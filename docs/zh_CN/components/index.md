@@ -21,6 +21,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [NavigationBar](../components/navigationbar)               | 底部导航组件           | 主要页面切换         |
 | [BottomFloatingAccessoryNavigationBar](../components/bottomfloatingaccessorynavigationbar) | 带两侧配件的悬浮胶囊导航栏 | 底部导航与快捷操作 |
 | [BottomFloatingEditToolbar](../components/bottomfloatingedittoolbar) | 悬浮编辑工具栏       | 编辑操作、快捷工具   |
+| [BottomFloatingToolbar](../components/bottomfloatingtoolbar) | 悬浮文本选择工具栏   | 文本选择操作、分组操作 |
 | [NavigationPopupMenu](../components/navigationpopupmenu)   | 导航溢出菜单           | 导航栏放不下的项     |
 | [HorizontalPopupMenu](../components/horizontalpopupmenu)   | 弹窗列表中的横向图标块 | 弹窗内的图标操作     |
 | [NavigationRail](../components/navigationrail)             | 侧边导航组件           | 主要页面切换（大屏）  |

@@ -67,6 +67,7 @@ export default defineConfig({
                         { text: "NavigationBar", link: "/components/navigationbar" },
                         { text: "BottomFloatingAccessoryNavigationBar", link: "/components/bottomfloatingaccessorynavigationbar" },
                         { text: "BottomFloatingEditToolbar", link: "/components/bottomfloatingedittoolbar" },
+                        { text: "BottomFloatingToolbar", link: "/components/bottomfloatingtoolbar" },
                         { text: "NavigationPopupMenu", link: "/components/navigationpopupmenu" },
                         { text: "HorizontalPopupMenu", link: "/components/horizontalpopupmenu" },
                         { text: "NavigationRail", link: "/components/navigationrail" },
