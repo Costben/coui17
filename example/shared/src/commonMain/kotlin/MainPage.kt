@@ -34,6 +34,7 @@ import component.blurSection
 import component.bottomFloatingAccessoryNavigationBarSection
 import component.bottomFloatingEditToolbarSection
 import component.bottomFloatingNavigationBarSection
+import component.bottomFloatingToolbarSection
 import component.bottomSheetSection
 import component.breadcrumbBarSection
 import component.buttonSection
@@ -376,6 +377,7 @@ fun MainPage(
                     bottomFloatingNavigationBarSection()
                     bottomFloatingAccessoryNavigationBarSection()
                     bottomFloatingEditToolbarSection()
+                    bottomFloatingToolbarSection()
                     navigationPopupMenuSection()
                     metaBallSection()
                     appBarGlassSection()
