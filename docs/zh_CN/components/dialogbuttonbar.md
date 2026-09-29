@@ -177,7 +177,7 @@ DialogButtonBar(
 - **底部按钮承载面板留白。** 最底部的纵排按钮拿到 0dp 额外下内边距和 44dp 最小高度，所以对话框面板本身不需要再加底部内边距。
 - **多按钮纵排栏有 0dp 上外边距。** 单个纵排按钮没有，除非它是推荐按钮。
 - **单独一个否定按钮回退到横排度量。** 这是纵排里唯一一种 `resetVerButsPadding` 改用 44dp 面板最小高度与横排内边距、而非纵排那套的情况。
-- **按钮是直角且无按压缩放。** `COUIAlertDialogBottomButtonNewNormal` 设了 `drawableRadius=0dp`、`scaleEnable=false`、`stateListAnimator=@null`：唯一的按压反馈是整格的着色。
+- **按钮是直角，且按下会缩放。** `COUIAlertDialogBottomButtonNewNormal` 设了 `drawableRadius=0dp`、`background=@null`、`stateListAnimator=@null`、`drawableColor=@color/coui_transparence` 配 `animType=2`，以及 **`scaleEnable=true`**。所以按压反馈是整格的遮罩着色加上 COUIButton 的按压缩放，这也是按钮栏传 `pressScaleEnabled = true` 的原因。
 
 ## 未实现部分
 

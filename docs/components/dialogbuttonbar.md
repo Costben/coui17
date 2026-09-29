@@ -177,7 +177,7 @@ This mirrors `COUIButtonBarLayout.setRecommendButtonId`:
 - **Bottom button carries the panel inset.** The bottom-most stacked button gets 0dp of extra bottom padding and a 44dp min height, so the dialog panel needs no bottom padding of its own.
 - **A stacked bar of more than one button gets a 0dp top margin.** A single stacked button gets none unless it is the recommend button.
 - **A lone negative button falls back to the horizontal metrics.** This is the one stacked case where `resetVerButsPadding` applies the 44dp panel min height and the horizontal paddings instead of the vertical ones.
-- **Buttons are square-cornered with no press scale.** `COUIAlertDialogBottomButtonNewNormal` sets `drawableRadius=0dp`, `scaleEnable=false` and `stateListAnimator=@null`: the only press feedback is a tint over the whole cell.
+- **Buttons are square-cornered and do scale on press.** `COUIAlertDialogBottomButtonNewNormal` sets `drawableRadius=0dp`, `background=@null`, `stateListAnimator=@null`, `drawableColor=@color/coui_transparence` with `animType=2`, and **`scaleEnable=true`**. The press feedback is therefore the full-cell mask tint plus COUIButton's press scale, which is why the bar passes `pressScaleEnabled = true`.
 
 ## Limitations
 
