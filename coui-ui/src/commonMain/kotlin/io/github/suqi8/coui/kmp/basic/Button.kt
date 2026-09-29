@@ -3,7 +3,6 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Indication
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -397,8 +397,8 @@ private val PressedTintMinVisibleProgress = 0.7f
 /** Thrown to stop the deferred press-in tint animation once [PressedTintMinVisibleProgress] is reached. */
 private class PressTintThresholdReached : CancellationException("Press tint reached the minimum visible progress")
 
-/** COUIInEaseInterpolator, used to map the button area to the pressed end scale. */
-private val PressedScaleEasing = CubicBezierEasing(0f, 0f, 0.1f, 1f)
+/** COUI `COUIInEaseInterpolator`; shares [COUIInEase]. Maps the button area to the pressed end scale. */
+private val PressedScaleEasing = COUIInEase
 
 /** COUIPressFeedbackHelper area bounds: coui_min_end_value_size (48dp) squared. */
 private val PressedScaleMinAreaDp2 = 48f * 48f

@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.squircle.squircleBorder
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -760,8 +761,8 @@ private val DefaultLabelFontSize = 16f
 /** COUIEaseInterpolator: cubic-bezier(0.33, 0, 0.67, 1). */
 private val CouiEaseEasing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f)
 
-/** COUIInEaseInterpolator: cubic-bezier(0, 0, 0.1, 1). */
-private val CouiInEaseEasing = CubicBezierEasing(0f, 0f, 0.1f, 1f)
+/** COUI `COUIInEaseInterpolator`; shares [COUIInEase]. Used by the line mode focus underline. */
+private val CouiInEaseEasing = COUIInEase
 
 /** COUIMoveEaseInterpolator: cubic-bezier(0.3, 0, 0.1, 1), used by the label collapse. */
 private val CouiMoveEaseEasing = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)

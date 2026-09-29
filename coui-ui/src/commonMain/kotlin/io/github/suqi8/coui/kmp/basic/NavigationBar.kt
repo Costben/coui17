@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
+import io.github.suqi8.coui.kmp.anim.COUILinear
 import io.github.suqi8.coui.kmp.anim.COUIOutEase
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
@@ -268,7 +269,7 @@ object NavigationBarMotion {
 
     /** The menu exit alpha spec: [ExitAlphaDurationMillis] on `COUILinearInterpolator`. */
     val ExitAlphaSpec: AnimationSpec<Float> =
-        tween(durationMillis = ExitAlphaDurationMillis, easing = LinearEasing)
+        tween(durationMillis = ExitAlphaDurationMillis, easing = COUILinear)
 }
 
 /**

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -641,6 +642,14 @@ object TopAppBarDefaults {
     val ActionMenuItemSpacing = 10.dp
 
     /**
+     * The minimum width of a toolbar action item. COUI `coui_action_menu_item_min_width`, 48dp in
+     * `values/` and 40dp in `values-v37/`; the ColorOS 17 Settings toolbar applies the 40dp value —
+     * `coui_toolbar_back_view` and `coui_toolbar_more_view` both measure 155 x 155px =
+     * 40.00 x 40.00dp with 16.00dp margins.
+     */
+    val ActionItemMinWidth = 40.dp
+
+    /**
      * The horizontal margin of the centred title in the `compat` width tier.
      * COUI `coui_appbar_title_expanded_margin_start_compat` (16dp); `values-v37/` gives the same
      * three values to `toolbar_center_menu_padding_horizontal_{compat,medium,expanded}`.
@@ -689,6 +698,18 @@ object TopAppBarDefaults {
      */
     val SegmentButtonMaxWidth = 207.dp
 }
+
+/**
+ * Constrains a top app bar action item to the toolbar's minimum action width.
+ *
+ * COUI's `COUIToolbar` applies `coui_action_menu_item_min_width` to the action views it hosts, so the
+ * token never has to reach the caller. This port takes the actions slot as a plain [RowScope] lambda
+ * and does not own those views, so the toolbar cannot impose the width the way the native container
+ * does — apply this modifier to each action item instead. The ColorOS 17 Settings toolbar shows the
+ * native result: `coui_toolbar_back_view` and `coui_toolbar_more_view` both measure 155 x 155px =
+ * 40.00 x 40.00dp with 16.00dp margins.
+ */
+fun Modifier.couiTopAppBarActionItem(): Modifier = widthIn(min = TopAppBarDefaults.ActionItemMinWidth)
 
 /**
  * The horizontal margin of the centred title, resolved from the current window width.

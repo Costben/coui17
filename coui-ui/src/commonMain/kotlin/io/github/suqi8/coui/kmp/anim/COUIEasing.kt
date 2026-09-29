@@ -4,6 +4,7 @@ package io.github.suqi8.coui.kmp.anim
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import kotlin.math.PI
@@ -23,6 +24,15 @@ val COUIInEase: Easing = CubicBezierEasing(0f, 0f, 0.1f, 1f)
  * `(controlX1, controlY1, controlX2, controlY2) = (0.3f, 0.0f, 1.0f, 1.0f)`.
  */
 val COUIOutEase: Easing = CubicBezierEasing(0.3f, 0f, 1f, 1f)
+
+/**
+ * COUI `COUILinearInterpolator`, the easing COUI uses where an animation is left unshaped.
+ *
+ * `com.coui.appcompat.animation.COUILinearInterpolator` extends
+ * `android.view.animation.LinearInterpolator` with an empty body — no fields and no overrides — so it
+ * is exactly the framework's linear curve.
+ */
+val COUILinear: Easing = LinearEasing
 
 /**
  * Creates a [SpringSpec] from damping and response parameters.

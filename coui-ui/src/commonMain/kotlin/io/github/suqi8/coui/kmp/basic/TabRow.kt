@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -701,8 +702,8 @@ private val SegmentIndicatorLight = Color(0xFFFFFFFF)
 /** COUI `coui_color_segment_button_indicator` in dark themes (#1AFFFFFF). */
 private val SegmentIndicatorDark = Color(0x1AFFFFFF)
 
-/** COUIInEaseInterpolator, used to map the segment area to the pressed end scale. */
-private val PressedScaleEasing = CubicBezierEasing(0f, 0f, 0.1f, 1f)
+/** COUI `COUIInEaseInterpolator`; shares [COUIInEase]. Maps the segment area to the pressed end scale. */
+private val PressedScaleEasing = COUIInEase
 
 /** COUIPressFeedbackHelper area bounds: coui_min_end_value_size (48dp) squared. */
 private val PressedScaleMinAreaDp2 = 48f * 48f

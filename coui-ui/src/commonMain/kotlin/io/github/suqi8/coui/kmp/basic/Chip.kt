@@ -4,7 +4,6 @@ package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Indication
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -338,8 +338,8 @@ private val ChipPressedTintMinVisibleProgress = 0.7f
 /** Thrown to stop the deferred press-in tint animation once [ChipPressedTintMinVisibleProgress] is reached. */
 private class ChipPressTintThresholdReached : CancellationException("Press tint reached the minimum visible progress")
 
-/** COUIInEaseInterpolator, used to map the chip area to the pressed end scale. */
-private val ChipPressedScaleEasing = CubicBezierEasing(0f, 0f, 0.1f, 1f)
+/** COUI `COUIInEaseInterpolator`; shares [COUIInEase]. Maps the chip area to the pressed end scale. */
+private val ChipPressedScaleEasing = COUIInEase
 
 /** COUIPressFeedbackHelper area bounds: coui_min_end_value_size (48dp) squared. */
 private val ChipPressedScaleMinAreaDp2 = 48f * 48f
