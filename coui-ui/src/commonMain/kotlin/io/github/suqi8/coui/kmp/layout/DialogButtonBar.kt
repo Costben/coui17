@@ -38,26 +38,35 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param text The button label.
  * @param enabled Whether the button is enabled.
  * @param onClick Invoked when the button is clicked.
+ * @param recommended Whether this is the bar's recommended button. COUI addresses the recommend
+ *   button by id (`COUIButtonBarLayout.setRecommendButtonId`, matched against the button's own id);
+ *   an action carries the flag directly here. At most one action of a bar should set it.
  */
 @Stable
 data class DialogButtonBarAction(
     val text: String,
     val enabled: Boolean = true,
     val onClick: () -> Unit,
+    val recommended: Boolean = false,
 )
 
 /**
  * A COUI dialog button bar (`COUIButtonBarLayout`) that automatically flips between a horizontal
  * row and a vertical stack.
  *
- * `COUIButtonBarLayout.onMeasure` keeps the bar horizontal only when every label fits, there are
- * exactly two buttons and there is no recommend button; in every other case it stacks. The two
- * tiers differ by more than direction — min heights, paddings, divider thickness and insets all
- * change, and the buttons appear in the opposite order — so see [DialogButtonBarDefaults] for the
- * stacked metrics and [DialogDefaults] for the row ones.
+ * `COUIButtonBarLayout.onMeasure` keeps the bar horizontal only when every label fits and there are
+ * exactly two buttons; in every other case it stacks. The two tiers differ by more than direction —
+ * min heights, paddings, divider thickness and insets all change, and the buttons appear in the
+ * opposite order — so see [DialogButtonBarDefaults] for the stacked metrics and [DialogDefaults]
+ * for the row ones.
  *
- * The recommend-button tier (`setRecommendButtonId`, a highlighted filled button) is not
- * implemented; this bar always behaves as `mRecommendButtonId == NO_RECOMMEND_ID`.
+ * The recommend-button tier (`COUIButtonBarLayout.setRecommendButtonId`) highlights the action
+ * flagged [DialogButtonBarAction.recommended] as a filled primary button; the others stay
+ * secondary. COUI decides the fill through `getBlurWindowButtonType`, which returns `PRIMARY` for
+ * the recommend button and `SECONDARY` for every other one, and `applyRecommendStyle`, which
+ * switches the button to `COUIButton.ButtonType.PRIMARY`, re-tints its label with
+ * `coui_btn_default_text_color` and turns on the solid-fill animation mode (`setAnimType(1)`).
+ * The AI-payment variant (`setRecommendButtonType(AI_PAYMENT)`) is not implemented.
  *
  * @param negative The negative (cancel) action. Hidden when null.
  * @param positive The positive (confirm) action. Hidden when null.
@@ -70,7 +79,8 @@ data class DialogButtonBarAction(
  * @param hasContentAbove Whether the dialog shows a title, message or custom panel above the bar.
  *   COUI adds [DialogButtonBarDefaults.StackedButtonPaddingTopExtra] to the top-most stacked button
  *   only when nothing sits above it.
- * @param colors The [TextButtonColors] of the buttons.
+ * @param colors The [TextButtonColors] of the non-recommended buttons.
+ * @param recommendColors The [TextButtonColors] of the recommended button.
  * @param dividerColor The color of the dividers between buttons.
  * @param textStyle The text style of the labels, also used to measure them for the flip decision.
  */
@@ -84,6 +94,7 @@ fun DialogButtonBar(
     showDivider: Boolean = true,
     hasContentAbove: Boolean = true,
     colors: TextButtonColors = ButtonDefaults.textButtonColorsBorderless(),
+    recommendColors: TextButtonColors = ButtonDefaults.textButtonColorsPrimary(),
     dividerColor: Color = COUITheme.colorScheme.dividerLine,
     textStyle: TextStyle = COUITheme.textStyles.button,
 ) {
@@ -120,7 +131,7 @@ fun DialogButtonBar(
                     density = density,
                 )
                 // COUIButtonBarLayout.onMeasure stays horizontal only when the labels fit and there
-                // are exactly two buttons (and no recommend button, which this bar never has).
+                // are exactly two buttons.
                 !(labelsFit && buttonCount == 2)
             }
         }
@@ -133,6 +144,7 @@ fun DialogButtonBar(
                 showDivider = showDivider,
                 hasContentAbove = hasContentAbove,
                 colors = colors,
+                recommendColors = recommendColors,
                 dividerColor = dividerColor,
                 textStyle = textStyle,
             )
@@ -143,6 +155,7 @@ fun DialogButtonBar(
                 neutral = neutral,
                 showDivider = showDivider,
                 colors = colors,
+                recommendColors = recommendColors,
                 dividerColor = dividerColor,
                 textStyle = textStyle,
             )
@@ -198,6 +211,7 @@ private fun RowButtonBar(
     neutral: DialogButtonBarAction?,
     showDivider: Boolean,
     colors: TextButtonColors,
+    recommendColors: TextButtonColors,
     dividerColor: Color,
     textStyle: TextStyle,
 ) {
@@ -231,7 +245,7 @@ private fun RowButtonBar(
                 pressScaleEnabled = false,
                 cornerRadius = DialogButtonBarDefaults.ButtonCornerRadius,
                 minHeight = DialogDefaults.ButtonBarMinHeight,
-                colors = colors,
+                colors = if (action.recommended) recommendColors else colors,
                 insideMargin = DialogDefaults.ButtonBarInsideMargin,
                 textStyle = textStyle,
             )
@@ -252,6 +266,7 @@ private fun StackedButtonBar(
     showDivider: Boolean,
     hasContentAbove: Boolean,
     colors: TextButtonColors,
+    recommendColors: TextButtonColors,
     dividerColor: Color,
     textStyle: TextStyle,
 ) {
@@ -264,9 +279,15 @@ private fun StackedButtonBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            // COUI only adds coui_bottom_alert_dialog_buttonbar_margintop once the stacked bar
-            // holds more than one button.
-            .padding(top = if (slots.size > 1) DialogButtonBarDefaults.StackedBarMarginTop else 0.dp),
+            // COUI adds coui_bottom_alert_dialog_buttonbar_margintop once the stacked bar holds
+            // more than one button, or a single button that is the recommend one.
+            .padding(
+                top = if (slots.size > 1 || (slots.size == 1 && slots.first().second.recommended)) {
+                    DialogButtonBarDefaults.StackedBarMarginTop
+                } else {
+                    0.dp
+                },
+            ),
     ) {
         slots.forEachIndexed { index, (slot, action) ->
             if (index > 0 && showDivider) {
@@ -296,7 +317,7 @@ private fun StackedButtonBar(
                     isBottom -> DialogButtonBarDefaults.StackedButtonMinHeightBottom
                     else -> DialogButtonBarDefaults.StackedButtonMinHeight
                 },
-                colors = colors,
+                colors = if (action.recommended) recommendColors else colors,
                 insideMargin = if (loneNegative) {
                     DialogDefaults.ButtonBarInsideMargin
                 } else {
@@ -364,8 +385,8 @@ object DialogButtonBarDefaults {
     val StackedButtonPaddingBottomExtra = 0.dp
 
     /**
-     * The top margin of a stacked bar holding more than one button. COUI
-     * `coui_bottom_alert_dialog_buttonbar_margintop` (0dp).
+     * The top margin of a stacked bar holding more than one button, or a single button that is the
+     * recommend one. COUI `coui_bottom_alert_dialog_buttonbar_margintop` (0dp).
      */
     val StackedBarMarginTop = 0.dp
 

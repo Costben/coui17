@@ -37,6 +37,8 @@ fun LazyListScope.dialogSection() {
         var securityDialogHoldDown by remember { mutableStateOf(false) }
         var showStackedDialog by remember { mutableStateOf(false) }
         var stackedDialogHoldDown by remember { mutableStateOf(false) }
+        var showRecommendedDialog by remember { mutableStateOf(false) }
+        var recommendedDialogHoldDown by remember { mutableStateOf(false) }
 
         SmallTitle(text = "Dialog")
         Card(
@@ -85,6 +87,16 @@ fun LazyListScope.dialogSection() {
             )
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
             ArrowPreference(
+                title = "Recommended Button Bar (O)",
+                summary = "One action is highlighted as the recommend button",
+                onClick = {
+                    showRecommendedDialog = true
+                    recommendedDialogHoldDown = true
+                },
+                holdDownState = recommendedDialogHoldDown,
+            )
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            ArrowPreference(
                 title = "Security Dialog (O)",
                 summary = "Click to show an OverlaySecurityDialog",
                 onClick = {
@@ -109,6 +121,11 @@ fun LazyListScope.dialogSection() {
             show = showStackedDialog,
             onDismissRequest = { showStackedDialog = false },
             onDismissFinished = { stackedDialogHoldDown = false },
+        )
+        RecommendedButtonBarDialogDemo(
+            show = showRecommendedDialog,
+            onDismissRequest = { showRecommendedDialog = false },
+            onDismissFinished = { recommendedDialogHoldDown = false },
         )
 
         // Auto-dismiss the loading demo after a short delay, like a finished task would.
@@ -205,6 +222,37 @@ private fun WindowDialogDemo(
             DialogButtonBar(
                 negative = DialogButtonBarAction(text = "Cancel", onClick = { dismissState?.invoke() }),
                 positive = DialogButtonBarAction(text = "Confirm", onClick = { dismissState?.invoke() }),
+            )
+        },
+    )
+}
+
+/**
+ * Shows the recommend-button tier of [DialogButtonBar]: the positive action is flagged
+ * [DialogButtonBarAction.recommended], so it draws as a filled primary button while the negative
+ * one stays borderless — COUI's `COUIButtonBarLayout.setRecommendButtonId` /
+ * `getBlurWindowButtonType`.
+ */
+@Composable
+private fun RecommendedButtonBarDialogDemo(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    onDismissFinished: () -> Unit,
+) {
+    OverlayDialog(
+        show = show,
+        title = "Install Update",
+        summary = "The positive action below is the bar's recommend button.",
+        onDismissRequest = onDismissRequest,
+        onDismissFinished = onDismissFinished,
+        content = {
+            DialogButtonBar(
+                negative = DialogButtonBarAction(text = "Later", onClick = onDismissRequest),
+                positive = DialogButtonBarAction(
+                    text = "Install",
+                    onClick = onDismissRequest,
+                    recommended = true,
+                ),
             )
         },
     )
