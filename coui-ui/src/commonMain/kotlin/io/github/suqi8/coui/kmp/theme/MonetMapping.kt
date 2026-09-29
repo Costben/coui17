@@ -86,6 +86,7 @@ internal fun mapMd3RolesToCOUIColorsCommon(roles: MonetRoles, dark: Boolean): Co
     val baseSurface = roles.surface
     val baseSurfaceContainerHigh = roles.surfaceContainerHigh
     val onSurfaceSecondaryOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.8f), baseSurface)
+    val labelPrimaryVariantOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.72f), baseSurface)
     val onSurfaceContainerHighOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.8f), baseSurfaceContainerHigh)
     val sliderBackground = ensureOpaqueOver(roles.primary.copy(alpha = 0.2f), baseSurface)
     val disabledPrimaryOpaque = ensureOpaqueOver(roles.primary.copy(alpha = 0.38f), baseSurface)
@@ -152,5 +153,8 @@ internal fun mapMd3RolesToCOUIColorsCommon(roles: MonetRoles, dark: Boolean): Co
         sliderKeyPoint = roles.primary,
         sliderKeyPointForeground = roles.surfaceContainerHigh,
         sliderBackground = sliderBackground,
+        // COUI coui_color_bar follows the Material bottom navigation container role.
+        bar = roles.surfaceContainer,
+        labelPrimaryVariant = labelPrimaryVariantOpaque,
     )
 }

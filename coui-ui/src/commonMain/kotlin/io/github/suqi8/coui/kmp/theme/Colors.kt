@@ -62,6 +62,8 @@ import androidx.compose.ui.graphics.Color
  * @param sliderKeyPoint The color of the slider key point.
  * @param sliderKeyPointForeground The foreground color of the slider key point.
  * @param sliderBackground The background color of the slider.
+ * @param bar The background color of the bottom navigation bar. COUI `coui_color_bar` (`?attr/couiColorBar`). Cases: NavigationBar.
+ * @param labelPrimaryVariant The color of unselected items in the floating bottom navigation bar. COUI `coui_color_label_primary_variant` (`?attr/couiColorLabelPrimaryVariant`). Cases: BottomFloatingNavigationBar.
  */
 @Stable
 class Colors(
@@ -118,6 +120,8 @@ class Colors(
     sliderKeyPoint: Color,
     sliderKeyPointForeground: Color,
     sliderBackground: Color,
+    bar: Color,
+    labelPrimaryVariant: Color,
 ) {
     var primary by mutableStateOf(primary, structuralEqualityPolicy())
         internal set
@@ -225,6 +229,10 @@ class Colors(
         internal set
     var sliderBackground by mutableStateOf(sliderBackground, structuralEqualityPolicy())
         internal set
+    var bar by mutableStateOf(bar, structuralEqualityPolicy())
+        internal set
+    var labelPrimaryVariant by mutableStateOf(labelPrimaryVariant, structuralEqualityPolicy())
+        internal set
 
     fun copy(
         primary: Color = this.primary,
@@ -280,6 +288,8 @@ class Colors(
         sliderKeyPoint: Color = this.sliderKeyPoint,
         sliderKeyPointForeground: Color = this.sliderKeyPointForeground,
         sliderBackground: Color = this.sliderBackground,
+        bar: Color = this.bar,
+        labelPrimaryVariant: Color = this.labelPrimaryVariant,
     ): Colors = Colors(
         primary,
         onPrimary,
@@ -334,25 +344,27 @@ class Colors(
         sliderKeyPoint,
         sliderKeyPointForeground,
         sliderBackground,
+        bar,
+        labelPrimaryVariant,
     )
 }
 
-/** COUI light scheme. COUI: coui_color_blue #0066FF; gray page surface, white cards and dialog panels. */
+/** COUI light scheme. COUI: coui_color_blue #0080FF; gray page surface, white cards and dialog panels. */
 fun lightColorScheme(
-    primary: Color = Color(0xFF0066FF),
+    primary: Color = Color(0xFF0080FF),
     onPrimary: Color = Color.White,
-    primaryVariant: Color = Color(0xFF0066FF),
+    primaryVariant: Color = Color(0xFF0080FF),
     onPrimaryVariant: Color = Color(0xFFAECDFF),
     error: Color = Color(0xFFDB382C),
     onError: Color = Color(0xFFFFFFFF),
     errorContainer: Color = Color(0x26EB3B2F),
     onErrorContainer: Color = Color(0xFFDB382C),
-    disabledPrimary: Color = Color(0x4D0066FF),
+    disabledPrimary: Color = Color(0x4D0080FF),
     disabledOnPrimary: Color = Color.White,
-    disabledPrimaryButton: Color = Color(0x4D0066FF),
+    disabledPrimaryButton: Color = Color(0x4D0080FF),
     disabledOnPrimaryButton: Color = Color(0x8AFFFFFF),
     disabledPrimarySlider: Color = Color(0xFFEBEBEB),
-    primaryContainer: Color = Color(0xFF0066FF),
+    primaryContainer: Color = Color(0xFF0080FF),
     onPrimaryContainer: Color = Color.White,
     secondary: Color = Color(0xFFE5E5E5),
     onSecondary: Color = Color.White,
@@ -366,9 +378,9 @@ fun lightColorScheme(
     onSecondaryContainer: Color = Color(0x66000000),
     secondaryContainerVariant: Color = Color(0x14000000),
     onSecondaryContainerVariant: Color = Color(0x66000000),
-    tertiaryContainer: Color = Color(0x260066FF),
-    onTertiaryContainer: Color = Color(0xFF0066FF),
-    tertiaryContainerVariant: Color = Color(0x260066FF),
+    tertiaryContainer: Color = Color(0x260080FF),
+    onTertiaryContainer: Color = Color(0xFF0080FF),
+    tertiaryContainerVariant: Color = Color(0x260080FF),
     background: Color = Color.White,
     onBackground: Color = Color(0xE6000000),
     onBackgroundVariant: Color = Color(0x8A000000),
@@ -392,6 +404,8 @@ fun lightColorScheme(
     sliderKeyPoint: Color = Color(0xFFF2F2F2),
     sliderKeyPointForeground: Color = Color(0xFF6EB5FF),
     sliderBackground: Color = Color(0x0D000000),
+    bar: Color = Color(0xFFFAFAFA),
+    labelPrimaryVariant: Color = Color(0xB8000000),
 ): Colors = Colors(
     primary,
     onPrimary,
@@ -446,21 +460,23 @@ fun lightColorScheme(
     sliderKeyPoint,
     sliderKeyPointForeground,
     sliderBackground,
+    bar,
+    labelPrimaryVariant,
 )
 
-/** COUI dark scheme. COUI: coui_color_blue_dark #247CFF; pure black page surface, translucent white cards. */
+/** COUI dark scheme. COUI: coui_color_blue_dark #1A8CFF; pure black page surface, translucent white cards. */
 fun darkColorScheme(
-    primary: Color = Color(0xFF247CFF),
+    primary: Color = Color(0xFF1A8CFF),
     onPrimary: Color = Color.White,
-    primaryVariant: Color = Color(0xFF247CFF),
+    primaryVariant: Color = Color(0xFF1A8CFF),
     onPrimaryVariant: Color = Color(0xFF99C7F1),
     error: Color = Color(0xFFFF6C61),
     onError: Color = Color.White,
     errorContainer: Color = Color(0x40EB493D),
     onErrorContainer: Color = Color(0xFFFF6C61),
-    disabledPrimary: Color = Color(0x4D247CFF),
+    disabledPrimary: Color = Color(0x4D1A8CFF),
     disabledOnPrimary: Color = Color(0xFF404040),
-    disabledPrimaryButton: Color = Color(0x4D247CFF),
+    disabledPrimaryButton: Color = Color(0x4D1A8CFF),
     disabledOnPrimaryButton: Color = Color(0x29FFFFFF),
     disabledPrimarySlider: Color = Color(0xFF262626),
     primaryContainer: Color = Color(0xFF5C9DFF),
@@ -471,15 +487,15 @@ fun darkColorScheme(
     onSecondaryVariant: Color = Color(0xE6FFFFFF),
     disabledSecondary: Color = Color(0x4D757575),
     disabledOnSecondary: Color = Color(0x4DFFFFFF),
-    disabledSecondaryVariant: Color = Color(0x26FFFFFF),
+    disabledSecondaryVariant: Color = Color(0x1AFFFFFF),
     disabledOnSecondaryVariant: Color = Color(0x4DFFFFFF),
     secondaryContainer: Color = Color(0x26FFFFFF),
     onSecondaryContainer: Color = Color(0x66FFFFFF),
     secondaryContainerVariant: Color = Color(0x26FFFFFF),
     onSecondaryContainerVariant: Color = Color(0x66FFFFFF),
-    tertiaryContainer: Color = Color(0x40247CFF),
-    onTertiaryContainer: Color = Color(0xFF5C9DFF),
-    tertiaryContainerVariant: Color = Color(0x40247CFF),
+    tertiaryContainer: Color = Color(0x401A8CFF),
+    onTertiaryContainer: Color = Color(0xFF1A8CFF),
+    tertiaryContainerVariant: Color = Color(0x401A8CFF),
     background: Color = Color(0xFF1E1E1E),
     onBackground: Color = Color(0xE6FFFFFF),
     onBackgroundVariant: Color = Color(0x8AFFFFFF),
@@ -503,6 +519,8 @@ fun darkColorScheme(
     sliderKeyPoint: Color = Color(0xFF595959),
     sliderKeyPointForeground: Color = Color(0xFF5DAAFF),
     sliderBackground: Color = Color(0x1AFFFFFF),
+    bar: Color = Color(0xFF1E1E1E),
+    labelPrimaryVariant: Color = Color(0xB8FFFFFF),
 ): Colors = Colors(
     primary,
     onPrimary,
@@ -557,6 +575,8 @@ fun darkColorScheme(
     sliderKeyPoint,
     sliderKeyPointForeground,
     sliderBackground,
+    bar,
+    labelPrimaryVariant,
 )
 
 @Stable
@@ -614,6 +634,8 @@ internal fun Colors.updateColorsFrom(other: Colors) {
     sliderKeyPoint = other.sliderKeyPoint
     sliderKeyPointForeground = other.sliderKeyPointForeground
     sliderBackground = other.sliderBackground
+    bar = other.bar
+    labelPrimaryVariant = other.labelPrimaryVariant
 }
 
 internal val LocalColors = staticCompositionLocalOf { lightColorScheme() }
