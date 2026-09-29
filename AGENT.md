@@ -270,3 +270,19 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 
 共用内部件：`internal/CategoryHeader.kt`（`SmallTitle` + 尾部 slot，供两个 `*Category` 复用）、
 `internal/PreferenceWidgetDivider.kt`（`*WithDivider` 共用的竖线）。
+
+## 13. COUI 侧栏 / 侧面板组件（ColorOS 17 移植，2026-09-30）
+
+`coui-ui/src/commonMain/kotlin/io/github/suqi8/coui/kmp/basic/` 本轮新增 2 个组件，另在
+`coui-ui/src/commonMain/kotlin/io/github/suqi8/coui/kmp/icon/basic/` 新增 1 个图标。
+逐类裁决、设备侧证据与有意省略项见 `docs/coui-coloros17-component-coverage.md` §3 的 G-3 / G-4，
+每项用法见 `docs/components/<名称小写>.md` 与 `docs/zh_CN/components/<名称小写>.md`，
+示例落位见 `example/coui17/src/main/kotlin/io/github/suqi8/coui17/GalleryScreen.kt`（宿主 `GalleryActivity`）。
+
+| 组件 | 说明 |
+| :--- | :--- |
+| `SideNavigationBar` | 响应式侧边抽屉：紧凑窗口为临时抽屉（`coui_color_mask` 遮罩、可点遮罩关闭），宽窗口转为固定栏（无遮罩、内容仍可交互）。配 `SideNavigationBarState` / `SideNavigationBarMode` / `SideNavigationBarListener` / `SideNavigationBarDefaults` / `rememberSideNavigationBarState` |
+| `SidePaneLayout` | 起始边可拖拽侧面板：`coverStyle` 决定覆盖还是推开内容，`alwaysShowMask` 决定遮罩是否常显，折角按钮负责开合。配 `SidePaneLayoutState` / `SidePaneState` / `SidePanePanelSlideListener` / `SidePaneMaskListener` / `SidePaneUtils` / `SidePaneDefaults` / `SidePaneFoldIconColors` / `rememberSidePaneLayoutState` |
+| `COUIIcons.Basic.FoldPane` | `drawable/coui_pane_fold_normal` 的 1:1 移植（48×52 视口、1.4 圆头描边），供 `SidePaneLayout` 的折角按钮使用 |
+
+注意：`COUISidePaneLayout` 在被研究的 Gallery / Dialer 中**没有应用侧调用点**（只在库自身源码、`R.*` 生成类与 dex 二进制命中）；Gallery 的侧栏实为 `extends COUISideNavigationBar` 的子类。因此 `SideNavigationBar` 有设备实证调用点，`SidePaneLayout` 的演示为按设备类重建，非实测对齐。

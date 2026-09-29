@@ -71,6 +71,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [PopupMenuRotation](../components/popupmenurotation)       | 旋转弹窗菜单的几何计算 | 横屏布局下的溢出菜单 |
 | [ClickSelectMenu](../components/clickselectmenu)           | 在点击处弹出的选择菜单 | 在手指处弹出的行内菜单 |
 | [InstallLoadProgress](../components/installloadprogress)   | 安装按钮与进度切换   | 应用安装、下载     |
+| [SideNavigationBar](../components/sidenavigationbar)       | 可切换固定模式的响应式侧边抽屉 | 相册导航、平板侧栏 |
+| [SidePaneLayout](../components/sidepanelayout)             | 贴内容可拖拽的侧面板 | 相册侧栏、导航面板 |
 | [Snackbar](../components/snackbar)                         | 底部临时消息条组件     | 状态提示、操作结果   |
 | [TopTips](../components/toptips)                           | 页面顶部提示条         | 页面提示、公告       |
 | [Tooltip](../components/tooltip)                           | 悬停或长按显示的简短标签 | 图标按钮标签、元素提示 |

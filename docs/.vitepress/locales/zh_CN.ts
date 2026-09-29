@@ -142,6 +142,8 @@ export default defineConfig({
                         { text: "PopupMenuRotation", link: "/zh_CN/components/popupmenurotation" },
                         { text: "ClickSelectMenu", link: "/zh_CN/components/clickselectmenu" },
                         { text: "InstallLoadProgress", link: "/zh_CN/components/installloadprogress" },
+                        { text: "SideNavigationBar", link: "/zh_CN/components/sidenavigationbar" },
+                        { text: "SidePaneLayout", link: "/zh_CN/components/sidepanelayout" },
                     ],
                 },
                 {
