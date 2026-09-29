@@ -34,6 +34,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [IconButton](../components/iconbutton)                     | 图标按钮组件           | 辅助操作、工具栏     |
 | [Chip](../components/chip)                                 | 可选中的胶囊筛选标签   | 内容筛选、标签选择   |
 | [ChipTab](../components/chiptab)                           | 横向可滚动的页签栏     | 页签切换、分类浏览   |
+| [PageIndicator](../components/pageindicator)               | 带当前位置标记的圆点指示器 | 分页位置、引导页   |
 | [Text](../components/text)                                 | 展示各种样式的文字内容 | 标题、正文、描述文本 |
 | [SmallTitle](../components/smalltitle)                     | 小型标题组件           | 辅助标题、分类标识   |
 | [TextField](../components/textfield)                       | 接收用户文本输入       | 表单填写、搜索框     |
@@ -99,3 +100,4 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [WindowIconCascadingDropdownMenu](../components/windowiconcascadingdropdownmenu) | 基于 IconButton 的窗口级二级级联动作菜单组件                                       | 含子菜单的工具栏动作   |
 | [WindowBottomSheet](../components/windowbottomsheet) | 窗口级底部抽屉组件                                                                 | 底部抽屉、附加选项     |
 | [WindowDialog](../components/windowdialog)           | 窗口级对话框组件                                                                   | 提示、确认操作         |
+| [GuideDialog](../components/guidedialog)             | 窗口级多页首次引导对话框                                                           | 新手引导、首次使用引导 |

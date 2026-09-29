@@ -34,6 +34,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [IconButton](../components/iconbutton)                     | Icon button component                      | Auxiliary actions, toolbars           |
 | [Chip](../components/chip)                                 | Checkable capsule filter tag               | Content filtering, tag selection      |
 | [ChipTab](../components/chiptab)                           | Horizontal chip tab bar                    | Tab switching, category browsing      |
+| [PageIndicator](../components/pageindicator)               | Row of page dots with an active marker     | Page position in a pager, guides      |
 | [Text](../components/text)                                 | Display text content with various styles   | Titles, body text, descriptive text   |
 | [SmallTitle](../components/smalltitle)                     | Small title component                      | Auxiliary titles, category labels     |
 | [TextField](../components/textfield)                       | Receives user text input                   | Form filling, search boxes            |
@@ -99,3 +100,4 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [WindowIconCascadingDropdownMenu](../components/windowiconcascadingdropdownmenu) | Window-level icon-button cascading two-level menu                                        | Toolbar actions with submenus          |
 | [WindowBottomSheet](../components/windowbottomsheet) | Window-level bottom sheet component                                                      | Bottom drawer, additional options      |
 | [WindowDialog](../components/windowdialog)           | Window-level dialog component                                                            | Prompts, action confirmation           |
+| [GuideDialog](../components/guidedialog)             | Window-level first-run multi-page guide dialog                                           | Onboarding, first-run guides           |
