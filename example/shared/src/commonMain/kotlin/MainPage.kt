@@ -31,6 +31,8 @@ import component.arrowSection
 import component.badgeSection
 import component.basicComponentSection
 import component.blurSection
+import component.bottomFloatingAccessoryNavigationBarSection
+import component.bottomFloatingEditToolbarSection
 import component.bottomFloatingNavigationBarSection
 import component.bottomSheetSection
 import component.breadcrumbBarSection
@@ -43,9 +45,11 @@ import component.dateTimePickerSection
 import component.dialogSection
 import component.dropdownSection
 import component.fullPageStatementSection
+import component.horizontalPopupMenuSection
 import component.inputViewSection
 import component.listPreferenceSection
 import component.metaBallSection
+import component.navigationPopupMenuSection
 import component.numberPickerSection
 import component.otherPageSection
 import component.preferenceExtrasSection
@@ -360,6 +364,7 @@ fun MainPage(
                     dialogSection()
                     bottomSheetSection()
                     dropdownSection()
+                    horizontalPopupMenuSection()
                     spinnerSection()
                     buttonSection()
                     snackbarSection(snackbarHostState)
@@ -369,6 +374,9 @@ fun MainPage(
                     sliderSection()
                     tabRowSection()
                     bottomFloatingNavigationBarSection()
+                    bottomFloatingAccessoryNavigationBarSection()
+                    bottomFloatingEditToolbarSection()
+                    navigationPopupMenuSection()
                     metaBallSection()
                     appBarGlassSection()
                     breadcrumbBarSection()

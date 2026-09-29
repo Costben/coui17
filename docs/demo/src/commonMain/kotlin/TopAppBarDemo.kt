@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -24,6 +28,7 @@ import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
+import io.github.suqi8.coui.kmp.basic.TabRowWithContour
 import io.github.suqi8.coui.kmp.basic.TopAppBar
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Back
@@ -119,6 +124,110 @@ fun TopAppBarDemo() {
                                             contentDescription = "Back",
                                         )
                                     }
+                                },
+                                actions = {
+                                    IconButton(
+                                        onClick = { /* Handle click event */ },
+                                    ) {
+                                        Icon(
+                                            COUIIcons.More,
+                                            contentDescription = "More",
+                                        )
+                                    }
+                                },
+                            )
+                        },
+                    ) { paddingValues ->
+                        LazyColumn(
+                            contentPadding = PaddingValues(top = paddingValues.calculateTopPadding()),
+                        ) {
+                            item {
+                                Spacer(Modifier.height(8.dp))
+                            }
+                            items(100) {
+                                Card(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 8.dp),
+                                ) {
+                                    ArrowPreference(
+                                        title = "Something",
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Card(
+                    modifier = Modifier.weight(0.5f),
+                ) {
+                    Scaffold(
+                        topBar = {
+                            SmallTopAppBar(
+                                title = "Title",
+                                centerTitle = true,
+                                navigationIcon = {
+                                    IconButton(
+                                        onClick = { /* Handle click event */ },
+                                    ) {
+                                        Icon(
+                                            COUIIcons.Back,
+                                            contentDescription = "Back",
+                                        )
+                                    }
+                                },
+                                actions = {
+                                    IconButton(
+                                        onClick = { /* Handle click event */ },
+                                    ) {
+                                        Icon(
+                                            COUIIcons.More,
+                                            contentDescription = "More",
+                                        )
+                                    }
+                                },
+                            )
+                        },
+                    ) { paddingValues ->
+                        LazyColumn(
+                            contentPadding = PaddingValues(top = paddingValues.calculateTopPadding()),
+                        ) {
+                            item {
+                                Spacer(Modifier.height(8.dp))
+                            }
+                            items(100) {
+                                Card(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 8.dp),
+                                ) {
+                                    ArrowPreference(
+                                        title = "Something",
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Card(
+                    modifier = Modifier.weight(0.5f),
+                ) {
+                    var selectedTab by remember { mutableIntStateOf(0) }
+                    Scaffold(
+                        topBar = {
+                            SmallTopAppBar(
+                                title = "Title",
+                                segmentButton = {
+                                    TabRowWithContour(
+                                        tabs = listOf("Tab", "Tab"),
+                                        selectedTabIndex = selectedTab,
+                                        onTabSelected = { selectedTab = it },
+                                        height = 32.dp,
+                                    )
                                 },
                                 actions = {
                                     IconButton(
