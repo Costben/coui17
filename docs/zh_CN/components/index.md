@@ -33,6 +33,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [LoadingButton](../components/loadingbutton)               | 内置加载状态的文本按钮 | 异步操作提交         |
 | [IconButton](../components/iconbutton)                     | 图标按钮组件           | 辅助操作、工具栏     |
 | [Chip](../components/chip)                                 | 可选中的胶囊筛选标签   | 内容筛选、标签选择   |
+| [ChipTab](../components/chiptab)                           | 横向可滚动的页签栏     | 页签切换、分类浏览   |
 | [Text](../components/text)                                 | 展示各种样式的文字内容 | 标题、正文、描述文本 |
 | [SmallTitle](../components/smalltitle)                     | 小型标题组件           | 辅助标题、分类标识   |
 | [TextField](../components/textfield)                       | 接收用户文本输入       | 表单填写、搜索框     |

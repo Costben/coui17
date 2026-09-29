@@ -106,6 +106,7 @@ export default defineConfig({
                         { text: "Tooltip", link: "/zh_CN/components/tooltip" },
                         { text: "Badge", link: "/zh_CN/components/badge" },
                         { text: "Chip", link: "/zh_CN/components/chip" },
+                        { text: "ChipTab", link: "/zh_CN/components/chiptab" },
                         { text: "Icon", link: "/zh_CN/components/icon" },
                         { text: "FloatingActionButton", link: "/zh_CN/components/floatingactionbutton", },
                         { text: "FloatingToolbar", link: "/zh_CN/components/floatingtoolbar", },

@@ -97,6 +97,7 @@ export default defineConfig({
                         { text: "Tooltip", link: "/components/tooltip" },
                         { text: "Badge", link: "/components/badge" },
                         { text: "Chip", link: "/components/chip" },
+                        { text: "ChipTab", link: "/components/chiptab" },
                         { text: "Icon", link: "/components/icon" },
                         { text: "FloatingActionButton", link: "/components/floatingactionbutton", },
                         { text: "FloatingToolbar", link: "/components/floatingtoolbar" },

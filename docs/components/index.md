@@ -33,6 +33,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [LoadingButton](../components/loadingbutton)               | Text button with a built-in loading state  | Asynchronous action submission        |
 | [IconButton](../components/iconbutton)                     | Icon button component                      | Auxiliary actions, toolbars           |
 | [Chip](../components/chip)                                 | Checkable capsule filter tag               | Content filtering, tag selection      |
+| [ChipTab](../components/chiptab)                           | Horizontal chip tab bar                    | Tab switching, category browsing      |
 | [Text](../components/text)                                 | Display text content with various styles   | Titles, body text, descriptive text   |
 | [SmallTitle](../components/smalltitle)                     | Small title component                      | Auxiliary titles, category labels     |
 | [TextField](../components/textfield)                       | Receives user text input                   | Form filling, search boxes            |
