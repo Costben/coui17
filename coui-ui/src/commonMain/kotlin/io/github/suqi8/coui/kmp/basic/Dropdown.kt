@@ -35,7 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.ArrowRight
 import io.github.suqi8.coui.kmp.icon.basic.ArrowUpDown
@@ -71,12 +73,11 @@ fun RowScope.DropdownArrowEndAction(
  * @param dialogMode Whether the item is shown in dialog mode.
  * @param hasSubmenu When true, this row acts as a submenu trigger: a trailing chevron is shown
  *   instead of the selection check, and the row's accessibility role becomes [Role.Button].
- * @param isFirst Whether this row is the first row of the entire popup. Controls the larger top
- *   padding in popup mode. Defaults to `index == 0`; multi-entry callers should pass the
- *   popup-global flag so only the actual first row gets extra padding.
- * @param isLast Whether this row is the last row of the entire popup. Controls the larger bottom
- *   padding in popup mode. Defaults to `index == optionSize - 1`; multi-entry callers should pass
- *   the popup-global flag.
+ * @param isFirst Whether this row is the first row of the entire popup. Kept so existing callers
+ *   keep compiling: ColorOS 17 pads every row with the same top padding, so a popup-global first
+ *   row no longer differs. Defaults to `index == 0`.
+ * @param isLast Whether this row is the last row of the entire popup, kept for the same reason as
+ *   [isFirst]. Defaults to `index == optionSize - 1`.
  * @param onSelectedIndexChange The callback invoked with [index] when the option is selected.
  */
 @Composable
@@ -141,9 +142,8 @@ fun DropdownImpl(
                 .fillMaxWidth()
                 .padding(horizontal = DropdownDefaults.DialogHorizontalPadding)
         } else {
-            // COUI DefaultAdapter.configItemVerticalPadding enforces a per-row minimum height
-            // (padding included): the base coui_popup_list_window_item_min_height grown, on
-            // first/last rows, by the folded-in list inset carried by the larger edge padding.
+            // COUI MixedPopupListAdapter.configItemVerticalPadding enforces the same per-row minimum
+            // height (padding included) on every row, so the first/last fold below contributes 0.
             val minHeight = DropdownDefaults.PopupItemMinHeight +
                 (additionalTopPadding - DropdownDefaults.MiddleVerticalPadding) +
                 (additionalBottomPadding - DropdownDefaults.MiddleVerticalPadding)
@@ -171,7 +171,6 @@ fun DropdownImpl(
                 selected = isSelected,
                 enabled = enabled,
                 role = role,
-                hasIcon = item.icon != null,
                 onClick = { currentOnSelectedIndexChange(index) },
             )
             .then(containerModifier),
@@ -186,6 +185,13 @@ fun DropdownImpl(
                 Text(
                     text = item.text,
                     style = COUITheme.textStyles.body1,
+                    // COUI MixedPopupListAdapter.setTitleForVertical rebinds the popup row title to
+                    // the support library's couiTextBodyL (15sp); dialog rows keep the body1 size.
+                    fontSize = if (dialogMode) {
+                        COUITheme.textStyles.body1.fontSize
+                    } else {
+                        DropdownDefaults.PopupItemTitleFontSize
+                    },
                     // COUI popup rows are regular weight (coui_popup_list_window_item.xml
                     // textFontWeight=400); dialog single-choice rows use medium (couiTextAppearanceHeadline6).
                     fontWeight = if (dialogMode) FontWeight.Medium else FontWeight.Normal,
@@ -256,8 +262,9 @@ fun DropdownImpl(
  * @param text The group title.
  * @param modifier The modifier applied to the header row.
  * @param color The title color.
- * @param isFirst Whether this header is the first row of the entire popup. Like [DropdownImpl], the
- *   top edge then absorbs the folded-in list inset carried by [DropdownDefaults.FirstLastVerticalPadding].
+ * @param isFirst Whether this header is the first row of the entire popup. Kept so existing callers
+ *   keep compiling: ColorOS 17 pads every popup row with the same top padding, so the header's top
+ *   edge no longer differs from any other row.
  */
 @Composable
 fun DropdownHeaderItem(
@@ -467,15 +474,22 @@ object DropdownDefaults {
 
     /**
      * Minimum height of each option row in popup mode, vertical padding included
-     * (COUI coui_popup_list_window_item_min_height). Matching COUI
-     * DefaultAdapter.configItemVerticalPadding, the first/last rows additionally grow by the
-     * folded-in list inset (coui_popup_list_padding_vertical), i.e. by
-     * [FirstLastVerticalPadding] - [MiddleVerticalPadding] per affected edge.
+     * (COUI coui_popup_list_window_item_min_height). ColorOS 17 gives every row the same
+     * [MiddleVerticalPadding] top and bottom, so the minimum no longer grows on the first or the
+     * last row of the list.
      */
-    val PopupItemMinHeight: Dp = 48.dp
+    val PopupItemMinHeight: Dp = 40.dp
 
     /** Size of the trailing check icon shown on the selected option (COUI coui_popup_list_window_checkbox_width). */
     val CheckIconSize: Dp = 24.dp
+
+    /**
+     * Font size of a popup row title. The row layout declares couiTextAppearanceBodyL (16sp), but
+     * the adapter rebinds the title to the support library's couiTextBodyL (15sp) for every
+     * vertical row unless the window pins a fixed font size (COUI
+     * MixedPopupListAdapter.setTitleForVertical).
+     */
+    val PopupItemTitleFontSize: TextUnit = 15.sp
 
     /**
      * Size of the up-down arrow rendered by [DropdownArrowEndAction]
@@ -489,8 +503,11 @@ object DropdownDefaults {
      */
     val ChevronSize: DpSize = DpSize(width = 12.dp, height = 24.dp)
 
-    /** Minimum size of the leading icon cell (COUI coui_popup_list_window_item.xml icon, a 24dp ImageView). */
-    val IconMinSize: Dp = 24.dp
+    /**
+     * Minimum size of the leading icon cell (COUI coui_popup_list_window_item.xml icon, a 20dp
+     * ImageView).
+     */
+    val IconMinSize: Dp = 20.dp
 
     /**
      * Maximum width of the inner text/icon row when the dropdown is shown in popup mode
@@ -503,32 +520,40 @@ object DropdownDefaults {
      * Horizontal padding of each row in popup mode (COUI coui_popup_list_window_item_icon_margin_left,
      * used as both paddingStart and paddingEnd in coui_popup_list_window_item.xml).
      */
-    val InsideHorizontalPadding: Dp = 16.dp
+    val InsideHorizontalPadding: Dp = 20.dp
 
     /** Horizontal padding of each row in dialog mode. */
     val DialogHorizontalPadding: Dp = 28.dp
 
     /**
-     * Top/bottom padding applied to the first/last row in popup mode: COUI
-     * coui_popup_list_window_item_padding_top_and_bottom (8dp) plus the list inset
-     * coui_popup_list_padding_vertical (2dp) that COUI DefaultAdapter folds into the edge rows.
+     * Top/bottom padding applied to the first/last row in popup mode. ColorOS 17 pads every row
+     * with coui_popup_list_window_item_padding_top_and_bottom, so this equals
+     * [MiddleVerticalPadding] and the first/last fold contributes nothing; the separate list inset
+     * coui_popup_list_padding_vertical now lives on the popup list itself.
      */
-    val FirstLastVerticalPadding: Dp = 10.dp
+    val FirstLastVerticalPadding: Dp = 8.dp
 
     /**
-     * Top/bottom padding applied to middle rows in popup mode and to all rows in dialog mode
+     * Top/bottom padding applied to every popup row, and to all rows in dialog mode
      * (COUI coui_popup_list_window_item_padding_top_and_bottom).
      */
     val MiddleVerticalPadding: Dp = 8.dp
 
     /**
-     * Color of the 4dp group divider band between dropdown groups in popup mode
-     * (COUI coui_popup_list_group_divider_color #14000000). The resource has no values-night
-     * override, so COUI renders the same translucent black band in both light and dark themes.
+     * Color of the 4dp group divider band of the retired ListView adapter path
+     * (COUI coui_popup_list_group_divider_color #14000000). ColorOS 17 renders group boundaries with
+     * the same band as every other row boundary, so nothing consumes this token any more.
      */
+    @Deprecated("ColorOS 17 draws every popup divider with couiColorDivider; use PopupListDivider.")
     val PopupGroupDividerColor: Color = Color(0x14000000)
 
-    /** Thickness of the group divider band (COUI coui_popup_list_group_divider_height). */
+    /**
+     * Thickness of the 4dp group divider band of the retired ListView adapter path
+     * (COUI coui_popup_list_group_divider_height). ColorOS 17 reserves
+     * coui_popup_list_group_divider_total_height (12dp) for every divider instead; see
+     * [PopupListDivider].
+     */
+    @Deprecated("ColorOS 17 draws every popup divider as a 12dp band; use PopupListDivider.")
     val PopupGroupDividerThickness: Dp = 4.dp
 
     /** Padding between the leading icon cell and the title text (COUI coui_popup_list_window_item_icon_margin_right). */

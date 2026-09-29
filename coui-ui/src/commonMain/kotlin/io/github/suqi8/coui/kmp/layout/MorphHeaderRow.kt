@@ -87,7 +87,7 @@ internal fun MorphHeaderRow(
                     Column {
                         Text(
                             text = triggerItem.text,
-                            fontSize = COUITheme.textStyles.body1.fontSize,
+                            fontSize = DropdownDefaults.PopupItemTitleFontSize,
                             // COUI applies a medium typeface to the expanded submenu header row.
                             fontWeight = FontWeight.Medium,
                             color = titleColor,

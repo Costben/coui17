@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -29,16 +28,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
-import io.github.suqi8.coui.kmp.basic.DropdownDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.DropdownItem
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupLayoutPosition
+import io.github.suqi8.coui.kmp.basic.PopupListDivider
 import io.github.suqi8.coui.kmp.basic.PopupShadow
 import io.github.suqi8.coui.kmp.basic.popupClipReveal
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -46,7 +43,7 @@ import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 private var deeperChildrenWarned = false
 
 /** Primary side of a cascading popup. While a secondary is expanded, scales to
- *  [PRIMARY_SHRUNK_SCALE] under a translucent mask. */
+ *  [PRIMARY_SHRUNK_SCALE] and fades to [PRIMARY_SHRUNK_ALPHA]. */
 @Composable
 internal fun CascadingPrimaryContent(
     entries: List<DropdownEntry>,
@@ -61,8 +58,7 @@ internal fun CascadingPrimaryContent(
     surfaceColor: Color,
     dropdownColors: DropdownColors,
     primaryScale: () -> Float,
-    maskAlpha: () -> Float,
-    maskColor: Color,
+    primaryAlpha: () -> Float,
     onCollapseSecondary: () -> Unit,
 ) {
     val isExpanded = expandedItem != null
@@ -73,7 +69,7 @@ internal fun CascadingPrimaryContent(
                 val s = ENTER_SCALE_FROM + ENTER_SCALE_RANGE * enterFraction()
                 scaleX = s
                 scaleY = s
-                alpha = enterAlpha()
+                alpha = enterAlpha() * primaryAlpha()
                 this.transformOrigin = transformOrigin
             }
             .graphicsLayer {
@@ -127,22 +123,21 @@ internal fun CascadingPrimaryContent(
                     }
                     if (entryIndex != lastEntryIdx) {
                         key("divider", entry) {
-                            // COUI popup group divider: a full-bleed band without extra margins.
-                            HorizontalDivider(
-                                thickness = DropdownDefaults.PopupGroupDividerThickness,
-                                color = DropdownDefaults.PopupGroupDividerColor,
-                            )
+                            // COUI renders every popup separator — group boundaries included — as
+                            // the same 12dp band with a centred hairline.
+                            PopupListDivider()
                         }
                     }
                 }
             }
         }
         if (isExpanded) {
+            // Input shield only: COUI dims the main menu through its own alpha
+            // (mMainMenuAlphaPercent) instead of painting a scrim over it, and swallows taps so a
+            // press on the shrunken main menu collapses the sub-menu rather than re-triggering a row.
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .graphicsLayer { alpha = maskAlpha() }
-                    .background(maskColor)
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = { onCollapseSecondary() })
                     },
@@ -362,11 +357,9 @@ internal fun CascadingSecondaryColumn(
             dropdownColors = dropdownColors,
             onClick = onHeaderClick,
         )
-        // COUI separates the cloned submenu header from its children with the default hairline divider.
-        HorizontalDivider(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
-        )
+        // COUI separates the cloned submenu header from its children with the same divider band it
+        // stacks between two adjacent rows.
+        PopupListDivider()
         val lastChildIdx = children.lastIndex
         children.forEachIndexed { index, child ->
             key(child) {

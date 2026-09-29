@@ -78,6 +78,7 @@ fun OverlayListPopup(
         maxHeight = maxHeight,
         minWidth = minWidth,
         preciseClickState = preciseClickState,
+        enableGlass = true,
         content = content,
     )
 }

@@ -38,6 +38,7 @@ import io.github.suqi8.coui.kmp.basic.ListPopupContent
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
+import io.github.suqi8.coui.kmp.basic.popupGravityPath
 import io.github.suqi8.coui.kmp.basic.rememberListPopupLayoutInfo
 import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -83,10 +84,12 @@ internal fun ListPopupLayout(
     maxHeight: Dp? = null,
     minWidth: Dp = ListPopupDefaults.MinWidth,
     preciseClickState: PreciseClickState? = null,
+    enableGlass: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val fractionProgress = remember { Animatable(0f) }
     val alphaProgress = remember { Animatable(0f) }
+    val pathProgress = remember { Animatable(0f) }
     val dimProgress = remember { Animatable(0f) }
     val backProgress = remember { Animatable(0f) }
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
@@ -100,6 +103,8 @@ internal fun ListPopupLayout(
         if (show) {
             internalVisible.value = true
             backProgress.snapTo(0f)
+            // COUI runs three independent waves open (runOpenWaves): path t, scale and alpha.
+            launch { pathProgress.animateTo(1f, ListPopupDefaults.PathEnterAnimationSpec) }
             launch { fractionProgress.animateTo(1f, ListPopupDefaults.FractionAnimationSpec) }
             launch { alphaProgress.animateTo(1f, ListPopupDefaults.AlphaEnterAnimationSpec) }
             if (enableWindowDim) {
@@ -107,6 +112,7 @@ internal fun ListPopupLayout(
             }
         } else {
             if (!internalVisible.value) return@LaunchedEffect
+            launch { pathProgress.animateTo(0f, ListPopupDefaults.PathExitAnimationSpec) }
             launch { fractionProgress.animateTo(0f, ListPopupDefaults.FractionExitAnimationSpec) }
             if (enableWindowDim) {
                 launch { dimProgress.animateTo(0f, ListPopupDefaults.DimExitAnimationSpec) }
@@ -114,6 +120,7 @@ internal fun ListPopupLayout(
             // Alpha controls the master timing: once content fades out, unmount immediately.
             alphaProgress.animateTo(0f, ListPopupDefaults.AlphaExitAnimationSpec)
             // Force-settle remaining tracks so the next enter starts from a clean zero baseline.
+            pathProgress.snapTo(0f)
             fractionProgress.snapTo(0f)
             alphaProgress.snapTo(0f)
             dimProgress.snapTo(0f)
@@ -162,6 +169,12 @@ internal fun ListPopupLayout(
         parentBounds = anchorBounds,
         popupContentSize = popupContentSize,
     )
+
+    // COUI PopupMotionAnimateKitController.rebuildGeom: the trajectory is rebuilt from the anchor
+    // offset on every motion start, so it follows the menu when the anchor moves.
+    val gravityPath = remember(anchorBounds, layoutInfo, popupContentSize) {
+        popupGravityPath(anchorBounds, layoutInfo, popupContentSize)
+    }
 
     val requestDismiss: () -> Unit = remember {
         { currentOnDismiss?.invoke() }
@@ -263,8 +276,11 @@ internal fun ListPopupLayout(
                     onPopupContentSizeChange = { popupContentSize = it },
                     fractionProgress = { fractionProgress.value * (1f - backProgress.value) },
                     alphaProgress = { alphaProgress.value * (1f - backProgress.value) },
+                    pathProgress = { pathProgress.value * (1f - backProgress.value) },
+                    gravityPath = gravityPath,
                     popupLayoutPosition = layoutInfo.popupLayoutPosition,
                     localTransformOrigin = layoutInfo.localTransformOrigin,
+                    enableGlass = enableGlass,
                     content = {
                         CompositionLocalProvider(LocalDismissState provides requestDismiss) {
                             content()

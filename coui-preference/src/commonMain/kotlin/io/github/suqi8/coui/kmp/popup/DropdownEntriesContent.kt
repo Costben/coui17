@@ -6,11 +6,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import io.github.suqi8.coui.kmp.basic.DropdownColors
-import io.github.suqi8.coui.kmp.basic.DropdownDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownHeaderItem
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
+import io.github.suqi8.coui.kmp.basic.PopupListDivider
 
 /**
  * Renders a list of [DropdownEntry] groups inside a popup container. Computes popup-global
@@ -58,10 +57,7 @@ internal fun DropdownEntriesPopupContent(
             }
         }
         if (entryIdx != lastEntryIdx) {
-            HorizontalDivider(
-                thickness = DropdownDefaults.PopupGroupDividerThickness,
-                color = DropdownDefaults.PopupGroupDividerColor,
-            )
+            PopupListDivider()
         }
     }
 }
@@ -99,10 +95,7 @@ internal fun LazyListScope.dropdownEntriesDialogItems(
         }
         if (entryIdx != lastEntryIdx) {
             item(key = "divider-$entryIdx") {
-                HorizontalDivider(
-                    thickness = DropdownDefaults.PopupGroupDividerThickness,
-                    color = DropdownDefaults.PopupGroupDividerColor,
-                )
+                PopupListDivider()
             }
         }
     }

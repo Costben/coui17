@@ -75,7 +75,12 @@ private const val EXPAND_SPRING_RESPONSE = 0.45f
 private const val COLLAPSE_SPRING_RESPONSE = 0.2f
 private const val ARROW_EXPAND_SPRING_RESPONSE = 0.2f
 private const val ARROW_COLLAPSE_SPRING_RESPONSE = 0.3f
-private const val PRIMARY_SHRUNK_SCALE = 0.95f
+
+/** COUI DefaultScreenAnimationController.mMainMenuScalePercent. */
+private const val PRIMARY_SHRUNK_SCALE = 0.9f
+
+/** COUI DefaultScreenAnimationController.mMainMenuAlphaPercent. */
+private const val PRIMARY_SHRUNK_ALPHA = 0.7f
 internal const val ENTER_SCALE_FROM = 0.15f
 internal const val ENTER_SCALE_RANGE = 1f - ENTER_SCALE_FROM
 
@@ -109,7 +114,7 @@ internal fun CascadingListPopupLayout(
     var displayedItem by remember { mutableStateOf<DropdownItem?>(null) }
     val expandFraction = remember { Animatable(0f) }
     val primaryScale = remember { Animatable(1f) }
-    val maskAlpha = remember { Animatable(0f) }
+    val primaryAlpha = remember { Animatable(1f) }
     val arrowRotation = remember { Animatable(0f) }
 
     val layoutDirection = LocalLayoutDirection.current
@@ -138,7 +143,7 @@ internal fun CascadingListPopupLayout(
         } else {
             if (!internalVisible.value) return@LaunchedEffect
             expandedItem = null
-            launch { enterFraction.animateTo(0f, ListPopupDefaults.FractionAnimationSpec) }
+            launch { enterFraction.animateTo(0f, ListPopupDefaults.FractionExitAnimationSpec) }
             launch { dimProgress.animateTo(0f, ListPopupDefaults.DimExitAnimationSpec) }
             enterAlpha.animateTo(0f, ListPopupDefaults.AlphaExitAnimationSpec)
             enterFraction.stop()
@@ -178,7 +183,14 @@ internal fun CascadingListPopupLayout(
                 mainSpec,
             )
         }
-        launch { maskAlpha.animateTo(target, mainSpec) }
+        // COUI DefaultScreenAnimationController.startSubMenuEnter animates the main menu to
+        // mMainMenuAlphaPercent; the sub-menu no longer paints its own scrim over the primary.
+        launch {
+            primaryAlpha.animateTo(
+                if (target == 1f) PRIMARY_SHRUNK_ALPHA else 1f,
+                mainSpec,
+            )
+        }
         launch {
             val arrowResponse = if (target == 1f) {
                 ARROW_EXPAND_SPRING_RESPONSE
@@ -269,9 +281,6 @@ internal fun CascadingListPopupLayout(
 
         CompositionLocalProvider(LocalDismissState provides { currentOnDismiss() }) {
             val dimColor = COUITheme.colorScheme.windowDimming
-            val maskColor = remember(dimColor) {
-                dimColor.copy(alpha = (dimColor.alpha * 0.5f).coerceIn(0f, 1f))
-            }
             // COUI popup surface (couiColorSurfaceTop), shared with ListPopupContent.
             val surfaceColor = popupSurfaceColor()
 
@@ -336,13 +345,12 @@ internal fun CascadingListPopupLayout(
                         enterFraction = { enterFraction.value * (1f - backEnterProgress.value) },
                         enterAlpha = { enterAlpha.value * (1f - backEnterProgress.value) },
                         primaryScale = { 1f + (primaryScale.value - 1f) * (1f - backExpandProgress.value) },
-                        maskAlpha = { maskAlpha.value * (1f - backExpandProgress.value) },
+                        primaryAlpha = { 1f + (primaryAlpha.value - 1f) * (1f - backExpandProgress.value) },
                         expandFraction = { expandFraction.value * (1f - backExpandProgress.value) },
                         arrowRotation = { arrowRotation.value * (1f - backExpandProgress.value) },
                         layoutInfo = layoutInfo,
                         layoutDirection = layoutDirection,
                         surfaceColor = surfaceColor,
-                        maskColor = maskColor,
                     )
                 }
             }
@@ -384,13 +392,12 @@ private fun CascadingMorphSubLayout(
     enterFraction: () -> Float,
     enterAlpha: () -> Float,
     primaryScale: () -> Float,
-    maskAlpha: () -> Float,
+    primaryAlpha: () -> Float,
     expandFraction: () -> Float,
     arrowRotation: () -> Float,
     layoutInfo: ListPopupLayoutInfo,
     layoutDirection: LayoutDirection,
     surfaceColor: Color,
-    maskColor: Color,
 ) {
     SubcomposeLayout(modifier = Modifier.fillMaxSize()) { constraints ->
         val resolvedMaxHeightPx = maxHeight?.roundToPx()?.coerceAtLeast(50.dp.roundToPx())
@@ -433,8 +440,7 @@ private fun CascadingMorphSubLayout(
                 surfaceColor = surfaceColor,
                 dropdownColors = dropdownColors,
                 primaryScale = primaryScale,
-                maskAlpha = maskAlpha,
-                maskColor = maskColor,
+                primaryAlpha = primaryAlpha,
                 onCollapseSecondary = onCollapseSecondary,
             )
         }.map { it.measure(primaryConstraints) }

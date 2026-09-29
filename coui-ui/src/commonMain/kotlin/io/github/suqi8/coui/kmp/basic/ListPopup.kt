@@ -4,6 +4,7 @@ package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.focusGroup
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.captionBar
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -25,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -35,7 +38,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
@@ -84,9 +86,17 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.BezierGravityPathGeometry
+import io.github.suqi8.coui.kmp.anim.BezierGravityPathMath
+import io.github.suqi8.coui.kmp.anim.PopupGravityMotion
 import io.github.suqi8.coui.kmp.anim.SinOutEasing
 import io.github.suqi8.coui.kmp.anim.folmeSpring
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
@@ -112,18 +122,22 @@ private fun PopupPositionProvider.Align.resolve(layoutDirection: LayoutDirection
 
 private const val MAX_ITEMS_FOR_WIDTH = 8
 
-/** Hairline thickness between adjacent popup rows (COUI coui_popup_list_divider_height). */
-private val PopupItemDividerThickness = 0.33.dp
+/** Thickness of the divider hairline between adjacent popup rows (COUI coui_popup_list_divider_height). */
+private val PopupItemDividerThickness = 0.5.dp
 
-/** Horizontal inset of the row hairline (COUI coui_popup_list_default_divider_margin_horizontal). */
-private val PopupItemDividerMargin = 16.dp
+/** Horizontal inset of the divider hairline (COUI coui_popup_list_default_divider_margin_horizontal). */
+private val PopupItemDividerMargin = 20.dp
 
 /**
- * Start inset of the row hairline when the menu carries leading icons
- * (COUI coui_popup_list_default_divider_margin_start_with_icon); the end inset stays at
- * [PopupItemDividerMargin]. Mirrored under RTL by COUI DefaultAdapter.getDefaultDividerDrawable.
+ * Total height of the divider band reserved between adjacent popup rows, hairline included
+ * (COUI coui_popup_list_group_divider_total_height). ColorOS 17 renders every separator as the real
+ * layout space of MixedPopupListAdapter.DividerViewHolder and centres the hairline inside it; the
+ * retired ListView path instead drew a bare hairline and a separate full-bleed 4dp group band.
  */
-private val PopupItemDividerMarginStartWithIcon = 52.dp
+private val PopupItemDividerBandHeight = 12.dp
+
+/** Vertical padding the popup list keeps above its first and below its last row (COUI coui_popup_list_padding_vertical). */
+private val PopupListVerticalPadding = 8.dp
 
 /**
  * Alpha spring of the hairlines adjacent to the pressed row
@@ -146,6 +160,23 @@ private val PopupItemPressLight = Color(0x1F000000)
 /** couiColorPress in dark themes (COUI coui_color_press_dark #33FFFFFF). */
 private val PopupItemPressDark = Color(0x33FFFFFF)
 
+/** Horizontal inset of the press mask, per side (COUI coui_popup_list_window_mask_margin_horizontal). */
+private val PopupItemPressMaskMargin = 8.dp
+
+/**
+ * Press mask corner radius of a row exactly one line tall (COUI
+ * coui_popup_list_window_vertical_mask_radius). Such a row is as tall as the radius is wide, so the
+ * mask closes into a stadium — COUI passes weight 1.0 to keep that arc exact.
+ */
+private val PopupItemPressMaskRadius = 20.dp
+
+/**
+ * Press mask corner radius of any other row (COUI coui_popup_list_window_vertical_mask_radius_16_1,
+ * selected when `COUIVersionUtil.getOSVersionCode() > 37`). COUI passes weight 3.0 here, i.e. the
+ * smoothed silhouette rather than a plain arc.
+ */
+private val PopupItemPressMaskRadiusTall = 28.dp
+
 /** Travel direction of a drag crossing into a new row (COUI DividerAnimationController MOVE_FLAG_*). */
 private const val MOVE_FLAG_OUT = 0
 private const val MOVE_FLAG_UP = -1
@@ -163,7 +194,6 @@ internal class PopupListItemHandle {
     var top: Float = 0f
     var bottom: Float = 0f
     var enabled: Boolean = true
-    var hasIcon: Boolean = false
     var onClick: () -> Unit = {}
 
     /** Press mask progress (0 → 1), driven exclusively by the owning [PopupListGestureHost]. */
@@ -238,9 +268,6 @@ internal class PopupListGestureHost {
 
     /** Suppresses divider fades while the list is settling a scroll (COUI onScrollStateChanged). */
     var isScrolling: Boolean = false
-
-    val hasIcon: Boolean
-        get() = items.any { it.hasIcon }
 
     /**
      * Publishes the placement produced by one measure pass: the rows in order and the exact Y of
@@ -442,8 +469,9 @@ private val IntrinsicMeasurable.popupListItemHandle: PopupListItemHandle?
 
 /**
  * Registers a popup row with the enclosing [PopupListGestureHost] so the list can own its press
- * highlight, and draws the row's press mask (a flat, square-cornered `couiColorPress` rect, as COUI
- * ListItemMaskEffectDrawable disables the round style and the focused state for menu rows).
+ * highlight, and draws the row's press mask: a `couiColorPress` path inset [PopupItemPressMaskMargin]
+ * on each side and rounded by [PopupItemPressMaskRadius] or [PopupItemPressMaskRadiusTall]
+ * (COUI MixedPopupListAdapter.configureMaskPath).
  *
  * The row keeps its own click semantics: the accessibility action below is registered independently
  * of the pointer tracking, matching COUI's TalkBack path, which bypasses the drag gesture entirely
@@ -452,7 +480,6 @@ private val IntrinsicMeasurable.popupListItemHandle: PopupListItemHandle?
  * @param selected Whether the row is the selected option.
  * @param enabled Whether the row reacts to input.
  * @param role The accessibility [Role] exposed for the row.
- * @param hasIcon Whether the row shows a leading icon; widens the hairline's start inset.
  * @param onClick Invoked when the row is selected, by pointer or by accessibility action.
  */
 @Composable
@@ -460,7 +487,6 @@ internal fun Modifier.popupListItem(
     selected: Boolean,
     enabled: Boolean,
     role: Role,
-    hasIcon: Boolean,
     onClick: () -> Unit,
 ): Modifier {
     val host = LocalPopupListGestureHost.current ?: return this.selectable(
@@ -473,7 +499,6 @@ internal fun Modifier.popupListItem(
     val handle = remember { PopupListItemHandle() }
     val currentOnClick by rememberUpdatedState(onClick)
     handle.enabled = enabled
-    handle.hasIcon = hasIcon
     handle.onClick = remember { { currentOnClick() } }
 
     DisposableEffect(host, handle) {
@@ -484,13 +509,30 @@ internal fun Modifier.popupListItem(
     val parentData = remember(handle) { PopupListItemParentData(handle) }
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val maskColor = if (isDark) PopupItemPressDark else PopupItemPressLight
+    val squircleEnabled = isSquircleEnabled()
 
     return this
         .then(parentData)
-        .drawBehind {
-            val progress = handle.pressProgress.value
-            if (progress > 0f) {
-                drawRect(color = maskColor, alpha = progress.coerceIn(0f, 1f))
+        .drawWithCache {
+            val inset = PopupItemPressMaskMargin.toPx()
+            val singleLine = size.height == PopupItemPressMaskRadius.toPx() * 2f
+            val radius = if (singleLine) PopupItemPressMaskRadius else PopupItemPressMaskRadiusTall
+            val path = Path()
+            onDrawBehind {
+                val progress = handle.pressProgress.value
+                if (progress <= 0f) return@onDrawBehind
+                path.rewind()
+                path.addSquircleRect(
+                    width = (size.width - inset * 2f).coerceAtLeast(0f),
+                    height = size.height,
+                    cornerRadius = radius.toPx(),
+                    // COUI asks for weight 1.0 on a stadium row, which is a plain arc; the taller rows
+                    // take weight 3.0 and follow the squircle silhouette.
+                    squircleEnabled = squircleEnabled && !singleLine,
+                )
+                translate(left = inset) {
+                    drawPath(path, color = maskColor, alpha = progress.coerceIn(0f, 1f))
+                }
             }
         }
         .semantics(mergeDescendants = true) {
@@ -514,12 +556,13 @@ internal fun Modifier.popupListItem(
  * finger, so dragging moves the press highlight between rows and a release selects the row the
  * finger currently rests on.
  *
- * It also reserves real layout space for the hairline between every adjacent pair of selectable
+ * It also reserves real layout space for the divider band between every adjacent pair of selectable
  * rows, matching COUI, whose adapter interleaves an actual divider `View` of
- * `coui_popup_list_divider_height` between items (DefaultAdapter.getDefaultDividerView). Because the
- * hairlines are placed by this measure policy, the exact row bounds and hairline offsets are known
- * during layout and are published to the host directly — no cross-node coordinate resolution, which
- * is what previously left the bounds at zero (a child is positioned before its parent).
+ * `coui_popup_list_group_divider_total_height` between items
+ * (MixedPopupListAdapter.DividerViewHolder). Because the bands are placed by this measure policy,
+ * the exact row bounds and divider offsets are known during layout and are published to the host
+ * directly — no cross-node coordinate resolution, which is what previously left the bounds at zero
+ * (a child is positioned before its parent).
  *
  * @param content The items
  */
@@ -532,7 +575,6 @@ fun ListPopupColumn(
     val coroutineScope = rememberCoroutineScope()
     val performHaptic = rememberCouiHaptic()
     val touchSlop = LocalViewConfiguration.current.touchSlop
-    val layoutDirection = LocalLayoutDirection.current
     val dividerColor = COUITheme.colorScheme.dividerLine
 
     host.isDynamicSelection = !scrollState.canScrollForward && !scrollState.canScrollBackward
@@ -564,9 +606,9 @@ fun ListPopupColumn(
                 val lower = maxOf(minPx, parentMin).coerceAtMost(upper)
                 val listWidth = maxIntrinsic.coerceIn(lower, upper)
 
-                // At least 1px: coui_popup_list_divider_height is 0.33dp, which floors to zero on
-                // low densities, and a hairline that rounds away would be invisible.
-                val hairline = PopupItemDividerThickness.toPx().toInt().coerceAtLeast(1)
+                // COUI's DividerViewHolder is a real coui_popup_list_group_divider_total_height
+                // View, so the whole band is reserved and the hairline is centred inside it.
+                val dividerBand = PopupItemDividerBandHeight.roundToPx()
                 val childConstraints = constraints.copy(minWidth = listWidth, maxWidth = listWidth, minHeight = 0)
 
                 // COUI COUIPopupListWindow.measurePopupWindow stops accumulating once the next row
@@ -579,20 +621,20 @@ fun ListPopupColumn(
                 val hairlines = mutableMapOf<Int, Float>()
 
                 var listHeight = 0
-                var pendingHairline = 0
+                var pendingDividerBand = 0
                 var previousWasRow = false
 
                 for (i in measurables.indices) {
                     val measurable = measurables[i]
                     val handle = measurable.popupListItemHandle
                     val isRow = handle != null
-                    // A hairline only separates two adjacent selectable rows; a group divider band
-                    // or a header owns the gap itself (COUI item view types 2 and 5).
-                    val gap = if (isRow && previousWasRow) hairline else 0
+                    // A divider band only separates two adjacent selectable rows; an explicitly
+                    // composed divider or a header occupies its own slot (COUI item view types 2 and 5).
+                    val gap = if (isRow && previousWasRow) dividerBand else 0
 
                     val placeable = measurable.measure(childConstraints)
                     if (listHeight + gap + placeable.height > maxHeight && placeables.isNotEmpty()) {
-                        listHeight -= pendingHairline
+                        listHeight -= pendingDividerBand
                         break
                     }
 
@@ -607,7 +649,7 @@ fun ListPopupColumn(
                         rows.add(handle)
                     }
                     listHeight += placeable.height
-                    pendingHairline = gap
+                    pendingDividerBand = gap
                     previousWasRow = isRow
                 }
 
@@ -627,13 +669,13 @@ fun ListPopupColumn(
                 val minPx = ListPopupDefaults.MinWidth.roundToPx()
                 val maxPx = ListPopupDefaults.MaxWidth.roundToPx()
                 val listWidth = resolveIntrinsicWidth(measurables, Int.MAX_VALUE).coerceIn(minPx, maxPx)
-                val hairline = PopupItemDividerThickness.toPx().toInt().coerceAtLeast(1)
+                val dividerBand = PopupItemDividerBandHeight.roundToPx()
 
                 var height = 0
                 var previousWasRow = false
                 for (measurable in measurables) {
                     val isRow = measurable.popupListItemHandle != null
-                    if (isRow && previousWasRow) height += hairline
+                    if (isRow && previousWasRow) height += dividerBand
                     height += measurable.minIntrinsicHeight(listWidth)
                     previousWasRow = isRow
                 }
@@ -651,11 +693,14 @@ fun ListPopupColumn(
         modifier = Modifier
             .focusGroup()
             .height(IntrinsicSize.Min)
+            // COUI pads the popup RecyclerView itself (coui_popup_list_padding_vertical) on top of
+            // the per-row padding. The band sits outside the scroller, i.e. clipToPadding stays on.
+            .padding(vertical = PopupListVerticalPadding)
             .verticalScroll(state = scrollState)
             .popupListGestures(host, coroutineScope, touchSlop, performHaptic)
             .drawWithContent {
                 drawContent()
-                drawPopupItemDividers(host, dividerColor, layoutDirection)
+                drawPopupItemDividers(host, dividerColor)
             },
         measurePolicy = measurePolicy,
     )
@@ -712,37 +757,61 @@ private fun Modifier.popupListGestures(
 }
 
 /**
- * Draws the hairline in each gap the measure policy reserved between two adjacent rows. The line is
- * inset horizontally — COUI's divider `View` is `match_parent` but its background is an
- * `InsetDrawable` (DefaultAdapter.getDefaultDividerDrawable), so only the drawn line is inset.
+ * Draws the divider hairline centred in each band the measure policy reserved between two adjacent
+ * rows. Only the inset `coui_popup_list_divider_height` line is painted: COUI's divider `View`
+ * spans `match_parent` over a transparent `coui_popup_list_group_divider_total_height` band and
+ * carries an `InsetDrawable` background (MixedPopupListAdapter.DividerViewHolder).
  */
 private fun DrawScope.drawPopupItemDividers(
     host: PopupListGestureHost,
     color: Color,
-    layoutDirection: LayoutDirection,
 ) {
-    val hairlines = host.hairlines()
-    if (hairlines.isEmpty()) return
+    val dividers = host.hairlines()
+    if (dividers.isEmpty()) return
 
     val thickness = PopupItemDividerThickness.toPx().coerceAtLeast(1f)
-    val margin = PopupItemDividerMargin.toPx()
-    val startMargin = if (host.hasIcon) PopupItemDividerMarginStartWithIcon.toPx() else margin
-    val left = if (layoutDirection == LayoutDirection.Rtl) margin else startMargin
-    val right = if (layoutDirection == LayoutDirection.Rtl) startMargin else margin
-    val width = (size.width - left - right).coerceAtLeast(0f)
+    val bandHeight = PopupItemDividerBandHeight.roundToPx()
+    val margin = PopupItemDividerMargin.roundToPx()
+    val width = (size.width - margin * 2).coerceAtLeast(0f)
     if (width <= 0f) return
 
-    for ((boundary, y) in hairlines) {
+    for ((boundary, y) in dividers) {
         val alpha = host.dividerAlpha(boundary)
         if (alpha <= 0f) continue
         drawRect(
             color = color,
             alpha = alpha.coerceIn(0f, 1f),
-            topLeft = Offset(left, y),
+            topLeft = Offset(margin.toFloat(), y + (bandHeight - thickness) / 2f),
             size = Size(width = width, height = thickness),
         )
     }
 }
+
+/**
+ * The divider COUI stacks between two adjacent popup rows and between two dropdown groups: a
+ * coui_popup_list_group_divider_total_height band whose coui_popup_list_divider_height hairline is
+ * vertically centred and inset by coui_popup_list_default_divider_margin_horizontal on both sides
+ * (COUI MixedPopupListAdapter.DividerViewHolder).
+ *
+ * Rows laid out by [ListPopupColumn] reserve this band themselves; compose this only where the
+ * divider is an explicit child of the list, such as a dropdown group boundary.
+ *
+ * @param modifier The modifier applied to the band.
+ * @param color The hairline color (COUI ?couiColorDivider).
+ */
+@Composable
+@NonRestartableComposable
+fun PopupListDivider(
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.dividerLine,
+) = HorizontalDivider(
+    modifier = modifier.padding(
+        horizontal = PopupItemDividerMargin,
+        vertical = (PopupItemDividerBandHeight - PopupItemDividerThickness) / 2,
+    ),
+    thickness = PopupItemDividerThickness,
+    color = color,
+)
 
 @Stable
 interface PopupPositionProvider {
@@ -786,29 +855,67 @@ interface PopupPositionProvider {
 
 object ListPopupDefaults {
     /**
-     * Scale enter spring (COUI main-menu enter COUISpringForce response 0.35 / bounce 0.2).
+     * COUI ColorOS 17 replaced the single main-menu `COUISpringForce` with three independent springs
+     * per direction — one for the Bezier path parameter, one for scale, one for alpha — all carrying
+     * COUI's `SpringData` response/bounce pair converted by [folmeSpring] (`dampingRatio` comes from
+     * the bounce, `stiffness` from `39.47 / response²`, which is `(2π / response)²`).
+     *
+     * Geometry and the six spring pairs come from `PopupGravityMotionParams`; the trajectory they
+     * feed is built by [BezierGravityPathMath].
      */
-    val FractionAnimationSpec = spring(dampingRatio = 0.8f, stiffness = 322.27f, visibilityThreshold = 0.0001f)
+    val GravityMotion: PopupGravityMotion = PopupGravityMotion.Default
 
     /**
-     * Scale exit spring (COUI main-menu exit scale COUISpringForce response 0.3 / bounce 0). COUI's
-     * exit is asymmetric: the scale settles on its own spring while [AlphaExitAnimationSpec] drives
-     * the faster fade and the unmount timing.
+     * Path-parameter enter spring, driving the Bezier trajectory's `t` from 0 to 1
+     * (COUI `PopupGravityMotionParams.openPathSpring`, response 0.29 / bounce 0.13).
      */
-    val FractionExitAnimationSpec = spring<Float>(dampingRatio = 1f, stiffness = 438.65f, visibilityThreshold = 0.0001f)
+    val PathEnterAnimationSpec =
+        folmeSpring<Float>(damping = 0.935f, response = 0.29f, visibilityThreshold = 0.001f)
 
     /**
-     * Content alpha enter spring (COUI main-menu enter alpha COUISpringForce
-     * response 0.35 / bounce 0.2, mapped by [folmeSpring]).
+     * Path-parameter exit spring, driving the Bezier trajectory's `t` back to 0
+     * (COUI `PopupGravityMotionParams.closePathSpring`, response 0.26 / bounce 0).
      */
-    val AlphaEnterAnimationSpec = folmeSpring<Float>(damping = 0.8f, response = 0.35f)
+    val PathExitAnimationSpec =
+        folmeSpring<Float>(damping = 1f, response = 0.26f, visibilityThreshold = 0.001f)
+
+    /**
+     * Scale enter spring (COUI `PopupGravityMotionParams.openScaleSpring`, response 0.40 /
+     * bounce 0.20).
+     */
+    val FractionAnimationSpec =
+        folmeSpring<Float>(damping = 0.9f, response = 0.4f, visibilityThreshold = 0.001f)
+
+    /**
+     * Scale exit spring (COUI `PopupGravityMotionParams.closeScaleSpring`, response 0.21 /
+     * bounce 0). COUI's exit is asymmetric: the scale settles on its own spring while
+     * [AlphaExitAnimationSpec] drives the fade and the unmount timing.
+     */
+    val FractionExitAnimationSpec =
+        folmeSpring<Float>(damping = 1f, response = 0.21f, visibilityThreshold = 0.001f)
+
+    /**
+     * Content alpha enter spring (COUI `PopupGravityMotionParams.openOpacitySpring`, response 0.27 /
+     * bounce 0).
+     */
+    val AlphaEnterAnimationSpec =
+        folmeSpring<Float>(damping = 1f, response = 0.27f, visibilityThreshold = 0.001f)
 
     /**
      * Content alpha exit spring; also the master timing for unmounting the popup
-     * (COUI main-menu exit alpha COUISpringForce response 0.25 / bounce 0). The Compose
-     * default visibility threshold avoids COUI's long invisible tap-blocking tail.
+     * (COUI `PopupGravityMotionParams.closeOpacitySpring`, response 0.23 / bounce 0).
      */
-    val AlphaExitAnimationSpec = folmeSpring<Float>(damping = 1f, response = 0.25f)
+    val AlphaExitAnimationSpec =
+        folmeSpring<Float>(damping = 1f, response = 0.23f, visibilityThreshold = 0.001f)
+
+    /**
+     * Window-level exit fade, applied by COUI to the popup window itself rather than to its content
+     * (`Animation.COUI.PopupListWindow.Dismiss` → `coui_popup_list_window_exit.xml`: alpha 200ms,
+     * `pathInterpolator(0.3, 0, 0.8, 0.15)`). The content is already invisible by the time it runs —
+     * the three springs own the visible exit — so it only governs how long the window lingers.
+     */
+    val WindowExitAnimationSpec =
+        tween<Float>(durationMillis = 200, easing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f))
 
     /**
      * Extra clearance reserved below the status bar before the popup may be placed
@@ -828,20 +935,24 @@ object ListPopupDefaults {
     /** Default animation spec driving the background dim while exiting. */
     val DimExitAnimationSpec = tween<Float>(durationMillis = 150, easing = SinOutEasing)
 
-    /** Re-enter spring used when a cancelled back gesture restores the popup; matches [FractionAnimationSpec]. */
-    val ResetAnimationSpec = spring(dampingRatio = 0.8f, stiffness = 322.27f, visibilityThreshold = 0.0001f)
+    /**
+     * Re-enter spring used when a cancelled back gesture restores the popup. COUI has no dedicated
+     * restore spring — `COUIPopupTouchMotionAnimator.startPopupAnim` re-enters through
+     * `startOpenPopupMotion`, i.e. the open springs — so this reuses the slowest of them.
+     */
+    val ResetAnimationSpec = PathEnterAnimationSpec
 
     /**
      * Default minimum width of the popup (COUI coui_popup_list_window_min_width).
      * Also matches the lower clamp inside [ListPopupColumn]'s width measurement.
      */
-    val MinWidth = 178.dp
+    val MinWidth = 168.dp
 
     /**
      * Default maximum width of the popup window (COUI coui_popup_list_window_max_width).
      * Also matches the upper clamp inside [ListPopupColumn]'s width measurement.
      */
-    val MaxWidth = 232.dp
+    val MaxWidth = 256.dp
 
     /**
      * Default minimum height the popup will occupy when measured. Used as the floor for the
@@ -998,8 +1109,12 @@ object ListPopupDefaults {
     }
 }
 
-/** Corner radius of the popup container (COUI couiRoundCornerM, coui_round_corner_m 12dp). */
-internal val PopupCornerRadius = 12.dp
+/**
+ * Corner radius of the popup container (COUI coui_popup_round_frame_layout_corner_radius, applied by
+ * RoundFrameLayout.getSmoothRadiusAndWeight once the OPlus SDK version is above 37). The 12dp
+ * `couiRoundCornerM` / `coui_round_corner_m` radius the layout declares is overridden on ColorOS 17.
+ */
+internal val PopupCornerRadius = 28.dp
 
 /** COUI popup surface in light themes (coui_popup_window_background -> ?couiColorSurfaceTop, coui_color_surface_top #FFFFFF). */
 private val PopupSurfaceLight = Color.White
@@ -1014,6 +1129,28 @@ private val PopupSurfaceDark = Color(0xFF333333)
  */
 @Composable
 internal fun popupSurfaceColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) PopupSurfaceDark else PopupSurfaceLight
+
+/** COUI `coui_popup_list_mix_blur_light` / `coui_popup_list_mix_blur_dark`. */
+private val PopupMixBlurLight = Color(0xFF99CDCDCD)
+private val PopupMixBlurDark = Color(0xFF99262626)
+
+/** COUI `coui_popup_list_blend_blur_light` / `coui_popup_list_blend_blur_dark`. */
+private val PopupBlendBlurLight = Color(0xFFBFEEEEEE)
+private val PopupBlendBlurDark = Color(0xFF99262626)
+
+/**
+ * The tint pair COUI feeds its popup blur builder: `RoundFrameLayout.applyBlurColorParams()` sets a
+ * mix color and a blend color per theme, then `setMode(4)` selects the pair for popups (mode 3 is
+ * the light pair other COUI surfaces use, mode 2 the dark one). Both are drawn over the blurred
+ * backdrop, in this order. The HDR pair (`_hdr`, picked when the display is in an HDR state) is not
+ * modelled.
+ */
+@Composable
+internal fun popupGlassBlendColors(): List<BlendColorEntry> = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+    listOf(BlendColorEntry(color = PopupMixBlurDark), BlendColorEntry(color = PopupBlendBlurDark))
+} else {
+    listOf(BlendColorEntry(color = PopupMixBlurLight), BlendColorEntry(color = PopupBlendBlurLight))
+}
 
 /**
  * Drop shadow of the popup container, calibrated to COUI SHADOW_LV4: 26.66dp blur at 13.7% black
@@ -1055,6 +1192,7 @@ data class PopupLayoutPosition(
  * @property popupMargin The (extra) margins applied around the popup content.
  * @property effectiveTransformOrigin The transform origin in window coordinates used to scale the popup from its anchor corner.
  * @property localTransformOrigin The transform origin local to the popup content used by its [graphicsLayer] scaling.
+ * @property calculatedOffset The popup content's resolved position in window coordinates.
  * @property popupLayoutPosition The resolved [PopupLayoutPosition] describing how the popup is placed relative to its anchor.
  */
 @Immutable
@@ -1063,6 +1201,7 @@ data class ListPopupLayoutInfo(
     val popupMargin: IntRect,
     val effectiveTransformOrigin: TransformOrigin,
     val localTransformOrigin: TransformOrigin,
+    val calculatedOffset: IntOffset,
     val popupLayoutPosition: PopupLayoutPosition,
 )
 
@@ -1260,7 +1399,48 @@ fun rememberListPopupLayoutInfo(
         popupMargin = popupMargin,
         effectiveTransformOrigin = effectiveTransformOrigin,
         localTransformOrigin = localTransformOrigin,
+        calculatedOffset = calculatedOffset,
         popupLayoutPosition = popupLayoutPosition,
+    )
+}
+
+/**
+ * The popup's Bezier gravity trajectory: COUI `PopupMenuDomain.computeMainMenuPopupPathAnchorOffset`
+ * produces the path anchor, `PopupMotionTrajectoryUtil.snapshot` turns it into the offset from the
+ * menu centre, and `BezierGravityPathMath.controlPoints` fits the arc between it and the menu centre.
+ *
+ * With the default `pathAnchorMode = PATH_ANCHOR_MODE_CENTER` the path anchor is the anchor's
+ * horizontal centre on the menu-facing edge — the anchor bottom when the menu opens below it, the
+ * anchor top when it opens above — offset along that axis by
+ * [PopupGravityMotion.pathAnchorEdgeOffsetY]. The auto-corner anchor mode is not implemented.
+ *
+ * @param anchorBounds The anchor's bounds in window coordinates.
+ * @param layoutInfo The resolved popup layout, supplying the placement direction and menu position.
+ * @param popupContentSize The measured popup size; [IntSize.Zero] until the popup is measured, in
+ *   which case the trajectory collapses to a degenerate straight line.
+ */
+fun popupGravityPath(
+    anchorBounds: IntRect,
+    layoutInfo: ListPopupLayoutInfo,
+    popupContentSize: IntSize,
+    gravityMotion: PopupGravityMotion = ListPopupDefaults.GravityMotion,
+): BezierGravityPathGeometry {
+    val menuCenter = Offset(
+        layoutInfo.calculatedOffset.x + popupContentSize.width / 2f,
+        layoutInfo.calculatedOffset.y + popupContentSize.height / 2f,
+    )
+    val anchorY = if (layoutInfo.popupLayoutPosition.showBelow) {
+        anchorBounds.bottom + gravityMotion.pathAnchorEdgeOffsetY
+    } else {
+        anchorBounds.top - gravityMotion.pathAnchorEdgeOffsetY
+    }
+    val pathAnchor = Offset(anchorBounds.left + anchorBounds.width / 2f, anchorY)
+    return BezierGravityPathMath.controlPoints(
+        start = pathAnchor - menuCenter,
+        end = Offset.Zero,
+        config = gravityMotion.gravityConfig,
+        p1T = gravityMotion.p1T,
+        p2T = gravityMotion.p2T,
     )
 }
 
@@ -1272,9 +1452,14 @@ fun rememberListPopupLayoutInfo(
  * @param onPopupContentSizeChange Called when the measured content size changes.
  * @param fractionProgress Provides the current scale fraction (0 → 1) of the popup.
  * @param alphaProgress Provides the current alpha (0 → 1) of the popup content.
+ * @param pathProgress Provides the current Bezier trajectory parameter (0 → 1) of the popup.
+ * @param gravityPath The trajectory built by [popupGravityPath]; the popup is translated along it.
  * @param popupLayoutPosition The [PopupLayoutPosition] describing the popup's spawn direction.
  * @param localTransformOrigin The transform origin local to the content used while scaling.
  * @param modifier The modifier to be applied to the popup container.
+ * @param enableGlass Whether to draw the ColorOS 17 popup glass behind the content. Only the
+ *   in-window overlay host enables it; the `Dialog` host has no coordinates in the host window for
+ *   a backdrop to sample.
  * @param content The content of the popup.
  */
 @Composable
@@ -1283,13 +1468,22 @@ fun ListPopupContent(
     onPopupContentSizeChange: (IntSize) -> Unit,
     fractionProgress: () -> Float,
     alphaProgress: () -> Float,
+    pathProgress: () -> Float,
+    gravityPath: BezierGravityPathGeometry,
     popupLayoutPosition: PopupLayoutPosition,
     localTransformOrigin: TransformOrigin,
     modifier: Modifier = Modifier,
+    enableGlass: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val backgroundColor = popupSurfaceColor()
+    val backdrop = if (enableGlass) LocalBackdrop.current else null
+    val squircleEnabled = isSquircleEnabled()
     val shape = remember { RoundedCornerShape(PopupCornerRadius) }
+    val glassShape = remember(PopupCornerRadius, squircleEnabled) {
+        SquircleShape(cornerRadius = PopupCornerRadius, squircleEnabled = squircleEnabled)
+    }
+    val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
 
     Box(
         modifier = modifier
@@ -1304,9 +1498,24 @@ fun ListPopupContent(
                 scaleY = scale
                 alpha = alphaProgress()
                 transformOrigin = localTransformOrigin
+                // COUI COUIPopupTouchMotionAnimator.collect() leaves the scale pivot where
+                // PopupMenuDomain.getMainMenuEnterPivotX/Y put it and folds the pivot compensation
+                // into TRANSLATE_X/Y instead of moving it, so the two below always travel together:
+                // size * (0.5 - pivotRatio) * (1 - scale) cancels the pivot and lets the trajectory
+                // start at the path anchor rather than at the pivot point.
+                val pathPoint = gravityPath.pointAt(pathProgress())
+                translationX = pathPoint.x + size.width * (0.5f - localTransformOrigin.pivotFractionX) * (1f - scale)
+                translationY = pathPoint.y + size.height * (0.5f - localTransformOrigin.pivotFractionY) * (1f - scale)
             }
             .dropShadow(shape = shape, shadow = PopupShadow)
-            .squircleSurface(color = backgroundColor, cornerRadius = PopupCornerRadius),
+            .couiGlassSurface(
+                backdrop = backdrop,
+                shape = glassShape,
+                containerColor = backgroundColor,
+                fallback = Modifier.squircleSurface(color = backgroundColor, cornerRadius = PopupCornerRadius),
+                blendColors = popupGlassBlendColors(),
+                highlight = highlight,
+            ),
     ) {
         content()
     }
