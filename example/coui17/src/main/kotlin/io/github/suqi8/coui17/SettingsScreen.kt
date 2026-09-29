@@ -138,9 +138,11 @@ internal fun SettingsScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            // A translucent scrim over the wallpaper: ColorOS 17 settings keeps the picture behind
-            // the list, which is what gives the glass bars something to refract.
-            .background(COUITheme.colorScheme.background.copy(alpha = 0.62f))
+            // ColorOS 17's settings list is opaque: the device renders this page as a uniform
+            // `coui_color_background_with_card` (#F0F1F2) with no wallpaper showing through, which
+            // is what `colorScheme.surface` carries. A translucent scrim here reads as #F9FAFA —
+            // wallpaper-dependent, and not a value the device colour table contains at all.
+            .background(COUITheme.colorScheme.surface)
             .scrollEndHaptic()
             .overScrollVertical()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -153,7 +155,9 @@ internal fun SettingsScreen(
             SearchBar(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    // No horizontal padding here: SearchBarDefaults.InsideMargin already insets the
+                    // capsule by 16dp x 6dp, which is exactly the device's geometry (capsule 40dp tall
+                    // inside a 52dp row at a 16dp page margin). Adding another 16dp doubles it to 32dp.
                     .padding(bottom = 8.dp),
                 inputField = {
                     InputField(
