@@ -34,6 +34,9 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [IconButton](../components/iconbutton)                     | 图标按钮组件           | 辅助操作、工具栏     |
 | [Chip](../components/chip)                                 | 可选中的胶囊筛选标签   | 内容筛选、标签选择   |
 | [ChipTab](../components/chiptab)                           | 横向可滚动的页签栏     | 页签切换、分类浏览   |
+| [CalendarView](../components/calendarview)                 | 带星期表头的月历网格   | 日期选择、按月浏览   |
+| [FloatingButton](../components/floatingbutton)             | 快速拨号浮动按钮       | 快捷操作、功能入口   |
+| [ExpandableList](../components/expandablelist)             | 可展开的分组列表       | 设置分组、分组内容   |
 | [LockPatternView](../components/lockpatternview)           | 3x3 图案解锁九宫格     | 图案解锁、手势密码   |
 | [NumericKeyboard](../components/numerickeyboard)           | 数字 PIN 键盘          | PIN 输入、密码弹窗   |
 | [Banner](../components/banner)                             | 自动轮播的卡片横幅     | 功能轮播、活动推广   |
