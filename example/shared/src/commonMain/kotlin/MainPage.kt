@@ -63,6 +63,7 @@ import component.preferenceExtrasSection
 import component.progressIndicatorSection
 import component.radioButtonSection
 import component.searchAndSliderSection
+import component.searchProgressSection
 import component.sliderSection
 import component.snackbarSection
 import component.spinnerSection
@@ -401,6 +402,7 @@ fun MainPage(
                     calendarAndFabSection()
                     lockAndBannerSection()
                     searchAndSliderSection()
+                    searchProgressSection()
                     legacyComponentSection()
                     badgeSection()
                     preferenceExtrasSection()
