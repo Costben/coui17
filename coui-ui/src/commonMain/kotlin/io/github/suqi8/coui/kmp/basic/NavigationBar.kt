@@ -3,6 +3,8 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -36,9 +38,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -50,7 +56,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,24 +64,42 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.anim.COUIInEase
+import io.github.suqi8.coui.kmp.anim.COUIOutEase
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.Platform
 import io.github.suqi8.coui.kmp.utils.platform
+import kotlinx.coroutines.launch
 
 /**
  * A [NavigationBar] that with 2 to 5 items.
  *
+ * Resource source: the `coui_*` names this bar is built from (`coui_tab_navigation_view_bg`,
+ * `coui_navigation_tab_color`, `coui_tool_navigation_item_height`, ...) are **not** UXDesign design
+ * tokens. They live in the App-side `com.support.bottomnavigation` resource table, statically linked
+ * into every app that ships the component: `aapt2 dump resources` finds 62 `coui_navigation` entries
+ * in `Settings.apk` and 83 in `Clock.apk`, and **0** in `UXDesign.apk`. Do not look them up in the
+ * UXDesign token TSV dumps — they will never be there.
+ *
  * @param modifier The modifier to be applied to the [NavigationBar].
- * @param color The color of the [NavigationBar]. COUI `coui_tab_navigation_view_bg`, whose solid fill is
- * `?attr/couiColorBar` (`coui_color_bar`). When a [backdrop] is available the bar draws it blurred
- * with [color] laid over at [GlassDefaults.ContainerAlpha]; otherwise it keeps the opaque fill.
+ * @param color The color of the [NavigationBar]. COUI `coui_tab_navigation_view_bg`, whose solid fill
+ * is `?attr/couiColorBar` (`coui_color_bar`). Both the drawable and the attribute are App-side
+ * `com.support.bottomnavigation` resources (verified in the `Settings.apk` / `Clock.apk` resource
+ * tables), not UXDesign tokens. When a [backdrop] is available the bar draws it blurred with [color]
+ * laid over at [GlassDefaults.ContainerAlpha]; otherwise it keeps the opaque fill.
  * @param backdrop The content blurred behind the bar, defaulting to [LocalBackdrop]. `null` keeps
  * the bar opaque.
  * @param showDivider Whether to show the divider line between the [NavigationBar] and the content.
- * @param defaultWindowInsetsPadding whether to apply default window insets padding to the [NavigationBar].
+ * @param defaultWindowInsetsPadding Whether to reserve the caption bar's bottom inset below the
+ * items. COUI `COUINavigationView.applyWindowInsets` only folds the `systemBars` left/right insets
+ * into the view's start/end padding and never consumes the bottom navigation-bar inset, so the bar
+ * does not add a navigation-bar inset of its own: bottom avoidance is the host layout's job.
+ * @param visible Whether the bar is on screen. Toggling it plays the COUI show / hide motion on the
+ * bar itself (see [NavigationBarMotion]); the bar stays composed and slides out by its own height.
+ * For the menu enter / exit transition COUI plays when swapping menus use [NavigationBarEnterExit].
  * @param mode The mode for displaying items in the [NavigationBar]. It can show icons, text or both.
  * @param content The content of the [NavigationBar], usually [NavigationBarItem]s.
  */
@@ -86,6 +110,7 @@ fun NavigationBar(
     backdrop: Backdrop? = LocalBackdrop.current,
     showDivider: Boolean = true,
     defaultWindowInsetsPadding: Boolean = true,
+    visible: Boolean = true,
     mode: NavigationBarDisplayMode = NavigationBarDisplayMode.IconAndText,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -97,9 +122,23 @@ fun NavigationBar(
         animationSpec = tween(durationMillis = 300),
     )
 
+    // COUINavigationView.show()/hide() animate the bar's bottomMargin between 0 and -measuredHeight,
+    // i.e. the bar slides out by its own height. Compose has no bottomMargin to animate, so the same
+    // displacement is applied as a translationY over the measured height.
+    var barHeightPx by remember { mutableIntStateOf(0) }
+    val slide = remember { Animatable(if (visible) 1f else 0f) }
+    LaunchedEffect(visible) {
+        slide.animateTo(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = if (visible) NavigationBarMotion.ShowSpec else NavigationBarMotion.HideSpec,
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .onSizeChanged { barHeightPx = it.height }
+            .graphicsLayer { translationY = (1f - slide.value) * barHeightPx }
             .couiGlassSurface(
                 backdrop = backdrop,
                 shape = RectangleShape,
@@ -123,26 +162,113 @@ fun NavigationBar(
             }
         }
         if (defaultWindowInsetsPadding) {
-            val navigationBarsPadding = if (platform() != Platform.IOS) {
-                WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-            } else {
-                20.dp
-            }
             Spacer(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .layout { measurable, constraints ->
-                        val totalHeight = (navigationBarsPadding + animatedCaptionBarHeight).roundToPx()
-                        val fixedConstraints = constraints.copy(minHeight = totalHeight, maxHeight = totalHeight)
-                        val placeable = measurable.measure(fixedConstraints)
-                        layout(placeable.width, totalHeight) {
-                            placeable.placeRelative(0, 0)
-                        }
-                    }
+                    .height(animatedCaptionBarHeight)
                     .pointerInput(Unit) { detectTapGestures { /* Do nothing to consume the click */ } },
             )
         }
     }
+}
+
+/**
+ * Plays COUI's navigation-menu enter / exit transition around [content].
+ *
+ * `COUINavigationView.switchToMenu` runs the outgoing menu's exit and then the incoming menu's enter
+ * (`setAnimationType(1)` / `setAnimationType(2)`). Exit is an alpha 1 → 0 fade over
+ * [NavigationBarMotion.ExitAlphaDurationMillis] on `COUILinearInterpolator`; enter runs
+ * `AnimatorSet.playTogether(enterAlpha, enterTranslate)` — alpha 0 → 1 over
+ * [NavigationBarMotion.EnterAlphaDurationMillis] and a translationY of one bar height settling to 0
+ * over [NavigationBarMotion.EnterTranslateDurationMillis], both on `COUIInEaseInterpolator`.
+ *
+ * This is a different transition from [NavigationBar]'s [NavigationBar.visible]: COUI plays it when
+ * the menu *content* is swapped, not when the bar itself is shown or hidden.
+ *
+ * @param visible Whether the content is entering (`true`) or exiting (`false`).
+ * @param modifier The modifier to be applied to the layout.
+ * @param content The menu content.
+ */
+@Composable
+fun NavigationBarEnterExit(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    var contentHeightPx by remember { mutableIntStateOf(0) }
+    val alpha = remember { Animatable(if (visible) 1f else 0f) }
+    val translate = remember { Animatable(if (visible) 1f else 0f) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(visible) {
+        if (visible) {
+            // COUINavigationView.initAnimation(): animatorSet.playTogether(mEnterAnimation,
+            // mEnterTranslateAnimation) — the two enter tracks start together.
+            scope.launch { alpha.animateTo(1f, NavigationBarMotion.EnterAlphaSpec) }
+            scope.launch { translate.animateTo(1f, NavigationBarMotion.EnterTranslateSpec) }
+        } else {
+            alpha.animateTo(0f, NavigationBarMotion.ExitAlphaSpec)
+            // The exit is alpha-only; seed the next enter back at one bar height below.
+            translate.snapTo(0f)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .onSizeChanged { contentHeightPx = it.height }
+            .graphicsLayer {
+                this.alpha = alpha.value
+                translationY = (1f - translate.value) * contentHeightPx
+            },
+    ) {
+        content()
+    }
+}
+
+/**
+ * The COUI bar-level motion values, all from `COUINavigationView.initAnimation()`.
+ *
+ * The durations are the three constants `DEFAULT_ENTER_TRANSLATE_ANIMATION_DURATION` (350),
+ * `DEFAULT_SHOW_TRANSLATE_ANIMATION_DURATION` (250) and `DEFAULT_HIDE_TRANSLATE_ANIMATION_DURATION`
+ * (200) plus the two hard-coded 100ms alpha durations; the easings are COUI's own
+ * `COUIInEaseInterpolator` / `COUIOutEaseInterpolator` / `COUILinearInterpolator`.
+ */
+object NavigationBarMotion {
+
+    /** The bar slide-in duration (COUI `DEFAULT_SHOW_TRANSLATE_ANIMATION_DURATION`). */
+    val ShowTranslateDurationMillis = 250
+
+    /** The bar slide-out duration (COUI `DEFAULT_HIDE_TRANSLATE_ANIMATION_DURATION`). */
+    val HideTranslateDurationMillis = 200
+
+    /** The menu enter alpha duration (COUI `mEnterAnimation.setDuration(100L)`). */
+    val EnterAlphaDurationMillis = 100
+
+    /** The menu enter translationY duration (COUI `DEFAULT_ENTER_TRANSLATE_ANIMATION_DURATION`). */
+    val EnterTranslateDurationMillis = 350
+
+    /** The menu exit alpha duration (COUI `mExitAnimation.setDuration(100L)`). */
+    val ExitAlphaDurationMillis = 100
+
+    /** The bar slide-in spec: [ShowTranslateDurationMillis] on `COUIInEaseInterpolator`. */
+    val ShowSpec: AnimationSpec<Float> =
+        tween(durationMillis = ShowTranslateDurationMillis, easing = COUIInEase)
+
+    /** The bar slide-out spec: [HideTranslateDurationMillis] on `COUIOutEaseInterpolator`. */
+    val HideSpec: AnimationSpec<Float> =
+        tween(durationMillis = HideTranslateDurationMillis, easing = COUIOutEase)
+
+    /** The menu enter alpha spec: [EnterAlphaDurationMillis] on `COUIInEaseInterpolator`. */
+    val EnterAlphaSpec: AnimationSpec<Float> =
+        tween(durationMillis = EnterAlphaDurationMillis, easing = COUIInEase)
+
+    /** The menu enter translation spec: [EnterTranslateDurationMillis] on `COUIInEaseInterpolator`. */
+    val EnterTranslateSpec: AnimationSpec<Float> =
+        tween(durationMillis = EnterTranslateDurationMillis, easing = COUIInEase)
+
+    /** The menu exit alpha spec: [ExitAlphaDurationMillis] on `COUILinearInterpolator`. */
+    val ExitAlphaSpec: AnimationSpec<Float> =
+        tween(durationMillis = ExitAlphaDurationMillis, easing = LinearEasing)
 }
 
 /**
@@ -168,18 +294,30 @@ fun RowScope.NavigationBarItem(
     val isPressed by interactionSource.collectIsPressedAsState()
     val colorScheme = COUITheme.colorScheme
 
-    // COUI coui_navigation_tab_color selector: no pressed entry, switches instantly (not animated).
+    // COUI `coui_navigation_tab_color` selector — an App-side `com.support.bottomnavigation` colour,
+    // **not** a UXDesign token (0 occurrences in UXDesign.apk, present in Settings.apk / Clock.apk).
+    // tab type has no pressed and no disabled entry, so it switches instantly (not animated):
+    // selected ?couiColorPrimaryNeutral (#E6000000 / #E6FFFFFF) : ?couiColorSecondNeutral
+    // (#8A000000 / #8AFFFFFF).
     val labelColor = when {
         !enabled -> colorScheme.disabledOnSurface
         selected -> colorScheme.onSurfaceContainer
         else -> colorScheme.onSurfaceSecondary
     }
-    // COUI tab icon selector: selected variant shown for state_selected OR state_pressed,
-    // cross-faded over 180ms.
+    // Icon colour: the App supplies state-tinted selector drawables for the menu icons (Clock:
+    // `tab_alarm_selector_color` -> `tab_alarm` / `tab_alarm_select`), whose path fillColors are
+    // `?attr/couiColorLabelPrimaryVariant` (#B8000000 / #B8FFFFFF) when unselected and
+    // `?attr/couiColorLabelPrimary` (#E6000000 / #E6FFFFFF) when selected or pressed. That selector
+    // is the mechanism that decides the rendered icon: the style's `couiNaviIconTint`
+    // (`coui_bottom_tool_navigation_item_selector`) carries no `state_selected` entry, so tinting
+    // with it would paint selected and unselected icons the same colour, which contradicts the two
+    // distinct fillColors in the icon selector. The tint applied here therefore carries the icon
+    // selector's colour pair, reproduced 1:1. `state_selected=false` and `state_pressed=true` both
+    // map to the selected drawable, cross-faded over the selector's enter/exitFadeDuration of 180ms.
     val iconTargetTint = when {
         !enabled -> colorScheme.disabledOnSurface
         selected || isPressed -> colorScheme.onSurfaceContainer
-        else -> colorScheme.onSurfaceSecondary
+        else -> colorScheme.labelPrimaryVariant
     }
     val iconTint by animateColorAsState(
         targetValue = iconTargetTint,
@@ -300,6 +438,11 @@ fun RowScope.NavigationBarItem(
 
 /**
  * A floating navigation bar that supports 2 to 5 items.
+ *
+ * Distinct from [BottomFloatingNavigationBar] despite the similar name: this is the older
+ * `COUIFloatingNavigationBar`-style pill (36dp outer margin, 52dp tall, 28dp icon-only items),
+ * whereas [BottomFloatingNavigationBar] ports ColorOS 17's `COUIBottomFloatingNavigationBar`
+ * (16dp outer margin, 56dp tall, 24dp icon + 10sp label). The two coexist.
  *
  * @param modifier A [Modifier] to be applied to the [FloatingNavigationBar] for additional customization.
  * @param color The background color of the [FloatingNavigationBar].

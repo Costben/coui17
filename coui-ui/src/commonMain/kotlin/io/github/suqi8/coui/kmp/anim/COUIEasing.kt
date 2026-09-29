@@ -2,9 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.anim
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import kotlin.math.PI
+
+/**
+ * COUI `COUIInEaseInterpolator`, the easing COUI uses for everything entering or growing.
+ *
+ * `com.coui.appcompat.animation.COUIInEaseInterpolator` extends `PathInterpolator` with
+ * `(controlX1, controlY1, controlX2, controlY2) = (0.0f, 0.0f, 0.1f, 1.0f)`.
+ */
+val COUIInEase: Easing = CubicBezierEasing(0f, 0f, 0.1f, 1f)
+
+/**
+ * COUI `COUIOutEaseInterpolator`, the easing COUI uses for everything leaving or shrinking.
+ *
+ * `com.coui.appcompat.animation.COUIOutEaseInterpolator` extends `PathInterpolator` with
+ * `(controlX1, controlY1, controlX2, controlY2) = (0.3f, 0.0f, 1.0f, 1.0f)`.
+ */
+val COUIOutEase: Easing = CubicBezierEasing(0.3f, 0f, 1f, 1f)
 
 /**
  * Creates a [SpringSpec] from damping and response parameters.
