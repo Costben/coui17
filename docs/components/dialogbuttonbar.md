@@ -54,13 +54,12 @@ DialogButtonBar(
 
 ## The Stacking Rule
 
-The bar reproduces `COUIButtonBarLayout.onMeasure` exactly. It stays **horizontal only when all three of these hold**:
+The bar reproduces `COUIButtonBarLayout.onMeasure` exactly. It stays **horizontal only when both of these hold**:
 
 1. Every label fits in its cell, and
-2. there are exactly two buttons, and
-3. there is no recommend button (never the case here — see [Limitations](#limitations)).
+2. there are exactly two buttons.
 
-In every other case the bar stacks. In particular, a three-button bar and a single-button bar both take the vertical path.
+In every other case the bar stacks. In particular, a three-button bar and a single-button bar both take the vertical path. The recommend button does **not** enter this decision: `onMeasure` reads `mDynamicLayout && (getButtonCount() != 2 || needSetButVertical(...))`, and `mRecommendButtonId` only affects the top margin of a single-button stacked bar.
 
 Cell width comes from `needSetButVertical`: the bar width — clamped to `DialogDefaults.MaxWidth` (`coui_dialog_max_width`, 392dp) — is split evenly between the buttons, minus the dividers, and each cell then loses its two horizontal paddings:
 
@@ -110,21 +109,23 @@ A divider is drawn between each pair of adjacent present buttons. Set `showDivid
 | dynamicLayout   | Boolean                | Whether the bar may stack itself; false pins it horizontal                  | true                                        | No       |
 | showDivider     | Boolean                | Whether dividers between buttons are shown                                  | true                                        | No       |
 | hasContentAbove | Boolean                | Whether a title, message or custom panel sits above the bar                 | true                                        | No       |
-| colors          | TextButtonColors       | Colors of the buttons                                                       | ButtonDefaults.textButtonColorsBorderless() | No       |
+| colors          | TextButtonColors       | Colors of the non-recommended buttons                                       | ButtonDefaults.textButtonColorsBorderless() | No       |
+| recommendColors | TextButtonColors       | Colors of the button flagged `recommended`                                  | ButtonDefaults.textButtonColorsPrimary()    | No       |
 | dividerColor    | Color                  | Color of the dividers                                                       | COUITheme.colorScheme.dividerLine           | No       |
 | textStyle       | TextStyle              | Label text style, also used to measure labels for the stacking decision     | COUITheme.textStyles.button                 | No       |
 
 ::: warning
-`hasContentAbove` affects spacing: COUI adds 6dp of extra top padding to the top-most stacked button only when nothing sits above it. Leave it `true` for a normal dialog with a title or message.
+`hasContentAbove` affects spacing: COUI adds 0dp of extra top padding to the top-most stacked button when nothing sits above it (`coui_bottom_alert_dialog_vertical_button_padding_top_extra_new`), and 0dp of extra top margin to a stacked bar (`coui_bottom_alert_dialog_buttonbar_margintop`). Leave it `true` for a normal dialog with a title or message.
 :::
 
 ### DialogButtonBarAction Properties
 
-| Property | Type       | Description                        | Default | Required |
-| :------- | :--------- | :--------------------------------- | :------ | :------- |
-| text     | String     | The button label                   | -       | Yes      |
-| enabled  | Boolean    | Whether the button is enabled      | true    | No       |
-| onClick  | () -> Unit | Invoked when the button is clicked | -       | Yes      |
+| Property    | Type       | Description                                          | Default | Required |
+| :---------- | :--------- | :--------------------------------------------------- | :------ | :------- |
+| text        | String     | The button label                                     | -       | Yes      |
+| enabled     | Boolean    | Whether the button is enabled                        | true    | No       |
+| onClick     | () -> Unit | Invoked when the button is clicked                   | -       | Yes      |
+| recommended | Boolean    | Whether this is the bar's recommend button           | false   | No       |
 
 ### DialogButtonBarDefaults Object
 
@@ -132,24 +133,52 @@ Metrics of the vertical tier and the values shared by both tiers. The horizontal
 
 | Property                      | Type | Description                                                                | Value   |
 | :---------------------------- | :--- | :------------------------------------------------------------------------- | :------ |
-| ButtonHorizontalPadding       | Dp   | Horizontal padding of a bar button, in both tiers                          | 24.dp   |
-| StackedButtonMinHeight        | Dp   | Min height of a stacked button                                             | 52.dp   |
-| StackedButtonMinHeightBottom  | Dp   | Min height of the bottom-most stacked button (52dp + 12dp extra)           | 64.dp   |
-| StackedButtonPaddingVertical  | Dp   | Vertical padding of a stacked button                                       | 14.dp   |
-| StackedButtonPaddingTopExtra  | Dp   | Extra top padding of the top-most stacked button when nothing sits above   | 6.dp    |
-| StackedButtonPaddingBottomExtra | Dp | Extra bottom padding of the bottom-most stacked button (the panel inset)   | 12.dp   |
-| StackedBarMarginTop           | Dp   | Top margin of a stacked bar holding more than one button                   | 16.dp   |
+| ButtonHorizontalPadding       | Dp   | Horizontal padding of a bar button, in both tiers                          | 12.dp   |
+| StackedButtonMinHeight        | Dp   | Min height of a stacked button                                             | 44.dp   |
+| StackedButtonMinHeightBottom  | Dp   | Min height of the bottom-most stacked button (44dp + 0dp extra)            | 44.dp   |
+| StackedButtonPaddingVertical  | Dp   | Vertical padding of a stacked button                                       | 4.dp    |
+| StackedButtonPaddingTopExtra  | Dp   | Extra top padding of the top-most stacked button when nothing sits above   | 0.dp    |
+| StackedButtonPaddingBottomExtra | Dp | Extra bottom padding of the bottom-most stacked button (the panel inset)   | 0.dp    |
+| StackedBarMarginTop           | Dp   | Top margin of a stacked bar holding more than one button, or a single recommend button | 0.dp |
 | StackedDividerThickness       | Dp   | Thickness of the divider between stacked buttons                           | 0.33.dp |
 | StackedDividerInsetHorizontal | Dp   | Horizontal inset of the divider between stacked buttons                    | 24.dp   |
 | ButtonCornerRadius            | Dp   | Corner radius of a bar button (a full-cell square-cornered rect)           | 0.dp    |
 
+The horizontal tier's own metrics live in `DialogDefaults.ButtonBar*` and read from the same resource table:
+
+| Property                  | Value  | COUI token                                              |
+| :------------------------ | :----- | :------------------------------------------------------ |
+| MaxWidth                  | 392.dp | `coui_dialog_max_width`                                 |
+| ButtonBarMinHeight        | 44.dp  | `coui_alert_dialog_button_height`                       |
+| ButtonBarInsideMargin     | 12/12/12/22 | `coui_alert_dialog_button_horizontal_padding` + the bar's own insets |
+| ButtonBarDividerThickness | 1.dp   | `coui_delete_alert_dialog_divider_height_horizontalbutton` |
+| ButtonBarDividerInsetTop  | 17.dp  | `coui_bottom_alert_dialog_horizontal_button_padding_top_extra_divider_new` |
+| ButtonBarDividerInsetBottom | 21.dp | `coui_bottom_alert_dialog_horizontal_button_padding_bottom_extra_divider_new` |
+
+## Recommended Button
+
+Flag one action with `recommended = true` and the bar draws it as a filled primary button while every other button stays on `colors`:
+
+```kotlin
+DialogButtonBar(
+    negative = DialogButtonBarAction(text = "Later", onClick = { showDialog = false }),
+    positive = DialogButtonBarAction(text = "Install", onClick = { showDialog = false }, recommended = true),
+)
+```
+
+This mirrors `COUIButtonBarLayout.setRecommendButtonId`:
+
+- `getBlurWindowButtonType` returns `ButtonType.PRIMARY` for the button whose id equals `mRecommendButtonId`, and `SECONDARY` for every other one — so the bar's fill splits exactly along the `recommended` flag.
+- `applyRecommendStyle` switches the button to `ButtonType.PRIMARY`, re-tints its label with `color/coui_btn_default_text_color` and turns on the solid-fill animation mode (`setAnimType(1)`; `COUIButton.java` fills `mDrawableColor` directly when `mAnimType == 1`). `textButtonColorsPrimary()` covers the fill and the label tint.
+- A single-button stacked bar still gets `StackedBarMarginTop` when that button is the recommend one (`onMeasure` checks `getButtonCount() == 1 && mRecommendButtonId != -1`).
+
 ## Behavior Notes
 
-- **Bottom button carries the panel inset.** The bottom-most stacked button gets 12dp of extra bottom padding and a 64dp min height, so the dialog panel needs no bottom padding of its own.
-- **A stacked bar of more than one button gets a 16dp top margin.** A single stacked button gets none.
-- **A lone negative button falls back to the horizontal metrics.** This is the one stacked case where `resetVerButsPadding` applies the 58dp panel min height and the horizontal paddings instead of the vertical ones.
+- **Bottom button carries the panel inset.** The bottom-most stacked button gets 0dp of extra bottom padding and a 44dp min height, so the dialog panel needs no bottom padding of its own.
+- **A stacked bar of more than one button gets a 0dp top margin.** A single stacked button gets none unless it is the recommend button.
+- **A lone negative button falls back to the horizontal metrics.** This is the one stacked case where `resetVerButsPadding` applies the 44dp panel min height and the horizontal paddings instead of the vertical ones.
 - **Buttons are square-cornered with no press scale.** `COUIAlertDialogBottomButtonNewNormal` sets `drawableRadius=0dp`, `scaleEnable=false` and `stateListAnimator=@null`: the only press feedback is a tint over the whole cell.
 
 ## Limitations
 
-The **recommend-button** tier is not implemented. In ColorOS, `COUIButtonBarLayout.setRecommendButtonId` promotes one button to a highlighted filled primary button (44dp tall, its own paddings and margins, all dividers hidden). This bar always behaves as `mRecommendButtonId == NO_RECOMMEND_ID`, which is the stock alert-dialog path.
+The **AI-payment recommend variant** is not implemented. COUI's `setRecommendButtonType(AI_PAYMENT)` sends the recommend button down a separate path — `ButtonType.AI_PAYMENT`, `setDrawableRadius(-1)`, the `couiColorAiPayment*Text` colours and, on material devices, `PopupGradientBackgroundHelper.drawRadialGradient` behind a `COUIMaterialEffect` / `COUIMaterialStateManager` feature gate. The library has no equivalent material-effect capability, so `recommended = true` always renders the plain primary fill.
