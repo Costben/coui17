@@ -34,6 +34,9 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [IconButton](../components/iconbutton)                     | 图标按钮组件           | 辅助操作、工具栏     |
 | [Chip](../components/chip)                                 | 可选中的胶囊筛选标签   | 内容筛选、标签选择   |
 | [ChipTab](../components/chiptab)                           | 横向可滚动的页签栏     | 页签切换、分类浏览   |
+| [SearchHistoryView](../components/searchhistoryview)       | 换行排列的搜索历史标签面板 | 搜索历史、最近查询 |
+| [TouchSearchView](../components/touchsearchview)           | 带放大字母磁贴的 A–Z 索引栏 | 按字母快速定位列表 |
+| [IntentSeekBar](../components/intentseekbar)               | 带次级进度层的滑块     | 媒体播放、缓冲进度   |
 | [MarqueeText](../components/marqueetextview)               | 溢出时横向滚动的文本   | 长标签、跑马灯       |
 | [NotificationSnackBar](../components/notificationsnackbar) | 通知样式 Snackbar      | 应用内通知、状态提示 |
 | [TagView](../components/tagview)                           | 小型文字角标           | 「NEW」「BETA」标记  |
