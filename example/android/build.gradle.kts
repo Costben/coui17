@@ -52,19 +52,12 @@ android {
                 enableV4Signing = true
             }
         }
-    } else {
-        signingConfigs {
-            register("release") {
-                enableV3Signing = true
-                enableV4Signing = true
-            }
-        }
     }
     buildTypes {
         release {
             optimization.enable = true
             vcsInfo.include = false
-            signingConfig = signingConfigs.getByName(if (keystorePath != null) "github" else "release")
+            signingConfig = signingConfigs.getByName(if (keystorePath != null) "github" else "debug")
         }
         debug {
             if (keystorePath != null) signingConfig = signingConfigs.getByName("github")
