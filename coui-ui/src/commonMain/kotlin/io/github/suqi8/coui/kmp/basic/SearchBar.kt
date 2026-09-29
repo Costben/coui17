@@ -48,6 +48,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -302,8 +303,8 @@ fun InputField(
         keyboardActions = KeyboardActions(onSearch = { currentOnSearch(query) }),
         interactionSource = internalInteractionSource,
         decorationBox = { innerTextField ->
-            // COUISearchBar capsule: coui_search_view_selector_color_normal (translucent, the
-            // page background shows through).
+            // COUISearchBar capsule: coui_search_bar_no_blur_solid with blur off (40% white over
+            // the page background), coui_search_view_selector_color_normal when blur is on.
             Box(
                 modifier = Modifier
                     .background(
@@ -359,6 +360,19 @@ fun InputField(
         }
     }
 }
+
+/** coui_search_bar_no_blur_solid (night) #28767676. */
+private val NoBlurSolidDark = Color(0x28767676)
+
+/** coui_search_bar_no_blur_solid #64ffffff. */
+private val NoBlurSolidLight = Color(0x64FFFFFF)
+
+/**
+ * The search bar capsule fill with blur off: COUI `coui_search_bar_no_blur_solid`, a translucent
+ * white that reads as the page tint (#F0F1F2 -> #F6F7F7) rather than as a second surface.
+ */
+@Composable
+private fun noBlurSolidColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) NoBlurSolidDark else NoBlurSolidLight
 
 /** Contains default values used by [SearchBar] and [InputField]. */
 object SearchBarDefaults {
@@ -418,12 +432,12 @@ object SearchBarDefaults {
 
     /**
      * Creates a [SearchBarColors] with the default colors of the [InputField], following
-     * COUISearchBar (`coui_search_view_selector_color_normal` capsule, couiColorLabelSecondary
-     * hint, couiColorSecondNeutral glyph, couiColorHintNeutral clear circle).
+     * COUISearchBar (`coui_search_bar_no_blur_solid` capsule, couiColorLabelSecondary hint,
+     * couiColorSecondNeutral glyph, couiColorHintNeutral clear circle).
      */
     @Composable
     fun searchBarColors(
-        backgroundColor: Color = COUITheme.colorScheme.secondaryContainer,
+        backgroundColor: Color = noBlurSolidColor(),
         labelColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
         iconColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
         clearIconColor: Color = COUITheme.colorScheme.onSurfaceContainerHigh,
