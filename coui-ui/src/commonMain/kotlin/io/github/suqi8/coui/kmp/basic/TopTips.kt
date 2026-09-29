@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -34,6 +37,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -44,186 +48,414 @@ import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * A [TopTips] component with COUI style.
+ * A tip banner shown at the top of a page, mirroring the ColorOS top-tips family:
+ * `com.coui.appcompat.tips.COUICustomTopTips`, `...tips.def.COUIDefaultTopTips`,
+ * `...tips.def.COUIDefaultTopTipsView` and `...tips.marquee.COUIMarqueeTopTips`.
  *
- * A tip banner shown at the top of a page, mirroring ColorOS's COUIDefaultTopTips: a rounded
- * card (couiColorContainer4 fill, couiRoundCornerM corners) holding an optional 24dp start icon,
- * a 14sp message and one trailing element. Like the original view the trailing element is
- * exclusive: providing [actionText] shows an accent colored text button (COUI text-button type),
- * otherwise providing [onClose] shows a round close button (COUI image-button type). When the
- * message would collide with the action label, the label drops to its own row below the text
- * (COUIDefaultTopTipsView.isNeedMultiText).
+ * `COUICustomTopTips` is an abstract `COUICardView`: `init` sets
+ * `setRadius(couiRoundCornerMRadius)` / `setWeight(couiRoundCornerMWeight)` and fills the card with
+ * `?attr/couiColorFillThin`, and `showWithAnim` / `dismissWithAnim` scale the view on Y from 0 to 1
+ * over 250ms. The port keeps that 250ms vertical scale for [visible].
  *
- * Toggling [visible] plays the COUICustomTopTips show/dismiss animation (a 250ms vertical scale);
- * the banner leaves the composition once the dismiss animation finishes.
+ * `COUIDefaultTopTips` overrides the background (`applySolidBackgroundColor`:
+ * [TopTipsBackgroundStyle] `White` fills with `?attr/couiColorCard`, `Gray` — the default of
+ * `mLastBackgroundStyle` — with `?attr/couiColorContainer4`), switches the corner radius with
+ * `updateRadius(hasTitle, isSingleLineText)` and picks its layout mode from the style with
+ * `resolveTargetLayoutMode`. Its content is a `COUIDefaultTopTipsView`, a `ConstraintLayout`
+ * inflated from `res/layout/coui_default_toptips.xml` (or `res/layout/coui_ai_payment_toptips.xml`)
+ * holding an `image` icon, a `title`, a `COUIMarqueeTextView` `content`, an `ignore` and an
+ * `action` `COUIButton`, and a `close` `ImageView`.
  *
- * @param text The message of the [TopTips].
- * @param modifier The modifier to be applied to the [TopTips].
- * @param visible Whether the [TopTips] is visible. Changing this value animates the banner in/out.
- * @param startIcon The optional leading icon of the [TopTips], laid out in a
- *   [TopTipsDefaults.IconSize] box.
- * @param actionText The optional label of the trailing action button.
- * @param onAction The callback when the action button is clicked.
- * @param onClose The callback when the close button is clicked. Only shown when [actionText] is
- *   absent, matching COUIDefaultTopTipsView's exclusive button types.
- * @param cornerRadius The corner radius of the [TopTips].
- * @param colors The [TopTipsColors] of the [TopTips].
+ * `COUIMarqueeTopTips` adds only `startRoll` / `stopRoll`, which forward to
+ * `COUIDefaultTopTipsView.startRoll` / `stopRoll` and therefore to
+ * `COUIMarqueeTextView.continueRoll` / `stopRoll`; [marqueeEnabled] is that switch, and the
+ * scrolling core is [MarqueeText].
+ *
+ * Not ported, because the corresponding machinery has no Compose equivalent:
+ * - `COUIDefaultTopTips.animateExpand` / `animateCollapse` and the `mClipAnimator` /
+ *   `calculateClipHeight` outline clipping that grows and shrinks the banner, plus
+ *   `animateWidthChange` / `createSpaceAndFixLayout` and the `Space`-based width cross-fade; the
+ *   port shows and hides the banner with `COUICustomTopTips`' scale instead.
+ * - `setTipsBackgroundDrawable` / `COUIDefaultTopTips.BackgroundOverlayView` as an Android `View`
+ *   that measures 0x0 and is laid out over the card; [backgroundOverlay] is the same slot, drawn
+ *   over a transparent fill exactly as `applyBackgroundOverlayState` blanks the card colour.
+ * - `RoundCornerUtil.getSmoothStyleType` and the `OplusOutline` / `OplusOutlineAdapter` smooth
+ *   corner outlines, plus the `COUIVersionUtil.getOSVersionCode()` branches of `getMultiLineRadius`
+ *   (OS > 37 `coui_toptips_view_radius`, OS 37 `coui_toptips_view_radius_os16`,
+ *   `coui_toptips_view_radius_os15` below, and `couiRoundCornerXL` without smooth corners) and of
+ *   `getSingleLineRadius` (`couiRoundCornerFULL`, `couiRoundCornerXXL` without smooth corners); the
+ *   port keeps the ColorOS 17 branch.
+ * - `setWeight` / the smooth-round-rect weight of `applyRoundCornerToOutline`; the port uses the
+ *   squircle surface of this library.
+ * - `setClipToOutline(true)` and the outline that `setupOutlineProvider` builds, so the port's
+ *   content is not clipped to the rounded shape; the banner's own padding keeps it inside.
+ * - `COUIButton` itself, so the `ButtonType` / `MaterialEffectState` / drawable radius state of
+ *   `resetDefaultButtonStyle`, `applyAiPaymentButtonStyle`, `applyDefaultSecondaryButtonStyle` and
+ *   `applyLegacyIgnoreLinkStyle`, and `COUITextViewCompatUtil.setPressRippleDrawable`; both labels
+ *   are drawn as accent text with the `text_ripple_bg_padding_*` press padding.
+ * - `OnLinesChangedListener` and `updateRadius`'s callback plumbing; the port derives the
+ *   single-line radius from its own measurement instead.
+ * - The `id/image`, `id/title`, `id/content`, `id/action`, `id/ignore` and `id/close` view ids and
+ *   the `ConstraintSet` rewrites that reposition them; the port lays the same children out with
+ *   `Row` / `Column`. `isNeedDefaultMultiTextWithTitle` only reaches its multi-line branch when
+ *   there is a start icon, which the port's fit measurement does not require.
+ *
+ * @param text The message of the banner. `COUIDefaultTopTipsView`'s `content`, a
+ *   `COUIMarqueeTextView` styled `couiTextBodyS` (13sp, `coui_spacing_multiplier_body_s`) in
+ *   `?attr/couiColorLabelSecondary`, with `coui_toptips_view_content_min_height` (20dp) and the
+ *   `coui_toptips_view_content_*` margins.
+ * @param modifier The modifier to be applied to the banner.
+ * @param visible Whether the banner is visible. Changing this plays `COUICustomTopTips`'
+ *   `showWithAnim` / `dismissWithAnim` scale.
+ * @param title The optional title above [text]. `COUIDefaultTopTipsView`'s `title`, styled
+ *   `couiTextHeadlineXS` (16sp, `sans-serif-medium`) in `?attr/couiColorLabelPrimary`,
+ *   `maxLines=2`, with `coui_toptips_view_title_min_height` (22dp). `hasTitle()` is what selects
+ *   the multi-line corner radius.
+ * @param startIcon The optional leading icon. `COUIDefaultTopTipsView`'s `image`, laid out at
+ *   `coui_toptips_view_title_icon_size` (36dp) with a title and
+ *   `coui_toptips_view_icon_btn_size` (24dp) without, inset by
+ *   `coui_toptips_view_icon_start_margin` (16dp).
+ * @param actionText The optional label of the `action` button, the primary button of the banner.
+ * @param onAction The callback of the `action` button.
+ * @param ignoreText The optional label of the `ignore` button, the secondary button.
+ *   `setNegativeButton` routes here, and `hasIgnoreText()` is part of `hasDualButtons()`.
+ * @param onIgnore The callback of the `ignore` button.
+ * @param onClose The callback of the `close` button. `setCloseDrawable` is what makes the native
+ *   show it, so a non-null callback is the port's equivalent.
+ * @param marqueeEnabled Whether [text] may scroll. Mirrors `COUIMarqueeTopTips.startRoll` /
+ *   `stopRoll`, which end at `COUIMarqueeTextView.setMarqueeEnable`.
+ * @param style The banner style. `COUIDefaultTopTips.setTopTipsStyle` /
+ *   `COUIDefaultTopTipsView.applyTopTipsStyle`, which only feed `resolveTargetLayoutMode`.
+ * @param backgroundStyle The solid background. `COUIDefaultTopTips.setTipsBackgroundColor` and
+ *   `mLastBackgroundStyle`.
+ * @param backgroundOverlay An optional overlay drawn over the fill, mirroring
+ *   `COUIDefaultTopTips.setTipsBackgroundDrawable` and its `BackgroundOverlayView`. When set, the
+ *   card fill is left transparent the way `applyBackgroundOverlayState` blanks it.
+ * @param cornerRadius An explicit corner radius. `null` follows `updateRadius`, i.e.
+ *   [TopTipsDefaults.SingleLineCornerRadius] for an untitled single-line banner and
+ *   [TopTipsDefaults.CornerRadius] otherwise.
+ * @param colors The [TopTipsColors] of the banner.
  */
 @Composable
 fun TopTips(
     text: String,
     modifier: Modifier = Modifier,
     visible: Boolean = true,
+    title: String? = null,
     startIcon: (@Composable () -> Unit)? = null,
     actionText: String? = null,
     onAction: (() -> Unit)? = null,
+    ignoreText: String? = null,
+    onIgnore: (() -> Unit)? = null,
     onClose: (() -> Unit)? = null,
-    cornerRadius: Dp = TopTipsDefaults.CornerRadius,
-    colors: TopTipsColors = TopTipsDefaults.topTipsColors(),
+    marqueeEnabled: Boolean = true,
+    style: TopTipsStyle = TopTipsStyle.Standard,
+    backgroundStyle: TopTipsBackgroundStyle = TopTipsBackgroundStyle.Gray,
+    backgroundOverlay: (@Composable () -> Unit)? = null,
+    cornerRadius: Dp? = null,
+    colors: TopTipsColors = TopTipsDefaults.topTipsColors(backgroundStyle),
 ) {
-    // COUICustomTopTips.showWithAnim/dismissWithAnim: ObjectAnimator scaleY 0..1 over 250ms with
-    // the default accelerate-decelerate interpolator, pivoting at the view center.
     val visibility = remember { Animatable(if (visible) 1f else 0f) }
     LaunchedEffect(visible) {
         val target = if (visible) 1f else 0f
         if (visibility.value != target) {
-            visibility.animateTo(target, tween(ShowDismissDurationMillis, easing = ShowDismissEasing))
+            visibility.animateTo(
+                targetValue = target,
+                animationSpec = tween(SHOW_DISMISS_DURATION_MILLIS, easing = SHOW_DISMISS_EASING),
+            )
         }
     }
     if (!visible && visibility.value == 0f) return
 
-    val hasAction = !actionText.isNullOrEmpty()
-    val showClose = !hasAction && onClose != null
-    val textStyle = TopTipsDefaults.textStyle()
+    val displayTitle = title?.takeIf { it.isNotEmpty() }
+    val action = actionText?.takeIf { it.isNotEmpty() }
+    val ignore = ignoreText?.takeIf { it.isNotEmpty() }
+    val layoutMode = style.layoutMode()
+    val titleStyle = TopTipsDefaults.titleStyle()
+    val contentStyle = TopTipsDefaults.textStyle()
     val actionStyle = TopTipsDefaults.actionTextStyle()
 
-    Box(
-        modifier = modifier
-            .graphicsLayer { scaleY = visibility.value }
-            .squircleSurface(color = colors.containerColor, cornerRadius = cornerRadius),
-    ) {
-        BoxWithConstraints {
-            // COUIDefaultTopTipsView.isNeedMultiText: the layout switches to the multi-line
-            // variant when the single-line message plus the button clearance would reach into
-            // the action label.
-            val density = LocalDensity.current
-            val textMeasurer = rememberTextMeasurer()
-            val multiLine = hasAction && constraints.hasBoundedWidth && with(density) {
-                val startInset = TopTipsDefaults.ContentPadding +
-                    if (startIcon != null) TopTipsDefaults.IconSize + TopTipsDefaults.IconSpacing else 0.dp
-                val actionWidth = textMeasurer
-                    .measure(AnnotatedString(actionText!!), style = actionStyle, maxLines = 1)
-                    .size.width.toDp() + ActionPaddingHorizontal * 2
-                val titleWidth = textMeasurer
-                    .measure(AnnotatedString(text), style = textStyle, maxLines = 1)
-                    .size.width.toDp()
-                val actionStart = this@BoxWithConstraints.maxWidth - ActionEndMargin - actionWidth
-                startInset + titleWidth + ButtonClearance >= actionStart
-            }
-
-            if (multiLine) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = TopTipsDefaults.ContentPadding, bottom = MultiActionBottomPadding),
-                ) {
-                    Row(verticalAlignment = Alignment.Top) {
-                        if (startIcon != null) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(top = MultiIconTopPadding)
-                                    .size(TopTipsDefaults.IconSize),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                startIcon()
-                            }
-                        }
-                        Text(
-                            text = text,
-                            color = colors.contentColor,
-                            style = textStyle,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(
-                                    start = if (startIcon != null) TopTipsDefaults.IconSpacing else 0.dp,
-                                    top = TopTipsDefaults.VerticalPadding,
-                                    end = MultiTitleEndMargin,
-                                ),
-                        )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = ActionRowTopSpacing, end = ActionEndMargin),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        TopTipsActionLabel(
-                            text = actionText!!,
-                            color = colors.actionColor,
-                            style = actionStyle,
-                            onClick = onAction,
-                        )
-                    }
-                }
+    BoxWithConstraints(modifier = modifier.graphicsLayer { scaleY = visibility.value }) {
+        val density = LocalDensity.current
+        val textMeasurer = rememberTextMeasurer()
+        val titleWidthPx = displayTitle?.let { textMeasurer.labelWidthPx(it, titleStyle) } ?: 0
+        val contentWidthPx = textMeasurer.labelWidthPx(text, contentStyle)
+        val leadingWidthPx = with(density) {
+            if (startIcon == null) {
+                CONTENT_END_MARGIN.toPx()
             } else {
+                val iconSize = if (displayTitle == null) {
+                    TopTipsDefaults.IconSize
+                } else {
+                    TopTipsDefaults.TitleIconSize
+                }
+                val gap = if (displayTitle == null) {
+                    TopTipsDefaults.IconSpacing
+                } else {
+                    TITLE_ICON_TEXT_GAP
+                }
+                ICON_START_MARGIN.toPx() + iconSize.toPx() + gap.toPx()
+            }
+        }
+        val trailingWidthPx = with(density) {
+            val gap = TEXT_TO_BTN_GAP.toPx()
+            val labelPadding = (ACTION_PADDING_HORIZONTAL * 2).toPx()
+            var width = 0f
+            if (ignore != null) {
+                width += textMeasurer.labelWidthPx(ignore, actionStyle) + labelPadding + gap
+            }
+            if (action != null) {
+                width += textMeasurer.labelWidthPx(action, actionStyle) + labelPadding + gap
+            }
+            if (onClose != null) width += TopTipsDefaults.IconSize.toPx() + gap
+            width
+        }
+        val availableWidthPx = with(density) { maxWidth.toPx() }
+        val textWidthPx = maxOf(titleWidthPx, contentWidthPx)
+        val multiText = leadingWidthPx + textWidthPx + trailingWidthPx > availableWidthPx
+        val radius = cornerRadius ?: if (displayTitle == null && !multiText) {
+            TopTipsDefaults.SingleLineCornerRadius
+        } else {
+            TopTipsDefaults.CornerRadius
+        }
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .squircleSurface(
+                    color = if (backgroundOverlay == null) {
+                        colors.containerColor
+                    } else {
+                        Color.Transparent
+                    },
+                    cornerRadius = radius,
+                ),
+        ) {
+            backgroundOverlay?.invoke()
+        }
+
+        if (multiText) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TopTipsTextArea(
+                        title = displayTitle,
+                        text = text,
+                        startIcon = startIcon,
+                        marqueeEnabled = marqueeEnabled,
+                        titleStyle = titleStyle,
+                        contentStyle = contentStyle,
+                        titleColor = colors.titleColor,
+                        contentColor = colors.contentColor,
+                    )
+                }
+                TopTipsTrailing(
+                    action = action,
+                    onAction = onAction,
+                    ignore = ignore,
+                    onIgnore = onIgnore,
+                    onClose = onClose,
+                    layoutMode = layoutMode,
+                    actionStyle = actionStyle,
+                    colors = colors,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start = TopTipsDefaults.ContentPadding,
-                            top = TopTipsDefaults.VerticalPadding,
-                            end = if (hasAction) ActionEndMargin else TopTipsDefaults.ContentPadding,
-                            bottom = TopTipsDefaults.VerticalPadding,
+                            top = BTN_TOP_MARGIN,
+                            end = CONTENT_END_MARGIN,
+                            bottom = MULTI_BTN_BOTTOM_MARGIN,
                         ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (startIcon != null) {
-                        Box(
-                            modifier = Modifier.size(TopTipsDefaults.IconSize),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            startIcon()
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(
-                                start = if (startIcon != null) TopTipsDefaults.IconSpacing else 0.dp,
-                                end = if (hasAction || showClose) TitleTrailingSpacing else 0.dp,
-                            )
-                            .defaultMinSize(minHeight = TopTipsDefaults.TextMinHeight),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        Text(
-                            text = text,
-                            color = colors.contentColor,
-                            style = textStyle,
-                        )
-                    }
-                    if (hasAction) {
-                        TopTipsActionLabel(
-                            text = actionText!!,
-                            color = colors.actionColor,
-                            style = actionStyle,
-                            onClick = onAction,
-                        )
-                    } else if (showClose) {
-                        TopTipsCloseButton(
-                            backgroundColor = colors.closeButtonColor,
-                            iconColor = colors.closeIconColor,
-                            onClick = onClose!!,
-                        )
-                    }
-                }
+                )
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TopTipsTextArea(
+                    title = displayTitle,
+                    text = text,
+                    startIcon = startIcon,
+                    marqueeEnabled = marqueeEnabled,
+                    titleStyle = titleStyle,
+                    contentStyle = contentStyle,
+                    titleColor = colors.titleColor,
+                    contentColor = colors.contentColor,
+                )
+                TopTipsTrailing(
+                    action = action,
+                    onAction = onAction,
+                    ignore = ignore,
+                    onIgnore = onIgnore,
+                    onClose = onClose,
+                    layoutMode = layoutMode,
+                    actionStyle = actionStyle,
+                    colors = colors,
+                    modifier = Modifier.padding(end = CONTENT_END_MARGIN),
+                )
             }
         }
     }
 }
 
 /**
- * The trailing action label: an accent colored 14sp medium text with the capsule press ripple
- * COUITextViewCompatUtil.setPressRippleDrawable applies (12dp/4dp ripple padding).
+ * The `image` + `title` + `content` block of `coui_default_toptips.xml`: the icon at
+ * `coui_toptips_view_icon_start_margin` (16dp) from the start, then a column whose title sits
+ * `coui_toptips_view_content_top_margin` (12dp) below the top and
+ * `coui_toptips_view_title_content_gap` (0dp) above the content.
+ */
+@Composable
+private fun RowScope.TopTipsTextArea(
+    title: String?,
+    text: String,
+    startIcon: (@Composable () -> Unit)?,
+    marqueeEnabled: Boolean,
+    titleStyle: TextStyle,
+    contentStyle: TextStyle,
+    titleColor: Color,
+    contentColor: Color,
+) {
+    if (startIcon != null) {
+        Box(
+            modifier = Modifier
+                .padding(start = ICON_START_MARGIN)
+                .size(
+                    if (title == null) TopTipsDefaults.IconSize else TopTipsDefaults.TitleIconSize,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            startIcon()
+        }
+    }
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .padding(
+                start = when {
+                    startIcon == null -> CONTENT_END_MARGIN
+                    title == null -> TopTipsDefaults.IconSpacing
+                    else -> TITLE_ICON_TEXT_GAP
+                },
+                top = TopTipsDefaults.ContentPadding,
+                bottom = TopTipsDefaults.ContentPadding,
+            ),
+        verticalArrangement = Arrangement.spacedBy(TITLE_CONTENT_GAP),
+    ) {
+        if (title != null) {
+            Text(
+                text = title,
+                color = titleColor,
+                style = titleStyle,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.defaultMinSize(minHeight = TopTipsDefaults.TitleMinHeight),
+            )
+        }
+        MarqueeText(
+            text = text,
+            color = contentColor,
+            style = contentStyle,
+            marqueeEnabled = marqueeEnabled,
+            modifier = Modifier.defaultMinSize(minHeight = TopTipsDefaults.TextMinHeight),
+        )
+    }
+}
+
+/**
+ * The `ignore` / `action` / `close` cluster. `changeLayoutWithDualButtons` hides `close` and sizes
+ * both buttons with `configureDualButtonSizing` / `configureDualButtonTextLines` in the AI payment
+ * layout; every other layout shows the buttons as they come and keeps `close` at the end.
+ */
+@Composable
+private fun TopTipsTrailing(
+    action: String?,
+    onAction: (() -> Unit)?,
+    ignore: String?,
+    onIgnore: (() -> Unit)?,
+    onClose: (() -> Unit)?,
+    layoutMode: TopTipsLayoutMode,
+    actionStyle: TextStyle,
+    colors: TopTipsColors,
+    modifier: Modifier = Modifier,
+) {
+    if (layoutMode == TopTipsLayoutMode.AiPayment && action != null && ignore != null) {
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TopTipsActionLabel(
+                text = ignore,
+                color = colors.actionColor,
+                style = actionStyle,
+                onClick = onIgnore,
+                minWidth = AI_PAYMENT_BTN_MIN_WIDTH,
+                minHeight = AI_PAYMENT_BTN_MIN_HEIGHT,
+                horizontalPadding = AI_PAYMENT_BTN_HORIZONTAL_PADDING,
+            )
+            Spacer(modifier = Modifier.width(TEXT_TO_BTN_GAP))
+            TopTipsActionLabel(
+                text = action,
+                color = colors.actionColor,
+                style = actionStyle,
+                onClick = onAction,
+                minWidth = AI_PAYMENT_BTN_MIN_WIDTH,
+                minHeight = AI_PAYMENT_BTN_MIN_HEIGHT,
+                horizontalPadding = AI_PAYMENT_BTN_HORIZONTAL_PADDING,
+            )
+        }
+        return
+    }
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End,
+    ) {
+        if (ignore != null) {
+            TopTipsActionLabel(
+                text = ignore,
+                color = colors.actionColor,
+                style = actionStyle,
+                onClick = onIgnore,
+            )
+            Spacer(modifier = Modifier.width(TEXT_TO_BTN_GAP))
+        }
+        if (action != null) {
+            TopTipsActionLabel(
+                text = action,
+                color = colors.actionColor,
+                style = actionStyle,
+                onClick = onAction,
+            )
+            Spacer(modifier = Modifier.width(TEXT_TO_BTN_GAP))
+        }
+        if (onClose != null) {
+            TopTipsCloseButton(
+                backgroundColor = colors.closeButtonColor,
+                iconColor = colors.closeIconColor,
+                onClick = onClose,
+            )
+        }
+    }
+}
+
+/**
+ * One of the banner's text buttons: an accent coloured 13sp medium label carrying the capsule press
+ * padding `COUITextViewCompatUtil.setPressRippleDrawable` uses.
+ *
+ * @param text The label of the button.
+ * @param color The colour of the label.
+ * @param style The text style of the label.
+ * @param onClick The callback of the button, or `null` for a non-interactive label.
+ * @param modifier The modifier to be applied to the label.
+ * @param minWidth The minimum width of the button. `configureDualButtonSizing` applies
+ *   `coui_toptips_ai_payment_btn_min_width` to both AI payment buttons.
+ * @param minHeight The minimum height of the button. `configureDualButtonTextLines` applies
+ *   `coui_toptips_ai_payment_btn_min_height` to both AI payment buttons.
+ * @param horizontalPadding The horizontal padding of the button. `configureDualButtonSizing`
+ *   overrides it with `coui_toptips_ai_payment_btn_horizontal_padding`.
  */
 @Composable
 private fun TopTipsActionLabel(
@@ -231,6 +463,10 @@ private fun TopTipsActionLabel(
     color: Color,
     style: TextStyle,
     onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    minWidth: Dp = 0.dp,
+    minHeight: Dp = 0.dp,
+    horizontalPadding: Dp = ACTION_PADDING_HORIZONTAL,
 ) {
     Text(
         text = text,
@@ -238,16 +474,25 @@ private fun TopTipsActionLabel(
         style = style,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        modifier = Modifier
+        modifier = modifier
+            .defaultMinSize(minWidth = minWidth, minHeight = minHeight)
             .clip(CircleShape)
             .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(ActionPadding),
+            .padding(
+                PaddingValues(
+                    horizontal = horizontalPadding,
+                    vertical = ACTION_PADDING_VERTICAL,
+                ),
+            ),
     )
 }
 
 /**
- * The trailing close button, redrawn from coui_ic_toptips_close: a 24dp icon holding an 18dp
- * couiColorControls circle with a white rounded cross.
+ * The `close` `ImageView` of `coui_default_toptips.xml`: a 24dp square inset
+ * `coui_toptips_view_btn_margin` (16dp) from the end, redrawn from `coui_ic_toptips_close` — a
+ * 24dp viewport holding an `r=9` circle in `?attr/couiColorControls` and a white cross whose arms
+ * reach 8.464 and 15.536. The layout's own `android:src` is `ic_embedded_top_tips_close`, the same
+ * glyph with an `r=10` circle.
  */
 @Composable
 private fun TopTipsCloseButton(
@@ -264,9 +509,13 @@ private fun TopTipsCloseButton(
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.size(TopTipsDefaults.IconSize)) {
-            drawCircle(color = backgroundColor, radius = CloseCircleRadius.toPx(), center = center)
-            val arm = CloseCrossArm.toPx()
-            val stroke = CloseCrossStrokeWidth.toPx()
+            drawCircle(
+                color = backgroundColor,
+                radius = CLOSE_CIRCLE_RADIUS.toPx(),
+                center = center,
+            )
+            val arm = CLOSE_CROSS_ARM.toPx()
+            val stroke = CLOSE_CROSS_STROKE_WIDTH.toPx()
             drawLine(
                 color = iconColor,
                 start = Offset(center.x - arm, center.y - arm),
@@ -285,55 +534,190 @@ private fun TopTipsCloseButton(
     }
 }
 
-/** Contains default values used by [TopTips]. */
-object TopTipsDefaults {
-    /** The corner radius of the banner (COUI couiRoundCornerM: coui_round_corner_m 12dp). */
-    val CornerRadius = 12.dp
+/**
+ * The style of a [TopTips]. `COUIDefaultTopTips.TopTipsStyle`, whose default is `STANDARD` and
+ * whose `AI_PAYMENT` member is selected from the `couiTopTipsStyle` attribute of the
+ * `COUIDefaultTopTips` styleable.
+ */
+enum class TopTipsStyle {
 
-    /** The start/end padding of the banner content (COUI coui_toptips_view_btn_margin). */
-    val ContentPadding = 12.dp
+    /** `COUIDefaultTopTips.TopTipsStyle.STANDARD`. */
+    Standard,
 
-    /** The top/bottom padding of the message (COUI coui_toptips_view_title_top_margin). */
-    val VerticalPadding = 12.dp
+    /** `COUIDefaultTopTips.TopTipsStyle.AI_PAYMENT`. */
+    AiPayment,
+}
 
-    /** The size of the start icon and the close button (COUI coui_toptips_view_icon_btn_size). */
-    val IconSize = 24.dp
+/**
+ * The solid fill of a [TopTips]. `COUIDefaultTopTips.BackgroundStyle`, applied by
+ * `applySolidBackgroundColor`, whose `mLastBackgroundStyle` starts at `GRAY`.
+ */
+enum class TopTipsBackgroundStyle {
 
-    /** The spacing between the start icon and the message (COUI coui_toptips_view_title_start_margin). */
-    val IconSpacing = 8.dp
+    /** `COUIDefaultTopTips.BackgroundStyle.WHITE`, filled with `?attr/couiColorCard`. */
+    White,
 
-    /** The minimum height of the message (COUI coui_toptips_view_title_min_height). */
-    val TextMinHeight = 20.dp
+    /** `COUIDefaultTopTips.BackgroundStyle.GRAY`, filled with `?attr/couiColorContainer4`. */
+    Gray,
+}
 
-    /** The default text style of the message (COUI coui_toptips_view_default_text_size: 14sp). */
-    @Composable
-    fun textStyle(): TextStyle = COUITheme.textStyles.body2
+/**
+ * The layout a [TopTips] content view uses. `COUIDefaultTopTipsView.LayoutMode`, produced by
+ * `resolveTargetLayoutMode` from the top tips style and consumed by `applyLayoutConstraints`; the
+ * `AI_PAYMENT` mode is the one that reaches `changeLayoutWithDualButtons`.
+ */
+enum class TopTipsLayoutMode {
 
-    /** The default text style of the action button (14sp, sans-serif-medium in coui_default_toptips.xml). */
-    @Composable
-    fun actionTextStyle(): TextStyle = COUITheme.textStyles.body2.copy(fontWeight = FontWeight.Medium)
+    /** `COUIDefaultTopTipsView.LayoutMode.DEFAULT`, inflated from `coui_default_toptips.xml`. */
+    Default,
 
     /**
-     * The default [TopTipsColors], mapping COUIDefaultTopTips: container = couiColorContainer4
-     * (#0A000000 light / #14FFFFFF dark), message = couiColorSecondNeutral, action label =
-     * couiColorPrimaryText and the close button circle = couiColorControls (#29000000 light /
-     * #40FFFFFF dark) with a white cross.
+     * `COUIDefaultTopTipsView.LayoutMode.AI_PAYMENT`, inflated from
+     * `coui_ai_payment_toptips.xml`.
+     */
+    AiPayment,
+}
+
+/** Contains default values used by [TopTips]. */
+object TopTipsDefaults {
+
+    /**
+     * The corner radius of a banner that is not a single untitled line. `getMultiLineRadius` on
+     * ColorOS 17 (`COUIVersionUtil.getOSVersionCode() > 37`), which reads
+     * `coui_toptips_view_radius` (28dp); the older branches are
+     * `coui_toptips_view_radius_os16` (20dp), `coui_toptips_view_radius_os15` (16dp) and
+     * `couiRoundCornerXL` (20dp) when smooth corners are unavailable.
+     */
+    val CornerRadius = 28.dp
+
+    /**
+     * The corner radius of an untitled banner whose message fits one line. `getSingleLineRadius`,
+     * which reads `couiRoundCornerFULL` (72dp) when smooth corners are supported and
+     * `couiRoundCornerXXL` (24dp) otherwise.
+     */
+    val SingleLineCornerRadius = 72.dp
+
+    /**
+     * The vertical padding of the banner. `COUIDefaultTopTipsView.loadDimenResources` reads
+     * `coui_toptips_view_content_top_margin` (12dp) into `mContentTopMargin` and puts it above the
+     * title and below the content.
+     */
+    val ContentPadding = 12.dp
+
+    /**
+     * The size of the leading icon without a title. COUI `coui_toptips_view_icon_btn_size`
+     * (24dp).
+     */
+    val IconSize = 24.dp
+
+    /**
+     * The size of the leading icon next to a title. COUI `coui_toptips_view_title_icon_size`
+     * (36dp).
+     */
+    val TitleIconSize = 36.dp
+
+    /**
+     * The gap between the leading icon and the content. COUI
+     * `coui_toptips_view_content_start_margin` (8dp), `mContentStartMargin`.
+     */
+    val IconSpacing = 8.dp
+
+    /** The minimum height of the message. COUI `coui_toptips_view_content_min_height` (20dp). */
+    val TextMinHeight = 20.dp
+
+    /** The minimum height of the title. COUI `coui_toptips_view_title_min_height` (22dp). */
+    val TitleMinHeight = 22.dp
+
+    /**
+     * The default title style. `coui_default_toptips.xml` gives `title` the `couiTextHeadlineXS`
+     * appearance — 16sp, `sans-serif-medium`, `coui_spacing_multiplier_headline_xs` — in
+     * `?attr/couiColorLabelPrimary`; the port uses the theme's `headline1`, the 16sp
+     * `couiTextAppearanceHeadline6` tier, with a medium weight.
+     */
+    @Composable
+    fun titleStyle(): TextStyle = COUITheme.textStyles.headline1.copy(
+        fontWeight = FontWeight.Medium,
+    )
+
+    /**
+     * The default message style. `coui_default_toptips.xml` gives `content` the `couiTextBodyS`
+     * appearance (13sp, `coui_spacing_multiplier_body_s`) in `?attr/couiColorLabelSecondary`; the
+     * port uses the theme's `footnote1`, its 13sp tier.
+     */
+    @Composable
+    fun textStyle(): TextStyle = COUITheme.textStyles.footnote1
+
+    /**
+     * The default button label style. `coui_default_toptips.xml` gives `ignore` the 13sp
+     * `coui_toptips_view_default_text_size` in `?attr/couiColorPrimaryText`; the port adds the
+     * medium weight the native buttons use.
+     */
+    @Composable
+    fun actionTextStyle(): TextStyle = COUITheme.textStyles.footnote1.copy(
+        fontWeight = FontWeight.Medium,
+    )
+
+    /**
+     * The default [TopTipsColors].
+     *
+     * @param backgroundStyle The solid background of the banner; selects between `couiColorCard`
+     *   (#FFFFFFFF light / #1AFFFFFF night) and `couiColorContainer4` (#0A000000 light /
+     *   #1AFFFFFF night).
+     * @param containerColor The fill of the banner.
+     * @param contentColor The colour of the message, `?attr/couiColorLabelSecondary`
+     *   (#8A000000 / #8AFFFFFF).
+     * @param actionColor The colour of the button labels, `?attr/couiColorPrimaryText`.
+     * @param closeButtonColor The fill of the close circle, `?attr/couiColorControls`
+     *   (#29000000 / #40FFFFFF).
+     * @param closeIconColor The colour of the cross inside the close circle, white in
+     *   `coui_ic_toptips_close`.
+     * @param titleColor The colour of the title, `?attr/couiColorLabelPrimary`
+     *   (#E6000000 / #E6FFFFFF).
      */
     @Composable
     fun topTipsColors(
-        containerColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) ContainerColorDark else ContainerColorLight,
+        backgroundStyle: TopTipsBackgroundStyle = TopTipsBackgroundStyle.Gray,
+        containerColor: Color = topTipsContainerColor(backgroundStyle),
         contentColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
         actionColor: Color = COUITheme.colorScheme.primary,
-        closeButtonColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) CloseButtonColorDark else CloseButtonColorLight,
+        closeButtonColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+            CLOSE_BUTTON_COLOR_DARK
+        } else {
+            CLOSE_BUTTON_COLOR_LIGHT
+        },
         closeIconColor: Color = Color.White,
-    ): TopTipsColors = remember(containerColor, contentColor, actionColor, closeButtonColor, closeIconColor) {
+        titleColor: Color = COUITheme.colorScheme.onSurface,
+    ): TopTipsColors = remember(
+        containerColor,
+        contentColor,
+        actionColor,
+        closeButtonColor,
+        closeIconColor,
+        titleColor,
+    ) {
         TopTipsColors(
             containerColor = containerColor,
             contentColor = contentColor,
             actionColor = actionColor,
             closeButtonColor = closeButtonColor,
             closeIconColor = closeIconColor,
+            titleColor = titleColor,
         )
+    }
+
+    /**
+     * The solid fill `applySolidBackgroundColor` picks for a [TopTipsBackgroundStyle]:
+     * `couiColorCard` (#FFFFFFFF light / #1AFFFFFF night) for [TopTipsBackgroundStyle.White] and
+     * `couiColorContainer4` (#0A000000 light / #1AFFFFFF night) for
+     * [TopTipsBackgroundStyle.Gray].
+     */
+    @Composable
+    fun topTipsContainerColor(backgroundStyle: TopTipsBackgroundStyle): Color {
+        val dark = COUITheme.colorScheme.background.luminance() < 0.5f
+        return when (backgroundStyle) {
+            TopTipsBackgroundStyle.White -> if (dark) CARD_COLOR_DARK else CARD_COLOR_LIGHT
+            TopTipsBackgroundStyle.Gray -> if (dark) CONTAINER_COLOR_DARK else CONTAINER_COLOR_LIGHT
+        }
     }
 }
 
@@ -342,9 +726,10 @@ object TopTipsDefaults {
  *
  * @param containerColor The background color of the banner.
  * @param contentColor The color of the message.
- * @param actionColor The color of the action label.
+ * @param actionColor The color of the button labels.
  * @param closeButtonColor The fill color of the close button circle.
  * @param closeIconColor The color of the cross inside the close button.
+ * @param titleColor The color of the title.
  */
 @Immutable
 data class TopTipsColors(
@@ -353,64 +738,93 @@ data class TopTipsColors(
     val actionColor: Color,
     val closeButtonColor: Color,
     val closeIconColor: Color,
+    val titleColor: Color,
 )
 
-/** couiColorContainer4 in light themes (coui_color_container4 #0A000000). */
-private val ContainerColorLight = Color(0x0A000000)
+/** The single-line width of a label measured with [style], in pixels. */
+private fun TextMeasurer.labelWidthPx(text: String, style: TextStyle): Int = measure(
+    AnnotatedString(text),
+    style = style,
+    maxLines = 1,
+).size.width
 
-/** couiColorContainer4 in dark themes (coui_color_container4_dark #14FFFFFF). */
-private val ContainerColorDark = Color(0x14FFFFFF)
+/** `COUIDefaultTopTipsView.resolveTargetLayoutMode`, which only reads `mTopTipsStyle`. */
+private fun TopTipsStyle.layoutMode(): TopTipsLayoutMode = when (this) {
+    TopTipsStyle.Standard -> TopTipsLayoutMode.Default
+    TopTipsStyle.AiPayment -> TopTipsLayoutMode.AiPayment
+}
 
-/** couiColorControls in light themes (coui_color_controls #29000000). */
-private val CloseButtonColorLight = Color(0x29000000)
+/** `couiColorCard` in light themes (`coui_color_card` #FFFFFFFF). */
+private val CARD_COLOR_LIGHT = Color(0xFFFFFFFF)
 
-/** couiColorControls in dark themes (coui_color_controls_dark #40FFFFFF). */
-private val CloseButtonColorDark = Color(0x40FFFFFF)
+/** `couiColorCard` in dark themes (`coui_color_card` night #1AFFFFFF). */
+private val CARD_COLOR_DARK = Color(0x1AFFFFFF)
 
-/** The spacing between the message and the trailing element (COUI coui_toptips_view_btn_margin_right). */
-private val TitleTrailingSpacing = 8.dp
+/** `couiColorContainer4` in light themes (`coui_color_container4` #0A000000). */
+private val CONTAINER_COLOR_LIGHT = Color(0x0A000000)
 
-/** The end margin of the message in the multi-line layout (COUI coui_toptips_view_title_end_margin). */
-private val MultiTitleEndMargin = 18.dp
+/** `couiColorContainer4` in dark themes (`coui_color_container4` night #1AFFFFFF). */
+private val CONTAINER_COLOR_DARK = Color(0x1AFFFFFF)
 
-/** The spacing between the message and the action row in the multi-line layout (COUI coui_toptips_view_btn_top_margin). */
-private val ActionRowTopSpacing = 8.dp
+/** `couiColorControls` in light themes (`coui_color_controls` #29000000). */
+private val CLOSE_BUTTON_COLOR_LIGHT = Color(0x29000000)
 
-/** The bottom padding of the action row in the multi-line layout (COUI coui_toptips_view_multi_btn_text_bottom_margin). */
-private val MultiActionBottomPadding = 8.dp
+/** `couiColorControls` in dark themes (`coui_color_controls` night #40FFFFFF). */
+private val CLOSE_BUTTON_COLOR_DARK = Color(0x40FFFFFF)
 
-/** The minimum top padding of the start icon in the multi-line layout (COUI coui_toptips_view_multi_title_top_margin). */
-private val MultiIconTopPadding = 10.dp
+/** COUI `coui_toptips_view_icon_start_margin` (16dp), `mIconStartMargin`. */
+private val ICON_START_MARGIN = 16.dp
 
-/** The end margin of the action button (layout_marginEnd of the action view in coui_default_toptips.xml). */
-private val ActionEndMargin = 6.dp
+/** COUI `coui_toptips_view_title_icon_text_gap` (12dp), `mTitleIconTextGap`. */
+private val TITLE_ICON_TEXT_GAP = 12.dp
 
-/** The horizontal padding of the action press area (COUI text_ripple_bg_padding_horizontal). */
-private val ActionPaddingHorizontal = 12.dp
+/** COUI `coui_toptips_view_content_end_margin` (16dp), `mContentEndMargin`. */
+private val CONTENT_END_MARGIN = 16.dp
 
-/** The padding of the action press area (COUI text_ripple_bg_padding_horizontal/vertical). */
-private val ActionPadding = PaddingValues(horizontal = ActionPaddingHorizontal, vertical = 4.dp)
+/** COUI `coui_toptips_view_title_content_gap` (0dp), `mTitleContentGap`. */
+private val TITLE_CONTENT_GAP = 0.dp
 
-/** The clearance kept between the message and the action label before wrapping (COUI coui_toptips_view_btn_margin). */
-private val ButtonClearance = 12.dp
+/** COUI `coui_toptips_view_text_to_btn_gap` (8dp), `mTextToBtnGap`. */
+private val TEXT_TO_BTN_GAP = 8.dp
 
-/** The radius of the close button circle (coui_ic_toptips_close: r=9 in a 24dp viewport). */
-private val CloseCircleRadius = 9.dp
+/** COUI `coui_toptips_view_btn_top_margin` (8dp), `mBtnTopMargin`. */
+private val BTN_TOP_MARGIN = 8.dp
+
+/** COUI `coui_toptips_view_multi_btn_text_bottom_margin` (12dp), `mMultiBtnBottomMargin`. */
+private val MULTI_BTN_BOTTOM_MARGIN = 12.dp
+
+/** COUI `coui_toptips_ai_payment_btn_min_width` (144dp), `mDualBtnMinWidth`. */
+private val AI_PAYMENT_BTN_MIN_WIDTH = 144.dp
+
+/** COUI `coui_toptips_ai_payment_btn_min_height` (32dp), `mDualBtnMinHeight`. */
+private val AI_PAYMENT_BTN_MIN_HEIGHT = 32.dp
+
+/** COUI `coui_toptips_ai_payment_btn_horizontal_padding` (12dp), `mHorButHorPadding`. */
+private val AI_PAYMENT_BTN_HORIZONTAL_PADDING = 12.dp
+
+/** COUI `text_ripple_bg_padding_horizontal` (12dp), the press area of a text button. */
+private val ACTION_PADDING_HORIZONTAL = 12.dp
+
+/** COUI `text_ripple_bg_padding_vertical` (4dp), the press area of a text button. */
+private val ACTION_PADDING_VERTICAL = 4.dp
+
+/** The radius of the close circle (`coui_ic_toptips_close`: `r=9` in a 24dp viewport). */
+private val CLOSE_CIRCLE_RADIUS = 9.dp
 
 /**
- * Half the reach of each cross arm endpoint in coui_ic_toptips_close: the rounded stroke spans
+ * Half the reach of each cross arm in `coui_ic_toptips_close`: the rounded stroke spans
  * 8.464..15.536, so with the 1.6dp stroke caps the line endpoints sit 2.736dp from the center.
  */
-private val CloseCrossArm = 2.736.dp
+private val CLOSE_CROSS_ARM = 2.736.dp
 
-/** The stroke width of the cross in coui_ic_toptips_close. */
-private val CloseCrossStrokeWidth = 1.6.dp
+/** The stroke width of the cross in `coui_ic_toptips_close`. */
+private val CLOSE_CROSS_STROKE_WIDTH = 1.6.dp
 
-/** COUICustomTopTips show/dismiss animation duration (ObjectAnimator setDuration(250)). */
-private val ShowDismissDurationMillis = 250
+/** `COUICustomTopTips.showWithAnim` / `dismissWithAnim`: `setDuration(250)`. */
+private const val SHOW_DISMISS_DURATION_MILLIS = 250
 
 /**
- * The show/dismiss easing: Android's default AccelerateDecelerateInterpolator, closely matched
- * by the symmetric ease-in-out cubic bezier.
+ * The show/dismiss easing: Android's default `AccelerateDecelerateInterpolator`, closely matched by
+ * the symmetric ease-in-out cubic bezier.
  */
-private val ShowDismissEasing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+private val SHOW_DISMISS_EASING = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
