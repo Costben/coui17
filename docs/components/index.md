@@ -66,6 +66,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [Stepper](../components/stepper)                           | Increment / decrement integer control      | Quantity adjustment, value tuning     |
 | [ProgressIndicator](../components/progressindicator)       | Displays operation progress status         | Loading, progress display             |
 | [SearchViewAnimate](../components/searchviewanimate)       | Magnetic search bar between icon and input | Search entry, collapsing search bars  |
+| [HintAnimationLayout](../components/hintanimationlayout)   | Rotating search-bar hint text              | Search bar hints, placeholders        |
 | [LoadProgressButton](../components/loadprogressbutton)     | Download button with a load state machine  | Install, download, pause, retry       |
 | [PopupMenuRotation](../components/popupmenurotation)       | Rotated popup menu geometry                | Overflow menus in landscape layouts   |
 | [ClickSelectMenu](../components/clickselectmenu)           | Menu placed at the touch point             | Row menus that open under the finger  |

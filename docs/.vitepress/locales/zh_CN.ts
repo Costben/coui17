@@ -135,6 +135,7 @@ export default defineConfig({
                         { text: "ColorPicker", link: "/zh_CN/components/colorpicker" },
                         { text: "ColorSwatchPicker", link: "/zh_CN/components/colorswatchpicker" },
                         { text: "SearchViewAnimate", link: "/zh_CN/components/searchviewanimate" },
+                        { text: "HintAnimationLayout", link: "/zh_CN/components/hintanimationlayout" },
                         { text: "LoadProgressButton", link: "/zh_CN/components/loadprogressbutton" },
                         { text: "PopupMenuRotation", link: "/zh_CN/components/popupmenurotation" },
                         { text: "ClickSelectMenu", link: "/zh_CN/components/clickselectmenu" },

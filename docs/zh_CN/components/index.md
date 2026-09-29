@@ -66,6 +66,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [Stepper](../components/stepper)                           | 加减调节整数值的控件   | 数量调整、数值微调   |
 | [ProgressIndicator](../components/progressindicator)       | 展示操作进度状态       | 加载中、进度展示     |
 | [SearchViewAnimate](../components/searchviewanimate)       | 图标与输入框间磁吸切换的搜索栏 | 搜索入口、可折叠搜索栏 |
+| [HintAnimationLayout](../components/hintanimationlayout)   | 轮播搜索栏提示文案 | 搜索栏提示、占位文案 |
 | [LoadProgressButton](../components/loadprogressbutton)     | 带加载状态机的下载按钮 | 安装、下载、暂停、重试 |
 | [PopupMenuRotation](../components/popupmenurotation)       | 旋转弹窗菜单的几何计算 | 横屏布局下的溢出菜单 |
 | [ClickSelectMenu](../components/clickselectmenu)           | 在点击处弹出的选择菜单 | 在手指处弹出的行内菜单 |
