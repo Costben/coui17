@@ -41,6 +41,7 @@ import component.buttonSection
 import component.cardSection
 import component.checkboxSection
 import component.chipSection
+import component.chipTabSection
 import component.colorPickerSection
 import component.dateTimePickerSection
 import component.dialogSection
@@ -388,6 +389,7 @@ fun MainPage(
                     colorPickerSection()
                     cardSection()
                     chipSection()
+                    chipTabSection()
                     badgeSection()
                     preferenceExtrasSection()
                     listPreferenceSection()
