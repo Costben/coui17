@@ -32,9 +32,15 @@ object SquircleDefaults {
 
 /**
  * Cubic Bézier handle ratio used by [addSquircleRect]. Must stay in lock-step with the value the
- * pre-baked SDF was generated for so path-based and shader-backed silhouettes line up.
+ * pre-baked SDF was generated for (`coui-squircle/build.gradle.kts` `bakeSquircleSdf`) so
+ * path-based and shader-backed silhouettes line up.
+ *
+ * Tuned to ColorOS 17's default corner weight 2.5 (`RoundCornerUtil.WEIGHT_16_1_NORMAL`), whose
+ * corner curve is the hwui "G2" Lp superellipse `|x|^n + |y|^n = R^n` with `n = weight`. One cubic
+ * cannot equal an Lp ball, so this matches its 45° inset instead: `n = 2.5` needs `h / T = 0.3123`,
+ * i.e. `1 - 0.3123 = 0.6877`. The retired `0.643` matched `n ≈ 2.31` (5–7% flatter than target).
  */
-internal const val SQUIRCLE_CONTROL = 0.643f
+internal const val SQUIRCLE_CONTROL = 0.6877f
 
 /**
  * Appends a squircle-shaped rounded rectangle path. Use this for path-based effects that can't

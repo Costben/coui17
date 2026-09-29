@@ -148,7 +148,8 @@ abstract class BakeSquircleSdfTask : DefaultTask() {
 
 val bakeSquircleSdf by tasks.registering(BakeSquircleSdfTask::class) {
     description = "bakeSquircleSdf"
-    control.set(0.643f)
+    // Must equal SquirclePath.kt SQUIRCLE_CONTROL -- ColorOS 17 smooth weight 2.5 (Lp exponent n = 2.5).
+    control.set(0.6877f)
     size.set(512)
     halfRange.set(0.125f)
     bezierSamples.set(64)
