@@ -123,6 +123,9 @@ export default defineConfig({
                         { text: "ColorPalette", link: "/components/colorpalette" },
                         { text: "ColorPicker", link: "/components/colorpicker" },
                         { text: "ColorSwatchPicker", link: "/components/colorswatchpicker" },
+                        { text: "SearchViewAnimate", link: "/components/searchviewanimate" },
+                        { text: "LoadProgressButton", link: "/components/loadprogressbutton" },
+                        { text: "PopupMenuRotation", link: "/components/popupmenurotation" },
                     ],
                 },
                 {
