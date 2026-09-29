@@ -56,6 +56,7 @@ import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
 import io.github.suqi8.coui.kmp.basic.LinearProgressIndicator
 import io.github.suqi8.coui.kmp.basic.LoadProgressState
+import io.github.suqi8.coui.kmp.basic.LunarDatePicker
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SearchBar
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -85,6 +86,7 @@ import io.github.suqi8.coui.kmp.icon.extended.Update
 import io.github.suqi8.coui.kmp.icon.extended.UploadCloud
 import io.github.suqi8.coui.kmp.icon.extended.VolumeOff
 import io.github.suqi8.coui.kmp.icon.extended.VolumeUp
+import io.github.suqi8.coui.kmp.icon.extended.WorldClock
 import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.preference.AppInfoPreference
@@ -111,11 +113,13 @@ import io.github.suqi8.coui.kmp.preference.StepperPreference
 import io.github.suqi8.coui.kmp.preference.SwitchPreference
 import io.github.suqi8.coui.kmp.preference.SwitchWithDividerPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.LunarUtil
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 private val IconBlue = Color(0xFF3B82F6)
 private val IconGreen = Color(0xFF22C55E)
@@ -171,6 +175,21 @@ internal fun SettingsScreen(
     var lockScreenNotify by remember { mutableStateOf(true) }
     var notifyDetail by remember { mutableStateOf(true) }
     var showAboutDialog by remember { mutableStateOf(false) }
+
+    // ColorOS 17 keeps 日期和时间 under 系统与更新. The picker is lunar (COUILunarDatePicker), so the
+    // initial value is today's lunar date, converted from the Gregorian calendar.
+    var showDateTimeDialog by remember { mutableStateOf(false) }
+    var lunarDate by remember {
+        mutableStateOf(
+            Calendar.getInstance().let { calendar ->
+                LunarUtil.toLunarDate(
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH) + 1,
+                    calendar.get(Calendar.DAY_OF_MONTH),
+                )
+            },
+        )
+    }
 
     // `COUILoadingPreferenceCategory` is a transient state on the device too: the settings app shows
     // it while it re-reads the battery stats and swaps the widget out when the read returns.
@@ -557,6 +576,30 @@ internal fun SettingsScreen(
                 }
             }
 
+            item(key = "systemUpdate") {
+                // ColorOS 17 places 日期和时间 under 系统与更新, above 关于本机; the row keeps the same
+                // 52dp minimum height and card pattern as its neighbours.
+                SmallTitle(text = "系统与更新")
+                SettingsCard {
+                    ArrowPreference(
+                        title = "日期和时间",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = {
+                            InlineValue(
+                                LunarUtil.lunarDateString(
+                                    lunarDate.year,
+                                    lunarDate.month,
+                                    lunarDate.day,
+                                    lunarDate.isLeapMonth,
+                                ),
+                            )
+                        },
+                        startAction = { SettingIcon(COUIIcons.WorldClock, IconTeal) },
+                        onClick = { showDateTimeDialog = true },
+                    )
+                }
+            }
+
             item(key = "about") {
                 SmallTitle(text = "关于本机")
                 AppInfoPreference(
@@ -757,6 +800,26 @@ internal fun SettingsScreen(
             InfoLine("Android 版本", "17 (API 37)")
             InfoLine("应用版本", "COUI 17")
         }
+    }
+
+    // 日期和时间 hosts the lunar picker in a COUI dialog, matching ColorOS's
+    // 系统与更新 > 日期和时间 entry.
+    OverlayDialog(
+        show = showDateTimeDialog,
+        title = "日期和时间",
+        summary = LunarUtil.lunarDateString(
+            lunarDate.year,
+            lunarDate.month,
+            lunarDate.day,
+            lunarDate.isLeapMonth,
+        ),
+        onDismissRequest = { showDateTimeDialog = false },
+    ) {
+        LunarDatePicker(
+            value = lunarDate,
+            onValueChange = { lunarDate = it },
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
     }
 }
 

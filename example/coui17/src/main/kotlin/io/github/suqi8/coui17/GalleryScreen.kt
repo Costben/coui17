@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
+import io.github.suqi8.coui.kmp.basic.ListDetailView
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.SideNavigationBar
 import io.github.suqi8.coui.kmp.basic.SidePaneLayout
@@ -80,7 +81,7 @@ import io.github.suqi8.coui.kmp.theme.ThemeController
 /**
  * COUI 17 — the ColorOS Gallery album page.
  *
- * Two pages, each giving one of the side panel families a position in a running app:
+ * Three pages, each giving one of the side panel families a position in a running app:
  *
  * - the album list is the page [SideNavigationBar] (G-3) draws its drawer over. The Gallery ships a
  *   real subclass of the device class — `ColorOS.app.sidepane.ui.SidePaneLayout
@@ -90,6 +91,10 @@ import io.github.suqi8.coui.kmp.theme.ThemeController
  *   the same album list, and the fold button that `COUISidePaneLayout#createIconView` builds is the
  *   only control it adds. No studied app references `COUISidePaneLayout`, so this page is a
  *   reconstruction from the device class rather than a copy of a Gallery screen.
+ * - the album → photo-detail navigation is hosted by [ListDetailView] (G-6). ColorOS's
+ *   `COUIListDetailView` is the responsive list-detail container, so this is the position it exists
+ *   for: on the phone-width window it shows one pane at a time, and the two-pane split appears once
+ *   the window reaches the COUI 600dp `WindowTotalSizeClass.Compact` boundary.
  */
 @Composable
 fun GalleryApp() {
@@ -114,10 +119,35 @@ private fun GalleryPages() {
     var openAlbum by remember { mutableStateOf<GalleryAlbum?>(null) }
     val album = openAlbum
 
-    if (album == null) {
-        AlbumListPage(onOpenAlbum = { openAlbum = it })
-    } else {
-        AlbumDetailPage(album = album, onBack = { openAlbum = null })
+    ListDetailView(
+        detailVisible = album != null,
+        mainContent = { AlbumListPage(onOpenAlbum = { openAlbum = it }) },
+        detailContent = {
+            if (album != null) {
+                AlbumDetailPage(album = album, onBack = { openAlbum = null })
+            }
+        },
+        emptyPageContent = { EmptyAlbumPane() },
+    )
+}
+
+/**
+ * The placeholder [ListDetailView] shows in the detail area in split mode before an album is picked,
+ * standing in for the device's `mEmptyPageFragment` content.
+ */
+@Composable
+private fun EmptyAlbumPane() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(COUITheme.colorScheme.surface),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "选择相册查看照片",
+            fontSize = 14.sp,
+            color = COUITheme.colorScheme.onSurfaceSecondary,
+        )
     }
 }
 
