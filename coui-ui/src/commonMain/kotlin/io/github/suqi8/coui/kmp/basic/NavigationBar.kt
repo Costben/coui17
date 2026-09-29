@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -57,6 +58,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.Platform
@@ -66,7 +69,11 @@ import io.github.suqi8.coui.kmp.utils.platform
  * A [NavigationBar] that with 2 to 5 items.
  *
  * @param modifier The modifier to be applied to the [NavigationBar].
- * @param color The color of the [NavigationBar]. COUI `coui_tab_navigation_view_bg`.
+ * @param color The color of the [NavigationBar]. COUI `coui_tab_navigation_view_bg`, whose solid fill is
+ * `?attr/couiColorBar` (`coui_color_bar`). When a [backdrop] is available the bar draws it blurred
+ * with [color] laid over at [GlassDefaults.ContainerAlpha]; otherwise it keeps the opaque fill.
+ * @param backdrop The content blurred behind the bar, defaulting to [LocalBackdrop]. `null` keeps
+ * the bar opaque.
  * @param showDivider Whether to show the divider line between the [NavigationBar] and the content.
  * @param defaultWindowInsetsPadding whether to apply default window insets padding to the [NavigationBar].
  * @param mode The mode for displaying items in the [NavigationBar]. It can show icons, text or both.
@@ -75,7 +82,8 @@ import io.github.suqi8.coui.kmp.utils.platform
 @Composable
 fun NavigationBar(
     modifier: Modifier = Modifier,
-    color: Color = COUITheme.colorScheme.background,
+    color: Color = COUITheme.colorScheme.bar,
+    backdrop: Backdrop? = LocalBackdrop.current,
     showDivider: Boolean = true,
     defaultWindowInsetsPadding: Boolean = true,
     mode: NavigationBarDisplayMode = NavigationBarDisplayMode.IconAndText,
@@ -92,7 +100,12 @@ fun NavigationBar(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(color),
+            .couiGlassSurface(
+                backdrop = backdrop,
+                shape = RectangleShape,
+                containerColor = color,
+                fallback = Modifier.background(color),
+            ),
     ) {
         if (showDivider) {
             // COUINavigationView.addCompatibilityTopDivider; HorizontalDivider defaults already match.

@@ -42,13 +42,16 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -59,9 +62,70 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastFirst
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.basic.TopAppBarState.Companion.Saver
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurDefaults
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.textureBlur
+import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
+/**
+ * The ColorOS 17 app bar blur tokens, from `com.coui.appcompat.toolbar.AppBarBlurParams` /
+ * `AppBarBlurHelper` (`coui-support-toolbar_release`).
+ *
+ * `AppBarBlurHelper` gives a `COUIAppBarLayout` the framework's top-bar material while the OS
+ * supports it, and leaves the plain `couiColorSurface` fill in place otherwise. It knows two
+ * shapes: a **uniform** blur, and a **scroll-driven gradient** blur whose radius ramps from
+ * `startBlurRadius` to `endBlurRadius` across a three-stop alpha ramp. Only the uniform shape is
+ * reproduced here — the gradient band's geometry is still unresolved, see the audit.
+ */
+object AppBarGlassDefaults {
+
+    /** `AppBarBlurParams.normalBlurRadiusPx`. In px, because that is what the framework consumes. */
+    val BlurRadiusPx = 50f
+
+    /** `AppBarBlurParams.normalBackgroundAlphaFraction`, light theme. */
+    val BackgroundAlpha = 0.8f
+
+    /** `AppBarBlurHelper.NORMAL_BLUR_DARK_ALPHA`. */
+    val BackgroundAlphaDark = 0.6f
+
+    /** `AppBarBlurParams.startBlurRadius`, the gradient shape's full-strength radius. In px. */
+    val GradientBlurRadiusPx = 30f
+
+    /** `AppBarBlurParams.gradientBlurSpeed`. */
+    val GradientBlurSpeed = 3f
+}
+
+/**
+ * Paints the app bar surface: the blurred backdrop with [color] laid over at the ColorOS background
+ * alpha when a backdrop is available, and the plain [color] fill otherwise.
+ *
+ * [AppBarGlassDefaults.BlurRadiusPx] is converted through the current density so the physical radius
+ * stays put across densities, the way the framework's px radius does.
+ */
+@Composable
+private fun Modifier.appBarSurface(color: Color): Modifier {
+    val backdrop: Backdrop? = LocalBackdrop.current
+    // A fully transparent surface means the caller already paints the material behind the bar.
+    if (backdrop == null || color.alpha == 0f || !isRuntimeShaderSupported()) return background(color)
+    val alpha = if (color.luminance() < 0.5f) {
+        AppBarGlassDefaults.BackgroundAlphaDark
+    } else {
+        AppBarGlassDefaults.BackgroundAlpha
+    }
+    return textureBlur(
+        backdrop = backdrop,
+        shape = RectangleShape,
+        blurRadius = with(LocalDensity.current) { AppBarGlassDefaults.BlurRadiusPx.toDp().value },
+        colors = BlurDefaults.blurColors(
+            blendColors = listOf(BlendColorEntry(color = color.copy(alpha = alpha))),
+        ),
+    )
+}
 
 /**
  * A [TopAppBar] with COUI style that can collapse and expand based on the
@@ -119,7 +183,10 @@ fun TopAppBar(
     val actionsRow =
         @Composable {
             Row(
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.spacedBy(
+                    TopAppBarDefaults.ActionMenuItemSpacing,
+                    Alignment.End,
+                ),
                 verticalAlignment = Alignment.CenterVertically,
                 content = actions,
             )
@@ -206,7 +273,10 @@ fun SmallTopAppBar(
     val actionsRow =
         @Composable {
             Row(
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.spacedBy(
+                    TopAppBarDefaults.ActionMenuItemSpacing,
+                    Alignment.End,
+                ),
                 verticalAlignment = Alignment.CenterVertically,
                 content = actions,
             )
@@ -445,15 +515,21 @@ object TopAppBarDefaults {
 
     /**
      * The horizontal gap between the navigation icon and the collapsed title.
-     * COUI `coui_toolbar_gap_between_navigation_and_title` (4dp).
+     * COUI `coui_toolbar_gap_between_navigation_and_title`, 4dp in `values/` and 10dp in `values-v37/`.
      */
-    val NavigationIconGap = 4.dp
+    val NavigationIconGap = 10.dp
 
     /**
      * The horizontal gap between the title and the action icons.
-     * COUI `coui_toolbar_gap_before_menu` (8dp).
+     * COUI `coui_toolbar_gap_before_menu` (4dp); the token has no `values-v37` override.
      */
-    val ActionIconGap = 8.dp
+    val ActionIconGap = 4.dp
+
+    /**
+     * The spacing between action menu items.
+     * COUI `coui_actionbar_menuitemview_item_spacing`, 0dp in `values/` and 10dp in `values-v37/`.
+     */
+    val ActionMenuItemSpacing = 10.dp
 }
 
 @Stable
@@ -789,7 +865,7 @@ private fun TopAppBarLayout(
             }
         },
         modifier = modifier
-            .background(color)
+            .appBarSurface(color)
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier
@@ -1083,7 +1159,7 @@ private fun SmallTopAppBarLayout(
             }
         },
         modifier = modifier
-            .background(color)
+            .appBarSurface(color)
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier

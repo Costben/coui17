@@ -52,6 +52,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(projects.couiBlur)
             api(projects.couiCore)
             api(projects.couiSquircle)
             api(libs.jetbrains.compose.foundation)
@@ -60,6 +61,15 @@ kotlin {
             implementation(libs.jetbrains.compose.window.size)
 
             implementation(libs.materialKolor.utilities) // Material Color for Multiplatform
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+        val desktopTest by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation(libs.jetbrains.compose.ui.test)
+            }
         }
     }
 }
