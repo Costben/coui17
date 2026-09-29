@@ -103,6 +103,21 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [RecommendedPreference](../components/recommendedpreference)   | 推荐相关设置的圆角卡片                                                             | 相关设置推荐           |
 | [SliderPreference](../components/sliderpreference)             | 基于 BasicComponent 的滑块组件                                                     | 数值调节、音量/亮度    |
 | [RangeSliderPreference](../components/rangesliderpreference)   | 基于 BasicComponent 的范围滑块组件                                                 | 范围选择、价格筛选     |
+| [StepperPreference](../components/stepperpreference)           | 基于 BasicComponent 的步进器组件                                                   | 数值型设置、字号       |
+| [EditTextPreference](../components/edittextpreference)         | 在底部面板中编辑取值的设置项（需在 `Scaffold` 中使用）                             | 文本设置、设备名称     |
+| [InputPreference](../components/inputpreference)               | 就地编辑输入框的卡片行                                                             | 文本设置、名称         |
+| [SpannablePreference](../components/spannablepreference)       | 摘要为带可点击 span 的 `AnnotatedString` 的设置项                                  | 法律条款、链接         |
+| [StatusSwitchingPreference](../components/statusswitchingpreference) | 尾部挂件可在文本与图标间切换的设置项                                         | 状态展示               |
+| [LoadInstallProgressPreference](../components/loadinstallprogresspreference) | 尾部带下载/安装进度按钮的设置项                                       | 系统更新、下载         |
+| [MarkWithDividerPreference](../components/markwithdividerpreference) | 用细线与标题分隔标记的设置项                                                  | 互斥选项组             |
+| [CheckBoxWithDividerPreference](../components/checkboxwithdividerpreference) | 用细线与标题分隔复选框的设置项                                        | 多选组                 |
+| [SwitchWithDividerPreference](../components/switchwithdividerpreference) | 用细线与标题分隔开关的设置项                                              | 开关组                 |
+| [LoadingPreferenceCategory](../components/loadingpreferencecategory) | 尾部带加载指示器的分组标题                                                  | 扫描中、加载中的分组   |
+| [CheckBoxPreferenceCategory](../components/checkboxpreferencecategory) | 尾部带复选框的分组标题                                                    | 分组全选               |
+| [PagerHeaderPreference](../components/pagerheaderpreference)   | 页面开头的说明文字                                                                 | 页面表头               |
+| [PagerFooterPreference](../components/pagerfooterpreference)   | 页面结尾的说明文字（支持可点击 span）                                              | 页面脚注、法律文本     |
+| [AppInfoPreference](../components/appinfopreference)           | 关于页顶部的图标 + 应用名 + 版本信息头                                              | 关于页面               |
+| [BottomPreference](../components/bottompreference)             | 设置列表结尾的不可见底部占位                                                       | 列表底部留白           |
 | [OverlayListPopup](../components/overlaylistpopup)             | 基于 BasicComponent 的列表弹窗组件（使用 COUIPopupUtils，需在 `Scaffold` 中使用） | 选项选择、功能列表     |
 | [OverlayCascadingListPopup](../components/overlaycascadinglistpopup) | 二级级联列表弹窗组件（使用 COUIPopupUtils，需在 `Scaffold` 中使用）               | 子菜单、分组动作面板   |
 | [OverlayDropdownPreference](../components/overlaydropdownpreference) | 基于 BasicComponent 的下拉选择器组件（使用 COUIPopupUtils，需在 `Scaffold` 中使用） | 选项选择、功能列表     |

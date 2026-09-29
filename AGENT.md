@@ -242,3 +242,31 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 - 逆向工作区统一放 `D:\AndroidStudioProjects\jadx\work\<package_name>\`，结论写进该目录 `notes.md`。
 - 写 / 改组件仍遵守 `CLAUDE.md` 的 API 约定、性能约束、`@Immutable`/`@Stable` 规则。
 - 与用户用中文交流、用中文输出 Plan；生成的代码（含注释 / KDoc）保持英文。
+
+## 12. COUI preference 组件（ColorOS 17 移植，2026-09-30）
+
+`coui-preference/src/commonMain/kotlin/io/github/suqi8/coui/kmp/preference/` 本轮新增 15 个组件。
+逐类裁决、设备侧证据与有意省略项见 `docs/coui-coloros17-component-coverage.md` §3 的 G-9 / G-10，
+每项用法见 `docs/components/<名称小写>.md` 与 `docs/zh_CN/components/<名称小写>.md`，
+示例落位见 `example/coui17/src/main/kotlin/io/github/suqi8/coui17/SettingsScreen.kt`。
+
+| 组件 | 说明 |
+| :--- | :--- |
+| `StepperPreference` | 标题 + 数值步进器行（包装 `basic/Stepper.kt`），`MinValue` / `MaxValue` / `Step` 在 `StepperPreferenceDefaults` |
+| `EditTextPreference` | 点击后从底部面板输入文本的行（`TextField` + 取消 / 确认按钮栏） |
+| `InputPreference` | 行内嵌输入框（`TextField(backgroundMode = Line)`），可选字数上限与清除按钮 |
+| `StatusSwitchingPreference` | 右侧状态文本 / 小图标的行（`StatusSwitchingContent.Text` / `.Icon`），可配 `bottomAction` |
+| `SpannablePreference` | 富文本摘要行（`AnnotatedString`，可点链接），标题可有可无 |
+| `BottomPreference` | 列表尾部留白（32dp `Spacer`） |
+| `MarkWithDividerPreference` | 对勾单选行 + 1dp×22dp 竖分隔线 |
+| `CheckBoxWithDividerPreference` | 复选行 + 竖分隔线 |
+| `SwitchWithDividerPreference` | 开关行 + 竖分隔线 |
+| `LoadingPreferenceCategory` | 分类标题 + 右侧加载指示器与文案 |
+| `CheckBoxPreferenceCategory` | 分类标题 + 右侧三态 `Checkbox` |
+| `LoadInstallProgressPreference` | 按钮式下载 / 安装进度行（包装 `basic/InstallLoadProgress.kt`） |
+| `PagerHeaderPreference` | 页首说明行（32dp 水平内边距、12sp，可选标题） |
+| `PagerFooterPreference` | 页脚说明行（`AnnotatedString` 摘要，默认 24dp 底边距） |
+| `AppInfoPreference` | 「关于本机」应用信息块（squircle 图标 60dp / 名称 20sp / 版本 12sp） |
+
+共用内部件：`internal/CategoryHeader.kt`（`SmallTitle` + 尾部 slot，供两个 `*Category` 复用）、
+`internal/PreferenceWidgetDivider.kt`（`*WithDivider` 共用的竖线）。

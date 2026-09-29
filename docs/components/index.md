@@ -103,6 +103,21 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [RecommendedPreference](../components/recommendedpreference)   | Rounded card recommending related settings                                               | Related settings recommendations       |
 | [SliderPreference](../components/sliderpreference)             | Slider component based on BasicComponent                                                 | Value adjustment, volume/brightness    |
 | [RangeSliderPreference](../components/rangesliderpreference)   | Range slider component based on BasicComponent                                           | Range selection, price filter          |
+| [StepperPreference](../components/stepperpreference)           | Stepper component based on BasicComponent                                                | Numeric settings, font size            |
+| [EditTextPreference](../components/edittextpreference)         | Preference row editing its value in a bottom sheet (requires `Scaffold`)                 | Text settings, device name             |
+| [InputPreference](../components/inputpreference)               | Card row whose input field is edited in place                                            | Text settings, device name             |
+| [SpannablePreference](../components/spannablepreference)       | Preference row whose summary is an `AnnotatedString` with clickable spans                 | Legal notices, links                   |
+| [StatusSwitchingPreference](../components/statusswitchingpreference) | Preference row whose trailing widget switches between text and icon               | Status readouts                        |
+| [LoadInstallProgressPreference](../components/loadinstallprogresspreference) | Preference row with a download/install progress button                      | System update, downloads               |
+| [MarkWithDividerPreference](../components/markwithdividerpreference) | Mark preference row separated from the title by a divider                          | Exclusive option groups                |
+| [CheckBoxWithDividerPreference](../components/checkboxwithdividerpreference) | Checkbox preference row separated from the title by a divider              | Multi-select groups                    |
+| [SwitchWithDividerPreference](../components/switchwithdividerpreference) | Switch preference row separated from the title by a divider                  | Switch groups                          |
+| [LoadingPreferenceCategory](../components/loadingpreferencecategory) | Category header with a loading indicator                                          | Scanning, loading groups               |
+| [CheckBoxPreferenceCategory](../components/checkboxpreferencecategory) | Category header with a checkbox                                                  | Group select-all                       |
+| [PagerHeaderPreference](../components/pagerheaderpreference)   | Page-opening explanatory note                                                            | Page headers                           |
+| [PagerFooterPreference](../components/pagerfooterpreference)   | Page-closing note with clickable spans                                                   | Page footers, legal text               |
+| [AppInfoPreference](../components/appinfopreference)           | About-page header with icon, app name and version                                        | About pages                            |
+| [BottomPreference](../components/bottompreference)             | Invisible bottom spacer for a settings list                                              | List bottom padding                    |
 | [OverlayListPopup](../components/overlaylistpopup)             | List popup component based on BasicComponent (uses COUIPopupUtils; requires `Scaffold`) | Option selection, feature list         |
 | [OverlayCascadingListPopup](../components/overlaycascadinglistpopup) | Two-level cascading list popup (uses COUIPopupUtils; requires `Scaffold`)               | Submenus, grouped action panels        |
 | [OverlayDropdownPreference](../components/overlaydropdownpreference) | Dropdown selector based on BasicComponent (uses COUIPopupUtils; requires `Scaffold`)    | Option selection, feature list         |
