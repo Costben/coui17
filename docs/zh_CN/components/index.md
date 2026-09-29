@@ -89,6 +89,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [ColorPalette](../components/colorpalette)                 | 网格调色盘（含透明度） | 主题设置、颜色选择   |
 | [ColorPicker](../components/colorpicker)                   | 选择颜色的控件         | 主题设置、颜色选择   |
 | [ColorSwatchPicker](../components/colorswatchpicker)       | 圆点色板选择器（选中描边环） | 主题设置、颜色选择   |
+| [GridSpringChain](../components/gridspringchain)           | 网格按行错峰的弹簧链越界效果 | 相册网格、磁贴网格   |
 
 ## 扩展组件
 
@@ -103,6 +104,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [ButtonPreference](../components/buttonpreference)             | 尾部带小型按钮的设置项                                                             | 设置列表内联操作       |
 | [ListPreference](../components/listpreference)                 | 打开底部选择面板的设置项（需在 `Scaffold` 中使用）                                 | 单选 / 多选设置项      |
 | [RecommendedPreference](../components/recommendedpreference)   | 推荐相关设置的圆角卡片                                                             | 相关设置推荐           |
+| [CardEntrancePreference](../components/cardentrancepreference) | 可点击跳转的入口卡片（小卡 / 大卡两套布局）                                        | 功能入口、页面入口     |
+| [CardInstructionPreference](../components/cardinstructionpreference) | 带插图、标题与描述的功能引导卡片                                            | 功能引导、使用说明     |
 | [SliderPreference](../components/sliderpreference)             | 基于 BasicComponent 的滑块组件                                                     | 数值调节、音量/亮度    |
 | [RangeSliderPreference](../components/rangesliderpreference)   | 基于 BasicComponent 的范围滑块组件                                                 | 范围选择、价格筛选     |
 | [StepperPreference](../components/stepperpreference)           | 基于 BasicComponent 的步进器组件                                                   | 数值型设置、字号       |

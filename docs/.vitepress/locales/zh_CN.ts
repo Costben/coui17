@@ -144,6 +144,7 @@ export default defineConfig({
                         { text: "InstallLoadProgress", link: "/zh_CN/components/installloadprogress" },
                         { text: "SideNavigationBar", link: "/zh_CN/components/sidenavigationbar" },
                         { text: "SidePaneLayout", link: "/zh_CN/components/sidepanelayout" },
+                        { text: "GridSpringChain", link: "/zh_CN/components/gridspringchain" },
                     ],
                 },
                 {
@@ -176,6 +177,8 @@ export default defineConfig({
                         { text: "ButtonPreference", link: "/zh_CN/components/buttonpreference" },
                         { text: "ListPreference", link: "/zh_CN/components/listpreference" },
                         { text: "RecommendedPreference", link: "/zh_CN/components/recommendedpreference" },
+                        { text: "CardEntrancePreference", link: "/zh_CN/components/cardentrancepreference" },
+                        { text: "CardInstructionPreference", link: "/zh_CN/components/cardinstructionpreference" },
                         { text: "OverlayListPopup", link: "/zh_CN/components/overlaylistpopup" },
                         { text: "OverlayCascadingListPopup", link: "/zh_CN/components/overlaycascadinglistpopup" },
                         { text: "OverlayDropdownPreference", link: "/zh_CN/components/overlaydropdownpreference" },

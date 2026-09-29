@@ -89,6 +89,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [ColorPalette](../components/colorpalette)                 | Grid palette with alpha slider             | Theme settings, color selection       |
 | [ColorPicker](../components/colorpicker)                   | Color selection control                    | Theme settings, color selection       |
 | [ColorSwatchPicker](../components/colorswatchpicker)       | Circular color swatch row with selection ring | Theme settings, color selection    |
+| [GridSpringChain](../components/gridspringchain)           | Per-row spring-chain overscroll for grids  | Album grids, tile grids               |
 
 ## Extended Components
 
@@ -103,6 +104,8 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [ButtonPreference](../components/buttonpreference)             | Preference row with a small inline button                                                | Inline actions in settings lists       |
 | [ListPreference](../components/listpreference)                 | Preference row opening a bottom-sheet choice panel (requires `Scaffold`)                 | Single / multiple choice settings      |
 | [RecommendedPreference](../components/recommendedpreference)   | Rounded card recommending related settings                                               | Related settings recommendations       |
+| [CardEntrancePreference](../components/cardentrancepreference) | Tappable card that opens another page (small / large layouts)                            | Feature entries, page entries          |
+| [CardInstructionPreference](../components/cardinstructionpreference) | Card that walks through a feature with an illustration, title and description      | Onboarding, feature instructions       |
 | [SliderPreference](../components/sliderpreference)             | Slider component based on BasicComponent                                                 | Value adjustment, volume/brightness    |
 | [RangeSliderPreference](../components/rangesliderpreference)   | Range slider component based on BasicComponent                                           | Range selection, price filter          |
 | [StepperPreference](../components/stepperpreference)           | Stepper component based on BasicComponent                                                | Numeric settings, font size            |

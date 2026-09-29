@@ -286,3 +286,20 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 | `COUIIcons.Basic.FoldPane` | `drawable/coui_pane_fold_normal` 的 1:1 移植（48×52 视口、1.4 圆头描边），供 `SidePaneLayout` 的折角按钮使用 |
 
 注意：`COUISidePaneLayout` 在被研究的 Gallery / Dialer 中**没有应用侧调用点**（只在库自身源码、`R.*` 生成类与 dex 二进制命中）；Gallery 的侧栏实为 `extends COUISideNavigationBar` 的子类。因此 `SideNavigationBar` 有设备实证调用点，`SidePaneLayout` 的演示为按设备类重建，非实测对齐。
+
+## 14. COUI 卡片 / 网格弹簧链组件（ColorOS 17 移植，2026-09-30）
+
+本轮在 `coui-ui/.../basic/` 新增 1 个网格越界组件，在 `coui-preference/.../preference/` 新增 2 个卡片组件。
+逐类裁决、设备侧证据与有意省略项见 `docs/coui-coloros17-component-coverage.md` §3 的 G-7 / G-8，
+每项用法见 `docs/components/<名称小写>.md` 与 `docs/zh_CN/components/<名称小写>.md`，
+示例落位见 `example/coui17/src/main/kotlin/io/github/suqi8/coui17/GalleryScreen.kt`。
+
+| 组件 | 说明 |
+| :--- | :--- |
+| `GridSpringChain` | 网格越界弹簧链：`Modifier.gridSpringChainOverscroll(state)` 加在网格上度量并阻尼越界量，`Modifier.gridSpringChainItem(state, row)` 把控制距离换算为按行位移。配 `GridSpringChainState` / `GridSpringChainTranslation` / `GridSpringChainDefaults` / `rememberGridSpringChainState`。复用既有 `utils/Overscroll.kt`（`SpringMath.obtainDampingDistance`）与 `utils/SpringUtils.kt`（`SpringEngine.runSettleAnimation`），未新写弹簧积分器 |
+| `CardEntrancePreference` | 可点击跳转的入口卡片，小卡（图标在上、12dp 圆角）/ 大卡（图标在左、16dp 圆角）两套布局。配 `CardEntranceType` / `CardEntranceTintIcon` / `CardEntrancePreferenceDefaults` / `CardEntranceColors` |
+| `CardInstructionPreference` | 功能引导卡片，Description（`HorizontalPager` + `PageIndicator` 轮播）/ Selector（一行单选）两态。配 `CardInstructionItem` / `CardInstructionType` / `CardInstructionPreferenceDefaults` / `CardInstructionColors` |
+
+常量来源（逐条回查设备资源，不臆造）：`GridSpringChain` 取 `COUIGridSpringChainScrollView`（`MAX_DISTANCE_FACTOR=0.25f` / `MAX_DISTANCE_RATIO=0.5f` / `OVER_SCROLL_FACTOR=0.3f`）、`COUIGridSpringChain`（默认位移 `(row + 1) * 0.1f * distance`、`MAIN_TENSION/MAIN_FRICTION=150f/10f`）、`COUISpringChain`（40/6、70/10）、`COUIChainDecorator`（`FACTOR=0.3f`、`DEFAULT_MARGIN_VERTICAL=24f`）；两张卡片取 `coui_component_card_entrance_{small,large}_bg.xml`（圆角 12dp / 16dp）、`coui_component_card_entrance_preference_type_{small,large}.xml`、`coui_component_card_instruction_bg.xml`（16dp）、`coui_component_card_instruction_preference.xml` 与 `dimens.xml` 的 `coui_component_card_instruction_*` 全组。
+
+未移植项：`springchain/` 的 7 个顶层类与 `api/` 3 个接口（`COUIGridSpringChainScrollView` / `COUIChainDecorator` / `COUIGridSpringChainItem` / `ICOUIGridSpringChainViewGroup` / `IChainItem` / `ICheckViewEdge` / `ISpringUpdateListener` 等）属 Android View 基础设施；`COUISpringChain` 的 tension/friction 无法一一映射到临界阻尼的 `SpringEngine`；`card/` 的 17 个类（`RecyclerView.ItemDecoration` / `SpanSizeLookup` / `Adapter` 体系、`COUIMutableSizeScrollView`、`BaseDisplayInfo` 等）属 RecyclerView 与 View 层基础设施，或库内已有等价覆盖。`CardEntrancePreferenceDefaults.IconSize = 32.dp` 是移植自选值（设备为 `wrap_content`，无 `coui_*` dimen），已在 KDoc 与文档注明；`GridSpringChainDefaults.ChainMarginVertical = 24f` 按设备原样保留为 px 值。
