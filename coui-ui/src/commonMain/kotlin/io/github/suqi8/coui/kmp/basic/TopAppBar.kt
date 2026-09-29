@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.TransformOrigin
@@ -52,8 +53,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
@@ -66,9 +69,13 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.ProgressiveBlur
+import io.github.suqi8.coui.kmp.blur.progressiveTextureBlur
 import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
+import io.github.suqi8.coui.kmp.utils.COUIWindowSizeClass
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -78,9 +85,9 @@ import kotlin.math.roundToInt
  *
  * `AppBarBlurHelper` gives a `COUIAppBarLayout` the framework's top-bar material while the OS
  * supports it, and leaves the plain `couiColorSurface` fill in place otherwise. It knows two
- * shapes: a **uniform** blur, and a **scroll-driven gradient** blur whose radius ramps from
- * `startBlurRadius` to `endBlurRadius` across a three-stop alpha ramp. Only the uniform shape is
- * reproduced here — the gradient band's geometry is still unresolved, see the audit.
+ * shapes: a **uniform** blur, and a **gradient** blur whose radius ramps from `startBlurRadius` to
+ * `endBlurRadius`. Both are reproduced here; the audit records the one piece of the gradient that
+ * stays inferred.
  */
 object AppBarGlassDefaults {
 
@@ -96,9 +103,40 @@ object AppBarGlassDefaults {
     /** `AppBarBlurParams.startBlurRadius`, the gradient shape's full-strength radius. In px. */
     val GradientBlurRadiusPx = 30f
 
-    /** `AppBarBlurParams.gradientBlurSpeed`. */
+    /** `AppBarBlurParams.endBlurRadius`, the radius at the far end of the gradient. In px. */
+    val GradientEndBlurRadiusPx = 0f
+
+    /**
+     * `AppBarBlurParams.gradientBlurSpeed`. The exponent of the gradient's blend curve — hwui's
+     * gradient-blur shader computes `mix(blurred, original, pow(1 - t, speed))` — not a band width.
+     */
     val GradientBlurSpeed = 3f
+
+    /**
+     * `AppBarBlurParams.gradientPos0` / `_1` / `_2`, the three stops of the gradient surface's alpha
+     * ramp, measured from the **bottom** edge (`GradientBackgroundDrawable` builds its
+     * `LinearGradient` bottom-to-top).
+     */
+    val GradientPos0 = 0f
+    val GradientPos1 = 0.4f
+    val GradientPos2 = 1f
+
+    /** `AppBarBlurParams.gradientAlpha0` / `_1` / `_2`, light theme, paired with the stops above. */
+    val GradientAlpha0 = 0f
+    val GradientAlpha1 = 0.7f
+    val GradientAlpha2 = 1f
+
+    /** `AppBarBlurHelper.GRADIENT_DARK_ALPHA`, the dark theme's top-edge alpha. */
+    val GradientAlphaDark = 0.4f
 }
+
+/**
+ * The gradient shape's full-strength radius. `RenderEffect.createGradientBlurEffect` blurs at
+ * `max(startBlurRadius, endBlurRadius)` and lets the blend curve do the ramping, so with the default
+ * parameters the whole shape rides one 30px radius.
+ */
+private val AppBarGradientBlurRadiusPx =
+    maxOf(AppBarGlassDefaults.GradientBlurRadiusPx, AppBarGlassDefaults.GradientEndBlurRadiusPx)
 
 /**
  * Paints the app bar surface: the blurred backdrop with [color] laid over at the ColorOS background
@@ -106,12 +144,29 @@ object AppBarGlassDefaults {
  *
  * [AppBarGlassDefaults.BlurRadiusPx] is converted through the current density so the physical radius
  * stays put across densities, the way the framework's px radius does.
+ *
+ * With [gradient] the surface follows the framework's *gradient* shape instead: a progressive blur
+ * at full strength along the top edge, and a vertical [color] ramp that reaches full transparency at
+ * the bottom edge. The ramp is painted even without a backdrop or a runtime shader — the framework's
+ * gradient lives in the app bar's own background drawable, not in the RenderEffect.
  */
 @Composable
-private fun Modifier.appBarSurface(color: Color): Modifier {
+private fun Modifier.appBarSurface(color: Color, gradient: Boolean = false): Modifier {
     val backdrop: Backdrop? = LocalBackdrop.current
     // A fully transparent surface means the caller already paints the material behind the bar.
-    if (backdrop == null || color.alpha == 0f || !isRuntimeShaderSupported()) return background(color)
+    if (color.alpha == 0f) return background(color)
+    if (gradient) {
+        val brush = appBarGradientBrush(color)
+        if (backdrop == null || !isRuntimeShaderSupported()) return background(brush)
+        return progressiveTextureBlur(
+            backdrop = backdrop,
+            shape = RectangleShape,
+            blurRadius = with(LocalDensity.current) { AppBarGradientBlurRadiusPx.toDp().value },
+            gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
+            colors = BlurDefaults.blurColors(),
+        ).background(brush)
+    }
+    if (backdrop == null || !isRuntimeShaderSupported()) return background(color)
     val alpha = if (color.luminance() < 0.5f) {
         AppBarGlassDefaults.BackgroundAlphaDark
     } else {
@@ -125,6 +180,36 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
             blendColors = listOf(BlendColorEntry(color = color.copy(alpha = alpha))),
         ),
     )
+}
+
+/**
+ * The gradient shape's colour ramp, from `GradientBackgroundDrawable`.
+ *
+ * The framework builds `LinearGradient(0f, height, 0f, 0f, colors, positions, CLAMP)` — bottom edge
+ * up to the top — with `colors[i] = alpha_i << 24 | (baseColor & 0xFFFFFF)`. Compose's
+ * [Brush.verticalGradient] runs the other way, so each stop is mirrored to `1 - position`; the
+ * positions and alphas themselves come from [AppBarGlassDefaults].
+ */
+@Composable
+private fun appBarGradientBrush(color: Color): Brush {
+    val dark = color.luminance() < 0.5f
+    return remember(color, dark) {
+        val top = 1f - AppBarGlassDefaults.GradientPos2
+        val middle = 1f - AppBarGlassDefaults.GradientPos1
+        val bottom = 1f - AppBarGlassDefaults.GradientPos0
+        if (dark) {
+            Brush.verticalGradient(
+                top to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
+                bottom to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            )
+        } else {
+            Brush.verticalGradient(
+                top to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
+                middle to color.copy(alpha = AppBarGlassDefaults.GradientAlpha1),
+                bottom to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            )
+        }
+    }
 }
 
 /**
@@ -155,6 +240,8 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
  * @param titlePadding The horizontal padding of the [TopAppBar]'s title & large title.
  * @param navigationIconPadding The start padding of the navigation icon.
  * @param actionIconPadding The end padding of the action icons.
+ * @param gradientGlass Whether to paint the ColorOS gradient-blur app bar material
+ *   (`AppBarBlurHelper`'s gradient shape) instead of the uniform one.
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -174,6 +261,7 @@ fun TopAppBar(
     defaultWindowInsetsPadding: Boolean = true,
     showDivider: Boolean = true,
     hideSubtitleOnCollapse: Boolean = true,
+    gradientGlass: Boolean = false,
     titlePadding: Dp = TopAppBarDefaults.TitlePadding,
     navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
     actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
@@ -215,6 +303,7 @@ fun TopAppBar(
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
         showDivider = showDivider,
         hideSubtitleOnCollapse = hideSubtitleOnCollapse,
+        gradientGlass = gradientGlass,
         bottomContent = bottomContent,
     )
 }
@@ -240,6 +329,17 @@ fun TopAppBar(
  * @param titlePadding The horizontal padding of the [SmallTopAppBar]'s title.
  * @param navigationIconPadding The start padding of the navigation icon.
  * @param actionIconPadding The end padding of the action icons.
+ * @param centerTitle Whether to use COUI's centred-title toolbar form
+ *   (`COUIToolbar.setIsTitleCenterStyle`). The title is centred between the icon slots, and the
+ *   three paddings above are replaced by [centerTitleMargin], exactly as `COUIToolbar` swaps its own
+ *   responsive padding for `toolbar_center_menu_padding_horizontal_*` in that mode.
+ * @param centerTitleMargin The horizontal margin reserved at each end by the centred title form.
+ *   Defaults to the `coui_appbar_title_expanded_margin_start_{compat,medium,expanded}` tier for the
+ *   current window width.
+ * @param segmentButton An optional segmented control (`COUIToolbar.setSegmentButtons`) slotted
+ *   between the navigation icon and the title. It is mutually exclusive with [centerTitle].
+ * @param gradientGlass Whether to paint the ColorOS gradient-blur app bar material
+ *   (`AppBarBlurHelper`'s gradient shape) instead of the uniform one.
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -256,6 +356,10 @@ fun SmallTopAppBar(
     scrollBehavior: ScrollBehavior? = null,
     defaultWindowInsetsPadding: Boolean = true,
     showDivider: Boolean = true,
+    centerTitle: Boolean = false,
+    centerTitleMargin: Dp = rememberCenterTitleMargin(),
+    segmentButton: (@Composable () -> Unit)? = null,
+    gradientGlass: Boolean = false,
     titlePadding: Dp = TopAppBarDefaults.TitlePadding,
     navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
     actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
@@ -295,9 +399,14 @@ fun SmallTopAppBar(
         dividerColor = dividerColor,
         navigationIcon = navigationIcon,
         actions = actionsRow,
-        titlePadding = titlePadding,
-        navigationIconPadding = navigationIconPadding,
-        actionIconPadding = actionIconPadding,
+        // The centred form swaps the toolbar's own padding for the responsive centre margin, the
+        // way COUIToolbar.changeToolbarPadding does for mIsTitleCenterStyle.
+        titlePadding = if (centerTitle) centerTitleMargin else titlePadding,
+        navigationIconPadding = if (centerTitle) centerTitleMargin else navigationIconPadding,
+        actionIconPadding = if (centerTitle) centerTitleMargin else actionIconPadding,
+        centerTitle = centerTitle,
+        segmentButton = segmentButton,
+        gradientGlass = gradientGlass,
         scrollBehavior = scrollBehavior,
         modifier = modifier,
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
@@ -530,6 +639,75 @@ object TopAppBarDefaults {
      * COUI `coui_actionbar_menuitemview_item_spacing`, 0dp in `values/` and 10dp in `values-v37/`.
      */
     val ActionMenuItemSpacing = 10.dp
+
+    /**
+     * The horizontal margin of the centred title in the `compat` width tier.
+     * COUI `coui_appbar_title_expanded_margin_start_compat` (16dp); `values-v37/` gives the same
+     * three values to `toolbar_center_menu_padding_horizontal_{compat,medium,expanded}`.
+     */
+    val CenterTitleMarginCompat = 16.dp
+
+    /** The centred title's margin in the `medium` tier. COUI `..._margin_start_medium` (24dp). */
+    val CenterTitleMarginMedium = 24.dp
+
+    /** The centred title's margin in the `expanded` tier. COUI `..._margin_start_expanded` (40dp). */
+    val CenterTitleMarginExpanded = 40.dp
+
+    /**
+     * The fallback horizontal padding of the centred title when the window width is unknown.
+     * COUI `toolbar_center_title_padding_left` / `_right` (4dp).
+     */
+    val CenterTitlePadding = 4.dp
+
+    /**
+     * The gap the segment slot keeps on each side of itself.
+     * COUI `coui_toolbar_section_gap` (40dp), for the `medium` / `expanded` tiers.
+     */
+    val SectionGap = 40.dp
+
+    /** The section gap in the `compat` tier. COUI `coui_toolbar_section_gap_small` (0dp). */
+    val SectionGapSmall = 0.dp
+
+    /**
+     * The padding inside the action-menu container, folded into the centred title's slot.
+     * COUI `coui_toolbar_action_menu_inner_padding` (0dp).
+     */
+    val ActionMenuInnerPadding = 0.dp
+
+    /** The height of the segment slot. COUI `segment_button_height` (32dp). */
+    val SegmentButtonHeight = 32.dp
+
+    /**
+     * The width below which the segment slot no longer counts as fitting beside the title.
+     * COUI `coui_toolbar_segment_button_min_width` (108dp).
+     */
+    val SegmentButtonMinWidth = 108.dp
+
+    /**
+     * The segment slot's width ceiling in the `compat` tier.
+     * COUI `coui_toolbar_segment_button_max_width` (207dp).
+     */
+    val SegmentButtonMaxWidth = 207.dp
+}
+
+/**
+ * The horizontal margin of the centred title, resolved from the current window width.
+ *
+ * COUI resolves it inside the toolbar's own measure pass, from the toolbar's measured width
+ * (`COUIToolbar.calculateToolbarPadding` -> `COUIResponsiveUtils.isSmallScreen` / `isMediumScreen` /
+ * `isLargeScreen(context, MeasureSpec.getSize(i))`). Composition has no measured width yet, so the
+ * window's container width stands in; the two agree for a full-width app bar.
+ */
+@Composable
+private fun rememberCenterTitleMargin(): Dp {
+    val windowWidth = LocalWindowInfo.current.containerDpSize.width
+    if (windowWidth <= 0.dp) return TopAppBarDefaults.CenterTitlePadding
+    return COUIResponsiveUtils.pick(
+        windowSizeClass = COUIResponsiveUtils.windowSizeClass(windowWidth),
+        compat = TopAppBarDefaults.CenterTitleMarginCompat,
+        medium = TopAppBarDefaults.CenterTitleMarginMedium,
+        expanded = TopAppBarDefaults.CenterTitleMarginExpanded,
+    )
 }
 
 @Stable
@@ -737,6 +915,7 @@ private suspend fun settleAppBar(
  * @param defaultWindowInsetsPadding whether to apply default window insets padding to the [TopAppBar].
  * @param showDivider whether to draw the bottom hairline divider while collapsing.
  * @param hideSubtitleOnCollapse whether the subtitle fades out while the bar collapses.
+ * @param gradientGlass whether to paint the ColorOS gradient-blur app bar material.
  * @param bottomContent the composable content displayed below the title bar area.
  */
 @Composable
@@ -759,6 +938,7 @@ private fun TopAppBarLayout(
     defaultWindowInsetsPadding: Boolean = true,
     showDivider: Boolean = true,
     hideSubtitleOnCollapse: Boolean = true,
+    gradientGlass: Boolean = false,
     bottomContent: @Composable () -> Unit = {},
 ) {
     // Producer lambdas — reads stay in layout/draw phases so scroll never recomposes this subtree.
@@ -865,7 +1045,7 @@ private fun TopAppBarLayout(
             }
         },
         modifier = modifier
-            .appBarSurface(color)
+            .appBarSurface(color, gradient = gradientGlass)
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier
@@ -1073,6 +1253,11 @@ private fun TopAppBarLayout(
  * @param navigationIconPadding the start padding of the navigation icon.
  * @param actionIconPadding the end padding of the action icons.
  * @param scrollBehavior the [ScrollBehavior] whose content offset drives the divider reveal.
+ * @param centerTitle whether to centre the title between the two icon slots
+ *   (`COUIToolbar.setIsTitleCenterStyle`).
+ * @param segmentButton an optional segmented control (`COUIToolbar.setSegmentButtons`) slotted
+ *   between the navigation icon and the title; ignored while [centerTitle] is set.
+ * @param gradientGlass whether to paint the ColorOS gradient-blur app bar material.
  * @param modifier the [Modifier] to be applied to this layout.
  * @param defaultWindowInsetsPadding whether to apply default window insets padding to the [SmallTopAppBar].
  * @param showDivider whether to draw the bottom hairline divider on scroll.
@@ -1095,6 +1280,9 @@ private fun SmallTopAppBarLayout(
     modifier: Modifier = Modifier,
     defaultWindowInsetsPadding: Boolean = true,
     showDivider: Boolean = true,
+    centerTitle: Boolean = false,
+    segmentButton: (@Composable () -> Unit)? = null,
+    gradientGlass: Boolean = false,
     bottomContent: @Composable () -> Unit = {},
 ) {
     val animatedTitleColor by animateColorAsState(
@@ -1121,6 +1309,13 @@ private fun SmallTopAppBarLayout(
                     .padding(start = navigationIconPadding),
             ) {
                 navigationIcon()
+            }
+            if (!centerTitle && segmentButton != null) {
+                // COUIToolbar.setSegmentButtons(View) slots the segment before the title; the
+                // centred-title form never lays one out (mIsTitleCenterStyle short-circuits it).
+                Box(Modifier.layoutId("segmentButton")) {
+                    segmentButton()
+                }
             }
             // Title: TextAppearance.COUI.Toolbar.SecondTitle (18dp, medium, viewStart alignment).
             Box(Modifier.layoutId("title")) {
@@ -1159,7 +1354,7 @@ private fun SmallTopAppBarLayout(
             }
         },
         modifier = modifier
-            .appBarSurface(color)
+            .appBarSurface(color, gradient = gradientGlass)
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier
@@ -1204,6 +1399,8 @@ private fun SmallTopAppBarLayout(
                 },
             ),
     ) { measurables, constraints ->
+        val widthPx = constraints.maxWidth
+
         val navigationIconPlaceable =
             measurables
                 .fastFirst { it.layoutId == "navigationIcon" }
@@ -1218,26 +1415,95 @@ private fun SmallTopAppBarLayout(
         val navigationIconPaddingPx = navigationIconPadding.roundToPx()
         val actionIconPaddingPx = actionIconPadding.roundToPx()
 
-        // Title bounds: start-aligned after the navigation icon (COUIToolbar viewStart layout);
-        // falls back to the title margin on sides without an icon.
-        val hasNavigationIcon = navigationIconPlaceable.width > navigationIconPaddingPx
+        // Both icon slots carry their own padding, so the bare content width is what the centred
+        // slot below and the segment measurement both have to clear.
+        val navigationIconContentPx =
+            (navigationIconPlaceable.width - navigationIconPaddingPx).coerceAtLeast(0)
+        val hasNavigationIcon = navigationIconContentPx > 0
         val hasActions = actionIconsPlaceable.width > actionIconPaddingPx
-        val titleX = if (hasNavigationIcon) {
+
+        // COUIToolbar picks its section gap from the tier its own measured width lands in.
+        val isCompactWidth =
+            COUIResponsiveUtils.windowSizeClass(widthPx.toDp()) == COUIWindowSizeClass.Compat
+        val sectionGapPx = if (isCompactWidth) {
+            TopAppBarDefaults.SectionGapSmall.roundToPx()
+        } else {
+            TopAppBarDefaults.SectionGap.roundToPx()
+        }
+
+        // Start-aligned bounds (COUIToolbar's viewStart layout), falling back to the title margin on
+        // sides without an icon.
+        val titleStartPx = if (hasNavigationIcon) {
             navigationIconPlaceable.width + TopAppBarDefaults.NavigationIconGap.roundToPx()
         } else {
             titlePaddingPx
         }
-        val titleEnd = if (hasActions) {
-            constraints.maxWidth - actionIconsPlaceable.width - TopAppBarDefaults.ActionIconGap.roundToPx()
+        val titleEndPx = if (hasActions) {
+            widthPx - actionIconsPlaceable.width - TopAppBarDefaults.ActionIconGap.roundToPx()
         } else {
-            constraints.maxWidth - titlePaddingPx
+            widthPx - titlePaddingPx
         }
-        val titleMaxWidth = (titleEnd - titleX).coerceAtLeast(0)
+
+        // Centred form (COUIToolbar.calculateTitlePosition): the title gets a slot symmetric about
+        // the bar centre, cleared by the wider of the two icon slots plus the action-menu padding.
+        // SmallTopAppBar has already replaced the three paddings with the tier margin in this form.
+        val centeredOuterPx = maxOf(navigationIconPlaceable.width, actionIconsPlaceable.width) +
+            TopAppBarDefaults.ActionMenuInnerPadding.roundToPx()
+        var titleMaxWidth = if (centerTitle) {
+            (widthPx - 2 * centeredOuterPx).coerceAtLeast(0)
+        } else {
+            (titleEndPx - titleStartPx).coerceAtLeast(0)
+        }
+
+        val titleMeasurable = measurables.fastFirst { it.layoutId == "title" }
+        val segmentButtonPlaceable = if (centerTitle) {
+            null
+        } else {
+            measurables.firstOrNull { it.layoutId == "segmentButton" }?.let { measurable ->
+                // COUIToolbar measures the title's *natural* text width here (`paint.measureText`).
+                // A Measurable may only be measured once per pass, so read it off the intrinsics.
+                val naturalTitleWidthPx = titleMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+                val segmentMinWidthPx = TopAppBarDefaults.SegmentButtonMinWidth.roundToPx()
+                val halfContentPx = (widthPx / 2 - navigationIconContentPx).coerceAtLeast(0)
+                val fitsBesideTitle = naturalTitleWidthPx <=
+                    ((halfContentPx - segmentMinWidthPx / 2) - sectionGapPx) - navigationIconPaddingPx
+                val freeSegmentWidthPx = if (fitsBesideTitle) {
+                    val freePx =
+                        ((halfContentPx - naturalTitleWidthPx) - sectionGapPx) - navigationIconPaddingPx
+                    if (isCompactWidth) {
+                        minOf(freePx * 2, TopAppBarDefaults.SegmentButtonMaxWidth.roundToPx())
+                    } else {
+                        freePx * 2
+                    }
+                } else {
+                    (((halfContentPx - navigationIconPaddingPx) - sectionGapPx) / 2) * 2
+                }
+                val segmentMaxWidthPx = freeSegmentWidthPx.coerceIn(0, widthPx)
+                val segmentHeightPx = TopAppBarDefaults.SegmentButtonHeight.roundToPx()
+                // `measureChildMaxWidthConstrained` fixes the height at segment_button_height and
+                // only clamps the width. COUI consults SegmentButtonMinWidth in the fit test above;
+                // it is applied as the slot's floor here as well, so the slot honours its token.
+                measurable.measure(
+                    Constraints(
+                        minWidth = minOf(segmentMinWidthPx, segmentMaxWidthPx),
+                        maxWidth = segmentMaxWidthPx,
+                        minHeight = segmentHeightPx,
+                        maxHeight = segmentHeightPx,
+                    ),
+                )
+            }
+        }
+
+        if (segmentButtonPlaceable != null) {
+            // The title keeps clear of the segment and its section gap.
+            val segmentLeftPx = ((widthPx - segmentButtonPlaceable.width) / 2)
+                .coerceAtLeast(navigationIconPlaceable.width)
+            titleMaxWidth =
+                minOf(titleMaxWidth, (segmentLeftPx - sectionGapPx - titleStartPx).coerceAtLeast(0))
+        }
 
         val titlePlaceable =
-            measurables
-                .fastFirst { it.layoutId == "title" }
-                .measure(constraints.copy(minWidth = 0, maxWidth = titleMaxWidth, minHeight = 0))
+            titleMeasurable.measure(constraints.copy(minWidth = 0, maxWidth = titleMaxWidth, minHeight = 0))
 
         val subtitlePlaceable =
             measurables
@@ -1253,6 +1519,21 @@ private fun SmallTopAppBarLayout(
         val verticalCenter = TopAppBarDefaults.SmallTopAppBarCenterHeight.roundToPx() / 2
         val subtitleMarginTopPx = TopAppBarDefaults.SubtitleMarginTop.roundToPx()
 
+        // Centred: `(getWidth() - textW) / 2`. COUI also lands there whenever the text fits its
+        // slot, because the slot is symmetric; a text that fills the slot stops at the slot edge,
+        // which the measurement above already enforced.
+        val titleX = if (centerTitle) {
+            ((widthPx - titlePlaceable.width) / 2).coerceAtLeast(0)
+        } else {
+            titleStartPx
+        }
+        val segmentX = segmentButtonPlaceable?.let { placeable ->
+            ((widthPx - placeable.width) / 2).coerceIn(
+                minimumValue = navigationIconPlaceable.width,
+                maximumValue = maxOf(navigationIconPlaceable.width, widthPx - actionIconsPlaceable.width),
+            )
+        } ?: 0
+
         // Title stack: vertically centered in the 52dp toolbar area; the subtitle sits
         // 3.5dp below the title, matching the collapsed COUI app bar stack.
         val stackHeight = titlePlaceable.height +
@@ -1267,14 +1548,20 @@ private fun SmallTopAppBarLayout(
         val contentTop = maxOf(collapsedHeight, stackHeight + subtitleBottomPadding)
         val layoutHeight = contentTop + bottomContentPlaceable.height
 
-        layout(constraints.maxWidth, layoutHeight) {
+        layout(widthPx, layoutHeight) {
             // Navigation icon
             navigationIconPlaceable.placeRelative(
                 x = 0,
                 y = verticalCenter - navigationIconPlaceable.height / 2,
             )
 
-            // Title (start-aligned)
+            // Segment slot (centred between the icons, clamped inside them)
+            segmentButtonPlaceable?.placeRelative(
+                x = segmentX,
+                y = verticalCenter - segmentButtonPlaceable.height / 2,
+            )
+
+            // Title (centred in the centred form, start-aligned otherwise)
             titlePlaceable.placeRelative(
                 x = titleX,
                 y = titleY,
@@ -1282,11 +1569,11 @@ private fun SmallTopAppBarLayout(
 
             // Action icons
             actionIconsPlaceable.placeRelative(
-                x = constraints.maxWidth - actionIconsPlaceable.width,
+                x = widthPx - actionIconsPlaceable.width,
                 y = verticalCenter - actionIconsPlaceable.height / 2,
             )
 
-            // Subtitle (start-aligned, 3.5dp below the title)
+            // Subtitle (aligned with the title, 3.5dp below it)
             subtitlePlaceable?.placeRelative(
                 x = titleX,
                 y = subtitleY,
