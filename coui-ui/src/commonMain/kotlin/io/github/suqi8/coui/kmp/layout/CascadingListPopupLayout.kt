@@ -84,6 +84,17 @@ private const val PRIMARY_SHRUNK_ALPHA = 0.7f
 internal const val ENTER_SCALE_FROM = 0.15f
 internal const val ENTER_SCALE_RANGE = 1f - ENTER_SCALE_FROM
 
+/**
+ * Popup content bounds in the dismiss layer's local coordinates.
+ *
+ * A plain holder rather than a state: it is written from the sub-layout's measure/layout pass and
+ * read inside the dismiss gesture, so making it observable would only add a needless invalidation
+ * (and risk a measure loop).
+ */
+private class PopupContentBounds {
+    var rect: IntRect = IntRect.Zero
+}
+
 /** Internal shared layout for cascading list popups. Cascading depth is limited to 2. */
 @Composable
 internal fun CascadingListPopupLayout(
@@ -112,6 +123,7 @@ internal fun CascadingListPopupLayout(
     var expandedItem by remember { mutableStateOf<DropdownItem?>(null) }
     // Outlives [expandedItem] until the collapse spring settles so the secondary stays subcomposed.
     var displayedItem by remember { mutableStateOf<DropdownItem?>(null) }
+    val popupContentBounds = remember { PopupContentBounds() }
     val expandFraction = remember { Animatable(0f) }
     val primaryScale = remember { Animatable(1f) }
     val primaryAlpha = remember { Animatable(1f) }
@@ -302,7 +314,17 @@ internal fun CascadingListPopupLayout(
                             hostMeasured = true
                         }
                         .pointerInput(Unit) {
-                            detectTapGestures(onTap = {
+                            detectTapGestures(onTap = { position ->
+                                // COUI hosts the popup in its own window, so a touch on a row never
+                                // reaches the window-level dismiss handler. Here both share one
+                                // hierarchy, and this layer sits above the list in the hit path:
+                                // without the bounds check the row's own gesture runs first and this
+                                // handler then resets the very item that gesture just expanded.
+                                val bounds = popupContentBounds.rect
+                                val inside = bounds != IntRect.Zero &&
+                                    position.x >= bounds.left && position.x <= bounds.right &&
+                                    position.y >= bounds.top && position.y <= bounds.bottom
+                                if (inside) return@detectTapGestures
                                 if (expandedItem != null) {
                                     expandedItem = null
                                 } else {
@@ -333,6 +355,7 @@ internal fun CascadingListPopupLayout(
                             }
                         },
                         onPrimarySizeChange = { primarySize = it },
+                        onContentBoundsChange = { popupContentBounds.rect = it },
                         windowBounds = layoutInfo.windowBounds,
                         popupMargin = layoutInfo.popupMargin,
                         parentBounds = parentBounds,
@@ -380,6 +403,7 @@ private fun CascadingMorphSubLayout(
     getAnchorBounds: (DropdownItem) -> IntRect?,
     setAnchorBounds: (DropdownItem, IntRect) -> Unit,
     onPrimarySizeChange: (IntSize) -> Unit,
+    onContentBoundsChange: (IntRect) -> Unit,
     windowBounds: IntRect,
     popupMargin: IntRect,
     parentBounds: IntRect,
@@ -566,11 +590,24 @@ private fun CascadingMorphSubLayout(
                 placeable.place(primaryDxLocal, py)
                 py += placeable.height
             }
+            // Reported in the dismiss layer's local coordinates so it can tell a tap on the popup
+            // from a tap outside it. See [PopupContentBounds].
+            var bounds = IntRect(
+                left = primaryDxLocal,
+                top = primaryDyLocal,
+                right = primaryDxLocal + primaryWidth,
+                bottom = primaryDyLocal + primaryHeight,
+            )
             secondaryLayout?.let { (placeables, unionRect) ->
                 val ux = unionRect.left - host.x
                 val uy = unionRect.top - host.y
                 placeables.forEach { it.place(ux, uy) }
+                bounds = unionOf(
+                    bounds,
+                    IntRect(ux, uy, ux + unionRect.width, uy + unionRect.height),
+                )
             }
+            onContentBoundsChange(bounds)
         }
     }
 }

@@ -162,7 +162,20 @@ private fun CascadingPrimaryRow(
     onAnchorBounds: (DropdownItem, IntRect) -> Unit,
 ) {
     val rowEnabled = entryEnabled && item.enabled
-    Box(
+    // The row has to stay ListPopupColumn's direct child: the column registers a row by reading its
+    // parent data, so a wrapper here would hide the row from the gesture host and the popup would
+    // treat every tap as a tap on its own backdrop.
+    DropdownImpl(
+        item = item,
+        optionSize = optionSize,
+        isSelected = item.selected,
+        index = index,
+        dropdownColors = dropdownColors,
+        enabled = rowEnabled,
+        hasSubmenu = !item.children.isNullOrEmpty(),
+        isFirst = isFirst,
+        isLast = isLast,
+        onSelectedIndexChange = { onClick() },
         modifier = Modifier
             .fillMaxWidth()
             .onGloballyPositioned { coords ->
@@ -177,21 +190,7 @@ private fun CascadingPrimaryRow(
                     ),
                 )
             },
-        propagateMinConstraints = true,
-    ) {
-        DropdownImpl(
-            item = item,
-            optionSize = optionSize,
-            isSelected = item.selected,
-            index = index,
-            dropdownColors = dropdownColors,
-            enabled = rowEnabled,
-            hasSubmenu = !item.children.isNullOrEmpty(),
-            isFirst = isFirst,
-            isLast = isLast,
-            onSelectedIndexChange = { onClick() },
-        )
-    }
+    )
 }
 
 /** Secondary side of a cascading popup. Laid out at union size (primary ∪ secondary) with a
@@ -366,24 +365,22 @@ internal fun CascadingSecondaryColumn(
         val lastChildIdx = children.lastIndex
         children.forEachIndexed { index, child ->
             key(child) {
-                Box(
+                // No wrapper: the row must stay ListPopupColumn's direct child, or the column cannot
+                // register it and the submenu's leaves stop responding to taps.
+                DropdownImpl(
+                    item = child,
+                    optionSize = children.size,
+                    isSelected = child.selected,
+                    index = index,
+                    dropdownColors = dropdownColors,
+                    enabled = child.enabled,
+                    hasSubmenu = false,
+                    // Header owns popup-global "first"; only the trailing child owns "last".
+                    isFirst = false,
+                    isLast = index == lastChildIdx,
+                    onSelectedIndexChange = { onLeafSelected(child) },
                     modifier = Modifier.fillMaxWidth(),
-                    propagateMinConstraints = true,
-                ) {
-                    DropdownImpl(
-                        item = child,
-                        optionSize = children.size,
-                        isSelected = child.selected,
-                        index = index,
-                        dropdownColors = dropdownColors,
-                        enabled = child.enabled,
-                        hasSubmenu = false,
-                        // Header owns popup-global "first"; only the trailing child owns "last".
-                        isFirst = false,
-                        isLast = index == lastChildIdx,
-                        onSelectedIndexChange = { onLeafSelected(child) },
-                    )
-                }
+                )
             }
         }
     }

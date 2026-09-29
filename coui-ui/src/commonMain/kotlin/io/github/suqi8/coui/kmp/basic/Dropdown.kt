@@ -79,6 +79,11 @@ fun RowScope.DropdownArrowEndAction(
  * @param isLast Whether this row is the last row of the entire popup, kept for the same reason as
  *   [isFirst]. Defaults to `index == optionSize - 1`.
  * @param onSelectedIndexChange The callback invoked with [index] when the option is selected.
+ * @param modifier The modifier applied to the row. Inside a [ListPopupColumn] the row has to be the
+ *   column's direct child for the column to register it: `Modifier.popupListItem` carries the row's
+ *   handle as parent data on the node it is applied to, and the column's measure policy only reads
+ *   parent data from its own children. Wrap nothing around the row — pass what the wrapper would have
+ *   carried through this parameter instead.
  */
 @Composable
 fun DropdownImpl(
@@ -86,13 +91,14 @@ fun DropdownImpl(
     optionSize: Int,
     isSelected: Boolean,
     index: Int,
+    modifier: Modifier = Modifier,
     dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
     enabled: Boolean = item.enabled,
     dialogMode: Boolean = false,
     hasSubmenu: Boolean = false,
     isFirst: Boolean = index == 0,
     isLast: Boolean = index == optionSize - 1,
-    onSelectedIndexChange: (Int) -> Unit,
+    onSelectedIndexChange: (Int) -> Unit = {},
 ) {
     val additionalTopPadding =
         if (!dialogMode && isFirst) {
@@ -165,7 +171,7 @@ fun DropdownImpl(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
+        modifier = modifier
             .drawBehind { drawRect(backgroundColorState.value) }
             .popupListItem(
                 selected = isSelected,
