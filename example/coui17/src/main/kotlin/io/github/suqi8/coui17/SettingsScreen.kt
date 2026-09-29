@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -88,6 +89,13 @@ private val IconOrange = Color(0xFFF59E0B)
 private val IconPurple = Color(0xFF8B5CF6)
 private val IconRed = Color(0xFFEF4444)
 private val IconTeal = Color(0xFF14B8A6)
+
+/**
+ * The per-row floor of ColorOS 17's settings home page, from the device token
+ * `homepage_preference_min_height` (52dp). It sits above the 48dp `support_preference_min_height`
+ * that [BasicComponent] applies to a standard preference row, and an outer `heightIn` wins.
+ */
+private val HomepageRowMinHeight = 52.dp
 
 /** The ColorOS 17 settings list, with every control sitting where the real app puts it. */
 @Composable
@@ -200,7 +208,8 @@ internal fun SettingsScreen(
             SettingsCard {
                 SwitchPreference(
                     title = "WLAN",
-                    summary = "COUI-Lab-5G",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = { InlineValue("COUI-Lab-5G") },
                     startAction = { SettingIcon(COUIIcons.Community, IconBlue) },
                     checked = wifi,
                     onCheckedChange = { wifi = it },
@@ -208,7 +217,8 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 SwitchPreference(
                     title = "蓝牙",
-                    summary = "已连接 2 台设备",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = { InlineValue("已连接") },
                     startAction = { SettingIcon(COUIIcons.Link, IconBlue) },
                     checked = bluetooth,
                     onCheckedChange = { bluetooth = it },
@@ -216,13 +226,15 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 ArrowPreference(
                     title = "移动网络",
-                    summary = "5G · 中国移动",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = { InlineValue("5G · 中国移动") },
                     startAction = { SettingIcon(COUIIcons.Carrier, IconGreen) },
                     onClick = { notify(scope, snackbarHostState, "移动网络设置暂不可用") },
                 )
                 SettingsDivider()
                 SwitchPreference(
                     title = "个人热点",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Share, IconOrange) },
                     checked = hotspot,
                     onCheckedChange = { hotspot = it },
@@ -230,7 +242,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 SwitchPreference(
                     title = "NFC",
-                    summary = "读卡、刷卡与数据传输",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.BankCards, IconPurple) },
                     checked = nfc,
                     onCheckedChange = { nfc = it },
@@ -244,6 +256,7 @@ internal fun SettingsScreen(
                 SliderPreference(
                     value = brightness,
                     onValueChange = { brightness = it },
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     title = "亮度",
                     valueText = "${(brightness * 100).toInt()}%",
                     startAction = { SettingIcon(COUIIcons.Theme, IconOrange) },
@@ -252,6 +265,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 SwitchPreference(
                     title = "自动调节亮度",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Show, IconOrange) },
                     checked = autoBrightness,
                     onCheckedChange = { autoBrightness = it },
@@ -259,7 +273,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 SwitchPreference(
                     title = "深色模式",
-                    summary = "跟随开关即时生效",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Background, IconPurple) },
                     checked = darkMode,
                     onCheckedChange = onDarkModeChange,
@@ -270,6 +284,7 @@ internal fun SettingsScreen(
                     selectedIndex = colorModeIndex,
                     onSelectedIndexChange = { colorModeIndex = it },
                     title = "色彩模式",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     dialogTitle = "色彩模式",
                     cancelButtonText = "取消",
                     startAction = { SettingIcon(COUIIcons.Album, IconTeal) },
@@ -278,7 +293,8 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 ArrowPreference(
                     title = "屏幕刷新率",
-                    summary = refreshRates[refreshIndex],
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = { InlineValue(refreshRates[refreshIndex]) },
                     startAction = { SettingIcon(COUIIcons.Update, IconGreen) },
                     onClick = { showRefreshSheet = true },
                 )
@@ -291,6 +307,7 @@ internal fun SettingsScreen(
                 SliderPreference(
                     value = mediaVolume,
                     onValueChange = { mediaVolume = it },
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     title = "媒体音量",
                     valueText = "${(mediaVolume * 100).toInt()}%",
                     startAction = { SettingIcon(COUIIcons.VolumeUp, IconBlue) },
@@ -298,7 +315,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 SwitchPreference(
                     title = "静音",
-                    summary = "来电与通知不响铃",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.VolumeOff, IconRed) },
                     checked = silent,
                     onCheckedChange = { silent = it },
@@ -306,7 +323,8 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 ArrowPreference(
                     title = "铃声",
-                    summary = ringtones[ringtoneIndex],
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = { InlineValue(ringtones[ringtoneIndex]) },
                     startAction = { SettingIcon(COUIIcons.Music, IconPurple) },
                     onClick = { showRingtoneSheet = true },
                 )
@@ -317,8 +335,9 @@ internal fun SettingsScreen(
             SmallTitle(text = "电池")
             SettingsCard {
                 BasicComponent(
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     title = "电池电量",
-                    summary = "约 9 小时 12 分可用",
+                    endActions = { InlineValue("约 9 小时 12 分可用") },
                     startAction = { SettingIcon(COUIIcons.Timer, IconGreen) },
                     bottomAction = {
                         Column(modifier = Modifier.padding(top = 8.dp)) {
@@ -332,7 +351,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 SwitchPreference(
                     title = "省电模式",
-                    summary = "限制后台活动以延长续航",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Update, IconGreen) },
                     checked = powerSaving,
                     onCheckedChange = { powerSaving = it },
@@ -345,6 +364,7 @@ internal fun SettingsScreen(
             SettingsCard {
                 SwitchPreference(
                     title = "允许通知",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Messages, IconBlue) },
                     checked = notifyEnabled,
                     onCheckedChange = { notifyEnabled = it },
@@ -352,6 +372,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 CheckboxPreference(
                     title = "锁屏显示通知",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Lock, IconOrange) },
                     checked = lockScreenNotify,
                     onCheckedChange = { lockScreenNotify = it },
@@ -359,7 +380,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 RadioButtonPreference(
                     title = "显示通知内容",
-                    summary = "仅在解锁后显示完整内容",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Notes, IconTeal) },
                     selected = notifyDetail,
                     onClick = { notifyDetail = true },
@@ -367,6 +388,7 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 RadioButtonPreference(
                     title = "隐藏通知内容",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Hide, IconRed) },
                     selected = !notifyDetail,
                     onClick = { notifyDetail = false },
@@ -379,7 +401,7 @@ internal fun SettingsScreen(
             SettingsCard {
                 SwitchPreference(
                     title = "展开熔球",
-                    summary = "底部悬浮栏旁的圆形按钮从胶囊里熔出",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     startAction = { SettingIcon(COUIIcons.Merge, IconPurple) },
                     checked = meltBallExpanded,
                     onCheckedChange = onMeltBallExpandedChange,
@@ -387,10 +409,15 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 ArrowPreference(
                     title = "壁纸",
-                    summary = when (wallpaperSource) {
-                        WallpaperSource.System -> "系统壁纸"
-                        WallpaperSource.Lock -> "锁屏壁纸"
-                        WallpaperSource.Bundled -> "内置图片 · 系统为动态壁纸"
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = {
+                        InlineValue(
+                            when (wallpaperSource) {
+                                WallpaperSource.System -> "系统壁纸"
+                                WallpaperSource.Lock -> "锁屏壁纸"
+                                WallpaperSource.Bundled -> "内置图片"
+                            },
+                        )
                     },
                     startAction = { SettingIcon(COUIIcons.Image, IconTeal) },
                     onClick = {
@@ -405,13 +432,15 @@ internal fun SettingsScreen(
             SettingsCard {
                 ArrowPreference(
                     title = "型号",
-                    summary = "OnePlus PLK110",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = { InlineValue("OnePlus PLK110") },
                     startAction = { SettingIcon(COUIIcons.Info, IconBlue) },
                     onClick = { showAboutDialog = true },
                 )
                 SettingsDivider()
                 ButtonPreference(
                     title = "系统更新",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                     buttonText = "检查",
                     startAction = { SettingIcon(COUIIcons.UploadCloud, IconTeal) },
                     onButtonClick = { notify(scope, snackbarHostState, "已是最新版本") },
@@ -419,7 +448,8 @@ internal fun SettingsScreen(
                 SettingsDivider()
                 ArrowPreference(
                     title = "ColorOS 版本",
-                    summary = "V17.0.0",
+                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    endActions = { InlineValue("V17.0.0") },
                     startAction = { SettingIcon(COUIIcons.Info, IconGreen) },
                     onClick = { showAboutDialog = true },
                 )
@@ -529,6 +559,18 @@ private fun SettingIcon(icon: ImageVector, tint: Color) {
         contentDescription = null,
         tint = tint,
         modifier = Modifier.size(24.dp),
+    )
+}
+
+/** The value ColorOS prints at the end of a settings row, ahead of the switch or chevron. */
+@Composable
+private fun InlineValue(text: String) {
+    Text(
+        text = text,
+        style = COUITheme.textStyles.footnote1,
+        color = COUITheme.colorScheme.onSurfaceSecondary,
+        maxLines = 1,
+        modifier = Modifier.padding(end = 4.dp),
     )
 }
 
