@@ -39,6 +39,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [ExpandableList](../components/expandablelist)             | 可展开的分组列表       | 设置分组、分组内容   |
 | [LockPatternView](../components/lockpatternview)           | 3x3 图案解锁九宫格     | 图案解锁、手势密码   |
 | [NumericKeyboard](../components/numerickeyboard)           | 数字 PIN 键盘          | PIN 输入、密码弹窗   |
+| [SimpleLockView](../components/simplelockview)             | 锁屏 PIN 圆点指示行       | 锁屏 PIN 输入     |
+| [LockScreenPwdInput](../components/lockscreenpwdinput)     | 胶囊密码输入框            | 锁屏密码输入        |
 | [Banner](../components/banner)                             | 自动轮播的卡片横幅     | 功能轮播、活动推广   |
 | [SearchHistoryView](../components/searchhistoryview)       | 换行排列的搜索历史标签面板 | 搜索历史、最近查询 |
 | [TouchSearchView](../components/touchsearchview)           | 带放大字母磁贴的 A–Z 索引栏 | 按字母快速定位列表 |
@@ -66,6 +68,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [SearchViewAnimate](../components/searchviewanimate)       | 图标与输入框间磁吸切换的搜索栏 | 搜索入口、可折叠搜索栏 |
 | [LoadProgressButton](../components/loadprogressbutton)     | 带加载状态机的下载按钮 | 安装、下载、暂停、重试 |
 | [PopupMenuRotation](../components/popupmenurotation)       | 旋转弹窗菜单的几何计算 | 横屏布局下的溢出菜单 |
+| [ClickSelectMenu](../components/clickselectmenu)           | 在点击处弹出的选择菜单 | 在手指处弹出的行内菜单 |
+| [InstallLoadProgress](../components/installloadprogress)   | 安装按钮与进度切换   | 应用安装、下载     |
 | [Snackbar](../components/snackbar)                         | 底部临时消息条组件     | 状态提示、操作结果   |
 | [TopTips](../components/toptips)                           | 页面顶部提示条         | 页面提示、公告       |
 | [Tooltip](../components/tooltip)                           | 悬停或长按显示的简短标签 | 图标按钮标签、元素提示 |

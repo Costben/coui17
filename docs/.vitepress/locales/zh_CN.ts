@@ -121,6 +121,8 @@ export default defineConfig({
                         { text: "PageIndicator", link: "/zh_CN/components/pageindicator" },
                         { text: "LockPatternView", link: "/zh_CN/components/lockpatternview" },
                         { text: "NumericKeyboard", link: "/zh_CN/components/numerickeyboard" },
+                        { text: "SimpleLockView", link: "/zh_CN/components/simplelockview" },
+                        { text: "LockScreenPwdInput", link: "/zh_CN/components/lockscreenpwdinput" },
                         { text: "Banner", link: "/zh_CN/components/banner" },
                         { text: "Icon", link: "/zh_CN/components/icon" },
                         { text: "FloatingActionButton", link: "/zh_CN/components/floatingactionbutton", },
@@ -135,6 +137,8 @@ export default defineConfig({
                         { text: "SearchViewAnimate", link: "/zh_CN/components/searchviewanimate" },
                         { text: "LoadProgressButton", link: "/zh_CN/components/loadprogressbutton" },
                         { text: "PopupMenuRotation", link: "/zh_CN/components/popupmenurotation" },
+                        { text: "ClickSelectMenu", link: "/zh_CN/components/clickselectmenu" },
+                        { text: "InstallLoadProgress", link: "/zh_CN/components/installloadprogress" },
                     ],
                 },
                 {

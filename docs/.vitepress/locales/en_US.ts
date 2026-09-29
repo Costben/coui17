@@ -112,6 +112,8 @@ export default defineConfig({
                         { text: "PageIndicator", link: "/components/pageindicator" },
                         { text: "LockPatternView", link: "/components/lockpatternview" },
                         { text: "NumericKeyboard", link: "/components/numerickeyboard" },
+                        { text: "SimpleLockView", link: "/components/simplelockview" },
+                        { text: "LockScreenPwdInput", link: "/components/lockscreenpwdinput" },
                         { text: "Banner", link: "/components/banner" },
                         { text: "Icon", link: "/components/icon" },
                         { text: "FloatingActionButton", link: "/components/floatingactionbutton", },
@@ -126,6 +128,8 @@ export default defineConfig({
                         { text: "SearchViewAnimate", link: "/components/searchviewanimate" },
                         { text: "LoadProgressButton", link: "/components/loadprogressbutton" },
                         { text: "PopupMenuRotation", link: "/components/popupmenurotation" },
+                        { text: "ClickSelectMenu", link: "/components/clickselectmenu" },
+                        { text: "InstallLoadProgress", link: "/components/installloadprogress" },
                     ],
                 },
                 {

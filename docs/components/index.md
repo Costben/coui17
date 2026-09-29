@@ -39,6 +39,8 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [ExpandableList](../components/expandablelist)             | Collapsible group list                     | Settings sections, grouped content    |
 | [LockPatternView](../components/lockpatternview)           | 3x3 pattern unlock grid                    | Pattern unlock, gesture password      |
 | [NumericKeyboard](../components/numerickeyboard)           | Numeric PIN pad                            | PIN entry, passcode dialogs           |
+| [SimpleLockView](../components/simplelockview)             | Row of PIN dots that fill as you type      | PIN entry, passcode status            |
+| [LockScreenPwdInput](../components/lockscreenpwdinput)     | Pill password field with a next button     | Lock screen password entry            |
 | [Banner](../components/banner)                             | Auto-scrolling card banner with dots       | Feature carousels, promo banners      |
 | [SearchHistoryView](../components/searchhistoryview)       | Wrapping panel of recent search chips      | Search history, recent queries        |
 | [TouchSearchView](../components/touchsearchview)           | A–Z index rail with a magnified key tile   | Alphabetical list navigation          |
@@ -66,6 +68,8 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [SearchViewAnimate](../components/searchviewanimate)       | Magnetic search bar between icon and input | Search entry, collapsing search bars  |
 | [LoadProgressButton](../components/loadprogressbutton)     | Download button with a load state machine  | Install, download, pause, retry       |
 | [PopupMenuRotation](../components/popupmenurotation)       | Rotated popup menu geometry                | Overflow menus in landscape layouts   |
+| [ClickSelectMenu](../components/clickselectmenu)           | Menu placed at the touch point             | Row menus that open under the finger  |
+| [InstallLoadProgress](../components/installloadprogress)   | Install button that morphs into progress   | App installs, downloads, retries      |
 | [Snackbar](../components/snackbar)                         | Temporary message bar for brief feedback   | Operation result, status notification |
 | [TopTips](../components/toptips)                           | Tip banner at the top of a page            | Page hints, announcements             |
 | [Tooltip](../components/tooltip)                           | Brief label shown on hover or long press   | Icon button labels, element hints     |
