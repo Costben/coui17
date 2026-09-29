@@ -34,6 +34,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [IconButton](../components/iconbutton)                     | 图标按钮组件           | 辅助操作、工具栏     |
 | [Chip](../components/chip)                                 | 可选中的胶囊筛选标签   | 内容筛选、标签选择   |
 | [ChipTab](../components/chiptab)                           | 横向可滚动的页签栏     | 页签切换、分类浏览   |
+| [MaterialShadowEdge](../components/materialshadowedge)     | 材质边缘描边与内阴影                      | 悬浮工具栏、面板描边                    |
+| [SpotLight](../components/spotlight)                       | 可移动的材质高光光源                      | 按压、拖动高光反馈                     |
 | [PageIndicator](../components/pageindicator)               | 带当前位置标记的圆点指示器 | 分页位置、引导页   |
 | [Text](../components/text)                                 | 展示各种样式的文字内容 | 标题、正文、描述文本 |
 | [SmallTitle](../components/smalltitle)                     | 小型标题组件           | 辅助标题、分类标识   |

@@ -34,6 +34,8 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [IconButton](../components/iconbutton)                     | Icon button component                      | Auxiliary actions, toolbars           |
 | [Chip](../components/chip)                                 | Checkable capsule filter tag               | Content filtering, tag selection      |
 | [ChipTab](../components/chiptab)                           | Horizontal chip tab bar                    | Tab switching, category browsing      |
+| [MaterialShadowEdge](../components/materialshadowedge)     | Gradient rim plus inner shadow             | Material surface edges                |
+| [SpotLight](../components/spotlight)                       | Positional light painted over a surface    | Press and drag highlights             |
 | [PageIndicator](../components/pageindicator)               | Row of page dots with an active marker     | Page position in a pager, guides      |
 | [Text](../components/text)                                 | Display text content with various styles   | Titles, body text, descriptive text   |
 | [SmallTitle](../components/smalltitle)                     | Small title component                      | Auxiliary titles, category labels     |

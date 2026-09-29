@@ -107,6 +107,8 @@ export default defineConfig({
                         { text: "Badge", link: "/zh_CN/components/badge" },
                         { text: "Chip", link: "/zh_CN/components/chip" },
                         { text: "ChipTab", link: "/zh_CN/components/chiptab" },
+                        { text: "MaterialShadowEdge", link: "/zh_CN/components/materialshadowedge" },
+                        { text: "SpotLight", link: "/zh_CN/components/spotlight" },
                         { text: "PageIndicator", link: "/zh_CN/components/pageindicator" },
                         { text: "Icon", link: "/zh_CN/components/icon" },
                         { text: "FloatingActionButton", link: "/zh_CN/components/floatingactionbutton", },
