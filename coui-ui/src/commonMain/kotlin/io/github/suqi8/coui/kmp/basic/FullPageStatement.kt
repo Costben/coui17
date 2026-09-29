@@ -221,8 +221,11 @@ object FullPageStatementDefaults {
      */
     val ContentPadding = PaddingValues(start = 24.dp, top = 12.dp, end = 24.dp, bottom = 14.dp)
 
-    /** Length of the vertical fading edges (COUI coui_full_page_statement_scroll_fade_length). */
-    val ScrollFadeLength = 46.dp
+    /**
+     * Length of the vertical fading edges
+     * (COUI `coui_full_page_statement_scroll_fade_length`, 32dp).
+     */
+    val ScrollFadeLength = 32.dp
 
     /** Top margin of the primary button (COUI coui_full_page_statement_button_margin_top). */
     val PrimaryButtonMarginTop = 20.dp

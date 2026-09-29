@@ -79,10 +79,10 @@ object DividerDefaults {
 
     /**
      * Recommended horizontal inset for a [HorizontalDivider] placed between rows inside a [Card]
-     * (COUI coui_preference_divider_default_horizontal_padding). For rows with a leading icon,
-     * align the start inset with the title text start instead.
+     * (COUI `coui_preference_divider_default_horizontal_padding`, 32dp). For rows with a leading
+     * icon, align the start inset with the title text start instead.
      *
      * Usage: `HorizontalDivider(Modifier.padding(horizontal = DividerDefaults.CardInset))`.
      */
-    val CardInset = 16.dp
+    val CardInset = 32.dp
 }

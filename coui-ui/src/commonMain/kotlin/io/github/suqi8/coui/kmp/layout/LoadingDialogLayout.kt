@@ -121,9 +121,9 @@ object LoadingDialogDefaults {
     val CornerRadius = 9.dp
 
     /**
-     * The size of the rotating spinner. COUI `coui_spinner_loading_anim_width/height` (26dp).
+     * The size of the rotating spinner. COUI `coui_spinner_loading_anim_width/height` (36dp).
      */
-    val SpinnerSize = 26.dp
+    val SpinnerSize = 36.dp
 
     /**
      * The default color of the message below the spinner. COUI progress_tips uses
@@ -140,14 +140,14 @@ object LoadingDialogDefaults {
     fun spinnerColor() = COUITheme.colorScheme.onBackground
 }
 
-/** COUI coui_spinner_margin_top. */
-private val SpinnerMarginTop = 26.dp
+/** COUI `coui_spinner_margin_top` (28dp). */
+private val SpinnerMarginTop = 28.dp
 
-/** COUI coui_spinner_margin_bottom. */
-private val SpinnerMarginBottom = 16.dp
+/** COUI `coui_spinner_margin_bottom` (12dp). */
+private val SpinnerMarginBottom = 12.dp
 
-/** COUI coui_spinner_text_margin_bottom. */
-private val TextMarginBottom = 26.dp
+/** COUI `coui_spinner_text_margin_bottom` (28dp). */
+private val TextMarginBottom = 28.dp
 
 /** COUI coui_spinner_text_margin_horizontal. */
 private val TextMarginHorizontal = 16.dp

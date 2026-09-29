@@ -687,8 +687,8 @@ private val IndicatorShadowBlurRadius = 1.dp
 /** COUI `coui_segment_button_shadow_color` in light themes (#0D000000). */
 private val IndicatorShadowLight = Color(0x0D000000)
 
-/** COUI `coui_segment_button_shadow_color` in dark themes (#1A000000). */
-private val IndicatorShadowDark = Color(0x1A000000)
+/** COUI `coui_segment_button_shadow_color` in dark themes (#14000000). */
+private val IndicatorShadowDark = Color(0x14000000)
 
 /** COUI `coui_color_segment_button_background` in light themes (#0F000000). */
 private val SegmentContainerLight = Color(0x0F000000)
@@ -696,11 +696,11 @@ private val SegmentContainerLight = Color(0x0F000000)
 /** COUI `coui_color_segment_button_background` in dark themes (#1FFFFFFF). */
 private val SegmentContainerDark = Color(0x1FFFFFFF)
 
-/** COUI `coui_color_segment_button_indicator` in light themes (#FFFFFF). */
-private val SegmentIndicatorLight = Color(0xFFFFFFFF)
+/** COUI `coui_color_segment_button_indicator` in light themes (#B2FFFFFF). */
+private val SegmentIndicatorLight = Color(0xB2FFFFFF)
 
-/** COUI `coui_color_segment_button_indicator` in dark themes (#1AFFFFFF). */
-private val SegmentIndicatorDark = Color(0x1AFFFFFF)
+/** COUI `coui_color_segment_button_indicator` in dark themes (#33FFFFFF). */
+private val SegmentIndicatorDark = Color(0x33FFFFFF)
 
 /** COUI `COUIInEaseInterpolator`; shares [COUIInEase]. Maps the segment area to the pressed end scale. */
 private val PressedScaleEasing = COUIInEase

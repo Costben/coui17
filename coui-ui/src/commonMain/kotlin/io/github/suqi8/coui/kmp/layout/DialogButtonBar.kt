@@ -325,47 +325,49 @@ private enum class BarSlot { Neutral, Positive, Negative }
 object DialogButtonBarDefaults {
     /**
      * The horizontal padding of a bar button, in both tiers. COUI
-     * `coui_alert_dialog_button_horizontal_padding`; also the padding
+     * `coui_alert_dialog_button_horizontal_padding` (12dp); also the padding
      * `COUIButtonBarLayout.needSetButVertical` subtracts from each cell.
      */
-    val ButtonHorizontalPadding = 24.dp
+    val ButtonHorizontalPadding = 12.dp
 
     /**
      * The min height of a stacked bar button. COUI
-     * `coui_alert_dialog_vertical_button_min_height` (`mVerButMinHeightNormal`).
+     * `coui_alert_dialog_vertical_button_min_height` (44dp, `mVerButMinHeightNormal`).
      */
-    val StackedButtonMinHeight = 52.dp
+    val StackedButtonMinHeight = 44.dp
 
     /**
      * The min height of the bottom-most stacked bar button. COUI `mVerButMinHeightBottom` =
-     * `coui_alert_dialog_vertical_button_min_height` +
-     * `coui_center_alert_dialog_vertical_button_paddingbottom_vertical_extra` (12dp).
+     * `coui_alert_dialog_vertical_button_min_height` (44dp) +
+     * `coui_center_alert_dialog_vertical_button_paddingbottom_vertical_extra` (0dp), which leaves
+     * it at the same 44dp as [StackedButtonMinHeight].
      */
-    val StackedButtonMinHeightBottom = 64.dp
+    val StackedButtonMinHeightBottom = 44.dp
 
     /**
      * The vertical padding of a stacked bar button. COUI
-     * `coui_bottom_alert_dialog_vertical_button_padding_vertical_new` (`mVerButtonVecPaddingNew`).
+     * `coui_bottom_alert_dialog_vertical_button_padding_vertical_new` (4dp,
+     * `mVerButtonVecPaddingNew`).
      */
-    val StackedButtonPaddingVertical = 14.dp
+    val StackedButtonPaddingVertical = 4.dp
 
     /**
      * The extra top padding of the top-most stacked bar button when nothing sits above the bar.
-     * COUI `coui_bottom_alert_dialog_vertical_button_padding_top_extra_new`.
+     * COUI `coui_bottom_alert_dialog_vertical_button_padding_top_extra_new` (0dp).
      */
-    val StackedButtonPaddingTopExtra = 6.dp
+    val StackedButtonPaddingTopExtra = 0.dp
 
     /**
      * The extra bottom padding of the bottom-most stacked bar button, which carries the panel
-     * bottom inset. COUI `coui_bottom_alert_dialog_vertical_button_padding_bottom_extra_new`.
+     * bottom inset. COUI `coui_bottom_alert_dialog_vertical_button_padding_bottom_extra_new` (0dp).
      */
-    val StackedButtonPaddingBottomExtra = 12.dp
+    val StackedButtonPaddingBottomExtra = 0.dp
 
     /**
      * The top margin of a stacked bar holding more than one button. COUI
-     * `coui_bottom_alert_dialog_buttonbar_margintop`.
+     * `coui_bottom_alert_dialog_buttonbar_margintop` (0dp).
      */
-    val StackedBarMarginTop = 16.dp
+    val StackedBarMarginTop = 0.dp
 
     /**
      * The thickness of the divider between stacked bar buttons. COUI

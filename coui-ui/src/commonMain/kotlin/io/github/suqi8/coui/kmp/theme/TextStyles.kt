@@ -143,7 +143,10 @@ fun defaultTextStyles(
     title4,
 )
 
-/** COUI couiTextAppearanceHeadline6 (coui_spacing_multiplier_headline_xs), the closest tier to 17sp. */
+/**
+ * Miuix's 17sp main text style, line height 1.158em. COUI has no 17sp text appearance, so the
+ * size stays as inherited; couiTextAppearanceBodyL and couiTextAppearanceHeadline6 are 16sp.
+ */
 private val Main: TextStyle
     get() =
         TextStyle(
@@ -152,7 +155,10 @@ private val Main: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceBodyL (coui_spacing_multiplier_body_l), the closest tier to 17sp. */
+/**
+ * Miuix's 17sp paragraph text style, line height 1.158em. COUI has no 17sp text appearance, so
+ * the size stays as inherited; couiTextAppearanceBodyL and couiTextAppearanceHeadline6 are 16sp.
+ */
 private val Paragraph: TextStyle
     get() =
         TextStyle(
@@ -161,7 +167,7 @@ private val Paragraph: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceBodyL 16sp (coui_spacing_multiplier_body_l). */
+/** COUI couiTextAppearanceBodyL 16sp, line height 1.158em. */
 private val Body1: TextStyle
     get() =
         TextStyle(
@@ -170,7 +176,7 @@ private val Body1: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceBody 14sp (coui_spacing_multiplier_body_m). */
+/** COUI couiTextAppearanceBody 14sp, line height 1.2245em. */
 private val Body2: TextStyle
     get() =
         TextStyle(
@@ -179,7 +185,7 @@ private val Body2: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceButtonL 16sp, sans-serif-medium (coui_spacing_multiplier_button_l). */
+/** COUI couiTextAppearanceButtonL 16sp, sans-serif-medium, line height 1.263em. */
 private val Button: TextStyle
     get() =
         TextStyle(
@@ -189,7 +195,7 @@ private val Button: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceBody (coui_spacing_multiplier_body_m); COUI has no 13sp tier. */
+/** COUI couiTextAppearanceArticleBody 13sp, line height 1.2245em. */
 private val Footnote1: TextStyle
     get() =
         TextStyle(
@@ -198,7 +204,10 @@ private val Footnote1: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceDescription 12sp (coui_spacing_multiplier_body_xs); COUI has no 11sp tier. */
+/**
+ * Miuix's 11sp footnote text style, line height 1.143em. COUI has no 11sp text appearance, so
+ * the size stays as inherited; the nearest tier, couiTextAppearanceDescription, is 12sp.
+ */
 private val Footnote2: TextStyle
     get() =
         TextStyle(
@@ -208,9 +217,9 @@ private val Footnote2: TextStyle
         )
 
 /**
- * COUI couiTextAppearanceHeadline6 16sp (coui_spacing_multiplier_headline_xs), the appearance behind
- * TextAppearance.COUI.List.Title. Confirmed on device: a ColorOS 16 preference title node measures
- * 21.71dp at 560 dpi, which is 16sp rather than the 17sp inherited from Miuix.
+ * COUI couiTextAppearanceHeadline6 16sp, line height 1.158em, the appearance behind
+ * TextAppearance.COUI.List.Title. Confirmed on device: a ColorOS 16 preference title node
+ * measures 21.71dp at 560 dpi, which is 16sp rather than the 17sp inherited from Miuix.
  */
 private val Headline1: TextStyle
     get() =
@@ -220,7 +229,7 @@ private val Headline1: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline6 16sp (coui_spacing_multiplier_headline_xs). */
+/** COUI couiTextAppearanceHeadline6 16sp, line height 1.158em. */
 private val Headline2: TextStyle
     get() =
         TextStyle(
@@ -229,7 +238,7 @@ private val Headline2: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceBody 14sp (coui_spacing_multiplier_body_m). */
+/** COUI couiTextAppearanceBody 14sp, bold, line height 1.2245em. */
 private val Subtitle: TextStyle
     get() =
         TextStyle(
@@ -239,7 +248,7 @@ private val Subtitle: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline1 32sp (coui_spacing_multiplier_display_s). */
+/** COUI couiTextAppearanceHeadline1 32sp, line height 1.2322em. */
 private val Title1: TextStyle
     get() =
         TextStyle(
@@ -248,7 +257,7 @@ private val Title1: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline3 24sp (coui_spacing_multiplier_display_xs). */
+/** COUI couiTextAppearanceHeadline3 24sp, line height 1.2em. */
 private val Title2: TextStyle
     get() =
         TextStyle(
@@ -257,7 +266,7 @@ private val Title2: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline4 20sp (coui_spacing_multiplier_headline_m). */
+/** COUI couiTextAppearanceHeadline4 20sp, line height 1.1831em. */
 private val Title3: TextStyle
     get() =
         TextStyle(
@@ -266,7 +275,7 @@ private val Title3: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline5 18sp (coui_spacing_multiplier_headline_s). */
+/** COUI couiTextAppearanceHeadline5 18sp, line height 1.2381em. */
 private val Title4: TextStyle
     get() =
         TextStyle(

@@ -480,9 +480,10 @@ object DialogDefaults {
 
     /**
      * The default margin outside the dialog.
-     * COUI `coui_dialog_layout_margin_horizontal` / `coui_dialog_layout_margin_vertical`.
+     * COUI `coui_dialog_layout_margin_horizontal` (16dp) / `coui_dialog_layout_margin_vertical`
+     * (32dp).
      */
-    val outsideMargin = DpSize(16.dp, 24.dp)
+    val outsideMargin = DpSize(16.dp, 32.dp)
 
     /**
      * The default margin for the built-in title and summary texts: width is their horizontal
@@ -493,18 +494,18 @@ object DialogDefaults {
     val insideMargin = DpSize(24.dp, 24.dp)
 
     /**
-     * The min height of a horizontal dialog button bar. COUI `coui_alert_dialog_button_height`.
+     * The min height of a horizontal dialog button bar. COUI `coui_alert_dialog_button_height`
+     * (44dp, `mHorButPanelMinHeight`), the height COUI gives each bar button.
      */
-    val ButtonBarMinHeight = 58.dp
+    val ButtonBarMinHeight = 44.dp
 
     /**
-     * The paddings of a button in a horizontal dialog button bar. COUI
-     * `coui_alert_dialog_button_horizontal_padding` and the vertical values
-     * `COUIButtonBarLayout.resetHorButsPadding` settles on,
-     * `coui_bottom_alert_dialog_horizontal_button_padding_top/bottom_extra_new`, so the panel
-     * bottom inset is carried by the buttons themselves.
+     * The paddings of a button in a horizontal dialog button bar. The horizontal start/end are
+     * COUI `coui_alert_dialog_button_horizontal_padding` (12dp); the vertical values are the
+     * bar's own top/bottom inset, carried on the buttons so the panel bottom inset rides on them
+     * (`COUIButtonBarLayout.resetHorButsPadding`).
      */
-    val ButtonBarInsideMargin = PaddingValues(start = 24.dp, top = 12.dp, end = 24.dp, bottom = 22.dp)
+    val ButtonBarInsideMargin = PaddingValues(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 22.dp)
 
     /**
      * The thickness of the divider between horizontal dialog bar buttons. COUI

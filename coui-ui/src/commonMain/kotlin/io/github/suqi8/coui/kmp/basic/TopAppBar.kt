@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastFirst
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.basic.TopAppBarState.Companion.Saver
@@ -591,10 +590,10 @@ object TopAppBarDefaults {
 
     /**
      * The default expanded height of the [TopAppBar] when no subtitle is present.
-     * COUI `coui_appbar_title_expanded_height` (107dp); the bar grows beyond it when the
+     * COUI `coui_appbar_title_expanded_height` (110dp); the bar grows beyond it when the
      * measured title content requires more space.
      */
-    val ExpandedHeight = 107.dp
+    val ExpandedHeight = 110.dp
 
     /**
      * The top padding of the expanded large title, measured from the top of the bar.
@@ -986,12 +985,17 @@ private fun TopAppBarLayout(
         }
     }
 
-    // CollapsingTextHelper lerps the text size from expanded 32dp to collapsed 18dp; replicated
-    // as a scale factor around the title's top-start corner.
-    val largeTitleFontSize = COUITheme.textStyles.title1.fontSize
-    val collapsedTitleScale = remember(largeTitleFontSize) {
+    val density = LocalDensity.current
+    // CollapsingTextHelper lerps the text size from the expanded 32dp down to the collapsed
+    // 24dp, or 18dp when a subtitle is present; replicated as a scale factor around the title's
+    // top-start corner.
+    val largeTitleFontSize = with(density) { LargeTitleTextSize.toSp() }
+    val collapsedTitleSize =
+        if (subtitle.isNotEmpty()) CollapsedTitleWithSubtitleTextSize else CollapsedTitleTextSize
+    val collapsedTitleFontSize = with(density) { collapsedTitleSize.toSp() }
+    val collapsedTitleScale = remember(largeTitleFontSize, collapsedTitleFontSize) {
         if (largeTitleFontSize.value > 0f) {
-            CollapsedTitleTextSize.value / largeTitleFontSize.value
+            collapsedTitleFontSize.value / largeTitleFontSize.value
         } else {
             1f
         }
@@ -1025,7 +1029,7 @@ private fun TopAppBarLayout(
                 Text(
                     text = title,
                     color = animatedTitleColor,
-                    fontSize = CollapsedTitleTextSize,
+                    fontSize = collapsedTitleFontSize,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -1343,13 +1347,14 @@ private fun SmallTopAppBarLayout(
                     segmentButton()
                 }
             }
-            // Title: TextAppearance.COUI.Toolbar.SecondTitle (18dp, medium, viewStart alignment).
+            // Title: TextAppearance.COUI.Toolbar.SecondTitle, the same 18dp as
+            // coui_appbar_title_collapsed_with_subtitle_text_size (medium, viewStart alignment).
             Box(Modifier.layoutId("title")) {
                 Text(
                     text = title,
                     color = animatedTitleColor,
                     maxLines = 1,
-                    fontSize = CollapsedTitleTextSize,
+                    fontSize = with(LocalDensity.current) { CollapsedTitleWithSubtitleTextSize.toSp() },
                     fontWeight = FontWeight.Medium,
                     overflow = TextOverflow.Ellipsis,
                     softWrap = false,
@@ -1611,8 +1616,14 @@ private fun SmallTopAppBarLayout(
     }
 }
 
-/** COUI `coui_appbar_title_collapsed_text_size` (18dp, sans-serif-medium). */
-private val CollapsedTitleTextSize = 18.sp
+/** COUI `coui_appbar_title_expanded_text_size` (32dp), the expanded large title. */
+private val LargeTitleTextSize = 32.dp
+
+/** COUI `coui_appbar_title_collapsed_text_size` (24dp, sans-serif-medium). */
+private val CollapsedTitleTextSize = 24.dp
+
+/** COUI `coui_appbar_title_collapsed_with_subtitle_text_size` (18dp). */
+private val CollapsedTitleWithSubtitleTextSize = 18.dp
 
 /**
  * COUIEaseInterpolator: cubic-bezier(0.33, 0, 0.67, 1), applied to the collapsing title's

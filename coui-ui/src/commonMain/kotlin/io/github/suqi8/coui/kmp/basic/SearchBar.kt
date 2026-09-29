@@ -376,9 +376,9 @@ object SearchBarDefaults {
 
     /**
      * The default font size for the [InputField] text and label.
-     * COUI `coui_search_view_input_text_size` (16sp).
+     * COUI `coui_search_view_input_text_size` (15sp).
      */
-    val InputFieldFontSize = 16.sp
+    val InputFieldFontSize = 15.sp
 
     /**
      * The start padding for the default leading icon: the COUI 4dp icon container start gap plus
@@ -465,8 +465,8 @@ private val ActionOffsetDurationMillis = 400
 /** COUISearchBar DEFAULT_BUTTON_ALPHA_CHANGE_DURATION (350ms). */
 private val ActionAlphaDurationMillis = 350
 
-/** COUI `coui_search_bar_functional_button_offset_distance` (30dp). */
-private val ActionSlideDistance = 30.dp
+/** COUI `coui_search_bar_functional_button_offset_distance` (60dp). */
+private val ActionSlideDistance = 60.dp
 
 /**
  * Extra start padding for the outside end action: the COUI 20dp visual gap from the capsule
