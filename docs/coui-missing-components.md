@@ -1,5 +1,11 @@
 # COUI 16 缺失组件清单（对照盘点）
 
+> **状态回写（2026-09-30，ColorOS 17 阶段二收尾）**：本清单的多数条目**已落地**。
+> 逐项终态请以 `docs/coui-coloros17-widget-audit.md` §4.4 终态表与 §5.4 G9 行为准
+> （该行给出 24 项已落地的代码位置、5 项沿用既有、8 族「不适用」的 `dexdump` 证据，以及 4 项仍未闭合），
+> 令牌溯源见同文件 §7.12.1–§7.12.6，工单与收口核验见 `docs/coui-coloros17-upgrade-plan.md` §2.4.1 与 §2.5。
+> 本文件保留 2026-07-26 的原始盘点口径（含当时使用的 Windows 逆向工作区路径），**不再逐条更新**，以免出现两处真相。
+
 > 盘点日期：2026-07-26。对照基线：`coui-ui/src/commonMain/.../basic/`（32 个文件）+ `overlay/`、`window/`、`layout/` + `coui-preference/`（19 个文件）。
 > COUI 全集来源（逆向工作区 `E:\AndroidStudioProjects\jadx\work\`，下文用缩写）：
 >
