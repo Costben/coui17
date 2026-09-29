@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui17
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,8 +31,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Button
@@ -44,6 +55,7 @@ import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
 import io.github.suqi8.coui.kmp.basic.LinearProgressIndicator
+import io.github.suqi8.coui.kmp.basic.LoadProgressState
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SearchBar
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -75,14 +87,29 @@ import io.github.suqi8.coui.kmp.icon.extended.VolumeOff
 import io.github.suqi8.coui.kmp.icon.extended.VolumeUp
 import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
+import io.github.suqi8.coui.kmp.preference.AppInfoPreference
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
-import io.github.suqi8.coui.kmp.preference.ButtonPreference
-import io.github.suqi8.coui.kmp.preference.CheckboxPreference
+import io.github.suqi8.coui.kmp.preference.BottomPreference
+import io.github.suqi8.coui.kmp.preference.CheckBoxPreferenceCategory
+import io.github.suqi8.coui.kmp.preference.CheckBoxWithDividerPreference
+import io.github.suqi8.coui.kmp.preference.EditTextPreference
+import io.github.suqi8.coui.kmp.preference.InputPreference
 import io.github.suqi8.coui.kmp.preference.ListPreference
 import io.github.suqi8.coui.kmp.preference.ListPreferenceEntry
+import io.github.suqi8.coui.kmp.preference.LoadInstallProgressPreference
+import io.github.suqi8.coui.kmp.preference.LoadingPreferenceCategory
+import io.github.suqi8.coui.kmp.preference.MarkWithDividerPreference
+import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
+import io.github.suqi8.coui.kmp.preference.PagerFooterPreference
+import io.github.suqi8.coui.kmp.preference.PagerHeaderPreference
 import io.github.suqi8.coui.kmp.preference.RadioButtonPreference
 import io.github.suqi8.coui.kmp.preference.SliderPreference
+import io.github.suqi8.coui.kmp.preference.SpannablePreference
+import io.github.suqi8.coui.kmp.preference.StatusSwitchingContent
+import io.github.suqi8.coui.kmp.preference.StatusSwitchingPreference
+import io.github.suqi8.coui.kmp.preference.StepperPreference
 import io.github.suqi8.coui.kmp.preference.SwitchPreference
+import io.github.suqi8.coui.kmp.preference.SwitchWithDividerPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
@@ -132,7 +159,7 @@ internal fun SettingsScreen(
     var autoBrightness by remember { mutableStateOf(true) }
     var colorModeIndex by remember { mutableIntStateOf(0) }
     var refreshIndex by remember { mutableIntStateOf(1) }
-    var showRefreshSheet by remember { mutableStateOf(false) }
+    var fontScaleIndex by remember { mutableIntStateOf(1) }
 
     var mediaVolume by remember { mutableFloatStateOf(0.45f) }
     var silent by remember { mutableStateOf(false) }
@@ -145,11 +172,29 @@ internal fun SettingsScreen(
     var notifyDetail by remember { mutableStateOf(true) }
     var showAboutDialog by remember { mutableStateOf(false) }
 
+    // `COUILoadingPreferenceCategory` is a transient state on the device too: the settings app shows
+    // it while it re-reads the battery stats and swaps the widget out when the read returns.
+    var batteryLoading by remember { mutableStateOf(true) }
+    var deviceName by remember { mutableStateOf("OnePlus PLK110") }
+    var bluetoothName by remember { mutableStateOf("COUI-Lab 17") }
+    var systemUpdateState by remember { mutableStateOf(LoadProgressState.Default) }
+    var systemUpdateProgress by remember { mutableIntStateOf(0) }
+
     val colorModes = remember { listOf("自然", "鲜艳", "柔和") }
     val refreshRates = remember { listOf("60Hz", "120Hz", "智能切换") }
     val ringtones = remember { listOf("清晨", "潮汐", "静谧", "无") }
+    val fontScales = remember { listOf("小", "标准", "大", "超大") }
+    val appIcon = rememberAppIcon()
     val suggestions = remember {
         listOf("WLAN 与网络", "蓝牙", "显示与亮度", "声音与振动", "电池", "通知与状态栏")
+    }
+
+    // A category-level "select all" box reads `Indeterminate` while only part of the group is on,
+    // which is exactly what `COUICheckBox`'s tri-state is for.
+    val notifyAllState = when {
+        notifyEnabled && lockScreenNotify && notifyDetail -> ToggleableState.On
+        !notifyEnabled && !lockScreenNotify && !notifyDetail -> ToggleableState.Off
+        else -> ToggleableState.Indeterminate
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -243,6 +288,14 @@ internal fun SettingsScreen(
                 }
             }
 
+            // `COUIPagerHeaderPreference` is the note a ColorOS settings sub-page opens with. This
+            // demo has no sub-page, so it takes the page-top slot right below the search bar.
+            item(key = "pageHeader") {
+                PagerHeaderPreference(
+                    summary = "以下设置项按 ColorOS 17 设置首页的排布放置，每个控件都是 COUI 17 组件。",
+                )
+            }
+
             item(key = "connection") {
                 SmallTitle(text = "连接与共享")
                 SettingsCard {
@@ -262,6 +315,15 @@ internal fun SettingsScreen(
                         startAction = { SettingIcon(COUIIcons.Link, IconBlue) },
                         checked = bluetooth,
                         onCheckedChange = { bluetooth = it },
+                    )
+                    SettingsDivider()
+                    InputPreference(
+                        title = "蓝牙名称",
+                        value = bluetoothName,
+                        onValueChange = { bluetoothName = it },
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        maxCount = 24,
+                        showClearButton = true,
                     )
                     SettingsDivider()
                     ArrowPreference(
@@ -331,12 +393,24 @@ internal fun SettingsScreen(
                         showValue = true,
                     )
                     SettingsDivider()
-                    ArrowPreference(
+                    StepperPreference(
+                        value = fontScaleIndex,
+                        onValueChange = { fontScaleIndex = it },
+                        title = "字体大小",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        summary = fontScales[fontScaleIndex],
+                        minValue = 0,
+                        maxValue = fontScales.lastIndex,
+                        startAction = { SettingIcon(COUIIcons.Notes, IconOrange) },
+                    )
+                    SettingsDivider()
+                    OverlayDropdownPreference(
+                        items = refreshRates,
+                        selectedIndex = refreshIndex,
                         title = "屏幕刷新率",
                         modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                        endActions = { InlineValue(refreshRates[refreshIndex]) },
                         startAction = { SettingIcon(COUIIcons.Update, IconGreen) },
-                        onClick = { showRefreshSheet = true },
+                        onSelectedIndexChange = { refreshIndex = it },
                     )
                 }
             }
@@ -372,12 +446,19 @@ internal fun SettingsScreen(
             }
 
             item(key = "battery") {
-                SmallTitle(text = "电池")
+                // `COUILoadingPreferenceCategory`: the device shows the spinner while it re-reads the
+                // battery stats, then swaps the widget out. The "after loading" layout is empty here,
+                // so the header simply settles on its title.
+                LoadingPreferenceCategory(
+                    title = "电池",
+                    loading = batteryLoading,
+                    loadingText = "正在统计用电情况…",
+                )
                 SettingsCard {
-                    BasicComponent(
-                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    StatusSwitchingPreference(
                         title = "电池电量",
-                        endActions = { InlineValue("约 9 小时 12 分可用") },
+                        status = StatusSwitchingContent.Text("约 9 小时 12 分可用"),
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                         startAction = { SettingIcon(COUIIcons.Timer, IconGreen) },
                         bottomAction = {
                             Column(modifier = Modifier.padding(top = 8.dp)) {
@@ -400,9 +481,18 @@ internal fun SettingsScreen(
             }
 
             item(key = "notification") {
-                SmallTitle(text = "通知与状态栏")
+                CheckBoxPreferenceCategory(
+                    title = "通知与状态栏",
+                    state = notifyAllState,
+                    onClick = {
+                        val turnOn = notifyAllState != ToggleableState.On
+                        notifyEnabled = turnOn
+                        lockScreenNotify = turnOn
+                        notifyDetail = turnOn
+                    },
+                )
                 SettingsCard {
-                    SwitchPreference(
+                    SwitchWithDividerPreference(
                         title = "允许通知",
                         modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                         startAction = { SettingIcon(COUIIcons.Messages, IconBlue) },
@@ -410,7 +500,7 @@ internal fun SettingsScreen(
                         onCheckedChange = { notifyEnabled = it },
                     )
                     SettingsDivider()
-                    CheckboxPreference(
+                    CheckBoxWithDividerPreference(
                         title = "锁屏显示通知",
                         modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                         startAction = { SettingIcon(COUIIcons.Lock, IconOrange) },
@@ -418,19 +508,19 @@ internal fun SettingsScreen(
                         onCheckedChange = { lockScreenNotify = it },
                     )
                     SettingsDivider()
-                    RadioButtonPreference(
+                    MarkWithDividerPreference(
                         title = "显示通知内容",
                         modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                         startAction = { SettingIcon(COUIIcons.Notes, IconTeal) },
-                        selected = notifyDetail,
+                        checked = notifyDetail,
                         onClick = { notifyDetail = true },
                     )
                     SettingsDivider()
-                    RadioButtonPreference(
+                    MarkWithDividerPreference(
                         title = "隐藏通知内容",
                         modifier = Modifier.heightIn(min = HomepageRowMinHeight),
                         startAction = { SettingIcon(COUIIcons.Hide, IconRed) },
-                        selected = !notifyDetail,
+                        checked = !notifyDetail,
                         onClick = { notifyDetail = false },
                     )
                 }
@@ -469,7 +559,24 @@ internal fun SettingsScreen(
 
             item(key = "about") {
                 SmallTitle(text = "关于本机")
+                AppInfoPreference(
+                    appName = "COUI 17",
+                    appVersion = "V17.0.0 · ColorOS 17 组件演示",
+                    icon = appIcon,
+                    onVersionLongClick = { notify(scope, snackbarHostState, "版本号已复制") },
+                )
                 SettingsCard {
+                    EditTextPreference(
+                        title = "设备名称",
+                        value = deviceName,
+                        onValueChange = { deviceName = it },
+                        confirmButtonText = "确定",
+                        cancelButtonText = "取消",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        dialogTitle = "设备名称",
+                        hint = "最多 24 个字符",
+                    )
+                    SettingsDivider()
                     ArrowPreference(
                         title = "型号",
                         modifier = Modifier.heightIn(min = HomepageRowMinHeight),
@@ -478,12 +585,34 @@ internal fun SettingsScreen(
                         onClick = { showAboutDialog = true },
                     )
                     SettingsDivider()
-                    ButtonPreference(
+                    LoadInstallProgressPreference(
                         title = "系统更新",
                         modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                        buttonText = "检查",
+                        summary = "已是最新版本 V17.0.0",
                         startAction = { SettingIcon(COUIIcons.UploadCloud, IconTeal) },
-                        onButtonClick = { notify(scope, snackbarHostState, "已是最新版本") },
+                        state = systemUpdateState,
+                        progress = systemUpdateProgress,
+                        progressText = if (systemUpdateState == LoadProgressState.Loading) "暂停" else "检查更新",
+                        onClick = {
+                            if (systemUpdateState == LoadProgressState.Loading) {
+                                systemUpdateState = LoadProgressState.Default
+                                systemUpdateProgress = 0
+                            } else {
+                                systemUpdateProgress = 0
+                                systemUpdateState = LoadProgressState.Loading
+                                scope.launch {
+                                    repeat(5) {
+                                        delay(160)
+                                        systemUpdateProgress += 20
+                                    }
+                                    if (systemUpdateState == LoadProgressState.Loading) {
+                                        systemUpdateState = LoadProgressState.Default
+                                        systemUpdateProgress = 0
+                                        notify(scope, snackbarHostState, "已是最新版本")
+                                    }
+                                }
+                            }
+                        },
                     )
                     SettingsDivider()
                     ArrowPreference(
@@ -493,7 +622,34 @@ internal fun SettingsScreen(
                         startAction = { SettingIcon(COUIIcons.Info, IconGreen) },
                         onClick = { showAboutDialog = true },
                     )
+                    SettingsDivider()
+                    SpannablePreference(
+                        title = "法律信息",
+                        summary = buildAnnotatedString {
+                            append("《")
+                            withLink(
+                                LinkAnnotation.Clickable(tag = "privacy") {
+                                    notify(scope, snackbarHostState, "打开《隐私政策》")
+                                },
+                            ) {
+                                append("隐私政策")
+                            }
+                            append("》与《")
+                            withLink(
+                                LinkAnnotation.Clickable(tag = "terms") {
+                                    notify(scope, snackbarHostState, "打开《用户协议》")
+                                },
+                            ) {
+                                append("用户协议")
+                            }
+                            append("》")
+                        },
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                    )
                 }
+                PagerFooterPreference(
+                    summary = AnnotatedString("本页仅用于 COUI 17 组件演示，所列数据均为示例。"),
+                )
             }
 
             item(key = "actions") {
@@ -519,6 +675,12 @@ internal fun SettingsScreen(
                         },
                     )
                 }
+            }
+
+            // `COUIBottomPreference` draws nothing; it is the invisible 32dp the device keeps between
+            // the last card and the end of the list.
+            item(key = "bottom") {
+                BottomPreference()
             }
         }
 
@@ -546,29 +708,10 @@ internal fun SettingsScreen(
                 showOptimizeResult = false
             }
         }
-    }
 
-    OverlayBottomSheet(
-        show = showRefreshSheet,
-        title = "屏幕刷新率",
-        onDismissRequest = { showRefreshSheet = false },
-    ) {
-        Column(modifier = Modifier.padding(bottom = 16.dp)) {
-            refreshRates.forEachIndexed { index, rate ->
-                RadioButtonPreference(
-                    title = rate,
-                    summary = when (rate) {
-                        "120Hz" -> "更流畅，耗电略高"
-                        "智能切换" -> "根据内容自动调节"
-                        else -> "更省电"
-                    },
-                    selected = refreshIndex == index,
-                    onClick = {
-                        refreshIndex = index
-                        showRefreshSheet = false
-                    },
-                )
-            }
+        LaunchedEffect(Unit) {
+            delay(1200)
+            batteryLoading = false
         }
     }
 
@@ -649,6 +792,29 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
             .padding(bottom = 12.dp),
         content = content,
     )
+}
+
+/**
+ * The demo app's own launcher icon, drawn as the "about" header's 60dp squircle.
+ *
+ * `PackageManager.getApplicationIcon` is the only lookup that survives an adaptive icon: on API 26+
+ * `@mipmap/ic_launcher` resolves to an XML `AdaptiveIconDrawable`, which `BitmapFactory` cannot decode
+ * and whose intrinsic size is -1. Bounds are therefore pinned to a fixed square instead of trusting
+ * a size the drawable does not report.
+ */
+@Composable
+private fun rememberAppIcon(): Painter? {
+    val context = LocalContext.current
+    return remember(context) {
+        runCatching {
+            val drawable = context.packageManager.getApplicationIcon(context.packageName)
+            val size = 120
+            val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            drawable.setBounds(0, 0, size, size)
+            drawable.draw(Canvas(bitmap))
+            BitmapPainter(bitmap.asImageBitmap())
+        }.getOrNull()
+    }
 }
 
 @Composable
