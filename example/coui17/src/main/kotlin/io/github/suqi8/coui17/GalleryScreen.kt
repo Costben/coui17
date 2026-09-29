@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +51,9 @@ import io.github.suqi8.coui.kmp.basic.SideNavigationBar
 import io.github.suqi8.coui.kmp.basic.SidePaneLayout
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TopAppBar
+import io.github.suqi8.coui.kmp.basic.gridSpringChainItem
+import io.github.suqi8.coui.kmp.basic.gridSpringChainOverscroll
+import io.github.suqi8.coui.kmp.basic.rememberGridSpringChainState
 import io.github.suqi8.coui.kmp.basic.rememberSideNavigationBarState
 import io.github.suqi8.coui.kmp.basic.rememberSidePaneLayoutState
 import io.github.suqi8.coui.kmp.icon.COUIIcons
@@ -62,6 +68,11 @@ import io.github.suqi8.coui.kmp.icon.extended.Photos
 import io.github.suqi8.coui.kmp.icon.extended.Play
 import io.github.suqi8.coui.kmp.icon.extended.Recent
 import io.github.suqi8.coui.kmp.icon.extended.ScreenCapture
+import io.github.suqi8.coui.kmp.preference.CardEntrancePreference
+import io.github.suqi8.coui.kmp.preference.CardEntranceType
+import io.github.suqi8.coui.kmp.preference.CardInstructionItem
+import io.github.suqi8.coui.kmp.preference.CardInstructionPreference
+import io.github.suqi8.coui.kmp.preference.CardInstructionType
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.ColorSchemeMode
 import io.github.suqi8.coui.kmp.theme.ThemeController
@@ -343,9 +354,12 @@ private fun AlbumNavigationRow(album: GalleryAlbum, onClick: () -> Unit) {
 
 @Composable
 private fun AlbumGrid(padding: PaddingValues, onOpenAlbum: (GalleryAlbum) -> Unit) {
+    val chainState = rememberGridSpringChainState()
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .gridSpringChainOverscroll(chainState),
         contentPadding = PaddingValues(
             start = 16.dp,
             end = 16.dp,
@@ -355,8 +369,19 @@ private fun AlbumGrid(padding: PaddingValues, onOpenAlbum: (GalleryAlbum) -> Uni
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        items(GalleryAlbums, key = { it.name }) { album ->
-            Column(modifier = Modifier.fillMaxWidth()) {
+        item(span = { GridItemSpan(maxLineSpan) }, key = GALLERY_ENTRY_BLOCK_KEY) {
+            // The COUI card entry block the Gallery shows above the album list. It is the grid's
+            // first row, so the chain moves it along with the tiles below it.
+            GalleryEntryBlock(modifier = Modifier.gridSpringChainItem(chainState, row = 0))
+        }
+
+        itemsIndexed(GalleryAlbums, key = { _, album -> album.name }) { index, album ->
+            // The entry block above owns row 0, so the album tiles start at row 1.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .gridSpringChainItem(chainState, row = 1 + index / 2),
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -382,6 +407,45 @@ private fun AlbumGrid(padding: PaddingValues, onOpenAlbum: (GalleryAlbum) -> Uni
                 )
             }
         }
+    }
+}
+
+/**
+ * The card entry block the Gallery home shows above the album list: the COUI card instruction
+ * carousel (G-8 `COUICardInstructionPreference`) over the large card entrance
+ * (`COUICardEntrancePreference`). The studied Gallery layout has no album-list card of its own, so
+ * these are the two device card types placed at the position the Gallery gives its entry block.
+ */
+@Composable
+private fun GalleryEntryBlock(modifier: Modifier = Modifier) {
+    var instructionPage by remember { mutableIntStateOf(0) }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        CardEntrancePreference(
+            title = "云端相册",
+            summary = "备份已开启 · 上次同步 2 分钟前",
+            cardType = CardEntranceType.Large,
+            icon = rememberVectorPainter(COUIIcons.Download),
+            statusOn = true,
+            onClick = {},
+        )
+        CardInstructionPreference(
+            items = GalleryInstructions,
+            cardType = CardInstructionType.Description,
+            selectedIndex = instructionPage,
+            onSelectedIndexChange = { instructionPage = it },
+            illustration = { page ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(GalleryInstructionHeight)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Brush.linearGradient(GalleryInstructionCovers[page])),
+                )
+            },
+        )
     }
 }
 
@@ -446,6 +510,26 @@ private val SidePaneHeaderDividerMarginBottom = 14.dp
 
 /** Offset of the album list below the status bar, standing in for the host's collapsing app bar. */
 private val NavigationContentTopPadding = 56.dp
+
+/** Key of the full-span card entry block item in the album grid. */
+private const val GALLERY_ENTRY_BLOCK_KEY = "gallery_entry_block"
+
+/** Height of the demo illustration inside the card instruction carousel. */
+private val GalleryInstructionHeight = 96.dp
+
+/** The card instruction pages of the demo entry block. Copy is page content, not a design token. */
+private val GalleryInstructions = listOf(
+    CardInstructionItem("智能整理", "按人物、地点和时间自动归集照片"),
+    CardInstructionItem("云端同步", "开启后可在其他设备继续浏览"),
+    CardInstructionItem("回忆相册", "每月自动生成一段回忆"),
+)
+
+/** The illustration gradients of [GalleryInstructions], matching the album cover palette. */
+private val GalleryInstructionCovers = listOf(
+    listOf(Color(0xFF2F4858), Color(0xFF86BBD8)),
+    listOf(Color(0xFF33658A), Color(0xFF86BBD8)),
+    listOf(Color(0xFF3B5249), Color(0xFFA3C9A8)),
+)
 
 /** One album of the demo Gallery. */
 private data class GalleryAlbum(
