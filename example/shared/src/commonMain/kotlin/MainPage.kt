@@ -43,6 +43,7 @@ import component.cardSection
 import component.checkboxSection
 import component.chipSection
 import component.chipTabSection
+import component.clickSelectMenuSection
 import component.colorPickerSection
 import component.dateTimePickerSection
 import component.dialogSection
@@ -51,6 +52,7 @@ import component.fullPageStatementSection
 import component.guideDialogSection
 import component.horizontalPopupMenuSection
 import component.inputViewSection
+import component.installLoadProgressSection
 import component.legacyComponentSection
 import component.listPreferenceSection
 import component.lockAndBannerSection
@@ -403,6 +405,8 @@ fun MainPage(
                     lockAndBannerSection()
                     searchAndSliderSection()
                     searchProgressSection()
+                    clickSelectMenuSection()
+                    installLoadProgressSection()
                     legacyComponentSection()
                     badgeSection()
                     preferenceExtrasSection()

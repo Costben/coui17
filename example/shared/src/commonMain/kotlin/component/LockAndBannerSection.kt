@@ -14,22 +14,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Banner
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.LockPatternDisplayMode
 import io.github.suqi8.coui.kmp.basic.LockPatternView
+import io.github.suqi8.coui.kmp.basic.LockScreenPwdInput
 import io.github.suqi8.coui.kmp.basic.NumericKeyboard
 import io.github.suqi8.coui.kmp.basic.NumericKeyboardDefaults
+import io.github.suqi8.coui.kmp.basic.SimpleLockType
+import io.github.suqi8.coui.kmp.basic.SimpleLockView
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
@@ -39,7 +45,7 @@ import io.github.suqi8.coui.kmp.squircle.squircleSurface
 
 fun LazyListScope.lockAndBannerSection() {
     item(key = "lockAndBanner") {
-        SmallTitle(text = "LockPatternView / NumericKeyboard / Banner")
+        SmallTitle(text = "LockPatternView / NumericKeyboard / SimpleLockView / LockScreenPwdInput / Banner")
         Card(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
@@ -48,6 +54,10 @@ fun LazyListScope.lockAndBannerSection() {
             LockPatternDemo()
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
             NumericKeyboardDemo()
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            SimpleLockDemo()
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            LockScreenPwdInputDemo()
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
             BannerDemo()
         }
@@ -141,6 +151,108 @@ private fun NumericKeyboardDemo() {
                 onRightClick = { pin = "" },
             )
         }
+    }
+}
+
+@Composable
+private fun SimpleLockDemo() {
+    var count by remember { mutableIntStateOf(0) }
+    var failed by remember { mutableStateOf(false) }
+    var type by remember { mutableStateOf(SimpleLockType.Six) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        SimpleLockView(
+            count = count,
+            type = type,
+            failed = failed,
+        )
+        Text(
+            text = "Filled " + count.toString() + " of " + type.dotCount.toString(),
+            modifier = Modifier.padding(top = 12.dp),
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            TextButton(
+                text = "Add",
+                onClick = {
+                    failed = false
+                    count = (count + 1).coerceAtMost(type.dotCount)
+                },
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                text = "Remove",
+                onClick = {
+                    failed = false
+                    count = (count - 1).coerceAtLeast(0)
+                },
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                text = "Fail",
+                onClick = { failed = !failed },
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            TextButton(
+                text = "4 dots",
+                onClick = {
+                    type = SimpleLockType.Four
+                    count = count.coerceAtMost(type.dotCount)
+                },
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                text = "6 dots",
+                onClick = {
+                    type = SimpleLockType.Six
+                    count = count.coerceAtMost(type.dotCount)
+                },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LockScreenPwdInputDemo() {
+    var password by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("Type a password") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        LockScreenPwdInput(
+            value = password,
+            onValueChange = { password = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = "Password",
+            minCount = 4,
+            onNextClick = { status = "Next: " + it.length.toString() + " characters" },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        )
+        Text(
+            text = status,
+            modifier = Modifier.padding(top = 12.dp),
+        )
     }
 }
 
