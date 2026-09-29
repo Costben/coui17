@@ -34,6 +34,9 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [IconButton](../components/iconbutton)                     | Icon button component                      | Auxiliary actions, toolbars           |
 | [Chip](../components/chip)                                 | Checkable capsule filter tag               | Content filtering, tag selection      |
 | [ChipTab](../components/chiptab)                           | Horizontal chip tab bar                    | Tab switching, category browsing      |
+| [LockPatternView](../components/lockpatternview)           | 3x3 pattern unlock grid                    | Pattern unlock, gesture password      |
+| [NumericKeyboard](../components/numerickeyboard)           | Numeric PIN pad                            | PIN entry, passcode dialogs           |
+| [Banner](../components/banner)                             | Auto-scrolling card banner with dots       | Feature carousels, promo banners      |
 | [SearchHistoryView](../components/searchhistoryview)       | Wrapping panel of recent search chips      | Search history, recent queries        |
 | [TouchSearchView](../components/touchsearchview)           | A–Z index rail with a magnified key tile   | Alphabetical list navigation          |
 | [IntentSeekBar](../components/intentseekbar)               | Seek bar with a secondary progress layer   | Media playback, buffered ranges       |
