@@ -242,7 +242,7 @@ private fun RowButtonBar(
                 onClick = action.onClick,
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 enabled = action.enabled,
-                pressScaleEnabled = false,
+                pressScaleEnabled = true,
                 cornerRadius = DialogButtonBarDefaults.ButtonCornerRadius,
                 minHeight = DialogDefaults.ButtonBarMinHeight,
                 colors = if (action.recommended) recommendColors else colors,
@@ -310,7 +310,7 @@ private fun StackedButtonBar(
                 onClick = action.onClick,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = action.enabled,
-                pressScaleEnabled = false,
+                pressScaleEnabled = true,
                 cornerRadius = DialogButtonBarDefaults.ButtonCornerRadius,
                 minHeight = when {
                     loneNegative -> DialogDefaults.ButtonBarMinHeight
@@ -404,10 +404,11 @@ object DialogButtonBarDefaults {
     val StackedDividerInsetHorizontal = 24.dp
 
     /**
-     * The corner radius of a dialog bar button. COUIAlertDialogBottomButtonNewNormal sets
-     * `drawableRadius=0dp` and `scaleEnable=false`, and the press state of
-     * `coui_alert_dialog_item_background` is a plain `<color>` with no shape, so a bar button is a
-     * square-cornered cell whose only feedback is the press tint filling it.
+     * The corner radius of a dialog bar button. `COUIAlertDialogBottomButtonNewNormal` sets
+     * `drawableRadius=0dp`, so a bar button is a square-cornered cell. Its `drawableColor` is
+     * `@color/coui_transparence` with `animType=2`, which fills through
+     * `getStrokeButtonAnimatorColor` and draws the borderless pass — the press feedback is the
+     * mask tint over the whole cell plus the COUI press scale (`scaleEnable=true`).
      */
     val ButtonCornerRadius = 0.dp
 }

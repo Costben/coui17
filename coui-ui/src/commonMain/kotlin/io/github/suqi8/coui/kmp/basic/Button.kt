@@ -49,8 +49,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param modifier The modifier to be applied to the [Button].
  * @param enabled Whether the [Button] is enabled.
  * @param pressScaleEnabled Whether the [Button] shrinks while pressed (COUIButton `scaleEnable`).
- *   Set to `false` for buttons that fill a container cell, such as the alert dialog button bar,
- *   leaving the full-cell press tint as the only feedback.
+ *   Defaults to `true`, matching COUIButton's own default; `COUIAlertDialogBottomButtonNewNormal`
+ *   also sets `scaleEnable=true` explicitly. Set to `false` only where the device style does.
  * @param cornerRadius The corner radius of the [Button].
  * @param minWidth The minimum width of the [Button].
  * @param minHeight The minimum height of the [Button].
