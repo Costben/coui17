@@ -140,6 +140,56 @@ TopAppBar(
 )
 ```
 
+## 居中标题与嵌入分段槽位
+
+`SmallTopAppBar` 还覆盖了 COUI 工具栏两个与折叠标题无关的形态：居中标题与嵌入分段槽位。
+两者都只在 `SmallTopAppBar` 上提供——COUI 里它们属于普通 `COUIToolbar`，折叠栏没有对应证据。
+
+### 居中标题
+
+`centerTitle = true` 会让标题（以及副标题）在导航图标与操作区之间居中，对应 COUI 的
+`setIsTitleCenterStyle`。该形态下栏两端保留的是 `centerTitleMargin`，取代常规的
+`titlePadding` / `navigationIconPadding` / `actionIconPadding`；这个留白跟随 COUI 的宽度档位：
+低于 600dp 为 16dp，600dp 到 840dp 为 24dp，840dp 及以上为 40dp。
+
+```kotlin
+SmallTopAppBar(
+    title = "标题",
+    centerTitle = true,
+    navigationIcon = { /* ... */ },
+    actions = { /* ... */ }
+)
+```
+
+显式传入 `centerTitleMargin` 可以固定留白，不再跟随窗口宽度。
+
+### 分段槽位
+
+`segmentButton` 会在导航图标与标题之间嵌入一个分段控件，对应 COUI 的 `setSegmentButtons(View)`。
+该槽位高 32dp，宽至少 108dp、最多 207dp，标题需要空间时会收缩；`centerTitle` 为 true 时
+完全不参与布局——两种形态互斥。
+
+```kotlin
+SmallTopAppBar(
+    title = "标题",
+    segmentButton = {
+        Row(Modifier.padding(4.dp)) { /* 分段按钮 */ }
+    }
+)
+```
+
+### 渐变玻璃
+
+`gradientGlass = true` 会把顶栏材质从均匀模糊换成 COUI 的渐变形态：背景在顶边模糊最强、
+向下逐渐变清晰，同时表面颜色从顶部的不透明渐变到底部的完全透明。它和均匀材质一样需要
+`LocalBackdrop`；没有 backdrop 或不支持 runtime shader 时，只保留渐变颜色填充。
+
+```kotlin
+CompositionLocalProvider(LocalBackdrop provides backdrop) {
+    SmallTopAppBar(title = "标题", gradientGlass = true)
+}
+```
+
 ## 属性
 
 ### TopAppBar 属性
@@ -164,6 +214,7 @@ TopAppBar(
 | titlePadding          | Dp                              | 水平内容边距                   | TopAppBarDefaults.TitlePadding | 否       |
 | navigationIconPadding      | Dp                              | 导航图标的起始边距             | TopAppBarDefaults.NavigationIconPadding | 否       |
 | actionIconPadding          | Dp                              | 操作图标的末尾边距             | TopAppBarDefaults.ActionIconPadding | 否       |
+| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质（顶边最强、向下渐清）而非均匀模糊 | false | 否 |
 | bottomContent              | @Composable () -> Unit          | 显示在标题栏下方的可组合内容 | {}                                | 否       |
 
 ### SmallTopAppBar 属性
@@ -182,6 +233,10 @@ TopAppBar(
 | scrollBehavior             | ScrollBehavior?                 | 控制顶部栏滚动行为       | null                              | 否       |
 | defaultWindowInsetsPadding | Boolean                         | 是否应用默认窗口边距     | true                              | 否       |
 | showDivider                | Boolean                         | 内容在栏下滚动时是否绘制底部细分割线（需要 scrollBehavior） | true    | 否       |
+| centerTitle                | Boolean                         | 是否让标题在两个图标槽之间居中（对应 COUI `setIsTitleCenterStyle`）；该形态下下方三个边距会被 `centerTitleMargin` 取代 | false | 否 |
+| centerTitleMargin          | Dp                              | 居中标题两端保留的水平留白     | 按当前窗口宽度取档位值 | 否 |
+| segmentButton              | (@Composable () -> Unit)?       | 嵌入在导航图标与标题之间的分段控件槽位；`centerTitle` 为 true 时不参与布局 | null | 否 |
+| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质（顶边最强、向下渐清）而非均匀模糊 | false | 否 |
 | titlePadding          | Dp                              | 水平内容边距             | TopAppBarDefaults.TitlePadding | 否       |
 | navigationIconPadding      | Dp                              | 导航图标的起始边距       | TopAppBarDefaults.NavigationIconPadding | 否       |
 | actionIconPadding          | Dp                              | 操作图标的末尾边距       | TopAppBarDefaults.ActionIconPadding | 否       |
@@ -207,6 +262,17 @@ TopAppBarDefaults 对象提供了 TopAppBar 和 SmallTopAppBar 组件的默认�
 | SubtitleMarginTop          | Dp   | 标题与副标题之间的垂直间距        | 3.5.dp |
 | NavigationIconGap          | Dp   | 导航图标与折叠态标题之间的水平间距 | 4.dp   |
 | ActionIconGap              | Dp   | 标题与操作图标之间的水平间距      | 8.dp   |
+| ActionMenuItemSpacing      | Dp   | 操作菜单项之间的间距              | 10.dp  |
+| CenterTitleMarginCompat    | Dp   | 居中标题的水平留白，compat 档（低于 600dp） | 16.dp |
+| CenterTitleMarginMedium    | Dp   | 居中标题的水平留白，medium 档（600–840dp） | 24.dp |
+| CenterTitleMarginExpanded  | Dp   | 居中标题的水平留白，expanded 档（840dp 及以上） | 40.dp |
+| CenterTitlePadding         | Dp   | 窗口宽度未知时居中标题的回退内边距 | 4.dp   |
+| SectionGap                 | Dp   | 分段槽位两侧保留的间距，medium / expanded 档 | 40.dp |
+| SectionGapSmall            | Dp   | compat 档的分段间距               | 0.dp   |
+| ActionMenuInnerPadding     | Dp   | 操作菜单容器内部的内边距，计入居中标题的槽位 | 0.dp |
+| SegmentButtonHeight        | Dp   | 分段槽位的高度                    | 32.dp  |
+| SegmentButtonMinWidth      | Dp   | 低于该宽度时分段槽位不再被视为能放在标题旁 | 108.dp |
+| SegmentButtonMaxWidth      | Dp   | compat 档分段槽位的宽度上限       | 207.dp |
 
 ### ScrollBehavior
 

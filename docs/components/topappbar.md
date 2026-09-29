@@ -142,6 +142,61 @@ TopAppBar(
 )
 ```
 
+## Centred Title and Segment Slot
+
+`SmallTopAppBar` also covers the two COUI toolbar forms that are not about the collapsible title:
+the centred title and the embedded segment slot. Both are `SmallTopAppBar`-only — COUI has them on
+the plain `COUIToolbar`, and there is no evidence of a collapsible-bar equivalent.
+
+### Centred Title
+
+Set `centerTitle = true` to centre the title (and the subtitle) between the navigation icon and the
+actions, matching COUI's `setIsTitleCenterStyle`. In this form the bar reserves `centerTitleMargin`
+at each end in place of the usual `titlePadding` / `navigationIconPadding` / `actionIconPadding`,
+and that margin follows COUI's width tiers: 16dp below 600dp, 24dp from 600dp to 840dp, and 40dp
+from 840dp up.
+
+```kotlin
+SmallTopAppBar(
+    title = "Title",
+    centerTitle = true,
+    navigationIcon = { /* ... */ },
+    actions = { /* ... */ }
+)
+```
+
+Pass `centerTitleMargin` explicitly to pin the margin instead of following the window width.
+
+### Segment Slot
+
+`segmentButton` slots a segmented control between the navigation icon and the title, matching
+COUI's `setSegmentButtons(View)`. The slot is 32dp tall, at least 108dp and at most 207dp wide,
+shrinks when the title needs the room, and is not laid out at all while `centerTitle` is set —
+the two forms are mutually exclusive.
+
+```kotlin
+SmallTopAppBar(
+    title = "Title",
+    segmentButton = {
+        Row(Modifier.padding(4.dp)) { /* segment buttons */ }
+    }
+)
+```
+
+### Gradient Glass
+
+`gradientGlass = true` switches the app bar material from the uniform blur to COUI's gradient
+shape: the backdrop is blurred most strongly at the top edge and clears toward the bottom, while
+the surface colour ramps from full strength at the top to fully transparent at the bottom. It needs
+the same `LocalBackdrop` as the uniform material; without one — or without runtime shader support —
+the bar falls back to the gradient colour fill alone.
+
+```kotlin
+CompositionLocalProvider(LocalBackdrop provides backdrop) {
+    SmallTopAppBar(title = "Title", gradientGlass = true)
+}
+```
+
 ## Properties
 
 ### TopAppBar Properties
@@ -166,6 +221,7 @@ TopAppBar(
 | titlePadding          | Dp                              | Horizontal content padding                     | TopAppBarDefaults.TitlePadding | No       |
 | navigationIconPadding      | Dp                              | Start padding of the navigation icon           | TopAppBarDefaults.NavigationIconPadding | No       |
 | actionIconPadding          | Dp                              | End padding of the action icons                | TopAppBarDefaults.ActionIconPadding | No       |
+| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material (top-edge blur fading to a clear bottom edge) instead of the uniform one | false | No |
 | bottomContent              | @Composable () -> Unit          | Composable content displayed below the title bar area | {} | No |
 
 ### SmallTopAppBar Properties
@@ -184,6 +240,10 @@ TopAppBar(
 | scrollBehavior             | ScrollBehavior?                 | Controls top bar scroll behavior               | null                            | No       |
 | defaultWindowInsetsPadding | Boolean                         | Whether to apply default window insets padding | true                            | No       |
 | showDivider                | Boolean                         | Whether to draw the bottom hairline divider as content scrolls beneath the bar (requires scrollBehavior) | true | No       |
+| centerTitle                | Boolean                         | Centre the title between the two icon slots (COUI `setIsTitleCenterStyle`); replaces the three paddings below with `centerTitleMargin` | false | No |
+| centerTitleMargin          | Dp                              | Horizontal margin the centred title reserves at each end | tier for the current window width | No |
+| segmentButton              | (@Composable () -> Unit)?       | Segmented control slotted between the navigation icon and the title; ignored while `centerTitle` is set | null | No |
+| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material (top-edge blur fading to a clear bottom edge) instead of the uniform one | false | No |
 | titlePadding          | Dp                              | Horizontal content padding                     | TopAppBarDefaults.TitlePadding | No       |
 | navigationIconPadding      | Dp                              | Start padding of the navigation icon           | TopAppBarDefaults.NavigationIconPadding | No       |
 | actionIconPadding          | Dp                              | End padding of the action icons                | TopAppBarDefaults.ActionIconPadding | No       |
@@ -209,6 +269,17 @@ The TopAppBarDefaults object provides default values for TopAppBar and SmallTopA
 | SubtitleMarginTop          | Dp   | Vertical gap between the title and the subtitle   | 3.5.dp        |
 | NavigationIconGap          | Dp   | Horizontal gap between the navigation icon and the collapsed title | 4.dp |
 | ActionIconGap              | Dp   | Horizontal gap between the title and the action icons | 8.dp      |
+| ActionMenuItemSpacing      | Dp   | Spacing between action menu items                  | 10.dp         |
+| CenterTitleMarginCompat    | Dp   | Centred title's horizontal margin, `compat` tier (below 600dp) | 16.dp |
+| CenterTitleMarginMedium    | Dp   | Centred title's horizontal margin, `medium` tier (600–840dp) | 24.dp |
+| CenterTitleMarginExpanded  | Dp   | Centred title's horizontal margin, `expanded` tier (840dp and up) | 40.dp |
+| CenterTitlePadding         | Dp   | Fallback centred title padding when the window width is unknown | 4.dp |
+| SectionGap                 | Dp   | Gap the segment slot keeps on each side of itself, `medium` / `expanded` tiers | 40.dp |
+| SectionGapSmall            | Dp   | Section gap in the `compat` tier                  | 0.dp          |
+| ActionMenuInnerPadding     | Dp   | Padding inside the action-menu container, folded into the centred title's slot | 0.dp |
+| SegmentButtonHeight        | Dp   | Height of the segment slot                         | 32.dp         |
+| SegmentButtonMinWidth      | Dp   | Width below which the segment slot no longer counts as fitting beside the title | 108.dp |
+| SegmentButtonMaxWidth      | Dp   | Segment slot's width ceiling in the `compat` tier  | 207.dp        |
 
 ### ScrollBehavior
 

@@ -17,6 +17,10 @@ import io.github.suqi8.coui.kmp.basic.NavigationBar
 import io.github.suqi8.coui.kmp.basic.NavigationBarItem
 import io.github.suqi8.coui.kmp.basic.FloatingNavigationBar
 import io.github.suqi8.coui.kmp.basic.FloatingNavigationBarItem
+import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBar
+import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
+import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarDefaults
+import io.github.suqi8.coui.kmp.basic.BottomFloatingRedDot
 import io.github.suqi8.coui.kmp.basic.NavigationBarDisplayMode
 import io.github.suqi8.coui.kmp.basic.NavigationItem
 ```
@@ -73,6 +77,29 @@ Scaffold(
 )
 ```
 
+### BottomFloatingNavigationBar
+
+`BottomFloatingNavigationBar` is the ColorOS 17 floating capsule bar (`COUIBottomFloatingNavigationBar`). It is a separate component from `FloatingNavigationBar`: its items carry an icon and a label, and a bar can host a red dot, a long-press overflow menu and a round expansion view that melts out of the capsule.
+
+```kotlin
+var selectedIndex by remember { mutableStateOf(0) }
+val items = listOf("Home", "Messages", "Settings")
+val icons = listOf(COUIIcons.Home, COUIIcons.Messages, COUIIcons.Settings)
+
+BottomFloatingNavigationBar {
+    items.forEachIndexed { index, label ->
+        BottomFloatingNavigationBarItem(
+            selected = selectedIndex == index,
+            onClick = { selectedIndex = index },
+            icon = icons[index],
+            label = label
+        )
+    }
+}
+```
+
+The bar samples the content behind it from `LocalBackdrop`; provide a backdrop to get the ColorOS 17 light-sensing glass, or pass `backdrop = null` to keep the capsule opaque.
+
 ## Component States
 
 ### Selected State
@@ -127,6 +154,74 @@ Scaffold(
 | label         | String        | Label of the item                | -             | Yes      |
 | modifier      | Modifier      | Modifier applied to the item     | Modifier      | No       |
 | enabled       | Boolean       | Whether the item is enabled      | true          | No       |
+
+### BottomFloatingNavigationBar Properties
+
+| Property Name  | Type                                | Description                                                             | Default Value             | Required |
+| -------------- | ----------------------------------- | ----------------------------------------------------------------------- | ------------------------- | -------- |
+| modifier       | Modifier                            | Modifier applied to the bar                                             | Modifier                  | No       |
+| containerColor | Color                               | Background color of the capsule                                         | COUITheme.colorScheme.bar | No       |
+| backdrop       | Backdrop?                           | The content blurred behind the capsule; `null` keeps it opaque          | LocalBackdrop.current     | No       |
+| expanded       | Boolean                             | Whether the expansion view is shown; ignored when `expansion` is `null` | false                     | No       |
+| expansion      | (@Composable BoxScope.() -> Unit)?  | The view that melts out of the capsule                                  | null                      | No       |
+| content        | @Composable RowScope.() -> Unit     | The content of the bar, usually `BottomFloatingNavigationBarItem`s      | -                         | Yes      |
+
+### BottomFloatingNavigationBarItem Properties
+
+| Property Name | Type                       | Description                                                                | Default Value | Required |
+| ------------- | -------------------------- | -------------------------------------------------------------------------- | ------------- | -------- |
+| selected      | Boolean                    | Whether the item is selected                                               | -             | Yes      |
+| onClick       | () -> Unit                 | Callback when the item is clicked                                          | -             | Yes      |
+| icon          | ImageVector                | Icon of the item                                                           | -             | Yes      |
+| label         | String                     | Label of the item                                                          | -             | Yes      |
+| modifier      | Modifier                   | Modifier applied to the item                                               | Modifier      | No       |
+| enabled       | Boolean                    | Whether the item is enabled                                                | true          | No       |
+| largeIcon     | Boolean                    | Whether to draw the 40dp large-icon form overflowing the item              | false         | No       |
+| redDot        | BottomFloatingRedDot?      | The red dot pinned to the icon's top end corner                            | null          | No       |
+| overflowMenu  | (@Composable () -> Unit)?  | The rows of the long-press overflow menu, shown in a `NavigationPopupMenu` | null          | No       |
+
+### BottomFloatingRedDot
+
+`BottomFloatingRedDot` is the red dot pinned to a bottom floating item's icon. A plain dot is `Dot`; a number capsule is `Count(number)`.
+
+| Value         | Description                |
+| ------------- | -------------------------- |
+| Dot           | A plain dot                |
+| Count(number) | A capsule showing `number` |
+
+### BottomFloatingNavigationBarDefaults Object
+
+The `BottomFloatingNavigationBarDefaults` object provides the metrics shared by `BottomFloatingNavigationBar` and `BottomFloatingNavigationBarItem`.
+
+#### Constants
+
+| Constant Name                   | Type     | Description                                                    | Default Value |
+| ------------------------------- | -------- | -------------------------------------------------------------- | ------------- |
+| BarHeight                       | Dp       | The capsule height                                             | 56.dp         |
+| MinHeightWithoutPaddingVertical | Dp       | The minimum outer height of the bar                            | 88.dp         |
+| PaddingHorizontal               | Dp       | The outside padding on a small screen                          | 16.dp         |
+| ExpansionSize                   | Dp       | The footprint of the expansion view                            | 56.dp         |
+| SideSpacing                     | Dp       | The gap between the capsule and the expansion view             | 12.dp         |
+| ItemHeight                      | Dp       | The item cell height                                           | 48.dp         |
+| ItemMaxWidth                    | Dp       | The maximum width of an item cell                              | 70.dp         |
+| ItemSpacing                     | Dp       | The spacing between items                                      | 8.dp          |
+| ItemInnerPadding                | Dp       | The horizontal padding inside an item cell                     | 12.dp         |
+| ItemBackgroundHorizontalPadding | Dp       | The horizontal padding of the item background                  | 8.dp          |
+| IconSize                        | Dp       | The icon size                                                  | 24.dp         |
+| IconTopMargin                   | Dp       | The top margin of the icon                                     | 4.dp          |
+| IconTitleGapVertical            | Dp       | The vertical gap between icon and title                        | 2.dp          |
+| IconTitleGapHorizontal          | Dp       | The horizontal gap between icon and title                      | 4.dp          |
+| LargeIconSize                   | Dp       | The icon size of the large-icon form                           | 40.dp         |
+| LargeIconOverflow               | Dp       | How far the large-icon form is drawn above the item's top edge | 14.dp         |
+| RedDotDiameter                  | Dp       | The diameter of the plain red dot                              | 6.dp          |
+| RedDotRightOverflow1Digit       | Dp       | The red dot's end-edge overflow for a one-digit count          | 6.dp          |
+| RedDotRightOverflow2Digit       | Dp       | The red dot's end-edge overflow for a two-digit count          | 9.dp          |
+| RedDotRightOverflow3Digit       | Dp       | The red dot's end-edge overflow for a three-digit count        | 10.dp         |
+| RedDotTopOverflow               | Dp       | The red dot's top overflow for a number                        | 4.dp          |
+| TouchEffectRadius               | Dp       | The radius of the radial touch highlight                       | 40.dp         |
+| MinimumSpacingWithSlideView     | Dp       | The minimum spacing kept with a slide view                     | 12.dp         |
+| LabelFontSize                   | TextUnit | The label font size                                            | 10.sp         |
+| CornerRadius                    | Dp       | The capsule corner radius                                      | 28.dp         |
 
 ### NavigationBarDefaults Object
 
@@ -263,6 +358,100 @@ FloatingNavigationBar(
     // ... items ...
 }
 ```
+
+### BottomFloatingNavigationBar
+
+#### Glass Surface
+
+`BottomFloatingNavigationBar` draws its capsule with the ColorOS 17 light-sensing glass. `backdrop` is the content it samples; it defaults to `LocalBackdrop.current`, so a bar placed where a backdrop is provided picks it up automatically. When `backdrop` is `null` the capsule falls back to an opaque fill of `containerColor`.
+
+```kotlin
+CompositionLocalProvider(LocalBackdrop provides backdrop) {
+    BottomFloatingNavigationBar(containerColor = COUITheme.colorScheme.bar) {
+        // ... items ...
+    }
+}
+```
+
+#### Expansion View (Melt Ball)
+
+Pass an `expansion` view and drive it with `expanded`. The bar reserves room for it next to the capsule and draws both silhouettes through one merged surface, so the expansion view melts out of the capsule and back in:
+
+```kotlin
+var expanded by remember { mutableStateOf(false) }
+
+BottomFloatingNavigationBar(
+    expanded = expanded,
+    expansion = {
+        Box(
+            modifier = Modifier.fillMaxSize().clip(CircleShape).background(COUITheme.colorScheme.primary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(imageVector = COUIIcons.Add, contentDescription = "Expand")
+        }
+    },
+) {
+    // ... items ...
+}
+```
+
+Without `expansion` the `expanded` flag has no effect and the bar is a plain capsule. While the expansion view is shown the capsule is measured against the width it leaves over — the expansion footprint plus `BottomFloatingNavigationBarDefaults.SideSpacing`.
+
+#### Large Icon
+
+Set `largeIcon = true` on an item to draw the 40dp form (`BottomFloatingNavigationBarDefaults.LargeIconSize`) overflowing the item by `BottomFloatingNavigationBarDefaults.LargeIconOverflow` instead of the 24dp icon. The label keeps its place below the icon slot.
+
+```kotlin
+BottomFloatingNavigationBarItem(
+    selected = selectedIndex == 0,
+    onClick = { selectedIndex = 0 },
+    icon = COUIIcons.Home,
+    label = "Home",
+    largeIcon = true,
+)
+```
+
+#### Red Dot
+
+`redDot` pins a dot to the icon's top end corner: `BottomFloatingRedDot.Dot` for a plain dot, `BottomFloatingRedDot.Count(number)` for a number capsule. `null` shows nothing.
+
+```kotlin
+BottomFloatingNavigationBarItem(
+    selected = false,
+    onClick = {},
+    icon = COUIIcons.Messages,
+    label = "Messages",
+    redDot = BottomFloatingRedDot.Count(12),
+)
+```
+
+#### Overflow Menu
+
+`overflowMenu` fills the item's long-press menu; its rows are shown in a `NavigationPopupMenu` anchored to the item. Passing `null` disables the long press.
+
+```kotlin
+BottomFloatingNavigationBarItem(
+    selected = false,
+    onClick = {},
+    icon = COUIIcons.Settings,
+    label = "Settings",
+    overflowMenu = {
+        NavigationPopupMenuItem(
+            label = "Search",
+            icon = COUIIcons.Search,
+            onClick = { /* ... */ },
+        )
+    },
+)
+```
+
+#### Radial Touch Highlight
+
+While a finger is down, the bar paints a radial highlight under the items, clipped to the capsule silhouette. It runs from white at 38/255 alpha in the centre to fully transparent at `BottomFloatingNavigationBarDefaults.TouchEffectRadius` (40dp), and fades in on its own spring. The pointer is tracked without consuming the press, so the items' own tap and long-press gestures still see the whole gesture.
+
+#### Responsive Margins
+
+The 16dp outside padding (`BottomFloatingNavigationBarDefaults.PaddingHorizontal`) is kept on a small screen only; on the medium and large tiers it collapses to zero, so the capsule can use the full width.
 
 ### Using with Page Navigation (Using Scaffold)
 

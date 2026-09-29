@@ -19,6 +19,10 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [Surface](../components/surface)                           | Basic container component                  | Content display, background container |
 | [TopAppBar](../components/topappbar)                       | Application top navigation bar             | Page title, primary actions           |
 | [NavigationBar](../components/navigationbar)               | Bottom navigation component                | Main page switching                   |
+| [BottomFloatingAccessoryNavigationBar](../components/bottomfloatingaccessorynavigationbar) | Floating capsule navigation bar with side accessories | Bottom navigation with quick actions |
+| [BottomFloatingEditToolbar](../components/bottomfloatingedittoolbar) | Floating edit toolbar            | Editing actions, quick tools          |
+| [NavigationPopupMenu](../components/navigationpopupmenu)   | Navigation overflow menu                   | Items that do not fit in the bar      |
+| [HorizontalPopupMenu](../components/horizontalpopupmenu)   | Horizontal icon block inside a popup list  | Icon actions in popups                |
 | [NavigationRail](../components/navigationrail)             | Side navigation component                  | Main page switching (Large screen)    |
 | [TabRow](../components/tabrow)                             | Horizontal tab bar                         | Content category browsing             |
 | [BreadcrumbBar](../components/breadcrumbbar)               | Horizontal breadcrumb navigation bar         | File path navigation, location trail   |

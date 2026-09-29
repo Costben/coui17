@@ -102,10 +102,10 @@ ColorOS = **灰底 + 白卡**;miuix 现状 = 白底 + 浅灰面。已确认 miui
 | `BottomSheetContentLayout.kt` 28dp | 28dp | ✓ 无需改 | coui_panel_os_16_1_radius_28_dp | 高 |
 | `ListPopup` 16dp + `CascadingPopupCornerRadius` 16dp | 16dp | ✓ 无需改 | coui_popup_list_window_os_16_1_radius_16_dp | 高 |
 | `TabRowDefaults.TabRowWithContourCornerRadius` 8dp | 8dp | ✓ | coui_corner_radius | 中 |
-| `TabRowDefaults.TabRowCornerRadius` | 12dp | (可选)8dp | coui_navigation_item_background_radius(clock-only) | 低·flag |
+| `TabRowDefaults.TabRowCornerRadius` | 20dp | ✓ 无需改 | 旧 flag 已结案：`coui_navigation_item_background_radius`(8dp) 在 17 上只服务 tool 型蒙层，tab 型不消费，不可作 tab 圆角依据（audit N7） | 中 |
 | `FloatingToolbarDefaults.CornerRadius` | 50dp | (分歧)24dp | coui_toolbar_menu_bg_radius — **改前确认** | 中·flag |
 
-**Squircle 连续曲率**:`SquircleDefaults.Extension`(`SquirclePath.kt`,现 `1.1f`,clamp 1f–2f)。COUI `coui_round_corner_*` 三元组(extent/radius 比):M=1.33 / XL=1.25 / XXL=1.26 / L=1.23 / S·XS=1.0(纯圆)。建议 `1.1f → ~1.25f`,或半径相关(≤8dp 用 1.0,≥12dp 用 1.25)。`_weight` 是 COUI 平滑连续度参数,miuix 无 1:1 旋钮,精确复刻需 shader 改动(flag)。
+**Squircle 连续曲率**:`SquircleDefaults.Extension`(`SquirclePath.kt`,现 `1.0f`,clamp 1f–2f)已按 CO17 主路径收口——hwui G2 SDF 的角部 tile 严格等于 `cornerRadius`,故取 `1.0`;旧值 `1.2819` 来自已停用的 COS16 `COUIShapePath` tile `128.19/100`。CO17 的 `_weight` **不是** extent/radius 比,而是 `OplusPath.addSmoothRoundRect` 的 **Lp 超椭圆指数 n**(`n ≥ 2`,`2` 即正圆);「M=1.33 / XL=1.25 / XXL=1.26 / L=1.23 / S·XS=1.0」那套读法是 pre-16.1 的 OLD_G2(`tile=(1+weight)·R`),不适用于 CO17 的 NEW_G2。命中 weight 2.5 / 3.0 的曲线控制点(`0.6877` / `0.7832`)见 audit S2。
 
 ## 4. 尺寸 — L==D
 
@@ -149,10 +149,10 @@ Switch / Slider / Checkbox / RadioButton / Button 的所有 accent 态都读 `co
 - **批次 0 — Colors.kt 纯值替换**(最高 ROI,零代码风险):primary 家族 + surface/card 家族 + secondary + slider* + 语义色 + 文字 alpha + 分隔线 + 遮罩。一改传播到所有组件。先做、单独提交、目测。
 - **批次 1 — Button + Card Defaults**:Card 16→17;Button CornerRadius 16→21.5、MinHeight 40→44、InsideMargin 水平 16→12。
 - **批次 2 — Slider 几何**:MinHeight 28→20、KeyPointRadius 3.855→3。
-- **批次 3 — Squircle Extension**:1.1f→1.25f(全局形状手感,广泛回归)。
+- **批次 3 — Squircle Extension**:已结案为 `1.0f`(CO17 主路径 hwui G2 SDF 的角部 tile 严格等于 `cornerRadius`;详见 audit S1/S2)。
 - **批次 4 — 次级 Defaults**:TextField 角 16→10、SmallTitle (28,8)→(32,12)、TopAppBar TitlePadding 26→24、IconButton 40→48、FAB 60→56。
 - **批次 5 — 代码字面量(中风险)**:Component heightIn 56→60、Dialog 底角 32→33。
-- **批次 6 — 几何(已做 Switch + FloatingToolbar)**:Switch 49×28→36×22(拇指 18dp,行程/偏移/拖拽阈值全由 `SwitchDefaults.Travel` 推导,数学自洽);FloatingToolbar 50→24(`coui_toolbar_menu_bg_radius`)。**未做**:TabRow 12→8(证据不足/低置信,不臆造)、字体梯度(用户决策"暂不动")。
+- **批次 6 — 几何(已做 Switch + FloatingToolbar)**:Switch 49×28→36×22(拇指 18dp,行程/偏移/拖拽阈值全由 `SwitchDefaults.Travel` 推导,数学自洽);FloatingToolbar 50→24(`coui_toolbar_menu_bg_radius`)。**未做**:TabRow 12→8(COS17 已结案:该 8dp 只服务 tool 型蒙层,不可作 tab 圆角依据,见 audit N7)、字体梯度(用户决策"暂不动")。
 
 ## 8. 未决项(需运行时目测)
 

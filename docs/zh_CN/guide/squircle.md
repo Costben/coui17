@@ -165,12 +165,12 @@ Modifier.absoluteSquircleSurface(
 
 ## 调整曲线参数
 
-`extension` 决定连续曲率区从顶点延伸出去的距离。`1.0` 等同标准圆弧；
-默认 `1.1` 给出标准的 squircle 观感。
+`extension` 决定连续曲率区从顶点延伸出去的距离。默认 `1.0`：ColorOS 17 的平滑圆角走
+hwui G2 符号距离场，其角部 tile 严格等于 `cornerRadius`，因此在路径层默认轮廓即标准圆弧。
 
 | 参数        | 默认值 | 范围         | 作用                                                                |
 | ----------- | :----: | ------------ | ------------------------------------------------------------------- |
-| `extension` | `1.1`  | `[1, 2]`     | 角部区域大小相对 `cornerRadius` 的倍数；`1.0` 即标准圆弧。           |
+| `extension` | `1.0`  | `[1, 2]`     | 角部区域大小相对 `cornerRadius` 的倍数；`1.0` 即标准圆弧。           |
 
 ```kotlin
 Modifier.squircleBackground(
@@ -282,6 +282,6 @@ fun OutlinedSurface(cornerRadius: Dp) {
 
 | 常量           | 类型    | 说明                       |  值    |
 | -------------- | ------- | -------------------------- | -----: |
-| `Extension`    | `Float` | 默认角部区域倍数           | `1.1`  |
+| `Extension`    | `Float` | 默认角部区域倍数           | `1.0`  |
 | `ExtensionMin` | `Float` | `Extension` 下限           | `1.0`  |
 | `ExtensionMax` | `Float` | `Extension` 上限           | `2.0`  |

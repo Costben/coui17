@@ -176,12 +176,13 @@ Modifier.absoluteSquircleSurface(
 ## Customizing the Curve
 
 `extension` controls how far the continuous-curvature zone extends from the
-corner. `1.0` matches a circular arc; the default `1.1` gives the standard
-squircle look.
+corner. The default is `1.0`: ColorOS 17 draws smooth corners with the hwui G2
+signed-distance field, whose corner tile is exactly `cornerRadius`, so at the
+path level the default silhouette is a circular arc.
 
 | Parameter   | Default | Range    | Effect                                                                    |
 | ----------- | :-----: | -------- | ------------------------------------------------------------------------- |
-| `extension` |  `1.1`  | `[1, 2]` | Corner-tile size as a multiple of `cornerRadius`. `1.0` is a circular arc. |
+| `extension` |  `1.0`  | `[1, 2]` | Corner-tile size as a multiple of `cornerRadius`. `1.0` is a circular arc. |
 
 ```kotlin
 Modifier.squircleBackground(
@@ -293,6 +294,6 @@ fun OutlinedSurface(cornerRadius: Dp) {
 
 | Constant       | Type    | Description                          | Value  |
 | -------------- | ------- | ------------------------------------ | -----: |
-| `Extension`    | `Float` | Default corner-tile size multiplier  | `1.1`  |
+| `Extension`    | `Float` | Default corner-tile size multiplier  | `1.0`  |
 | `ExtensionMin` | `Float` | Lower bound for `Extension`          | `1.0`  |
 | `ExtensionMax` | `Float` | Upper bound for `Extension`          | `2.0`  |

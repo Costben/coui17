@@ -17,6 +17,10 @@ import io.github.suqi8.coui.kmp.basic.NavigationBar
 import io.github.suqi8.coui.kmp.basic.NavigationBarItem
 import io.github.suqi8.coui.kmp.basic.FloatingNavigationBar
 import io.github.suqi8.coui.kmp.basic.FloatingNavigationBarItem
+import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBar
+import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
+import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarDefaults
+import io.github.suqi8.coui.kmp.basic.BottomFloatingRedDot
 import io.github.suqi8.coui.kmp.basic.NavigationBarDisplayMode
 import io.github.suqi8.coui.kmp.basic.NavigationItem
 ```
@@ -73,6 +77,29 @@ Scaffold(
 )
 ```
 
+### BottomFloatingNavigationBar
+
+`BottomFloatingNavigationBar` 是 ColorOS 17 的悬浮胶囊导航栏（`COUIBottomFloatingNavigationBar`）。它与 `FloatingNavigationBar` 是两个不同的组件：其导航项同时带有图标与标签，并且可以承载红点、长按溢出菜单，以及从胶囊中「融出」的圆形展开视图。
+
+```kotlin
+var selectedIndex by remember { mutableStateOf(0) }
+val items = listOf("Home", "Messages", "Settings")
+val icons = listOf(COUIIcons.Home, COUIIcons.Messages, COUIIcons.Settings)
+
+BottomFloatingNavigationBar {
+    items.forEachIndexed { index, label ->
+        BottomFloatingNavigationBarItem(
+            selected = selectedIndex == index,
+            onClick = { selectedIndex = index },
+            icon = icons[index],
+            label = label
+        )
+    }
+}
+```
+
+导航栏通过 `LocalBackdrop` 采样其后方的画面；提供背景层即可获得 ColorOS 17 的光感玻璃效果，传入 `backdrop = null` 则保持胶囊不透明。
+
 ## 组件状态
 
 ### 选中状态
@@ -127,6 +154,74 @@ Scaffold(
 | label    | String      | 文本标签         | -      | 是       |
 | modifier | Modifier    | 应用于导航项的修饰符 | Modifier | 否       |
 | enabled  | Boolean     | 是否启用         | true     | 否       |
+
+### BottomFloatingNavigationBar 属性
+
+| 属性名         | 类型                                | 说明                                                     | 默认值                    | 是否必须 |
+| -------------- | ----------------------------------- | -------------------------------------------------------- | ------------------------- | -------- |
+| modifier       | Modifier                            | 应用于导航栏的修饰符                                     | Modifier                  | 否       |
+| containerColor | Color                               | 胶囊的背景颜色                                           | COUITheme.colorScheme.bar | 否       |
+| backdrop       | Backdrop?                           | 胶囊后方被模糊的内容；`null` 时保持不透明                | LocalBackdrop.current     | 否       |
+| expanded       | Boolean                             | 是否显示展开视图；`expansion` 为 `null` 时忽略           | false                     | 否       |
+| expansion      | (@Composable BoxScope.() -> Unit)?  | 从胶囊中「融出」的展开视图                               | null                      | 否       |
+| content        | @Composable RowScope.() -> Unit     | 导航栏内容，通常是 `BottomFloatingNavigationBarItem`     | -                         | 是       |
+
+### BottomFloatingNavigationBarItem 属性
+
+| 属性名       | 类型                       | 说明                                                        | 默认值   | 是否必须 |
+| ------------ | -------------------------- | ----------------------------------------------------------- | -------- | -------- |
+| selected     | Boolean                    | 是否选中                                                    | -        | 是       |
+| onClick      | () -> Unit                 | 点击时的回调                                                | -        | 是       |
+| icon         | ImageVector                | 图标                                                        | -        | 是       |
+| label        | String                     | 文本标签                                                    | -        | 是       |
+| modifier     | Modifier                   | 应用于导航项的修饰符                                        | Modifier | 否       |
+| enabled      | Boolean                    | 是否启用                                                    | true     | 否       |
+| largeIcon    | Boolean                    | 是否绘制溢出导航项的 40dp 大图标形态                        | false    | 否       |
+| redDot       | BottomFloatingRedDot?      | 固定在图标顶部结束角的红点                                  | null     | 否       |
+| overflowMenu | (@Composable () -> Unit)?  | 长按溢出菜单的各行，显示在 `NavigationPopupMenu` 中         | null     | 否       |
+
+### BottomFloatingRedDot
+
+`BottomFloatingRedDot` 是固定在底部悬浮导航项图标上的红点。纯圆点为 `Dot`；数字胶囊为 `Count(number)`。
+
+| 值            | 说明                  |
+| ------------- | --------------------- |
+| Dot           | 纯圆点                |
+| Count(number) | 显示 `number` 的胶囊  |
+
+### BottomFloatingNavigationBarDefaults 对象
+
+`BottomFloatingNavigationBarDefaults` 对象提供 `BottomFloatingNavigationBar` 与 `BottomFloatingNavigationBarItem` 共用的度量值。
+
+#### 常量
+
+| 常量名                          | 类型     | 说明                                             | 默认值 |
+| ------------------------------- | -------- | ------------------------------------------------ | ------ |
+| BarHeight                       | Dp       | 胶囊高度                                         | 56.dp  |
+| MinHeightWithoutPaddingVertical | Dp       | 导航栏的最小外部高度                             | 88.dp  |
+| PaddingHorizontal               | Dp       | 小屏下的外部内边距                               | 16.dp  |
+| ExpansionSize                   | Dp       | 展开视图的占位尺寸                               | 56.dp  |
+| SideSpacing                     | Dp       | 胶囊与展开视图之间的间距                         | 12.dp  |
+| ItemHeight                      | Dp       | 导航项单元高度                                   | 48.dp  |
+| ItemMaxWidth                    | Dp       | 导航项单元的最大宽度                             | 70.dp  |
+| ItemSpacing                     | Dp       | 导航项之间的间距                                 | 8.dp   |
+| ItemInnerPadding                | Dp       | 导航项单元内部的水平内边距                       | 12.dp  |
+| ItemBackgroundHorizontalPadding | Dp       | 导航项背景的水平内边距                           | 8.dp   |
+| IconSize                        | Dp       | 图标尺寸                                         | 24.dp  |
+| IconTopMargin                   | Dp       | 图标的上边距                                     | 4.dp   |
+| IconTitleGapVertical            | Dp       | 图标与标题之间的垂直间距                         | 2.dp   |
+| IconTitleGapHorizontal          | Dp       | 图标与标题之间的水平间距                         | 4.dp   |
+| LargeIconSize                   | Dp       | 大图标形态的图标尺寸                             | 40.dp  |
+| LargeIconOverflow               | Dp       | 大图标形态超出导航项上边缘的距离                 | 14.dp  |
+| RedDotDiameter                  | Dp       | 纯圆点红点的直径                                 | 6.dp   |
+| RedDotRightOverflow1Digit       | Dp       | 一位数字时红点超出结束边的距离                   | 6.dp   |
+| RedDotRightOverflow2Digit       | Dp       | 两位数字时红点超出结束边的距离                   | 9.dp   |
+| RedDotRightOverflow3Digit       | Dp       | 三位数字时红点超出结束边的距离                   | 10.dp  |
+| RedDotTopOverflow               | Dp       | 数字红点向上溢出的距离                           | 4.dp   |
+| TouchEffectRadius               | Dp       | 径向触摸高亮的半径                               | 40.dp  |
+| MinimumSpacingWithSlideView     | Dp       | 与滑动视图之间保留的最小间距                     | 12.dp  |
+| LabelFontSize                   | TextUnit | 标签字号                                         | 10.sp  |
+| CornerRadius                    | Dp       | 胶囊圆角半径                                     | 28.dp  |
 
 ### NavigationBarDefaults 对象
 
@@ -263,6 +358,100 @@ FloatingNavigationBar(
     // ... items ...
 }
 ```
+
+### BottomFloatingNavigationBar
+
+#### 玻璃表面
+
+`BottomFloatingNavigationBar` 使用 ColorOS 17 的光感玻璃绘制胶囊。`backdrop` 是它采样的内容，默认为 `LocalBackdrop.current`，因此在提供了背景层的位置，导航栏会自动取用。`backdrop` 为 `null` 时，胶囊回退为 `containerColor` 的不透明填充。
+
+```kotlin
+CompositionLocalProvider(LocalBackdrop provides backdrop) {
+    BottomFloatingNavigationBar(containerColor = COUITheme.colorScheme.bar) {
+        // ... 导航项 ...
+    }
+}
+```
+
+#### 展开视图（融球）
+
+传入 `expansion` 视图并用 `expanded` 控制它。导航栏会在胶囊旁边为它预留空间，并把两个轮廓通过同一个融合表面绘制，因此展开视图是从胶囊中「融出」再融回的：
+
+```kotlin
+var expanded by remember { mutableStateOf(false) }
+
+BottomFloatingNavigationBar(
+    expanded = expanded,
+    expansion = {
+        Box(
+            modifier = Modifier.fillMaxSize().clip(CircleShape).background(COUITheme.colorScheme.primary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(imageVector = COUIIcons.Add, contentDescription = "展开")
+        }
+    },
+) {
+    // ... 导航项 ...
+}
+```
+
+未传入 `expansion` 时 `expanded` 不产生任何效果，导航栏就是普通胶囊。展开视图显示期间，胶囊会按它让出的宽度进行测量——即展开视图的占位加上 `BottomFloatingNavigationBarDefaults.SideSpacing`。
+
+#### 大图标
+
+在导航项上设置 `largeIcon = true`，即可绘制 40dp 的大图标形态（`BottomFloatingNavigationBarDefaults.LargeIconSize`），并溢出导航项 `BottomFloatingNavigationBarDefaults.LargeIconOverflow`，取代默认的 24dp 图标。标签仍在图标槽位下方保持原位。
+
+```kotlin
+BottomFloatingNavigationBarItem(
+    selected = selectedIndex == 0,
+    onClick = { selectedIndex = 0 },
+    icon = COUIIcons.Home,
+    label = "首页",
+    largeIcon = true,
+)
+```
+
+#### 红点
+
+`redDot` 会把红点固定在图标顶部的结束角：`BottomFloatingRedDot.Dot` 为纯圆点，`BottomFloatingRedDot.Count(number)` 为数字胶囊。`null` 表示不显示。
+
+```kotlin
+BottomFloatingNavigationBarItem(
+    selected = false,
+    onClick = {},
+    icon = COUIIcons.Messages,
+    label = "消息",
+    redDot = BottomFloatingRedDot.Count(12),
+)
+```
+
+#### 溢出菜单
+
+`overflowMenu` 用于填充导航项的长按菜单，其中的各行会显示在锚定到该导航项的 `NavigationPopupMenu` 中。传入 `null` 则禁用长按。
+
+```kotlin
+BottomFloatingNavigationBarItem(
+    selected = false,
+    onClick = {},
+    icon = COUIIcons.Settings,
+    label = "设置",
+    overflowMenu = {
+        NavigationPopupMenuItem(
+            label = "搜索",
+            icon = COUIIcons.Search,
+            onClick = { /* ... */ },
+        )
+    },
+)
+```
+
+#### 径向触摸高亮
+
+手指按下期间，导航栏会在导航项下方绘制一层径向高亮，并裁剪到胶囊轮廓内。它从中心的白色 38/255 透明度渐变到 `BottomFloatingNavigationBarDefaults.TouchEffectRadius`（40dp）处的完全透明，并以自己的弹簧淡入。指针只被追踪而不会被消费，因此导航项自身的点击与长按手势仍能拿到完整的手势。
+
+#### 响应式边距
+
+16dp 的外部内边距（`BottomFloatingNavigationBarDefaults.PaddingHorizontal`）只在小屏下保留；中屏与大屏下收缩为 0，胶囊可以使用整个宽度。
 
 ### 结合页面切换使用（使用脚手架）
 
