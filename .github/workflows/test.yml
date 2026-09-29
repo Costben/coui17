@@ -15,6 +15,7 @@ on:
       - "CLAUDE.md"
       - "AGENTS.md"
       - "docs/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
