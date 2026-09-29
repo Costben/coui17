@@ -15,9 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
@@ -114,8 +118,38 @@ fun rememberBlurBackdrop(): LayerBackdrop? {
     if (!appState.enableBlur || !isRuntimeShaderSupported()) return null
     val surfaceColor = COUITheme.colorScheme.surface
     return rememberLayerBackdrop {
-        drawRect(surfaceColor)
+        drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
         drawContent()
+    }
+}
+
+/** Records the selected web wallpaper into the same texture that glass surfaces sample. */
+fun ContentDrawScope.drawWallpaperBackdrop(
+    surfaceColor: Color,
+    wallpaper: ImageBitmap?,
+) {
+    drawRect(surfaceColor)
+    if (wallpaper != null) {
+        val targetSize = IntSize(size.width.toInt(), size.height.toInt())
+        val scale = maxOf(
+            targetSize.width.toFloat() / wallpaper.width,
+            targetSize.height.toFloat() / wallpaper.height,
+        )
+        val sourceSize = IntSize(
+            width = (targetSize.width / scale).toInt().coerceAtLeast(1),
+            height = (targetSize.height / scale).toInt().coerceAtLeast(1),
+        )
+        val sourceOffset = IntOffset(
+            x = ((wallpaper.width - sourceSize.width) / 2).coerceAtLeast(0),
+            y = ((wallpaper.height - sourceSize.height) / 2).coerceAtLeast(0),
+        )
+        drawImage(
+            image = wallpaper,
+            srcOffset = sourceOffset,
+            srcSize = sourceSize,
+            dstSize = targetSize,
+            alpha = 0.92f,
+        )
     }
 }
 

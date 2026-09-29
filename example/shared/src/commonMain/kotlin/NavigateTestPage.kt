@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -22,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
@@ -42,6 +42,7 @@ import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.VerticalScrollBar
 import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
@@ -54,7 +55,8 @@ import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
 import navigation3.Route
 import utils.AdaptiveTopAppBar
-import utils.BlurredBar
+import utils.WallpaperState
+import utils.drawWallpaperBackdrop
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import kotlin.random.Random
@@ -70,28 +72,28 @@ fun NavTestPage(
     val isWideScreen = LocalIsWideScreen.current
     val blurSupported = isRuntimeShaderSupported()
     val surfaceColor = COUITheme.colorScheme.surface
-    val backdrop = if (blurSupported) {
+    val backdrop = if (blurSupported && appState.enableBlur) {
         rememberLayerBackdrop {
-            drawRect(surfaceColor)
+            drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
             drawContent()
         }
     } else {
         null
     }
-    val blurActive = appState.enableBlur && blurSupported
-    val barColor = if (blurActive) Color.Transparent else COUITheme.colorScheme.surface
     val topAppBarScrollBehavior = COUIScrollBehavior()
     val navigator = LocalNavigator.current
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop, blurActive) {
+            // The bar reads the content layer behind it, so it must be a sibling of that layer,
+            // never inside it — LocalBackdrop is provided to the bar slot alone.
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
                     title = "Navigate Test $index",
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = barColor,
+                    color = COUITheme.colorScheme.surface,
                     navigationIcon = {
                         BackNavigationIcon(
                             onClick = { navigator.pop() },

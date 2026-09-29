@@ -1,6 +1,9 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -10,11 +13,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
 import kotlinx.coroutines.flow.drop
 import ui.AppTheme
 import ui.keyColorFor
+import utils.WallpaperState
 
 @Composable
 fun App(
@@ -46,7 +52,18 @@ fun App(
             LocalUpdateAppState provides updateAppState,
             LocalSquircleEnabled provides appState.enableSquircle,
         ) {
-            AppContent(padding = padding)
+            Box(modifier = Modifier.fillMaxSize()) {
+                WallpaperState.bitmap?.let { bitmap ->
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.92f,
+                    )
+                }
+                AppContent(padding = padding)
+            }
         }
     }
 }

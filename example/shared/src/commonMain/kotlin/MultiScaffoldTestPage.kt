@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -25,6 +25,7 @@ import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.SmallTitle
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
@@ -32,7 +33,8 @@ import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import utils.AdaptiveTopAppBar
-import utils.BlurredBar
+import utils.WallpaperState
+import utils.drawWallpaperBackdrop
 
 @Composable
 fun MultiScaffoldTestPage(
@@ -42,28 +44,28 @@ fun MultiScaffoldTestPage(
     val isWideScreen = LocalIsWideScreen.current
     val blurSupported = isRuntimeShaderSupported()
     val surfaceColor = COUITheme.colorScheme.surface
-    val backdrop = if (blurSupported) {
+    val backdrop = if (blurSupported && appState.enableBlur) {
         rememberLayerBackdrop {
-            drawRect(surfaceColor)
+            drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
             drawContent()
         }
     } else {
         null
     }
-    val blurActive = appState.enableBlur && blurSupported
-    val barColor = if (blurActive) Color.Transparent else COUITheme.colorScheme.surface
     val topAppBarScrollBehavior = COUIScrollBehavior()
     val navigator = LocalNavigator.current
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop, blurActive) {
+            // The bar reads the content layer behind it, so it must be a sibling of that layer,
+            // never inside it — LocalBackdrop is provided to the bar slot alone.
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
                     title = "Multi-Scaffold Test",
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = barColor,
+                    color = COUITheme.colorScheme.surface,
                     navigationIcon = {
                         BackNavigationIcon(
                             onClick = { navigator.pop() },

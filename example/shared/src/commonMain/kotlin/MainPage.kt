@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -21,15 +22,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import component.appBarGlassSection
 import component.arrowSection
 import component.badgeSection
 import component.basicComponentSection
 import component.blurSection
+import component.bottomFloatingNavigationBarSection
 import component.bottomSheetSection
 import component.breadcrumbBarSection
 import component.buttonSection
@@ -43,6 +45,7 @@ import component.dropdownSection
 import component.fullPageStatementSection
 import component.inputViewSection
 import component.listPreferenceSection
+import component.metaBallSection
 import component.numberPickerSection
 import component.otherPageSection
 import component.preferenceExtrasSection
@@ -68,6 +71,7 @@ import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.VerticalScrollBar
 import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.SelectAll
@@ -78,7 +82,6 @@ import io.github.suqi8.coui.kmp.menu.OverlayIconCascadingDropdownMenu
 import io.github.suqi8.coui.kmp.menu.OverlayIconDropdownMenu
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import utils.AdaptiveTopAppBar
-import utils.BlurredBar
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
@@ -102,8 +105,6 @@ fun MainPage(
     }
 
     val backdrop = rememberBlurBackdrop()
-    val blurActive = backdrop != null
-    val barColor = if (blurActive) Color.Transparent else COUITheme.colorScheme.surface
 
     val topAppBarScrollBehavior = COUIScrollBehavior()
     val lazyListState = rememberLazyListState()
@@ -251,13 +252,15 @@ fun MainPage(
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop, blurActive) {
+            // The bar reads the content layer behind it, so it must be a sibling of that layer,
+            // never inside it — LocalBackdrop is provided to the bar slot alone.
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
                     title = "Home",
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = barColor,
+                    color = COUITheme.colorScheme.surface,
                     actions = {
                         OverlayIconCascadingDropdownMenu(
                             entries = cascadingEntries,
@@ -365,6 +368,9 @@ fun MainPage(
                     inputViewSection()
                     sliderSection()
                     tabRowSection()
+                    bottomFloatingNavigationBarSection()
+                    metaBallSection()
+                    appBarGlassSection()
                     breadcrumbBarSection()
                     tooltipSection()
                     numberPickerSection()

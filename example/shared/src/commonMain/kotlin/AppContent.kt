@@ -117,6 +117,8 @@ import navigation3.Route
 import ui.isInDarkTheme
 import utils.BlurredBar
 import utils.FPSMonitor
+import utils.WallpaperState
+import utils.drawWallpaperBackdrop
 import utils.rememberBlurBackdrop
 import utils.shouldShowSplitPane
 import kotlin.math.abs
@@ -385,7 +387,7 @@ private fun CompactScreenLayout(
     val surfaceColor = COUITheme.colorScheme.surface
     val appState = LocalAppState.current
     val backdrop = rememberLayerBackdrop {
-        drawRect(surfaceColor)
+        drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
         drawContent()
     }
     Scaffold(

@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,13 +11,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.ComposeViewport
+import kotlinx.browser.document
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.HTMLInputElement
+import utils.WallpaperState
 import webfont.preloadWebFonts
 import webfont.queryParam
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 private const val DEFAULT_CSS_URL =
     "https://cdn-font.hyperos.mi.com/font/css?family=MiSans_VF:VF:Chinese_Simplify&display=swap"
@@ -24,8 +33,9 @@ private const val DEFAULT_CSS_URL =
 // subsets keep downloading in the background.
 private const val LOADING_FONT_TIMEOUT_MS = 10_000L
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalEncodingApi::class)
 fun main() {
+    installWallpaperPicker()
     val cssUrl = queryParam("cssUrl").ifBlank { DEFAULT_CSS_URL }
     ComposeViewport(viewportContainerId = "composeApp") {
         var insetTopPx by remember { mutableDoubleStateOf(0.0) }
@@ -65,4 +75,39 @@ fun main() {
 
         App(padding = safePadding)
     }
+}
+
+private fun installWallpaperPicker() {
+    val input = document.getElementById("wallpaperInput") as? HTMLInputElement ?: return
+    val clear = document.getElementById("clearWallpaper")
+    input.onchange = {
+        input.files?.item(0)?.let { file ->
+            val reader = org.w3c.files.FileReader()
+            reader.onload = {
+                val dataUrl = reader.result?.toString()
+                if (dataUrl != null) {
+                    runCatching {
+                        val bytes = Base64.decode(dataUrl.substringAfter(','))
+                        WallpaperState.bitmap = org.jetbrains.skia.Image.makeFromEncoded(bytes).toComposeImageBitmap()
+                    }.onSuccess {
+                        setWallpaperStatus("Active")
+                    }.onFailure {
+                        setWallpaperStatus("Invalid image")
+                    }
+                }
+                null
+            }
+            reader.readAsDataURL(file)
+        }
+        null
+    }
+    clear?.addEventListener("click", {
+        WallpaperState.bitmap = null
+        input.value = ""
+        setWallpaperStatus("Default")
+    })
+}
+
+private fun setWallpaperStatus(status: String) {
+    (document.getElementById("wallpaperStatus") as? HTMLElement)?.textContent = status
 }

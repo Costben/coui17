@@ -1,0 +1,24 @@
+<!-- Copyright 2025, compose-coui-ui contributors -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <title>COUI</title>
+    <link rel="shortcut icon" href="./favicon.ico">
+    <link href="styles.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div id="loading">Loading</div>
+<div id="wallpaper-toolbar" role="toolbar" aria-label="Wallpaper preview controls">
+    <label for="wallpaperInput">Wallpaper</label>
+    <input id="wallpaperInput" type="file" accept="image/*" aria-label="Choose wallpaper">
+    <button id="clearWallpaper" type="button">Clear</button>
+    <span id="wallpaperStatus" aria-live="polite">Default</span>
+</div>
+<div id="composeApp"></div>
+</body>
+<script src="composeApp.js" type="application/javascript"></script>
+</html>

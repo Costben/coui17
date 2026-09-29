@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -50,6 +51,7 @@ import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.VerticalScrollBar
 import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.ExpandLess
@@ -61,7 +63,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import utils.AdaptiveTopAppBar
 import utils.All
-import utils.BlurredBar
 import utils.SearchStatus
 import utils.pageContentPadding
 import utils.pageScrollModifiers
@@ -126,8 +127,6 @@ fun IconsPage(
 
     // Blur state
     val backdrop = rememberBlurBackdrop()
-    val blurActive = backdrop != null
-    val barColor = if (blurActive) colorScheme.surface.copy(alpha = 0f) else colorScheme.surface
 
     // Scroll state
     val lazyListState = rememberLazyListState()
@@ -135,14 +134,16 @@ fun IconsPage(
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop, blurActive) {
-                searchStatus.TopAppBarAnim(backgroundColor = barColor) {
+            // The bar reads the content layer behind it, so it must be a sibling of that layer,
+            // never inside it — LocalBackdrop is provided to the bar slot alone.
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                searchStatus.TopAppBarAnim(backgroundColor = COUITheme.colorScheme.surface) {
                     AdaptiveTopAppBar(
                         title = "Icon",
                         showTopAppBar = appState.showTopAppBar,
                         isWideScreen = isWideScreen,
                         scrollBehavior = topAppBarScrollBehavior,
-                        color = barColor,
+                        color = COUITheme.colorScheme.surface,
                     ) {
                         Box(
                             modifier = Modifier

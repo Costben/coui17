@@ -9,10 +9,52 @@
     <title>COUI</title>
     <link rel="shortcut icon" href="./favicon.ico">
     <link href="styles.css" rel="stylesheet" type="text/css">
+    <script>
+        // Replays the phone's system bar insets so a browser capture can be compared with a device
+        // capture one to one: ?insetTop=36.387&insetBottom=16 uses dp, matching the 141px/62px
+        // insets measured on a 620dpi device. Must run before composeApp.js reads the values.
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            if (!params.has("insetTop") && !params.has("insetBottom")) return;
+            var style = document.documentElement.style;
+            if (params.has("insetTop")) style.setProperty("--safe-area-inset-top", params.get("insetTop") + "px");
+            if (params.has("insetBottom")) style.setProperty("--safe-area-inset-bottom", params.get("insetBottom") + "px");
+        })();
+    </script>
 </head>
 <body>
 <div id="loading">Loading</div>
+<div id="wallpaper-toolbar" role="toolbar" aria-label="Wallpaper preview controls">
+    <label for="wallpaperInput">Wallpaper</label>
+    <input id="wallpaperInput" type="file" accept="image/*" aria-label="Choose wallpaper">
+    <button id="clearWallpaper" type="button">Clear</button>
+    <button id="toggleInsets" type="button" aria-pressed="false">Insets: off</button>
+    <span id="wallpaperStatus" aria-live="polite">Default</span>
+</div>
 <div id="composeApp"></div>
 </body>
+<script>
+    // The insets are read once during the first composition, so switching them reloads the page.
+    (function () {
+        var button = document.getElementById("toggleInsets");
+        if (!button) return;
+        var params = new URLSearchParams(window.location.search);
+        var enabled = params.has("insetTop") || params.has("insetBottom");
+        button.textContent = enabled ? "Insets: on" : "Insets: off";
+        button.setAttribute("aria-pressed", enabled ? "true" : "false");
+        button.addEventListener("click", function () {
+            var next = new URLSearchParams(window.location.search);
+            if (enabled) {
+                next.delete("insetTop");
+                next.delete("insetBottom");
+            } else {
+                next.set("insetTop", "36.387");
+                next.set("insetBottom", "16");
+            }
+            var query = next.toString();
+            window.location.search = query ? "?" + query : "";
+        });
+    })();
+</script>
 <script src="composeApp.js" type="application/javascript"></script>
 </html>

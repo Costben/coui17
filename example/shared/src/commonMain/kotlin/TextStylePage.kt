@@ -14,11 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
@@ -29,12 +29,12 @@ import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.VerticalScrollBar
 import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.interfaces.ExperimentalScrollBarApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import lazyfont.LazyText
 import utils.AdaptiveTopAppBar
-import utils.BlurredBar
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
@@ -80,18 +80,18 @@ fun TextStylePage(
     }
 
     val backdrop = rememberBlurBackdrop()
-    val blurActive = backdrop != null
-    val barColor = if (blurActive) Color.Transparent else COUITheme.colorScheme.surface
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop, blurActive) {
+            // The bar reads the content layer behind it, so it must be a sibling of that layer,
+            // never inside it — LocalBackdrop is provided to the bar slot alone.
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
                     title = "Text Style",
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = barColor,
+                    color = COUITheme.colorScheme.surface,
                 )
             }
         },

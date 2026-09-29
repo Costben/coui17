@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -60,6 +61,7 @@ import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.textureBlur
@@ -75,7 +77,6 @@ import misc.VersionInfo
 import navigation3.Route
 import org.jetbrains.compose.resources.painterResource
 import ui.isInDarkTheme
-import utils.BlurredBar
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
@@ -107,20 +108,20 @@ fun AboutPage(
     }
 
     val backdrop = rememberBlurBackdrop()
-    val blurActive = backdrop != null && scrollProgress == 1f
-    val barColor = if (blurActive) {
-        Color.Transparent
-    } else {
-        if (scrollProgress == 1f) COUITheme.colorScheme.surface else Color.Transparent
-    }
 
     Scaffold(
         topBar = {
-            BlurredBar(backdrop, blurActive) {
+            // The bar reads the content layer behind it, so it must be a sibling of that layer,
+            // never inside it — LocalBackdrop is provided to the bar slot alone.
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 SmallTopAppBar(
                     title = "About",
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = barColor,
+                    color = if (scrollProgress == 1f) {
+                        COUITheme.colorScheme.surface
+                    } else {
+                        Color.Transparent
+                    },
                     titleColor = COUITheme.colorScheme.onSurface.copy(
                         alpha = ((scrollProgress - 0.35f) / 0.65f).coerceIn(0f, 1f),
                     ),

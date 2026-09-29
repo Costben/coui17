@@ -1,0 +1,75 @@
+COUI Web wallpaper verification
+
+Changed branch/field
+- Web preview branch: `example/web`.
+- HTML field: `#wallpaperInput` / `#wallpaperStatus` in `example/web/src/webMain/resources/index.html`.
+- Compose field: `utils.WallpaperState.bitmap`; the selected bitmap is recorded by `LayerBackdrop` and used by the glass demos.
+
+Artifacts
+- MODIFIED_FILE: `verification/coui-web-wallpaper/MODIFIED_FILE`
+- DIFF_FILE: `verification/coui-web-wallpaper/DIFF_FILE`
+- VERIFICATION.txt: `verification/coui-web-wallpaper/VERIFICATION.txt`
+- ROLLBACK.sh: `verification/coui-web-wallpaper/ROLLBACK.sh`
+
+BASELINE
+Command:
+`git show HEAD:example/web/src/webMain/resources/index.html > /tmp/coui-web-wallpaper-baseline.html && shasum -a 256 /tmp/coui-web-wallpaper-baseline.html`
+Input: repository `HEAD` version of `example/web/src/webMain/resources/index.html`.
+Literal output/result:
+`bec90238164f1b4b4a48f9a7a15fe9707fe2e8d0f1978d90113be3b28f759fea  /tmp/coui-web-wallpaper-baseline.html`
+Exit status: `0`.
+
+MODIFIED
+Command:
+`cp example/web/src/webMain/resources/index.html verification/coui-web-wallpaper/MODIFIED_FILE && shasum -a 256 verification/coui-web-wallpaper/MODIFIED_FILE`
+Input: modified Web HTML with wallpaper controls.
+Literal output/result:
+`4d2f354467b98f73c7c39694c01a93a4f5417ba031051ba38bfc74125b6972f4  verification/coui-web-wallpaper/MODIFIED_FILE`
+Exit status: `0`.
+
+ROLLBACK
+Command:
+`cp verification/coui-web-wallpaper/MODIFIED_FILE /tmp/coui-web-wallpaper-rollback.html && verification/coui-web-wallpaper/ROLLBACK.sh /tmp/coui-web-wallpaper-rollback.html /tmp/coui-web-wallpaper-baseline.html && shasum -a 256 /tmp/coui-web-wallpaper-rollback.html`
+Input: a separate copy of `MODIFIED_FILE`; baseline fixture `/tmp/coui-web-wallpaper-baseline.html`.
+Literal output/result:
+`restored /tmp/coui-web-wallpaper-rollback.html from /tmp/coui-web-wallpaper-baseline.html`
+`bec90238164f1b4b4a48f9a7a15fe9707fe2e8d0f1978d90113be3b28f759fea  /tmp/coui-web-wallpaper-rollback.html`
+Exit status: `0`; restored copy hash equals BASELINE. `MODIFIED_FILE` remains changed.
+
+Tests
+- `./gradlew :example:web:jsBrowserDevelopmentWebpack --console=plain -I .ground-truth/gradle-mirror.init.gradle` -> `BUILD SUCCESSFUL`, exit `0`.
+- `./gradlew :example:android:assembleDebug :coui-ui:desktopTest :example:shared:spotlessCheck :example:web:spotlessCheck --console=plain -I .ground-truth/gradle-mirror.init.gradle` -> `BUILD SUCCESSFUL`, exit `0`.
+- Playwright input `example/shared/src/commonMain/composeResources/drawable/blur_test_bg.jpg` at `http://127.0.0.1:8770/coui/` -> `{"active":"Active","cleared":"Default","consoleErrors":[],"pageErrors":[],"failed":[]}`, exit `0`.
+
+Restored behavior/status
+- Clearing the picker sets `WallpaperState.bitmap = null` and status `Default`.
+- With no selected bitmap, Android and Web use the original opaque backdrop path; Android build completed successfully.
+
+PASEO PORT DEPLOYMENT AND DEVICE PARITY
+- Existing Paseo static server retained: `http://127.0.0.1:8770/`; Paseo daemon retained on `6767` / `58100`. Temporary server `8123` was stopped.
+- COUI shared Compose preview is available at `http://127.0.0.1:8770/coui/`.
+- Original AGSL preview at `http://127.0.0.1:8770/` now has `#wallpaper-input`, `#wallpaper-status`, and `#clear-wallpaper`; selecting an image makes the WebGL canvas transparent so the image remains behind the shader surfaces.
+
+ROOT AGSL BASELINE
+Command:
+`cd <coloros-material-preview> && node verify_render.mjs http://127.0.0.1:8770/index.html /tmp/pv-wallpaper`
+Input: existing ColorOS AGSL preview and its four generated shader variants.
+Literal output/result: `consoleErrors: []`; COMMON/BEZIER/NEW_G2/OLD_G2 self-checks all `OK`; pages report `WebGL2 OK` with 9/8/39 draw calls; interaction report `{"before":1,"after":0.9,"pinned":true}`.
+Exit status: `0`.
+
+ROOT AGSL WALLPAPER
+Command:
+`node /tmp/verify_root_wallpaper.mjs`
+Input: `example/shared/src/commonMain/composeResources/drawable/blur_test_bg.jpg`.
+Literal output/result: `before.status="默认纯色背景"`; `active.status="已加载 blur_test_bg.jpg"`; `active.alpha="rgba(0, 0, 0, 0)"`; `active.glStatus="WebGL2 OK · 9 draw calls · CornerType NEW_G2"`; `cleared.status="默认纯色背景"`; `errors=[]`; screenshot mean absolute delta `43.453`.
+Exit status: `0`.
+
+DEVICE REFERENCE
+Command:
+`adb -s <device> shell getprop ro.build.display.id; adb -s <device> shell wm size; adb -s <device> shell wm density`
+Literal output/result: `PLK110_17.0.0.100(SP09CN01)`; `Physical size: 1272x2772`; `Override density: 620`.
+Exit status: `0`.
+
+PARITY RESULT
+- Shared COUI source and device-scale browser viewport (`328x715 CSS px`, `deviceScaleFactor=3.875`) preserve the same component tree and ColorOS geometry; Android UI dump reports the same `1272x2772` root and bottom navigation region `[0,2492][1272,2772]`.
+- Whole-screen pixels are not byte-identical across Android/Skia and Chromium/WebGL rasterizers: default no-wallpaper comparison measured `MAE 17.387`, `SSIM 0.593`; the wallpaper comparison is intentionally different (`MAE 27.300`, `SSIM 0.4623`) because the wallpaper is an added input.

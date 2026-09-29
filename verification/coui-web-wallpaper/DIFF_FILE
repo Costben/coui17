@@ -1,0 +1,301 @@
+diff --git a/example/shared/src/commonMain/kotlin/App.kt b/example/shared/src/commonMain/kotlin/App.kt
+index 68631134..365120dc 100644
+--- a/example/shared/src/commonMain/kotlin/App.kt
++++ b/example/shared/src/commonMain/kotlin/App.kt
+@@ -1,6 +1,9 @@
+ // Copyright 2025, compose-coui-ui contributors
+ // SPDX-License-Identifier: Apache-2.0
++import androidx.compose.foundation.Image
++import androidx.compose.foundation.layout.Box
+ import androidx.compose.foundation.layout.PaddingValues
++import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.CompositionLocalProvider
+ import androidx.compose.runtime.LaunchedEffect
+@@ -10,11 +13,14 @@ import androidx.compose.runtime.remember
+ import androidx.compose.runtime.rememberUpdatedState
+ import androidx.compose.runtime.setValue
+ import androidx.compose.runtime.snapshotFlow
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.layout.ContentScale
+ import androidx.compose.ui.unit.dp
+ import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
+ import kotlinx.coroutines.flow.drop
+ import ui.AppTheme
+ import ui.keyColorFor
++import utils.WallpaperState
+ 
+ @Composable
+ fun App(
+@@ -46,7 +52,18 @@ fun App(
+             LocalUpdateAppState provides updateAppState,
+             LocalSquircleEnabled provides appState.enableSquircle,
+         ) {
+-            AppContent(padding = padding)
++            Box(modifier = Modifier.fillMaxSize()) {
++                WallpaperState.bitmap?.let { bitmap ->
++                    Image(
++                        bitmap = bitmap,
++                        contentDescription = null,
++                        modifier = Modifier.fillMaxSize(),
++                        contentScale = ContentScale.Crop,
++                        alpha = 0.92f,
++                    )
++                }
++                AppContent(padding = padding)
++            }
+         }
+     }
+ }
+diff --git a/example/shared/src/commonMain/kotlin/AppContent.kt b/example/shared/src/commonMain/kotlin/AppContent.kt
+index 27ace35e..ca97753d 100644
+--- a/example/shared/src/commonMain/kotlin/AppContent.kt
++++ b/example/shared/src/commonMain/kotlin/AppContent.kt
+@@ -117,6 +117,8 @@ import navigation3.Route
+ import ui.isInDarkTheme
+ import utils.BlurredBar
+ import utils.FPSMonitor
++import utils.WallpaperState
++import utils.drawWallpaperBackdrop
+ import utils.rememberBlurBackdrop
+ import utils.shouldShowSplitPane
+ import kotlin.math.abs
+@@ -385,7 +387,7 @@ private fun CompactScreenLayout(
+     val surfaceColor = COUITheme.colorScheme.surface
+     val appState = LocalAppState.current
+     val backdrop = rememberLayerBackdrop {
+-        drawRect(surfaceColor)
++        drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
+         drawContent()
+     }
+     Scaffold(
+diff --git a/example/shared/src/commonMain/kotlin/utils/PageUtils.kt b/example/shared/src/commonMain/kotlin/utils/PageUtils.kt
+index 469aba41..f63737d4 100644
+--- a/example/shared/src/commonMain/kotlin/utils/PageUtils.kt
++++ b/example/shared/src/commonMain/kotlin/utils/PageUtils.kt
+@@ -15,9 +15,12 @@ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.remember
+ import androidx.compose.ui.Modifier
+ import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.graphics.ImageBitmap
+ import androidx.compose.ui.graphics.RectangleShape
++import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+ import androidx.compose.ui.input.nestedscroll.nestedScroll
+ import androidx.compose.ui.unit.Dp
++import androidx.compose.ui.unit.IntSize
+ import androidx.compose.ui.unit.dp
+ import io.github.suqi8.coui.kmp.basic.ScrollBehavior
+ import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
+@@ -114,11 +117,26 @@ fun rememberBlurBackdrop(): LayerBackdrop? {
+     if (!appState.enableBlur || !isRuntimeShaderSupported()) return null
+     val surfaceColor = COUITheme.colorScheme.surface
+     return rememberLayerBackdrop {
+-        drawRect(surfaceColor)
++        drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
+         drawContent()
+     }
+ }
+ 
++/** Records the selected web wallpaper into the same texture that glass surfaces sample. */
++fun ContentDrawScope.drawWallpaperBackdrop(
++    surfaceColor: Color,
++    wallpaper: ImageBitmap?,
++) {
++    drawRect(surfaceColor)
++    if (wallpaper != null) {
++        drawImage(
++            image = wallpaper,
++            dstSize = IntSize(size.width.toInt(), size.height.toInt()),
++            alpha = 0.92f,
++        )
++    }
++}
++
+ @Composable
+ fun BlurredBar(
+     backdrop: LayerBackdrop?,
+diff --git a/example/web/src/webMain/kotlin/Main.web.kt b/example/web/src/webMain/kotlin/Main.web.kt
+index e77ac934..abe5df1b 100644
+--- a/example/web/src/webMain/kotlin/Main.web.kt
++++ b/example/web/src/webMain/kotlin/Main.web.kt
+@@ -1,5 +1,7 @@
+ // Copyright 2025, compose-coui-ui contributors
+ // SPDX-License-Identifier: Apache-2.0
++@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
++
+ import androidx.compose.foundation.layout.PaddingValues
+ import androidx.compose.runtime.LaunchedEffect
+ import androidx.compose.runtime.getValue
+@@ -9,13 +11,20 @@ import androidx.compose.runtime.rememberCoroutineScope
+ import androidx.compose.runtime.setValue
+ import androidx.compose.runtime.withFrameNanos
+ import androidx.compose.ui.ExperimentalComposeUiApi
++import androidx.compose.ui.graphics.toComposeImageBitmap
+ import androidx.compose.ui.platform.LocalFontFamilyResolver
+ import androidx.compose.ui.unit.Dp
+ import androidx.compose.ui.window.ComposeViewport
++import kotlinx.browser.document
+ import kotlinx.coroutines.launch
+ import kotlinx.coroutines.withTimeoutOrNull
++import org.w3c.dom.HTMLElement
++import org.w3c.dom.HTMLInputElement
++import utils.WallpaperState
+ import webfont.preloadWebFonts
+ import webfont.queryParam
++import kotlin.io.encoding.Base64
++import kotlin.io.encoding.ExperimentalEncodingApi
+ 
+ private const val DEFAULT_CSS_URL =
+     "https://cdn-font.hyperos.mi.com/font/css?family=MiSans_VF:VF:Chinese_Simplify&display=swap"
+@@ -24,8 +33,9 @@ private const val DEFAULT_CSS_URL =
+ // subsets keep downloading in the background.
+ private const val LOADING_FONT_TIMEOUT_MS = 10_000L
+ 
+-@OptIn(ExperimentalComposeUiApi::class)
++@OptIn(ExperimentalComposeUiApi::class, ExperimentalEncodingApi::class)
+ fun main() {
++    installWallpaperPicker()
+     val cssUrl = queryParam("cssUrl").ifBlank { DEFAULT_CSS_URL }
+     ComposeViewport(viewportContainerId = "composeApp") {
+         var insetTopPx by remember { mutableDoubleStateOf(0.0) }
+@@ -66,3 +76,38 @@ fun main() {
+         App(padding = safePadding)
+     }
+ }
++
++private fun installWallpaperPicker() {
++    val input = document.getElementById("wallpaperInput") as? HTMLInputElement ?: return
++    val clear = document.getElementById("clearWallpaper")
++    input.onchange = {
++        input.files?.item(0)?.let { file ->
++            val reader = org.w3c.files.FileReader()
++            reader.onload = {
++                val dataUrl = reader.result?.toString()
++                if (dataUrl != null) {
++                    runCatching {
++                        val bytes = Base64.decode(dataUrl.substringAfter(','))
++                        WallpaperState.bitmap = org.jetbrains.skia.Image.makeFromEncoded(bytes).toComposeImageBitmap()
++                    }.onSuccess {
++                        setWallpaperStatus("Active")
++                    }.onFailure {
++                        setWallpaperStatus("Invalid image")
++                    }
++                }
++                null
++            }
++            reader.readAsDataURL(file)
++        }
++        null
++    }
++    clear?.addEventListener("click", {
++        WallpaperState.bitmap = null
++        input.value = ""
++        setWallpaperStatus("Default")
++    })
++}
++
++private fun setWallpaperStatus(status: String) {
++    (document.getElementById("wallpaperStatus") as? HTMLElement)?.textContent = status
++}
+diff --git a/example/web/src/webMain/resources/index.html b/example/web/src/webMain/resources/index.html
+index 5c5b83ad..90c33870 100644
+--- a/example/web/src/webMain/resources/index.html
++++ b/example/web/src/webMain/resources/index.html
+@@ -12,7 +12,13 @@
+ </head>
+ <body>
+ <div id="loading">Loading</div>
++<div id="wallpaper-toolbar" role="toolbar" aria-label="Wallpaper preview controls">
++    <label for="wallpaperInput">Wallpaper</label>
++    <input id="wallpaperInput" type="file" accept="image/*" aria-label="Choose wallpaper">
++    <button id="clearWallpaper" type="button">Clear</button>
++    <span id="wallpaperStatus" aria-live="polite">Default</span>
++</div>
+ <div id="composeApp"></div>
+ </body>
+ <script src="composeApp.js" type="application/javascript"></script>
+-</html>
+\ No newline at end of file
++</html>
+diff --git a/example/web/src/webMain/resources/styles.css b/example/web/src/webMain/resources/styles.css
+index 51a49da9..64c27f1f 100644
+--- a/example/web/src/webMain/resources/styles.css
++++ b/example/web/src/webMain/resources/styles.css
+@@ -1,6 +1,3 @@
+-/* For KernelSU WebUI */
+-@import url('https://mui.kernelsu.org/internal/insets.css');
+-
+ :root {
+     color-scheme: light dark;
+     --loading-bg: #ffffff;
+@@ -8,6 +5,10 @@
+     --loading-sub: #8c93b0;
+     --loading-track: rgba(0, 0, 0, 0.08);
+     --loading-accent: #3482ff;
++    --safe-area-inset-top: env(safe-area-inset-top, 0px);
++    --safe-area-inset-right: env(safe-area-inset-right, 0px);
++    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
++    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+ }
+ 
+ @media (prefers-color-scheme: dark) {
+@@ -136,4 +137,57 @@ body {
+     margin: 0;
+     padding: 0;
+     overflow: hidden;
+-}
+\ No newline at end of file
++}
++
++#wallpaper-toolbar {
++    position: fixed;
++    top: max(12px, env(safe-area-inset-top));
++    right: max(12px, env(safe-area-inset-right));
++    z-index: 1100;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++    padding: 8px 10px;
++    border: 1px solid rgba(255, 255, 255, 0.24);
++    border-radius: 14px;
++    background: rgba(24, 24, 28, 0.68);
++    color: #fff;
++    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
++    backdrop-filter: blur(18px) saturate(1.2);
++    -webkit-backdrop-filter: blur(18px) saturate(1.2);
++    font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
++}
++
++#wallpaper-toolbar input[type="file"] {
++    width: 116px;
++    max-width: 34vw;
++    color: rgba(255, 255, 255, 0.86);
++    font: inherit;
++}
++
++#wallpaper-toolbar button {
++    border: 0;
++    border-radius: 9px;
++    padding: 6px 9px;
++    background: rgba(255, 255, 255, 0.16);
++    color: inherit;
++    font: inherit;
++    cursor: pointer;
++}
++
++#wallpaper-toolbar button:hover {
++    background: rgba(255, 255, 255, 0.26);
++}
++
++#wallpaperStatus {
++    color: rgba(255, 255, 255, 0.72);
++    white-space: nowrap;
++}
++
++@media (max-width: 520px) {
++    #wallpaper-toolbar {
++        right: 8px;
++        left: 8px;
++        justify-content: space-between;
++    }
++}
