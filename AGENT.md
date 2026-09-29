@@ -303,3 +303,19 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 常量来源（逐条回查设备资源，不臆造）：`GridSpringChain` 取 `COUIGridSpringChainScrollView`（`MAX_DISTANCE_FACTOR=0.25f` / `MAX_DISTANCE_RATIO=0.5f` / `OVER_SCROLL_FACTOR=0.3f`）、`COUIGridSpringChain`（默认位移 `(row + 1) * 0.1f * distance`、`MAIN_TENSION/MAIN_FRICTION=150f/10f`）、`COUISpringChain`（40/6、70/10）、`COUIChainDecorator`（`FACTOR=0.3f`、`DEFAULT_MARGIN_VERTICAL=24f`）；两张卡片取 `coui_component_card_entrance_{small,large}_bg.xml`（圆角 12dp / 16dp）、`coui_component_card_entrance_preference_type_{small,large}.xml`、`coui_component_card_instruction_bg.xml`（16dp）、`coui_component_card_instruction_preference.xml` 与 `dimens.xml` 的 `coui_component_card_instruction_*` 全组。
 
 未移植项：`springchain/` 的 7 个顶层类与 `api/` 3 个接口（`COUIGridSpringChainScrollView` / `COUIChainDecorator` / `COUIGridSpringChainItem` / `ICOUIGridSpringChainViewGroup` / `IChainItem` / `ICheckViewEdge` / `ISpringUpdateListener` 等）属 Android View 基础设施；`COUISpringChain` 的 tension/friction 无法一一映射到临界阻尼的 `SpringEngine`；`card/` 的 17 个类（`RecyclerView.ItemDecoration` / `SpanSizeLookup` / `Adapter` 体系、`COUIMutableSizeScrollView`、`BaseDisplayInfo` 等）属 RecyclerView 与 View 层基础设施，或库内已有等价覆盖。`CardEntrancePreferenceDefaults.IconSize = 32.dp` 是移植自选值（设备为 `wrap_content`，无 `coui_*` dimen），已在 KDoc 与文档注明；`GridSpringChainDefaults.ChainMarginVertical = 24f` 按设备原样保留为 px 值。
+
+## 15. COUI 列表-详情容器与农历日期选择器（ColorOS 17 移植，2026-09-30）
+
+本轮在 `coui-ui/.../basic/` 新增 2 个组件，在 `coui-ui/.../utils/` 新增 1 个换算工具。
+逐类裁决、设备侧证据与有意省略项见 `docs/coui-coloros17-component-coverage.md` §3 的 G-6 / G-11，
+每项用法见 `docs/components/<名称小写>.md` 与 `docs/zh_CN/components/<名称小写>.md`。
+
+| 组件 | 说明 |
+| :--- | :--- |
+| `ListDetailView` | 响应式列表-详情容器：窄于 600dp 时只组合 `mainContent` / `detailContent` 之一（由 `detailVisible` 决定），达到 600dp 后主面板占 40%、后接 `coui_fragment_gap_width` 细线、详情（未选中时为 `emptyPageContent`）占满剩余。配 `ListDetailViewDefaults`（`SplitModeMinWidth` 600dp / `MinMainWidth` 280dp / `MaxMainWidth` 412dp / `DividerWidth` 0.33000004dp），`isSplitMode(width)` 判定分栏 |
+| `LunarDatePicker` | 农历日期滚轮：三列均宽 76dp（`coui_number_picker_width_middle`），月列显示 `coui_lunar_month` 月名并带 `coui_lunar_leap_string`（闰）前缀，年 / 日列为纯数字。配 `LunarDatePickerDefaults`（`YearRange` 1910..2099 / `ColumnWidth` / `MonthNames` / `LeapPrefix` / `MonthLabel`） |
+| `LunarUtil` + `LunarDateValue` | `LunarUtil` 的直接移植：`LUNAR_INFO`（1900..2100，201 项）与 `SOLAR_TERM_DAYS`（1970..2036，67×24）逐项转写，`calculateLunarByGregorian` / `lunarToSolar` / `toLunarDate` / `leapMonth` / `daysOfALunarMonth` / `chineseStringOfALunarDay` 等纯整数 API 独立可用 |
+
+常量来源（逐条回查设备资源，不臆造）：`ListDetailView` 取 `COUIListDetailView`（`DEFAULT_MAIN_WIDTH_PERCENT=0.4f`）与 `coui_main_fragment_min_width` / `coui_main_fragment_max_width` / `coui_fragment_gap_width`，分栏阈值取 `WindowTotalSizeClass.Compact` 的边界 `Breakpoints.BP_MEDIUM_WINDOW_BASE_WIDTH`（600dp）；`LunarDatePicker` 取 `COUILunarDatePicker`（`DEFAULT_START_YEAR=1910` / `DEFAULT_END_YEAR=2099`）与 `layout/coui_lunar_date_picker.xml`、`coui_lunar_month`、`coui_lunar_leap_string`。演示落位见 `example/coui17/.../GalleryScreen.kt`（相册列表 → 照片详情）与 `example/coui17/.../SettingsScreen.kt`（系统与更新 → 日期和时间，Dialog 宿主）。
+
+未移植项：`grid/` 的 `COUIPercentWidth*` / `COUIGridLayout` / `COUIPercentUtils` 属 Android View 基础设施（`COUIResponsiveUtils` 库内已有）；`COUILunarDatePicker` 的 `updateSpinners()` 与 `IncompleteDate.change(int,int,int)` jadx 无法反编译（产出桩），滚动时滚轮重排未逐行照抄，且 `getLunarDateString(Calendar)` / `@Deprecated changeALunarYearByOne` 因 `java.util.Calendar` 入参在 commonMain 不适用。

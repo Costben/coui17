@@ -62,6 +62,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [Slider](../components/slider)                             | Sliding control for value adjustment       | Volume control, range selection       |
 | [NumberPicker](../components/numberpicker)                 | Vertical scroll picker for number selection | Time picker, quantity selection       |
 | [DatePicker](../components/datepicker)                     | Date wheel picker (year / month / day)     | Date selection, forms                 |
+| [LunarDatePicker](../components/lunardatepicker)           | Lunar date wheel picker (year / month / day) | Lunar date selection, forms         |
 | [TimePicker](../components/timepicker)                     | Time wheel picker (hour / minute)          | Time selection, alarms                |
 | [Stepper](../components/stepper)                           | Increment / decrement integer control      | Quantity adjustment, value tuning     |
 | [ProgressIndicator](../components/progressindicator)       | Displays operation progress status         | Loading, progress display             |
@@ -73,6 +74,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [InstallLoadProgress](../components/installloadprogress)   | Install button that morphs into progress   | App installs, downloads, retries      |
 | [SideNavigationBar](../components/sidenavigationbar)       | Responsive side drawer with a fixed mode    | Album navigation, tablet side panels  |
 | [SidePaneLayout](../components/sidepanelayout)             | Draggable pane beside the page content      | Gallery side panes, navigation panes  |
+| [ListDetailView](../components/listdetailview)             | Responsive one-pane / two-pane list-detail container | Master-detail pages, tablet split |
 | [Snackbar](../components/snackbar)                         | Temporary message bar for brief feedback   | Operation result, status notification |
 | [TopTips](../components/toptips)                           | Tip banner at the top of a page            | Page hints, announcements             |
 | [Tooltip](../components/tooltip)                           | Brief label shown on hover or long press   | Icon button labels, element hints     |

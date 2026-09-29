@@ -62,6 +62,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [Slider](../components/slider)                             | 调节值的滑动控件       | 音量调节、范围选择   |
 | [NumberPicker](../components/numberpicker)                 | 垂直滚动数字选择器     | 时间选择、数量选择   |
 | [DatePicker](../components/datepicker)                     | 日期滚轮选择器（年/月/日） | 日期选择、表单       |
+| [LunarDatePicker](../components/lunardatepicker)           | 农历日期滚轮选择器（年/月/日） | 农历日期选择、表单 |
 | [TimePicker](../components/timepicker)                     | 时间滚轮选择器（时/分） | 时间选择、闹钟       |
 | [Stepper](../components/stepper)                           | 加减调节整数值的控件   | 数量调整、数值微调   |
 | [ProgressIndicator](../components/progressindicator)       | 展示操作进度状态       | 加载中、进度展示     |
@@ -73,6 +74,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [InstallLoadProgress](../components/installloadprogress)   | 安装按钮与进度切换   | 应用安装、下载     |
 | [SideNavigationBar](../components/sidenavigationbar)       | 可切换固定模式的响应式侧边抽屉 | 相册导航、平板侧栏 |
 | [SidePaneLayout](../components/sidepanelayout)             | 贴内容可拖拽的侧面板 | 相册侧栏、导航面板 |
+| [ListDetailView](../components/listdetailview)             | 响应式列表-详情容器（窄窗口单面板 / 宽窗口双面板） | 主从页面、平板分栏 |
 | [Snackbar](../components/snackbar)                         | 底部临时消息条组件     | 状态提示、操作结果   |
 | [TopTips](../components/toptips)                           | 页面顶部提示条         | 页面提示、公告       |
 | [Tooltip](../components/tooltip)                           | 悬停或长按显示的简短标签 | 图标按钮标签、元素提示 |
