@@ -50,6 +50,7 @@ import component.dialogSection
 import component.dropdownSection
 import component.fullPageStatementSection
 import component.guideDialogSection
+import component.hintAndTipsSection
 import component.horizontalPopupMenuSection
 import component.inputViewSection
 import component.installLoadProgressSection
@@ -405,6 +406,7 @@ fun MainPage(
                     lockAndBannerSection()
                     searchAndSliderSection()
                     searchProgressSection()
+                    hintAndTipsSection()
                     clickSelectMenuSection()
                     installLoadProgressSection()
                     legacyComponentSection()
