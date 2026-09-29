@@ -50,6 +50,7 @@ import component.fullPageStatementSection
 import component.guideDialogSection
 import component.horizontalPopupMenuSection
 import component.inputViewSection
+import component.legacyComponentSection
 import component.listPreferenceSection
 import component.materialEffectSection
 import component.metaBallSection
@@ -394,6 +395,7 @@ fun MainPage(
                     cardSection()
                     chipSection()
                     chipTabSection()
+                    legacyComponentSection()
                     badgeSection()
                     preferenceExtrasSection()
                     listPreferenceSection()
