@@ -92,10 +92,25 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * bound `COUIBottomFloatingNavigationBar.onMeasure` gives its menu view, and it takes the full width
  * back once the expansion view is gone.
  *
- * Parts of the native component are still not implemented here: the long-press overflow menu
- * (`COUINavigationPopupMenu`) is supplied by the caller through
- * [BottomFloatingNavigationBarItem]'s `overflowMenu` slot, and the responsive large-screen and
- * horizontal branches of the menu view are not ported.
+ * The long-press overflow menu (`COUINavigationPopupMenu`) is not part of this component: the caller
+ * supplies it through [BottomFloatingNavigationBarItem]'s `overflowMenu` slot.
+ *
+ * `COUIBottomFloatingNavigationBarMenuView` itself has no responsive and no landscape branch — the
+ * only orientation-aware code in the whole component is the `onConfigurationChanged` gate that skips
+ * the next layout animation, which recomposition replaces here. The parent bar carries the two width
+ * tiers that do exist. The first is the 16dp outside padding, kept by `changePadding` on a small
+ * screen and dropped above it; that one is ported above. The second is `couiMenuViewCentered`: on a
+ * small screen, with the attribute set and exactly two visible items,
+ * `measureMenuViewWithCenteredExpansionReserve` leaves the expansion view's footprint plus
+ * [BottomFloatingNavigationBarDefaults.SideSpacing] free on *both* sides of the capsule, and
+ * `computeExpansionActiveHorizontalPositions` then centres the capsule in what is left with the
+ * expansion view pinned to the bar's trailing edge. That branch is deliberately not ported. It only
+ * differs from the arrangement here when the bar is laid out wider than its content, which cannot
+ * happen for this port — the native bar measures itself to `content + padding`, and the bar here
+ * wraps its content and is centred by its parent — and the attribute defaults to false, with no
+ * ColorOS 17 artifact this port was written against setting it. With the expansion view hidden
+ * `layoutWhenExpansionViewInactive` centres the capsule whichever branch was taken, so the two
+ * arrangements coincide in the resting state regardless.
  *
  * @param modifier The modifier to be applied to the bar.
  * @param containerColor The background color of the capsule.

@@ -63,7 +63,11 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * capsule, exactly like [BottomFloatingNavigationBar].
  *
  * `COUIBottomFloatingAccessoryNavigationBar.changePadding` keeps its 16dp outside padding on a small
- * screen only, so the same rule applies here.
+ * screen only, so the same rule applies here. Its `onLayout` picks between `layoutPositionsSmallScreen`
+ * and `layoutPositionsMediumScreen` on that same tier, but the choice cannot be observed here. Only the
+ * small-screen method survives decompilation, and it pins each accessory to its own outer edge and
+ * centres the menu between them — which is what the bar below already does, because the native
+ * component measures itself to `content + padding` and this port likewise wraps its content.
  *
  * @param modifier The modifier to be applied to the bar.
  * @param containerColor The background color of the capsule and of the merged blob.
