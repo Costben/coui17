@@ -52,3 +52,6 @@ example/ios/iosApp/Generated.xcconfig
 .serena/
 .coui-verify.workflow.js
 .coui-audit.workflow.js
+
+# ColorOS 17 forensics artifacts
+.ground-truth/
