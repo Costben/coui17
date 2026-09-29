@@ -38,6 +38,7 @@ import component.bottomFloatingToolbarSection
 import component.bottomSheetSection
 import component.breadcrumbBarSection
 import component.buttonSection
+import component.calendarAndFabSection
 import component.cardSection
 import component.checkboxSection
 import component.chipSection
@@ -397,6 +398,7 @@ fun MainPage(
                     cardSection()
                     chipSection()
                     chipTabSection()
+                    calendarAndFabSection()
                     lockAndBannerSection()
                     searchAndSliderSection()
                     legacyComponentSection()
