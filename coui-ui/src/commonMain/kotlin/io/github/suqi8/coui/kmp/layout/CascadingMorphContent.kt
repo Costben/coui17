@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -38,6 +37,7 @@ import io.github.suqi8.coui.kmp.basic.PopupLayoutPosition
 import io.github.suqi8.coui.kmp.basic.PopupListDivider
 import io.github.suqi8.coui.kmp.basic.PopupShadow
 import io.github.suqi8.coui.kmp.basic.popupClipReveal
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 
 private var deeperChildrenWarned = false
@@ -62,7 +62,10 @@ internal fun CascadingPrimaryContent(
     onCollapseSecondary: () -> Unit,
 ) {
     val isExpanded = expandedItem != null
-    val shape = remember { RoundedCornerShape(CascadingPopupCornerRadius) }
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(CascadingPopupCornerRadius, squircleEnabled) {
+        SquircleShape(cornerRadius = CascadingPopupCornerRadius, squircleEnabled = squircleEnabled)
+    }
     Box(
         modifier = Modifier
             .graphicsLayer {
@@ -80,7 +83,7 @@ internal fun CascadingPrimaryContent(
             }
             // Draw the shadow outside popupClipReveal's hard clip so it is not erased.
             .dropShadow(shape = shape, shadow = PopupShadow)
-            .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, isSquircleEnabled())
+            .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, squircleEnabled)
             .background(color = surfaceColor),
     ) {
         Box {

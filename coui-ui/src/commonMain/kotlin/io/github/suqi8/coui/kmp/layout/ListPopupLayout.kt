@@ -61,8 +61,9 @@ import kotlinx.coroutines.launch
  * @param enableWindowDim Whether to render and animate the window-dim layer. The outside-tap
  *   dismiss gesture is preserved regardless of this flag.
  * @param onDismissRequest The callback when the popup is dismissed.
- * @param onDismissFinished Invoked when the hide animation completes; not invoked if the hide
- *   is cancelled mid-flight (e.g., by [show] toggling back to true).
+ * @param onDismissFinished Invoked when the hide animation completes — after the content exit
+ *   springs and the window-level exit fade, i.e. when the host is about to unmount; not invoked if
+ *   the hide is cancelled mid-flight (e.g., by [show] toggling back to true).
  * @param maxHeight The maximum height of the popup.
  * @param minWidth The minimum width of the popup.
  * @param preciseClickState When non-null and carrying a recorded touch point, the anchor is
@@ -92,6 +93,8 @@ internal fun ListPopupLayout(
     val pathProgress = remember { Animatable(0f) }
     val dimProgress = remember { Animatable(0f) }
     val backProgress = remember { Animatable(0f) }
+    val windowAlpha = remember { Animatable(1f) }
+    var windowExiting by remember { mutableStateOf(false) }
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
     val currentOnDismissFinished by rememberUpdatedState(onDismissFinished)
     val coroutineScope = rememberCoroutineScope()
@@ -102,6 +105,8 @@ internal fun ListPopupLayout(
     LaunchedEffect(show) {
         if (show) {
             internalVisible.value = true
+            windowExiting = false
+            windowAlpha.snapTo(1f)
             backProgress.snapTo(0f)
             // COUI runs three independent waves open (runOpenWaves): path t, scale and alpha.
             launch { pathProgress.animateTo(1f, ListPopupDefaults.PathEnterAnimationSpec) }
@@ -119,6 +124,14 @@ internal fun ListPopupLayout(
             }
             // Alpha controls the master timing: once content fades out, unmount immediately.
             alphaProgress.animateTo(0f, ListPopupDefaults.AlphaExitAnimationSpec)
+            // COUI does not remove the window together with the content: `COUIPopupListWindow.dismiss`
+            // posts `forceDismiss` 350ms later (`postDelayedDismiss(mWindowAnimationDismissRunnable,
+            // 350L)`), and only then does the window play `Animation.COUI.PopupListWindow.Dismiss` —
+            // the 200ms `coui_popup_list_window_exit` alpha. The close opacity spring settles at
+            // ~340ms, so the fade starts on an already-invisible panel and its only remaining job is
+            // to set how long the host stays mounted.
+            windowExiting = true
+            windowAlpha.animateTo(0f, ListPopupDefaults.WindowExitAnimationSpec)
             // Force-settle remaining tracks so the next enter starts from a clean zero baseline.
             pathProgress.snapTo(0f)
             fractionProgress.snapTo(0f)
@@ -223,14 +236,26 @@ internal fun ListPopupLayout(
             Box(
                 modifier = popupModifier
                     .fillMaxSize()
+                    // The window-level exit fade (`Animation.COUI.PopupListWindow.Dismiss`) belongs
+                    // to the popup window's own surface rather than to its content.
+                    .graphicsLayer { alpha = windowAlpha.value }
                     .onGloballyPositioned { coordinates ->
                         hostPositionInWindow = coordinates.positionInWindow()
                     }
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onTap = { requestDismiss() },
-                        )
-                    }
+                    // COUI's PopupWindow is non-focusable with `setOutsideTouchable(true)`, so the
+                    // window keeps passing outside taps through even while it plays its exit
+                    // animation; once it is fading, this container must stop swallowing them.
+                    .then(
+                        if (windowExiting) {
+                            Modifier
+                        } else {
+                            Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onTap = { requestDismiss() },
+                                )
+                            }
+                        },
+                    )
                     .layout { measurable, constraints ->
                         val windowBounds = layoutInfo.windowBounds
                         val popupMargin = layoutInfo.popupMargin

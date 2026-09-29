@@ -281,7 +281,7 @@ internal fun CascadingListPopupLayout(
 
         CompositionLocalProvider(LocalDismissState provides { currentOnDismiss() }) {
             val dimColor = COUITheme.colorScheme.windowDimming
-            // COUI popup surface (couiColorSurfaceTop), shared with ListPopupContent.
+            // COUI popup surface (couiColorBackgroundTop), shared with ListPopupContent.
             val surfaceColor = popupSurfaceColor()
 
             Box(modifier = Modifier.fillMaxSize()) {

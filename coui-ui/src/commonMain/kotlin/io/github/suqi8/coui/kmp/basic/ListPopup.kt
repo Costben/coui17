@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -146,19 +145,19 @@ private val PopupListVerticalPadding = 8.dp
 private val PopupItemDividerAlphaSpring = spring<Float>(dampingRatio = 1f, stiffness = 631.65f, visibilityThreshold = 0.002f)
 
 /** Press mask spring of a popup row (COUI COUISpringForce response 0.3 / bounce 0). */
-private val PopupItemPressSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
+internal val PopupItemPressSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
 
 /**
  * Minimum press progress a row mask reaches before a release may fade it out, so quick taps still
  * flash (COUI COUIMaskEffectDrawable DEFAULT_MIN_PROGRESS_FOR_TOUCH_ENTER_ANIMATION).
  */
-private val PopupItemPressMinVisibleProgress = 0.7f
+internal val PopupItemPressMinVisibleProgress = 0.7f
 
 /** couiColorPress in light themes (COUI coui_color_press #1F000000). */
-private val PopupItemPressLight = Color(0x1F000000)
+internal val PopupItemPressLight = Color(0x1F000000)
 
 /** couiColorPress in dark themes (COUI coui_color_press_dark #33FFFFFF). */
-private val PopupItemPressDark = Color(0x33FFFFFF)
+internal val PopupItemPressDark = Color(0x33FFFFFF)
 
 /** Horizontal inset of the press mask, per side (COUI coui_popup_list_window_mask_margin_horizontal). */
 private val PopupItemPressMaskMargin = 8.dp
@@ -919,13 +918,13 @@ object ListPopupDefaults {
 
     /**
      * Extra clearance reserved below the status bar before the popup may be placed
-     * (COUI coui_popup_list_window_margin_top_or_bottom_barrier).
+     * (COUI coui_popup_list_window_top_status_bar_margin).
      */
     val TopBarrier = 16.dp
 
     /**
      * Extra clearance reserved above the navigation bar before the popup may be placed
-     * (COUI coui_popup_list_window_margin_bottom_barrier_with_navigation).
+     * (COUI coui_popup_list_window_bottom_navigation_bar_margin).
      */
     val BottomBarrier = 32.dp
 
@@ -1116,15 +1115,15 @@ object ListPopupDefaults {
  */
 internal val PopupCornerRadius = 28.dp
 
-/** COUI popup surface in light themes (coui_popup_window_background -> ?couiColorSurfaceTop, coui_color_surface_top #FFFFFF). */
+/** COUI popup surface in light themes (coui_popup_window_background -> ?couiColorBackgroundTop, coui_color_background_top #FFFFFF). */
 private val PopupSurfaceLight = Color.White
 
-/** COUI popup surface in dark themes (coui_color_surface_top #333333, values-night). */
+/** COUI popup surface in dark themes (coui_color_background_top #333333, values-night). */
 private val PopupSurfaceDark = Color(0xFF333333)
 
 /**
  * Resolves the COUI popup container color for the current theme: the popup floats above
- * arbitrary content, so COUI uses the opaque couiColorSurfaceTop pair (#FFFFFF / #333333)
+ * arbitrary content, so COUI uses the opaque couiColorBackgroundTop pair (#FFFFFF / #333333)
  * instead of the translucent dark card color (coui_popup_window_background).
  */
 @Composable
@@ -1153,15 +1152,57 @@ internal fun popupGlassBlendColors(): List<BlendColorEntry> = if (COUITheme.colo
 }
 
 /**
- * Drop shadow of the popup container, calibrated to COUI SHADOW_LV4: 26.66dp blur at 13.7% black
- * (coui_shadow_color_lv4), offset down 3.33dp (coui_shadow_elevation_four).
+ * Drop shadow of the popup container, derived from COUI SHADOW_LV4's Oplus light-source geometry.
+ *
+ * `RoundFrameLayout.setClipMode(1)` calls `ShadowUtils.setElevationToView(this, 3)`, which on an
+ * OPlus-view-elevation SDK (`checkOPlusViewSubSDK(34, 2)`) resolves SHADOW_LV4 and hands five
+ * values to `OplusView.setOverrideLightSourceGeometry`:
+ *
+ * | source parameter | value | COUI token |
+ * | :-- | :-- | :-- |
+ * | occluder height (elevation) | 180dp | `coui_shadow_elevation_level4` |
+ * | spot + ambient colour | `argb(48, 0, 0, 0)` | `coui_shadow_color_lv4` = 48 |
+ * | lightX / lightY | -1 / -200dp | `coui_shadow_light_y_level4` |
+ * | lightZ | 10000dp | `coui_shadow_light_z_level4` |
+ * | light radius | 2000dp | `coui_shadow_light_r_level4` |
+ * | extra blur radius | 0dp | `coui_shadow_blur_r_level4` |
+ *
+ * The call lands on `RenderNode.nSetOverrideLightSourceGeometry` (native), and hwui renders the
+ * caster through Skia's spot-shadow metrics — `SkDrawShadowMetrics::GetSpotParams` in
+ * `src/core/SkDrawShadowInfo.h`, the same model `ReorderBarrierDrawables::drawShadow` feeds into
+ * `SkShadowUtils::DrawShadow`. There is therefore no closed-form
+ * `Shadow(radius, color, offset, spread)`; the values below are the engineering approximation that
+ * model produces:
+ *
+ * ```
+ * zRatio     = clamp(elevation / (lightZ - elevation), 0, 0.95) = 180 / 9820     = 0.01833
+ * offset     = (-zRatio * lightX, -zRatio * lightY)                             = (0.02, +3.67) dp
+ * blurRadius = lightRadius * zRatio                                             = 36.66 dp
+ * scale      = clamp(lightZ / (lightZ - elevation), 1, 1.95)                    = 1.018
+ * ```
+ *
+ * Direction: lightY is negative, i.e. the light sits above the panel, so the cast shadow runs
+ * downward; lightX is the literal -1 passed by COUI, so it is horizontally centred.
+ *
+ * `radius` transfers 1:1 because both sides convert a radius to a Gaussian sigma with the same
+ * rule: Skia's `SkBlurMask::ConvertRadiusToSigma` (`0.57735r + 0.5`) for the spot shadow, and
+ * `BlurEffect.convertRadiusToSigma` in Compose's shadow painter.
+ *
+ * Two parts of the native result a single Compose [Shadow] cannot carry, documented rather than
+ * guessed:
+ *  - hwui draws an additional omni-directional **ambient** shadow from the same colour: outset
+ *    `min(0.5 * elevation, 150dp)` = 90dp at `alpha / AmbientRecipAlpha(180dp)` ≈ 0.078.
+ *    `Modifier.dropShadow` renders one shadow only, so this softer halo is dropped.
+ *  - the spot silhouette is uniformly scaled by 1.018, a ~1.5dp outset on a 168dp panel that is
+ *    well below the blur radius and not a constant, so `spread` stays 0.
+ *
  * Shared with the cascading popup surfaces so main and cascading menus cast identical shadows.
  */
 internal val PopupShadow: Shadow = Shadow(
-    radius = 26.66.dp,
-    color = Color.Black.copy(alpha = 0.137f),
+    radius = 36.66.dp,
+    color = Color.Black.copy(alpha = 48f / 255f),
     spread = 0.dp,
-    offset = DpOffset(0.dp, 3.33.dp),
+    offset = DpOffset(0.dp, 3.67.dp),
 )
 
 internal fun safeTransformOrigin(x: Float, y: Float): TransformOrigin {
@@ -1479,7 +1520,6 @@ fun ListPopupContent(
     val backgroundColor = popupSurfaceColor()
     val backdrop = if (enableGlass) LocalBackdrop.current else null
     val squircleEnabled = isSquircleEnabled()
-    val shape = remember { RoundedCornerShape(PopupCornerRadius) }
     val glassShape = remember(PopupCornerRadius, squircleEnabled) {
         SquircleShape(cornerRadius = PopupCornerRadius, squircleEnabled = squircleEnabled)
     }
@@ -1507,7 +1547,7 @@ fun ListPopupContent(
                 translationX = pathPoint.x + size.width * (0.5f - localTransformOrigin.pivotFractionX) * (1f - scale)
                 translationY = pathPoint.y + size.height * (0.5f - localTransformOrigin.pivotFractionY) * (1f - scale)
             }
-            .dropShadow(shape = shape, shadow = PopupShadow)
+            .dropShadow(shape = glassShape, shadow = PopupShadow)
             .couiGlassSurface(
                 backdrop = backdrop,
                 shape = glassShape,
