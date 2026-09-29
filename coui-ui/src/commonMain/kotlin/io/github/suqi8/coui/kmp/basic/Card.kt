@@ -288,9 +288,17 @@ fun cardListPositionOf(index: Int, count: Int): CardListPosition = when {
 object CardDefaults {
 
     /**
-     * The default corner radius of the [Card] (COUI coui_round_corner_m).
+     * The default corner radius of the [Card].
+     *
+     * ColorOS 17 keeps the COUI `couiRoundCornerM` / `coui_round_corner_m` token at 12dp but remaps
+     * it at draw time through `RoundCornerUtil.getRoundCornerForOS17` to
+     * `coui_round_corner_m_radius_large_16_1` = 17dp.
+     *
+     * The native card outline (`RoundRectDrawable.getOutline`) additionally hardcodes smooth weight
+     * 3.0. `squircleSurface` cannot express that yet: the corner curve is baked once at a single
+     * control point tuned to weight 2.5, with no per-call weight knob.
      */
-    val CornerRadius = 12.dp
+    val CornerRadius = 17.dp
 
     /**
      * The default margin inside the [Card].
