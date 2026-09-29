@@ -52,6 +52,7 @@ import component.horizontalPopupMenuSection
 import component.inputViewSection
 import component.legacyComponentSection
 import component.listPreferenceSection
+import component.lockAndBannerSection
 import component.materialEffectSection
 import component.metaBallSection
 import component.navigationPopupMenuSection
@@ -396,6 +397,7 @@ fun MainPage(
                     cardSection()
                     chipSection()
                     chipTabSection()
+                    lockAndBannerSection()
                     searchAndSliderSection()
                     legacyComponentSection()
                     badgeSection()
