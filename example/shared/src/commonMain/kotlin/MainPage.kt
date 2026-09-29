@@ -60,6 +60,7 @@ import component.otherPageSection
 import component.preferenceExtrasSection
 import component.progressIndicatorSection
 import component.radioButtonSection
+import component.searchAndSliderSection
 import component.sliderSection
 import component.snackbarSection
 import component.spinnerSection
@@ -395,6 +396,7 @@ fun MainPage(
                     cardSection()
                     chipSection()
                     chipTabSection()
+                    searchAndSliderSection()
                     legacyComponentSection()
                     badgeSection()
                     preferenceExtrasSection()
