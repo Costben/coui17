@@ -131,6 +131,8 @@ export default defineConfig({
                         { text: "PullToRefresh", link: "/zh_CN/components/pulltorefresh" },
                         { text: "SearchBar", link: "/zh_CN/components/searchbar" },
                         { text: "FullPageStatement", link: "/zh_CN/components/fullpagestatement" },
+                        { text: "EmptyState", link: "/zh_CN/components/emptystate" },
+                        { text: "CompleteState", link: "/zh_CN/components/completestate" },
                         { text: "ColorPalette", link: "/zh_CN/components/colorpalette" },
                         { text: "ColorPicker", link: "/zh_CN/components/colorpicker" },
                         { text: "ColorSwatchPicker", link: "/zh_CN/components/colorswatchpicker" },

@@ -82,6 +82,8 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [PullToRefresh](../components/pulltorefresh)               | Pull-down refresh operation                | Data update, page refresh             |
 | [SearchBar](../components/searchbar)                       | Search input field                         | Content search, quick find            |
 | [FullPageStatement](../components/fullpagestatement)       | Full-page user agreement statement         | First-launch agreement, privacy statement |
+| [EmptyState](../components/emptystate)                     | Empty page placeholder                     | No search results, empty lists        |
+| [CompleteState](../components/completestate)               | Action completion page                     | Result pages, task finished           |
 | [ColorPalette](../components/colorpalette)                 | Grid palette with alpha slider             | Theme settings, color selection       |
 | [ColorPicker](../components/colorpicker)                   | Color selection control                    | Theme settings, color selection       |
 | [ColorSwatchPicker](../components/colorswatchpicker)       | Circular color swatch row with selection ring | Theme settings, color selection    |

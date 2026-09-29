@@ -122,6 +122,8 @@ export default defineConfig({
                         { text: "PullToRefresh", link: "/components/pulltorefresh" },
                         { text: "SearchBar", link: "/components/searchbar" },
                         { text: "FullPageStatement", link: "/components/fullpagestatement" },
+                        { text: "EmptyState", link: "/components/emptystate" },
+                        { text: "CompleteState", link: "/components/completestate" },
                         { text: "ColorPalette", link: "/components/colorpalette" },
                         { text: "ColorPicker", link: "/components/colorpicker" },
                         { text: "ColorSwatchPicker", link: "/components/colorswatchpicker" },

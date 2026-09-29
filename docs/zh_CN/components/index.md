@@ -82,6 +82,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [PullToRefresh](../components/pulltorefresh)               | 下拉触发刷新操作       | 数据更新、页面刷新   |
 | [SearchBar](../components/searchbar)                       | 执行搜索的输入框       | 内容搜索、快速查找   |
 | [FullPageStatement](../components/fullpagestatement)       | 全屏用户协议声明页     | 首次启动协议、隐私声明 |
+| [EmptyState](../components/emptystate)                     | 空状态占位页           | 搜索无结果、列表为空   |
+| [CompleteState](../components/completestate)               | 操作完成结果页         | 操作结果、任务完成     |
 | [ColorPalette](../components/colorpalette)                 | 网格调色盘（含透明度） | 主题设置、颜色选择   |
 | [ColorPicker](../components/colorpicker)                   | 选择颜色的控件         | 主题设置、颜色选择   |
 | [ColorSwatchPicker](../components/colorswatchpicker)       | 圆点色板选择器（选中描边环） | 主题设置、颜色选择   |
