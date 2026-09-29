@@ -47,6 +47,7 @@ import component.dateTimePickerSection
 import component.dialogSection
 import component.dropdownSection
 import component.fullPageStatementSection
+import component.guideDialogSection
 import component.horizontalPopupMenuSection
 import component.inputViewSection
 import component.listPreferenceSection
@@ -364,6 +365,7 @@ fun MainPage(
                     switchSection()
                     arrowSection()
                     dialogSection()
+                    guideDialogSection()
                     bottomSheetSection()
                     dropdownSection()
                     horizontalPopupMenuSection()
