@@ -207,6 +207,11 @@ internal fun SettingsScreen(
     val suggestions = remember {
         listOf("WLAN 与网络", "蓝牙", "显示与亮度", "声音与振动", "电池", "通知与状态栏")
     }
+    // Measured on the device (PLK110, 1272x2772): with a query that matches nothing, the system
+    // search page replaces the list with a single 16sp `无搜索结果` title whose ink box sits at
+    // y 1222..1295 — centre at 45% of the page, the free-space ratio `EmptyState` uses.
+    val searchHasNoResults = searchExpanded && query.isNotEmpty() &&
+        suggestions.none { it.contains(query, ignoreCase = true) }
 
     // A category-level "select all" box reads `Indeterminate` while only part of the group is on,
     // which is exactly what `COUICheckBox`'s tri-state is for.
@@ -271,25 +276,15 @@ internal fun SettingsScreen(
                 ) {
                     val visible = suggestions
                         .filter { query.isEmpty() || it.contains(query, ignoreCase = true) }
-                    if (visible.isEmpty()) {
-                        EmptyState(
-                            title = "未找到结果",
-                            subtitle = "试试搜索“WLAN”“蓝牙”或“电池”等设置项",
-                            actionText = "清除搜索内容",
-                            onActionClick = { query = "" },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    } else {
-                        Column {
-                            visible.forEach { suggestion ->
-                                BasicComponent(
-                                    title = suggestion,
-                                    onClick = {
-                                        query = suggestion
-                                        searchExpanded = false
-                                    },
-                                )
-                            }
+                    Column {
+                        visible.forEach { suggestion ->
+                            BasicComponent(
+                                title = suggestion,
+                                onClick = {
+                                    query = suggestion
+                                    searchExpanded = false
+                                },
+                            )
                         }
                     }
                 }
@@ -725,6 +720,16 @@ internal fun SettingsScreen(
             item(key = "bottom") {
                 BottomPreference()
             }
+        }
+
+        // The device's no-result search page is one 16sp title placed at 45% of the page, so the
+        // empty state is drawn over the whole page rather than inside the result panel. It carries no
+        // background, so the search field underneath stays visible and editable.
+        if (searchHasNoResults) {
+            EmptyState(
+                title = "无搜索结果",
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         // The device's completion page replaces the page content and carries no button; it stays for as
