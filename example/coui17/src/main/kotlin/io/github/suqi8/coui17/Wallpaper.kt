@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
@@ -16,27 +17,52 @@ import androidx.compose.ui.platform.LocalContext
 /** Keeps the decoded wallpaper within a sane memory budget while still filling a phone screen. */
 private const val MAX_WALLPAPER_EDGE = 1800
 
+/** Which picture ended up behind the glass. */
+internal enum class WallpaperSource {
+    /** The system (home screen) wallpaper. */
+    System,
+
+    /** The lock screen wallpaper, used when the system one has no static image. */
+    Lock,
+
+    /** The still bundled with the app. */
+    Bundled,
+}
+
+internal data class Wallpaper(
+    val image: ImageBitmap,
+    val source: WallpaperSource,
+)
+
 /**
  * The picture the ColorOS 17 glass samples.
  *
- * The device wallpaper is read through [WallpaperManager], which needs no permission; when it is a
- * live wallpaper, or reading fails, the bundled still is used so the light-sensing material always
+ * Reading a wallpaper needs no permission, but a live wallpaper has no static image at all: the
+ * system state then reports an engine and an empty wallpaper file, and both [WallpaperManager]
+ * lookups answer `null`. The bundled still is the last resort so the light-sensing material always
  * has something to refract.
  */
 @Composable
-internal fun rememberWallpaper(): ImageBitmap {
+internal fun rememberWallpaper(): Wallpaper {
     val context = LocalContext.current
     return remember(context) {
-        val fromDevice = runCatching {
-            WallpaperManager.getInstance(context).drawable?.toImageBitmap()
+        val manager = WallpaperManager.getInstance(context)
+        readWallpaper { manager.drawable }?.let {
+            return@remember Wallpaper(it, WallpaperSource.System)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            readWallpaper { manager.getDrawable(WallpaperManager.FLAG_LOCK) }?.let {
+                return@remember Wallpaper(it, WallpaperSource.Lock)
+            }
+        }
+        val bundled = runCatching {
+            BitmapFactory.decodeResource(context.resources, R.drawable.coui17_wallpaper)?.asImageBitmap()
         }.getOrNull()
-        fromDevice
-            ?: runCatching {
-                BitmapFactory.decodeResource(context.resources, R.drawable.blur_test_bg)?.asImageBitmap()
-            }.getOrNull()
-            ?: ImageBitmap(1, 1)
+        Wallpaper(bundled ?: ImageBitmap(1, 1), WallpaperSource.Bundled)
     }
 }
+
+private inline fun readWallpaper(load: () -> Drawable?): ImageBitmap? = runCatching { load()?.toImageBitmap() }.getOrNull()
 
 private fun Drawable.toImageBitmap(): ImageBitmap? {
     val width = intrinsicWidth

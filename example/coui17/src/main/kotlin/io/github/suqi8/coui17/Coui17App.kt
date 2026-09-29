@@ -32,6 +32,7 @@ import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.Icon
+import io.github.suqi8.coui.kmp.basic.NavigationPopupMenuItem
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SnackbarHost
@@ -44,11 +45,17 @@ import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Add
+import io.github.suqi8.coui.kmp.icon.extended.Delete
 import io.github.suqi8.coui.kmp.icon.extended.Home
+import io.github.suqi8.coui.kmp.icon.extended.Info
 import io.github.suqi8.coui.kmp.icon.extended.Messages
 import io.github.suqi8.coui.kmp.icon.extended.More
+import io.github.suqi8.coui.kmp.icon.extended.Pin
+import io.github.suqi8.coui.kmp.icon.extended.Rename
 import io.github.suqi8.coui.kmp.icon.extended.Settings
-import io.github.suqi8.coui.kmp.menu.OverlayIconDropdownMenu
+import io.github.suqi8.coui.kmp.icon.extended.Share
+import io.github.suqi8.coui.kmp.icon.extended.Unpin
+import io.github.suqi8.coui.kmp.menu.OverlayIconCascadingDropdownMenu
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.ColorSchemeMode
 import io.github.suqi8.coui.kmp.theme.ThemeController
@@ -58,8 +65,8 @@ import kotlin.math.max
  * COUI 17 — a ColorOS 17 settings screen.
  *
  * Everything is placed where it would live in the real app: the overflow menu hangs off the three
- * dots in the app bar, search suggestions open under the search field, and the floating navigation
- * bar carries the ColorOS 17 melt ball.
+ * dots in the app bar, search suggestions open under the search field, the floating navigation bar
+ * carries the ColorOS 17 melt ball, and long-pressing a bar item opens its navigation popup menu.
  */
 @Composable
 fun Coui17App() {
@@ -93,7 +100,7 @@ private fun SettingsScaffold(
     // The recorded layer is what the light-sensing surfaces sample. It has to be a sibling of every
     // glass surface, never their ancestor, or the blur would sample itself.
     val backdrop = rememberLayerBackdrop {
-        drawWallpaper(surfaceColor, wallpaper)
+        drawWallpaper(surfaceColor, wallpaper.image)
         drawContent()
     }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -125,6 +132,7 @@ private fun SettingsScaffold(
                 padding = padding,
                 scrollBehavior = scrollBehavior,
                 snackbarHostState = snackbarHostState,
+                wallpaperSource = wallpaper.source,
                 darkMode = darkMode,
                 onDarkModeChange = onDarkModeChange,
                 meltBallExpanded = meltBallExpanded,
@@ -134,12 +142,18 @@ private fun SettingsScaffold(
     }
 }
 
-/** The ColorOS 17 gradient-glass app bar, with the overflow menu hanging off its three dots. */
+/**
+ * The ColorOS 17 gradient-glass app bar.
+ *
+ * The three dots open the cascading menu ColorOS 17 uses: a flat group of choices plus entries that
+ * open a submenu of their own.
+ */
 @Composable
 private fun SettingsTopBar(scrollBehavior: ScrollBehavior) {
     var sortIndex by remember { mutableIntStateOf(0) }
     var viewIndex by remember { mutableIntStateOf(0) }
-    val entries = remember(sortIndex, viewIndex) {
+    var filterIndex by remember { mutableIntStateOf(0) }
+    val entries = remember(sortIndex, viewIndex, filterIndex) {
         listOf(
             DropdownEntry(
                 items = listOf("按名称排序", "按修改时间排序", "按大小排序")
@@ -165,10 +179,14 @@ private fun SettingsTopBar(scrollBehavior: ScrollBehavior) {
                     ),
                     DropdownItem(
                         text = "筛选",
-                        children = listOf(
-                            DropdownItem(text = "全部"),
-                            DropdownItem(text = "仅已启用"),
-                        ),
+                        children = listOf("全部", "仅已启用", "仅已停用")
+                            .mapIndexed { index, text ->
+                                DropdownItem(
+                                    text = text,
+                                    selected = filterIndex == index,
+                                    onClick = { filterIndex = index },
+                                )
+                            },
                     ),
                 ),
             ),
@@ -180,7 +198,7 @@ private fun SettingsTopBar(scrollBehavior: ScrollBehavior) {
         scrollBehavior = scrollBehavior,
         gradientGlass = true,
         actions = {
-            OverlayIconDropdownMenu(
+            OverlayIconCascadingDropdownMenu(
                 entries = entries,
                 content = {
                     Icon(imageVector = COUIIcons.More, contentDescription = "更多")
@@ -190,7 +208,11 @@ private fun SettingsTopBar(scrollBehavior: ScrollBehavior) {
     )
 }
 
-/** The floating capsule with the melt ball that melts out of it. */
+/**
+ * The floating capsule with the melt ball that melts out of it.
+ *
+ * Each item carries the ColorOS 17 long-press navigation popup menu.
+ */
 @Composable
 private fun SettingsBottomBar(
     backdrop: Backdrop?,
@@ -230,6 +252,18 @@ private fun SettingsBottomBar(
                 onClick = { selected = 0 },
                 icon = COUIIcons.Home,
                 label = "首页",
+                overflowMenu = {
+                    NavigationPopupMenuItem(
+                        label = "固定首页",
+                        icon = COUIIcons.Pin,
+                        onClick = {},
+                    )
+                    NavigationPopupMenuItem(
+                        label = "重命名",
+                        icon = COUIIcons.Rename,
+                        onClick = {},
+                    )
+                },
             )
             BottomFloatingNavigationBarItem(
                 selected = selected == 1,
@@ -237,18 +271,49 @@ private fun SettingsBottomBar(
                 icon = COUIIcons.Messages,
                 label = "消息",
                 redDot = BottomFloatingRedDot.Count(3),
+                overflowMenu = {
+                    NavigationPopupMenuItem(
+                        label = "全部标为已读",
+                        icon = COUIIcons.Messages,
+                        onClick = {},
+                    )
+                    NavigationPopupMenuItem(
+                        label = "移除",
+                        icon = COUIIcons.Delete,
+                        onClick = {},
+                    )
+                },
             )
             BottomFloatingNavigationBarItem(
                 selected = selected == 2,
                 onClick = { selected = 2 },
                 icon = COUIIcons.Settings,
                 label = "设置",
+                overflowMenu = {
+                    NavigationPopupMenuItem(
+                        label = "取消固定",
+                        icon = COUIIcons.Unpin,
+                        onClick = {},
+                    )
+                    NavigationPopupMenuItem(
+                        label = "分享",
+                        icon = COUIIcons.Share,
+                        onClick = {},
+                    )
+                },
             )
             BottomFloatingNavigationBarItem(
                 selected = expanded,
                 onClick = { onExpandedChange(!expanded) },
                 icon = COUIIcons.Add,
                 label = "更多",
+                overflowMenu = {
+                    NavigationPopupMenuItem(
+                        label = "关于悬浮栏",
+                        icon = COUIIcons.Info,
+                        onClick = {},
+                    )
+                },
             )
         }
     }
@@ -260,10 +325,10 @@ private fun SettingsBottomBar(
  */
 private fun ContentDrawScope.drawWallpaper(
     surfaceColor: Color,
-    wallpaper: ImageBitmap?,
+    wallpaper: ImageBitmap,
 ) {
     drawRect(surfaceColor)
-    if (wallpaper == null) {
+    if (wallpaper.width <= 1 || wallpaper.height <= 1) {
         drawRect(
             brush = Brush.verticalGradient(
                 listOf(Color(0xFF16223B), Color(0xFF3B4F7D), Color(0xFF9AAECF)),

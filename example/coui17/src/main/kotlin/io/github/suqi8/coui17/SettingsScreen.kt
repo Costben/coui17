@@ -50,6 +50,7 @@ import io.github.suqi8.coui.kmp.icon.extended.BankCards
 import io.github.suqi8.coui.kmp.icon.extended.Carrier
 import io.github.suqi8.coui.kmp.icon.extended.Community
 import io.github.suqi8.coui.kmp.icon.extended.Hide
+import io.github.suqi8.coui.kmp.icon.extended.Image
 import io.github.suqi8.coui.kmp.icon.extended.Info
 import io.github.suqi8.coui.kmp.icon.extended.Link
 import io.github.suqi8.coui.kmp.icon.extended.Lock
@@ -94,6 +95,7 @@ internal fun SettingsScreen(
     padding: PaddingValues,
     scrollBehavior: ScrollBehavior,
     snackbarHostState: SnackbarHostState,
+    wallpaperSource: WallpaperSource,
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
     meltBallExpanded: Boolean,
@@ -369,7 +371,7 @@ internal fun SettingsScreen(
         }
 
         item(key = "floatingBar") {
-            SmallTitle(text = "悬浮栏")
+            SmallTitle(text = "外观与壁纸")
             SettingsCard {
                 SwitchPreference(
                     title = "展开熔球",
@@ -377,6 +379,19 @@ internal fun SettingsScreen(
                     startAction = { SettingIcon(COUIIcons.Merge, IconPurple) },
                     checked = meltBallExpanded,
                     onCheckedChange = onMeltBallExpandedChange,
+                )
+                SettingsDivider()
+                ArrowPreference(
+                    title = "壁纸",
+                    summary = when (wallpaperSource) {
+                        WallpaperSource.System -> "系统壁纸"
+                        WallpaperSource.Lock -> "锁屏壁纸"
+                        WallpaperSource.Bundled -> "内置图片 · 系统为动态壁纸"
+                    },
+                    startAction = { SettingIcon(COUIIcons.Image, IconTeal) },
+                    onClick = {
+                        notify(scope, snackbarHostState, "光感材质取此图折射")
+                    },
                 )
             }
         }
