@@ -3,6 +3,7 @@
 package io.github.suqi8.coui17
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -34,6 +36,10 @@ import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Button
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CircularProgressIndicator
+import io.github.suqi8.coui.kmp.basic.CompleteState
+import io.github.suqi8.coui.kmp.basic.CompleteStateDefaults
+import io.github.suqi8.coui.kmp.basic.CompleteStateStatus
+import io.github.suqi8.coui.kmp.basic.EmptyState
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
@@ -81,6 +87,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val IconBlue = Color(0xFF3B82F6)
@@ -114,6 +121,8 @@ internal fun SettingsScreen(
     var query by remember { mutableStateOf("") }
     var searchExpanded by remember { mutableStateOf(false) }
 
+    var showOptimizeResult by remember { mutableStateOf(false) }
+
     var wifi by remember { mutableStateOf(true) }
     var bluetooth by remember { mutableStateOf(true) }
     var hotspot by remember { mutableStateOf(false) }
@@ -143,341 +152,398 @@ internal fun SettingsScreen(
         listOf("WLAN 与网络", "蓝牙", "显示与亮度", "声音与振动", "电池", "通知与状态栏")
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            // ColorOS 17's settings list is opaque: the device renders this page as a uniform
-            // `coui_color_background_with_card` (#F0F1F2) with no wallpaper showing through, which
-            // is what `colorScheme.surface` carries. A translucent scrim here reads as #F9FAFA —
-            // wallpaper-dependent, and not a value the device colour table contains at all.
-            .background(COUITheme.colorScheme.surface)
-            .scrollEndHaptic()
-            .overScrollVertical()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-        contentPadding = PaddingValues(
-            top = padding.calculateTopPadding(),
-            bottom = padding.calculateBottomPadding() + 8.dp,
-        ),
-    ) {
-        item(key = "search") {
-            SearchBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    // No horizontal padding here: SearchBarDefaults.InsideMargin already insets the
-                    // capsule by 16dp x 6dp, which is exactly the device's geometry (capsule 40dp tall
-                    // inside a 52dp row at a 16dp page margin). Adding another 16dp doubles it to 32dp.
-                    .padding(bottom = 8.dp),
-                inputField = {
-                    InputField(
-                        query = query,
-                        onQueryChange = { query = it },
-                        onSearch = { searchExpanded = false },
-                        expanded = searchExpanded,
-                        onExpandedChange = { searchExpanded = it },
-                        label = "搜索设置项",
-                    )
-                },
-                outsideEndAction = {
-                    Text(
-                        text = "取消",
-                        color = COUITheme.colorScheme.primary,
-                        modifier = Modifier.padding(end = 16.dp),
-                    )
-                },
-                expanded = searchExpanded,
-                onExpandedChange = { searchExpanded = it },
-            ) {
-                val visible = suggestions
-                    .filter { query.isEmpty() || it.contains(query, ignoreCase = true) }
-                Column {
-                    visible.forEach { suggestion ->
-                        BasicComponent(
-                            title = suggestion,
-                            onClick = {
-                                query = suggestion
-                                searchExpanded = false
-                            },
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                // ColorOS 17's settings list is opaque: the device renders this page as a uniform
+                // `coui_color_background_with_card` (#F0F1F2) with no wallpaper showing through, which
+                // is what `colorScheme.surface` carries. A translucent scrim here reads as #F9FAFA —
+                // wallpaper-dependent, and not a value the device colour table contains at all.
+                .background(COUITheme.colorScheme.surface)
+                .scrollEndHaptic()
+                .overScrollVertical()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            // While the search page is open the device replaces the settings list entirely, so the
+            // list must not be reachable behind the results.
+            userScrollEnabled = !searchExpanded,
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding(),
+                bottom = padding.calculateBottomPadding() + 8.dp,
+            ),
+        ) {
+            item(key = "search") {
+                SearchBar(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // No horizontal padding here: SearchBarDefaults.InsideMargin already insets the
+                        // capsule by 16dp x 6dp, which is exactly the device's geometry (capsule 40dp tall
+                        // inside a 52dp row at a 16dp page margin). Adding another 16dp doubles it to 32dp.
+                        .padding(bottom = 8.dp),
+                    inputField = {
+                        InputField(
+                            query = query,
+                            onQueryChange = { query = it },
+                            onSearch = { searchExpanded = false },
+                            expanded = searchExpanded,
+                            onExpandedChange = { searchExpanded = it },
+                            label = "搜索设置项",
                         )
+                    },
+                    outsideEndAction = {
+                        Text(
+                            text = "取消",
+                            color = COUITheme.colorScheme.primary,
+                            modifier = Modifier
+                                .clickable {
+                                    query = ""
+                                    searchExpanded = false
+                                }
+                                .padding(end = 16.dp),
+                        )
+                    },
+                    expanded = searchExpanded,
+                    onExpandedChange = { searchExpanded = it },
+                ) {
+                    val visible = suggestions
+                        .filter { query.isEmpty() || it.contains(query, ignoreCase = true) }
+                    if (visible.isEmpty()) {
+                        EmptyState(
+                            title = "未找到结果",
+                            subtitle = "试试搜索“WLAN”“蓝牙”或“电池”等设置项",
+                            actionText = "清除搜索内容",
+                            onActionClick = { query = "" },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        Column {
+                            visible.forEach { suggestion ->
+                                BasicComponent(
+                                    title = suggestion,
+                                    onClick = {
+                                        query = suggestion
+                                        searchExpanded = false
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        item(key = "connection") {
-            SmallTitle(text = "连接与共享")
-            SettingsCard {
-                SwitchPreference(
-                    title = "WLAN",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = { InlineValue("COUI-Lab-5G") },
-                    startAction = { SettingIcon(COUIIcons.Community, IconBlue) },
-                    checked = wifi,
-                    onCheckedChange = { wifi = it },
-                )
-                SettingsDivider()
-                SwitchPreference(
-                    title = "蓝牙",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = { InlineValue("已连接") },
-                    startAction = { SettingIcon(COUIIcons.Link, IconBlue) },
-                    checked = bluetooth,
-                    onCheckedChange = { bluetooth = it },
-                )
-                SettingsDivider()
-                ArrowPreference(
-                    title = "移动网络",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = { InlineValue("5G · 中国移动") },
-                    startAction = { SettingIcon(COUIIcons.Carrier, IconGreen) },
-                    onClick = { notify(scope, snackbarHostState, "移动网络设置暂不可用") },
-                )
-                SettingsDivider()
-                SwitchPreference(
-                    title = "个人热点",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Share, IconOrange) },
-                    checked = hotspot,
-                    onCheckedChange = { hotspot = it },
-                )
-                SettingsDivider()
-                SwitchPreference(
-                    title = "NFC",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.BankCards, IconPurple) },
-                    checked = nfc,
-                    onCheckedChange = { nfc = it },
-                )
-            }
-        }
-
-        item(key = "display") {
-            SmallTitle(text = "显示与亮度")
-            SettingsCard {
-                SliderPreference(
-                    value = brightness,
-                    onValueChange = { brightness = it },
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    title = "亮度",
-                    valueText = "${(brightness * 100).toInt()}%",
-                    startAction = { SettingIcon(COUIIcons.Theme, IconOrange) },
-                    showKeyPoints = true,
-                )
-                SettingsDivider()
-                SwitchPreference(
-                    title = "自动调节亮度",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Show, IconOrange) },
-                    checked = autoBrightness,
-                    onCheckedChange = { autoBrightness = it },
-                )
-                SettingsDivider()
-                SwitchPreference(
-                    title = "深色模式",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Background, IconPurple) },
-                    checked = darkMode,
-                    onCheckedChange = onDarkModeChange,
-                )
-                SettingsDivider()
-                ListPreference(
-                    entries = colorModes.map { ListPreferenceEntry(text = it) },
-                    selectedIndex = colorModeIndex,
-                    onSelectedIndexChange = { colorModeIndex = it },
-                    title = "色彩模式",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    dialogTitle = "色彩模式",
-                    cancelButtonText = "取消",
-                    startAction = { SettingIcon(COUIIcons.Album, IconTeal) },
-                    showValue = true,
-                )
-                SettingsDivider()
-                ArrowPreference(
-                    title = "屏幕刷新率",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = { InlineValue(refreshRates[refreshIndex]) },
-                    startAction = { SettingIcon(COUIIcons.Update, IconGreen) },
-                    onClick = { showRefreshSheet = true },
-                )
-            }
-        }
-
-        item(key = "sound") {
-            SmallTitle(text = "声音与振动")
-            SettingsCard {
-                SliderPreference(
-                    value = mediaVolume,
-                    onValueChange = { mediaVolume = it },
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    title = "媒体音量",
-                    valueText = "${(mediaVolume * 100).toInt()}%",
-                    startAction = { SettingIcon(COUIIcons.VolumeUp, IconBlue) },
-                )
-                SettingsDivider()
-                SwitchPreference(
-                    title = "静音",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.VolumeOff, IconRed) },
-                    checked = silent,
-                    onCheckedChange = { silent = it },
-                )
-                SettingsDivider()
-                ArrowPreference(
-                    title = "铃声",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = { InlineValue(ringtones[ringtoneIndex]) },
-                    startAction = { SettingIcon(COUIIcons.Music, IconPurple) },
-                    onClick = { showRingtoneSheet = true },
-                )
-            }
-        }
-
-        item(key = "battery") {
-            SmallTitle(text = "电池")
-            SettingsCard {
-                BasicComponent(
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    title = "电池电量",
-                    endActions = { InlineValue("约 9 小时 12 分可用") },
-                    startAction = { SettingIcon(COUIIcons.Timer, IconGreen) },
-                    bottomAction = {
-                        Column(modifier = Modifier.padding(top = 8.dp)) {
-                            LinearProgressIndicator(
-                                modifier = Modifier.fillMaxWidth(),
-                                progress = 0.82f,
-                            )
-                        }
-                    },
-                )
-                SettingsDivider()
-                SwitchPreference(
-                    title = "省电模式",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Update, IconGreen) },
-                    checked = powerSaving,
-                    onCheckedChange = { powerSaving = it },
-                )
-            }
-        }
-
-        item(key = "notification") {
-            SmallTitle(text = "通知与状态栏")
-            SettingsCard {
-                SwitchPreference(
-                    title = "允许通知",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Messages, IconBlue) },
-                    checked = notifyEnabled,
-                    onCheckedChange = { notifyEnabled = it },
-                )
-                SettingsDivider()
-                CheckboxPreference(
-                    title = "锁屏显示通知",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Lock, IconOrange) },
-                    checked = lockScreenNotify,
-                    onCheckedChange = { lockScreenNotify = it },
-                )
-                SettingsDivider()
-                RadioButtonPreference(
-                    title = "显示通知内容",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Notes, IconTeal) },
-                    selected = notifyDetail,
-                    onClick = { notifyDetail = true },
-                )
-                SettingsDivider()
-                RadioButtonPreference(
-                    title = "隐藏通知内容",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Hide, IconRed) },
-                    selected = !notifyDetail,
-                    onClick = { notifyDetail = false },
-                )
-            }
-        }
-
-        item(key = "floatingBar") {
-            SmallTitle(text = "外观与壁纸")
-            SettingsCard {
-                SwitchPreference(
-                    title = "展开熔球",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    startAction = { SettingIcon(COUIIcons.Merge, IconPurple) },
-                    checked = meltBallExpanded,
-                    onCheckedChange = onMeltBallExpandedChange,
-                )
-                SettingsDivider()
-                ArrowPreference(
-                    title = "壁纸",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = {
-                        InlineValue(
-                            when (wallpaperSource) {
-                                WallpaperSource.System -> "系统壁纸"
-                                WallpaperSource.Lock -> "锁屏壁纸"
-                                WallpaperSource.Bundled -> "内置图片"
-                            },
-                        )
-                    },
-                    startAction = { SettingIcon(COUIIcons.Image, IconTeal) },
-                    onClick = {
-                        notify(scope, snackbarHostState, "光感材质取此图折射")
-                    },
-                )
-            }
-        }
-
-        item(key = "about") {
-            SmallTitle(text = "关于本机")
-            SettingsCard {
-                ArrowPreference(
-                    title = "型号",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = { InlineValue("OnePlus PLK110") },
-                    startAction = { SettingIcon(COUIIcons.Info, IconBlue) },
-                    onClick = { showAboutDialog = true },
-                )
-                SettingsDivider()
-                ButtonPreference(
-                    title = "系统更新",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    buttonText = "检查",
-                    startAction = { SettingIcon(COUIIcons.UploadCloud, IconTeal) },
-                    onButtonClick = { notify(scope, snackbarHostState, "已是最新版本") },
-                )
-                SettingsDivider()
-                ArrowPreference(
-                    title = "ColorOS 版本",
-                    modifier = Modifier.heightIn(min = HomepageRowMinHeight),
-                    endActions = { InlineValue("V17.0.0") },
-                    startAction = { SettingIcon(COUIIcons.Info, IconGreen) },
-                    onClick = { showAboutDialog = true },
-                )
-            }
-        }
-
-        item(key = "actions") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Button(onClick = { notify(scope, snackbarHostState, "已优化 12 项设置") }) {
-                    Text(text = "立即优化")
+            if (searchExpanded) {
+                // ColorOS covers the settings list with the search page, so the list stays neither
+                // visible nor scrollable behind the results.
+                item(key = "searchCover") {
+                    Box(
+                        modifier = Modifier
+                            .fillParentMaxHeight()
+                            .background(COUITheme.colorScheme.surface),
+                    )
                 }
-                TextButton(
-                    text = "恢复默认",
-                    onClick = {
-                        wifi = true
-                        bluetooth = true
-                        hotspot = false
-                        brightness = 0.72f
-                        notify(scope, snackbarHostState, "已恢复默认设置")
-                    },
+            }
+
+            item(key = "connection") {
+                SmallTitle(text = "连接与共享")
+                SettingsCard {
+                    SwitchPreference(
+                        title = "WLAN",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = { InlineValue("COUI-Lab-5G") },
+                        startAction = { SettingIcon(COUIIcons.Community, IconBlue) },
+                        checked = wifi,
+                        onCheckedChange = { wifi = it },
+                    )
+                    SettingsDivider()
+                    SwitchPreference(
+                        title = "蓝牙",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = { InlineValue("已连接") },
+                        startAction = { SettingIcon(COUIIcons.Link, IconBlue) },
+                        checked = bluetooth,
+                        onCheckedChange = { bluetooth = it },
+                    )
+                    SettingsDivider()
+                    ArrowPreference(
+                        title = "移动网络",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = { InlineValue("5G · 中国移动") },
+                        startAction = { SettingIcon(COUIIcons.Carrier, IconGreen) },
+                        onClick = { notify(scope, snackbarHostState, "移动网络设置暂不可用") },
+                    )
+                    SettingsDivider()
+                    SwitchPreference(
+                        title = "个人热点",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Share, IconOrange) },
+                        checked = hotspot,
+                        onCheckedChange = { hotspot = it },
+                    )
+                    SettingsDivider()
+                    SwitchPreference(
+                        title = "NFC",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.BankCards, IconPurple) },
+                        checked = nfc,
+                        onCheckedChange = { nfc = it },
+                    )
+                }
+            }
+
+            item(key = "display") {
+                SmallTitle(text = "显示与亮度")
+                SettingsCard {
+                    SliderPreference(
+                        value = brightness,
+                        onValueChange = { brightness = it },
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        title = "亮度",
+                        valueText = "${(brightness * 100).toInt()}%",
+                        startAction = { SettingIcon(COUIIcons.Theme, IconOrange) },
+                        showKeyPoints = true,
+                    )
+                    SettingsDivider()
+                    SwitchPreference(
+                        title = "自动调节亮度",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Show, IconOrange) },
+                        checked = autoBrightness,
+                        onCheckedChange = { autoBrightness = it },
+                    )
+                    SettingsDivider()
+                    SwitchPreference(
+                        title = "深色模式",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Background, IconPurple) },
+                        checked = darkMode,
+                        onCheckedChange = onDarkModeChange,
+                    )
+                    SettingsDivider()
+                    ListPreference(
+                        entries = colorModes.map { ListPreferenceEntry(text = it) },
+                        selectedIndex = colorModeIndex,
+                        onSelectedIndexChange = { colorModeIndex = it },
+                        title = "色彩模式",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        dialogTitle = "色彩模式",
+                        cancelButtonText = "取消",
+                        startAction = { SettingIcon(COUIIcons.Album, IconTeal) },
+                        showValue = true,
+                    )
+                    SettingsDivider()
+                    ArrowPreference(
+                        title = "屏幕刷新率",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = { InlineValue(refreshRates[refreshIndex]) },
+                        startAction = { SettingIcon(COUIIcons.Update, IconGreen) },
+                        onClick = { showRefreshSheet = true },
+                    )
+                }
+            }
+
+            item(key = "sound") {
+                SmallTitle(text = "声音与振动")
+                SettingsCard {
+                    SliderPreference(
+                        value = mediaVolume,
+                        onValueChange = { mediaVolume = it },
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        title = "媒体音量",
+                        valueText = "${(mediaVolume * 100).toInt()}%",
+                        startAction = { SettingIcon(COUIIcons.VolumeUp, IconBlue) },
+                    )
+                    SettingsDivider()
+                    SwitchPreference(
+                        title = "静音",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.VolumeOff, IconRed) },
+                        checked = silent,
+                        onCheckedChange = { silent = it },
+                    )
+                    SettingsDivider()
+                    ArrowPreference(
+                        title = "铃声",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = { InlineValue(ringtones[ringtoneIndex]) },
+                        startAction = { SettingIcon(COUIIcons.Music, IconPurple) },
+                        onClick = { showRingtoneSheet = true },
+                    )
+                }
+            }
+
+            item(key = "battery") {
+                SmallTitle(text = "电池")
+                SettingsCard {
+                    BasicComponent(
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        title = "电池电量",
+                        endActions = { InlineValue("约 9 小时 12 分可用") },
+                        startAction = { SettingIcon(COUIIcons.Timer, IconGreen) },
+                        bottomAction = {
+                            Column(modifier = Modifier.padding(top = 8.dp)) {
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    progress = 0.82f,
+                                )
+                            }
+                        },
+                    )
+                    SettingsDivider()
+                    SwitchPreference(
+                        title = "省电模式",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Update, IconGreen) },
+                        checked = powerSaving,
+                        onCheckedChange = { powerSaving = it },
+                    )
+                }
+            }
+
+            item(key = "notification") {
+                SmallTitle(text = "通知与状态栏")
+                SettingsCard {
+                    SwitchPreference(
+                        title = "允许通知",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Messages, IconBlue) },
+                        checked = notifyEnabled,
+                        onCheckedChange = { notifyEnabled = it },
+                    )
+                    SettingsDivider()
+                    CheckboxPreference(
+                        title = "锁屏显示通知",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Lock, IconOrange) },
+                        checked = lockScreenNotify,
+                        onCheckedChange = { lockScreenNotify = it },
+                    )
+                    SettingsDivider()
+                    RadioButtonPreference(
+                        title = "显示通知内容",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Notes, IconTeal) },
+                        selected = notifyDetail,
+                        onClick = { notifyDetail = true },
+                    )
+                    SettingsDivider()
+                    RadioButtonPreference(
+                        title = "隐藏通知内容",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Hide, IconRed) },
+                        selected = !notifyDetail,
+                        onClick = { notifyDetail = false },
+                    )
+                }
+            }
+
+            item(key = "floatingBar") {
+                SmallTitle(text = "外观与壁纸")
+                SettingsCard {
+                    SwitchPreference(
+                        title = "展开熔球",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        startAction = { SettingIcon(COUIIcons.Merge, IconPurple) },
+                        checked = meltBallExpanded,
+                        onCheckedChange = onMeltBallExpandedChange,
+                    )
+                    SettingsDivider()
+                    ArrowPreference(
+                        title = "壁纸",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = {
+                            InlineValue(
+                                when (wallpaperSource) {
+                                    WallpaperSource.System -> "系统壁纸"
+                                    WallpaperSource.Lock -> "锁屏壁纸"
+                                    WallpaperSource.Bundled -> "内置图片"
+                                },
+                            )
+                        },
+                        startAction = { SettingIcon(COUIIcons.Image, IconTeal) },
+                        onClick = {
+                            notify(scope, snackbarHostState, "光感材质取此图折射")
+                        },
+                    )
+                }
+            }
+
+            item(key = "about") {
+                SmallTitle(text = "关于本机")
+                SettingsCard {
+                    ArrowPreference(
+                        title = "型号",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = { InlineValue("OnePlus PLK110") },
+                        startAction = { SettingIcon(COUIIcons.Info, IconBlue) },
+                        onClick = { showAboutDialog = true },
+                    )
+                    SettingsDivider()
+                    ButtonPreference(
+                        title = "系统更新",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        buttonText = "检查",
+                        startAction = { SettingIcon(COUIIcons.UploadCloud, IconTeal) },
+                        onButtonClick = { notify(scope, snackbarHostState, "已是最新版本") },
+                    )
+                    SettingsDivider()
+                    ArrowPreference(
+                        title = "ColorOS 版本",
+                        modifier = Modifier.heightIn(min = HomepageRowMinHeight),
+                        endActions = { InlineValue("V17.0.0") },
+                        startAction = { SettingIcon(COUIIcons.Info, IconGreen) },
+                        onClick = { showAboutDialog = true },
+                    )
+                }
+            }
+
+            item(key = "actions") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Button(onClick = { showOptimizeResult = true }) {
+                        Text(text = "立即优化")
+                    }
+                    TextButton(
+                        text = "恢复默认",
+                        onClick = {
+                            wifi = true
+                            bluetooth = true
+                            hotspot = false
+                            brightness = 0.72f
+                            notify(scope, snackbarHostState, "已恢复默认设置")
+                        },
+                    )
+                }
+            }
+        }
+
+        // The device's completion page replaces the page content and carries no button; it stays for as
+        // long as raw/complete_page_success_anim.json runs, then the caller dismisses it.
+        if (showOptimizeResult) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(COUITheme.colorScheme.surface),
+                contentAlignment = Alignment.Center,
+            ) {
+                CompleteState(
+                    status = CompleteStateStatus.Success,
+                    title = "已优化 12 项设置",
+                    subtitle = "系统状态已更新",
+                    modifier = Modifier.fillMaxWidth(),
                 )
+            }
+        }
+
+        LaunchedEffect(showOptimizeResult) {
+            if (showOptimizeResult) {
+                delay(CompleteStateDefaults.SuccessDuration)
+                showOptimizeResult = false
             }
         }
     }
