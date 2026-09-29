@@ -268,7 +268,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `topEnd`       | `Dp`    | Per-corner radius (per-corner overload)                  | -                               |
 | `bottomEnd`    | `Dp`    | Per-corner radius (per-corner overload)                  | -                               |
 | `bottomStart`  | `Dp`    | Per-corner radius (per-corner overload)                  | -                               |
-| `extension`    | `Float` | Corner-tile size multiplier, clamped to `[1, 2]`         | `SquircleDefaults.Extension` = 1.1  |
+| `extension`    | `Float` | Corner-tile size multiplier, clamped to `[1, 2]`         | `SquircleDefaults.Extension` = 1.0  |
 
 ### squircleBorder
 

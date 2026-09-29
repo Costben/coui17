@@ -257,7 +257,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `topEnd`       | `Dp`    | 每角半径（按角重载）                              | -                                   |
 | `bottomEnd`    | `Dp`    | 每角半径（按角重载）                              | -                                   |
 | `bottomStart`  | `Dp`    | 每角半径（按角重载）                              | -                                   |
-| `extension`    | `Float` | 角部区域倍数，钳位到 `[1, 2]`                     | `SquircleDefaults.Extension` = 1.1  |
+| `extension`    | `Float` | 角部区域倍数，钳位到 `[1, 2]`                     | `SquircleDefaults.Extension` = 1.0  |
 
 ### squircleBorder
 

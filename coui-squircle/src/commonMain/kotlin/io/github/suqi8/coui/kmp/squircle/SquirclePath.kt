@@ -12,8 +12,16 @@ import kotlin.math.min
 /** Shared default constants for every squircle API in this module. */
 object SquircleDefaults {
 
-    /** Corner-tile size as a multiple of `cornerRadius`. COUI card/surface smoothing ≈ 1.2819 (COUIShapePath 128.19/100). */
-    val Extension = 1.2819f
+    /**
+     * Corner-tile size as a multiple of `cornerRadius`: the square the corner curve occupies, so the
+     * straight edges stop `cornerRadius * Extension` short of each corner.
+     *
+     * ColorOS 17 draws smooth corners with the hwui "G2" signed-distance field
+     * (`q = abs(p) - halfSize + r`; its corner region is exactly `q.x > 0 && q.y > 0`, i.e. `r` wide),
+     * which makes the tile `1.0 * cornerRadius`. The retired ColorOS 16 legacy path
+     * (`COUIShapePath.getRoundRectPath`, tile `128.19/100`) is where the previous `1.2819` came from.
+     */
+    val Extension = 1.0f
 
     /** Inclusive lower bound for [Extension]. */
     val ExtensionMin = 1f
