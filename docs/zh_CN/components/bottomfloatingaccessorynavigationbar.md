@@ -95,6 +95,8 @@ BottomFloatingAccessoryNavigationBar(
 
 与普通悬浮导航栏一致，16dp 的外部内边距只在小屏下保留，中屏与大屏下收缩为 0。胶囊会在两个配件视图让出的空间中居中。
 
+`onLayout` 在同一档位上会在 `layoutPositionsSmallScreen` 与 `layoutPositionsMediumScreen` 之间选择，但这个选择在这里观察不到。只有小屏方法在反编译后存活，它把每个配件视图贴到导航栏各自的外侧边缘，并把菜单居中于两者之间——本实现已经如此，因为原生组件把自身测量为「内容 + 内边距」，而本移植同样包裹内容。
+
 ## 与 BottomFloatingNavigationBar 的关系
 
 两者共用导航项、红点与默认值：`BottomFloatingNavigationBarItem` 与 `BottomFloatingRedDot` 在这里原样使用，胶囊高度、圆角、导航项度量与触摸高亮都来自 `BottomFloatingNavigationBarDefaults`。不需要侧边配件时使用 `BottomFloatingNavigationBar`，需要在胶囊两侧放置一到两个圆形操作入口时使用本组件。

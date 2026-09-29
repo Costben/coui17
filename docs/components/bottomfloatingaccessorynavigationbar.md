@@ -93,6 +93,8 @@ BottomFloatingAccessoryNavigationBar(
 
 Like the plain floating bar, the 16dp outside padding is kept on a small screen only and collapses to zero on the medium and large tiers. The capsule is centred in the space the accessory views leave over.
 
+`onLayout` picks between `layoutPositionsSmallScreen` and `layoutPositionsMediumScreen` on that same tier, but the choice cannot be observed here. Only the small-screen method survives decompilation, and it pins each accessory to its own outer edge of the bar and centres the menu between them — which is what this bar already does, because the native component measures itself to its content plus padding and this port likewise wraps its content.
+
 ## Relationship to BottomFloatingNavigationBar
 
 Both bars share their items, red dots and defaults: `BottomFloatingNavigationBarItem` and `BottomFloatingRedDot` are used here unchanged, and the capsule height, corner radius, item metrics and touch highlight come from `BottomFloatingNavigationBarDefaults`. Use `BottomFloatingNavigationBar` when no side accessory is needed, and this component when the bar carries one or two round actions next to the capsule.

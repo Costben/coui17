@@ -453,6 +453,8 @@ BottomFloatingNavigationBarItem(
 
 16dp 的外部内边距（`BottomFloatingNavigationBarDefaults.PaddingHorizontal`）只在小屏下保留；中屏与大屏下收缩为 0，胶囊可以使用整个宽度。
 
+这也是本栏唯一的宽度档位，并且没有横屏分支。`COUIBottomFloatingNavigationBarMenuView` 两者都没有，而 `onConfigurationChanged` 覆写只是跳过下一次布局动画，重组已经取代了它。`couiMenuViewCentered` 属性会选中第二套排列：小屏下且恰好两个可见项时，导航栏会在胶囊两侧各留出展开视图的占位加 `BottomFloatingNavigationBarDefaults.SideSpacing`，再把胶囊居中于剩余空间，展开视图则贴住导航栏的尾部边缘。这里不对外暴露该属性。原生栏把自身测量为「内容 + 内边距」，本移植同样包裹内容并交给父级居中，因此在这些尺寸下两套排列无法区分；该属性默认值也是 `false`。
+
 ### 结合页面切换使用（使用脚手架）
 
 #### 使用 NavigationBar

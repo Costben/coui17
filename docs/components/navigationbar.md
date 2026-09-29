@@ -453,6 +453,8 @@ While a finger is down, the bar paints a radial highlight under the items, clipp
 
 The 16dp outside padding (`BottomFloatingNavigationBarDefaults.PaddingHorizontal`) is kept on a small screen only; on the medium and large tiers it collapses to zero, so the capsule can use the full width.
 
+That is the bar's only width tier, and there is no landscape branch. `COUIBottomFloatingNavigationBarMenuView` carries neither, and the `onConfigurationChanged` override only skips the next layout animation, which recomposition replaces. The `couiMenuViewCentered` attribute selects a second arrangement: on a small screen with exactly two visible items the bar reserves the expansion view's footprint plus `BottomFloatingNavigationBarDefaults.SideSpacing` on both sides of the capsule and centres the capsule in what is left, with the expansion view pinned to the bar's trailing edge. It is not exposed here. The native bar measures itself to its content plus padding and this port likewise wraps its content and lets the parent centre it, so the two arrangements cannot be told apart at these sizes, and the attribute defaults to `false`.
+
 ### Using with Page Navigation (Using Scaffold)
 
 #### Using NavigationBar
