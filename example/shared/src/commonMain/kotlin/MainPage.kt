@@ -51,6 +51,7 @@ import component.guideDialogSection
 import component.horizontalPopupMenuSection
 import component.inputViewSection
 import component.listPreferenceSection
+import component.materialEffectSection
 import component.metaBallSection
 import component.navigationPopupMenuSection
 import component.numberPickerSection
@@ -383,6 +384,7 @@ fun MainPage(
                     bottomFloatingToolbarSection()
                     navigationPopupMenuSection()
                     metaBallSection()
+                    materialEffectSection()
                     appBarGlassSection()
                     breadcrumbBarSection()
                     tooltipSection()
