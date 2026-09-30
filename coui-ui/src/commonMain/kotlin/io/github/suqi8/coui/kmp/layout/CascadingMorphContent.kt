@@ -121,6 +121,7 @@ internal fun CascadingPrimaryContent(
                                 isFirst = isFirstEntry && itemIndex == 0,
                                 isLast = isLastEntry && itemIndex == lastItemIdx,
                                 dropdownColors = dropdownColors,
+                                groupKey = entryIndex,
                                 onClick = {
                                     val children = item.children?.takeIf { it.isNotEmpty() }
                                     if (children != null) {
@@ -178,6 +179,7 @@ private fun CascadingPrimaryRow(
     dropdownColors: DropdownColors,
     onClick: () -> Unit,
     onAnchorBounds: (DropdownItem, IntRect) -> Unit,
+    groupKey: Any? = null,
 ) {
     val rowEnabled = entryEnabled && item.enabled
     // The row has to stay ListPopupColumn's direct child: the column registers a row by reading its
@@ -194,6 +196,7 @@ private fun CascadingPrimaryRow(
         isFirst = isFirst,
         isLast = isLast,
         onSelectedIndexChange = { onClick() },
+        groupKey = groupKey,
         modifier = Modifier
             .fillMaxWidth()
             .onGloballyPositioned { coords ->
@@ -397,6 +400,9 @@ internal fun CascadingSecondaryColumn(
                     isFirst = false,
                     isLast = index == lastChildIdx,
                     onSelectedIndexChange = { onLeafSelected(child) },
+                    // Every leaf of one submenu belongs to the same COUI group, so the column keeps
+                    // them contiguous and only the explicit header band above separates them.
+                    groupKey = Unit,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
