@@ -2,321 +2,276 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui17
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBar
-import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
-import io.github.suqi8.coui.kmp.basic.BottomFloatingRedDot
-import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
-import io.github.suqi8.coui.kmp.basic.DropdownEntry
-import io.github.suqi8.coui.kmp.basic.DropdownItem
-import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.NavigationPopupMenuItem
+import androidx.navigation3.runtime.NavKey
+import appstate.AppState
+import appstate.LocalAppState
+import appstate.LocalNavigator
+import appstate.LocalUpdateAppState
+import component.SearchPager
+import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.Scaffold
-import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SnackbarHost
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
-import io.github.suqi8.coui.kmp.basic.TopAppBar
-import io.github.suqi8.coui.kmp.basic.couiGlassSurface
-import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
-import io.github.suqi8.coui.kmp.icon.COUIIcons
-import io.github.suqi8.coui.kmp.icon.extended.Add
-import io.github.suqi8.coui.kmp.icon.extended.Delete
-import io.github.suqi8.coui.kmp.icon.extended.Home
-import io.github.suqi8.coui.kmp.icon.extended.Info
-import io.github.suqi8.coui.kmp.icon.extended.Messages
-import io.github.suqi8.coui.kmp.icon.extended.More
-import io.github.suqi8.coui.kmp.icon.extended.Pin
-import io.github.suqi8.coui.kmp.icon.extended.Rename
-import io.github.suqi8.coui.kmp.icon.extended.Settings
-import io.github.suqi8.coui.kmp.icon.extended.Share
-import io.github.suqi8.coui.kmp.icon.extended.Unpin
-import io.github.suqi8.coui.kmp.menu.OverlayIconCascadingDropdownMenu
+import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
-import io.github.suqi8.coui.kmp.theme.ColorSchemeMode
-import io.github.suqi8.coui.kmp.theme.ThemeController
+import kotlinx.coroutines.launch
+import navigation3.Navigator
+import navigation3.Route
+import pages.ColorPage
+import pages.IconsPage
+import pages.SettingsPage
+import pages.TextStylePage
+import ui.AppTheme
+import ui.keyColorFor
+import utils.SearchStatus
 import kotlin.math.max
 
 /**
- * COUI 17 — a ColorOS 17 settings screen.
+ * The app's five pages.
  *
- * Everything is placed where it would live in the real app: the overflow menu hangs off the three
- * dots in the app bar, search suggestions open under the search field, the floating navigation bar
- * carries the ColorOS 17 melt ball, and long-pressing a bar item opens its navigation popup menu.
+ * The first three are what the accessory capsule carries; the last two are the panel entries, which
+ * is how the coui16 gallery's five pages map onto ColorOS 17's one-third-two split.
+ */
+enum class Coui17Page(val title: String) {
+    Home("组件"),
+    Icons("图标"),
+    Color("配色"),
+    TextStyle("文字样式"),
+    Settings("设置项"),
+    ;
+
+    /** Whether this page is reached from the panel rather than the capsule, so it carries a back key. */
+    val isPanelPage: Boolean get() = this == TextStyle || this == Settings
+}
+
+/**
+ * COUI 17 — the component gallery wearing ColorOS 17's clothes.
+ *
+ * The content is the coui16 gallery's, one-for-one; the layout is the system Settings app's: a bar
+ * per page carrying the gradient-blur material, and an accessory bar along the bottom.
  */
 @Composable
 fun Coui17App() {
-    var colorMode by remember { mutableIntStateOf(1) }
-    val dark = colorMode == 2
-    val controller = remember(colorMode) {
-        ThemeController(
-            when (colorMode) {
-                1 -> ColorSchemeMode.Light
-                2 -> ColorSchemeMode.Dark
-                else -> ColorSchemeMode.System
-            },
-        )
+    var appState by remember { mutableStateOf(AppState(showTopAppBar = false)) }
+    // The pages are the coui16 ones and would each draw their own app bar, so the flag is pinned
+    // off: ColorOS 17 gives every page the bar built here instead.
+    val updateAppState: ((AppState) -> AppState) -> Unit = remember {
+        { transform -> appState = transform(appState).copy(showTopAppBar = false) }
     }
-
-    COUITheme(controller = controller) {
-        SettingsScaffold(
-            darkMode = dark,
-            onDarkModeChange = { colorMode = if (it) 2 else 1 },
-        )
+    // The "Other" entry's arrows push routes the coui16 gallery renders for itself. COUI 17 has no
+    // navigation surface of its own, so the stack lives here and nothing draws it: the arrows stay
+    // inert instead of throwing when the entry scrolls into view.
+    val navigator = remember { Navigator(mutableListOf<NavKey>(Route.Main)) }
+    AppTheme(
+        colorMode = appState.colorMode,
+        keyColor = keyColorFor(appState.seedIndex),
+        paletteStyle = appState.paletteStyle,
+        colorSpec = appState.colorSpec,
+    ) {
+        CompositionLocalProvider(
+            LocalAppState provides appState,
+            LocalUpdateAppState provides updateAppState,
+            LocalNavigator provides navigator,
+            LocalSquircleEnabled provides appState.enableSquircle,
+        ) {
+            Coui17Root()
+        }
     }
 }
 
 @Composable
-private fun SettingsScaffold(
-    darkMode: Boolean,
-    onDarkModeChange: (Boolean) -> Unit,
-) {
+private fun Coui17Root() {
     val wallpaper = rememberWallpaper()
     val surfaceColor = COUITheme.colorScheme.surface
-    // The recorded layer is what the light-sensing surfaces sample. It has to be a sibling of every
-    // glass surface, never their ancestor, or the blur would sample itself.
+    // The recorded layer is what the light-sensing surfaces sample. It holds the page content and
+    // nothing else: every bar that reads it is a sibling of it, never a child, or the blur would
+    // sample a backdrop that already has the blur baked into it.
     val backdrop = rememberLayerBackdrop {
         drawWallpaper(surfaceColor, wallpaper.image)
         drawContent()
     }
     val snackbarHostState = remember { SnackbarHostState() }
-    val scrollBehavior = COUIScrollBehavior()
-    var meltBallExpanded by remember { mutableStateOf(false) }
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            CompositionLocalProvider(LocalBackdrop provides backdrop) {
-                SettingsTopBar(scrollBehavior = scrollBehavior)
-            }
-        },
-        bottomBar = {
-            SettingsBottomBar(
-                backdrop = backdrop,
-                expanded = meltBallExpanded,
-                onExpandedChange = { meltBallExpanded = it },
-            )
-        },
-        snackbarHost = { SnackbarHost(state = snackbarHostState) },
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .layerBackdrop(backdrop),
-        ) {
-            SettingsScreen(
-                padding = padding,
-                scrollBehavior = scrollBehavior,
-                snackbarHostState = snackbarHostState,
-                wallpaperSource = wallpaper.source,
-                darkMode = darkMode,
-                onDarkModeChange = onDarkModeChange,
-                meltBallExpanded = meltBallExpanded,
-                onMeltBallExpandedChange = { meltBallExpanded = it },
-            )
-        }
-    }
-}
-
-/**
- * The ColorOS 17 gradient-glass app bar.
- *
- * The three dots open the cascading menu ColorOS 17 uses: a flat group of choices plus entries that
- * open a submenu of their own.
- */
-@Composable
-private fun SettingsTopBar(scrollBehavior: ScrollBehavior) {
-    var sortIndex by remember { mutableIntStateOf(0) }
-    var viewIndex by remember { mutableIntStateOf(0) }
-    var filterIndex by remember { mutableIntStateOf(0) }
-    val entries = remember(sortIndex, viewIndex, filterIndex) {
-        listOf(
-            DropdownEntry(
-                items = listOf("按名称排序", "按修改时间排序", "按大小排序")
-                    .mapIndexed { index, text ->
-                        DropdownItem(
-                            text = text,
-                            selected = sortIndex == index,
-                            onClick = { sortIndex = index },
-                        )
-                    },
-            ),
-            DropdownEntry(
-                items = listOf(
-                    DropdownItem(
-                        text = "显示模式",
-                        children = listOf("标准", "紧凑").mapIndexed { index, text ->
-                            DropdownItem(
-                                text = text,
-                                selected = viewIndex == index,
-                                onClick = { viewIndex = index },
-                            )
-                        },
-                    ),
-                    DropdownItem(
-                        text = "筛选",
-                        children = listOf("全部", "仅已启用", "仅已停用")
-                            .mapIndexed { index, text ->
-                                DropdownItem(
-                                    text = text,
-                                    selected = filterIndex == index,
-                                    onClick = { filterIndex = index },
-                                )
-                            },
-                    ),
-                ),
-            ),
-        )
-    }
-
-    TopAppBar(
-        title = "设置",
-        scrollBehavior = scrollBehavior,
-        gradientGlass = true,
-        actions = {
-            OverlayIconCascadingDropdownMenu(
-                entries = entries,
-                content = {
-                    Icon(imageVector = COUIIcons.More, contentDescription = "更多")
-                },
-            )
-        },
+    val pagerState = rememberPagerState(pageCount = { Coui17Page.entries.size })
+    val coroutineScope = rememberCoroutineScope()
+    val scrollOffset = remember { ScrollOffset() }
+    var searchStatus by remember { mutableStateOf(SearchStatus(label = "搜索组件")) }
+    var panelOpen by remember { mutableStateOf(false) }
+    var lastCapsulePage by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
+    val scrollFraction = AppBarBlurOverlayDefaults.scrollAlpha(
+        scrollPx = scrollOffset.value,
+        density = density,
     )
-}
+    val bottomSpace = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+        Coui17Dimens.BottomBarSpace
+    val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val onSearch = {
+        searchStatus = searchStatus.copy(current = SearchStatus.Status.EXPANDING)
+    }
+    val currentPage = Coui17Page.entries[pagerState.currentPage]
 
-/**
- * The floating capsule with the melt ball that melts out of it.
- *
- * Each item carries the ColorOS 17 long-press navigation popup menu.
- */
-@Composable
-private fun SettingsBottomBar(
-    backdrop: Backdrop?,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-) {
-    var selected by remember { mutableIntStateOf(2) }
-    val barColor = COUITheme.colorScheme.bar
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(bottom = 12.dp),
-    ) {
-        BottomFloatingNavigationBar(
-            backdrop = backdrop,
-            expanded = expanded,
-            expansion = {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .couiGlassSurface(
-                            backdrop = backdrop,
-                            shape = CircleShape,
-                            containerColor = barColor,
-                            fallback = Modifier.background(barColor, CircleShape),
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(imageVector = COUIIcons.Add, contentDescription = "新建")
-                }
-            },
+    CompositionLocalProvider(LocalBackdrop provides backdrop) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            snackbarHost = { SnackbarHost(state = snackbarHostState) },
         ) {
-            BottomFloatingNavigationBarItem(
-                selected = selected == 0,
-                onClick = { selected = 0 },
-                icon = COUIIcons.Home,
-                label = "首页",
-                overflowMenu = {
-                    NavigationPopupMenuItem(
-                        label = "固定首页",
-                        icon = COUIIcons.Pin,
-                        onClick = {},
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Only the page content is recorded into the backdrop.
+                Box(modifier = Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        userScrollEnabled = searchStatus.isCollapsed(),
+                    ) { page ->
+                        Coui17PageContent(
+                            page = Coui17Page.entries[page],
+                            snackbarHostState = snackbarHostState,
+                            scrollOffset = scrollOffset,
+                            contentTop = if (page == Coui17Page.Home.ordinal) {
+                                Coui17Dimens.HomeAppBarBottom
+                            } else {
+                                statusBar + Coui17Dimens.CompactToolbarHeight
+                            },
+                            contentBottom = bottomSpace,
+                        )
+                    }
+                }
+                if (currentPage == Coui17Page.Home) {
+                    Coui17HomeTopBar(
+                        title = currentPage.title,
+                        searchLabel = "搜索组件",
+                        onSearchClick = onSearch,
+                        scrollFraction = scrollFraction,
+                        modifier = Modifier.align(Alignment.TopCenter),
                     )
-                    NavigationPopupMenuItem(
-                        label = "重命名",
-                        icon = COUIIcons.Rename,
-                        onClick = {},
+                } else {
+                    Coui17CompactToolbar(
+                        title = currentPage.title,
+                        onBack = if (currentPage.isPanelPage) {
+                            { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
+                        } else {
+                            null
+                        },
+                        scrollFraction = scrollFraction,
+                        modifier = Modifier.align(Alignment.TopCenter),
                     )
-                },
-            )
-            BottomFloatingNavigationBarItem(
-                selected = selected == 1,
-                onClick = { selected = 1 },
-                icon = COUIIcons.Messages,
-                label = "消息",
-                redDot = BottomFloatingRedDot.Count(3),
-                overflowMenu = {
-                    NavigationPopupMenuItem(
-                        label = "全部标为已读",
-                        icon = COUIIcons.Messages,
-                        onClick = {},
-                    )
-                    NavigationPopupMenuItem(
-                        label = "移除",
-                        icon = COUIIcons.Delete,
-                        onClick = {},
-                    )
-                },
-            )
-            BottomFloatingNavigationBarItem(
-                selected = selected == 2,
-                onClick = { selected = 2 },
-                icon = COUIIcons.Settings,
-                label = "设置",
-                overflowMenu = {
-                    NavigationPopupMenuItem(
-                        label = "取消固定",
-                        icon = COUIIcons.Unpin,
-                        onClick = {},
-                    )
-                    NavigationPopupMenuItem(
-                        label = "分享",
-                        icon = COUIIcons.Share,
-                        onClick = {},
-                    )
-                },
-            )
-            BottomFloatingNavigationBarItem(
-                selected = expanded,
-                onClick = { onExpandedChange(!expanded) },
-                icon = COUIIcons.Add,
-                label = "更多",
-                overflowMenu = {
-                    NavigationPopupMenuItem(
-                        label = "关于悬浮栏",
-                        icon = COUIIcons.Info,
-                        onClick = {},
-                    )
-                },
-            )
+                }
+                Coui17AccessoryBar(
+                    currentPage = pagerState.currentPage,
+                    onSelectPage = { page ->
+                        lastCapsulePage = page
+                        coroutineScope.launch { pagerState.animateScrollToPage(page) }
+                    },
+                    onSearch = onSearch,
+                    onOpenPanel = { panelOpen = true },
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+                Coui17Panel(
+                    show = panelOpen,
+                    onSelect = { page ->
+                        panelOpen = false
+                        coroutineScope.launch { pagerState.animateScrollToPage(page) }
+                    },
+                    onDismiss = { panelOpen = false },
+                )
+                searchStatus.SearchPager(
+                    onSearchStatusChange = { searchStatus = it },
+                    offsetY = Coui17Dimens.HomeAppBarBottom,
+                    defaultResult = {},
+                    result = {},
+                )
+            }
         }
     }
+}
+
+/** One page's content. Its app bar is drawn by the caller, as a sibling of the recorded layer. */
+@Composable
+private fun Coui17PageContent(
+    page: Coui17Page,
+    snackbarHostState: SnackbarHostState,
+    scrollOffset: ScrollOffset,
+    contentTop: Dp,
+    contentBottom: Dp,
+) {
+    // The pages keep their own scroll state, so the bar's fade is driven from here instead of from
+    // a behaviour the pages do not share.
+    val accumulator = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                scrollOffset.value = (scrollOffset.value - consumed.y).coerceAtLeast(0f)
+                return Offset.Zero
+            }
+        }
+    }
+    val pagePadding = PaddingValues(top = contentTop, bottom = contentBottom)
+
+    Box(modifier = Modifier.fillMaxSize().nestedScroll(accumulator)) {
+        when (page) {
+            Coui17Page.Home -> Coui17HomePage(
+                snackbarHostState = snackbarHostState,
+                contentPadding = pagePadding,
+                modifier = Modifier.fillMaxSize(),
+            )
+
+            Coui17Page.Icons -> IconsPage(padding = pagePadding)
+
+            Coui17Page.Color -> ColorPage(padding = pagePadding)
+
+            Coui17Page.TextStyle -> TextStylePage(padding = pagePadding)
+
+            Coui17Page.Settings -> SettingsPage(padding = pagePadding)
+        }
+    }
+}
+
+/** How far the content under a page's app bar has scrolled, in pixels. */
+@Stable
+private class ScrollOffset {
+    var value by mutableFloatStateOf(0f)
 }
 
 /**

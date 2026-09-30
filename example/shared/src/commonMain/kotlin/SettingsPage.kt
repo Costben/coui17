@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 @file:OptIn(ExperimentalScrollBarApi::class)
 
+package pages
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import appstate.LocalAppState
+import appstate.LocalIsWideScreen
+import appstate.LocalNavigator
+import appstate.LocalUpdateAppState
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider

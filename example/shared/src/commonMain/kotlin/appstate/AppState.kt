@@ -1,8 +1,11 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+package appstate
+
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import navigation3.Navigator
 
 @Stable
 data class AppState(
@@ -44,3 +47,6 @@ val LocalAppState = compositionLocalOf<AppState> {
 val LocalUpdateAppState = staticCompositionLocalOf<((AppState) -> AppState) -> Unit> {
     error("No AppState updater provided!")
 }
+
+val LocalNavigator = staticCompositionLocalOf<Navigator> { error("No navigator found!") }
+val LocalIsWideScreen = staticCompositionLocalOf { false }

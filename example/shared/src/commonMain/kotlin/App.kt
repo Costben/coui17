@@ -16,6 +16,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import appstate.AppState
+import appstate.LocalAppState
+import appstate.LocalUpdateAppState
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
 import kotlinx.coroutines.flow.drop
 import ui.AppTheme

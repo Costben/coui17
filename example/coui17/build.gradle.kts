@@ -11,7 +11,9 @@ dependencies {
     implementation(projects.couiUi)
     implementation(projects.couiPreference)
     implementation(projects.couiIcons)
+    implementation(projects.example.shared)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.navigation3.runtime)
 }
 
 @Suppress("UnstableApiUsage")

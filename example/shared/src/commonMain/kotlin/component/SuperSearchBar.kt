@@ -115,9 +115,18 @@ fun SearchStatus.SearchPager(
             .fillMaxSize()
             .zIndex(5f)
             .drawBehind { drawRect(surfaceColor.copy(alpha = surfaceAlpha)) }
-            .semantics { onClick { false } }
             .then(
-                if (!searchStatus.isCollapsed()) Modifier.pointerInput(Unit) { } else Modifier,
+                // The a11y click sink only belongs to the surface while it is up. Collapsed, the
+                // surface is invisible and already lets input through, and claiming a click here
+                // leaves a full-screen node behind that hides the page's own semantics tree from
+                // accessibility services.
+                if (!searchStatus.isCollapsed()) {
+                    Modifier
+                        .semantics { onClick { false } }
+                        .pointerInput(Unit) { }
+                } else {
+                    Modifier
+                },
             ),
     ) {
         Row(

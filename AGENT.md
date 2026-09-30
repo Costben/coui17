@@ -248,7 +248,8 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 `coui-preference/src/commonMain/kotlin/io/github/suqi8/coui/kmp/preference/` 本轮新增 15 个组件。
 逐类裁决、设备侧证据与有意省略项见 `docs/coui-coloros17-component-coverage.md` §3 的 G-9 / G-10，
 每项用法见 `docs/components/<名称小写>.md` 与 `docs/zh_CN/components/<名称小写>.md`，
-示例落位见 `example/coui17/src/main/kotlin/io/github/suqi8/coui17/SettingsScreen.kt`。
+示例落位：原复刻页 `SettingsScreen.kt` 已随 COS17 改版删除（`docs/coui17-gallery-plan.md` 决策 7），
+本批组件当前没有展廊条目，只有 `docs/components/` 的文档。
 
 | 组件 | 说明 |
 | :--- | :--- |
@@ -277,7 +278,8 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 `coui-ui/src/commonMain/kotlin/io/github/suqi8/coui/kmp/icon/basic/` 新增 1 个图标。
 逐类裁决、设备侧证据与有意省略项见 `docs/coui-coloros17-component-coverage.md` §3 的 G-3 / G-4，
 每项用法见 `docs/components/<名称小写>.md` 与 `docs/zh_CN/components/<名称小写>.md`，
-示例落位见 `example/coui17/src/main/kotlin/io/github/suqi8/coui17/GalleryScreen.kt`（宿主 `GalleryActivity`）。
+示例落位：原复刻页 `GalleryScreen.kt` 与宿主 `GalleryActivity` 已随 COS17 改版删除（决策 7），
+本批组件当前没有展廊条目，只有 `docs/components/` 的文档。
 
 | 组件 | 说明 |
 | :--- | :--- |
@@ -292,7 +294,7 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 本轮在 `coui-ui/.../basic/` 新增 1 个网格越界组件，在 `coui-preference/.../preference/` 新增 2 个卡片组件。
 逐类裁决、设备侧证据与有意省略项见 `docs/coui-coloros17-component-coverage.md` §3 的 G-7 / G-8，
 每项用法见 `docs/components/<名称小写>.md` 与 `docs/zh_CN/components/<名称小写>.md`，
-示例落位见 `example/coui17/src/main/kotlin/io/github/suqi8/coui17/GalleryScreen.kt`。
+示例落位：原复刻页 `GalleryScreen.kt` 已随 COS17 改版删除（决策 7），本批组件当前没有展廊条目。
 
 | 组件 | 说明 |
 | :--- | :--- |
@@ -316,7 +318,7 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 | `LunarDatePicker` | 农历日期滚轮：三列均宽 76dp（`coui_number_picker_width_middle`），月列显示 `coui_lunar_month` 月名并带 `coui_lunar_leap_string`（闰）前缀，年 / 日列为纯数字。配 `LunarDatePickerDefaults`（`YearRange` 1910..2099 / `ColumnWidth` / `MonthNames` / `LeapPrefix` / `MonthLabel`） |
 | `LunarUtil` + `LunarDateValue` | `LunarUtil` 的直接移植：`LUNAR_INFO`（1900..2100，201 项）与 `SOLAR_TERM_DAYS`（1970..2036，67×24）逐项转写，`calculateLunarByGregorian` / `lunarToSolar` / `toLunarDate` / `leapMonth` / `daysOfALunarMonth` / `chineseStringOfALunarDay` 等纯整数 API 独立可用 |
 
-常量来源（逐条回查设备资源，不臆造）：`ListDetailView` 取 `COUIListDetailView`（`DEFAULT_MAIN_WIDTH_PERCENT=0.4f`）与 `coui_main_fragment_min_width` / `coui_main_fragment_max_width` / `coui_fragment_gap_width`，分栏阈值取 `WindowTotalSizeClass.Compact` 的边界 `Breakpoints.BP_MEDIUM_WINDOW_BASE_WIDTH`（600dp）；`LunarDatePicker` 取 `COUILunarDatePicker`（`DEFAULT_START_YEAR=1910` / `DEFAULT_END_YEAR=2099`）与 `layout/coui_lunar_date_picker.xml`、`coui_lunar_month`、`coui_lunar_leap_string`。演示落位见 `example/coui17/.../GalleryScreen.kt`（相册列表 → 照片详情）与 `example/coui17/.../SettingsScreen.kt`（系统与更新 → 日期和时间，Dialog 宿主）。
+常量来源（逐条回查设备资源，不臆造）：`ListDetailView` 取 `COUIListDetailView`（`DEFAULT_MAIN_WIDTH_PERCENT=0.4f`）与 `coui_main_fragment_min_width` / `coui_main_fragment_max_width` / `coui_fragment_gap_width`，分栏阈值取 `WindowTotalSizeClass.Compact` 的边界 `Breakpoints.BP_MEDIUM_WINDOW_BASE_WIDTH`（600dp）；`LunarDatePicker` 取 `COUILunarDatePicker`（`DEFAULT_START_YEAR=1910` / `DEFAULT_END_YEAR=2099`）与 `layout/coui_lunar_date_picker.xml`、`coui_lunar_month`、`coui_lunar_leap_string`。演示落位：原 `GalleryScreen.kt`（相册列表 → 照片详情）与 `SettingsScreen.kt`（系统与更新 → 日期和时间，Dialog 宿主）已随 COS17 改版删除（决策 7），这两个组件当前没有展廊条目。
 
 未移植项：`grid/` 的 `COUIPercentWidth*` / `COUIGridLayout` / `COUIPercentUtils` 属 Android View 基础设施（`COUIResponsiveUtils` 库内已有）；`COUILunarDatePicker` 的 `updateSpinners()` 与 `IncompleteDate.change(int,int,int)` jadx 无法反编译（产出桩），滚动时滚轮重排未逐行照抄，且 `getLunarDateString(Calendar)` / `@Deprecated changeALunarYearByOne` 因 `java.util.Calendar` 入参在 commonMain 不适用。
 
@@ -383,3 +385,57 @@ AGSL 着色器，工具栏自身的 `coui_toolbar_back_view` 属性表尚未定�
   coui16 demo 装机截图比对（可滚动页用锚点相对位移做与滚动无关的判等，页首图要求逐字节相同）。
 - 骨架层 `Home()` 增加 `layout: @Composable (HomeLayoutScope) -> Unit` 槽，默认值等于原行为，
   coui17 可据此替换整页外壳。
+
+## 18. `example/coui17` 改为 ColorOS 17 设置式展廊（决策 1–21，2026-09-30）
+
+改写依据 `docs/coui17-gallery-plan.md`。coui17 不再复用 `MainPage`（决策 20），内容真源仍是
+`example/shared` 的 82 个 `component.*` 内容 composable（§17）。
+
+**结构**（`example/coui17/src/main/kotlin/io/github/suqi8/coui17/`）：
+
+| 文件 | 职责 |
+| :--- | :--- |
+| `Coui17App.kt` | 根组件。`Scaffold` 内容盒里 `layerBackdrop` 只包 pager 内容，顶栏 / 配件栏 / 面板 / 搜索浮层一律是它的**兄弟节点**——材质叠加层若被录进它自己要采样的层，会在 `libhwui.so` 的 `RenderNode::prepareTreeImpl` 里自采样递归爆栈。5 页由 `enum Coui17Page` 定义，前 3 页走胶囊、后 2 页走面板（`isPanelPage` 决定顶栏是否带返回键） |
+| `Coui17Bars.kt` | `Coui17HomeTopBar` / `Coui17CompactToolbar` / `Coui17AccessoryBar`（`BottomFloatingAccessoryNavigationBar`：左球搜索、右球更多、胶囊三项）/ `Coui17Panel`（`OverlayCascadingListPopup`） |
+| `Coui17HomePage.kt` | 按 coui16 原序调用 82 个内容 composable，每条一个 `coui17Entry` |
+| `Coui17Dimens.kt` | §18.2 尺寸表的唯一落点 |
+
+删除：`SettingsScreen.kt`、`GalleryScreen.kt`、`GalleryActivity.kt`，及 `AndroidManifest.xml` 的该
+activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面层移进 `pages` 包
+（`IconsPage` / `ColorPage` / `TextStylePage` / `SettingsPage`）、应用状态移进 `appstate` 包
+（`AppState` / `LocalAppState` / `LocalUpdateAppState` / `LocalNavigator` / `LocalIsWideScreen`），
+因为 Kotlin 的默认包无法被 `import`。
+
+**尺寸来源**（参考机 OnePlus PLK110，ColorOS V17.0.0，1272x2772px @620dpi，1dp = 3.875px）：
+
+| 常量 | 值 | 设备实测 |
+| :--- | :--- | :--- |
+| `HomeAppBarBottom` | 88.52dp | 设置主页 `app_bar_layout` `[0,0][1272,343]` |
+| `AppBarBlurExtra` | 14dp | `blur_overlay` `[0,0][1272,397]` = 343px + 54px，即 `homepage_appbar_blur_extra_height` |
+| `HomeSearchBandHeight` | 52.13dp | `searchView` `[0,141][1272,343]` |
+| `SearchPillHeight` / `BarHorizontalPadding` | 40dp / 16dp | pill `[62,164][1210,319]` |
+| `CompactToolbarHeight` | 52.13dp | 二级页 `toolbar` `[0,141][1272,343]` |
+| `BackButtonSize` | 40dp | `coui_toolbar_back_view` `[62,164][217,319]` |
+| `ToolbarTitleStart` | 65.8dp | 二级页标题 x = 255px |
+| `ListRowHeight` | 52.13dp | 列表行 202px（首行 205px、带副标题 209px），取常见档 |
+| `ListTextIndent` | 72dp | 行文字 x = 279px |
+| `ListCardInset` / `ListGroupGap` | 16dp | 卡片 x 62..1210px；组间空留白 62px |
+
+标题带高度 = 状态栏高，不另立常量：本机 `WindowInsets.statusBars` 顶部 = 141px（由标题文字底边
+118px + 6dp 内边距反推，且与设备 `toolbar_options` `[0,0][1272,141]` 相等）。首页列表不加分割线——
+设备实测无分割线节点，只有两处 16dp 空留白带。
+
+**搜索浮层语义树修复**：`example/shared` 的 `SearchPager` 根 `Column` 是 `fillMaxSize()`，原先无条件挂
+`semantics { onClick { false } }`。折叠态下这个全屏可点击节点会让整页自身的语义节点全部消失
+（`uiautomator dump` 只剩 1 个节点、2649 字节；修复后 27273 字节；设置主页与图标页各复现一次）。
+现在 `semantics` 与 `pointerInput` 一起，只在该浮层真的铺满屏幕时才挂。两者都不参与绘制，故**渲染不变**，
+但因为动的是 `example/shared`，同轮单独构建 `:example:android:assembleDebug` 通过。
+
+**已知缺口**（留待 Phase 4）：搜索浮层的返回键要按两次才关闭——`coui-ui` 的 `SearchBar`
+（`isBackEnabled = expanded`）与 `SearchPager` 各注册一个 `NavigationBackHandler`，第一次被前者吃掉，
+属既有 shared / coui-ui 行为，本轮未改；展开态的搜索框自身没有语义节点；首页搜索 pill 的 leading icon
+从 pill 起始边占 44dp，设备的对应槽位是 40dp（36dp 图标视图 + 4dp 内缩，文字 x 216px vs 本实现 233px），
+但设备 `search_src_text` 的 `EditText` 自带 padding，实测分不清差值属槽位还是文本框内缩，按「查不清就挂起」
+留到视觉层比对；`OtherDemo` 的三条导航箭头在 coui17 里是惰性的（只给了空 `Navigator` 栈，没有 `NavDisplay`）；
+删除复刻页后 `SideNavigationBar` / `SidePaneLayout` / `CardEntrancePreference` / `CardInstructionPreference` /
+`ListDetailView` / `LunarDatePicker` 不再有任何展廊条目。

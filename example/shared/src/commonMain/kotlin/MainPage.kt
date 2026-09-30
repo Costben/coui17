@@ -26,6 +26,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import appstate.LocalAppState
+import appstate.LocalIsWideScreen
 import component.appBarGlassSection
 import component.arrowSection
 import component.badgeSection

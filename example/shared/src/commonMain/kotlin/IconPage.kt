@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 @file:OptIn(ExperimentalScrollBarApi::class)
 
+package pages
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,6 +43,8 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import appstate.LocalAppState
+import appstate.LocalIsWideScreen
 import component.SearchBarFake
 import component.SearchPager
 import io.github.suqi8.coui.kmp.basic.BasicComponent

@@ -68,6 +68,9 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.savedstate.serialization.SavedStateConfiguration
+import appstate.LocalAppState
+import appstate.LocalIsWideScreen
+import appstate.LocalNavigator
 import component.liquid.IosLiquidGlassNavigationBar
 import io.github.suqi8.coui.kmp.basic.FabPosition
 import io.github.suqi8.coui.kmp.basic.FloatingActionButton
@@ -114,6 +117,10 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import navigation3.Navigator
 import navigation3.Route
+import pages.ColorPage
+import pages.IconsPage
+import pages.SettingsPage
+import pages.TextStylePage
 import ui.isInDarkTheme
 import utils.BlurredBar
 import utils.FPSMonitor
@@ -145,8 +152,6 @@ enum class FloatingNavigationBarAlignment(val value: Int) {
     }
 }
 
-val LocalNavigator = staticCompositionLocalOf<Navigator> { error("No navigator found!") }
-val LocalIsWideScreen = staticCompositionLocalOf { false }
 val LocalMainPagerState = staticCompositionLocalOf<MainPagerState> { error("LocalMainPagerState not provided") }
 
 @Composable
