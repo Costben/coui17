@@ -120,6 +120,12 @@ fun Coui17App() {
 private fun Coui17Root() {
     val wallpaper = rememberWallpaper()
     val surfaceColor = COUITheme.colorScheme.surface
+    // The page's own background, and the colour the app bar material is drawn in. The device resolves
+    // the material's base colour from the page background (`resolvePageFallbackBackgroundColor`), so
+    // the two are one colour and the material never shows as a band of its own — measured on the
+    // device, the material's full-strength patch (y=0, alpha 1) is the page background's own
+    // (240,240,241) over an identical (240,240,241) page.
+    val pageColor = AppBarBlurOverlayDefaults.containerColor()
     // The recorded layer is what the light-sensing surfaces sample. It holds the page content and
     // nothing else: every bar that reads it is a sibling of it, never a child, or the blur would
     // sample a backdrop that already has the blur baked into it.
@@ -127,6 +133,10 @@ private fun Coui17Root() {
         drawWallpaper(surfaceColor, wallpaper.image)
         drawContent()
     }
+    // The bars sample the page without the wallpaper. The device's material blurs whatever sits
+    // behind the bar, and behind the bar is the page — nothing on the Settings home is wallpaper, so
+    // a bar that sampled one would paint a band the device does not have.
+    val pageBackdrop = rememberLayerBackdrop { drawContent() }
     val snackbarHostState = remember { SnackbarHostState() }
     val pagerState = rememberPagerState(pageCount = { Coui17Page.entries.size })
     val coroutineScope = rememberCoroutineScope()
@@ -150,13 +160,18 @@ private fun Coui17Root() {
     CompositionLocalProvider(LocalBackdrop provides backdrop) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent,
+            containerColor = pageColor,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(state = snackbarHostState) },
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Only the page content is recorded into the backdrop.
-                Box(modifier = Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .layerBackdrop(backdrop)
+                        .layerBackdrop(pageBackdrop),
+                ) {
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
@@ -175,25 +190,29 @@ private fun Coui17Root() {
                         )
                     }
                 }
-                if (currentPage == Coui17Page.Home) {
-                    Coui17HomeTopBar(
-                        title = currentPage.title,
-                        searchLabel = "搜索组件",
-                        onSearchClick = onSearch,
-                        scrollFraction = scrollFraction,
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
-                } else {
-                    Coui17CompactToolbar(
-                        title = currentPage.title,
-                        onBack = if (currentPage.isPanelPage) {
-                            { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
-                        } else {
-                            null
-                        },
-                        scrollFraction = scrollFraction,
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
+                // The bars read the page layer, not the wallpaper one: the device's material blurs the
+                // page behind the bar and shows no wallpaper there.
+                CompositionLocalProvider(LocalBackdrop provides pageBackdrop) {
+                    if (currentPage == Coui17Page.Home) {
+                        Coui17HomeTopBar(
+                            title = currentPage.title,
+                            searchLabel = "搜索组件",
+                            onSearchClick = onSearch,
+                            scrollFraction = scrollFraction,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                        )
+                    } else {
+                        Coui17CompactToolbar(
+                            title = currentPage.title,
+                            onBack = if (currentPage.isPanelPage) {
+                                { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
+                            } else {
+                                null
+                            },
+                            scrollFraction = scrollFraction,
+                            modifier = Modifier.align(Alignment.TopCenter),
+                        )
+                    }
                 }
                 Coui17AccessoryBar(
                     currentPage = pagerState.currentPage,
