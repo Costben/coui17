@@ -66,8 +66,11 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.icon.basic.SearchCleanup
+import io.github.suqi8.coui.kmp.shared.generated.resources.Res
+import io.github.suqi8.coui.kmp.shared.generated.resources.search_cancel
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
+import org.jetbrains.compose.resources.stringResource
 import utils.SearchStatus
 
 // Search Pager Composable
@@ -178,7 +181,7 @@ fun SearchStatus.SearchPager(
                 exit = shrinkHorizontally() + slideOutHorizontally(targetOffsetX = { it }),
             ) {
                 Text(
-                    text = "Cancel",
+                    text = stringResource(Res.string.search_cancel),
                     fontWeight = FontWeight.Bold,
                     color = COUITheme.colorScheme.primary,
                     modifier = Modifier
