@@ -44,7 +44,9 @@ import io.github.suqi8.coui.kmp.icon.extended.Back
 import io.github.suqi8.coui.kmp.icon.extended.Home
 import io.github.suqi8.coui.kmp.icon.extended.Image
 import io.github.suqi8.coui.kmp.icon.extended.More
+import io.github.suqi8.coui.kmp.icon.extended.Settings
 import io.github.suqi8.coui.kmp.icon.extended.Theme
+import io.github.suqi8.coui.kmp.icon.extended.Translate
 import io.github.suqi8.coui.kmp.overlay.OverlayCascadingListPopup
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -312,11 +314,34 @@ fun Coui17Panel(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val iconTint = COUITheme.colorScheme.onSurfaceContainer
     val entries = listOf(
         DropdownEntry(
             items = listOf(
-                DropdownItem(text = "文字样式", onClick = { onSelect(Coui17Page.TextStyle.ordinal) }),
-                DropdownItem(text = "设置项", onClick = { onSelect(Coui17Page.Settings.ordinal) }),
+                DropdownItem(
+                    text = "文字样式",
+                    icon = { modifier ->
+                        Icon(
+                            modifier = modifier,
+                            imageVector = COUIIcons.Translate,
+                            tint = iconTint,
+                            contentDescription = null,
+                        )
+                    },
+                    onClick = { onSelect(Coui17Page.TextStyle.ordinal) },
+                ),
+                DropdownItem(
+                    text = "设置项",
+                    icon = { modifier ->
+                        Icon(
+                            modifier = modifier,
+                            imageVector = COUIIcons.Settings,
+                            tint = iconTint,
+                            contentDescription = null,
+                        )
+                    },
+                    onClick = { onSelect(Coui17Page.Settings.ordinal) },
+                ),
             ),
         ),
     )
