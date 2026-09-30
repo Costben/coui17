@@ -253,6 +253,7 @@ private fun Coui17Root() {
                 searchStatus.SearchPager(
                     onSearchStatusChange = { searchStatus = it },
                     offsetY = Coui17Dimens.HomeAppBarBottom,
+                    surfaceColor = pageColor,
                     defaultResult = {},
                     result = {},
                 )

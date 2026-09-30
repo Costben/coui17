@@ -71,11 +71,21 @@ import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import utils.SearchStatus
 
 // Search Pager Composable
+
+/**
+ * The full-screen search surface.
+ *
+ * @param surfaceColor The colour the surface paints. It is the *page's* background, not
+ *   `colorScheme.surface`: on the device the expanded search keeps the page behind it, while the
+ *   ColorOS 17 dark scheme's `surface` is pure black — a full screen of it reads as the page going
+ *   black the moment the search bar is tapped.
+ */
 @Composable
 fun SearchStatus.SearchPager(
     onSearchStatusChange: (SearchStatus) -> Unit,
     offsetY: Dp,
     defaultResult: @Composable () -> Unit,
+    surfaceColor: Color = COUITheme.colorScheme.surface,
     expandBar: @Composable (SearchStatus, (SearchStatus) -> Unit) -> Unit = { searchStatus, onStatusChange ->
         SearchBar(searchStatus, onStatusChange)
     },
@@ -114,7 +124,6 @@ fun SearchStatus.SearchPager(
         label = "SearchPagerSurfaceAlpha",
     )
 
-    val surfaceColor = COUITheme.colorScheme.surface
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -146,7 +155,7 @@ fun SearchStatus.SearchPager(
                 }
                 .then(
                     if (!searchStatus.isCollapsed()) {
-                        Modifier.background(COUITheme.colorScheme.surface)
+                        Modifier.background(surfaceColor)
                     } else {
                         Modifier
                     },
@@ -158,7 +167,7 @@ fun SearchStatus.SearchPager(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .background(COUITheme.colorScheme.surface),
+                        .background(surfaceColor),
                 ) {
                     expandBar(searchStatus, onSearchStatusChange)
                 }
