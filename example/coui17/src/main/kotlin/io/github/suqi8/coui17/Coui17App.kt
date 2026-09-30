@@ -71,7 +71,7 @@ import kotlin.math.max
  * is how the coui16 gallery's five pages map onto ColorOS 17's one-third-two split.
  */
 enum class Coui17Page(val title: String) {
-    Home("组件"),
+    Home("设置"),
     Icons("图标"),
     Color("配色"),
     TextStyle("文字样式"),
@@ -147,7 +147,9 @@ private fun Coui17Root() {
     val pagerState = rememberPagerState(pageCount = { Coui17Page.entries.size })
     val coroutineScope = rememberCoroutineScope()
     val scrollOffset = remember { ScrollOffset() }
-    var searchStatus by remember { mutableStateOf(SearchStatus(label = "搜索组件")) }
+    // The device's hint reads `搜索设置项` (`Settings.apk` string table, length-prefixed 5), and the
+    // collapsed pill draws five glyphs at x 219..501px.
+    var searchStatus by remember { mutableStateOf(SearchStatus(label = "搜索设置项")) }
     var panelOpen by remember { mutableStateOf(false) }
     var lastCapsulePage by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
@@ -202,7 +204,7 @@ private fun Coui17Root() {
                     if (currentPage == Coui17Page.Home) {
                         Coui17HomeTopBar(
                             title = currentPage.title,
-                            searchLabel = "搜索组件",
+                            searchLabel = "搜索设置项",
                             onSearchClick = onSearch,
                             scrollFraction = scrollFraction,
                             modifier = Modifier.align(Alignment.TopCenter),
