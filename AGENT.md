@@ -441,3 +441,21 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
 留到视觉层比对；`OtherDemo` 的三条导航箭头在 coui17 里是惰性的（只给了空 `Navigator` 栈，没有 `NavDisplay`）；
 删除复刻页后 `SideNavigationBar` / `SidePaneLayout` / `CardEntrancePreference` / `CardInstructionPreference` /
 `ListDetailView` / `LunarDatePicker` 不再有任何展廊条目。
+
+**Phase 4 复核结论（2026-09-30）**：
+
+- 底栏胶囊底距屏底：库内已按 `MenuToScreenNaviDistance` 抬起 8dp，示例又叠了一层 `.padding(bottom = 8.dp)`，
+  胶囊因此离屏底 32dp。去掉多余的一层后为 24.0dp，与同机 Clock 底栏（`[62,2462][1210,2679]`、
+  底距屏底 93px = 24.0dp）逐像素吻合；本机 `navigationBars` inset 实测 16dp（62px）。
+- 条目拓扑：源码声明 **82** 条（`Coui17HomePage.kt` 的 `coui17Entry`，含 1 条跨行标题），coui16 为 81 条，
+  多出的 1 条是 `Snackbar`（`MainPage.kt` 从未调用 `snackbarSection()`）。真机滚动遍历（5 轮、约 250 次
+  `uiautomator dump`）按序观察到 81/82 条标题；唯一从未抓到的是第 70 条 `MarqueeText`——它是标题行落在
+  两次滑动之间的跳空带里，属抓取缺口而非渲染缺失（它与其余 81 条结构完全相同），**该项运行时未验到**。
+- **待解决：app bar 下方 14dp 带有一条材质色带并止于硬边**。本实现 `AppBarBlurOverlay` 的
+  `progressiveTextureBlur` 把采样到的 backdrop 铺满整个节点，而该带的材质 α 按设计恒为 0；本仓 backdrop
+  记录的是壁纸（`Coui17App.kt` 的 `drawWallpaper`），页面本身并不画壁纸，于是该带露出壁纸色并在节点底边
+  （y=397px）出现硬跳变：实测左留白 x∈[2,58] 在 y=343..396 恒为 (199,214,207) / 深色 (201,217,208)，
+  397 起突变为页面底色 (250,250,250) / (48,48,48)。真机在该处没有跳变（plan §九 已记该带来源未坐实）。
+  材质自身的 α 剖面是对的，缺口只在 backdrop 与屏上内容不一致；两种可行修法（按 α 遮蔽模糊、或让页面
+  真的铺壁纸底色）都会改动已验证过的行为，故按「查不清就挂起」留待裁定。
+
