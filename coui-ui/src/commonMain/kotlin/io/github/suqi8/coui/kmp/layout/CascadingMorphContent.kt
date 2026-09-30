@@ -9,12 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
@@ -24,8 +28,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
@@ -235,11 +241,25 @@ internal fun CascadingSecondaryContent(
     onLeafSelected: (DropdownItem) -> Unit,
     dropdownColors: DropdownColors,
     surfaceColor: Color,
+    enableGlass: Boolean,
 ) {
     val cornerPx = with(LocalDensity.current) { CascadingPopupCornerRadius.toPx() }
     val anchorTopLeft = anchorLocalInUnion.topLeft
     val secondaryTopLeft = secondaryLocalInUnion.topLeft
     val secondaryWidth = secondaryLocalInUnion.width
+    val backdrop = if (enableGlass) LocalBackdrop.current else null
+    val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
+    // Read at outline/draw time, never at composition time: the morph runs on its own animation and
+    // must not recompose this subtree every frame.
+    val currentMorph = {
+        MorphClipShape(
+            fraction = expandFraction(),
+            anchor = anchorLocalInUnion,
+            secondary = secondaryLocalInUnion,
+            cornerPx = cornerPx,
+            anchorIsLast = isAnchorPopupLast,
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -251,55 +271,30 @@ internal fun CascadingSecondaryContent(
                 this.transformOrigin = transformOrigin
             }
             .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, isSquircleEnabled())
+            // Silhouette clip for the pass: the glass surface's own shape only clips its content
+            // layer, so the blurred backdrop — and the fallback fill when glass is off — are cut
+            // here, in draw phase, where the morph fraction is current.
             .drawWithCache {
                 val innerPath = Path()
                 onDrawWithContent {
-                    val frac = expandFraction()
-                    val rTop = cornerPx * frac
-                    // Last-row anchors share primary's rounded bottom — keep both bottom corners
-                    // full. Mid-list anchors must shrink uniformly into a flat internal row.
-                    val rBottom = if (isAnchorPopupLast) cornerPx else rTop
-                    val topRadius = CornerRadius(rTop, rTop)
-                    val bottomRadius = CornerRadius(rBottom, rBottom)
                     innerPath.rewind()
-                    innerPath.addRoundRect(
-                        RoundRect(
-                            left = lerp(
-                                anchorLocalInUnion.left.toFloat(),
-                                secondaryLocalInUnion.left.toFloat(),
-                                frac,
-                            ),
-                            top = lerp(
-                                anchorLocalInUnion.top.toFloat(),
-                                secondaryLocalInUnion.top.toFloat(),
-                                frac,
-                            ),
-                            right = lerp(
-                                anchorLocalInUnion.right.toFloat(),
-                                secondaryLocalInUnion.right.toFloat(),
-                                frac,
-                            ),
-                            bottom = lerp(
-                                anchorLocalInUnion.bottom.toFloat(),
-                                secondaryLocalInUnion.bottom.toFloat(),
-                                frac,
-                            ),
-                            topLeftCornerRadius = topRadius,
-                            topRightCornerRadius = topRadius,
-                            bottomRightCornerRadius = bottomRadius,
-                            bottomLeftCornerRadius = bottomRadius,
-                        ),
-                    )
+                    innerPath.addRoundRect(currentMorph().roundRect)
                     clipPath(innerPath) {
-                        drawRect(
-                            color = surfaceColor,
-                            topLeft = androidx.compose.ui.geometry.Offset.Zero,
-                            size = this.size,
-                        )
                         this@onDrawWithContent.drawContent()
                     }
                 }
             }
+            .couiGlassSurface(
+                backdrop = backdrop,
+                // Re-emitted per outline request: the blur's outline cache compares by value, so a
+                // moved fraction invalidates it and the silhouette tracks the morph instead of
+                // freezing at the anchor rect.
+                shape = currentMorph,
+                containerColor = surfaceColor,
+                fallback = Modifier.drawBehind { drawRect(surfaceColor) },
+                blendColors = popupGlassBlendColors(),
+                highlight = highlight,
+            )
             // Occupy full union size so the inner content can slide between anchor and
             // secondary even when the anchor sits outside the secondary bounds.
             .layout { measurable, _ ->
@@ -407,5 +402,67 @@ internal fun CascadingSecondaryColumn(
                 )
             }
         }
+    }
+}
+
+/**
+ * Silhouette of the secondary popup part-way through its slide: the anchor row's rect interpolated
+ * towards the submenu's own rect, with the corners opening up as it goes.
+ *
+ * Equality is by value, which is what the glass surface's outline cache reads — re-emitting an
+ * unchanged fraction keeps the cached outline, a moved one invalidates it. Emitting the same
+ * instance instead would pin whichever outline it produced first.
+ */
+private class MorphClipShape(
+    private val fraction: Float,
+    private val anchor: IntRect,
+    private val secondary: IntRect,
+    private val cornerPx: Float,
+    private val anchorIsLast: Boolean,
+) : Shape {
+
+    val roundRect: RoundRect
+        get() {
+            val rTop = cornerPx * fraction
+            // Last-row anchors share primary's rounded bottom — keep both bottom corners full.
+            // Mid-list anchors must shrink uniformly into a flat internal row.
+            val rBottom = if (anchorIsLast) cornerPx else rTop
+            val topRadius = CornerRadius(rTop, rTop)
+            val bottomRadius = CornerRadius(rBottom, rBottom)
+            return RoundRect(
+                left = lerp(anchor.left.toFloat(), secondary.left.toFloat(), fraction),
+                top = lerp(anchor.top.toFloat(), secondary.top.toFloat(), fraction),
+                right = lerp(anchor.right.toFloat(), secondary.right.toFloat(), fraction),
+                bottom = lerp(anchor.bottom.toFloat(), secondary.bottom.toFloat(), fraction),
+                topLeftCornerRadius = topRadius,
+                topRightCornerRadius = topRadius,
+                bottomRightCornerRadius = bottomRadius,
+                bottomLeftCornerRadius = bottomRadius,
+            )
+        }
+
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline = Outline.Rounded(roundRect)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MorphClipShape) return false
+        return fraction == other.fraction &&
+            anchor == other.anchor &&
+            secondary == other.secondary &&
+            cornerPx == other.cornerPx &&
+            anchorIsLast == other.anchorIsLast
+    }
+
+    override fun hashCode(): Int {
+        var result = fraction.hashCode()
+        result = 31 * result + anchor.hashCode()
+        result = 31 * result + secondary.hashCode()
+        result = 31 * result + cornerPx.hashCode()
+        result = 31 * result + anchorIsLast.hashCode()
+        return result
     }
 }

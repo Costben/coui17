@@ -577,6 +577,7 @@ private fun CascadingMorphSubLayout(
                             onLeafSelected = onLeafSelected,
                             dropdownColors = dropdownColors,
                             surfaceColor = surfaceColor,
+                            enableGlass = enableGlass,
                         )
                     }.map { it.measure(unionConstraints) }
                     SecondaryLayout(placeables, unionRect)

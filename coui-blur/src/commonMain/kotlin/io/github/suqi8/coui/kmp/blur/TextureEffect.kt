@@ -170,6 +170,100 @@ fun Modifier.textureEffect(
 )
 
 /**
+ * [textureEffect] taking a shape provider instead of a resolved [Shape], re-read on every outline
+ * request so an animated silhouette stays current.
+ *
+ * Return a value that changes with the geometry: the outline cache compares with `equals`, so
+ * re-emitting an equal shape reuses the cached outline while a different one invalidates it. A
+ * single instance reading the animation inside [Shape.createOutline] would keep returning the
+ * outline it produced first.
+ *
+ * @param shape Supplies the blur region's silhouette for the current frame.
+ */
+fun Modifier.textureEffect(
+    backdrop: Backdrop,
+    shape: () -> Shape,
+    blurRadius: Float = BlurDefaults.BlurRadius,
+    noiseCoefficient: Float = BlurDefaults.NoiseCoefficient,
+    colors: BlurColors = BlurColors(),
+    highlight: Highlight? = null,
+    contentBlendMode: ComposeBlendMode = ComposeBlendMode.SrcOver,
+    enabled: Boolean = true,
+): Modifier = textureEffect(
+    backdrop = backdrop,
+    shape = shape,
+    blurRadiusX = blurRadius,
+    blurRadiusY = blurRadius,
+    noiseCoefficient = noiseCoefficient,
+    colors = colors,
+    highlight = highlight,
+    contentBlendMode = contentBlendMode,
+    enabled = enabled,
+)
+
+/**
+ * [textureEffect] with independent horizontal and vertical radii, taking a shape provider.
+ * See the single-radius overload for the provider contract.
+ *
+ * @param shape Supplies the blur region's silhouette for the current frame.
+ */
+fun Modifier.textureEffect(
+    backdrop: Backdrop,
+    shape: () -> Shape,
+    blurRadiusX: Float,
+    blurRadiusY: Float,
+    noiseCoefficient: Float = BlurDefaults.NoiseCoefficient,
+    colors: BlurColors = BlurColors(),
+    highlight: Highlight? = null,
+    contentBlendMode: ComposeBlendMode = ComposeBlendMode.SrcOver,
+    enabled: Boolean = true,
+): Modifier = this.drawBackdrop(
+    backdrop = backdrop,
+    shape = shape,
+    effects = {
+        textureBlurEffect(
+            blurRadiusX = blurRadiusX,
+            blurRadiusY = blurRadiusY,
+            noiseCoefficient = noiseCoefficient,
+            colors = colors,
+        )
+    },
+    highlight = if (highlight != null) {
+        { highlight }
+    } else {
+        null
+    },
+    contentBlendMode = contentBlendMode,
+    enabled = enabled,
+)
+
+/**
+ * [textureBlur] taking a shape provider instead of a resolved [Shape].
+ * See [textureEffect] for the provider contract.
+ *
+ * @param shape Supplies the blur region's silhouette for the current frame.
+ */
+fun Modifier.textureBlur(
+    backdrop: Backdrop,
+    shape: () -> Shape,
+    blurRadius: Float = BlurDefaults.BlurRadius,
+    noiseCoefficient: Float = BlurDefaults.NoiseCoefficient,
+    colors: BlurColors = BlurColors(),
+    highlight: Highlight? = null,
+    contentBlendMode: ComposeBlendMode = ComposeBlendMode.SrcOver,
+    enabled: Boolean = true,
+): Modifier = textureEffect(
+    backdrop = backdrop,
+    shape = shape,
+    blurRadius = blurRadius,
+    noiseCoefficient = noiseCoefficient,
+    colors = colors,
+    highlight = highlight,
+    contentBlendMode = contentBlendMode,
+    enabled = enabled,
+)
+
+/**
  * Applies a **progressive (gradient) backdrop blur**: the blur strength ramps from full to zero
  * along [gradient]'s direction — a genuine medium blur in the middle of the ramp, a pixel-sharp
  * full-resolution clear end. Ideal for navigation bars and edge fades. Same color / blend / noise /

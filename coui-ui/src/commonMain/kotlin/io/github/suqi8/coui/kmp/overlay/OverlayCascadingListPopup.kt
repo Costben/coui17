@@ -5,6 +5,7 @@ package io.github.suqi8.coui.kmp.overlay
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -16,6 +17,7 @@ import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.layout.CascadingListPopupLayout
 import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.PopupLayout
 
@@ -57,6 +59,10 @@ fun OverlayCascadingListPopup(
     collapseOnSelection: Boolean = true,
     enableGlass: Boolean = true,
 ) {
+    // The popup composes in the root Scaffold's overlay rather than here, so the backdrop this call
+    // site sees has to be published again inside it: a surface reads whatever is current where it
+    // composes, and at the root that is nothing, which silently drops the glass to its opaque fill.
+    val backdrop = LocalBackdrop.current
     CascadingListPopupLayout(
         show = show,
         popupHost = { visible, hostContent ->
@@ -70,7 +76,9 @@ fun OverlayCascadingListPopup(
                 exitTransition = ExitTransition.None,
                 renderInRootScaffold = renderInRootScaffold,
             ) {
-                hostContent()
+                CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                    hostContent()
+                }
             }
         },
         entries = entries,
