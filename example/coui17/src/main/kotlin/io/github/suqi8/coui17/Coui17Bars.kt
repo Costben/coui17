@@ -228,13 +228,22 @@ fun Coui17CompactToolbar(
  *
  * The merged blob already carries each accessory's circle, so the slots draw the icon alone; the tap
  * target is the whole 56dp accessory square.
+ *
+ * [Coui17Panel] is composed inside the end ball rather than beside the bar: the panel is a
+ * `CascadingListPopupLayout`, which anchors itself to the window bounds of the layout node it is
+ * measured in. Hung off the root box those bounds are the whole screen, no side has room below or
+ * above and the menu lands centred in the middle of the display; inside the ball it opens above it,
+ * right-aligned, the way the device's three-dot menu does.
  */
 @Composable
 fun Coui17AccessoryBar(
     currentPage: Int,
+    panelOpen: Boolean,
     onSelectPage: (Int) -> Unit,
     onSearch: () -> Unit,
     onOpenPanel: () -> Unit,
+    onPanelSelect: (Int) -> Unit,
+    onPanelDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BottomFloatingAccessoryNavigationBar(
@@ -253,6 +262,11 @@ fun Coui17AccessoryBar(
                 icon = COUIIcons.More,
                 description = "更多",
                 onClick = onOpenPanel,
+            )
+            Coui17Panel(
+                show = panelOpen,
+                onSelect = onPanelSelect,
+                onDismiss = onPanelDismiss,
             )
         },
     ) {

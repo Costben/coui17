@@ -206,8 +206,12 @@ private fun Coui17Root() {
                         )
                     }
                 }
-                // The bars read the page layer, not the wallpaper one: the device's material blurs the
-                // page behind the bar and shows no wallpaper there.
+                // Every floating bar reads the page layer, not the wallpaper one: the device's material
+                // blurs the page behind the bar and shows no wallpaper there. Both the top material and
+                // the bottom accessory bar sit inside this provider — the bottom bar was left on the
+                // wallpaper layer, where the page has no content of its own the blur read straight
+                // through to the wallpaper the user cannot see behind the bar, so its capsules and
+                // accessory balls came out at the wallpaper's own brightness instead of the page's.
                 CompositionLocalProvider(LocalBackdrop provides barBackdrop) {
                     if (currentPage == Coui17Page.Home) {
                         Coui17HomeTopBar(
@@ -229,25 +233,23 @@ private fun Coui17Root() {
                             modifier = Modifier.align(Alignment.TopCenter),
                         )
                     }
+                    Coui17AccessoryBar(
+                        currentPage = pagerState.currentPage,
+                        panelOpen = panelOpen,
+                        onSelectPage = { page ->
+                            lastCapsulePage = page
+                            coroutineScope.launch { pagerState.animateScrollToPage(page) }
+                        },
+                        onSearch = onSearch,
+                        onOpenPanel = { panelOpen = true },
+                        onPanelSelect = { page ->
+                            panelOpen = false
+                            coroutineScope.launch { pagerState.animateScrollToPage(page) }
+                        },
+                        onPanelDismiss = { panelOpen = false },
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
-                Coui17AccessoryBar(
-                    currentPage = pagerState.currentPage,
-                    onSelectPage = { page ->
-                        lastCapsulePage = page
-                        coroutineScope.launch { pagerState.animateScrollToPage(page) }
-                    },
-                    onSearch = onSearch,
-                    onOpenPanel = { panelOpen = true },
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-                Coui17Panel(
-                    show = panelOpen,
-                    onSelect = { page ->
-                        panelOpen = false
-                        coroutineScope.launch { pagerState.animateScrollToPage(page) }
-                    },
-                    onDismiss = { panelOpen = false },
-                )
                 searchStatus.SearchPager(
                     onSearchStatusChange = { searchStatus = it },
                     offsetY = Coui17Dimens.HomeAppBarBottom,
