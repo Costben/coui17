@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
@@ -95,7 +97,11 @@ fun Coui17HomeTopBar(
                 modifier = Modifier.fillMaxWidth().height(Coui17Dimens.HomeSearchBandHeight),
                 contentAlignment = Alignment.Center,
             ) {
-                Coui17SearchPill(label = searchLabel, onClick = onSearchClick)
+                Coui17SearchPill(
+                    label = searchLabel,
+                    onClick = onSearchClick,
+                    scrollFraction = scrollFraction,
+                )
             }
         }
     }
@@ -106,15 +112,18 @@ fun Coui17HomeTopBar(
  *
  * The field itself is inert — the whole pill is the tap target, exactly like the device, where the
  * `search_src_text` `EditText` carries the click and expands the page into the search view.
+ *
+ * The pill also casts the shadow the device keeps for the collapsed state; see [searchBarShadow].
  */
 @Composable
-private fun Coui17SearchPill(label: String, onClick: () -> Unit) {
+private fun Coui17SearchPill(label: String, onClick: () -> Unit, scrollFraction: Float) {
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Coui17Dimens.BarHorizontalPadding)
             .height(Coui17Dimens.SearchPillHeight)
+            .dropShadow(shape = CircleShape, shadow = searchBarShadow(scrollFraction))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
