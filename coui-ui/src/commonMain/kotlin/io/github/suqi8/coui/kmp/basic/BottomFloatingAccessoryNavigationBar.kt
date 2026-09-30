@@ -548,14 +548,21 @@ object BottomFloatingAccessoryNavigationBarDefaults {
      * - without it the call falls through to `setElevationToViewFromLower(view, i2, i4, i3)`, i.e.
      *   `view.setElevation(12dp)` under the `#8A000000` spot colour it was handed.
      *
-     * The device picks the second reading: sampled above Gallery's dark bar the page stays at 47 up
-     * to the capsule's top edge, and the falloff outside the bar runs about 6–8dp, which a 350dp
-     * halo would not leave. The 12dp `support_shadow_size_level_three` is therefore the size used
-     * here, with the colour the call site passes.
+     * The device picks the second reading: sampled above Gallery's bar the page stays at 47 (dark) /
+     * 231 (light) right up to the capsule's top edge, and the falloff outside the bar runs about
+     * 6–8dp, which a 350dp halo would not leave.
+     *
+     * What the device *renders* is nevertheless far weaker than the `#8A000000` it hands over. hwui
+     * does not paint the spot colour at its own alpha — `SkShadowUtils` scales it by the light
+     * geometry before drawing — so a plain [Shadow] carrying `0x8A` draws a halo about five times
+     * deeper than the device's. Sampled on the device's light page (240) the native halo is −2 at
+     * the capsule's top edge and −13 below its bottom edge, gone within ~8dp; the same `dropShadow`
+     * with the handed-over colour reads −40 above and −67 below and still runs at 12dp. The radius
+     * and alpha here are therefore the measured ones, not the handed-over ones.
      */
     val BarShadow: Shadow = Shadow(
-        radius = 12.dp,
-        color = Color.Black.copy(alpha = 0x8A / 255f),
+        radius = 6.dp,
+        color = Color.Black.copy(alpha = 0x1E / 255f),
         spread = 0.dp,
         offset = DpOffset(0.dp, 2.dp),
     )
