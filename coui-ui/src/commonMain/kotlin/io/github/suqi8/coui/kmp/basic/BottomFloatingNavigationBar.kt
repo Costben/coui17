@@ -534,11 +534,13 @@ fun RowScope.BottomFloatingNavigationBarItem(
             .semantics { this.selected = selected },
     ) {
         // The native item pins icon and title to the top of the cell, so the space below the label
-        // stays empty on purpose.
+        // stays empty on purpose. The item carries no horizontal padding of its own:
+        // `BaseBottomFloatingMenuView.onMeasure` spends `mInnerPadding` on the capsule's own width
+        // and measures every child at its full item width, so a second inset here would squeeze the
+        // icon and ellipsize the label. Measured on the device, Clock's 62.06dp item holds a 24dp
+        // icon and a 62.06dp-wide label, and Gallery's 50.7dp item a 50.7dp-wide one.
         Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(horizontal = BottomFloatingNavigationBarDefaults.ItemInnerPadding),
+            modifier = Modifier.align(Alignment.TopCenter),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(BottomFloatingNavigationBarDefaults.IconTopMargin))
@@ -701,7 +703,14 @@ object BottomFloatingNavigationBarDefaults {
     /** The spacing between items. COUI `coui_bottom_floating_navigation_bar_item_space`. */
     val ItemSpacing = 8.dp
 
-    /** The horizontal padding inside an item cell. COUI `coui_bottom_floating_navigation_bar_item_padding`. */
+    /**
+     * The padding the capsule keeps at each end, inside its own shape. COUI `mInnerPadding`, from
+     * `coui_bottom_floating_navigation_bar_item_padding`.
+     *
+     * It is spent on the capsule's width, not on each item's content: `BaseBottomFloatingMenuView`
+     * counts it once per end in `totalItemSpace` and then measures every child at the full item
+     * width. `COUIBottomFloatingNavigationBarItem` adds no inset of its own.
+     */
     val ItemInnerPadding = 12.dp
 
     /** The horizontal padding of the item background. COUI `coui_bottom_floating_navigation_bar_item_bg_horizontal_padding`. */
