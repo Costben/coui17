@@ -451,11 +451,16 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
   多出的 1 条是 `Snackbar`（`MainPage.kt` 从未调用 `snackbarSection()`）。真机滚动遍历（5 轮、约 250 次
   `uiautomator dump`）按序观察到 81/82 条标题；唯一从未抓到的是第 70 条 `MarqueeText`——它是标题行落在
   两次滑动之间的跳空带里，属抓取缺口而非渲染缺失（它与其余 81 条结构完全相同），**该项运行时未验到**。
-- **待解决：app bar 下方 14dp 带有一条材质色带并止于硬边**。本实现 `AppBarBlurOverlay` 的
-  `progressiveTextureBlur` 把采样到的 backdrop 铺满整个节点，而该带的材质 α 按设计恒为 0；本仓 backdrop
-  记录的是壁纸（`Coui17App.kt` 的 `drawWallpaper`），页面本身并不画壁纸，于是该带露出壁纸色并在节点底边
-  （y=397px）出现硬跳变：实测左留白 x∈[2,58] 在 y=343..396 恒为 (199,214,207) / 深色 (201,217,208)，
-  397 起突变为页面底色 (250,250,250) / (48,48,48)。真机在该处没有跳变（plan §九 已记该带来源未坐实）。
-  材质自身的 α 剖面是对的，缺口只在 backdrop 与屏上内容不一致；两种可行修法（按 α 遮蔽模糊、或让页面
-  真的铺壁纸底色）都会改动已验证过的行为，故按「查不清就挂起」留待裁定。
+- **已解决：app bar 下方 14dp 带的那条材质色带与 397px 硬边**。根因是本仓 backdrop 与屏上内容不一致：
+  `Coui17App.kt` 的 `drawWallpaper` 往记录给玻璃采样的那一层里垫了壁纸，而页面本身并不画壁纸，于是
+  `AppBarBlurOverlay` 的 `progressiveTextureBlur` 把壁纸铺满整个节点（含 α 恒为 0 的 14dp 带），并在
+  节点底边 y=397px 收成硬边：实测左留白 x=5 从 y=0 的 240.8 一路压到 y=390 的 **208.7**，y=400 起突变为
+  250。修法（commit `fix(coui17): 顶栏材质不再压出色带，页面底色对齐真机`）：记录两层——顶栏只读页面
+  那层（`pageBackdrop`），页内的玻璃组件仍读带壁纸的那层；页面底色改用材质基色 `containerColor()`。
+  装机复测：顶栏区域 y∈[0,520] 恒为 **240.8**，y=397 处无跳变，与真机一致（真机同处 240.8）。
+  真机这一带**不是材质**，是**搜索栏自己的投影**（`SHADOW_LV3_A`，收起态才出现），来源与证据见
+  `docs/coui17-gallery-plan.md` §九。
+- **仍未完成：搜索栏投影本身**。它带 `OplusView.setOverrideLightSourceGeometry(-1, -200dp, 10000dp, 2000dp, 0)`，
+  Compose 不暴露该接口；直接套用反编译常量 `Modifier.shadow(elevation = 100.dp, black@34/255)` 实测得到的是
+  全屏均匀压暗 −2.8（真机是贴胶囊的 −11.9@x=50 / −6.1@x=5），形状不对，已回退。
 
