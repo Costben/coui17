@@ -77,8 +77,24 @@ object MetaBallDefaults {
     /** Vertical reach multiplier, COUI `MELT_BALL_EXTENSION_FACTOR_Y`. */
     const val EXTENSION_FACTOR_Y = 2.0f
 
-    /** Width of the light rim traced along the merged outline, in dp. */
-    val RimWidth = 1.dp
+    /**
+     * Width of the light rim traced along the merged outline, in dp.
+     *
+     * The device's highlight is a thin line, not a glow: sampled down column x=636 of Gallery's dark
+     * accessory bar the capsule's top edge steps 45, 89, 89, 66, 44 in one-pixel samples, so about
+     * 0.7dp at Gallery's 565dpi.
+     */
+    val RimWidth = 0.5.dp
+
+    /**
+     * How far the rim's light bleeds inward from the outline before it dies, in dp.
+     *
+     * The rim is the glass highlight, not a drawn outline: it is brightest on the top edge and gone
+     * at the sides, because COUI lights its glass with two directional lights that only catch a
+     * surface whose normal points up. The old flat `White.copy(alpha = 0.55f)` traced that ring all
+     * the way round at 151/255, where the device draws a single top edge at 89 over a 41 body.
+     */
+    val RimBlur = 0.5.dp
 }
 
 /**
@@ -110,6 +126,7 @@ object MetaBallDefaults {
  * @param extensionFactorX The horizontal reach multiplier.
  * @param extensionFactorY The vertical reach multiplier.
  * @param rimColor The light traced along the merged outline, or `null` to skip it.
+ * @param rimBlur How far that light bleeds inward before it dies, in dp.
  * @param content The content drawn on top of the silhouette.
  */
 @Composable
@@ -124,6 +141,7 @@ fun MetaBallSurface(
     extensionFactorX: Float = MetaBallDefaults.EXTENSION_FACTOR_X,
     extensionFactorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
     rimColor: Color? = Color.White.copy(alpha = 0.55f),
+    rimBlur: Dp = MetaBallDefaults.RimBlur,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val runsShader = isRuntimeShaderSupported()
@@ -156,6 +174,7 @@ fun MetaBallSurface(
                         extension = extension,
                         extensionFactorX = extensionFactorX,
                         extensionFactorY = extensionFactorY,
+                        rimBlur = rimBlur,
                     )
                 }
             }
@@ -170,6 +189,7 @@ fun MetaBallSurface(
                         extension = extension,
                         extensionFactorX = extensionFactorX,
                         extensionFactorY = extensionFactorY,
+                        rimBlur = rimBlur,
                     )
                 }
             }
@@ -183,6 +203,7 @@ fun MetaBallSurface(
                     extension = extension,
                     extensionFactorX = extensionFactorX,
                     extensionFactorY = extensionFactorY,
+                    rimBlur = rimBlur,
                 )
             }
         } else {
@@ -213,6 +234,7 @@ private fun DrawScope.drawMetaBall(
     extension: Dp,
     extensionFactorX: Float,
     extensionFactorY: Float,
+    rimBlur: Dp,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
     if (count == 0) return
@@ -241,6 +263,7 @@ private fun DrawScope.drawMetaBall(
     shader.setFloatUniform("in_body", body.red, body.green, body.blue, body.alpha)
     shader.setFloatUniform("in_rim", rim.red, rim.green, rim.blue, rim.alpha)
     shader.setFloatUniform("in_rimWidth", MetaBallDefaults.RimWidth.toPx())
+    shader.setFloatUniform("in_rimBlur", rimBlur.toPx())
 
     drawRect(brush = shader.asBrush(), size = size)
 }
@@ -285,6 +308,7 @@ uniform float2 in_factor;
 uniform float4 in_body;
 uniform float4 in_rim;
 uniform float in_rimWidth;
+uniform float in_rimBlur;
 
 float couiSdRoundBox(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
@@ -300,6 +324,7 @@ float couiSmin(float a, float b, float k) {
 half4 main(float2 xy) {
     float d = 1e6;
     float2 nearest = float2(0.0, 0.0);
+    float2 nearestHalf = float2(1.0, 1.0);
     float has = 0.0;
     for (int i = 0; i < 8; i++) {
         if (float(i) >= in_count) {
@@ -310,6 +335,7 @@ half4 main(float2 xy) {
         if (has < 0.5) {
             d = di;
             nearest = c;
+            nearestHalf = in_half[i];
             has = 1.0;
         } else {
             float2 delta = c - nearest;
@@ -320,6 +346,7 @@ half4 main(float2 xy) {
             d = couiSmin(d, di, k);
             if (di < prev) {
                 nearest = c;
+                nearestHalf = in_half[i];
             }
         }
     }
@@ -336,10 +363,21 @@ half4 main(float2 xy) {
         return half4(0.0);
     }
 
+    // The rim is the glass highlight, not a drawn outline. COUI lights it with a flat 0.05-alpha
+    // stroke plus two directional lights, so the light gathers along the top edge and dies at the
+    // sides: on Gallery's accessory bar the top edge sits ~48/255 above the body while the capsule's
+    // side edges show no highlight at all. `-d` is the depth inside the merged silhouette, so the
+    // mask keeps full strength for `in_rimWidth` and fades out over `in_rimBlur`; `up` is 1 on the
+    // top edge of the ownership silhouette and 0 at its vertical centre.
     half4 body = half4(in_body.x, in_body.y, in_body.z, in_body.w);
     half4 rim = half4(in_rim.x, in_rim.y, in_rim.z, in_rim.w);
-    half rimMask = half(smoothstep(in_rimWidth, 0.0, abs(d + in_rimWidth * 0.5)));
-    half srcA = rim.a * rimMask;
+    float rimMask = smoothstep(in_rimWidth + in_rimBlur, in_rimWidth, -d);
+    half srcA = half(0.0);
+    if (rimMask > 0.0) {
+        float2 rel = (xy - nearest) / max(nearestHalf, float2(1.0, 1.0));
+        float up = clamp(-rel.y, 0.0, 1.0);
+        srcA = rim.a * half(rimMask * up * up);
+    }
     half4 result = half4(0.0, 0.0, 0.0, 0.0);
     result.a = srcA + body.a * (1.0 - srcA);
     result.rgb = rim.rgb * srcA + body.rgb * body.a * (1.0 - srcA);
