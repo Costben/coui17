@@ -144,8 +144,11 @@ private fun Coui17SearchPill(label: String, onClick: () -> Unit, scrollFraction:
                     imageVector = COUIIcons.Basic.Search,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(44.dp)
-                        .padding(start = 16.dp, end = 8.dp),
+                        .size(Coui17Dimens.SearchLeadingIconSlot)
+                        .padding(
+                            start = Coui17Dimens.SearchLeadingIconIndent,
+                            end = Coui17Dimens.SearchLeadingIconEndGap,
+                        ),
                     tint = COUITheme.colorScheme.onSurfaceContainerHigh,
                 )
             },

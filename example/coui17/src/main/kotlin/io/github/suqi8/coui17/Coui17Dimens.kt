@@ -37,6 +37,19 @@ object Coui17Dimens {
     /** The bar's horizontal padding: 16dp (the pill spans x 62..1210px). */
     val BarHorizontalPadding = 16.dp
 
+    /**
+     * The leading magnifier's slot in the collapsed search pill: 40dp.
+     *
+     * On the device the glyph spans x 112..180px and the label starts at x=218px, so the slot itself
+     * ends at x=217px — 62px (the pill's start edge) + 155px = 40dp.
+     */
+    val SearchLeadingIconSlot = 40.dp
+
+    /** Inset before the magnifier inside its slot, and the gap after it. */
+    val SearchLeadingIconIndent = 10.dp
+
+    val SearchLeadingIconEndGap = 7.dp
+
     /** A second-level page's toolbar: `toolbar` spans y 141..343px, so 202px tall. */
     val CompactToolbarHeight = 52.13.dp
 
