@@ -73,6 +73,7 @@ export default defineConfig({
                     items: [
                         { text: "Surface", link: "/zh_CN/components/surface" },
                         { text: "TopAppBar", link: "/zh_CN/components/topappbar" },
+                        { text: "AppBarBlurOverlay", link: "/zh_CN/components/appbarbluroverlay" },
                         { text: "NavigationBar", link: "/zh_CN/components/navigationbar" },
                         { text: "BottomFloatingAccessoryNavigationBar", link: "/zh_CN/components/bottomfloatingaccessorynavigationbar" },
                         { text: "BottomFloatingEditToolbar", link: "/zh_CN/components/bottomfloatingedittoolbar" },
@@ -87,6 +88,7 @@ export default defineConfig({
                         { text: "Button", link: "/zh_CN/components/button" },
                         { text: "LoadingButton", link: "/zh_CN/components/loadingbutton" },
                         { text: "IconButton", link: "/zh_CN/components/iconbutton" },
+                        { text: "HighlightedIconButton", link: "/zh_CN/components/highlightediconbutton" },
                         { text: "Text", link: "/zh_CN/components/text" },
                         { text: "SmallTitle", link: "/zh_CN/components/smalltitle" },
                         { text: "TextField", link: "/zh_CN/components/textfield" },

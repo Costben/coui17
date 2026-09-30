@@ -18,6 +18,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | ---------------------------------------------------------- | ---------------------- | -------------------- |
 | [Surface](../components/surface)                           | 基础容器组件           | 内容展示、背景容器   |
 | [TopAppBar](../components/topappbar)                       | 应用顶部的导航栏       | 页面标题、主要操作   |
+| [AppBarBlurOverlay](../components/appbarbluroverlay)       | 随滚动淡入的顶栏材质叠加层 | 覆盖页面的渐变模糊顶栏 |
 | [NavigationBar](../components/navigationbar)               | 底部导航组件           | 主要页面切换         |
 | [BottomFloatingAccessoryNavigationBar](../components/bottomfloatingaccessorynavigationbar) | 带两侧配件的悬浮胶囊导航栏 | 底部导航与快捷操作 |
 | [BottomFloatingEditToolbar](../components/bottomfloatingedittoolbar) | 悬浮编辑工具栏       | 编辑操作、快捷工具   |
@@ -32,6 +33,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [Button](../components/button)                             | 触发操作的交互元素     | 表单提交、操作确认   |
 | [LoadingButton](../components/loadingbutton)               | 内置加载状态的文本按钮 | 异步操作提交         |
 | [IconButton](../components/iconbutton)                     | 图标按钮组件           | 辅助操作、工具栏     |
+| [HighlightedIconButton](../components/highlightediconbutton) | 带光晕的工具栏图标按钮 | 工具栏返回键、三点菜单键 |
 | [Chip](../components/chip)                                 | 可选中的胶囊筛选标签   | 内容筛选、标签选择   |
 | [ChipTab](../components/chiptab)                           | 横向可滚动的页签栏     | 页签切换、分类浏览   |
 | [CalendarView](../components/calendarview)                 | 带星期表头的月历网格   | 日期选择、按月浏览   |

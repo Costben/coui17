@@ -200,6 +200,7 @@ The `BottomFloatingNavigationBarDefaults` object provides the metrics shared by 
 | BarHeight                       | Dp       | The capsule height                                             | 56.dp         |
 | MinHeightWithoutPaddingVertical | Dp       | The minimum outer height of the bar                            | 88.dp         |
 | PaddingHorizontal               | Dp       | The outside padding on a small screen                          | 16.dp         |
+| MenuToScreenNaviDistance        | Dp       | The gap between the capsule and the bottom edge of the bar's box | 8.dp        |
 | ExpansionSize                   | Dp       | The footprint of the expansion view                            | 56.dp         |
 | SideSpacing                     | Dp       | The gap between the capsule and the expansion view             | 12.dp         |
 | ItemHeight                      | Dp       | The item cell height                                           | 48.dp         |
@@ -372,6 +373,19 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
     }
 }
 ```
+
+#### Capsule Geometry
+
+The capsule is measured the way `BaseBottomFloatingMenuView.onMeasure` measures the native menu view, so every item gets an **exact** width instead of a wrap-content one:
+
+- `innerPadding` 12dp (`BottomFloatingNavigationBarDefaults.ItemInnerPadding`, `coui_bottom_floating_navigation_bar_item_padding`), `itemSpace` 8dp (`ItemSpacing`, `..._item_space`) and `itemMaxWidth` 70dp (`ItemMaxWidth`, `..._item_max_width`); the capsule is 56dp tall (`BarHeight`, `..._height`);
+- `totalItemMax = n * 70 + 2 * 12 + (n - 1) * 8`;
+- when `totalItemMax` fits the width the bar leaves over, the capsule is exactly `totalItemMax` wide and every item is 70dp; otherwise the capsule takes the available width and every item gets `(available - 24 - (n - 1) * 8) / n`, truncated to whole pixels;
+- every child is measured with an exact width and placed at `x = 12 + i * (itemWidth + 8)`, centred vertically in the capsule.
+
+The 12dp inner padding is part of the capsule's own width rather than a `padding` modifier, so the glass surface and the radial touch highlight span the whole capsule. `RowScope.weight` and `RowScope.align` do nothing inside this bar: the row measures every child itself, matching the native menu view, which has no weight concept and places each child at its own computed x.
+
+Vertically, the capsule sits `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` (8dp, `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`) above the bottom edge of the bar's box. With the system's 16dp `navigationBars` inset that is 24dp of clearance at rest.
 
 #### Expansion View (Melt Ball)
 

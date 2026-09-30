@@ -3,7 +3,6 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -66,8 +64,10 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * screen only, so the same rule applies here. Its `onLayout` picks between `layoutPositionsSmallScreen`
  * and `layoutPositionsMediumScreen` on that same tier, but the choice cannot be observed here. Only the
  * small-screen method survives decompilation, and it pins each accessory to its own outer edge and
- * centres the menu between them — which is what the bar below already does, because the native
- * component measures itself to `content + padding` and this port likewise wraps its content.
+ * centres the menu between them — which is what the bar below already does, because the capsule is
+ * measured the way `BaseBottomFloatingMenuView.onMeasure` measures it: as wide as its items at
+ * [BottomFloatingNavigationBarDefaults.ItemMaxWidth] while they fit, and squeezed into the width the
+ * accessories leave over when they do not.
  *
  * @param modifier The modifier to be applied to the bar.
  * @param containerColor The background color of the capsule and of the merged blob.
@@ -129,7 +129,7 @@ fun BottomFloatingAccessoryNavigationBar(
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.BottomCenter,
         ) {
             var barWidthPx by remember { mutableIntStateOf(0) }
             var capsuleWidthPx by remember { mutableIntStateOf(0) }
@@ -140,7 +140,13 @@ fun BottomFloatingAccessoryNavigationBar(
             val startTuck = (accessorySize + sideSpacing) * startExpansion.tuck
             val endTuck = (accessorySize + sideSpacing) * endExpansion.tuck
 
-            Box(modifier = Modifier.onSizeChanged { barWidthPx = it.width }) {
+            // The blob and the row share this box, so the particles below are expressed in the
+            // capsule's own coordinates, and the whole group is lifted off the bar's bottom edge.
+            Box(
+                modifier = Modifier
+                    .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance)
+                    .onSizeChanged { barWidthPx = it.width },
+            ) {
                 MetaBallSurface(
                     particles = buildList {
                         if (capsuleWidthPx > 0) {
@@ -189,15 +195,12 @@ fun BottomFloatingAccessoryNavigationBar(
                         )
                         Spacer(Modifier.width(sideSpacing))
                     }
-                    Row(
-                        modifier = Modifier
-                            .height(barHeight)
-                            .onSizeChanged { capsuleWidthPx = it.width },
-                        horizontalArrangement = Arrangement.spacedBy(
-                            BottomFloatingNavigationBarDefaults.ItemSpacing,
-                            Alignment.CenterHorizontally,
-                        ),
-                        verticalAlignment = Alignment.CenterVertically,
+                    FloatingCapsuleRow(
+                        modifier = Modifier.onSizeChanged { capsuleWidthPx = it.width },
+                        // `layoutPositionsSmallScreen` reserves the end accessory's footprint plus its
+                        // side spacing out of the menu view's width, and centres the capsule in what is
+                        // left over.
+                        trailingReserve = if (endAccessory != null) accessorySize + sideSpacing else 0.dp,
                         content = content,
                     )
                     if (endAccessory != null) {
@@ -316,26 +319,28 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            Row(
+            // `couiGlassSurface` returns its own chain instead of appending to the receiver, so a
+            // modifier placed ahead of it is discarded. The lift therefore cannot ride on the row's
+            // own modifier chain and needs a wrapper the row is measured inside.
+            Box(
                 modifier = Modifier
-                    .height(BottomFloatingNavigationBarDefaults.BarHeight)
-                    .couiGlassSurface(
-                        backdrop = backdrop,
-                        shape = shape,
-                        containerColor = containerColor,
-                        fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
-                        highlight = highlight,
-                    )
-                    .bottomFloatingTouchHighlight(shape),
-                horizontalArrangement = Arrangement.spacedBy(
-                    BottomFloatingNavigationBarDefaults.ItemSpacing,
-                    Alignment.CenterHorizontally,
-                ),
-                verticalAlignment = Alignment.CenterVertically,
-                content = content,
-            )
+                    .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
+            ) {
+                FloatingCapsuleRow(
+                    modifier = Modifier
+                        .couiGlassSurface(
+                            backdrop = backdrop,
+                            shape = shape,
+                            containerColor = containerColor,
+                            fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                            highlight = highlight,
+                        )
+                        .bottomFloatingTouchHighlight(shape),
+                    content = content,
+                )
+            }
         }
     }
 }

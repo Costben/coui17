@@ -105,7 +105,8 @@ class BottomFloatingNavigationBarLargeIconRenderTest {
         setContent { BarScene(largeIcon = true) }
         waitForIdle()
 
-        // The capsule is centred in the 88dp minimum height, so it spans y = 16dp .. 72dp.
+        // The capsule sits MenuToScreenNaviDistance above the 88dp box's bottom edge, so it spans
+        // y = 24dp .. 80dp.
         val pixel = sample(OVERFLOW_SAMPLE_X, CAPSULE_SAMPLE_Y)
         assertTrue(
             greenChannel(pixel) < 200,
@@ -125,16 +126,18 @@ class BottomFloatingNavigationBarLargeIconRenderTest {
 }
 
 /**
- * The bar's layout, in dp. The 88dp minimum height centres the 56dp capsule, so the capsule spans
- * 16dp..72dp. The 48dp item is centred in the capsule and starts at 20dp; the icon slot's natural top
- * is 20 + [BottomFloatingNavigationBarDefaults.IconTopMargin] = 24dp, and the large-icon style offsets
- * it by `-(LargeIconOverflow + IconTopMargin)` = -18dp, leaving the 40dp icon at 6dp..46dp.
+ * The bar's layout, in dp. The 56dp capsule sits
+ * [BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance] above the bottom of the 88dp box, so
+ * it spans 24dp..80dp. The 48dp item is centred in the capsule and starts at 28dp; the icon slot's
+ * natural top is 28 + [BottomFloatingNavigationBarDefaults.IconTopMargin] = 32dp, and the large-icon
+ * style offsets it by `-(LargeIconOverflow + IconTopMargin)` = -18dp, leaving the 40dp icon at
+ * 14dp..54dp.
  *
- * 10dp is therefore inside the icon and above the capsule's 16dp top edge — the overflow band.
+ * 20dp is therefore inside the icon and above the capsule's 24dp top edge — the overflow band.
  */
-private const val OVERFLOW_SAMPLE_Y = 10f
+private const val OVERFLOW_SAMPLE_Y = 20f
 
-/** Between the capsule's top edge (16dp) and its bottom edge (72dp). */
+/** Between the capsule's top edge (24dp) and its bottom edge (80dp). */
 private const val CAPSULE_SAMPLE_Y = 44f
 
 /** The bar fills the canvas width and holds a single item, so the icon is centred horizontally. */

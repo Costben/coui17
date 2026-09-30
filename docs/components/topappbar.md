@@ -197,6 +197,10 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 }
 ```
 
+### Gradient Glass Overlay
+
+`gradientGlass` paints the material on the bar itself. When the page puts the material on a separate overlay node instead — the ColorOS 17 home page inflates `AppBarBlurOverlayView` as a sibling of the app bar and hollows the bar out — use [`AppBarBlurOverlay`](../components/appbarbluroverlay). It shares the same `AppBarGlassDefaults` blur radius and blend curve, and adds the band below the bar plus the scroll-driven alpha.
+
 ## Properties
 
 ### TopAppBar Properties

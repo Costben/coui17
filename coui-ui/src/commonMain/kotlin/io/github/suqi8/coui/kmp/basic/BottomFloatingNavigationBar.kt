@@ -9,7 +9,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -49,6 +47,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.HorizontalAlignmentLine
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measured
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -58,6 +59,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,6 +85,13 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * [containerColor] over it at [GlassDefaults.ContainerAlpha] and lights the rim with a glass stroke
  * — the ColorOS 17 light-sensing glass. Without a backdrop the capsule keeps its opaque fill.
  *
+ * The capsule is measured the way `BaseBottomFloatingMenuView.onMeasure` measures its menu view: it
+ * is as wide as its items at [BottomFloatingNavigationBarDefaults.ItemMaxWidth] plus the 12dp
+ * [BottomFloatingNavigationBarDefaults.ItemInnerPadding] and the gaps between them, and it is
+ * squeezed — items and all — into the width the bar leaves over when they do not all fit. The
+ * capsule sits [BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance] above the bottom edge
+ * of the bar's box.
+ *
  * When [expansion] is supplied the bar reserves room for it next to the capsule and draws both
  * silhouettes through one [MetaBallSurface], so the expansion view melts out of the capsule the way
  * the native `COUIMaterialEffect.setMetaBallChain` joins its `{mainView, menuView}` chain. The
@@ -104,11 +113,9 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * `measureMenuViewWithCenteredExpansionReserve` leaves the expansion view's footprint plus
  * [BottomFloatingNavigationBarDefaults.SideSpacing] free on *both* sides of the capsule, and
  * `computeExpansionActiveHorizontalPositions` then centres the capsule in what is left with the
- * expansion view pinned to the bar's trailing edge. That branch is deliberately not ported. It only
- * differs from the arrangement here when the bar is laid out wider than its content, which cannot
- * happen for this port — the native bar measures itself to `content + padding`, and the bar here
- * wraps its content and is centred by its parent — and the attribute defaults to false, with no
- * ColorOS 17 artifact this port was written against setting it. With the expansion view hidden
+ * expansion view pinned to the bar's trailing edge. That branch is deliberately not ported: the
+ * attribute defaults to false and no ColorOS 17 artifact this port was written against sets it, so
+ * the trailing-side arrangement is the only one reachable here. With the expansion view hidden
  * `layoutWhenExpansionViewInactive` centres the capsule whichever branch was taken, so the two
  * arrangements coincide in the resting state regardless.
  *
@@ -150,6 +157,114 @@ fun BottomFloatingNavigationBar(
     }
 }
 
+/**
+ * The capsule's content row: the ColorOS 17 menu view layout, where every item gets an exact width.
+ *
+ * `BaseBottomFloatingMenuView.onMeasure` computes the capsule's width from the item count and then
+ * measures every child with an exact width, so the capsule is either as wide as `n` maximum-width
+ * items or is squeezed to whatever the bar leaves over:
+ *
+ * - `innerPadding` = [BottomFloatingNavigationBarDefaults.ItemInnerPadding] (12dp), `itemSpace` =
+ *   [BottomFloatingNavigationBarDefaults.ItemSpacing] (8dp) and `itemMaxWidth` =
+ *   [BottomFloatingNavigationBarDefaults.ItemMaxWidth] (70dp);
+ * - `totalItemMax = n * itemMaxWidth + 2 * innerPadding + (n - 1) * itemSpace`;
+ * - when `totalItemMax` fits the available width the capsule is `totalItemMax` wide and every item is
+ *   `itemMaxWidth` wide; otherwise the capsule takes the available width and every item gets
+ *   `(available - 2 * innerPadding - (n - 1) * itemSpace) / n`, truncated to whole pixels;
+ * - every child is measured with `minWidth == maxWidth == itemWidth` and `maxHeight == capsuleHeight`
+ *   and placed at `innerPadding + i * (itemWidth + itemSpace)`, centred vertically.
+ *
+ * The 12dp inner padding is part of the capsule's own width rather than a Compose padding modifier,
+ * so the glass surface and the touch highlight the caller draws on this row span the whole capsule.
+ *
+ * @param modifier The modifier to be applied to the capsule.
+ * @param trailingReserve The width to leave free at the capsule's end for a view measured after it —
+ *   the expansion view plus its gap, or the end accessory plus its side spacing. It comes off the
+ *   available width, which is the bound `COUIBottomFloatingNavigationBar.onMeasure` puts on its menu
+ *   view while such a view is active.
+ * @param content The items of the capsule, usually [BottomFloatingNavigationBarItem]s.
+ */
+@Composable
+internal fun FloatingCapsuleRow(
+    modifier: Modifier = Modifier,
+    trailingReserve: Dp = 0.dp,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val innerPaddingPx = with(density) { BottomFloatingNavigationBarDefaults.ItemInnerPadding.roundToPx() }
+    val itemSpacePx = with(density) { BottomFloatingNavigationBarDefaults.ItemSpacing.roundToPx() }
+    val itemMaxWidthPx = with(density) { BottomFloatingNavigationBarDefaults.ItemMaxWidth.roundToPx() }
+    val capsuleHeightPx = with(density) { BottomFloatingNavigationBarDefaults.BarHeight.roundToPx() }
+    val reservePx = with(density) { trailingReserve.roundToPx() }
+
+    Layout(
+        modifier = modifier,
+        content = { BottomFloatingCapsuleRowScope.content() },
+    ) { measurables, constraints ->
+        val count = measurables.size
+        if (count == 0) {
+            return@Layout layout(0, 0) {}
+        }
+
+        // A width that is not bounded has nothing to squeeze into, so the reserve is only taken off a
+        // real width and an unbounded one falls into the first branch below, at its natural size.
+        val availableWidth = if (constraints.hasBoundedWidth) {
+            (constraints.maxWidth - reservePx).coerceAtLeast(0)
+        } else {
+            Constraints.Infinity
+        }
+        val totalItemMax = count * itemMaxWidthPx + 2 * innerPaddingPx + (count - 1) * itemSpacePx
+        val fits = totalItemMax <= availableWidth
+
+        val capsuleWidth = if (fits) totalItemMax else availableWidth
+        val itemWidth = if (fits) {
+            itemMaxWidthPx
+        } else {
+            ((availableWidth - 2 * innerPaddingPx - (count - 1) * itemSpacePx) / count).coerceAtLeast(0)
+        }
+
+        val placeables = measurables.map { measurable ->
+            measurable.measure(
+                Constraints(
+                    minWidth = itemWidth,
+                    maxWidth = itemWidth,
+                    minHeight = 0,
+                    maxHeight = capsuleHeightPx,
+                ),
+            )
+        }
+
+        layout(capsuleWidth, capsuleHeightPx) {
+            placeables.forEachIndexed { index, placeable ->
+                placeable.place(
+                    x = innerPaddingPx + index * (itemWidth + itemSpacePx),
+                    y = (capsuleHeightPx - placeable.height) / 2,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The [RowScope] the capsule's content is composed in.
+ *
+ * `FloatingCapsuleRow` measures every item with an exact width, so `Modifier.weight` and
+ * `Modifier.align` cannot do anything: both return the receiver unchanged. That matches the native
+ * menu view, which has no weight concept and places each child at its own computed x. The
+ * alignment-line entry points are inert for the same reason.
+ */
+private object BottomFloatingCapsuleRowScope : RowScope {
+    override fun Modifier.weight(weight: Float, fill: Boolean): Modifier = this
+
+    override fun Modifier.align(alignment: Alignment.Vertical): Modifier = this
+
+    override fun Modifier.alignBy(alignmentLine: HorizontalAlignmentLine): Modifier = this
+
+    override fun Modifier.alignByBaseline(): Modifier = this
+
+    override fun Modifier.alignBy(alignmentLineBlock: (Measured) -> Int): Modifier = this
+}
+
 /** The plain capsule bar: the ColorOS 17 glass surface with no expansion view. */
 @Suppress("ktlint:compose:modifier-not-used-at-root")
 @Composable
@@ -186,28 +301,29 @@ private fun BottomFloatingNavigationBarCapsule(
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            Row(
+            // `couiGlassSurface` returns its own chain instead of appending to the receiver, so a
+            // modifier placed ahead of it is discarded. The lift therefore cannot ride on the row's
+            // own modifier chain and needs a wrapper the row is measured inside.
+            Box(
                 modifier = Modifier
-                    .defaultMinSize(minHeight = BottomFloatingNavigationBarDefaults.BarHeight)
-                    .height(BottomFloatingNavigationBarDefaults.BarHeight)
-                    .couiGlassSurface(
-                        backdrop = backdrop,
-                        shape = shape,
-                        containerColor = containerColor,
-                        fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
-                        highlight = highlight,
-                    )
-                    .bottomFloatingTouchHighlight(shape)
-                    .then(modifier),
-                horizontalArrangement = Arrangement.spacedBy(
-                    BottomFloatingNavigationBarDefaults.ItemSpacing,
-                    Alignment.CenterHorizontally,
-                ),
-                verticalAlignment = Alignment.CenterVertically,
-                content = content,
-            )
+                    .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
+            ) {
+                FloatingCapsuleRow(
+                    modifier = Modifier
+                        .couiGlassSurface(
+                            backdrop = backdrop,
+                            shape = shape,
+                            containerColor = containerColor,
+                            fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                            highlight = highlight,
+                        )
+                        .bottomFloatingTouchHighlight(shape)
+                        .then(modifier),
+                    content = content,
+                )
+            }
         }
     }
 }
@@ -218,7 +334,8 @@ private fun BottomFloatingNavigationBarCapsule(
  * The capsule keeps its own measured width; the gap and the expansion view's footprint are driven
  * by [expanded] through `progress`, and the merged silhouette is one [MetaBallSurface] whose second
  * particle is exactly the expansion view's current footprint. That keeps the blob and the layout in
- * lockstep: shrinking the particle to nothing leaves the bar as a plain capsule.
+ * lockstep: shrinking the particle to nothing leaves the bar as a plain capsule. The blob is drawn in
+ * the capsule's own box, so its particles are expressed on the capsule's centre line.
  */
 @Composable
 private fun BottomFloatingNavigationBarMeltBall(
@@ -265,84 +382,80 @@ private fun BottomFloatingNavigationBarMeltBall(
             medium = 0.dp,
             expanded = 0.dp,
         )
-        // COUI narrows the menu view by exactly the expansion view's footprint plus the side spacing
-        // while the expansion view is active, and hands it the full width again once it is inactive
-        // (`COUIBottomFloatingNavigationBar.onMeasure`). Deriving the bound from the animated values
-        // keeps the capsule and the blob in step through the transition.
-        val capsuleMaxWidth =
-            (maxWidth - horizontalPadding * 2 - gap - expansionFootprint).coerceAtLeast(0.dp)
-
-        // The blob is a match-parent sibling behind the row, so the row's size is the bar's size and
-        // the particles below are expressed in exactly those coordinates.
+        // The blob and the row share one box, so the particles below use the capsule's own centre
+        // line, and the whole group is lifted off the bar's bottom edge as one.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.BottomCenter,
         ) {
             val capsuleWidth = with(density) { capsuleWidthPx.toDp() }
-            MetaBallSurface(
-                particles = buildList {
-                    if (capsuleWidthPx > 0) {
-                        add(
-                            MetaBallParticle(
-                                centerX = capsuleWidth / 2,
-                                centerY = barHeight / 2,
-                                width = capsuleWidth,
-                                height = barHeight,
-                                cornerRadius = cornerRadius,
-                            ),
-                        )
-                    }
-                    if (expansionFootprint > 0.dp) {
-                        add(
-                            MetaBallParticle.circle(
-                                centerX = capsuleWidth + gap + expansionFootprint / 2,
-                                centerY = barHeight / 2,
-                                diameter = expansionFootprint,
-                            ),
-                        )
-                    }
-                },
-                modifier = Modifier.matchParentSize(),
-                color = containerColor,
-                backdrop = backdrop,
-                // The merged outline gets the glass rim; without a backdrop the blob is opaque and
-                // the native component draws no stroke either.
-                rimColor = if (backdrop != null) Color.White.copy(alpha = 0.55f) else null,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Row(
-                    modifier = Modifier
-                        .widthIn(max = capsuleMaxWidth)
-                        .height(barHeight)
-                        .onSizeChanged { capsuleWidthPx = it.width }
-                        .bottomFloatingTouchHighlight(capsuleShape),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        BottomFloatingNavigationBarDefaults.ItemSpacing,
-                        Alignment.CenterHorizontally,
-                    ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = content,
+            Box(
+                modifier = Modifier.padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
+            ) {
+                MetaBallSurface(
+                    particles = buildList {
+                        if (capsuleWidthPx > 0) {
+                            add(
+                                MetaBallParticle(
+                                    centerX = capsuleWidth / 2,
+                                    centerY = barHeight / 2,
+                                    width = capsuleWidth,
+                                    height = barHeight,
+                                    cornerRadius = cornerRadius,
+                                ),
+                            )
+                        }
+                        if (expansionFootprint > 0.dp) {
+                            add(
+                                MetaBallParticle.circle(
+                                    centerX = capsuleWidth + gap + expansionFootprint / 2,
+                                    centerY = barHeight / 2,
+                                    diameter = expansionFootprint,
+                                ),
+                            )
+                        }
+                    },
+                    modifier = Modifier.matchParentSize(),
+                    color = containerColor,
+                    backdrop = backdrop,
+                    // The merged outline gets the glass rim; without a backdrop the blob is opaque and
+                    // the native component draws no stroke either.
+                    rimColor = if (backdrop != null) Color.White.copy(alpha = 0.55f) else null,
                 )
-                Box(modifier = Modifier.width(gap).height(barHeight))
-                Box(
-                    modifier = Modifier.width(expansionFootprint).height(barHeight),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    // Laid out at full size and scaled down, so the content keeps its proportions
-                    // while the space it occupies animates with `progress`.
-                    Box(
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    FloatingCapsuleRow(
                         modifier = Modifier
-                            .size(expansionSize)
-                            .graphicsLayer {
-                                scaleX = progress
-                                scaleY = progress
-                                alpha = progress
-                            },
+                            .onSizeChanged { capsuleWidthPx = it.width }
+                            .bottomFloatingTouchHighlight(capsuleShape),
+                        // COUI narrows the menu view by exactly the expansion view's footprint plus the
+                        // side spacing while the expansion view is active, and hands it the full width
+                        // back once it is inactive (`COUIBottomFloatingNavigationBar.onMeasure`).
+                        // Deriving the reserve from the animated values keeps the capsule and the blob
+                        // in step through the transition.
+                        trailingReserve = gap + expansionFootprint,
+                        content = content,
+                    )
+                    Box(modifier = Modifier.width(gap).height(barHeight))
+                    Box(
+                        modifier = Modifier.width(expansionFootprint).height(barHeight),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        expansion()
+                        // Laid out at full size and scaled down, so the content keeps its proportions
+                        // while the space it occupies animates with `progress`.
+                        Box(
+                            modifier = Modifier
+                                .size(expansionSize)
+                                .graphicsLayer {
+                                    scaleX = progress
+                                    scaleY = progress
+                                    alpha = progress
+                                },
+                        ) {
+                            expansion()
+                        }
                     }
                 }
             }
@@ -352,6 +465,10 @@ private fun BottomFloatingNavigationBarMeltBall(
 
 /**
  * A [BottomFloatingNavigationBarItem] that is suitable for [BottomFloatingNavigationBar].
+ *
+ * The bar measures the item with an exact width, so the item's own maximum width
+ * ([BottomFloatingNavigationBarDefaults.ItemMaxWidth]) is only a bound for a caller that places the
+ * item outside a bar.
  *
  * @param selected Whether the item is selected.
  * @param onClick The callback when the item is clicked.
@@ -557,6 +674,12 @@ object BottomFloatingNavigationBarDefaults {
      * `COUIResponsiveUtils.isSmallScreen` and collapses it to zero on the wider tiers.
      */
     val PaddingHorizontal = 16.dp
+
+    /**
+     * The gap between the capsule and the bottom edge of the bar's box.
+     * COUI `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`.
+     */
+    val MenuToScreenNaviDistance = 8.dp
 
     /**
      * The footprint of the expansion view that melts out of the capsule.

@@ -319,3 +319,67 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 常量来源（逐条回查设备资源，不臆造）：`ListDetailView` 取 `COUIListDetailView`（`DEFAULT_MAIN_WIDTH_PERCENT=0.4f`）与 `coui_main_fragment_min_width` / `coui_main_fragment_max_width` / `coui_fragment_gap_width`，分栏阈值取 `WindowTotalSizeClass.Compact` 的边界 `Breakpoints.BP_MEDIUM_WINDOW_BASE_WIDTH`（600dp）；`LunarDatePicker` 取 `COUILunarDatePicker`（`DEFAULT_START_YEAR=1910` / `DEFAULT_END_YEAR=2099`）与 `layout/coui_lunar_date_picker.xml`、`coui_lunar_month`、`coui_lunar_leap_string`。演示落位见 `example/coui17/.../GalleryScreen.kt`（相册列表 → 照片详情）与 `example/coui17/.../SettingsScreen.kt`（系统与更新 → 日期和时间，Dialog 宿主）。
 
 未移植项：`grid/` 的 `COUIPercentWidth*` / `COUIGridLayout` / `COUIPercentUtils` 属 Android View 基础设施（`COUIResponsiveUtils` 库内已有）；`COUILunarDatePicker` 的 `updateSpinners()` 与 `IncompleteDate.change(int,int,int)` jadx 无法反编译（产出桩），滚动时滚轮重排未逐行照抄，且 `getLunarDateString(Calendar)` / `@Deprecated changeALunarYearByOne` 因 `java.util.Calendar` 入参在 commonMain 不适用。
+
+## 16. COUI 顶栏材质叠加层、工具栏高亮按钮与底栏胶囊几何（ColorOS 17 移植，2026-09-30）
+
+本轮在 `coui-ui/src/commonMain/kotlin/io/github/suqi8/coui/kmp/basic/` 新增 2 个组件，并把底栏的胶囊
+几何与垂直偏移按设备反编译改正。逐类裁决、设备侧证据与有意省略项见
+`docs/coui-coloros17-component-coverage.md` §3 的 G-12，每项用法见 `docs/components/<名称小写>.md`
+与 `docs/zh_CN/components/<名称小写>.md`。
+
+| 组件 | 说明 |
+| :--- | :--- |
+| `AppBarBlurOverlay` | 顶栏材质叠加层（`AppBarBlurOverlayView` + `AppBarBlurOverlayBehavior` + `AppBarBlurHelper`）：节点由调用方定尺寸为「顶栏高 + `ExtraHeight`」，剖面锚定在**栏底**而非节点底，整体 alpha 由滚动驱动（`scrollAlpha(scrollPx, density)` = `min(1, scrollPx / 30dp)`，为 0 时不绘制）。配 `AppBarBlurOverlayDefaults`（`ExtraHeight` 14dp / `ScrollAlphaThresholdDp` 30f / `scrollAlpha` / `containerColor()`：浅色 `surface` `#f0f1f2`、深色 `DarkContainerColor` `#333333`） |
+| `HighlightedIconButton` | 工具栏返回键 / 三点菜单键的高亮按钮：正圆 40dp（非 squircle），径向填充（深色 `#1e1e1e`→`#242424`、浅色 249→251，alpha 0.78），按角度分布的白描边走 `Modifier.materialShadowEdge`（`GradientStrokeStyle.EDGE_STYLE_1` + `InnerShadowStyle.SHADOW_STYLE_1`），深色只在 60°–120° 下半弧有外辉光、浅色为对称暗晕。按下时整块弹到 0.89 并淡出描边与光晕。配 `HighlightedIconButtonDefaults` |
+| `FloatingCapsuleRow`（`internal`） | 胶囊内容行：照 `BaseBottomFloatingMenuView.onMeasure` 定宽测量——`totalItemMax = n * 70 + 2 * 12 + (n - 1) * 8`，放得下即胶囊宽 `totalItemMax`、每项 70dp，放不下则胶囊取满可用宽度、每项 `(available - 24 - (n - 1) * 8) / n` 截断到整像素，子项精确定宽并放在 `x = 12 + i * (itemWidth + 8)`。`BottomFloatingNavigationBar` 与 `BottomFloatingAccessoryNavigationBar` 共用，父级可用 `trailingReserve` 扣掉展开视图 / 配件的占位 |
+| `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` | 胶囊与导航栏盒子下边缘之间的间距，8dp（`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`）；加系统 16dp `navigationBars` inset 后静止时留 24dp。`BottomFloatingNavigationBar` 与 `BottomFloatingAccessoryNavigationBar` 的两种形态（普通胶囊 / 熔球组）都按它抬起 |
+
+常量来源（逐条回查设备资源与反编译，不臆造）：`AppBarBlurOverlay` 取 `AppBarBlurHelper`
+（`ALPHA_SCROLL_THRESHOLD_DP = 30f`、`GRADIENT_DARK_ALPHA = 0.4f`）、`AppBarBlurParams` 默认值
+（`startBlurRadius = 30px`、`endBlurRadius = 0px`、`gradientBlurSpeed = 3.0f`、浅色 positions
+`[0.0, 0.4, 1.0]` / alphas `[0.0, 0.7, 1.0]`，深色两档 `[0.0, 1.0]` / `[0.0, 0.4]`）与
+`homepage_appbar_blur_extra_height`（14dp，= `AppBarBlurOverlayDefaults.ExtraHeight`）；模糊半径与
+混合曲线复用 `TopAppBar.kt` 的 `AppBarGlassDefaults`（`GradientBlurRadiusPx` / `GradientBlurSpeed`）。
+深色基色 `DarkContainerColor = #333333` 取最近的夜间 token `coui_color_background_top` / `coui_color_surface_top`
+（`?couiColorBackgroundWithCard` 在 night 下是 `#ffffff`，与真机实测的顶边压暗不可调和）；
+`AppBarBlurHelper.setGradientBlurBgColor` 在 Settings APK 十四个 dex 里无调用点，故静态 override 已排除，
+深色缺口归为框架 `com.oplus.view.*` 的压暗层。深色两档 ramp 由主题判定（`background.luminance() < 0.5f`），
+不由基色亮度决定。
+`HighlightedIconButton` 的数值来自**真机实测**（UI dump + 像素采样，1dp = 3.875px）与 `ShadowEdge`
+AGSL 着色器，工具栏自身的 `coui_toolbar_back_view` 属性表尚未定位，故全部标注为实测所得而非反编译
+所得（详见该组件文档的「取值溯源」与 `docs/components/materialshadowedge.md` 的 `EDGE_STYLE_1` /
+`SHADOW_STYLE_1` 预设）。底栏取 `coui_bottom_floating_navigation_bar_{item_padding,item_space,item_max_width,height}`
+（12 / 8 / 70 / 56dp）与 `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`（8dp）。
+
+未移植项：`AppBarBlurOverlay` 只实现渐变路径——框架的均匀路径 `setUpNormalBlurBackground`
+（`normalBlurRadiusPx = 50px`、`normalBackgroundAlphaFraction = 0.8`、`NORMAL_BLUR_DARK_ALPHA = 0.6`）
+在已研究的 ColorOS 17 产物中无调用点，属死代码；`scrollDrivenAlphaEnabled` 属性、基色解析链
+`resolveGradientBlurBaseColorForAppBar` 与宿主侧的 `setAppBarLayoutTransparent()` 改由调用方承担。
+`HighlightedIconButton` 未移植工具栏自身的布局（40dp 圆距工具栏起始边的距离与垂直居中属工具栏职责），
+且 `ShadowEdge` 的 halo 只覆盖节点自身边界，填充与光晕由本组件自行绘制。底栏侧未移植
+`couiMenuViewCentered` 的第二套排列（属性默认 false，已研究产物无设置点）。
+
+演示落位：`example/shared/src/commonMain/kotlin/component/BackNavigationIcon.kt` 改用
+`HighlightedIconButton` 绘制工具栏返回键（原先为 `IconButton`）。
+
+## 17. `example/shared` 展廊条目拆分约定（决策 2，2026-09-30）
+
+`example/shared/src/commonMain/kotlin/component/*.kt` 共 48 个 `*Section.kt`，每个
+`fun LazyListScope.xxxSection()` 已拆成「包装」+「与布局无关的内容 composable」，
+内容一份真源、包装两份（coui16 用旧包装，coui17 自己布局）：
+
+- **切分边界是每个 `SmallTitle(...)`**。包装保留 `SmallTitle` 与紧随其后的内容调用；顺序、
+  `item(key = ...)`、section 函数名一律不变，`MainPage.kt` 不感知这次拆分。
+- 内容 composable 是 **public 顶层 `@Composable fun`**，命名 = `SmallTitle` 文本去标点
+  PascalCase + `Demo`（`"TopAppBar (ColorOS 17 forms)"` → `TopAppBarColorOS17FormsDemo`）。
+  与文件内既有 `private` 助手撞名时加 `Content` 后缀（如 `CalendarViewDemoContent`）。
+- 前置守卫（如 `if (!isRuntimeShaderSupported()) return`）留在包装里；跨组共享的状态提升到
+  包装并以参数传入（典型是 `InputViewSection` 的 `focusManager`）。控制行自己的
+  `padding(horizontal = 16.dp, vertical = 8.dp)` 属于内容，不留在包装。
+- 内容函数常在同一层级连续发射多个节点——这是它的语义（片段，由调用方放进容器），所以这些
+  文件带 `@file:Suppress("ktlint:compose:multiple-emitters-check")`。该规则由
+  `io.nlopez.compose.rules` 提供且按**文件**上报，函数级 `@Suppress` 无效。
+- 拆分是逐字搬运：标识符多重集除 `private` → public、新增函数名与注解外必须不变；回归靠
+  coui16 demo 装机截图比对（可滚动页用锚点相对位移做与滚动无关的判等，页首图要求逐字节相同）。
+- 骨架层 `Home()` 增加 `layout: @Composable (HomeLayoutScope) -> Unit` 槽，默认值等于原行为，
+  coui17 可据此替换整页外壳。

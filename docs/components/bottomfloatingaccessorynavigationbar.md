@@ -93,6 +93,8 @@ BottomFloatingAccessoryNavigationBar(
 
 Like the plain floating bar, the 16dp outside padding is kept on a small screen only and collapses to zero on the medium and large tiers. The capsule is centred in the space the accessory views leave over.
 
+The capsule itself is measured the way `BaseBottomFloatingMenuView.onMeasure` measures the native menu view — as wide as its items at `BottomFloatingNavigationBarDefaults.ItemMaxWidth` (70dp) plus the 12dp inner padding and the 8dp gaps while they all fit, and squeezed into the width the accessories leave over when they do not. Vertically it sits `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` (8dp, `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`) above the bottom edge of the bar's box, i.e. 24dp above the screen edge once the system's 16dp `navigationBars` inset is added.
+
 `onLayout` picks between `layoutPositionsSmallScreen` and `layoutPositionsMediumScreen` on that same tier, but the choice cannot be observed here. Only the small-screen method survives decompilation, and it pins each accessory to its own outer edge of the bar and centres the menu between them — which is what this bar already does, because the native component measures itself to its content plus padding and this port likewise wraps its content.
 
 ## Relationship to BottomFloatingNavigationBar

@@ -18,6 +18,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | ---------------------------------------------------------- | ------------------------------------------ | ------------------------------------- |
 | [Surface](../components/surface)                           | Basic container component                  | Content display, background container |
 | [TopAppBar](../components/topappbar)                       | Application top navigation bar             | Page title, primary actions           |
+| [AppBarBlurOverlay](../components/appbarbluroverlay)       | Scrolling app bar material overlay         | Gradient-blur app bar over the page   |
 | [NavigationBar](../components/navigationbar)               | Bottom navigation component                | Main page switching                   |
 | [BottomFloatingAccessoryNavigationBar](../components/bottomfloatingaccessorynavigationbar) | Floating capsule navigation bar with side accessories | Bottom navigation with quick actions |
 | [BottomFloatingEditToolbar](../components/bottomfloatingedittoolbar) | Floating edit toolbar            | Editing actions, quick tools          |
@@ -32,6 +33,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [Button](../components/button)                             | Interactive element for triggering actions | Form submission, action confirmation  |
 | [LoadingButton](../components/loadingbutton)               | Text button with a built-in loading state  | Asynchronous action submission        |
 | [IconButton](../components/iconbutton)                     | Icon button component                      | Auxiliary actions, toolbars           |
+| [HighlightedIconButton](../components/highlightediconbutton) | Toolbar icon button with a light halo    | Toolbar back and overflow keys        |
 | [Chip](../components/chip)                                 | Checkable capsule filter tag               | Content filtering, tag selection      |
 | [ChipTab](../components/chiptab)                           | Horizontal chip tab bar                    | Tab switching, category browsing      |
 | [CalendarView](../components/calendarview)                 | Month calendar grid with a weekday header  | Date selection, month browsing        |

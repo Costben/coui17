@@ -190,6 +190,13 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 }
 ```
 
+### 渐变玻璃叠加层
+
+`gradientGlass` 把材质画在顶栏本身上。若页面把材质画在独立的叠加层节点上——ColorOS 17
+主页把 `AppBarBlurOverlayView` inflate 成 app bar 的同级视图，并把导航栏掏空——请改用
+[`AppBarBlurOverlay`](../components/appbarbluroverlay)。它与这里共用 `AppBarGlassDefaults` 的模糊半径与
+混合曲线，另外还负责导航栏下方那条带子与随滚动驱动的整体 alpha。
+
 ## 属性
 
 ### TopAppBar 属性

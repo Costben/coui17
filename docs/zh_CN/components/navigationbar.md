@@ -200,6 +200,7 @@ BottomFloatingNavigationBar {
 | BarHeight                       | Dp       | 胶囊高度                                         | 56.dp  |
 | MinHeightWithoutPaddingVertical | Dp       | 导航栏的最小外部高度                             | 88.dp  |
 | PaddingHorizontal               | Dp       | 小屏下的外部内边距                               | 16.dp  |
+| MenuToScreenNaviDistance        | Dp       | 胶囊与导航栏盒子下边缘之间的间距                 | 8.dp   |
 | ExpansionSize                   | Dp       | 展开视图的占位尺寸                               | 56.dp  |
 | SideSpacing                     | Dp       | 胶囊与展开视图之间的间距                         | 12.dp  |
 | ItemHeight                      | Dp       | 导航项单元高度                                   | 48.dp  |
@@ -372,6 +373,19 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
     }
 }
 ```
+
+#### 胶囊几何
+
+胶囊按 `BaseBottomFloatingMenuView.onMeasure` 测量原生菜单视图的方式测量，因此每个导航项拿到的是**精确**宽度，而不是 wrap-content：
+
+- `innerPadding` 12dp（`BottomFloatingNavigationBarDefaults.ItemInnerPadding`，`coui_bottom_floating_navigation_bar_item_padding`）、`itemSpace` 8dp（`ItemSpacing`，`..._item_space`）、`itemMaxWidth` 70dp（`ItemMaxWidth`，`..._item_max_width`）；胶囊高 56dp（`BarHeight`，`..._height`）；
+- `totalItemMax = n * 70 + 2 * 12 + (n - 1) * 8`；
+- `totalItemMax` 能放进导航栏让出的宽度时，胶囊正好宽 `totalItemMax`，每项 70dp；放不下时胶囊取满可用宽度，每项拿到 `(available - 24 - (n - 1) * 8) / n`，截断到整数像素；
+- 每个子项都以精确宽度测量，并放置在 `x = 12 + i * (itemWidth + 8)`，在胶囊内垂直居中。
+
+12dp 的内边距是胶囊自身宽度的一部分，而不是一个 `padding` 修饰符，因此玻璃表面与径向触摸高亮都覆盖整条胶囊。`RowScope.weight` 与 `RowScope.align` 在本栏内不起作用：这一行自行测量每个子项，与原生菜单视图一致——后者没有 weight 概念，而是把每个子项放到自己算出的 x 上。
+
+纵向上，胶囊位于导航栏盒子下边缘之上 `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance`（8dp，`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`）。加上系统的 16dp `navigationBars` inset，静止时留出 24dp。
 
 #### 展开视图（融球）
 
