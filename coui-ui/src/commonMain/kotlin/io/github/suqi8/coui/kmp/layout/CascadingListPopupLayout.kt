@@ -47,6 +47,7 @@ import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.ListPopupLayoutInfo
+import io.github.suqi8.coui.kmp.basic.PopupCornerRadius
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.popupSurfaceColor
 import io.github.suqi8.coui.kmp.basic.rememberListPopupLayoutInfo
@@ -55,7 +56,8 @@ import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-internal val CascadingPopupCornerRadius = 16.dp
+/** Corner radius of the cascading popup container, shared with [PopupCornerRadius] (28dp squircle). */
+internal val CascadingPopupCornerRadius = PopupCornerRadius
 
 /**
  * Vertical overlap between the anchor row's top edge and the secondary menu's top edge.
@@ -111,6 +113,7 @@ internal fun CascadingListPopupLayout(
     maxHeight: Dp? = null,
     minWidth: Dp = 200.dp,
     collapseOnSelection: Boolean = true,
+    enableGlass: Boolean = false,
 ) {
     val internalVisible = remember { mutableStateOf(false) }
     val enterFraction = remember { Animatable(0f) }
@@ -374,6 +377,7 @@ internal fun CascadingListPopupLayout(
                         layoutInfo = layoutInfo,
                         layoutDirection = layoutDirection,
                         surfaceColor = surfaceColor,
+                        enableGlass = enableGlass,
                     )
                 }
             }
@@ -422,6 +426,7 @@ private fun CascadingMorphSubLayout(
     layoutInfo: ListPopupLayoutInfo,
     layoutDirection: LayoutDirection,
     surfaceColor: Color,
+    enableGlass: Boolean,
 ) {
     SubcomposeLayout(modifier = Modifier.fillMaxSize()) { constraints ->
         val resolvedMaxHeightPx = maxHeight?.roundToPx()?.coerceAtLeast(50.dp.roundToPx())
@@ -466,6 +471,7 @@ private fun CascadingMorphSubLayout(
                 primaryScale = primaryScale,
                 primaryAlpha = primaryAlpha,
                 onCollapseSecondary = onCollapseSecondary,
+                enableGlass = enableGlass,
             )
         }.map { it.measure(primaryConstraints) }
 

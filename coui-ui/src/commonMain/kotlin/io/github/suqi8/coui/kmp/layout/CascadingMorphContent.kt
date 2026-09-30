@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.layout
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,13 +31,19 @@ import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.DropdownItem
+import io.github.suqi8.coui.kmp.basic.GlassContainer
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupLayoutPosition
 import io.github.suqi8.coui.kmp.basic.PopupListDivider
 import io.github.suqi8.coui.kmp.basic.PopupShadow
+import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.popupClipReveal
+import io.github.suqi8.coui.kmp.basic.popupGlassBlendColors
+import io.github.suqi8.coui.kmp.basic.rememberGlassHighlight
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
+import io.github.suqi8.coui.kmp.squircle.squircleSurface
 
 private var deeperChildrenWarned = false
 
@@ -60,12 +65,15 @@ internal fun CascadingPrimaryContent(
     primaryScale: () -> Float,
     primaryAlpha: () -> Float,
     onCollapseSecondary: () -> Unit,
+    enableGlass: Boolean,
 ) {
     val isExpanded = expandedItem != null
     val squircleEnabled = isSquircleEnabled()
     val shape = remember(CascadingPopupCornerRadius, squircleEnabled) {
         SquircleShape(cornerRadius = CascadingPopupCornerRadius, squircleEnabled = squircleEnabled)
     }
+    val backdrop = if (enableGlass) LocalBackdrop.current else null
+    val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
     Box(
         modifier = Modifier
             .graphicsLayer {
@@ -84,7 +92,17 @@ internal fun CascadingPrimaryContent(
             // Draw the shadow outside popupClipReveal's hard clip so it is not erased.
             .dropShadow(shape = shape, shadow = PopupShadow)
             .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, squircleEnabled)
-            .background(color = surfaceColor),
+            .couiGlassSurface(
+                backdrop = backdrop,
+                shape = shape,
+                containerColor = surfaceColor,
+                fallback = Modifier.squircleSurface(
+                    color = surfaceColor,
+                    cornerRadius = CascadingPopupCornerRadius,
+                ),
+                blendColors = popupGlassBlendColors(),
+                highlight = highlight,
+            ),
     ) {
         Box {
             ListPopupColumn {

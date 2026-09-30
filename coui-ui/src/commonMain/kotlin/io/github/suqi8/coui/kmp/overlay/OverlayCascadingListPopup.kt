@@ -36,6 +36,9 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.PopupLayout
  * @param renderInRootScaffold Whether to render in the outermost Scaffold.
  * @param dropdownColors Colors used by every row.
  * @param collapseOnSelection When true, selecting any leaf dismisses the popup.
+ * @param enableGlass Whether to draw the ColorOS 17 popup glass behind the content. Only the
+ *   in-window overlay host enables it; the `Dialog` host has no coordinates in the host window for
+ *   a backdrop to sample.
  */
 @Composable
 fun OverlayCascadingListPopup(
@@ -52,6 +55,7 @@ fun OverlayCascadingListPopup(
     renderInRootScaffold: Boolean = true,
     dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
     collapseOnSelection: Boolean = true,
+    enableGlass: Boolean = true,
 ) {
     CascadingListPopupLayout(
         show = show,
@@ -80,5 +84,6 @@ fun OverlayCascadingListPopup(
         minWidth = minWidth,
         dropdownColors = dropdownColors,
         collapseOnSelection = collapseOnSelection,
+        enableGlass = enableGlass,
     )
 }
