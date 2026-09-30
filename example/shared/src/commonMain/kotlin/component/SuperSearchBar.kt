@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.onClick
@@ -59,6 +61,7 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
+import io.github.suqi8.coui.kmp.basic.SearchBarDefaults
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
@@ -93,8 +96,10 @@ fun SearchStatus.SearchPager(
     }
     val systemBarsPadding = WindowInsets.systemBars.asPaddingValues().calculateTopPadding()
     val topPadding by animateDpAsState(
+        // The device's expanded search bar keeps the collapsed bar's place — its `search_src_text`
+        // sits at y 164..319px in both states, 23px (6dp) below the 141px status bar.
         targetValue = if (searchStatus.shouldExpand()) {
-            systemBarsPadding + 12.dp
+            systemBarsPadding + 6.dp
         } else {
             max(offsetY, 0.dp)
         },
@@ -231,56 +236,69 @@ fun SearchBar(
         { onSearchStatusChangeUpdated.value(searchStatusUpdated.value.copy(searchText = "")) }
     }
 
-    InputField(
-        query = searchStatus.searchText,
-        onQueryChange = { onSearchStatusChange(searchStatus.copy(searchText = it)) },
-        label = searchStatus.label,
-        leadingIcon = {
-            Icon(
-                imageVector = COUIIcons.Basic.Search,
-                contentDescription = "back",
-                modifier = Modifier
-                    .size(44.dp)
-                    .padding(start = 16.dp, end = 8.dp),
-                tint = COUITheme.colorScheme.onSurfaceContainerHigh,
-            )
-        },
-        trailingIcon = {
-            AnimatedVisibility(
-                searchStatus.searchText.isNotEmpty(),
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut() + scaleOut(),
-            ) {
-                Icon(
-                    imageVector = COUIIcons.Basic.SearchCleanup,
-                    tint = COUITheme.colorScheme.onSurface,
-                    contentDescription = "Clean",
-                    modifier = Modifier
-                        .size(44.dp)
-                        .padding(start = 8.dp, end = 16.dp)
-                        .clickable(
-                            interactionSource = null,
-                            indication = null,
-                            onClick = onClearSearch,
-                        ),
-                )
-            }
-        },
+    // The capsule belongs to the row rather than to the field. The device keeps the magnifier as a
+    // sibling of `search_src_text`, so the field's own node starts at x=216px — after the 40dp icon
+    // slot — instead of stretching back over the glyph.
+    val colors = SearchBarDefaults.searchBarColors()
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(bottom = 6.dp)
-            .focusRequester(focusRequester),
-        onSearch = {},
-        expanded = searchStatus.shouldExpand(),
-        onExpandedChange = {
-            onSearchStatusChange(
-                searchStatus.copy(
-                    current = if (it) SearchStatus.Status.EXPANDED else SearchStatus.Status.COLLAPSED,
-                ),
-            )
-        },
-    )
+            .background(color = colors.backgroundColor, shape = CircleShape),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // The device's leading slot is 40dp, 36dp of it the icon view; the glyph reads 17.5dp. Same
+        // numbers as the collapsed home pill.
+        Icon(
+            imageVector = COUIIcons.Basic.Search,
+            contentDescription = null,
+            modifier = Modifier
+                .size(40.dp)
+                .padding(start = 10.dp, end = 7.dp),
+            tint = COUITheme.colorScheme.onSurfaceContainerHigh,
+        )
+        InputField(
+            query = searchStatus.searchText,
+            onQueryChange = { onSearchStatusChange(searchStatus.copy(searchText = it)) },
+            label = searchStatus.label,
+            leadingIcon = {},
+            trailingIcon = {
+                AnimatedVisibility(
+                    searchStatus.searchText.isNotEmpty(),
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut(),
+                ) {
+                    Icon(
+                        imageVector = COUIIcons.Basic.SearchCleanup,
+                        tint = COUITheme.colorScheme.onSurface,
+                        contentDescription = "Clean",
+                        modifier = Modifier
+                            .size(44.dp)
+                            .padding(start = 8.dp, end = 16.dp)
+                            .clickable(
+                                interactionSource = null,
+                                indication = null,
+                                onClick = onClearSearch,
+                            ),
+                    )
+                }
+            },
+            colors = colors.copy(backgroundColor = Color.Transparent),
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+            onSearch = {},
+            expanded = searchStatus.shouldExpand(),
+            onExpandedChange = {
+                onSearchStatusChange(
+                    searchStatus.copy(
+                        current = if (it) SearchStatus.Status.EXPANDED else SearchStatus.Status.COLLAPSED,
+                    ),
+                )
+            },
+        )
+    }
     LaunchedEffect(Unit) {
         if (!expanded && searchStatus.shouldExpand()) {
             focusRequester.requestFocus()
