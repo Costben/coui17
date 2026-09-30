@@ -21,7 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
@@ -114,6 +119,9 @@ fun Coui17HomeTopBar(
  * `search_src_text` `EditText` carries the click and expands the page into the search view.
  *
  * The pill also casts the shadow the device keeps for the collapsed state; see [searchBarShadow].
+ * The shadow sits on its own sibling layer with the capsule punched out: the pill's fill is
+ * translucent, so a shadow drawn behind it would show through and darken the field, which the
+ * device's shadow does not.
  */
 @Composable
 private fun Coui17SearchPill(label: String, onClick: () -> Unit, scrollFraction: Float) {
@@ -123,13 +131,24 @@ private fun Coui17SearchPill(label: String, onClick: () -> Unit, scrollFraction:
             .fillMaxWidth()
             .padding(horizontal = Coui17Dimens.BarHorizontalPadding)
             .height(Coui17Dimens.SearchPillHeight)
-            .dropShadow(shape = CircleShape, shadow = searchBarShadow(scrollFraction))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick,
             ),
     ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .drawWithContent {
+                    val radius = size.height / 2f
+                    val capsule = Path().apply {
+                        addRoundRect(RoundRect(0f, 0f, size.width, size.height, radius, radius))
+                    }
+                    clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
+                }
+                .dropShadow(shape = CircleShape, shadow = searchBarShadow(scrollFraction)),
+        )
         InputField(
             query = "",
             onQueryChange = {},
