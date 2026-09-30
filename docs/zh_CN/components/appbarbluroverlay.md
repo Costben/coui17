@@ -72,7 +72,7 @@ overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背�
 | 常量 / 函数           | 类型  | 说明                                                 | 值 / 来源 |
 | --------------------- | ----- | ---------------------------------------------------- | --------- |
 | ExtraHeight           | Dp    | overlay 越过导航栏下边缘的距离                       | 14.dp（`homepage_appbar_blur_extra_height`） |
-| ScrollAlphaThresholdDp | Float | overlay 的 alpha 从 0 升到 1 所跨过的滚动距离        | 30f（`AppBarBlurHelper.ALPHA_SCROLL_THRESHOLD_DP`） |
+| ScrollAlphaThresholdDp | Float | overlay 的 alpha 从 0 升到 1 所跨过的滚动距离        | 30f（`AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`） |
 | DarkContainerColor    | Color | 深色主题的材质基色，取最近的 ColorOS 夜间 token 而非框架属性 | `#333333`（`coui_color_background_top` / `coui_color_surface_top`） |
 | containerColor()      | Color | 当前主题的基色：浅色取 `surface`、深色取 `DarkContainerColor` | `#f0f1f2` / `#333333` |
 | scrollAlpha(scrollPx, density) | Float | `min(1, scrollPx / ScrollAlphaThresholdDp)`，钳制到 `0f..1f` | — |
@@ -86,7 +86,7 @@ overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背�
 | Token | 值 | 来源 |
 | :--- | :--- | :--- |
 | `ExtraHeight` | 14dp | `homepage_appbar_blur_extra_height` |
-| `ScrollAlphaThresholdDp` | 30 | `AppBarBlurHelper.ALPHA_SCROLL_THRESHOLD_DP` |
+| `ScrollAlphaThresholdDp` | 30 | `AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP` |
 | `startBlurRadius` | 30px | `AppBarBlurParams.startBlurRadius` |
 | `endBlurRadius` | 0px | `AppBarBlurParams.endBlurRadius` |
 | 混合曲线 | `pow(1 - t, 3.0)` | `AppBarBlurParams.gradientBlurSpeed` = 3.0f |

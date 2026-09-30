@@ -209,8 +209,7 @@ fun Coui17AccessoryBar(
     BottomFloatingAccessoryNavigationBar(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(bottom = 8.dp),
+            .navigationBarsPadding(),
         startAccessory = {
             Coui17AccessoryBall(
                 icon = COUIIcons.Basic.Search,

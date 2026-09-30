@@ -41,7 +41,7 @@ object AppBarBlurOverlayDefaults {
     val ExtraHeight = 14.dp
 
     /**
-     * `AppBarBlurHelper.ALPHA_SCROLL_THRESHOLD_DP`: the scroll distance over which the overlay's
+     * `AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`: the scroll distance over which the overlay's
      * alpha ramps from 0 to 1. At rest the overlay is invisible; it reaches full strength once the
      * content has scrolled this far.
      */

@@ -334,10 +334,11 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 | `AppBarBlurOverlay` | 顶栏材质叠加层（`AppBarBlurOverlayView` + `AppBarBlurOverlayBehavior` + `AppBarBlurHelper`）：节点由调用方定尺寸为「顶栏高 + `ExtraHeight`」，剖面锚定在**栏底**而非节点底，整体 alpha 由滚动驱动（`scrollAlpha(scrollPx, density)` = `min(1, scrollPx / 30dp)`，为 0 时不绘制）。配 `AppBarBlurOverlayDefaults`（`ExtraHeight` 14dp / `ScrollAlphaThresholdDp` 30f / `scrollAlpha` / `containerColor()`：浅色 `surface` `#f0f1f2`、深色 `DarkContainerColor` `#333333`） |
 | `HighlightedIconButton` | 工具栏返回键 / 三点菜单键的高亮按钮：正圆 40dp（非 squircle），径向填充（深色 `#1e1e1e`→`#242424`、浅色 249→251，alpha 0.78），按角度分布的白描边走 `Modifier.materialShadowEdge`（`GradientStrokeStyle.EDGE_STYLE_1` + `InnerShadowStyle.SHADOW_STYLE_1`），深色只在 60°–120° 下半弧有外辉光、浅色为对称暗晕。按下时整块弹到 0.89 并淡出描边与光晕。配 `HighlightedIconButtonDefaults` |
 | `FloatingCapsuleRow`（`internal`） | 胶囊内容行：照 `BaseBottomFloatingMenuView.onMeasure` 定宽测量——`totalItemMax = n * 70 + 2 * 12 + (n - 1) * 8`，放得下即胶囊宽 `totalItemMax`、每项 70dp，放不下则胶囊取满可用宽度、每项 `(available - 24 - (n - 1) * 8) / n` 截断到整像素，子项精确定宽并放在 `x = 12 + i * (itemWidth + 8)`。`BottomFloatingNavigationBar` 与 `BottomFloatingAccessoryNavigationBar` 共用，父级可用 `trailingReserve` 扣掉展开视图 / 配件的占位 |
-| `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` | 胶囊与导航栏盒子下边缘之间的间距，8dp（`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`）；加系统 16dp `navigationBars` inset 后静止时留 24dp。`BottomFloatingNavigationBar` 与 `BottomFloatingAccessoryNavigationBar` 的两种形态（普通胶囊 / 熔球组）都按它抬起 |
+| `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` | 胶囊与导航栏盒子下边缘之间的间距，8dp。取值有据——`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance` 在设备资源里确为 8dp——但**语义是本仓解释**：Settings 的底栏类从不读该 token（真正读它的是 Clock），8dp 是本仓按实测反推并沿用的命名与含义。本机 `navigationBars` inset 实测 16dp（`InsetsSource navigationBars frame=[0,2710][1272,2772]`，62px），故静止时胶囊底距屏底 16 + 8 = 24dp；同一设备实测 Clock 底栏胶囊底距屏底 93px = 24.0dp，两者一致。注意组件内部已自带这 8dp，调用方只需再叠 `navigationBarsPadding()`。`BottomFloatingNavigationBar` 与 `BottomFloatingAccessoryNavigationBar` 的两种形态（普通胶囊 / 熔球组）都按它抬起 |
 
-常量来源（逐条回查设备资源与反编译，不臆造）：`AppBarBlurOverlay` 取 `AppBarBlurHelper`
-（`ALPHA_SCROLL_THRESHOLD_DP = 30f`、`GRADIENT_DARK_ALPHA = 0.4f`）、`AppBarBlurParams` 默认值
+常量来源（逐条回查设备资源与反编译，不臆造）：`AppBarBlurOverlay` 取
+`AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP = 30f` 与 `AppBarBlurHelper.GRADIENT_DARK_ALPHA = 0.4f`
+（两者分属不同类，勿混记）、`AppBarBlurParams` 默认值
 （`startBlurRadius = 30px`、`endBlurRadius = 0px`、`gradientBlurSpeed = 3.0f`、浅色 positions
 `[0.0, 0.4, 1.0]` / alphas `[0.0, 0.7, 1.0]`，深色两档 `[0.0, 1.0]` / `[0.0, 0.4]`）与
 `homepage_appbar_blur_extra_height`（14dp，= `AppBarBlurOverlayDefaults.ExtraHeight`）；模糊半径与
@@ -351,7 +352,8 @@ adb exec-out screencap -p > D:\AndroidStudioProjects\jadx\work\_shots\settings.p
 AGSL 着色器，工具栏自身的 `coui_toolbar_back_view` 属性表尚未定位，故全部标注为实测所得而非反编译
 所得（详见该组件文档的「取值溯源」与 `docs/components/materialshadowedge.md` 的 `EDGE_STYLE_1` /
 `SHADOW_STYLE_1` 预设）。底栏取 `coui_bottom_floating_navigation_bar_{item_padding,item_space,item_max_width,height}`
-（12 / 8 / 70 / 56dp）与 `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`（8dp）。
+（12 / 8 / 70 / 56dp）；`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance` 同为 8dp，
+但语义解释见上表。
 
 未移植项：`AppBarBlurOverlay` 只实现渐变路径——框架的均匀路径 `setUpNormalBlurBackground`
 （`normalBlurRadiusPx = 50px`、`normalBackgroundAlphaFraction = 0.8`、`NORMAL_BLUR_DARK_ALPHA = 0.6`）

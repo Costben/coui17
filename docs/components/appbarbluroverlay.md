@@ -70,7 +70,7 @@ The overlay needs the content it samples through `LocalBackdrop`; place it where
 | Constant / Function   | Type  | Description                                                            | Value / Source |
 | --------------------- | ----- | ---------------------------------------------------------------------- | -------------- |
 | ExtraHeight           | Dp    | How far the overlay reaches past the bar's bottom edge                 | 14.dp (`homepage_appbar_blur_extra_height`) |
-| ScrollAlphaThresholdDp | Float | The scroll distance over which the overlay's alpha ramps from 0 to 1   | 30f (`AppBarBlurHelper.ALPHA_SCROLL_THRESHOLD_DP`) |
+| ScrollAlphaThresholdDp | Float | The scroll distance over which the overlay's alpha ramps from 0 to 1   | 30f (`AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`) |
 | DarkContainerColor    | Color | The dark-theme material base colour, taken from the nearest ColorOS night token rather than from the framework attribute | `#333333` (`coui_color_background_top` / `coui_color_surface_top`) |
 | containerColor()      | Color | The base colour for the current theme: the light theme's `surface`, the dark theme's `DarkContainerColor` | `#f0f1f2` / `#333333` |
 | scrollAlpha(scrollPx, density) | Float | `min(1, scrollPx / ScrollAlphaThresholdDp)`, coerced into `0f..1f` | — |
@@ -84,7 +84,7 @@ Every value below is taken from the decompiled `AppBarBlurParams` defaults, from
 | Token | Value | Source |
 | :--- | :--- | :--- |
 | `ExtraHeight` | 14dp | `homepage_appbar_blur_extra_height` |
-| `ScrollAlphaThresholdDp` | 30 | `AppBarBlurHelper.ALPHA_SCROLL_THRESHOLD_DP` |
+| `ScrollAlphaThresholdDp` | 30 | `AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP` |
 | `startBlurRadius` | 30px | `AppBarBlurParams.startBlurRadius` |
 | `endBlurRadius` | 0px | `AppBarBlurParams.endBlurRadius` |
 | Blend curve | `pow(1 - t, 3.0)` | `AppBarBlurParams.gradientBlurSpeed` = 3.0f |
