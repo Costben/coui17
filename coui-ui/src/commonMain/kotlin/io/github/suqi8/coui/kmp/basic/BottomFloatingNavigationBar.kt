@@ -9,6 +9,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,7 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -44,6 +47,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -510,6 +514,19 @@ fun RowScope.BottomFloatingNavigationBarItem(
         else -> colorScheme.labelPrimaryVariant
     }
 
+    // `COUIBottomFloatingToolbarItemView` wears a `COUIMaskRippleDrawable` background, enabled for
+    // the navi item styles (`applyNaviVerticalStyle` -> `setDrawableEnabled(true)`); the large-icon
+    // form turns it off. Its mask is the item cell upset by
+    // `coui_bottom_floating_navigation_bar_item_bg_horizontal_padding` on each side, rounded by half
+    // the item height, and its colour is `?attr/couiColorPress`.
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressProgress by animateFloatAsState(
+        targetValue = if (enabled && !largeIcon && isPressed) 1f else 0f,
+        animationSpec = BottomFloatingNavigationBarDefaults.PressMaskSpring,
+        label = "bottomFloatingItemPress",
+    )
+    val pressColor = BottomFloatingNavigationBarDefaults.pressColor(COUITheme.colorScheme.background)
+
     // COUIBottomFloatingNavigationBarMenuView opens the overflow menu on a long press and the native
     // item's onLongClick returns true, so the click that ends that same gesture is swallowed —
     // `combinedClickable` already gives exactly that pairing.
@@ -519,6 +536,18 @@ fun RowScope.BottomFloatingNavigationBarItem(
         modifier = modifier
             .height(BottomFloatingNavigationBarDefaults.ItemHeight)
             .widthIn(max = BottomFloatingNavigationBarDefaults.ItemMaxWidth)
+            .drawWithContent {
+                if (pressProgress > 0f) {
+                    val outset = BottomFloatingNavigationBarDefaults.PressMaskHorizontalOutset.toPx()
+                    drawRoundRect(
+                        color = pressColor.copy(alpha = pressColor.alpha * pressProgress),
+                        topLeft = Offset(-outset, 0f),
+                        size = Size(size.width + outset * 2f, size.height),
+                        cornerRadius = CornerRadius(size.height / 2f),
+                    )
+                }
+                drawContent()
+            }
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -780,6 +809,141 @@ object BottomFloatingNavigationBarDefaults {
      * `mRadius = (getHeight() - paddingTop - paddingBottom) / 2.0f`, i.e. a height/2 capsule.
      */
     val CornerRadius = 28.dp
+
+    /**
+     * The horizontal outset of the item's press mask on each side.
+     *
+     * `COUIBottomFloatingToolbarItemView.updateBackgroundMaskRect` builds the navi item's mask rect
+     * as `(-mBackgroundHorizontalPadding, 0, width + mBackgroundHorizontalPadding, height)`, with
+     * `mBackgroundHorizontalPadding` read from
+     * `coui_bottom_floating_navigation_bar_item_bg_horizontal_padding` — the same 8dp as
+     * [ItemBackgroundHorizontalPadding].
+     */
+    val PressMaskHorizontalOutset = 8.dp
+
+    /**
+     * The spring the item's press mask fades in and out on.
+     *
+     * `COUIMaskEffectDrawable` drives its press mask with
+     * `DEFAULT_SPRING_RESPONSE` (0.3) / `DEFAULT_SPRING_BOUNCE` (0), and `COUIMaskRippleDrawable`
+     * hands the same pair to its own state animators.
+     */
+    val PressMaskSpring = folmeSpring<Float>(
+        damping = 1f,
+        response = 0.3f,
+        visibilityThreshold = 0.001f,
+    )
+
+    /**
+     * The press scale the smallest surfaces spring to. COUI `PressParams.scaleRangeMin`.
+     *
+     * `COUIPressAnimatorUnit.initPressEngineConfig` takes the range from `mPressParams`, whose
+     * provider hands out `PressParams`' defaults.
+     */
+    val PressScaleMin = 0.85f
+
+    /** The press scale the largest surfaces spring to. COUI `PressParams.scaleRangeMax`. */
+    val PressScaleMax = 0.97f
+
+    /** The square side whose area is the low end of the press scale mapping. COUI `PressParams.minAreaWidthDp`. */
+    val PressAreaMinWidthDp = 20f
+
+    /** The square side whose area is the high end of the press scale mapping. COUI `PressParams.maxAreaWidthDp`. */
+    val PressAreaMaxWidthDp = 150f
+
+    /** The aspect ratio above which the second press-scale channel engages. COUI `PressParams.aspectActivationThreshold`. */
+    val PressAspectActivationThreshold = 2f
+
+    /** The aspect ratio at which the second channel reaches [PressAspectExtremeScale]. COUI `PressParams.aspectExtremeRatio`. */
+    val PressAspectExtremeRatio = 15f
+
+    /** The scale of the second channel at [PressAspectActivationThreshold]. COUI `PressParams.aspectBaseScale`. */
+    val PressAspectBaseScale = 0.85f
+
+    /** The scale of the second channel at [PressAspectExtremeRatio]. COUI `PressParams.aspectExtremeScale`. */
+    val PressAspectExtremeScale = 1f
+
+    /** The smallest scale a pressed surface may reach. COUI `PressPhysicsEngine.TARGET_SCALE_MIN`. */
+    val PressScaleClampMin = 0.4f
+
+    /** The largest scale a pressed surface may reach. COUI `PressPhysicsEngine.TARGET_SCALE_MAX_SHRINK`. */
+    val PressScaleClampMax = 1f
+
+    /**
+     * The spring a pressed capsule scales down on.
+     *
+     * `COUIPressAnimatorUnit.initPressEngineConfig` picks the jelly springs, and switches to the
+     * candy pair when the view is more than [PressAspectActivationThreshold] times wider than tall
+     * (`useCandyMaterialRealtime`). A capsule with two or more items is always in that case, so the
+     * candy pair is the one the bar uses: `PressParams.candyPressSpring` is bounce 0 / response 0.3.
+     */
+    val PressScalePressSpring = folmeSpring<Float>(
+        damping = 1f,
+        response = 0.3f,
+        visibilityThreshold = 0.001f,
+    )
+
+    /**
+     * The spring a released capsule scales back up on: `PressParams.candyHandUpSpring`, bounce 0.5 /
+     * response 0.5, cut at `CommonParams.iolPressHandUpMinimumVisibleChange` (1.0E-4).
+     */
+    val PressScaleReleaseSpring = folmeSpring<Float>(
+        damping = 0.5f,
+        response = 0.5f,
+        visibilityThreshold = 1.0E-4f,
+    )
+
+    /** `coui_color_press` in light themes (`couiColorPress`, `#1F000000`). */
+    val PressColorLight = Color(0x1F000000)
+
+    /** `coui_color_press` in dark themes (`couiColorPress`, `#33FFFFFF`). */
+    val PressColorDark = Color(0x33FFFFFF)
+
+    /** The press colour for a bar painted over [background]. */
+    fun pressColor(background: Color): Color = if (background.luminance() < 0.5f) PressColorDark else PressColorLight
+
+    /**
+     * The scale a `width` x `height` surface springs to while pressed.
+     *
+     * `COUIPressAnimatorUnit.initTargetScale` asks `PressPhysicsEngine.calculateTargetScaleBreakdown`
+     * for the target, handing it the [PressScaleMin] / [PressScaleMax] range, a clamp of
+     * [PressScaleClampMin] / [PressScaleClampMax], and a `PressScaleTuning` built from the
+     * `PressParams` defaults. `PressCalc.calculateUniformScaleBreakdown` then blends two channels:
+     *
+     * - the area channel maps the area from [PressAreaMinWidthDp]^2 to [PressAreaMaxWidthDp]^2 onto
+     *   [PressScaleMin]..[PressScaleMax] through the `PressParams` bezier — `(0, 0, 0, 1)`, whose
+     *   control points make `y = x`, so the mapping is linear;
+     * - the aspect channel engages once the longer side is more than
+     *   [PressAspectActivationThreshold] times the shorter one, coasts from [PressAspectBaseScale] to
+     *   [PressAspectExtremeScale] between that threshold and [PressAspectExtremeRatio], and is blended
+     *   into the area scale at half weight.
+     *
+     * The area bounds are taken in dp, the way the native tuning converts
+     * `minAreaWidthDp` / `maxAreaWidthDp` with `TouchAnimatorParamProvider.dp2px` and squares them:
+     * both ends carry the same density factor, so the interpolation is density independent.
+     */
+    fun pressScale(width: Dp, height: Dp): Float {
+        val w = width.value
+        val h = height.value
+        if (w <= 0f || h <= 0f) return 1f
+        val minArea = PressAreaMinWidthDp * PressAreaMinWidthDp
+        val maxArea = PressAreaMaxWidthDp * PressAreaMaxWidthDp
+        val area = (w * h).coerceIn(minArea, maxArea)
+        val areaScale = PressScaleMin + (PressScaleMax - PressScaleMin) * ((area - minArea) / (maxArea - minArea))
+        val aspect = maxOf(w / h, h / w)
+        val scale = if (aspect <= PressAspectActivationThreshold) {
+            areaScale
+        } else {
+            val aspectProgress = (
+                (aspect - PressAspectActivationThreshold) /
+                    (PressAspectExtremeRatio - PressAspectActivationThreshold)
+                ).coerceIn(0f, 1f)
+            val aspectScale = PressAspectBaseScale +
+                (PressAspectExtremeScale - PressAspectBaseScale) * aspectProgress
+            (areaScale + aspectScale) / 2f
+        }
+        return scale.coerceIn(PressScaleClampMin, PressScaleClampMax)
+    }
 }
 
 /**
