@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -126,17 +127,22 @@ private fun Coui17Root() {
     // device, the material's full-strength patch (y=0, alpha 1) is the page background's own
     // (240,240,241) over an identical (240,240,241) page.
     val pageColor = AppBarBlurOverlayDefaults.containerColor()
-    // The recorded layer is what the light-sensing surfaces sample. It holds the page content and
-    // nothing else: every bar that reads it is a sibling of it, never a child, or the blur would
-    // sample a backdrop that already has the blur baked into it.
-    val backdrop = rememberLayerBackdrop {
-        drawWallpaper(surfaceColor, wallpaper.image)
-        drawContent()
-    }
     // The bars sample the page without the wallpaper. The device's material blurs whatever sits
     // behind the bar, and behind the bar is the page — nothing on the Settings home is wallpaper, so
     // a bar that sampled one would paint a band the device does not have.
     val pageBackdrop = rememberLayerBackdrop { drawContent() }
+    // The recorded layer is what the light-sensing surfaces sample. It holds the page content and
+    // nothing else: every bar that reads it is a sibling of it, never a child, or the blur would
+    // sample a backdrop that already has the blur baked into it.
+    //
+    // Both modifiers sit on the same node, so the wallpaper goes under the page by blitting the page
+    // layer instead of calling `drawContent()` a second time: a second call would draw the whole
+    // pager again for every layer on every frame. The page layer's node draws before this one, so it
+    // already holds the current frame by the time this recording reads it.
+    val backdrop = rememberLayerBackdrop {
+        drawWallpaper(surfaceColor, wallpaper.image)
+        drawLayer(pageBackdrop.graphicsLayer)
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val pagerState = rememberPagerState(pageCount = { Coui17Page.entries.size })
     val coroutineScope = rememberCoroutineScope()
