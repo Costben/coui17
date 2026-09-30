@@ -43,9 +43,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.onClick
@@ -252,64 +258,84 @@ fun SearchBar(
     // sibling of `search_src_text`, so the field's own node starts at x=216px — after the 40dp icon
     // slot — instead of stretching back over the glyph.
     val colors = SearchBarDefaults.searchBarColors()
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(bottom = 6.dp)
-            .background(color = colors.backgroundColor, shape = CircleShape),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(bottom = 6.dp),
     ) {
-        // The device's leading slot is 40dp, 36dp of it the icon view; the glyph reads 17.5dp. Same
-        // numbers as the collapsed home pill.
-        Icon(
-            imageVector = COUIIcons.Basic.Search,
-            contentDescription = null,
+        // The expanded field keeps the shadow the device draws as soon as the search page is open.
+        // The fill is translucent at night, so the shadow sits on its own layer with the capsule
+        // punched out — drawn behind the fill it would darken the field itself.
+        Box(
             modifier = Modifier
-                .size(40.dp)
-                .padding(start = 10.dp, end = 7.dp),
-            tint = COUITheme.colorScheme.onSurfaceContainerHigh,
-        )
-        InputField(
-            query = searchStatus.searchText,
-            onQueryChange = { onSearchStatusChange(searchStatus.copy(searchText = it)) },
-            label = searchStatus.label,
-            leadingIcon = {},
-            trailingIcon = {
-                AnimatedVisibility(
-                    searchStatus.searchText.isNotEmpty(),
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut(),
-                ) {
-                    Icon(
-                        imageVector = COUIIcons.Basic.SearchCleanup,
-                        tint = COUITheme.colorScheme.onSurface,
-                        contentDescription = "Clean",
-                        modifier = Modifier
-                            .size(44.dp)
-                            .padding(start = 8.dp, end = 16.dp)
-                            .clickable(
-                                interactionSource = null,
-                                indication = null,
-                                onClick = onClearSearch,
-                            ),
-                    )
+                .matchParentSize()
+                .drawWithContent {
+                    val radius = size.height / 2f
+                    val capsule = Path().apply {
+                        addRoundRect(RoundRect(0f, 0f, size.width, size.height, radius, radius))
+                    }
+                    clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
                 }
-            },
-            colors = colors.copy(backgroundColor = Color.Transparent),
-            modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester),
-            onSearch = {},
-            expanded = searchStatus.shouldExpand(),
-            onExpandedChange = {
-                onSearchStatusChange(
-                    searchStatus.copy(
-                        current = if (it) SearchStatus.Status.EXPANDED else SearchStatus.Status.COLLAPSED,
-                    ),
-                )
-            },
+                .dropShadow(shape = CircleShape, shadow = searchBarShadow()),
         )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = colors.backgroundColor, shape = CircleShape),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // The device's leading slot is 40dp, 36dp of it the icon view; the glyph reads 17.5dp.
+            // Same numbers as the collapsed home pill.
+            Icon(
+                imageVector = COUIIcons.Basic.Search,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(start = 10.dp, end = 7.dp),
+                tint = COUITheme.colorScheme.onSurfaceContainerHigh,
+            )
+            InputField(
+                query = searchStatus.searchText,
+                onQueryChange = { onSearchStatusChange(searchStatus.copy(searchText = it)) },
+                label = searchStatus.label,
+                leadingIcon = {},
+                trailingIcon = {
+                    AnimatedVisibility(
+                        searchStatus.searchText.isNotEmpty(),
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut(),
+                    ) {
+                        Icon(
+                            imageVector = COUIIcons.Basic.SearchCleanup,
+                            tint = COUITheme.colorScheme.onSurface,
+                            contentDescription = "Clean",
+                            modifier = Modifier
+                                .size(44.dp)
+                                .padding(start = 8.dp, end = 16.dp)
+                                .clickable(
+                                    interactionSource = null,
+                                    indication = null,
+                                    onClick = onClearSearch,
+                                ),
+                        )
+                    }
+                },
+                colors = colors.copy(backgroundColor = Color.Transparent),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester),
+                onSearch = {},
+                expanded = searchStatus.shouldExpand(),
+                onExpandedChange = {
+                    onSearchStatusChange(
+                        searchStatus.copy(
+                            current = if (it) SearchStatus.Status.EXPANDED else SearchStatus.Status.COLLAPSED,
+                        ),
+                    )
+                },
+            )
+        }
     }
     LaunchedEffect(Unit) {
         if (!expanded && searchStatus.shouldExpand()) {
