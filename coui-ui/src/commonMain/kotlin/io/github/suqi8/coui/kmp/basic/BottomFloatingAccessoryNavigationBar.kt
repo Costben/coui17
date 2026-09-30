@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -21,11 +24,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
@@ -108,6 +115,9 @@ fun BottomFloatingAccessoryNavigationBar(
     val accessorySize = BottomFloatingAccessoryNavigationBarDefaults.AccessorySize
     val sideSpacing = BottomFloatingAccessoryNavigationBarDefaults.SideSpacing
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
+    // The rim's weight is a property of the theme, the way `rememberGlassHighlight` picks its
+    // stroke: a white bloom reads much stronger over the dark bar colour than over the light one.
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
     val startExpansion = rememberAccessoryExpansion(startAccessory != null && startAccessoryVisible)
     val endExpansion = rememberAccessoryExpansion(endAccessory != null && endAccessoryVisible)
@@ -147,6 +157,49 @@ fun BottomFloatingAccessoryNavigationBar(
                     .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance)
                     .onSizeChanged { barWidthPx = it.width },
             ) {
+                // The device lifts the bar with COUI's `SHADOW_LV_B` spot shadow. Each view casts its
+                // own — `ShadowUtils.setElevationToView(this, 2, ...)` runs both in
+                // `COUIBottomFloatingAccessoryView` and in `BaseBottomFloatingMenuView` — so the
+                // capsule and the two accessories each get a shadow layer of their own, under the
+                // blob that MetaBallSurface paints over them.
+                val barShadow = BottomFloatingAccessoryNavigationBarDefaults.BarShadow
+                Box(modifier = Modifier.matchParentSize()) {
+                    if (capsuleWidthPx > 0) {
+                        Box(
+                            modifier = Modifier
+                                .offset(x = reserve, y = 0.dp)
+                                .size(capsuleWidth, barHeight)
+                                .dropShadow(
+                                    shape = RoundedCornerShape(cornerRadius),
+                                    shadow = barShadow,
+                                ),
+                        )
+                    }
+                    if (barWidthPx > 0 && startAccessory != null) {
+                        val diameter = accessorySize * startExpansion.scale
+                        Box(
+                            modifier = Modifier
+                                .offset(
+                                    x = accessorySize / 2 + startTuck - diameter / 2,
+                                    y = (barHeight - diameter) / 2,
+                                )
+                                .size(diameter)
+                                .dropShadow(shape = CircleShape, shadow = barShadow),
+                        )
+                    }
+                    if (barWidthPx > 0 && endAccessory != null) {
+                        val diameter = accessorySize * endExpansion.scale
+                        Box(
+                            modifier = Modifier
+                                .offset(
+                                    x = barWidth - accessorySize / 2 - endTuck - diameter / 2,
+                                    y = (barHeight - diameter) / 2,
+                                )
+                                .size(diameter)
+                                .dropShadow(shape = CircleShape, shadow = barShadow),
+                        )
+                    }
+                }
                 MetaBallSurface(
                     particles = buildList {
                         if (capsuleWidthPx > 0) {
@@ -182,7 +235,16 @@ fun BottomFloatingAccessoryNavigationBar(
                     modifier = Modifier.matchParentSize(),
                     color = containerColor,
                     backdrop = backdrop,
-                    rimColor = if (backdrop != null) Color.White.copy(alpha = 0.55f) else null,
+                    containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
+                    // The highlight is the same bloom the other glass surfaces get, so it is only as
+                    // strong as `Highlight.GlassStroke*` would make it. Measured on Gallery's dark
+                    // accessory bar the top edge lands at 89 over a 41 body, which a 0.24 white
+                    // stroke reproduces; the old 0.55 drew a ring the device does not have.
+                    rimColor = if (backdrop != null) {
+                        Color.White.copy(alpha = if (isDark) 0.24f else 0.45f)
+                    } else {
+                        null
+                    },
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (startAccessory != null) {
@@ -361,6 +423,48 @@ object BottomFloatingAccessoryNavigationBarDefaults {
 
     /** The outside padding on a small screen. COUI `coui_bottom_floating_navigation_bar_padding_horizontal`. */
     val PaddingHorizontal = 16.dp
+
+    /**
+     * The alpha the bar colour keeps over the blur, per theme.
+     *
+     * The device does not paint this bar from a colour token: `COUIBottomFloatingAccessoryView`
+     * blurs it with `COUIMaterialEffect.setViewBlurEffect(..., TYPE_FRAMEWORK_BOTTOM_BAR)` and only
+     * falls back to `couiColorBar` when the effect is off. The blend therefore has to be matched by
+     * measurement, and the two themes do not land in the same place. Over an even page the device's
+     * light capsule reads 248 against the page's 240 — `#FAFAFA` at [GlassDefaults.ContainerAlpha]
+     * gives exactly that — while its dark capsule reads 39 against the page's 47, so it keeps about
+     * two thirds of `#1E1E1E`. At 0.8 the dark bar came out at 34 over a page of 51 and read as a
+     * black slab; at 0.35 it came out at 58 and read as a light one.
+     */
+    fun containerAlpha(isDark: Boolean): Float = if (isDark) 0.65f else GlassDefaults.ContainerAlpha
+
+    /**
+     * The spot shadow the capsule and each accessory cast, COUI `SHADOW_LV_B` (level 2 of
+     * `ShadowUtils.setElevationToView`).
+     *
+     * Both `COUIBottomFloatingAccessoryView` and `BaseBottomFloatingMenuView` call
+     * `ShadowUtils.setElevationToView(this, 2, support_shadow_size_level_three,
+     * coui_bottom_floating_navigation_bar_menu_shadow_color)`, and that overload branches on
+     * `checkOPlusViewElevationSDK()`:
+     *
+     * - with the OPlus sub-SDK the level 2 branch resolves `coui_shadow_elevation_level3b` (350dp),
+     *   `coui_shadow_light_y_level3b` (-160dp), `coui_shadow_light_z_level3b` (10000dp) and
+     *   `coui_shadow_light_r_level3b` (2000dp), whose Skia spot metrics would be a 72.54dp radius at
+     *   +5.80dp — a halo wide enough to darken the page more than 50px above the bar;
+     * - without it the call falls through to `setElevationToViewFromLower(view, i2, i4, i3)`, i.e.
+     *   `view.setElevation(12dp)` under the `#8A000000` spot colour it was handed.
+     *
+     * The device picks the second reading: sampled above Gallery's dark bar the page stays at 47 up
+     * to the capsule's top edge, and the falloff outside the bar runs about 6–8dp, which a 350dp
+     * halo would not leave. The 12dp `support_shadow_size_level_three` is therefore the size used
+     * here, with the colour the call site passes.
+     */
+    val BarShadow: Shadow = Shadow(
+        radius = 12.dp,
+        color = Color.Black.copy(alpha = 0x8A / 255f),
+        spread = 0.dp,
+        offset = DpOffset(0.dp, 2.dp),
+    )
 
     /** The scale the accessory view starts from. COUI `EXPANSION_VIEW_MIN_SCALE`. */
     val MinScale = 0.5f
