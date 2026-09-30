@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Arrangement
@@ -31,75 +33,81 @@ import io.github.suqi8.coui.kmp.utils.PressFeedbackType
 fun LazyListScope.cardSection() {
     item(key = "card") {
         SmallTitle(text = "Card")
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-            insideMargin = PaddingValues(16.dp),
-            onClick = { println("Card click") },
-        ) {
-            Text(
-                color = COUITheme.colorScheme.onSurface,
-                text = "Card",
-                fontSize = 19.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                text = "PressFeedbackType: Tint (default)",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Normal,
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Card(
-                modifier = Modifier.weight(1f),
-                insideMargin = PaddingValues(16.dp),
-                pressFeedbackType = PressFeedbackType.Sink,
-                onClick = { println("Card click") },
-                content = {
-                    Text(
-                        color = COUITheme.colorScheme.onSurface,
-                        text = "Card",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                        text = "PressFeedback\nType: Sink",
-                        style = COUITheme.textStyles.paragraph,
-                    )
-                },
-            )
-            Card(
-                modifier = Modifier.weight(1f),
-                insideMargin = PaddingValues(16.dp),
-                pressFeedbackType = PressFeedbackType.Tilt,
-                onLongPress = { println("Card long press") },
-                content = {
-                    Text(
-                        color = COUITheme.colorScheme.onSurface,
-                        text = "Card",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                        text = "PressFeedback\nType: Tilt",
-                        style = COUITheme.textStyles.paragraph,
-                    )
-                },
-            )
-        }
-        LongPressHoldDownCardDemo()
+        CardDemo()
     }
+}
+
+/** Renders the "Card" gallery section content (press-feedback cards plus the long-press dialog card). */
+@Composable
+fun CardDemo() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+        insideMargin = PaddingValues(16.dp),
+        onClick = { println("Card click") },
+    ) {
+        Text(
+            color = COUITheme.colorScheme.onSurface,
+            text = "Card",
+            fontSize = 19.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            color = COUITheme.colorScheme.onSurfaceVariantSummary,
+            text = "PressFeedbackType: Tint (default)",
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Normal,
+        )
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Card(
+            modifier = Modifier.weight(1f),
+            insideMargin = PaddingValues(16.dp),
+            pressFeedbackType = PressFeedbackType.Sink,
+            onClick = { println("Card click") },
+            content = {
+                Text(
+                    color = COUITheme.colorScheme.onSurface,
+                    text = "Card",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    color = COUITheme.colorScheme.onSurfaceVariantSummary,
+                    text = "PressFeedback\nType: Sink",
+                    style = COUITheme.textStyles.paragraph,
+                )
+            },
+        )
+        Card(
+            modifier = Modifier.weight(1f),
+            insideMargin = PaddingValues(16.dp),
+            pressFeedbackType = PressFeedbackType.Tilt,
+            onLongPress = { println("Card long press") },
+            content = {
+                Text(
+                    color = COUITheme.colorScheme.onSurface,
+                    text = "Card",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    color = COUITheme.colorScheme.onSurfaceVariantSummary,
+                    text = "PressFeedback\nType: Tilt",
+                    style = COUITheme.textStyles.paragraph,
+                )
+            },
+        )
+    }
+    LongPressHoldDownCardDemo()
 }
 
 @Composable

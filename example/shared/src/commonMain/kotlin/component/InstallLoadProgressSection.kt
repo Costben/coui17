@@ -32,15 +32,21 @@ import kotlinx.coroutines.delay
 fun LazyListScope.installLoadProgressSection() {
     item(key = "installLoadProgress") {
         SmallTitle(text = "InstallLoadProgress")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            InstallLoadStyleDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            InstallLoadSpecialStatesDemo()
-        }
+        InstallLoadProgressDemo()
+    }
+}
+
+/** Renders the "InstallLoadProgress" gallery section content (a card listing every load style plus the special states). */
+@Composable
+fun InstallLoadProgressDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        InstallLoadStyleDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        InstallLoadSpecialStatesDemo()
     }
 }
 

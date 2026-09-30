@@ -27,24 +27,30 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 fun LazyListScope.checkboxSection() {
     item(key = "checkbox") {
         SmallTitle(text = "Checkbox")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            CheckboxRow()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            CheckboxPreferenceEndDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            CheckboxPreferenceDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            CheckboxPreference(
-                title = "Disabled Checkbox",
-                checked = true,
-                enabled = false,
-                onCheckedChange = {},
-            )
-        }
+        CheckboxDemo()
+    }
+}
+
+/** Renders the "Checkbox" gallery section content (a card of checkbox rows and preference variants). */
+@Composable
+fun CheckboxDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        CheckboxRow()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        CheckboxPreferenceEndDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        CheckboxPreferenceDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        CheckboxPreference(
+            title = "Disabled Checkbox",
+            checked = true,
+            enabled = false,
+            onCheckedChange = {},
+        )
     }
 }
 

@@ -53,39 +53,57 @@ private val DemoHistory = listOf(
 fun LazyListScope.searchAndSliderSection() {
     item(key = "intentSeekBar") {
         SmallTitle(text = "IntentSeekBar")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            IntentSeekBarDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            IntentSeekBarSizeDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            IntentSeekBarFixedColorsDemo()
-        }
+        IntentSeekBarDemoContent()
     }
     item(key = "touchSearchView") {
         SmallTitle(text = "TouchSearchView")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            TouchSearchViewDemo()
-        }
+        TouchSearchViewDemoContent()
     }
     item(key = "searchHistoryView") {
         SmallTitle(text = "SearchHistoryView")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            SearchHistoryViewDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            FoldableSearchHistoryViewDemo()
-        }
+        SearchHistoryViewDemoContent()
+    }
+}
+
+/** Renders the "IntentSeekBar" gallery section content: a card of intent seek bar variants and a plain slider. */
+@Composable
+fun IntentSeekBarDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        IntentSeekBarDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        IntentSeekBarSizeDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        IntentSeekBarFixedColorsDemo()
+    }
+}
+
+/** Renders the "TouchSearchView" gallery section content: a card with the touch search keypad. */
+@Composable
+fun TouchSearchViewDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        TouchSearchViewDemo()
+    }
+}
+
+/** Renders the "SearchHistoryView" gallery section content: a card with the search history list and its folded variant. */
+@Composable
+fun SearchHistoryViewDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        SearchHistoryViewDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        FoldableSearchHistoryViewDemo()
     }
 }
 

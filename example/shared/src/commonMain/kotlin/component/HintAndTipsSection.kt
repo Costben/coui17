@@ -33,25 +33,37 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 fun LazyListScope.hintAndTipsSection() {
     item(key = "hintAnimationLayout") {
         SmallTitle(text = "HintAnimationLayout")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            HintAnimationDemo()
-        }
+        HintAnimationLayoutDemo()
     }
     item(key = "topTipsStyles") {
         SmallTitle(text = "TopTips Styles")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            TopTipsAiPaymentDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            TopTipsBackgroundDemo()
-        }
+        TopTipsStylesDemo()
+    }
+}
+
+/** Renders the "HintAnimationLayout" gallery section content (a card wrapping the hint animation demo). */
+@Composable
+fun HintAnimationLayoutDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        HintAnimationDemo()
+    }
+}
+
+/** Renders the "TopTips Styles" gallery section content (a card with the AI payment and background tips). */
+@Composable
+fun TopTipsStylesDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        TopTipsAiPaymentDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        TopTipsBackgroundDemo()
     }
 }
 

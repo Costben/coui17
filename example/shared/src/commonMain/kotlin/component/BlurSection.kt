@@ -65,8 +65,9 @@ fun LazyListScope.blurSection() {
     }
 }
 
+/** Renders the "Texture Blur" gallery section content: a texture-blur preview with blend, highlight and blur-parameter controls. */
 @Composable
-private fun BlurDemo() {
+fun BlurDemo() {
     var blurRadiusX by remember { mutableFloatStateOf(100f) }
     var blurRadiusY by remember { mutableFloatStateOf(100f) }
     var noiseCoefficient by remember { mutableFloatStateOf(BlurDefaults.NoiseCoefficient) }
@@ -230,8 +231,9 @@ private fun BlurDemo() {
     }
 }
 
+/** Renders the "Foreground Blur" gallery section content: a foreground-blur preview with variant, blend and blur-parameter controls. */
 @Composable
-private fun ForegroundBlurDemo() {
+fun ForegroundBlurDemo() {
     var blurRadiusX by remember { mutableFloatStateOf(200f) }
     var blurRadiusY by remember { mutableFloatStateOf(200f) }
     var noiseCoefficient by remember { mutableFloatStateOf(BlurDefaults.NoiseCoefficient) }

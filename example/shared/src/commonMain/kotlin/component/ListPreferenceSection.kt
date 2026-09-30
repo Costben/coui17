@@ -22,24 +22,30 @@ import io.github.suqi8.coui.kmp.preference.MultiSelectListPreference
 fun LazyListScope.listPreferenceSection() {
     item(key = "listPreference") {
         SmallTitle(text = "ListPreference")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            ListPreferenceDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            MultiSelectListPreferenceDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ListPreference(
-                entries = remember { listOf(ListPreferenceEntry("Unavailable")) },
-                selectedIndex = 0,
-                onSelectedIndexChange = {},
-                title = "Disabled ListPreference",
-                cancelButtonText = "Cancel",
-                enabled = false,
-            )
-        }
+        ListPreferenceDemoContent()
+    }
+}
+
+/** Renders the "ListPreference" gallery section content: single and multi select list preferences in a card. */
+@Composable
+fun ListPreferenceDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ListPreferenceDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        MultiSelectListPreferenceDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ListPreference(
+            entries = remember { listOf(ListPreferenceEntry("Unavailable")) },
+            selectedIndex = 0,
+            onSelectedIndexChange = {},
+            title = "Disabled ListPreference",
+            cancelButtonText = "Cancel",
+            enabled = false,
+        )
     }
 }
 

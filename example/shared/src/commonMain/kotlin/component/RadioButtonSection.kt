@@ -20,20 +20,26 @@ import io.github.suqi8.coui.kmp.preference.RadioButtonPreference
 fun LazyListScope.radioButtonSection() {
     item(key = "radioButton") {
         SmallTitle(text = "RadioButton")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            SuperRadioButtonDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            RadioButtonPreference(
-                title = "Disabled RadioButton",
-                selected = true,
-                enabled = false,
-                onClick = {},
-            )
-        }
+        RadioButtonDemo()
+    }
+}
+
+/** Renders the "RadioButton" gallery section content (a group of radio preferences followed by a disabled one). */
+@Composable
+fun RadioButtonDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        SuperRadioButtonDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        RadioButtonPreference(
+            title = "Disabled RadioButton",
+            selected = true,
+            enabled = false,
+            onClick = {},
+        )
     }
 }
 

@@ -38,68 +38,33 @@ fun LazyListScope.colorPickerSection() {
 
     item(key = "colorPicker-HSV") {
         SmallTitle(text = "ColorPicker (HSV)")
-        ColorPickerCard(colorSpace = ColorSpace.HSV)
+        ColorPickerHSVDemo()
     }
 
     item(key = "colorPicker-OKHSV") {
         SmallTitle(text = "ColorPicker (OKHSV)")
-        ColorPickerCard(colorSpace = ColorSpace.OKHSV)
+        ColorPickerOKHSVDemo()
     }
 
     item(key = "colorPicker-OKLAB") {
         SmallTitle(text = "ColorPicker (OKLAB)")
-        ColorPickerCard(colorSpace = ColorSpace.OKLAB)
+        ColorPickerOKLABDemo()
     }
 
     item(key = "colorPicker-OKLCH") {
         SmallTitle(text = "ColorPicker (OKLCH)")
-        ColorPickerCard(colorSpace = ColorSpace.OKLCH)
+        ColorPickerOKLCHDemo()
     }
 
     item(key = "colorPalette") {
         SmallTitle(text = "ColorPalette")
-        val couiColor = COUITheme.colorScheme.primary
-        var selectedColor by remember { mutableStateOf(couiColor) }
-        var colorHex by remember(selectedColor) {
-            mutableStateOf(
-                selectedColor.toArgb().toHexString(HexFormat.UpperCase),
-            )
-        }
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-            insideMargin = PaddingValues(16.dp),
-        ) {
-            Row(
-                modifier = Modifier.padding(bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "RGBA: ${(selectedColor.red * 255).toInt()}, " +
-                        "${(selectedColor.green * 255).toInt()}, " +
-                        "${(selectedColor.blue * 255).toInt()}, " +
-                        "${(round(selectedColor.alpha * 100) / 100.0)}",
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            ColorPalette(
-                color = selectedColor,
-                onColorChanged = { selectedColor = it },
-                showPreview = false,
-            )
-            ColorHexTextField(colorHex) { newHex, newColor ->
-                colorHex = newHex
-                if (newColor != null) selectedColor = newColor
-            }
-        }
+        ColorPaletteDemo()
     }
 }
 
+/** Renders the "ColorSwatchPicker" gallery section content. */
 @Composable
-private fun ColorSwatchPickerCard() {
+fun ColorSwatchPickerCard() {
     val swatchColors = remember {
         listOf(
             Color(0xFF0066FF),
@@ -124,6 +89,72 @@ private fun ColorSwatchPickerCard() {
             selectedIndex = selectedIndex,
             onSwatchSelected = { selectedIndex = it },
         )
+    }
+}
+
+/** Renders the "ColorPicker (HSV)" gallery section content. */
+@Composable
+fun ColorPickerHSVDemo() {
+    ColorPickerCard(colorSpace = ColorSpace.HSV)
+}
+
+/** Renders the "ColorPicker (OKHSV)" gallery section content. */
+@Composable
+fun ColorPickerOKHSVDemo() {
+    ColorPickerCard(colorSpace = ColorSpace.OKHSV)
+}
+
+/** Renders the "ColorPicker (OKLAB)" gallery section content. */
+@Composable
+fun ColorPickerOKLABDemo() {
+    ColorPickerCard(colorSpace = ColorSpace.OKLAB)
+}
+
+/** Renders the "ColorPicker (OKLCH)" gallery section content. */
+@Composable
+fun ColorPickerOKLCHDemo() {
+    ColorPickerCard(colorSpace = ColorSpace.OKLCH)
+}
+
+/** Renders the "ColorPalette" gallery section content: an RGBA readout, a palette and a hex field. */
+@Composable
+fun ColorPaletteDemo() {
+    val couiColor = COUITheme.colorScheme.primary
+    var selectedColor by remember { mutableStateOf(couiColor) }
+    var colorHex by remember(selectedColor) {
+        mutableStateOf(
+            selectedColor.toArgb().toHexString(HexFormat.UpperCase),
+        )
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+        insideMargin = PaddingValues(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "RGBA: ${(selectedColor.red * 255).toInt()}, " +
+                    "${(selectedColor.green * 255).toInt()}, " +
+                    "${(selectedColor.blue * 255).toInt()}, " +
+                    "${(round(selectedColor.alpha * 100) / 100.0)}",
+                modifier = Modifier.weight(1f),
+            )
+        }
+        ColorPalette(
+            color = selectedColor,
+            onColorChanged = { selectedColor = it },
+            showPreview = false,
+        )
+        ColorHexTextField(colorHex) { newHex, newColor ->
+            colorHex = newHex
+            if (newColor != null) selectedColor = newColor
+        }
     }
 }
 

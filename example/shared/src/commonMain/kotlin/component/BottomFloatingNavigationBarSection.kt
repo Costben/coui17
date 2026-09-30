@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.Image
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -47,96 +50,102 @@ import utils.rememberBlurBackdrop
 fun LazyListScope.bottomFloatingNavigationBarSection() {
     item(key = "bottomFloatingNavigationBar") {
         SmallTitle(text = "BottomFloatingNavigationBar")
-        var selectedIndex by remember { mutableIntStateOf(0) }
-        var expanded by remember { mutableStateOf(true) }
-        val colorScheme = COUITheme.colorScheme
-        // Three items: the bar hands the expansion view's footprint plus the side spacing to the
-        // capsule as a width bound, so the capsule has to leave that much of the row free.
-        val items = remember {
-            listOf(
-                "Home" to COUIIcons.Home,
-                "Messages" to COUIIcons.Messages,
-                "Settings" to COUIIcons.Settings,
-            )
-        }
-        val backdrop = rememberBlurBackdrop()
+        BottomFloatingNavigationBarDemo()
+    }
+}
 
+/** Renders the "BottomFloatingNavigationBar" gallery section content: a wallpaper-backed floating bar with an expansion-view switch. */
+@Composable
+fun BottomFloatingNavigationBarDemo() {
+    var selectedIndex by remember { mutableIntStateOf(0) }
+    var expanded by remember { mutableStateOf(true) }
+    val colorScheme = COUITheme.colorScheme
+    // Three items: the bar hands the expansion view's footprint plus the side spacing to the
+    // capsule as a width bound, so the capsule has to leave that much of the row free.
+    val items = remember {
+        listOf(
+            "Home" to COUIIcons.Home,
+            "Messages" to COUIIcons.Messages,
+            "Settings" to COUIIcons.Settings,
+        )
+    }
+    val backdrop = rememberBlurBackdrop()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp),
+    ) {
+        // The capsule samples this layer, so the demo gives it content worth refracting. It is a
+        // sibling of the bar, not an ancestor: a blur surface nested inside the layer it reads
+        // would draw the layer while the layer is still being recorded.
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp),
+                .matchParentSize()
+                .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier),
         ) {
-            // The capsule samples this layer, so the demo gives it content worth refracting. It is a
-            // sibling of the bar, not an ancestor: a blur surface nested inside the layer it reads
-            // would draw the layer while the layer is still being recorded.
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier),
-            ) {
-                WallpaperState.bitmap?.let { wallpaper ->
-                    Image(
-                        bitmap = wallpaper,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                    )
-                } ?: Image(
-                    painter = painterResource(Res.drawable.blur_test_bg),
+            WallpaperState.bitmap?.let { wallpaper ->
+                Image(
+                    bitmap = wallpaper,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                 )
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-            ) {
-                CompositionLocalProvider(LocalBackdrop provides backdrop) {
-                    BottomFloatingNavigationBar(
-                        expanded = expanded,
-                        // The expansion view melts out of the capsule through one merged silhouette,
-                        // so it is a plain round surface here rather than its own glass panel.
-                        expansion = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape)
-                                    .background(colorScheme.primary),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector = COUIIcons.Add,
-                                    contentDescription = "Expand",
-                                    tint = colorScheme.onPrimary,
-                                )
-                            }
-                        },
-                    ) {
-                        items.forEachIndexed { index, (label, icon) ->
-                            BottomFloatingNavigationBarItem(
-                                selected = selectedIndex == index,
-                                onClick = { selectedIndex = index },
-                                icon = icon,
-                                label = label,
-                                enabled = index != items.lastIndex,
+            } ?: Image(
+                painter = painterResource(Res.drawable.blur_test_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+        ) {
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                BottomFloatingNavigationBar(
+                    expanded = expanded,
+                    // The expansion view melts out of the capsule through one merged silhouette,
+                    // so it is a plain round surface here rather than its own glass panel.
+                    expansion = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(colorScheme.primary),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = COUIIcons.Add,
+                                contentDescription = "Expand",
+                                tint = colorScheme.onPrimary,
                             )
                         }
+                    },
+                ) {
+                    items.forEachIndexed { index, (label, icon) ->
+                        BottomFloatingNavigationBarItem(
+                            selected = selectedIndex == index,
+                            onClick = { selectedIndex = index },
+                            icon = icon,
+                            label = label,
+                            enabled = index != items.lastIndex,
+                        )
                     }
                 }
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = "Expansion view")
-            Switch(checked = expanded, onCheckedChange = { expanded = it })
-        }
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = "Expansion view")
+        Switch(checked = expanded, onCheckedChange = { expanded = it })
     }
 }

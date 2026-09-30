@@ -43,13 +43,19 @@ import io.github.suqi8.coui.kmp.window.WindowListPopup
 fun LazyListScope.clickSelectMenuSection() {
     item(key = "clickSelectMenu") {
         SmallTitle(text = "ClickSelectMenu")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            ClickSelectMenuDemo()
-        }
+        ClickSelectMenuDemoContent()
+    }
+}
+
+/** Renders the "ClickSelectMenu" gallery section content: a card hosting the click-select menu demo. */
+@Composable
+fun ClickSelectMenuDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ClickSelectMenuDemo()
     }
 }
 

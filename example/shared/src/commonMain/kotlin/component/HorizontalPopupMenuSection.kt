@@ -36,8 +36,9 @@ fun LazyListScope.horizontalPopupMenuSection() {
     }
 }
 
+/** Renders the "HorizontalPopupMenu" gallery section content (a button opening a popup with labelled and icon-only menus). */
 @Composable
-private fun HorizontalPopupMenuDemo() {
+fun HorizontalPopupMenuDemo() {
     var showPopup by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableIntStateOf(0) }
     val rows = remember { listOf("Option 1", "Option 2", "Option 3") }

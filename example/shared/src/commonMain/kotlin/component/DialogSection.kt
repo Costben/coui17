@@ -27,133 +27,139 @@ import kotlinx.coroutines.delay
 
 fun LazyListScope.dialogSection() {
     item(key = "dialog") {
-        var showSuperDialog by remember { mutableStateOf(false) }
-        var showWindowDialog by remember { mutableStateOf(false) }
-        var superDialogHoldDown by remember { mutableStateOf(false) }
-        var windowDialogHoldDown by remember { mutableStateOf(false) }
-        var showLoadingDialog by remember { mutableStateOf(false) }
-        var loadingDialogHoldDown by remember { mutableStateOf(false) }
-        var showSecurityDialog by remember { mutableStateOf(false) }
-        var securityDialogHoldDown by remember { mutableStateOf(false) }
-        var showStackedDialog by remember { mutableStateOf(false) }
-        var stackedDialogHoldDown by remember { mutableStateOf(false) }
-        var showRecommendedDialog by remember { mutableStateOf(false) }
-        var recommendedDialogHoldDown by remember { mutableStateOf(false) }
-
         SmallTitle(text = "Dialog")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            ArrowPreference(
-                title = "Dialog (O)",
-                summary = "Click to show an OverlayDialog",
-                onClick = {
-                    showSuperDialog = true
-                    superDialogHoldDown = true
-                },
-                holdDownState = superDialogHoldDown,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "Dialog (W)",
-                summary = "Click to show a WindowDialog",
-                onClick = {
-                    showWindowDialog = true
-                    windowDialogHoldDown = true
-                },
-                holdDownState = windowDialogHoldDown,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "Loading Dialog (O)",
-                summary = "Click to show an OverlayLoadingDialog",
-                onClick = {
-                    showLoadingDialog = true
-                    loadingDialogHoldDown = true
-                },
-                holdDownState = loadingDialogHoldDown,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "Stacked Button Bar (O)",
-                summary = "Long labels flip the bar to a vertical stack",
-                onClick = {
-                    showStackedDialog = true
-                    stackedDialogHoldDown = true
-                },
-                holdDownState = stackedDialogHoldDown,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "Recommended Button Bar (O)",
-                summary = "One action is highlighted as the recommend button",
-                onClick = {
-                    showRecommendedDialog = true
-                    recommendedDialogHoldDown = true
-                },
-                holdDownState = recommendedDialogHoldDown,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "Security Dialog (O)",
-                summary = "Click to show an OverlaySecurityDialog",
-                onClick = {
-                    showSecurityDialog = true
-                    securityDialogHoldDown = true
-                },
-                holdDownState = securityDialogHoldDown,
-            )
-        }
+        DialogDemo()
+    }
+}
 
-        SuperDialogDemo(
-            show = showSuperDialog,
-            onDismissRequest = { showSuperDialog = false },
-            onDismissFinished = { superDialogHoldDown = false },
-        )
-        WindowDialogDemo(
-            show = showWindowDialog,
-            onDismissRequest = { showWindowDialog = false },
-            onDismissFinished = { windowDialogHoldDown = false },
-        )
-        StackedButtonBarDialogDemo(
-            show = showStackedDialog,
-            onDismissRequest = { showStackedDialog = false },
-            onDismissFinished = { stackedDialogHoldDown = false },
-        )
-        RecommendedButtonBarDialogDemo(
-            show = showRecommendedDialog,
-            onDismissRequest = { showRecommendedDialog = false },
-            onDismissFinished = { recommendedDialogHoldDown = false },
-        )
+/** Renders the "Dialog" gallery section content (the dialog trigger card and every dialog demo). */
+@Composable
+fun DialogDemo() {
+    var showSuperDialog by remember { mutableStateOf(false) }
+    var showWindowDialog by remember { mutableStateOf(false) }
+    var superDialogHoldDown by remember { mutableStateOf(false) }
+    var windowDialogHoldDown by remember { mutableStateOf(false) }
+    var showLoadingDialog by remember { mutableStateOf(false) }
+    var loadingDialogHoldDown by remember { mutableStateOf(false) }
+    var showSecurityDialog by remember { mutableStateOf(false) }
+    var securityDialogHoldDown by remember { mutableStateOf(false) }
+    var showStackedDialog by remember { mutableStateOf(false) }
+    var stackedDialogHoldDown by remember { mutableStateOf(false) }
+    var showRecommendedDialog by remember { mutableStateOf(false) }
+    var recommendedDialogHoldDown by remember { mutableStateOf(false) }
 
-        // Auto-dismiss the loading demo after a short delay, like a finished task would.
-        LaunchedEffect(showLoadingDialog) {
-            if (showLoadingDialog) {
-                delay(3000)
-                showLoadingDialog = false
-            }
-        }
-        OverlayLoadingDialog(
-            show = showLoadingDialog,
-            text = "Loading...",
-            onDismissRequest = { showLoadingDialog = false },
-            onDismissFinished = { loadingDialogHoldDown = false },
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ArrowPreference(
+            title = "Dialog (O)",
+            summary = "Click to show an OverlayDialog",
+            onClick = {
+                showSuperDialog = true
+                superDialogHoldDown = true
+            },
+            holdDownState = superDialogHoldDown,
         )
-
-        OverlaySecurityDialog(
-            show = showSecurityDialog,
-            title = "Security Notice",
-            summary = "This feature needs to connect to the network.",
-            statement = "Tap and view Privacy Policy for more information.",
-            statementLinkText = "Privacy Policy",
-            onLinkClick = { /* Open the privacy policy */ },
-            onConfirm = { _ -> showSecurityDialog = false },
-            onCancel = { showSecurityDialog = false },
-            onDismissFinished = { securityDialogHoldDown = false },
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "Dialog (W)",
+            summary = "Click to show a WindowDialog",
+            onClick = {
+                showWindowDialog = true
+                windowDialogHoldDown = true
+            },
+            holdDownState = windowDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "Loading Dialog (O)",
+            summary = "Click to show an OverlayLoadingDialog",
+            onClick = {
+                showLoadingDialog = true
+                loadingDialogHoldDown = true
+            },
+            holdDownState = loadingDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "Stacked Button Bar (O)",
+            summary = "Long labels flip the bar to a vertical stack",
+            onClick = {
+                showStackedDialog = true
+                stackedDialogHoldDown = true
+            },
+            holdDownState = stackedDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "Recommended Button Bar (O)",
+            summary = "One action is highlighted as the recommend button",
+            onClick = {
+                showRecommendedDialog = true
+                recommendedDialogHoldDown = true
+            },
+            holdDownState = recommendedDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "Security Dialog (O)",
+            summary = "Click to show an OverlaySecurityDialog",
+            onClick = {
+                showSecurityDialog = true
+                securityDialogHoldDown = true
+            },
+            holdDownState = securityDialogHoldDown,
         )
     }
+
+    SuperDialogDemo(
+        show = showSuperDialog,
+        onDismissRequest = { showSuperDialog = false },
+        onDismissFinished = { superDialogHoldDown = false },
+    )
+    WindowDialogDemo(
+        show = showWindowDialog,
+        onDismissRequest = { showWindowDialog = false },
+        onDismissFinished = { windowDialogHoldDown = false },
+    )
+    StackedButtonBarDialogDemo(
+        show = showStackedDialog,
+        onDismissRequest = { showStackedDialog = false },
+        onDismissFinished = { stackedDialogHoldDown = false },
+    )
+    RecommendedButtonBarDialogDemo(
+        show = showRecommendedDialog,
+        onDismissRequest = { showRecommendedDialog = false },
+        onDismissFinished = { recommendedDialogHoldDown = false },
+    )
+
+    // Auto-dismiss the loading demo after a short delay, like a finished task would.
+    LaunchedEffect(showLoadingDialog) {
+        if (showLoadingDialog) {
+            delay(3000)
+            showLoadingDialog = false
+        }
+    }
+    OverlayLoadingDialog(
+        show = showLoadingDialog,
+        text = "Loading...",
+        onDismissRequest = { showLoadingDialog = false },
+        onDismissFinished = { loadingDialogHoldDown = false },
+    )
+
+    OverlaySecurityDialog(
+        show = showSecurityDialog,
+        title = "Security Notice",
+        summary = "This feature needs to connect to the network.",
+        statement = "Tap and view Privacy Policy for more information.",
+        statementLinkText = "Privacy Policy",
+        onLinkClick = { /* Open the privacy policy */ },
+        onConfirm = { _ -> showSecurityDialog = false },
+        onCancel = { showSecurityDialog = false },
+        onDismissFinished = { securityDialogHoldDown = false },
+    )
 }
 
 /**

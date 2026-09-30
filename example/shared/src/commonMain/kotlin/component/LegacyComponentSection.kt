@@ -36,152 +36,155 @@ import kotlinx.coroutines.launch
 fun LazyListScope.legacyComponentSection() {
     item(key = "tagView") {
         SmallTitle(text = "TagView")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            TagViewDemo()
-        }
+        TagViewDemo()
     }
     item(key = "notificationSnackBar") {
         SmallTitle(text = "NotificationSnackBar")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            NotificationSnackBarDemo()
-        }
+        NotificationSnackBarDemo()
     }
     item(key = "marqueeTextView") {
         SmallTitle(text = "MarqueeText")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            MarqueeTextDemo()
-        }
+        MarqueeTextDemo()
     }
 }
 
+/** Renders the "TagView" gallery section content: three tag chips in a row. */
 @Composable
-private fun TagViewDemo() {
-    Row(
+fun TagViewDemo() {
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
     ) {
-        TagView(text = "NEW", cornerRadius = 4.dp)
-        TagView(text = "BETA", cornerRadius = 4.dp)
-        TagView(text = "9.9.9", cornerRadius = 4.dp)
-    }
-}
-
-@Composable
-private fun NotificationSnackBarDemo() {
-    val hostState = remember { NotificationSnackBarHostState() }
-    val scope = rememberCoroutineScope()
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            NotificationSnackBar(
-                title = "New message",
-                subtitle = "Square image, 44dp",
-                icon = COUIIcons.Email,
-                imageType = NotificationSnackBarImageType.Square,
-                actionText = "Open",
-                onAction = { },
-                onClose = { },
-            )
-            NotificationSnackBar(
-                title = "Now playing",
-                subtitle = "Vertical image, 36dp x 48dp",
-                icon = COUIIcons.Photos,
-                imageType = NotificationSnackBarImageType.Vertical,
-                actionText = "Pause",
-                onAction = { },
-                onClose = { },
-            )
-            NotificationSnackBar(
-                title = "Alarm set",
-                subtitle = "Horizontal image, 58dp x 44dp",
-                icon = COUIIcons.WorldClock,
-                imageType = NotificationSnackBarImageType.Horizontal,
-                onClose = { },
-            )
-        }
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(
-                text = "Show",
-                onClick = {
-                    scope.launch {
-                        hostState.showNotification(
-                            title = "Charging",
-                            subtitle = "Battery is at 80%",
-                            icon = COUIIcons.WorldClock,
-                            actionText = "Details",
-                        )
-                    }
-                },
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(
-                text = "Show vertical",
-                onClick = {
-                    scope.launch {
-                        hostState.showNotification(
-                            title = "New photo",
-                            subtitle = "Tap to view the album",
-                            icon = COUIIcons.Photos,
-                            imageType = NotificationSnackBarImageType.Vertical,
-                            actionText = "View",
-                        )
-                    }
-                },
-                modifier = Modifier.weight(1f),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-        ) {
-            NotificationSnackBarHost(
-                state = hostState,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
+            TagView(text = "NEW", cornerRadius = 4.dp)
+            TagView(text = "BETA", cornerRadius = 4.dp)
+            TagView(text = "9.9.9", cornerRadius = 4.dp)
         }
     }
 }
 
+/** Renders the "NotificationSnackBar" gallery section content: sample notifications plus trigger buttons and a snackbar host. */
 @Composable
-private fun MarqueeTextDemo() {
-    Column(
+fun NotificationSnackBarDemo() {
+    val hostState = remember { NotificationSnackBarHostState() }
+    val scope = rememberCoroutineScope()
+
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
     ) {
-        MarqueeText(
-            text = "This sentence is far too long for the box it is given",
-            modifier = Modifier.width(160.dp),
-        )
-        MarqueeText(
-            text = "Short text",
-            modifier = Modifier.width(160.dp),
-        )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                NotificationSnackBar(
+                    title = "New message",
+                    subtitle = "Square image, 44dp",
+                    icon = COUIIcons.Email,
+                    imageType = NotificationSnackBarImageType.Square,
+                    actionText = "Open",
+                    onAction = { },
+                    onClose = { },
+                )
+                NotificationSnackBar(
+                    title = "Now playing",
+                    subtitle = "Vertical image, 36dp x 48dp",
+                    icon = COUIIcons.Photos,
+                    imageType = NotificationSnackBarImageType.Vertical,
+                    actionText = "Pause",
+                    onAction = { },
+                    onClose = { },
+                )
+                NotificationSnackBar(
+                    title = "Alarm set",
+                    subtitle = "Horizontal image, 58dp x 44dp",
+                    icon = COUIIcons.WorldClock,
+                    imageType = NotificationSnackBarImageType.Horizontal,
+                    onClose = { },
+                )
+            }
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                TextButton(
+                    text = "Show",
+                    onClick = {
+                        scope.launch {
+                            hostState.showNotification(
+                                title = "Charging",
+                                subtitle = "Battery is at 80%",
+                                icon = COUIIcons.WorldClock,
+                                actionText = "Details",
+                            )
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(
+                    text = "Show vertical",
+                    onClick = {
+                        scope.launch {
+                            hostState.showNotification(
+                                title = "New photo",
+                                subtitle = "Tap to view the album",
+                                icon = COUIIcons.Photos,
+                                imageType = NotificationSnackBarImageType.Vertical,
+                                actionText = "View",
+                            )
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp),
+            ) {
+                NotificationSnackBarHost(
+                    state = hostState,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+        }
+    }
+}
+
+/** Renders the "MarqueeText" gallery section content: long and short marquee text samples. */
+@Composable
+fun MarqueeTextDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            MarqueeText(
+                text = "This sentence is far too long for the box it is given",
+                modifier = Modifier.width(160.dp),
+            )
+            MarqueeText(
+                text = "Short text",
+                modifier = Modifier.width(160.dp),
+            )
+        }
     }
 }

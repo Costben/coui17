@@ -47,59 +47,65 @@ private val BottomSheetDropdownOptions = listOf("Option 1", "Option 2")
 
 fun LazyListScope.bottomSheetSection() {
     item(key = "bottomSheet") {
-        var showSuperBottomSheet by remember { mutableStateOf(false) }
-        var showWindowBottomSheet by remember { mutableStateOf(false) }
-        var superBottomSheetHoldDown by remember { mutableStateOf(false) }
-        var windowBottomSheetHoldDown by remember { mutableStateOf(false) }
-        var bottomSheetDropdownSelectedOption by remember { mutableIntStateOf(0) }
-        var bottomSheetSuperSwitchState by remember { mutableStateOf(true) }
-
         SmallTitle(text = "BottomSheet")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            ArrowPreference(
-                title = "BottomSheet (O)",
-                summary = "Click to show an OverlayBottomSheet",
-                onClick = {
-                    showSuperBottomSheet = true
-                    superBottomSheetHoldDown = true
-                },
-                holdDownState = superBottomSheetHoldDown,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "BottomSheet (W)",
-                summary = "Click to show a WindowBottomSheet",
-                onClick = {
-                    showWindowBottomSheet = true
-                    windowBottomSheetHoldDown = true
-                },
-                holdDownState = windowBottomSheetHoldDown,
-            )
-        }
+        BottomSheetDemo()
+    }
+}
 
-        SuperBottomSheetDemo(
-            show = showSuperBottomSheet,
-            onDismissRequest = { showSuperBottomSheet = false },
-            dropdownSelectedIndex = bottomSheetDropdownSelectedOption,
-            onDropdownSelectedIndexChange = { bottomSheetDropdownSelectedOption = it },
-            switchChecked = bottomSheetSuperSwitchState,
-            onSwitchCheckedChange = { bottomSheetSuperSwitchState = it },
-            onDismissFinished = { superBottomSheetHoldDown = false },
+/** Renders the "BottomSheet" gallery section content: the two sheet entry rows and their sheets. */
+@Composable
+fun BottomSheetDemo() {
+    var showSuperBottomSheet by remember { mutableStateOf(false) }
+    var showWindowBottomSheet by remember { mutableStateOf(false) }
+    var superBottomSheetHoldDown by remember { mutableStateOf(false) }
+    var windowBottomSheetHoldDown by remember { mutableStateOf(false) }
+    var bottomSheetDropdownSelectedOption by remember { mutableIntStateOf(0) }
+    var bottomSheetSuperSwitchState by remember { mutableStateOf(true) }
+
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ArrowPreference(
+            title = "BottomSheet (O)",
+            summary = "Click to show an OverlayBottomSheet",
+            onClick = {
+                showSuperBottomSheet = true
+                superBottomSheetHoldDown = true
+            },
+            holdDownState = superBottomSheetHoldDown,
         )
-        WindowBottomSheetDemo(
-            show = showWindowBottomSheet,
-            onDismissRequest = { showWindowBottomSheet = false },
-            dropdownSelectedIndex = bottomSheetDropdownSelectedOption,
-            onDropdownSelectedIndexChange = { bottomSheetDropdownSelectedOption = it },
-            switchChecked = bottomSheetSuperSwitchState,
-            onSwitchCheckedChange = { bottomSheetSuperSwitchState = it },
-            onDismissFinished = { windowBottomSheetHoldDown = false },
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "BottomSheet (W)",
+            summary = "Click to show a WindowBottomSheet",
+            onClick = {
+                showWindowBottomSheet = true
+                windowBottomSheetHoldDown = true
+            },
+            holdDownState = windowBottomSheetHoldDown,
         )
     }
+
+    SuperBottomSheetDemo(
+        show = showSuperBottomSheet,
+        onDismissRequest = { showSuperBottomSheet = false },
+        dropdownSelectedIndex = bottomSheetDropdownSelectedOption,
+        onDropdownSelectedIndexChange = { bottomSheetDropdownSelectedOption = it },
+        switchChecked = bottomSheetSuperSwitchState,
+        onSwitchCheckedChange = { bottomSheetSuperSwitchState = it },
+        onDismissFinished = { superBottomSheetHoldDown = false },
+    )
+    WindowBottomSheetDemo(
+        show = showWindowBottomSheet,
+        onDismissRequest = { showWindowBottomSheet = false },
+        dropdownSelectedIndex = bottomSheetDropdownSelectedOption,
+        onDropdownSelectedIndexChange = { bottomSheetDropdownSelectedOption = it },
+        switchChecked = bottomSheetSuperSwitchState,
+        onSwitchCheckedChange = { bottomSheetSuperSwitchState = it },
+        onDismissFinished = { windowBottomSheetHoldDown = false },
+    )
 }
 
 @Composable

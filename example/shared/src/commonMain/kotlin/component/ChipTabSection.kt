@@ -27,17 +27,23 @@ import io.github.suqi8.coui.kmp.icon.extended.Photos
 fun LazyListScope.chipTabSection() {
     item(key = "chipTab") {
         SmallTitle(text = "ChipTab")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            SingleSelectChipTabsDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            IconChipTabsDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            RedDotAndCountChipTabsDemo()
-        }
+        ChipTabDemo()
+    }
+}
+
+/** Renders the "ChipTab" gallery section content (single-select, icon, and red-dot/count chip tab groups). */
+@Composable
+fun ChipTabDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        SingleSelectChipTabsDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        IconChipTabsDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        RedDotAndCountChipTabsDemo()
     }
 }
 

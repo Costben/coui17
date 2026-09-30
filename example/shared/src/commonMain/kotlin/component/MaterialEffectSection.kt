@@ -54,8 +54,9 @@ fun LazyListScope.materialEffectSection() {
     }
 }
 
+/** Renders the "MaterialShadowEdge" gallery section content (capsule, circle and rounded plates showing the material shadow edge). */
 @Composable
-private fun MaterialShadowEdgeDemo() {
+fun MaterialShadowEdgeDemo() {
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val surface = if (isDark) Color(0xFF2B2B2F) else Color(0xFFF0F1F3)
 
@@ -123,8 +124,9 @@ private fun ShadowEdgeSurface(
     )
 }
 
+/** Renders the "SpotLight" gallery section content (a static spotlight and an animated sweeping one). */
 @Composable
-private fun SpotLightDemo() {
+fun SpotLightDemo() {
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val params = if (isDark) SpotLightDefaults.CapsuleParams1Dark else SpotLightDefaults.CapsuleParams1Light
     val density = LocalDensity.current

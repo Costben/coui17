@@ -47,35 +47,53 @@ import kotlinx.coroutines.delay
 fun LazyListScope.searchProgressSection() {
     item(key = "searchViewAnimate") {
         SmallTitle(text = "SearchViewAnimate")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            MagneticSearchBarDemo()
-        }
+        SearchViewAnimateDemo()
     }
     item(key = "loadProgressButton") {
         SmallTitle(text = "LoadProgressButton")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            LoadProgressStatesDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            LoadProgressPillDemo()
-        }
+        LoadProgressButtonDemo()
     }
     item(key = "popupMenuRotation") {
         SmallTitle(text = "PopupMenuRotation")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            RotatingPopupMenuDemo()
-        }
+        PopupMenuRotationDemo()
+    }
+}
+
+/** Renders the "SearchViewAnimate" gallery section content (a search bar with a collapse slider and query readout). */
+@Composable
+fun SearchViewAnimateDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        MagneticSearchBarDemo()
+    }
+}
+
+/** Renders the "LoadProgressButton" gallery section content (state buttons and a pill button with progress). */
+@Composable
+fun LoadProgressButtonDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        LoadProgressStatesDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        LoadProgressPillDemo()
+    }
+}
+
+/** Renders the "PopupMenuRotation" gallery section content (a rotated popup menu with rotation tabs). */
+@Composable
+fun PopupMenuRotationDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        RotatingPopupMenuDemo()
     }
 }
 

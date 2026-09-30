@@ -36,71 +36,77 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 
 fun LazyListScope.arrowSection() {
     item(key = "arrow") {
-        var volume by remember { mutableFloatStateOf(0.5f) }
-        val showVolumeDialog = remember { mutableStateOf(false) }
-        val volumeDialogHoldDown = remember { mutableStateOf(false) }
-
         SmallTitle(text = "Arrow")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            ArrowPreference(
-                title = "Arrow",
-                startAction = {
-                    Box(
-                        modifier = Modifier.padding(end = 8.dp),
-                    ) {
-                        Icon(
-                            imageVector = COUIIcons.Contacts,
-                            contentDescription = "Personal",
-                            tint = COUITheme.colorScheme.onBackground,
-                        )
-                    }
-                },
-                endActions = {
-                    Text(
-                        text = "End",
-                        fontSize = COUITheme.textStyles.body2.fontSize,
-                        color = COUITheme.colorScheme.onSurfaceVariantActions,
-                    )
-                },
-                onClick = {},
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            SliderPreference(
-                title = "Volume",
-                valueText = "${(volume * 100).toInt()}%",
-                value = volume,
-                onValueChange = { volume = it },
-                onClick = {
-                    showVolumeDialog.value = true
-                    volumeDialogHoldDown.value = true
-                },
-                holdDownState = volumeDialogHoldDown.value,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "Disabled Arrow",
-                endActions = {
-                    Text(
-                        text = "End",
-                        fontSize = COUITheme.textStyles.body2.fontSize,
-                        color = COUITheme.colorScheme.disabledOnSecondaryVariant,
-                    )
-                },
-                enabled = false,
-            )
-        }
+        ArrowDemo()
+    }
+}
 
-        SliderDialog(
-            showVolumeDialog,
-            volumeState = { volume },
-            onVolumeChange = { volume = it },
-            onDismissFinished = { volumeDialogHoldDown.value = false },
+/** Renders the Arrow gallery section: a card of arrow and slider preferences plus its volume dialog. */
+@Composable
+fun ArrowDemo() {
+    var volume by remember { mutableFloatStateOf(0.5f) }
+    val showVolumeDialog = remember { mutableStateOf(false) }
+    val volumeDialogHoldDown = remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ArrowPreference(
+            title = "Arrow",
+            startAction = {
+                Box(
+                    modifier = Modifier.padding(end = 8.dp),
+                ) {
+                    Icon(
+                        imageVector = COUIIcons.Contacts,
+                        contentDescription = "Personal",
+                        tint = COUITheme.colorScheme.onBackground,
+                    )
+                }
+            },
+            endActions = {
+                Text(
+                    text = "End",
+                    fontSize = COUITheme.textStyles.body2.fontSize,
+                    color = COUITheme.colorScheme.onSurfaceVariantActions,
+                )
+            },
+            onClick = {},
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        SliderPreference(
+            title = "Volume",
+            valueText = "${(volume * 100).toInt()}%",
+            value = volume,
+            onValueChange = { volume = it },
+            onClick = {
+                showVolumeDialog.value = true
+                volumeDialogHoldDown.value = true
+            },
+            holdDownState = volumeDialogHoldDown.value,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "Disabled Arrow",
+            endActions = {
+                Text(
+                    text = "End",
+                    fontSize = COUITheme.textStyles.body2.fontSize,
+                    color = COUITheme.colorScheme.disabledOnSecondaryVariant,
+                )
+            },
+            enabled = false,
         )
     }
+
+    SliderDialog(
+        showVolumeDialog,
+        volumeState = { volume },
+        onVolumeChange = { volume = it },
+        onDismissFinished = { volumeDialogHoldDown.value = false },
+    )
 }
 
 @Composable

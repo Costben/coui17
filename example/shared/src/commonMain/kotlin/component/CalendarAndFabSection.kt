@@ -41,35 +41,53 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 fun LazyListScope.calendarAndFabSection() {
     item(key = "calendarView") {
         SmallTitle(text = "CalendarView")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            CalendarViewDemo()
-        }
+        CalendarViewDemoContent()
     }
     item(key = "floatingButton") {
         SmallTitle(text = "FloatingButton")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            FloatingButtonDemo()
-        }
+        FloatingButtonDemoContent()
     }
     item(key = "expandableList") {
         SmallTitle(text = "ExpandableList")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            ExpandableListDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            AccordionExpandableListDemo()
-        }
+        ExpandableListDemoContent()
+    }
+}
+
+/** Renders the "CalendarView" gallery section content: a card wrapping the calendar demo. */
+@Composable
+fun CalendarViewDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        CalendarViewDemo()
+    }
+}
+
+/** Renders the "FloatingButton" gallery section content: a card wrapping the floating button demo. */
+@Composable
+fun FloatingButtonDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        FloatingButtonDemo()
+    }
+}
+
+/** Renders the "ExpandableList" gallery section content: a card with the expandable list and its accordion variant. */
+@Composable
+fun ExpandableListDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ExpandableListDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        AccordionExpandableListDemo()
     }
 }
 

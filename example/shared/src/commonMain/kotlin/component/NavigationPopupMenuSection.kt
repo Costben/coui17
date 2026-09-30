@@ -30,8 +30,9 @@ fun LazyListScope.navigationPopupMenuSection() {
     }
 }
 
+/** Renders the "NavigationPopupMenu" gallery section content: a button that opens a navigation popup menu. */
 @Composable
-private fun NavigationPopupMenuDemo() {
+fun NavigationPopupMenuDemo() {
     var expanded by remember { mutableStateOf(false) }
 
     // The popup anchors to the bounds of its parent layout node, so the menu is composed inside the

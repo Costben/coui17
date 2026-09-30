@@ -33,27 +33,39 @@ import io.github.suqi8.coui.kmp.icon.basic.Search
 fun LazyListScope.chipSection() {
     item(key = "chip") {
         SmallTitle(text = "Chip")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            MultiSelectChipsDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            SingleSelectChipsDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            DisabledChipsDemo()
-        }
+        ChipDemo()
     }
     item(key = "topTips") {
         SmallTitle(text = "TopTips")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            TopTipsDemo()
-        }
+        TopTipsDemoContent()
+    }
+}
+
+/** Renders the "Chip" gallery section content: a card of multi-select, single-select and disabled chip rows. */
+@Composable
+fun ChipDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        MultiSelectChipsDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        SingleSelectChipsDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        DisabledChipsDemo()
+    }
+}
+
+/** Renders the "TopTips" gallery section content: a card holding the TopTips samples. */
+@Composable
+fun TopTipsDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        TopTipsDemo()
     }
 }
 

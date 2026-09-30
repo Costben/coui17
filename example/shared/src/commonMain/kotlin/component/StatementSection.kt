@@ -24,13 +24,19 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 fun LazyListScope.fullPageStatementSection() {
     item(key = "fullPageStatement") {
         SmallTitle(text = "FullPageStatement")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            FullPageStatementDemo()
-        }
+        FullPageStatementDemoContent()
+    }
+}
+
+/** Renders the "FullPageStatement" gallery section content (the statement page hosted in a card). */
+@Composable
+fun FullPageStatementDemoContent() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        FullPageStatementDemo()
     }
 }
 

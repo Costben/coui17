@@ -46,21 +46,27 @@ import io.github.suqi8.coui.kmp.squircle.squircleSurface
 fun LazyListScope.lockAndBannerSection() {
     item(key = "lockAndBanner") {
         SmallTitle(text = "LockPatternView / NumericKeyboard / SimpleLockView / LockScreenPwdInput / Banner")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            LockPatternDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            NumericKeyboardDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            SimpleLockDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            LockScreenPwdInputDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            BannerDemo()
-        }
+        LockAndBannerDemo()
+    }
+}
+
+/** Renders the lock pattern, numeric keyboard, simple lock, password input and banner demos inside one card. */
+@Composable
+fun LockAndBannerDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        LockPatternDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        NumericKeyboardDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        SimpleLockDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        LockScreenPwdInputDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        BannerDemo()
     }
 }
 

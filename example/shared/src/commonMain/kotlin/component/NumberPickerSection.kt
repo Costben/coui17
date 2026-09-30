@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -24,42 +25,48 @@ import io.github.suqi8.coui.kmp.basic.Text
 fun LazyListScope.numberPickerSection() {
     item(key = "numberPicker") {
         SmallTitle(text = "NumberPicker")
-        Card(
+        NumberPickerDemo()
+    }
+}
+
+/** Renders the "NumberPicker" gallery section content: a card with an hour and a minute picker. */
+@Composable
+fun NumberPickerDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        var hourValue by remember { mutableIntStateOf(16) }
+        var minuteValue by remember { mutableIntStateOf(30) }
+        Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            var hourValue by remember { mutableIntStateOf(16) }
-            var minuteValue by remember { mutableIntStateOf(30) }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                NumberPicker(
-                    value = hourValue,
-                    onValueChange = { hourValue = it },
-                    range = 0..23,
-                    label = { it.toString().padStart(2, '0') },
-                    wrapAround = true,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = ":",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                NumberPicker(
-                    value = minuteValue,
-                    onValueChange = { minuteValue = it },
-                    range = 0..59,
-                    label = { it.toString().padStart(2, '0') },
-                    wrapAround = true,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            NumberPicker(
+                value = hourValue,
+                onValueChange = { hourValue = it },
+                range = 0..23,
+                label = { it.toString().padStart(2, '0') },
+                wrapAround = true,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = ":",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            NumberPicker(
+                value = minuteValue,
+                onValueChange = { minuteValue = it },
+                range = 0..59,
+                label = { it.toString().padStart(2, '0') },
+                wrapAround = true,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }

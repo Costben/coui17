@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.Image
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,71 +44,77 @@ import utils.rememberBlurBackdrop
 fun LazyListScope.bottomFloatingEditToolbarSection() {
     item(key = "bottomFloatingEditToolbar") {
         SmallTitle(text = "BottomFloatingEditToolbar")
-        var visible by remember { mutableStateOf(true) }
-        val backdrop = rememberBlurBackdrop()
+        BottomFloatingEditToolbarDemo()
+    }
+}
 
+/** Renders the "BottomFloatingEditToolbar" gallery section content (the floating edit toolbar over a blurred wallpaper). */
+@Composable
+fun BottomFloatingEditToolbarDemo() {
+    var visible by remember { mutableStateOf(true) }
+    val backdrop = rememberBlurBackdrop()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
+    ) {
+        // The capsule samples this layer, so it stays a sibling of the toolbar, not an ancestor.
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp),
+                .matchParentSize()
+                .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier),
         ) {
-            // The capsule samples this layer, so it stays a sibling of the toolbar, not an ancestor.
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier),
-            ) {
-                WallpaperState.bitmap?.let { wallpaper ->
-                    Image(
-                        bitmap = wallpaper,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                    )
-                } ?: Image(
-                    painter = painterResource(Res.drawable.blur_test_bg),
+            WallpaperState.bitmap?.let { wallpaper ->
+                Image(
+                    bitmap = wallpaper,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                 )
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth(),
-            ) {
-                CompositionLocalProvider(LocalBackdrop provides backdrop) {
-                    BottomFloatingEditToolbar(visible = visible) {
-                        BottomFloatingEditToolbarItem(
-                            onClick = {},
-                            icon = COUIIcons.Copy,
-                            label = "Copy",
-                        )
-                        BottomFloatingEditToolbarItem(
-                            onClick = {},
-                            icon = COUIIcons.Delete,
-                            label = "Delete",
-                            redDot = BottomFloatingRedDot.Count(3),
-                        )
-                        BottomFloatingEditToolbarItem(
-                            onClick = {},
-                            icon = COUIIcons.Share,
-                            label = "Share",
-                            enabled = false,
-                        )
-                    }
+            } ?: Image(
+                painter = painterResource(Res.drawable.blur_test_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth(),
+        ) {
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                BottomFloatingEditToolbar(visible = visible) {
+                    BottomFloatingEditToolbarItem(
+                        onClick = {},
+                        icon = COUIIcons.Copy,
+                        label = "Copy",
+                    )
+                    BottomFloatingEditToolbarItem(
+                        onClick = {},
+                        icon = COUIIcons.Delete,
+                        label = "Delete",
+                        redDot = BottomFloatingRedDot.Count(3),
+                    )
+                    BottomFloatingEditToolbarItem(
+                        onClick = {},
+                        icon = COUIIcons.Share,
+                        label = "Share",
+                        enabled = false,
+                    )
                 }
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = "Visible")
-            Switch(checked = visible, onCheckedChange = { visible = it })
-        }
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = "Visible")
+        Switch(checked = visible, onCheckedChange = { visible = it })
     }
 }

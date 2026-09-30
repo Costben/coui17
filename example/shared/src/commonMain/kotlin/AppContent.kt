@@ -277,15 +277,39 @@ fun AppContent(
     }
 }
 
+/**
+ * The pieces [Home] hands to a layout so that the layout can host the page pager
+ * and its own chrome. The default layout reproduces the stock coui16 home screen;
+ * another entry point (for example the ColorOS 17 gallery) supplies its own.
+ */
+@Stable
+class HomeLayoutScope internal constructor(
+    val navigationItems: List<NavigationItem>,
+    val mainPagerState: MainPagerState,
+    val snackbarHostState: SnackbarHostState,
+    val padding: PaddingValues,
+    val isWideScreen: Boolean,
+    val layoutDirection: LayoutDirection,
+)
+
 @Composable
-private fun Home(
+fun Home(
     padding: PaddingValues,
     navigationItems: List<NavigationItem>,
     mainPagerState: MainPagerState,
+    layout: @Composable (HomeLayoutScope) -> Unit = { DefaultHomeLayout(it) },
 ) {
     val isWideScreen = LocalIsWideScreen.current
     val layoutDirection = LocalLayoutDirection.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = HomeLayoutScope(
+        navigationItems = navigationItems,
+        mainPagerState = mainPagerState,
+        snackbarHostState = snackbarHostState,
+        padding = padding,
+        isWideScreen = isWideScreen,
+        layoutDirection = layoutDirection,
+    )
     Scaffold(
         snackbarHost = {
             if (isWideScreen) {
@@ -293,21 +317,27 @@ private fun Home(
             }
         },
     ) {
-        if (isWideScreen) {
-            WideScreenContent(
-                navigationItems = navigationItems,
-                snackbarHostState = snackbarHostState,
-                layoutDirection = layoutDirection,
-                mainPagerState = mainPagerState,
-            )
-        } else {
-            CompactScreenLayout(
-                navigationItems = navigationItems,
-                snackbarHostState = snackbarHostState,
-                padding = padding,
-                mainPagerState = mainPagerState,
-            )
-        }
+        layout(scope)
+    }
+}
+
+/** Stock coui16 home layout: navigation rail on wide screens, bottom bar otherwise. */
+@Composable
+private fun DefaultHomeLayout(scope: HomeLayoutScope) {
+    if (scope.isWideScreen) {
+        WideScreenContent(
+            navigationItems = scope.navigationItems,
+            snackbarHostState = scope.snackbarHostState,
+            layoutDirection = scope.layoutDirection,
+            mainPagerState = scope.mainPagerState,
+        )
+    } else {
+        CompactScreenLayout(
+            navigationItems = scope.navigationItems,
+            snackbarHostState = scope.snackbarHostState,
+            padding = scope.padding,
+            mainPagerState = scope.mainPagerState,
+        )
     }
 }
 

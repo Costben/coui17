@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,217 +31,235 @@ import io.github.suqi8.coui.kmp.preference.SliderPreference
 fun LazyListScope.sliderSection() {
     item(key = "slider") {
         SmallTitle(text = "Slider")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            var sliderValue by remember { mutableFloatStateOf(0.3f) }
-            SliderPreference(
-                value = sliderValue,
-                onValueChange = { sliderValue = it },
-                title = "Normal",
-                valueText = "${(sliderValue * 100).toInt()}%",
-            )
-            var stepsValue by remember { mutableFloatStateOf(100f) }
-            SliderPreference(
-                value = stepsValue,
-                onValueChange = { stepsValue = it },
-                title = "Steps",
-                valueText = "${stepsValue.toInt()}/200",
-                valueRange = 0f..200f,
-                steps = 199,
-                hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-            )
-            var stepsWithKeyPointsValue by remember { mutableFloatStateOf(5f) }
-            SliderPreference(
-                value = stepsWithKeyPointsValue,
-                onValueChange = { stepsWithKeyPointsValue = it },
-                title = "Steps with Key Points",
-                valueText = "${stepsWithKeyPointsValue.toInt()}/8",
-                valueRange = 0f..8f,
-                steps = 7,
-                hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                showKeyPoints = true,
-            )
-            var customKeyPointsValue by remember { mutableFloatStateOf(25f) }
-            SliderPreference(
-                value = customKeyPointsValue,
-                onValueChange = { customKeyPointsValue = it },
-                title = "Custom Key Points",
-                valueText = "${customKeyPointsValue.toInt()}%",
-                valueRange = 0f..100f,
-                showKeyPoints = true,
-                hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                keyPoints = listOf(0f, 25f, 50f, 75f, 100f),
-            )
-            val disabledValue by remember { mutableFloatStateOf(0.7f) }
-            SliderPreference(
-                value = disabledValue,
-                onValueChange = {},
-                title = "Disabled",
-                valueText = "${(disabledValue * 100).toInt()}%",
-                enabled = false,
-            )
-        }
+        SliderDemo()
 
         // RangeSlider
         SmallTitle(text = "RangeSlider")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            var rangeValue by remember { mutableStateOf(0.2f..0.8f) }
-            RangeSliderPreference(
-                value = rangeValue,
-                onValueChange = { rangeValue = it },
-                title = "Range",
-                valueText = "${(rangeValue.start * 100).toInt()}% - ${(rangeValue.endInclusive * 100).toInt()}%",
-            )
-            var rangeStepsValue by remember { mutableStateOf(2f..8f) }
-            RangeSliderPreference(
-                value = rangeStepsValue,
-                onValueChange = { rangeStepsValue = it },
-                title = "Range with Key Points",
-                valueText = "${rangeStepsValue.start.toInt()} - ${rangeStepsValue.endInclusive.toInt()}",
-                valueRange = 0f..8f,
-                steps = 7,
-                hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                showKeyPoints = true,
-            )
-            var customRangeValue by remember { mutableStateOf(20f..80f) }
-            RangeSliderPreference(
-                value = customRangeValue,
-                onValueChange = { customRangeValue = it },
-                title = "Custom Range Points",
-                valueText = "${customRangeValue.start.toInt()}% - ${customRangeValue.endInclusive.toInt()}%",
-                valueRange = 0f..100f,
-                showKeyPoints = true,
-                hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                keyPoints = listOf(0f, 20f, 40f, 60f, 80f, 100f),
-            )
-            var disabledRangeValue by remember { mutableStateOf(0.3f..0.7f) }
-            RangeSliderPreference(
-                value = disabledRangeValue,
-                onValueChange = {},
-                title = "Disabled",
-                valueText = "${(disabledRangeValue.start * 100).toInt()}% - ${(disabledRangeValue.endInclusive * 100).toInt()}%",
-                enabled = false,
-            )
-        }
+        RangeSliderDemo()
 
         // VerticalSlider
         SmallTitle(text = "VerticalSlider")
-        Card(
+        VerticalSliderDemo()
+    }
+}
+
+/** Renders the "Slider" gallery section content: a card of slider preferences. */
+@Composable
+fun SliderDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        var sliderValue by remember { mutableFloatStateOf(0.3f) }
+        SliderPreference(
+            value = sliderValue,
+            onValueChange = { sliderValue = it },
+            title = "Normal",
+            valueText = "${(sliderValue * 100).toInt()}%",
+        )
+        var stepsValue by remember { mutableFloatStateOf(100f) }
+        SliderPreference(
+            value = stepsValue,
+            onValueChange = { stepsValue = it },
+            title = "Steps",
+            valueText = "${stepsValue.toInt()}/200",
+            valueRange = 0f..200f,
+            steps = 199,
+            hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+        )
+        var stepsWithKeyPointsValue by remember { mutableFloatStateOf(5f) }
+        SliderPreference(
+            value = stepsWithKeyPointsValue,
+            onValueChange = { stepsWithKeyPointsValue = it },
+            title = "Steps with Key Points",
+            valueText = "${stepsWithKeyPointsValue.toInt()}/8",
+            valueRange = 0f..8f,
+            steps = 7,
+            hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+            showKeyPoints = true,
+        )
+        var customKeyPointsValue by remember { mutableFloatStateOf(25f) }
+        SliderPreference(
+            value = customKeyPointsValue,
+            onValueChange = { customKeyPointsValue = it },
+            title = "Custom Key Points",
+            valueText = "${customKeyPointsValue.toInt()}%",
+            valueRange = 0f..100f,
+            showKeyPoints = true,
+            hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+            keyPoints = listOf(0f, 25f, 50f, 75f, 100f),
+        )
+        val disabledValue by remember { mutableFloatStateOf(0.7f) }
+        SliderPreference(
+            value = disabledValue,
+            onValueChange = {},
+            title = "Disabled",
+            valueText = "${(disabledValue * 100).toInt()}%",
+            enabled = false,
+        )
+    }
+}
+
+/** Renders the "RangeSlider" gallery section content: a card of range-slider preferences. */
+@Composable
+fun RangeSliderDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        var rangeValue by remember { mutableStateOf(0.2f..0.8f) }
+        RangeSliderPreference(
+            value = rangeValue,
+            onValueChange = { rangeValue = it },
+            title = "Range",
+            valueText = "${(rangeValue.start * 100).toInt()}% - ${(rangeValue.endInclusive * 100).toInt()}%",
+        )
+        var rangeStepsValue by remember { mutableStateOf(2f..8f) }
+        RangeSliderPreference(
+            value = rangeStepsValue,
+            onValueChange = { rangeStepsValue = it },
+            title = "Range with Key Points",
+            valueText = "${rangeStepsValue.start.toInt()} - ${rangeStepsValue.endInclusive.toInt()}",
+            valueRange = 0f..8f,
+            steps = 7,
+            hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+            showKeyPoints = true,
+        )
+        var customRangeValue by remember { mutableStateOf(20f..80f) }
+        RangeSliderPreference(
+            value = customRangeValue,
+            onValueChange = { customRangeValue = it },
+            title = "Custom Range Points",
+            valueText = "${customRangeValue.start.toInt()}% - ${customRangeValue.endInclusive.toInt()}%",
+            valueRange = 0f..100f,
+            showKeyPoints = true,
+            hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+            keyPoints = listOf(0f, 20f, 40f, 60f, 80f, 100f),
+        )
+        var disabledRangeValue by remember { mutableStateOf(0.3f..0.7f) }
+        RangeSliderPreference(
+            value = disabledRangeValue,
+            onValueChange = {},
+            title = "Disabled",
+            valueText = "${(disabledRangeValue.start * 100).toInt()}% - ${(disabledRangeValue.endInclusive * 100).toInt()}%",
+            enabled = false,
+        )
+    }
+}
+
+/** Renders the "VerticalSlider" gallery section content: a row of vertical sliders with their labels. */
+@Composable
+fun VerticalSliderDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
+            var verticalValue1 by remember { mutableFloatStateOf(0.3f) }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f),
             ) {
-                var verticalValue1 by remember { mutableFloatStateOf(0.3f) }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    VerticalSlider(
-                        value = verticalValue1,
-                        onValueChange = { verticalValue1 = it },
-                        modifier = Modifier.size(25.dp, 160.dp),
-                    )
-                    Text(
-                        text = "Normal\n${(verticalValue1 * 100).toInt()}%",
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                var verticalValue2 by remember { mutableFloatStateOf(5f) }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    VerticalSlider(
-                        value = verticalValue2,
-                        onValueChange = { verticalValue2 = it },
-                        valueRange = 0f..6f,
-                        steps = 5,
-                        hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                        modifier = Modifier.size(25.dp, 160.dp),
-                    )
-                    Text(
-                        text = "Steps\n${verticalValue2.toInt()}/6",
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                var verticalValue3 by remember { mutableFloatStateOf(5f) }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    VerticalSlider(
-                        value = verticalValue3,
-                        onValueChange = { verticalValue3 = it },
-                        valueRange = 0f..6f,
-                        steps = 5,
-                        hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                        showKeyPoints = true,
-                        modifier = Modifier.size(25.dp, 160.dp),
-                    )
-                    Text(
-                        text = "Points\n${verticalValue3.toInt()}/6",
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                var verticalValue4 by remember { mutableFloatStateOf(50f) }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    VerticalSlider(
-                        value = verticalValue4,
-                        onValueChange = { verticalValue4 = it },
-                        valueRange = 0f..100f,
-                        showKeyPoints = true,
-                        hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                        keyPoints = listOf(0f, 25f, 50f, 75f, 100f),
-                        modifier = Modifier.size(25.dp, 160.dp),
-                    )
-                    Text(
-                        text = "Custom\n${verticalValue4.toInt()}%",
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                val disabledVerticalValue by remember { mutableFloatStateOf(0.7f) }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    VerticalSlider(
-                        value = disabledVerticalValue,
-                        onValueChange = {},
-                        enabled = false,
-                        modifier = Modifier.size(25.dp, 160.dp),
-                    )
-                    Text(
-                        text = "Disabled\n${(disabledVerticalValue * 100).toInt()}%",
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+                VerticalSlider(
+                    value = verticalValue1,
+                    onValueChange = { verticalValue1 = it },
+                    modifier = Modifier.size(25.dp, 160.dp),
+                )
+                Text(
+                    text = "Normal\n${(verticalValue1 * 100).toInt()}%",
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            var verticalValue2 by remember { mutableFloatStateOf(5f) }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f),
+            ) {
+                VerticalSlider(
+                    value = verticalValue2,
+                    onValueChange = { verticalValue2 = it },
+                    valueRange = 0f..6f,
+                    steps = 5,
+                    hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+                    modifier = Modifier.size(25.dp, 160.dp),
+                )
+                Text(
+                    text = "Steps\n${verticalValue2.toInt()}/6",
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            var verticalValue3 by remember { mutableFloatStateOf(5f) }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f),
+            ) {
+                VerticalSlider(
+                    value = verticalValue3,
+                    onValueChange = { verticalValue3 = it },
+                    valueRange = 0f..6f,
+                    steps = 5,
+                    hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+                    showKeyPoints = true,
+                    modifier = Modifier.size(25.dp, 160.dp),
+                )
+                Text(
+                    text = "Points\n${verticalValue3.toInt()}/6",
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            var verticalValue4 by remember { mutableFloatStateOf(50f) }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f),
+            ) {
+                VerticalSlider(
+                    value = verticalValue4,
+                    onValueChange = { verticalValue4 = it },
+                    valueRange = 0f..100f,
+                    showKeyPoints = true,
+                    hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+                    keyPoints = listOf(0f, 25f, 50f, 75f, 100f),
+                    modifier = Modifier.size(25.dp, 160.dp),
+                )
+                Text(
+                    text = "Custom\n${verticalValue4.toInt()}%",
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            val disabledVerticalValue by remember { mutableFloatStateOf(0.7f) }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f),
+            ) {
+                VerticalSlider(
+                    value = disabledVerticalValue,
+                    onValueChange = {},
+                    enabled = false,
+                    modifier = Modifier.size(25.dp, 160.dp),
+                )
+                Text(
+                    text = "Disabled\n${(disabledVerticalValue * 100).toInt()}%",
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }

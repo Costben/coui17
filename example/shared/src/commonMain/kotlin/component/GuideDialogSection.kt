@@ -28,69 +28,81 @@ import org.jetbrains.compose.resources.painterResource
 
 fun LazyListScope.guideDialogSection() {
     item(key = "guideDialog") {
-        var showMultiPageGuide by remember { mutableStateOf(false) }
-        var multiPageGuideHoldDown by remember { mutableStateOf(false) }
-        var showSinglePageGuide by remember { mutableStateOf(false) }
-        var singlePageGuideHoldDown by remember { mutableStateOf(false) }
-
         SmallTitle(text = "GuideDialog")
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            ArrowPreference(
-                title = "GuideDialog (3 pages)",
-                summary = "A first-run guide with a skip button and an indicator",
-                onClick = {
-                    showMultiPageGuide = true
-                    multiPageGuideHoldDown = true
-                },
-                holdDownState = multiPageGuideHoldDown,
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ArrowPreference(
-                title = "GuideDialog (single page)",
-                summary = "One page: the skip button and the indicator are hidden",
-                onClick = {
-                    showSinglePageGuide = true
-                    singlePageGuideHoldDown = true
-                },
-                holdDownState = singlePageGuideHoldDown,
-            )
-        }
-
-        MultiPageGuideDemo(
-            show = showMultiPageGuide,
-            onDismissRequest = { showMultiPageGuide = false },
-            onDismissFinished = { multiPageGuideHoldDown = false },
-        )
-        SinglePageGuideDemo(
-            show = showSinglePageGuide,
-            onDismissRequest = { showSinglePageGuide = false },
-            onDismissFinished = { singlePageGuideHoldDown = false },
-        )
+        GuideDialogDemo()
     }
 
     item(key = "pageIndicator") {
         SmallTitle(text = "PageIndicator")
-        Card(
+        PageIndicatorDemo()
+    }
+}
+
+/** Renders the "GuideDialog" gallery section content: the guide entry card and its two dialogs. */
+@Composable
+fun GuideDialogDemo() {
+    var showMultiPageGuide by remember { mutableStateOf(false) }
+    var multiPageGuideHoldDown by remember { mutableStateOf(false) }
+    var showSinglePageGuide by remember { mutableStateOf(false) }
+    var singlePageGuideHoldDown by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ArrowPreference(
+            title = "GuideDialog (3 pages)",
+            summary = "A first-run guide with a skip button and an indicator",
+            onClick = {
+                showMultiPageGuide = true
+                multiPageGuideHoldDown = true
+            },
+            holdDownState = multiPageGuideHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = "GuideDialog (single page)",
+            summary = "One page: the skip button and the indicator are hidden",
+            onClick = {
+                showSinglePageGuide = true
+                singlePageGuideHoldDown = true
+            },
+            holdDownState = singlePageGuideHoldDown,
+        )
+    }
+
+    MultiPageGuideDemo(
+        show = showMultiPageGuide,
+        onDismissRequest = { showMultiPageGuide = false },
+        onDismissFinished = { multiPageGuideHoldDown = false },
+    )
+    SinglePageGuideDemo(
+        show = showSinglePageGuide,
+        onDismissRequest = { showSinglePageGuide = false },
+        onDismissFinished = { singlePageGuideHoldDown = false },
+    )
+}
+
+/** Renders the "PageIndicator" gallery section content: a card of page indicators with varying counts. */
+@Composable
+fun PageIndicatorDemo() {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        Column(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                PageIndicator(count = 3, currentIndex = 1)
-                PageIndicator(count = 5, currentIndex = 0)
-                PageIndicator(count = 8, currentIndex = 6)
-                PageIndicator(count = 0, currentIndex = 0)
-            }
+            PageIndicator(count = 3, currentIndex = 1)
+            PageIndicator(count = 5, currentIndex = 0)
+            PageIndicator(count = 8, currentIndex = 6)
+            PageIndicator(count = 0, currentIndex = 0)
         }
     }
 }
