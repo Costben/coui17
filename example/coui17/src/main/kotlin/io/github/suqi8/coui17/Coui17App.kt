@@ -127,18 +127,25 @@ private fun Coui17Root() {
     // device, the material's full-strength patch (y=0, alpha 1) is the page background's own
     // (240,240,241) over an identical (240,240,241) page.
     val pageColor = AppBarBlurOverlayDefaults.containerColor()
-    // The bars sample the page without the wallpaper. The device's material blurs whatever sits
-    // behind the bar, and behind the bar is the page — nothing on the Settings home is wallpaper, so
-    // a bar that sampled one would paint a band the device does not have.
+    // The page content on its own, with no background of its own, so the wallpaper shows through it.
     val pageBackdrop = rememberLayerBackdrop { drawContent() }
-    // The recorded layer is what the light-sensing surfaces sample. It holds the page content and
-    // nothing else: every bar that reads it is a sibling of it, never a child, or the blur would
-    // sample a backdrop that already has the blur baked into it.
+    // What the bars sample: the page, opaque. The device's page has a background behind the bar, and
+    // the material blurs that — never the wallpaper, never empty space. A layer with a transparent
+    // background cannot stand in for it: the blur reads the layer's clear colour, which washes the
+    // bar out to near-white as soon as the ramp lets the blur through. The light ramp hides that
+    // (its top alpha is 1, so only the base colour shows) but the dark one does not (0.4), and there
+    // the bar came out at ~175 over the device's 48.
+    val barBackdrop = rememberLayerBackdrop {
+        drawRect(pageColor)
+        drawLayer(pageBackdrop.graphicsLayer)
+    }
+    // What the page's own glass samples: the wallpaper with the page over it. Every surface that
+    // reads it is a sibling of the recorded node, never a child, or the blur would sample a backdrop
+    // that already has the blur baked into it.
     //
-    // Both modifiers sit on the same node, so the wallpaper goes under the page by blitting the page
-    // layer instead of calling `drawContent()` a second time: a second call would draw the whole
-    // pager again for every layer on every frame. The page layer's node draws before this one, so it
-    // already holds the current frame by the time this recording reads it.
+    // The three modifiers sit on the same node and draw outside in, so the page layer is recorded
+    // before either of the two that blit it, and neither blit costs a second `drawContent()` — a
+    // second call would draw the whole pager again for every layer on every frame.
     val backdrop = rememberLayerBackdrop {
         drawWallpaper(surfaceColor, wallpaper.image)
         drawLayer(pageBackdrop.graphicsLayer)
@@ -178,6 +185,7 @@ private fun Coui17Root() {
                     modifier = Modifier
                         .fillMaxSize()
                         .layerBackdrop(backdrop)
+                        .layerBackdrop(barBackdrop)
                         .layerBackdrop(pageBackdrop),
                 ) {
                     HorizontalPager(
@@ -200,7 +208,7 @@ private fun Coui17Root() {
                 }
                 // The bars read the page layer, not the wallpaper one: the device's material blurs the
                 // page behind the bar and shows no wallpaper there.
-                CompositionLocalProvider(LocalBackdrop provides pageBackdrop) {
+                CompositionLocalProvider(LocalBackdrop provides barBackdrop) {
                     if (currentPage == Coui17Page.Home) {
                         Coui17HomeTopBar(
                             title = currentPage.title,
