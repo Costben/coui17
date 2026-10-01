@@ -221,9 +221,8 @@ fun Coui17HomePage(
 }
 
 /**
- * One gallery entry in ColorOS 17 list form: a group-title row, the entry's content, and the 16dp
- * band the device leaves between groups. Each shared demo owns its 16dp card inset; adding another
- * inset here makes every card 32dp from the screen edge, unlike the system Settings layout.
+ * One gallery entry in ColorOS 17 list form: a compact group-title row and the entry's content.
+ * Shared demos own their 16dp card inset and bottom spacing, so this wrapper adds neither again.
  */
 private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> Unit) {
     item(key = "title:$title") { Coui17GroupTitle(title) }
