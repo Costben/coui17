@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.ChipTabData
 import io.github.suqi8.coui.kmp.basic.ChipTabGroup
@@ -116,7 +117,7 @@ private fun MagneticSearchBarDemo() {
             onQueryChange = { query = it },
             expanded = expanded,
             onExpandedChange = { expanded = it },
-            hint = "Search settings",
+            hint = str("Search settings"),
             type = type,
             collapsePercent = collapsePercent,
             onSearch = { expanded = false },
@@ -129,11 +130,11 @@ private fun MagneticSearchBarDemo() {
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(
-                text = if (expanded) "Collapse" else "Expand",
+                text = if (expanded) str("Collapse") else str("Expand"),
                 onClick = { expanded = !expanded },
             )
             TextButton(
-                text = if (type == SearchViewAnimateType.InstantSearch) "Instant" else "Non-instant",
+                text = if (type == SearchViewAnimateType.InstantSearch) str("Instant") else str("Non-instant"),
                 onClick = {
                     type = if (type == SearchViewAnimateType.InstantSearch) {
                         SearchViewAnimateType.NonInstantSearch
@@ -144,7 +145,7 @@ private fun MagneticSearchBarDemo() {
             )
         }
         Text(
-            text = "query: \"$query\"",
+            text = str("query: \"{}\"", query),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -173,7 +174,7 @@ private fun LoadProgressStatesDemo() {
             }
         }
         Text(
-            text = "state: ${state.name} (${state.value})",
+            text = str("state: {} ({})", state.name, state.value),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -204,11 +205,11 @@ private fun LoadProgressPillDemo() {
             onClick = { state = state.toggled() },
             state = state,
             progress = progress,
-            text = if (state == LoadProgressState.Loading) "$progress%" else "Download",
+            text = if (state == LoadProgressState.Loading) "$progress%" else str("Download"),
             size = LoadProgressButtonSize.Large,
         )
         Text(
-            text = "state: ${state.name}, progress: $progress / 100",
+            text = str("state: {}, progress: {} / 100", state.name, progress),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -222,7 +223,7 @@ private fun RotatingPopupMenuDemo() {
         listOf(PopupMenuRotation.None, PopupMenuRotation.Degrees90, PopupMenuRotation.Degrees270)
     }
     val rotation = rotations[rotationIndex]
-    val rows = remember { listOf("Copy", "Share", "Delete") }
+    val rows = listOf(str("Copy"), str("Share"), str("Delete"))
 
     Column(
         modifier = Modifier
@@ -246,7 +247,7 @@ private fun RotatingPopupMenuDemo() {
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            TextButton(text = "Show rotated menu", onClick = { showPopup = true })
+            TextButton(text = str("Show rotated menu"), onClick = { showPopup = true })
             WindowListPopup(
                 show = showPopup,
                 // MenuRotationHelper.rotatedLocateWidth/Height: the locate pass sees the swapped size.

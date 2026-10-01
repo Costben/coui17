@@ -47,6 +47,7 @@ import appstate.LocalAppState
 import appstate.LocalIsWideScreen
 import component.SearchBarFake
 import component.SearchPager
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
@@ -88,7 +89,8 @@ fun IconsPage(
     }
 
     // Search state
-    var searchStatus by remember { mutableStateOf(SearchStatus(label = "Search icons")) }
+    val searchIconsLabel = str("Search icons")
+    var searchStatus by remember(searchIconsLabel) { mutableStateOf(SearchStatus(label = searchIconsLabel)) }
     val updateSearchStatus: (SearchStatus) -> Unit = { searchStatus = it }
     var searchOffsetY by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
@@ -143,7 +145,7 @@ fun IconsPage(
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 searchStatus.TopAppBarAnim(backgroundColor = COUITheme.colorScheme.surface) {
                     AdaptiveTopAppBar(
-                        title = "Icon",
+                        title = str("Icon"),
                         showTopAppBar = appState.showTopAppBar,
                         isWideScreen = isWideScreen,
                         scrollBehavior = topAppBarScrollBehavior,
@@ -247,13 +249,13 @@ fun IconsPage(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "Name",
+                            text = str("Name"),
                             modifier = Modifier.weight(1f),
                             style = COUITheme.textStyles.footnote1,
                             color = colorScheme.onSurfaceVariantActions,
                         )
                         Text(
-                            text = "Tap to compare weights",
+                            text = str("Tap to compare weights"),
                             style = COUITheme.textStyles.footnote2,
                             color = colorScheme.onSurfaceVariantActions,
                         )
@@ -294,7 +296,7 @@ fun IconsPage(
                             Spacer(modifier = Modifier.size(8.dp))
                             Icon(
                                 imageVector = if (expanded) COUIIcons.ExpandLess else COUIIcons.ExpandMore,
-                                contentDescription = if (expanded) "Collapse" else "Expand",
+                                contentDescription = if (expanded) str("Collapse") else str("Expand"),
                                 tint = colorScheme.onSurfaceVariantActions,
                                 modifier = Modifier.size(18.dp),
                             )
@@ -319,7 +321,7 @@ fun IconsPage(
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Text(
-                                            text = label,
+                                            text = str(label),
                                             style = COUITheme.textStyles.footnote2,
                                             color = colorScheme.onSurfaceVariantActions,
                                             textAlign = TextAlign.Center,

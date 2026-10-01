@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Checkbox
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -46,7 +47,7 @@ fun CheckboxDemo() {
         CheckboxPreferenceDemo()
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         CheckboxPreference(
-            title = "Disabled Checkbox",
+            title = str("Disabled Checkbox"),
             checked = true,
             enabled = false,
             onCheckedChange = {},
@@ -113,7 +114,7 @@ private fun CheckboxPreferenceEndDemo() {
 
     CheckboxPreference(
         checkboxLocation = CheckboxLocation.End,
-        title = "Checkbox",
+        title = str("Checkbox"),
         checked = checked,
         endActions = {
             Text(
@@ -131,8 +132,8 @@ private fun CheckboxPreferenceDemo() {
     var checked by remember { mutableStateOf(false) }
 
     CheckboxPreference(
-        title = "Checkbox",
-        summary = "State: $checked",
+        title = str("Checkbox"),
+        summary = str("State: {}", checked),
         checked = checked,
         onCheckedChange = { checked = it },
     )

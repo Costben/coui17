@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.NavigationPopupMenu
 import io.github.suqi8.coui.kmp.basic.NavigationPopupMenuItem
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -45,7 +46,7 @@ fun NavigationPopupMenuDemo() {
         contentAlignment = Alignment.Center,
     ) {
         TextButton(
-            text = "Show NavigationPopupMenu",
+            text = str("Show NavigationPopupMenu"),
             onClick = { expanded = true },
         )
         NavigationPopupMenu(
@@ -53,17 +54,17 @@ fun NavigationPopupMenuDemo() {
             onDismissRequest = { expanded = false },
         ) {
             NavigationPopupMenuItem(
-                label = "Search",
+                label = str("Search"),
                 icon = COUIIcons.Search,
                 onClick = { expanded = false },
             )
             NavigationPopupMenuItem(
-                label = "Settings",
+                label = str("Settings"),
                 icon = COUIIcons.Settings,
                 onClick = { expanded = false },
             )
             NavigationPopupMenuItem(
-                label = "About",
+                label = str("About"),
                 icon = COUIIcons.More,
                 enabled = false,
                 onClick = {},

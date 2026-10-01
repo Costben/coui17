@@ -9,6 +9,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -35,7 +37,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -44,6 +48,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -280,6 +285,8 @@ private fun BottomFloatingNavigationBarCapsule(
         SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val highlight = rememberGlassHighlight(GlassContainer.Medium, backdrop)
+    val touchState = rememberCOUITouchMotionState()
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
     BoxWithConstraints(
         modifier = Modifier.fillMaxWidth(),
@@ -319,7 +326,11 @@ private fun BottomFloatingNavigationBarCapsule(
                             fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
                             highlight = highlight,
                         )
-                        .bottomFloatingTouchHighlight(shape)
+                        .couiTouchMotion(
+                            shape = shape,
+                            lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                            motionState = touchState,
+                        )
                         .then(modifier),
                     content = content,
                 )
@@ -351,6 +362,8 @@ private fun BottomFloatingNavigationBarMeltBall(
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
     val expansionSize = BottomFloatingNavigationBarDefaults.ExpansionSize
     val sideSpacing = BottomFloatingNavigationBarDefaults.SideSpacing
+    val expansionTouchState = rememberCOUITouchMotionState()
+    val menuTouchState = rememberCOUITouchMotionState()
 
     // COUI drives the expansion view with a spring at response 0.55 / bounce 0.35 once the melt ball
     // is supported; Compose's spring takes `stiffness` = omega0^2 = (2*pi / 0.55)^2 and
@@ -366,10 +379,6 @@ private fun BottomFloatingNavigationBarMeltBall(
     val expansionFootprint = expansionSize * progress
 
     val squircleEnabled = isSquircleEnabled()
-    val capsuleShape = remember(cornerRadius, squircleEnabled) {
-        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
-    }
-
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
@@ -400,20 +409,26 @@ private fun BottomFloatingNavigationBarMeltBall(
                         if (capsuleWidthPx > 0) {
                             add(
                                 MetaBallParticle(
-                                    centerX = capsuleWidth / 2,
-                                    centerY = barHeight / 2,
-                                    width = capsuleWidth,
-                                    height = barHeight,
+                                    centerX = capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
+                                    centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
+                                    width = capsuleWidth * menuTouchState.scaleX,
+                                    height = barHeight * menuTouchState.scaleY,
                                     cornerRadius = cornerRadius,
                                 ),
                             )
                         }
                         if (expansionFootprint > 0.dp) {
                             add(
-                                MetaBallParticle.circle(
-                                    centerX = capsuleWidth + gap + expansionFootprint / 2,
-                                    centerY = barHeight / 2,
-                                    diameter = expansionFootprint,
+                                MetaBallParticle(
+                                    centerX = capsuleWidth + gap + expansionFootprint / 2 + with(density) {
+                                        expansionTouchState.translation.x.toDp()
+                                    },
+                                    centerY = barHeight / 2 + with(density) {
+                                        expansionTouchState.translation.y.toDp()
+                                    },
+                                    width = expansionFootprint * expansionTouchState.scaleX,
+                                    height = expansionFootprint * expansionTouchState.scaleY,
+                                    cornerRadius = expansionSize / 2,
                                 ),
                             )
                         }
@@ -429,7 +444,11 @@ private fun BottomFloatingNavigationBarMeltBall(
                     FloatingCapsuleRow(
                         modifier = Modifier
                             .onSizeChanged { capsuleWidthPx = it.width }
-                            .bottomFloatingTouchHighlight(capsuleShape),
+                            .couiTouchMotion(
+                                shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled),
+                                lightParams = SpotLightDefaults.opaqueMedium2(COUITheme.colorScheme.background.luminance() < 0.5f),
+                                motionState = menuTouchState,
+                            ),
                         // COUI narrows the menu view by exactly the expansion view's footprint plus the
                         // side spacing while the expansion view is active, and hands it the full width
                         // back once it is inactive (`COUIBottomFloatingNavigationBar.onMeasure`).
@@ -448,6 +467,14 @@ private fun BottomFloatingNavigationBarMeltBall(
                         Box(
                             modifier = Modifier
                                 .size(expansionSize)
+                                .couiTouchMotion(
+                                    enabled = expanded,
+                                    shape = CircleShape,
+                                    lightParams = SpotLightDefaults.opaqueMedium2(
+                                        COUITheme.colorScheme.background.luminance() < 0.5f,
+                                    ),
+                                    motionState = expansionTouchState,
+                                )
                                 .graphicsLayer {
                                     scaleX = progress
                                     scaleY = progress
@@ -488,6 +515,7 @@ private fun BottomFloatingNavigationBarMeltBall(
  *   `null` disables the long press.
  */
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun RowScope.BottomFloatingNavigationBarItem(
     selected: Boolean,
     onClick: () -> Unit,
@@ -498,9 +526,14 @@ fun RowScope.BottomFloatingNavigationBarItem(
     largeIcon: Boolean = false,
     redDot: BottomFloatingRedDot? = null,
     overflowMenu: (@Composable () -> Unit)? = null,
+    selectedIcon: ImageVector? = null,
+    motionSpec: COUITouchMotionSpec = COUITouchMotionSpec(),
+    lightSpec: SpotLightParams = SpotLightDefaults.opaqueMedium2(
+        COUITheme.colorScheme.background.luminance() < 0.5f,
+    ),
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     val colorScheme = COUITheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
 
     // COUI item label/icon colors: couiColorLabelTertiary / couiColorLabelPrimary /
     // couiColorLabelPrimaryVariant. The same color tints both the icon and the label.
@@ -534,11 +567,13 @@ fun RowScope.BottomFloatingNavigationBarItem(
             .semantics { this.selected = selected },
     ) {
         // The native item pins icon and title to the top of the cell, so the space below the label
-        // stays empty on purpose.
+        // stays empty on purpose. The item carries no horizontal padding of its own:
+        // `BaseBottomFloatingMenuView.onMeasure` spends `mInnerPadding` on the capsule's own width
+        // and measures every child at its full item width, so a second inset here would squeeze the
+        // icon and ellipsize the label. Measured on the device, Clock's 62.06dp item holds a 24dp
+        // icon and a 62.06dp-wide label, and Gallery's 50.7dp item a 50.7dp-wide one.
         Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(horizontal = BottomFloatingNavigationBarDefaults.ItemInnerPadding),
+            modifier = Modifier.align(Alignment.TopCenter),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(BottomFloatingNavigationBarDefaults.IconTopMargin))
@@ -561,7 +596,7 @@ fun RowScope.BottomFloatingNavigationBarItem(
                             BottomFloatingNavigationBarDefaults.IconSize
                         },
                     ),
-                    imageVector = icon,
+                    imageVector = selectedIcon.takeIf { selected } ?: icon,
                     contentDescription = label,
                     colorFilter = ColorFilter.tint(tint),
                 )
@@ -701,7 +736,14 @@ object BottomFloatingNavigationBarDefaults {
     /** The spacing between items. COUI `coui_bottom_floating_navigation_bar_item_space`. */
     val ItemSpacing = 8.dp
 
-    /** The horizontal padding inside an item cell. COUI `coui_bottom_floating_navigation_bar_item_padding`. */
+    /**
+     * The padding the capsule keeps at each end, inside its own shape. COUI `mInnerPadding`, from
+     * `coui_bottom_floating_navigation_bar_item_padding`.
+     *
+     * It is spent on the capsule's width, not on each item's content: `BaseBottomFloatingMenuView`
+     * counts it once per end in `totalItemSpace` and then measures every child at the full item
+     * width. `COUIBottomFloatingNavigationBarItem` adds no inset of its own.
+     */
     val ItemInnerPadding = 12.dp
 
     /** The horizontal padding of the item background. COUI `coui_bottom_floating_navigation_bar_item_bg_horizontal_padding`. */
@@ -765,6 +807,141 @@ object BottomFloatingNavigationBarDefaults {
      * `mRadius = (getHeight() - paddingTop - paddingBottom) / 2.0f`, i.e. a height/2 capsule.
      */
     val CornerRadius = 28.dp
+
+    /**
+     * The horizontal outset of the item's press mask on each side.
+     *
+     * `COUIBottomFloatingToolbarItemView.updateBackgroundMaskRect` builds the navi item's mask rect
+     * as `(-mBackgroundHorizontalPadding, 0, width + mBackgroundHorizontalPadding, height)`, with
+     * `mBackgroundHorizontalPadding` read from
+     * `coui_bottom_floating_navigation_bar_item_bg_horizontal_padding` — the same 8dp as
+     * [ItemBackgroundHorizontalPadding].
+     */
+    val PressMaskHorizontalOutset = 8.dp
+
+    /**
+     * The spring the item's press mask fades in and out on.
+     *
+     * `COUIMaskEffectDrawable` drives its press mask with
+     * `DEFAULT_SPRING_RESPONSE` (0.3) / `DEFAULT_SPRING_BOUNCE` (0), and `COUIMaskRippleDrawable`
+     * hands the same pair to its own state animators.
+     */
+    val PressMaskSpring = folmeSpring<Float>(
+        damping = 1f,
+        response = 0.3f,
+        visibilityThreshold = 0.001f,
+    )
+
+    /**
+     * The press scale the smallest surfaces spring to. COUI `PressParams.scaleRangeMin`.
+     *
+     * `COUIPressAnimatorUnit.initPressEngineConfig` takes the range from `mPressParams`, whose
+     * provider hands out `PressParams`' defaults.
+     */
+    val PressScaleMin = 0.85f
+
+    /** The press scale the largest surfaces spring to. COUI `PressParams.scaleRangeMax`. */
+    val PressScaleMax = 0.97f
+
+    /** The square side whose area is the low end of the press scale mapping. COUI `PressParams.minAreaWidthDp`. */
+    val PressAreaMinWidthDp = 20f
+
+    /** The square side whose area is the high end of the press scale mapping. COUI `PressParams.maxAreaWidthDp`. */
+    val PressAreaMaxWidthDp = 150f
+
+    /** The aspect ratio above which the second press-scale channel engages. COUI `PressParams.aspectActivationThreshold`. */
+    val PressAspectActivationThreshold = 2f
+
+    /** The aspect ratio at which the second channel reaches [PressAspectExtremeScale]. COUI `PressParams.aspectExtremeRatio`. */
+    val PressAspectExtremeRatio = 15f
+
+    /** The scale of the second channel at [PressAspectActivationThreshold]. COUI `PressParams.aspectBaseScale`. */
+    val PressAspectBaseScale = 0.85f
+
+    /** The scale of the second channel at [PressAspectExtremeRatio]. COUI `PressParams.aspectExtremeScale`. */
+    val PressAspectExtremeScale = 1f
+
+    /** The smallest scale a pressed surface may reach. COUI `PressPhysicsEngine.TARGET_SCALE_MIN`. */
+    val PressScaleClampMin = 0.4f
+
+    /** The largest scale a pressed surface may reach. COUI `PressPhysicsEngine.TARGET_SCALE_MAX_SHRINK`. */
+    val PressScaleClampMax = 1f
+
+    /**
+     * The spring a pressed capsule scales down on.
+     *
+     * `COUIPressAnimatorUnit.initPressEngineConfig` picks the jelly springs, and switches to the
+     * candy pair when the view is more than [PressAspectActivationThreshold] times wider than tall
+     * (`useCandyMaterialRealtime`). A capsule with two or more items is always in that case, so the
+     * candy pair is the one the bar uses: `PressParams.candyPressSpring` is bounce 0 / response 0.3.
+     */
+    val PressScalePressSpring = folmeSpring<Float>(
+        damping = 1f,
+        response = 0.3f,
+        visibilityThreshold = 0.001f,
+    )
+
+    /**
+     * The spring a released capsule scales back up on: `PressParams.candyHandUpSpring`, bounce 0.5 /
+     * response 0.5, cut at `CommonParams.iolPressHandUpMinimumVisibleChange` (1.0E-4).
+     */
+    val PressScaleReleaseSpring = folmeSpring<Float>(
+        damping = 0.5f,
+        response = 0.5f,
+        visibilityThreshold = 1.0E-4f,
+    )
+
+    /** `coui_color_press` in light themes (`couiColorPress`, `#1F000000`). */
+    val PressColorLight = Color(0x1F000000)
+
+    /** `coui_color_press` in dark themes (`couiColorPress`, `#33FFFFFF`). */
+    val PressColorDark = Color(0x33FFFFFF)
+
+    /** The press colour for a bar painted over [background]. */
+    fun pressColor(background: Color): Color = if (background.luminance() < 0.5f) PressColorDark else PressColorLight
+
+    /**
+     * The scale a `width` x `height` surface springs to while pressed.
+     *
+     * `COUIPressAnimatorUnit.initTargetScale` asks `PressPhysicsEngine.calculateTargetScaleBreakdown`
+     * for the target, handing it the [PressScaleMin] / [PressScaleMax] range, a clamp of
+     * [PressScaleClampMin] / [PressScaleClampMax], and a `PressScaleTuning` built from the
+     * `PressParams` defaults. `PressCalc.calculateUniformScaleBreakdown` then blends two channels:
+     *
+     * - the area channel maps the area from [PressAreaMinWidthDp]^2 to [PressAreaMaxWidthDp]^2 onto
+     *   [PressScaleMin]..[PressScaleMax] through the `PressParams` bezier — `(0, 0, 0, 1)`, whose
+     *   control points make `y = x`, so the mapping is linear;
+     * - the aspect channel engages once the longer side is more than
+     *   [PressAspectActivationThreshold] times the shorter one, coasts from [PressAspectBaseScale] to
+     *   [PressAspectExtremeScale] between that threshold and [PressAspectExtremeRatio], and is blended
+     *   into the area scale at half weight.
+     *
+     * The area bounds are taken in dp, the way the native tuning converts
+     * `minAreaWidthDp` / `maxAreaWidthDp` with `TouchAnimatorParamProvider.dp2px` and squares them:
+     * both ends carry the same density factor, so the interpolation is density independent.
+     */
+    fun pressScale(width: Dp, height: Dp): Float {
+        val w = width.value
+        val h = height.value
+        if (w <= 0f || h <= 0f) return 1f
+        val minArea = PressAreaMinWidthDp * PressAreaMinWidthDp
+        val maxArea = PressAreaMaxWidthDp * PressAreaMaxWidthDp
+        val area = (w * h).coerceIn(minArea, maxArea)
+        val areaScale = PressScaleMin + (PressScaleMax - PressScaleMin) * ((area - minArea) / (maxArea - minArea))
+        val aspect = maxOf(w / h, h / w)
+        val scale = if (aspect <= PressAspectActivationThreshold) {
+            areaScale
+        } else {
+            val aspectProgress = (
+                (aspect - PressAspectActivationThreshold) /
+                    (PressAspectExtremeRatio - PressAspectActivationThreshold)
+                ).coerceIn(0f, 1f)
+            val aspectScale = PressAspectBaseScale +
+                (PressAspectExtremeScale - PressAspectBaseScale) * aspectProgress
+            (areaScale + aspectScale) / 2f
+        }
+        return scale.coerceIn(PressScaleClampMin, PressScaleClampMax)
+    }
 }
 
 /**

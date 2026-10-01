@@ -99,6 +99,7 @@ fun DropdownImpl(
     isFirst: Boolean = index == 0,
     isLast: Boolean = index == optionSize - 1,
     onSelectedIndexChange: (Int) -> Unit = {},
+    groupKey: Any? = null,
 ) {
     val additionalTopPadding =
         if (!dialogMode && isFirst) {
@@ -178,6 +179,7 @@ fun DropdownImpl(
                 enabled = enabled,
                 role = role,
                 onClick = { currentOnSelectedIndexChange(index) },
+                groupKey = groupKey,
             )
             .then(containerModifier),
     ) {

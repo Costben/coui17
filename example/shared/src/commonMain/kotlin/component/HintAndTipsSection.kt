@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HintAnimationLayout
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -71,13 +72,11 @@ fun TopTipsStylesDemo() {
 private fun HintAnimationDemo() {
     var query by remember { mutableStateOf("") }
     var lastHint by remember { mutableStateOf("") }
-    val hints = remember {
-        listOf(
-            "Search settings",
-            "Search messages",
-            "Search apps and files",
-        )
-    }
+    val hints = listOf(
+        str("Search settings"),
+        str("Search messages"),
+        str("Search apps and files"),
+    )
 
     Column(
         modifier = Modifier
@@ -103,11 +102,11 @@ private fun HintAnimationDemo() {
             )
         }
         Text(
-            text = "query: \"$query\"",
+            text = str("query: \"{}\"", query),
             style = COUITheme.textStyles.footnote1,
         )
         Text(
-            text = "last hint: $lastHint",
+            text = str("last hint: {}", lastHint),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -125,8 +124,8 @@ private fun TopTipsAiPaymentDemo() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TopTips(
-            text = "Review the payment details before you confirm this transaction",
-            title = "AI payment",
+            text = str("Review the payment details before you confirm this transaction"),
+            title = str("AI payment"),
             visible = visible,
             startIcon = {
                 Icon(
@@ -136,12 +135,12 @@ private fun TopTipsAiPaymentDemo() {
                 )
             },
             style = TopTipsStyle.AiPayment,
-            ignoreText = "Not now",
+            ignoreText = str("Not now"),
             onIgnore = {
                 lastAction = "ignore"
                 visible = false
             },
-            actionText = "Continue",
+            actionText = str("Continue"),
             onAction = {
                 lastAction = "action"
                 visible = false
@@ -150,13 +149,13 @@ private fun TopTipsAiPaymentDemo() {
         )
         if (!visible) {
             TextButton(
-                text = "Show again",
+                text = str("Show again"),
                 onClick = { visible = true },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
         Text(
-            text = "last action: $lastAction",
+            text = str("last action: {}", lastAction),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -171,15 +170,15 @@ private fun TopTipsBackgroundDemo() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TopTips(
-            text = "White tips fill with couiColorCard",
-            title = "White background",
+            text = str("White tips fill with couiColorCard"),
+            title = str("White background"),
             backgroundStyle = TopTipsBackgroundStyle.White,
-            actionText = "Got it",
+            actionText = str("Got it"),
             onAction = {},
             modifier = Modifier.fillMaxWidth(),
         )
         TopTips(
-            text = "Gray tips fill with couiColorContainer4",
+            text = str("Gray tips fill with couiColorContainer4"),
             backgroundStyle = TopTipsBackgroundStyle.Gray,
             onClose = {},
             modifier = Modifier.fillMaxWidth(),

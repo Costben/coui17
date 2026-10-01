@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import i18n.LocalAppStrings
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
@@ -61,55 +63,56 @@ fun SpinnerDemo() {
     var windowDialogGroup1SpinnerOptionSelected by remember { mutableIntStateOf(0) }
     var windowDialogGroup2SpinnerOptionSelected by remember { mutableIntStateOf(0) }
     var windowDialogGroup3SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    val spinnerOptions = remember {
+    val s = LocalAppStrings.current
+    val spinnerOptions = remember(s) {
         listOf(
             DropdownItem(
                 icon = {
                     Icon(
                         RoundedRectanglePainter(),
-                        "Icon",
+                        s["Icon"],
                         Modifier.padding(end = 12.dp),
                         Color(0xFFFF5B29),
                     )
                 },
-                text = "Option 1",
-                summary = "Red",
+                text = s["Option 1"],
+                summary = s["Red"],
             ),
             DropdownItem(
                 icon = {
                     Icon(
                         RoundedRectanglePainter(),
-                        "Icon",
+                        s["Icon"],
                         Modifier.padding(end = 12.dp),
                         Color(0xFF36D167),
                     )
                 },
-                text = "Option 2",
-                summary = "Green",
+                text = s["Option 2"],
+                summary = s["Green"],
             ),
             DropdownItem(
                 icon = {
                     Icon(
                         RoundedRectanglePainter(),
-                        "Icon",
+                        s["Icon"],
                         Modifier.padding(end = 12.dp),
                         Color(0xFF3482FF),
                     )
                 },
-                text = "Option 3",
-                summary = "Blue",
+                text = s["Option 3"],
+                summary = s["Blue"],
             ),
             DropdownItem(
                 icon = {
                     Icon(
                         RoundedRectanglePainter(),
-                        "Icon",
+                        s["Icon"],
                         Modifier.padding(end = 12.dp),
                         Color(0xFFFFB21D),
                     )
                 },
-                text = "Option 4",
-                summary = "Yellow",
+                text = s["Option 4"],
+                summary = s["Yellow"],
             ),
         )
     }
@@ -184,8 +187,8 @@ fun SpinnerDemo() {
             .padding(bottom = 16.dp),
     ) {
         OverlaySpinnerPreference(
-            title = "SpinnerPref (O)",
-            summary = if (overlayExpanded) "Expanded" else "Collapsed",
+            title = str("SpinnerPref (O)"),
+            summary = if (overlayExpanded) str("Expanded") else str("Collapsed"),
             items = spinnerOptions,
             selectedIndex = superSpinnerOptionSelected.value,
             onSelectedIndexChange = { newOption -> superSpinnerOptionSelected.value = newOption },
@@ -193,8 +196,8 @@ fun SpinnerDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowSpinnerPreference(
-            title = "SpinnerPref (W)",
-            summary = if (windowExpanded) "Expanded" else "Collapsed",
+            title = str("SpinnerPref (W)"),
+            summary = if (windowExpanded) str("Expanded") else str("Collapsed"),
             items = spinnerOptions,
             selectedIndex = windowSpinnerOptionSelected.value,
             onSelectedIndexChange = { newOption -> windowSpinnerOptionSelected.value = newOption },
@@ -202,9 +205,9 @@ fun SpinnerDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         OverlaySpinnerPreference(
-            title = "SpinnerPref (O)",
-            summary = "As Dialog (O)" + if (overlayDialogExpanded) " (Expanded)" else " (Collapsed)",
-            dialogButtonString = "OK",
+            title = str("SpinnerPref (O)"),
+            summary = str("As Dialog (O)") + if (overlayDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
+            dialogButtonString = str("OK"),
             items = spinnerOptions,
             selectedIndex = superSpinnerOptionSelectedDialog.value,
             onSelectedIndexChange = { newOption -> superSpinnerOptionSelectedDialog.value = newOption },
@@ -212,9 +215,9 @@ fun SpinnerDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowSpinnerPreference(
-            title = "SpinnerPref (W)",
-            summary = "As Dialog (W)" + if (windowDialogExpanded) " (Expanded)" else " (Collapsed)",
-            dialogButtonString = "OK",
+            title = str("SpinnerPref (W)"),
+            summary = str("As Dialog (W)") + if (windowDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
+            dialogButtonString = str("OK"),
             items = spinnerOptions,
             selectedIndex = windowSpinnerOptionSelectedDialog.value,
             onSelectedIndexChange = { newOption -> windowSpinnerOptionSelectedDialog.value = newOption },
@@ -222,50 +225,50 @@ fun SpinnerDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         OverlaySpinnerPreference(
-            title = "Grouped SpinnerPref (O)",
-            summary = if (overlayGroupedExpanded) "Expanded" else "Collapsed",
+            title = str("Grouped SpinnerPref (O)"),
+            summary = if (overlayGroupedExpanded) str("Expanded") else str("Collapsed"),
             entries = overlayGroupedSpinnerOptions,
             collapseOnSelection = false,
             onExpandedChange = { overlayGroupedExpanded = it },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowSpinnerPreference(
-            title = "Grouped SpinnerPref (W)",
-            summary = if (windowGroupedExpanded) "Expanded" else "Collapsed",
+            title = str("Grouped SpinnerPref (W)"),
+            summary = if (windowGroupedExpanded) str("Expanded") else str("Collapsed"),
             entries = windowGroupedSpinnerOptions,
             collapseOnSelection = false,
             onExpandedChange = { windowGroupedExpanded = it },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         OverlaySpinnerPreference(
-            title = "Grouped SpinnerPref (O)",
-            summary = "As Dialog (O)" + if (overlayGroupedDialogExpanded) " (Expanded)" else " (Collapsed)",
-            dialogButtonString = "OK",
+            title = str("Grouped SpinnerPref (O)"),
+            summary = str("As Dialog (O)") + if (overlayGroupedDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
+            dialogButtonString = str("OK"),
             entries = overlayGroupedDialogSpinnerOptions,
             onExpandedChange = { overlayGroupedDialogExpanded = it },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowSpinnerPreference(
-            title = "Grouped SpinnerPref (W)",
-            summary = "As Dialog (W)" + if (windowGroupedDialogExpanded) " (Expanded)" else " (Collapsed)",
-            dialogButtonString = "OK",
+            title = str("Grouped SpinnerPref (W)"),
+            summary = str("As Dialog (W)") + if (windowGroupedDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
+            dialogButtonString = str("OK"),
             entries = windowGroupedDialogSpinnerOptions,
             onExpandedChange = { windowGroupedDialogExpanded = it },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         OverlaySpinnerPreference(
-            title = "Disabled SpinnerPref (O)",
-            summary = "Collapsed",
-            items = listOf(DropdownItem(text = "Option 5")),
+            title = str("Disabled SpinnerPref (O)"),
+            summary = str("Collapsed"),
+            items = listOf(DropdownItem(text = str("Option 5"))),
             selectedIndex = 0,
             onSelectedIndexChange = {},
             enabled = false,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowSpinnerPreference(
-            title = "Disabled SpinnerPref (W)",
-            summary = "Collapsed",
-            items = listOf(DropdownItem(text = "Option 6")),
+            title = str("Disabled SpinnerPref (W)"),
+            summary = str("Collapsed"),
+            items = listOf(DropdownItem(text = str("Option 6"))),
             selectedIndex = 0,
             onSelectedIndexChange = {},
             enabled = false,
@@ -307,7 +310,6 @@ private fun groupedSpinnerOptions(
     DropdownEntry(
         items = spinnerOptions.mapIndexed { index, item ->
             item.copy(
-                text = "Option ${index + 1}",
                 enabled = index % 2 == 0,
                 selected = group3SelectedIndex == index,
                 onClick = {

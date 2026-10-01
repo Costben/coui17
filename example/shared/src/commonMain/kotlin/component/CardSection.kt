@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -50,13 +51,13 @@ fun CardDemo() {
     ) {
         Text(
             color = COUITheme.colorScheme.onSurface,
-            text = "Card",
+            text = str("Card"),
             fontSize = 19.sp,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
             color = COUITheme.colorScheme.onSurfaceVariantSummary,
-            text = "PressFeedbackType: Tint (default)",
+            text = str("PressFeedbackType: Tint (default)"),
             fontSize = 17.sp,
             fontWeight = FontWeight.Normal,
         )
@@ -76,13 +77,13 @@ fun CardDemo() {
             content = {
                 Text(
                     color = COUITheme.colorScheme.onSurface,
-                    text = "Card",
+                    text = str("Card"),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
                     color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                    text = "PressFeedback\nType: Sink",
+                    text = str("PressFeedback\nType: Sink"),
                     style = COUITheme.textStyles.paragraph,
                 )
             },
@@ -95,13 +96,13 @@ fun CardDemo() {
             content = {
                 Text(
                     color = COUITheme.colorScheme.onSurface,
-                    text = "Card",
+                    text = str("Card"),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
                     color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                    text = "PressFeedback\nType: Tilt",
+                    text = str("PressFeedback\nType: Tilt"),
                     style = COUITheme.textStyles.paragraph,
                 )
             },
@@ -129,13 +130,13 @@ private fun LongPressHoldDownCardDemo() {
         content = {
             Text(
                 color = COUITheme.colorScheme.onSurface,
-                text = "Card",
+                text = str("Card"),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
             )
             Text(
                 color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                text = "Long press to show dialog",
+                text = str("Long press to show dialog"),
                 style = COUITheme.textStyles.paragraph,
             )
         },
@@ -143,8 +144,8 @@ private fun LongPressHoldDownCardDemo() {
 
     OverlayDialog(
         show = showDialog,
-        title = "Long Press Action",
-        summary = "Triggered by long pressing the card.",
+        title = str("Long Press Action"),
+        summary = str("Triggered by long pressing the card."),
         onDismissRequest = { showDialog = false },
         onDismissFinished = { holdDown = false },
         content = {
@@ -158,13 +159,13 @@ private fun LongPressHoldDownCardDemo() {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 TextButton(
-                    text = "Cancel",
+                    text = str("Cancel"),
                     onClick = { showDialog = false },
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(20.dp))
                 TextButton(
-                    text = "Confirm",
+                    text = str("Confirm"),
                     onClick = { showDialog = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.textButtonColorsPrimary(),

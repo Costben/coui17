@@ -459,12 +459,24 @@ fun Modifier.preciseClickAnchor(state: PreciseClickState): Modifier = this
  * Parent data a registered row exposes to [ListPopupColumn]'s measure policy, so the policy can tell
  * selectable rows apart from group divider bands and headers without inspecting the composition.
  */
-private class PopupListItemParentData(val handle: PopupListItemHandle) : ParentDataModifier {
+private class PopupListItemParentData(
+    val handle: PopupListItemHandle,
+    val groupKey: Any?,
+) : ParentDataModifier {
     override fun Density.modifyParentData(parentData: Any?): Any = this@PopupListItemParentData
 }
 
 private val IntrinsicMeasurable.popupListItemHandle: PopupListItemHandle?
     get() = (parentData as? PopupListItemParentData)?.handle
+
+/**
+ * Group identity a registered row exposes to [ListPopupColumn]'s measure policy, or `null` when the
+ * row declares none. COUI only inserts a group divider where `PopupListItem.getGroupId()` changes
+ * (`COUIPopupListWindow` collects the boundary indices into `mGroupSets`), so two adjacent rows
+ * sharing a key are contiguous and the 12dp band is skipped between them.
+ */
+private val IntrinsicMeasurable.popupListItemGroupKey: Any?
+    get() = (parentData as? PopupListItemParentData)?.groupKey
 
 /**
  * Registers a popup row with the enclosing [PopupListGestureHost] so the list can own its press
@@ -480,6 +492,10 @@ private val IntrinsicMeasurable.popupListItemHandle: PopupListItemHandle?
  * @param enabled Whether the row reacts to input.
  * @param role The accessibility [Role] exposed for the row.
  * @param onClick Invoked when the row is selected, by pointer or by accessibility action.
+ * @param groupKey Group identity shared with the adjacent rows that belong to the same popup group.
+ *   [ListPopupColumn] skips the 12dp divider band between two rows carrying an equal non-null key,
+ *   matching `COUIPopupListWindow`'s `getGroupId()` boundary rule. `null` keeps the band between
+ *   every adjacent pair.
  */
 @Composable
 internal fun Modifier.popupListItem(
@@ -487,6 +503,7 @@ internal fun Modifier.popupListItem(
     enabled: Boolean,
     role: Role,
     onClick: () -> Unit,
+    groupKey: Any? = null,
 ): Modifier {
     val host = LocalPopupListGestureHost.current ?: return this.selectable(
         selected = selected,
@@ -505,7 +522,7 @@ internal fun Modifier.popupListItem(
         onDispose { host.unregister(handle) }
     }
 
-    val parentData = remember(handle) { PopupListItemParentData(handle) }
+    val parentData = remember(handle, groupKey) { PopupListItemParentData(handle, groupKey) }
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val maskColor = if (isDark) PopupItemPressDark else PopupItemPressLight
     val squircleEnabled = isSquircleEnabled()
@@ -622,14 +639,21 @@ fun ListPopupColumn(
                 var listHeight = 0
                 var pendingDividerBand = 0
                 var previousWasRow = false
+                var previousGroupKey: Any? = null
 
                 for (i in measurables.indices) {
                     val measurable = measurables[i]
                     val handle = measurable.popupListItemHandle
                     val isRow = handle != null
+                    val groupKey = measurable.popupListItemGroupKey
                     // A divider band only separates two adjacent selectable rows; an explicitly
                     // composed divider or a header occupies its own slot (COUI item view types 2 and 5).
-                    val gap = if (isRow && previousWasRow) dividerBand else 0
+                    // COUIPopupListWindow collects mGroupSets from where PopupListItem.getGroupId()
+                    // changes, so two rows declaring an equal group key are one group and stay
+                    // contiguous — a uniform single-group list gets no band at all.
+                    val sameGroup =
+                        isRow && previousWasRow && groupKey != null && groupKey == previousGroupKey
+                    val gap = if (isRow && previousWasRow && !sameGroup) dividerBand else 0
 
                     val placeable = measurable.measure(childConstraints)
                     if (listHeight + gap + placeable.height > maxHeight && placeables.isNotEmpty()) {
@@ -650,6 +674,7 @@ fun ListPopupColumn(
                     listHeight += placeable.height
                     pendingDividerBand = gap
                     previousWasRow = isRow
+                    previousGroupKey = groupKey
                 }
 
                 host.onPlaced(rows, hairlines)
@@ -672,11 +697,16 @@ fun ListPopupColumn(
 
                 var height = 0
                 var previousWasRow = false
+                var previousGroupKey: Any? = null
                 for (measurable in measurables) {
                     val isRow = measurable.popupListItemHandle != null
-                    if (isRow && previousWasRow) height += dividerBand
+                    val groupKey = measurable.popupListItemGroupKey
+                    val sameGroup =
+                        isRow && previousWasRow && groupKey != null && groupKey == previousGroupKey
+                    if (isRow && previousWasRow && !sameGroup) height += dividerBand
                     height += measurable.minIntrinsicHeight(listWidth)
                     previousWasRow = isRow
+                    previousGroupKey = groupKey
                 }
                 return height
             }

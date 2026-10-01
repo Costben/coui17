@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -54,21 +55,21 @@ fun ArrowDemo() {
             .padding(bottom = 16.dp),
     ) {
         ArrowPreference(
-            title = "Arrow",
+            title = str("Arrow"),
             startAction = {
                 Box(
                     modifier = Modifier.padding(end = 8.dp),
                 ) {
                     Icon(
                         imageVector = COUIIcons.Contacts,
-                        contentDescription = "Personal",
+                        contentDescription = str("Personal"),
                         tint = COUITheme.colorScheme.onBackground,
                     )
                 }
             },
             endActions = {
                 Text(
-                    text = "End",
+                    text = str("End"),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = COUITheme.colorScheme.onSurfaceVariantActions,
                 )
@@ -77,7 +78,7 @@ fun ArrowDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         SliderPreference(
-            title = "Volume",
+            title = str("Volume"),
             valueText = "${(volume * 100).toInt()}%",
             value = volume,
             onValueChange = { volume = it },
@@ -89,10 +90,10 @@ fun ArrowDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "Disabled Arrow",
+            title = str("Disabled Arrow"),
             endActions = {
                 Text(
-                    text = "End",
+                    text = str("End"),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = COUITheme.colorScheme.disabledOnSecondaryVariant,
                 )
@@ -118,8 +119,8 @@ private fun SliderDialog(
 ) {
     OverlayDialog(
         show = showDialog.value,
-        title = "Adjust Volume",
-        summary = "Enter 0-100",
+        title = str("Adjust Volume"),
+        summary = str("Enter 0-100"),
         onDismissRequest = {
             showDialog.value = false
         },
@@ -155,13 +156,13 @@ private fun SliderDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 TextButton(
-                    text = "Cancel",
+                    text = str("Cancel"),
                     onClick = { showDialog.value = false },
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(20.dp))
                 TextButton(
-                    text = "Confirm",
+                    text = str("Confirm"),
                     onClick = {
                         val parsed = text.toIntOrNull()
                         val clamped = parsed?.coerceIn(0, 100) ?: ((volumeState() * 100).toInt())

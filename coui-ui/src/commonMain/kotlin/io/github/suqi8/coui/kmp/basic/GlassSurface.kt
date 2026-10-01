@@ -32,6 +32,15 @@ enum class GlassContainer {
 
     /** Full-width sheets and dialogs. */
     Large,
+
+    /**
+     * A popup panel: the same size class as [Large], lit on both long edges.
+     *
+     * COUI's `ShadowEdge` strokes both edges of a panel's silhouette (`EDGE_STYLE_0` carries a width
+     * and an alpha per edge), while the glass bloom only reaches the top edge unless a light is placed
+     * below the surface. Panels use the preset that has one.
+     */
+    Panel,
 }
 
 /** Default values for the ColorOS 17 light-sensing glass surfaces. */
@@ -75,8 +84,16 @@ fun rememberGlassHighlight(
         } else {
             when (container) {
                 GlassContainer.Small -> if (isDark) Highlight.GlassStrokeSmallDark else Highlight.GlassStrokeSmallLight
+
                 GlassContainer.Medium -> if (isDark) Highlight.GlassStrokeMiddleDark else Highlight.GlassStrokeMiddleLight
+
                 GlassContainer.Large -> if (isDark) Highlight.GlassStrokeBigDark else Highlight.GlassStrokeBigLight
+
+                GlassContainer.Panel -> if (isDark) {
+                    Highlight.GlassStrokePanelDark
+                } else {
+                    Highlight.GlassStrokePanelLight
+                }
             }
         }
     }
@@ -106,6 +123,38 @@ fun rememberGlassHighlight(
 fun Modifier.couiGlassSurface(
     backdrop: Backdrop?,
     shape: Shape,
+    containerColor: Color,
+    fallback: Modifier,
+    blurRadius: Float = GlassDefaults.BlurRadius,
+    containerAlpha: Float = GlassDefaults.ContainerAlpha,
+    blendColors: List<BlendColorEntry>? = null,
+    highlight: Highlight? = null,
+): Modifier {
+    if (backdrop == null || !isRuntimeShaderSupported()) return fallback
+    return textureBlur(
+        backdrop = backdrop,
+        shape = shape,
+        blurRadius = blurRadius,
+        colors = BlurDefaults.blurColors(
+            blendColors = blendColors
+                ?: listOf(BlendColorEntry(color = containerColor.copy(alpha = containerAlpha))),
+        ),
+        highlight = highlight,
+    )
+}
+
+/**
+ * [couiGlassSurface] taking a shape provider, for a surface whose silhouette moves — a popup
+ * morphing between two anchors, for instance. [shape] is re-read on every outline request, so it
+ * must return a value that changes with the geometry; see the `textureEffect` provider overload
+ * for the contract.
+ *
+ * @param shape Supplies the surface's silhouette for the current frame.
+ */
+@Composable
+fun Modifier.couiGlassSurface(
+    backdrop: Backdrop?,
+    shape: () -> Shape,
     containerColor: Color,
     fallback: Modifier,
     blurRadius: Float = GlassDefaults.BlurRadius,

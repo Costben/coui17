@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -36,6 +37,17 @@ fun LazyListScope.snackbarSection(snackbarHostState: SnackbarHostState) {
 @Composable
 fun SnackbarDemo(snackbarHostState: SnackbarHostState) {
     val scope = rememberCoroutineScope()
+    val shortMessage = str("This is a short message")
+    val longMessage = str("This is a long message to display more text content")
+    val customMessage = str("This message will last for 2 seconds")
+    val actionMessage = str("This message has an action")
+    val actionAlive = str("Action: Alive")
+    val actionUndo = str("Action: Undo")
+    val actionExpired = str("Action: Expired")
+    val undoLabel = str("Undo")
+    val dismissibleMessage = str("This message can be removed via the close button")
+    val indefiniteMessage = str("Indefinite message, dismiss manually")
+    val actionText = str("Action")
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -50,7 +62,7 @@ fun SnackbarDemo(snackbarHostState: SnackbarHostState) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 TextButton(
-                    text = "Dismiss oldest",
+                    text = str("Dismiss oldest"),
                     onClick = {
                         scope.launch {
                             snackbarHostState.oldestSnackbarData()?.dismiss()
@@ -59,7 +71,7 @@ fun SnackbarDemo(snackbarHostState: SnackbarHostState) {
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(
-                    text = "Dismiss newest",
+                    text = str("Dismiss newest"),
                     onClick = {
                         scope.launch {
                             snackbarHostState.newestSnackbarData()?.dismiss()
@@ -73,20 +85,20 @@ fun SnackbarDemo(snackbarHostState: SnackbarHostState) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 TextButton(
-                    text = "Short (4s)",
+                    text = str("Short (4s)"),
                     onClick = {
                         scope.launch {
-                            snackbarHostState.showSnackbar("This is a short message")
+                            snackbarHostState.showSnackbar(shortMessage)
                         }
                     },
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(
-                    text = "Long (10s)",
+                    text = str("Long (10s)"),
                     onClick = {
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "This is a long message to display more text content",
+                                message = longMessage,
                                 duration = SnackbarDuration.Long,
                             )
                         }
@@ -99,31 +111,31 @@ fun SnackbarDemo(snackbarHostState: SnackbarHostState) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 TextButton(
-                    text = "Custom (2s)",
+                    text = str("Custom (2s)"),
                     onClick = {
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "This message will last for 2 seconds",
+                                message = customMessage,
                                 duration = SnackbarDuration.Custom(2000L),
                             )
                         }
                     },
                     modifier = Modifier.weight(1f),
                 )
-                var text by remember { mutableStateOf("Action") }
+                var text by remember { mutableStateOf(actionText) }
                 TextButton(
                     text = text,
                     onClick = {
                         scope.launch {
-                            text = "Action: Alive"
+                            text = actionAlive
                             val result = snackbarHostState.showSnackbar(
-                                message = "This message has an action",
-                                actionLabel = "Undo",
+                                message = actionMessage,
+                                actionLabel = undoLabel,
                                 duration = SnackbarDuration.Short,
                             )
                             text = when (result) {
-                                SnackbarResult.ActionPerformed -> "Action: Undo"
-                                else -> "Action: Expired"
+                                SnackbarResult.ActionPerformed -> actionUndo
+                                else -> actionExpired
                             }
                         }
                     },
@@ -136,11 +148,11 @@ fun SnackbarDemo(snackbarHostState: SnackbarHostState) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 TextButton(
-                    text = "Dismissible",
+                    text = str("Dismissible"),
                     onClick = {
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "This message can be removed via the close button",
+                                message = dismissibleMessage,
                                 withDismissAction = true,
                                 duration = SnackbarDuration.Long,
                             )
@@ -149,11 +161,11 @@ fun SnackbarDemo(snackbarHostState: SnackbarHostState) {
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(
-                    text = "Indefinite",
+                    text = str("Indefinite"),
                     onClick = {
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "Indefinite message, dismiss manually",
+                                message = indefiniteMessage,
                                 withDismissAction = true,
                                 duration = SnackbarDuration.Indefinite,
                             )

@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.ColorPalette
 import io.github.suqi8.coui.kmp.basic.ColorPicker
@@ -220,7 +221,7 @@ private fun ColorHexTextField(
         },
         leadingIcon = {
             Text(
-                "HEX: #",
+                str("HEX: #"),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(start = 16.dp),
             )

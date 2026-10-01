@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.ChipTabData
 import io.github.suqi8.coui.kmp.basic.ChipTabGroup
@@ -68,7 +69,7 @@ private fun ClickSelectMenuDemo() {
     var showPopup by remember { mutableStateOf(false) }
     val placement = ClickSelectMenuPlacement(sides[sideIndex], alignments[alignmentIndex])
     val preciseClickState = rememberPreciseClickState()
-    val rows = remember { listOf("Cut", "Copy", "Paste") }
+    val rows = listOf(str("Cut"), str("Copy"), str("Paste"))
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     val isolated = remember {
         ClickSelectMenuDefaults.isolatedAnchor(pointX = 540, pointY = 1200, displaySize = IntSize(1080, 2400))
@@ -97,7 +98,7 @@ private fun ClickSelectMenuDemo() {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "Tap anywhere on this row",
+                text = str("Tap anywhere on this row"),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showPopup = true }

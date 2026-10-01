@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -83,8 +84,8 @@ fun SwitchDemo() {
         }
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         SwitchPreference(
-            title = "Switch",
-            summary = "Click to expand a Switch",
+            title = str("Switch"),
+            summary = str("Click to expand a Switch"),
             checked = superSwitchAnimState.value,
             onCheckedChange = {
                 superSwitchAnimState.value = it
@@ -100,7 +101,7 @@ fun SwitchDemo() {
             Column {
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 SwitchPreference(
-                    title = "Switch",
+                    title = str("Switch"),
                     checked = superSwitchState.value,
                     endActions = {
                         Text(
@@ -117,7 +118,7 @@ fun SwitchDemo() {
         }
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         SwitchPreference(
-            title = "Disabled Switch",
+            title = str("Disabled Switch"),
             checked = true,
             enabled = false,
             onCheckedChange = {},

@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
 import io.github.suqi8.coui.kmp.basic.Icon
@@ -62,11 +63,14 @@ fun BottomFloatingNavigationBarDemo() {
     val colorScheme = COUITheme.colorScheme
     // Three items: the bar hands the expansion view's footprint plus the side spacing to the
     // capsule as a width bound, so the capsule has to leave that much of the row free.
-    val items = remember {
+    val homeLabel = str("Home")
+    val messagesLabel = str("Messages")
+    val settingsLabel = str("Settings")
+    val items = remember(homeLabel, messagesLabel, settingsLabel) {
         listOf(
-            "Home" to COUIIcons.Home,
-            "Messages" to COUIIcons.Messages,
-            "Settings" to COUIIcons.Settings,
+            homeLabel to COUIIcons.Home,
+            messagesLabel to COUIIcons.Messages,
+            settingsLabel to COUIIcons.Settings,
         )
     }
     val backdrop = rememberBlurBackdrop()
@@ -119,7 +123,7 @@ fun BottomFloatingNavigationBarDemo() {
                         ) {
                             Icon(
                                 imageVector = COUIIcons.Add,
-                                contentDescription = "Expand",
+                                contentDescription = str("Expand"),
                                 tint = colorScheme.onPrimary,
                             )
                         }
@@ -145,7 +149,7 @@ fun BottomFloatingNavigationBarDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "Expansion view")
+        Text(text = str("Expansion view"))
         Switch(checked = expanded, onCheckedChange = { expanded = it })
     }
 }

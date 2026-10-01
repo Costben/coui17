@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.CalendarView
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.DateValue
@@ -100,9 +101,10 @@ private fun CalendarViewDemo() {
             .fillMaxWidth()
             .padding(16.dp),
     ) {
+        val selectedDate = value.day.toString().padStart(2, '0') + "." +
+            value.month.toString().padStart(2, '0') + "." + value.year
         Text(
-            text = "Selected " + value.day.toString().padStart(2, '0') + "." +
-                value.month.toString().padStart(2, '0') + "." + value.year,
+            text = str("Selected {}", selectedDate),
             color = COUITheme.colorScheme.onBackgroundVariant,
             style = COUITheme.textStyles.footnote1,
         )
@@ -118,12 +120,16 @@ private fun CalendarViewDemo() {
 @Composable
 private fun FloatingButtonDemo() {
     var expanded by remember { mutableStateOf(false) }
-    var picked by remember { mutableStateOf("Nothing picked yet") }
-    val items = remember {
+    val nothingPickedYet = str("Nothing picked yet")
+    var picked by remember { mutableStateOf(nothingPickedYet) }
+    val newFolderLabel = str("New folder")
+    val addToFavoritesLabel = str("Add to favorites")
+    val settingsLabel = str("Settings")
+    val items = remember(newFolderLabel, addToFavoritesLabel, settingsLabel) {
         listOf(
-            FloatingButtonItem(icon = COUIIcons.AddFolder, label = "New folder"),
-            FloatingButtonItem(icon = COUIIcons.Favorites, label = "Add to favorites"),
-            FloatingButtonItem(icon = COUIIcons.Tune, label = "Settings"),
+            FloatingButtonItem(icon = COUIIcons.AddFolder, label = newFolderLabel),
+            FloatingButtonItem(icon = COUIIcons.Favorites, label = addToFavoritesLabel),
+            FloatingButtonItem(icon = COUIIcons.Tune, label = settingsLabel),
         )
     }
 
@@ -172,12 +178,12 @@ private fun ExpandableListDemo() {
                 .height(280.dp),
             groupContent = { groupIndex, expanded ->
                 SettingsGroupHeader(
-                    title = DemoSettingsGroups[groupIndex].first,
+                    title = str(DemoSettingsGroups[groupIndex].first),
                     expanded = expanded,
                 )
             },
             childContent = { groupIndex, childIndex ->
-                SettingsChildRow(text = DemoSettingsGroups[groupIndex].second[childIndex])
+                SettingsChildRow(text = str(DemoSettingsGroups[groupIndex].second[childIndex]))
             },
         )
     }
@@ -203,12 +209,12 @@ private fun AccordionExpandableListDemo() {
                 .height(224.dp),
             groupContent = { groupIndex, expanded ->
                 SettingsGroupHeader(
-                    title = DemoAccordionGroups[groupIndex].first,
+                    title = str(DemoAccordionGroups[groupIndex].first),
                     expanded = expanded,
                 )
             },
             childContent = { groupIndex, childIndex ->
-                SettingsChildRow(text = DemoAccordionGroups[groupIndex].second[childIndex])
+                SettingsChildRow(text = str(DemoAccordionGroups[groupIndex].second[childIndex]))
             },
         )
     }

@@ -11,21 +11,29 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
@@ -108,9 +116,17 @@ fun BottomFloatingAccessoryNavigationBar(
     val accessorySize = BottomFloatingAccessoryNavigationBarDefaults.AccessorySize
     val sideSpacing = BottomFloatingAccessoryNavigationBarDefaults.SideSpacing
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
+    // The rim's weight is a property of the theme, the way `rememberGlassHighlight` picks its
+    // stroke: a white bloom reads much stronger over the dark bar colour than over the light one.
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
-    val startExpansion = rememberAccessoryExpansion(startAccessory != null && startAccessoryVisible)
-    val endExpansion = rememberAccessoryExpansion(endAccessory != null && endAccessoryVisible)
+    val startAccessoryActive = startAccessory != null && startAccessoryVisible
+    val endAccessoryActive = endAccessory != null && endAccessoryVisible
+    val startExpansion = rememberAccessoryExpansion(startAccessoryActive)
+    val endExpansion = rememberAccessoryExpansion(endAccessoryActive)
+    val startTouchState = if (startAccessory != null) rememberCOUITouchMotionState() else null
+    val endTouchState = if (endAccessory != null) rememberCOUITouchMotionState() else null
+    val menuTouchState = rememberCOUITouchMotionState()
 
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
@@ -147,34 +163,87 @@ fun BottomFloatingAccessoryNavigationBar(
                     .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance)
                     .onSizeChanged { barWidthPx = it.width },
             ) {
+                // The device lifts the bar with COUI's `SHADOW_LV_B` spot shadow. Each view casts its
+                // own — `ShadowUtils.setElevationToView(this, 2, ...)` runs both in
+                // `COUIBottomFloatingAccessoryView` and in `BaseBottomFloatingMenuView` — so the
+                // capsule and the two accessories each get a shadow layer of their own, under the
+                // blob that MetaBallSurface paints over them.
+                val barShadow = BottomFloatingAccessoryNavigationBarDefaults.BarShadow
+                Box(modifier = Modifier.matchParentSize()) {
+                    if (capsuleWidthPx > 0) {
+                        Box(
+                            modifier = Modifier
+                                .offset(x = reserve, y = 0.dp)
+                                .size(capsuleWidth, barHeight)
+                                .graphicsLayer {
+                                    translationX = menuTouchState.translation.x
+                                    translationY = menuTouchState.translation.y
+                                    scaleX = menuTouchState.scaleX
+                                    scaleY = menuTouchState.scaleY
+                                }
+                                .dropShadow(
+                                    shape = RoundedCornerShape(cornerRadius),
+                                    shadow = barShadow,
+                                ),
+                        )
+                    }
+                    if (barWidthPx > 0 && startAccessory != null) {
+                        val diameter = accessorySize * startExpansion.scale
+                        Box(
+                            modifier = Modifier
+                                .offset(
+                                    x = accessorySize / 2 + startTuck - diameter / 2,
+                                    y = (barHeight - diameter) / 2,
+                                )
+                                .size(diameter)
+                                .dropShadow(shape = CircleShape, shadow = barShadow),
+                        )
+                    }
+                    if (barWidthPx > 0 && endAccessory != null) {
+                        val diameter = accessorySize * endExpansion.scale
+                        Box(
+                            modifier = Modifier
+                                .offset(
+                                    x = barWidth - accessorySize / 2 - endTuck - diameter / 2,
+                                    y = (barHeight - diameter) / 2,
+                                )
+                                .size(diameter)
+                                .dropShadow(shape = CircleShape, shadow = barShadow),
+                        )
+                    }
+                }
                 MetaBallSurface(
                     particles = buildList {
                         if (capsuleWidthPx > 0) {
                             add(
                                 MetaBallParticle(
-                                    centerX = reserve + capsuleWidth / 2,
-                                    centerY = barHeight / 2,
-                                    width = capsuleWidth,
-                                    height = barHeight,
+                                    centerX = reserve + capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
+                                    centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
+                                    width = capsuleWidth * menuTouchState.scaleX,
+                                    height = barHeight * menuTouchState.scaleY,
                                     cornerRadius = cornerRadius,
                                 ),
                             )
                         }
                         if (barWidthPx > 0 && startAccessory != null) {
                             add(
-                                MetaBallParticle.circle(
-                                    centerX = accessorySize / 2 + startTuck,
-                                    centerY = barHeight / 2,
-                                    diameter = accessorySize * startExpansion.scale,
+                                MetaBallParticle(
+                                    centerX = accessorySize / 2 + startTuck + with(density) { startTouchState?.translation?.x?.toDp() ?: 0.dp },
+                                    centerY = barHeight / 2 + with(density) { startTouchState?.translation?.y?.toDp() ?: 0.dp },
+                                    width = accessorySize * startExpansion.scale * (startTouchState?.scaleX ?: 1f),
+                                    height = accessorySize * startExpansion.scale * (startTouchState?.scaleY ?: 1f),
+                                    cornerRadius = accessorySize / 2,
                                 ),
                             )
                         }
                         if (barWidthPx > 0 && endAccessory != null) {
                             add(
-                                MetaBallParticle.circle(
-                                    centerX = barWidth - accessorySize / 2 - endTuck,
-                                    centerY = barHeight / 2,
-                                    diameter = accessorySize * endExpansion.scale,
+                                MetaBallParticle(
+                                    centerX = barWidth - accessorySize / 2 - endTuck + with(density) { endTouchState?.translation?.x?.toDp() ?: 0.dp },
+                                    centerY = barHeight / 2 + with(density) { endTouchState?.translation?.y?.toDp() ?: 0.dp },
+                                    width = accessorySize * endExpansion.scale * (endTouchState?.scaleX ?: 1f),
+                                    height = accessorySize * endExpansion.scale * (endTouchState?.scaleY ?: 1f),
+                                    cornerRadius = accessorySize / 2,
                                 ),
                             )
                         }
@@ -182,7 +251,30 @@ fun BottomFloatingAccessoryNavigationBar(
                     modifier = Modifier.matchParentSize(),
                     color = containerColor,
                     backdrop = backdrop,
-                    rimColor = if (backdrop != null) Color.White.copy(alpha = 0.55f) else null,
+                    containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
+                    // The highlight is the same bloom the other glass surfaces get, so it is only as
+                    // strong as `Highlight.GlassStroke*` would make it. Measured on Gallery's dark
+                    // accessory bar the top edge lands at 89 over a 41 body, which a 0.24 white
+                    // stroke reproduces; the old 0.55 drew a ring the device does not have.
+                    rimColor = if (backdrop != null) {
+                        Color.White.copy(alpha = if (isDark) 0.24f else 0.45f)
+                    } else {
+                        null
+                    },
+                    // Gallery's material sends a weak, directional bloom through the lower edge;
+                    // keep it separate from the top rim so the capsule does not become a white ring.
+                    bottomGlowColor = if (backdrop != null) {
+                        Color.White.copy(alpha = if (isDark) 0.08f else 0.12f)
+                    } else {
+                        null
+                    },
+                    bottomGlowBlur = 8.dp,
+                    // COUI strokes both long edges of a silhouette — `GradientStrokeStyleSpec` carries
+                    // a width and an alpha per edge — so the capsule wears a lower line as well as the
+                    // upper one. Measured on Gallery's accessory bar the two read the same height
+                    // (both ~+40/255 over the body), which is what a weight of 1 gives; the sides stay
+                    // dark because both terms are gated on the vertical axis alone.
+                    rimBottomScale = 1f,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (startAccessory != null) {
@@ -191,12 +283,19 @@ fun BottomFloatingAccessoryNavigationBar(
                             tuckDirection = 1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
+                            motionState = startTouchState,
                             content = startAccessory,
                         )
                         Spacer(Modifier.width(sideSpacing))
                     }
                     FloatingCapsuleRow(
-                        modifier = Modifier.onSizeChanged { capsuleWidthPx = it.width },
+                        modifier = Modifier
+                            .onSizeChanged { capsuleWidthPx = it.width }
+                            .couiTouchMotion(
+                                shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = isSquircleEnabled()),
+                                lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                                motionState = menuTouchState,
+                            ),
                         // `layoutPositionsSmallScreen` reserves the end accessory's footprint plus its
                         // side spacing out of the menu view's width, and centres the capsule in what is
                         // left over.
@@ -210,6 +309,7 @@ fun BottomFloatingAccessoryNavigationBar(
                             tuckDirection = -1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
+                            motionState = endTouchState,
                             content = endAccessory,
                         )
                     }
@@ -233,11 +333,20 @@ private fun AccessorySlot(
     tuckDirection: Float,
     size: Dp,
     sideSpacing: Dp,
+    motionState: COUITouchMotionState?,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
         modifier = Modifier
             .size(size)
+            .couiTouchMotion(
+                enabled = expansion.alpha > 0.01f,
+                shape = CircleShape,
+                lightParams = SpotLightDefaults.opaqueMedium2(
+                    COUITheme.colorScheme.background.luminance() < 0.5f,
+                ),
+                motionState = motionState,
+            )
             .graphicsLayer {
                 alpha = expansion.alpha
                 scaleX = expansion.scale
@@ -302,6 +411,8 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
         SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val highlight = rememberGlassHighlight(GlassContainer.Medium, backdrop)
+    val touchState = rememberCOUITouchMotionState()
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
@@ -337,7 +448,11 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
                             fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
                             highlight = highlight,
                         )
-                        .bottomFloatingTouchHighlight(shape),
+                        .couiTouchMotion(
+                            shape = shape,
+                            lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                            motionState = touchState,
+                        ),
                     content = content,
                 )
             }
@@ -361,6 +476,55 @@ object BottomFloatingAccessoryNavigationBarDefaults {
 
     /** The outside padding on a small screen. COUI `coui_bottom_floating_navigation_bar_padding_horizontal`. */
     val PaddingHorizontal = 16.dp
+
+    /**
+     * The alpha the bar colour keeps over the blur, per theme.
+     *
+     * The device does not paint this bar from a colour token: `COUIBottomFloatingAccessoryView`
+     * blurs it with `COUIMaterialEffect.setViewBlurEffect(..., TYPE_FRAMEWORK_BOTTOM_BAR)` and only
+     * falls back to `couiColorBar` when the effect is off. The blend therefore has to be matched by
+     * measurement, and the two themes do not land in the same place. Over an even page the device's
+     * light capsule reads 248 against the page's 240 — `#FAFAFA` at [GlassDefaults.ContainerAlpha]
+     * gives exactly that — while its dark capsule reads 39 against the page's 47, so it keeps about
+     * two thirds of `#1E1E1E`. At 0.8 the dark bar came out at 34 over a page of 51 and read as a
+     * black slab; at 0.35 it came out at 58 and read as a light one.
+     */
+    fun containerAlpha(isDark: Boolean): Float = if (isDark) 0.65f else GlassDefaults.ContainerAlpha
+
+    /**
+     * The spot shadow the capsule and each accessory cast, COUI `SHADOW_LV_B` (level 2 of
+     * `ShadowUtils.setElevationToView`).
+     *
+     * Both `COUIBottomFloatingAccessoryView` and `BaseBottomFloatingMenuView` call
+     * `ShadowUtils.setElevationToView(this, 2, support_shadow_size_level_three,
+     * coui_bottom_floating_navigation_bar_menu_shadow_color)`, and that overload branches on
+     * `checkOPlusViewElevationSDK()`:
+     *
+     * - with the OPlus sub-SDK the level 2 branch resolves `coui_shadow_elevation_level3b` (350dp),
+     *   `coui_shadow_light_y_level3b` (-160dp), `coui_shadow_light_z_level3b` (10000dp) and
+     *   `coui_shadow_light_r_level3b` (2000dp), whose Skia spot metrics would be a 72.54dp radius at
+     *   +5.80dp — a halo wide enough to darken the page more than 50px above the bar;
+     * - without it the call falls through to `setElevationToViewFromLower(view, i2, i4, i3)`, i.e.
+     *   `view.setElevation(12dp)` under the `#8A000000` spot colour it was handed.
+     *
+     * The device picks the second reading: sampled above Gallery's bar the page stays at 47 (dark) /
+     * 231 (light) right up to the capsule's top edge, and the falloff outside the bar runs about
+     * 6–8dp, which a 350dp halo would not leave.
+     *
+     * What the device *renders* is nevertheless far weaker than the `#8A000000` it hands over. hwui
+     * does not paint the spot colour at its own alpha — `SkShadowUtils` scales it by the light
+     * geometry before drawing — so a plain [Shadow] carrying `0x8A` draws a halo about five times
+     * deeper than the device's. Sampled on the device's light page (240) the native halo is −2 at
+     * the capsule's top edge and −13 below its bottom edge, gone within ~8dp; the same `dropShadow`
+     * with the handed-over colour reads −40 above and −67 below and still runs at 12dp. The radius
+     * and alpha here are therefore the measured ones, not the handed-over ones.
+     */
+    val BarShadow: Shadow = Shadow(
+        radius = 6.dp,
+        color = Color.Black.copy(alpha = 0x1E / 255f),
+        spread = 0.dp,
+        offset = DpOffset(0.dp, 2.dp),
+    )
 
     /** The scale the accessory view starts from. COUI `EXPANSION_VIEW_MIN_SCALE`. */
     val MinScale = 0.5f

@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Badge
 import io.github.suqi8.coui.kmp.basic.BadgeBox
 import io.github.suqi8.coui.kmp.basic.BadgeDefaults
@@ -68,7 +69,7 @@ fun LoadingButtonDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         LoadingButton(
-            text = "Download",
+            text = str("Download"),
             onClick = { dotsLoading = true },
             modifier = Modifier.weight(1f),
             isLoading = dotsLoading,
@@ -76,11 +77,11 @@ fun LoadingButtonDemo() {
         )
         Spacer(Modifier.width(12.dp))
         LoadingButton(
-            text = "Sign in",
+            text = str("Sign in"),
             onClick = { textLoading = true },
             modifier = Modifier.weight(1f),
             isLoading = textLoading,
-            loadingText = "Signing in",
+            loadingText = str("Signing in"),
         )
     }
 }
@@ -118,7 +119,7 @@ fun BadgeDemo() {
             BadgeBox(badge = { Badge() }) {
                 Icon(
                     imageVector = COUIIcons.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = str("Settings"),
                     modifier = Modifier.size(32.dp),
                 )
             }
@@ -128,7 +129,7 @@ fun BadgeDemo() {
             ) {
                 Icon(
                     imageVector = COUIIcons.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = str("Settings"),
                     modifier = Modifier.size(32.dp),
                 )
             }

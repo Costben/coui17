@@ -2,20 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.layout
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
@@ -27,18 +34,26 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.DropdownItem
+import io.github.suqi8.coui.kmp.basic.GlassContainer
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupLayoutPosition
 import io.github.suqi8.coui.kmp.basic.PopupListDivider
 import io.github.suqi8.coui.kmp.basic.PopupShadow
+import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.popupClipReveal
+import io.github.suqi8.coui.kmp.basic.popupGlassBlendColors
+import io.github.suqi8.coui.kmp.basic.rememberGlassHighlight
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
+import io.github.suqi8.coui.kmp.squircle.squircleSurface
 
 private var deeperChildrenWarned = false
 
@@ -60,13 +75,22 @@ internal fun CascadingPrimaryContent(
     primaryScale: () -> Float,
     primaryAlpha: () -> Float,
     onCollapseSecondary: () -> Unit,
+    enableGlass: Boolean,
 ) {
     val isExpanded = expandedItem != null
     val squircleEnabled = isSquircleEnabled()
     val shape = remember(CascadingPopupCornerRadius, squircleEnabled) {
         SquircleShape(cornerRadius = CascadingPopupCornerRadius, squircleEnabled = squircleEnabled)
     }
+    val backdrop = if (enableGlass) LocalBackdrop.current else null
+    val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
+    // Both boxes propagate the minimum width: [CascadingListPopupLayout] already floors the panel at
+    // the caller's `minWidth`, and without passing that floor down to the list the two sizes
+    // disagree — the column clamps to its own `ListPopupDefaults.MinWidth` while the panel takes the
+    // floor, and the row press/selected mask (8dp in from each side of the *row*) then sits
+    // left-aligned inside a wider panel instead of spanning it. Native gives the floor to the list.
     Box(
+        propagateMinConstraints = true,
         modifier = Modifier
             .graphicsLayer {
                 val s = ENTER_SCALE_FROM + ENTER_SCALE_RANGE * enterFraction()
@@ -84,9 +108,19 @@ internal fun CascadingPrimaryContent(
             // Draw the shadow outside popupClipReveal's hard clip so it is not erased.
             .dropShadow(shape = shape, shadow = PopupShadow)
             .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, squircleEnabled)
-            .background(color = surfaceColor),
+            .couiGlassSurface(
+                backdrop = backdrop,
+                shape = shape,
+                containerColor = surfaceColor,
+                fallback = Modifier.squircleSurface(
+                    color = surfaceColor,
+                    cornerRadius = CascadingPopupCornerRadius,
+                ),
+                blendColors = popupGlassBlendColors(),
+                highlight = highlight,
+            ),
     ) {
-        Box {
+        Box(propagateMinConstraints = true) {
             ListPopupColumn {
                 val lastEntryIdx = entries.lastIndex
                 entries.forEachIndexed { entryIndex, entry ->
@@ -103,6 +137,7 @@ internal fun CascadingPrimaryContent(
                                 isFirst = isFirstEntry && itemIndex == 0,
                                 isLast = isLastEntry && itemIndex == lastItemIdx,
                                 dropdownColors = dropdownColors,
+                                groupKey = entryIndex,
                                 onClick = {
                                     val children = item.children?.takeIf { it.isNotEmpty() }
                                     if (children != null) {
@@ -160,6 +195,7 @@ private fun CascadingPrimaryRow(
     dropdownColors: DropdownColors,
     onClick: () -> Unit,
     onAnchorBounds: (DropdownItem, IntRect) -> Unit,
+    groupKey: Any? = null,
 ) {
     val rowEnabled = entryEnabled && item.enabled
     // The row has to stay ListPopupColumn's direct child: the column registers a row by reading its
@@ -176,6 +212,7 @@ private fun CascadingPrimaryRow(
         isFirst = isFirst,
         isLast = isLast,
         onSelectedIndexChange = { onClick() },
+        groupKey = groupKey,
         modifier = Modifier
             .fillMaxWidth()
             .onGloballyPositioned { coords ->
@@ -214,11 +251,27 @@ internal fun CascadingSecondaryContent(
     onLeafSelected: (DropdownItem) -> Unit,
     dropdownColors: DropdownColors,
     surfaceColor: Color,
+    enableGlass: Boolean,
 ) {
     val cornerPx = with(LocalDensity.current) { CascadingPopupCornerRadius.toPx() }
     val anchorTopLeft = anchorLocalInUnion.topLeft
     val secondaryTopLeft = secondaryLocalInUnion.topLeft
     val secondaryWidth = secondaryLocalInUnion.width
+    val backdrop = if (enableGlass) LocalBackdrop.current else null
+    val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
+    val squircleEnabled = isSquircleEnabled()
+    // Read at outline/draw time, never at composition time: the morph runs on its own animation and
+    // must not recompose this subtree every frame.
+    val currentMorph = {
+        MorphClipShape(
+            fraction = expandFraction(),
+            anchor = anchorLocalInUnion,
+            secondary = secondaryLocalInUnion,
+            cornerPx = cornerPx,
+            anchorIsLast = isAnchorPopupLast,
+            squircleEnabled = squircleEnabled,
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -229,56 +282,28 @@ internal fun CascadingSecondaryContent(
                 alpha = enterAlpha()
                 this.transformOrigin = transformOrigin
             }
-            .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, isSquircleEnabled())
+            .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, squircleEnabled)
+            // Silhouette clip for the pass: the glass surface's own shape only clips its content
+            // layer, so the blurred backdrop — and the fallback fill when glass is off — are cut
+            // here, in draw phase, where the morph fraction is current.
             .drawWithCache {
-                val innerPath = Path()
                 onDrawWithContent {
-                    val frac = expandFraction()
-                    val rTop = cornerPx * frac
-                    // Last-row anchors share primary's rounded bottom — keep both bottom corners
-                    // full. Mid-list anchors must shrink uniformly into a flat internal row.
-                    val rBottom = if (isAnchorPopupLast) cornerPx else rTop
-                    val topRadius = CornerRadius(rTop, rTop)
-                    val bottomRadius = CornerRadius(rBottom, rBottom)
-                    innerPath.rewind()
-                    innerPath.addRoundRect(
-                        RoundRect(
-                            left = lerp(
-                                anchorLocalInUnion.left.toFloat(),
-                                secondaryLocalInUnion.left.toFloat(),
-                                frac,
-                            ),
-                            top = lerp(
-                                anchorLocalInUnion.top.toFloat(),
-                                secondaryLocalInUnion.top.toFloat(),
-                                frac,
-                            ),
-                            right = lerp(
-                                anchorLocalInUnion.right.toFloat(),
-                                secondaryLocalInUnion.right.toFloat(),
-                                frac,
-                            ),
-                            bottom = lerp(
-                                anchorLocalInUnion.bottom.toFloat(),
-                                secondaryLocalInUnion.bottom.toFloat(),
-                                frac,
-                            ),
-                            topLeftCornerRadius = topRadius,
-                            topRightCornerRadius = topRadius,
-                            bottomRightCornerRadius = bottomRadius,
-                            bottomLeftCornerRadius = bottomRadius,
-                        ),
-                    )
-                    clipPath(innerPath) {
-                        drawRect(
-                            color = surfaceColor,
-                            topLeft = androidx.compose.ui.geometry.Offset.Zero,
-                            size = this.size,
-                        )
+                    clipPath(currentMorph().path) {
                         this@onDrawWithContent.drawContent()
                     }
                 }
             }
+            .couiGlassSurface(
+                backdrop = backdrop,
+                // Re-emitted per outline request: the blur's outline cache compares by value, so a
+                // moved fraction invalidates it and the silhouette tracks the morph instead of
+                // freezing at the anchor rect.
+                shape = currentMorph,
+                containerColor = surfaceColor,
+                fallback = Modifier.drawBehind { drawRect(surfaceColor) },
+                blendColors = popupGlassBlendColors(),
+                highlight = highlight,
+            )
             // Occupy full union size so the inner content can slide between anchor and
             // secondary even when the anchor sits outside the secondary bounds.
             .layout { measurable, _ ->
@@ -379,9 +404,140 @@ internal fun CascadingSecondaryColumn(
                     isFirst = false,
                     isLast = index == lastChildIdx,
                     onSelectedIndexChange = { onLeafSelected(child) },
+                    // Every leaf of one submenu belongs to the same COUI group, so the column keeps
+                    // them contiguous and only the explicit header band above separates them.
+                    groupKey = Unit,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
+    }
+}
+
+/**
+ * Silhouette of the secondary popup part-way through its slide: the anchor row's rect interpolated
+ * towards the submenu's own rect, with the corners opening up as it goes.
+ *
+ * Equality is by value, which is what the glass surface's outline cache reads — re-emitting an
+ * unchanged fraction keeps the cached outline, a moved one invalidates it. Emitting the same
+ * instance instead would pin whichever outline it produced first.
+ *
+ * It is a [CornerBasedShape] rather than a bare [Shape] for the same reason [SquircleShape] is: the
+ * rim highlight reads the radii off the shape and falls back to `min(width, height) / 2` otherwise,
+ * which during a morph would draw a stadium that does not follow the silhouette. The four corner
+ * sizes mirror [rect] exactly.
+ *
+ * The outline itself is the same corner family the static surface uses — [addSquircleRoundRect], the
+ * Lp superellipse — not a [RoundRect]. A circular corner parts from that superellipse along the
+ * diagonal by `0.0718 * radius` (7.8px at 28dp), so a morph traced with arcs would slide the rim
+ * highlight off its own silhouette for the whole animation, the very defect the static surface had.
+ */
+private class MorphClipShape(
+    private val fraction: Float,
+    private val anchor: IntRect,
+    private val secondary: IntRect,
+    private val cornerPx: Float,
+    private val anchorIsLast: Boolean,
+    private val squircleEnabled: Boolean,
+) : CornerBasedShape(
+    topStart = CornerSize(cornerPx * fraction),
+    topEnd = CornerSize(cornerPx * fraction),
+    bottomEnd = CornerSize(if (anchorIsLast) cornerPx else cornerPx * fraction),
+    bottomStart = CornerSize(if (anchorIsLast) cornerPx else cornerPx * fraction),
+) {
+
+    val rect: Rect
+        get() = Rect(
+            left = lerp(anchor.left.toFloat(), secondary.left.toFloat(), fraction),
+            top = lerp(anchor.top.toFloat(), secondary.top.toFloat(), fraction),
+            right = lerp(anchor.right.toFloat(), secondary.right.toFloat(), fraction),
+            bottom = lerp(anchor.bottom.toFloat(), secondary.bottom.toFloat(), fraction),
+        )
+
+    /** Rebuilt per frame: the mask below is wiped between hits and the geometry is moving. */
+    val path: Path
+        get() {
+            val rTop = cornerPx * fraction
+            // Last-row anchors share primary's rounded bottom — keep both bottom corners full.
+            // Mid-list anchors must shrink uniformly into a flat internal row.
+            val rBottom = if (anchorIsLast) cornerPx else rTop
+            return Path().apply {
+                addSquircleRoundRect(
+                    rect = rect,
+                    topLeft = rTop,
+                    topRight = rTop,
+                    bottomRight = rBottom,
+                    bottomLeft = rBottom,
+                    squircleEnabled = squircleEnabled,
+                )
+            }
+        }
+
+    val roundRect: RoundRect
+        get() {
+            val rTop = cornerPx * fraction
+            val rBottom = if (anchorIsLast) cornerPx else rTop
+            val topRadius = CornerRadius(rTop, rTop)
+            val bottomRadius = CornerRadius(rBottom, rBottom)
+            val r = rect
+            return RoundRect(
+                left = r.left,
+                top = r.top,
+                right = r.right,
+                bottom = r.bottom,
+                topLeftCornerRadius = topRadius,
+                topRightCornerRadius = topRadius,
+                bottomRightCornerRadius = bottomRadius,
+                bottomLeftCornerRadius = bottomRadius,
+            )
+        }
+
+    override fun createOutline(
+        size: Size,
+        topStart: Float,
+        topEnd: Float,
+        bottomEnd: Float,
+        bottomStart: Float,
+        layoutDirection: LayoutDirection,
+    ): Outline = if (squircleEnabled) {
+        Outline.Generic(path)
+    } else {
+        Outline.Rounded(roundRect)
+    }
+
+    override fun copy(
+        topStart: CornerSize,
+        topEnd: CornerSize,
+        bottomEnd: CornerSize,
+        bottomStart: CornerSize,
+    ): CornerBasedShape = if (topStart == this.topStart && topEnd == this.topEnd &&
+        bottomEnd == this.bottomEnd && bottomStart == this.bottomStart
+    ) {
+        this
+    } else {
+        // The silhouette is a lerped rect, not a rect at the shape's origin, so a per-corner request
+        // is not representable as one; hand back the plain rounded rectangle instead.
+        RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MorphClipShape) return false
+        return fraction == other.fraction &&
+            anchor == other.anchor &&
+            secondary == other.secondary &&
+            cornerPx == other.cornerPx &&
+            anchorIsLast == other.anchorIsLast &&
+            squircleEnabled == other.squircleEnabled
+    }
+
+    override fun hashCode(): Int {
+        var result = fraction.hashCode()
+        result = 31 * result + anchor.hashCode()
+        result = 31 * result + secondary.hashCode()
+        result = 31 * result + cornerPx.hashCode()
+        result = 31 * result + anchorIsLast.hashCode()
+        result = 31 * result + squircleEnabled.hashCode()
+        return result
     }
 }

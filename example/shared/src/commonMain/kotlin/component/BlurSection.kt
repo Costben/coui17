@@ -32,6 +32,8 @@ import component.blend.ColorBlendToken
 import component.effect.BgEffectBackground
 import component.highlight.HighlightConfig
 import component.highlight.rememberContainerHighlight
+import i18n.LocalAppStrings
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -82,7 +84,8 @@ fun BlurDemo() {
 
     var tiltDriven by remember { mutableStateOf(true) }
     val containers = HighlightConfig.Container.entries
-    val containerItems = remember { containers.map { it.displayName } }
+    val s = LocalAppStrings.current
+    val containerItems = remember(s) { containers.map { s[it.displayName] } }
     var containerIndex by remember { mutableIntStateOf(HighlightConfig.Container.Small.ordinal) }
     val currentContainer = containers[containerIndex]
     val highlight = rememberContainerHighlight(
@@ -91,18 +94,18 @@ fun BlurDemo() {
         tiltDriven = tiltDriven,
     )
 
-    val blendConfigs = remember(isInDark, surface) {
+    val blendConfigs = remember(isInDark, surface, s) {
         listOf(
-            "None" to emptyList(),
-            "Info Thin" to if (isInDark) ColorBlendToken.Info_Thin_Dark else ColorBlendToken.Info_Thin_Light,
-            "Info Regular" to if (isInDark) ColorBlendToken.Info_Regular_Dark else ColorBlendToken.Info_Regular_Light,
-            "Colored Thin" to if (isInDark) ColorBlendToken.Colored_Thin_Dark else ColorBlendToken.Colored_Thin_Light,
-            "Colored Regular" to if (isInDark) ColorBlendToken.Colored_Regular_Dark else ColorBlendToken.Colored_Regular_Light,
-            "Colored Thick" to if (isInDark) ColorBlendToken.Colored_Thick_Dark else ColorBlendToken.Colored_Thick_Light,
-            "Pured Regular" to if (isInDark) ColorBlendToken.Pured_Regular_Dark else ColorBlendToken.Pured_Regular_Light,
-            "Pured Thick" to if (isInDark) ColorBlendToken.Pured_Thick_Dark else ColorBlendToken.Pured_Thick_Light,
-            "Overlay Thin" to if (isInDark) ColorBlendToken.Overlay_Thin_Light else ColorBlendToken.Overlay_Thin_Light,
-            "Overlay Thick" to if (isInDark) ColorBlendToken.Overlay_Thick_Dark else ColorBlendToken.Overlay_Thick_Light,
+            s["None"] to emptyList(),
+            s["Info Thin"] to if (isInDark) ColorBlendToken.Info_Thin_Dark else ColorBlendToken.Info_Thin_Light,
+            s["Info Regular"] to if (isInDark) ColorBlendToken.Info_Regular_Dark else ColorBlendToken.Info_Regular_Light,
+            s["Colored Thin"] to if (isInDark) ColorBlendToken.Colored_Thin_Dark else ColorBlendToken.Colored_Thin_Light,
+            s["Colored Regular"] to if (isInDark) ColorBlendToken.Colored_Regular_Dark else ColorBlendToken.Colored_Regular_Light,
+            s["Colored Thick"] to if (isInDark) ColorBlendToken.Colored_Thick_Dark else ColorBlendToken.Colored_Thick_Light,
+            s["Pured Regular"] to if (isInDark) ColorBlendToken.Pured_Regular_Dark else ColorBlendToken.Pured_Regular_Light,
+            s["Pured Thick"] to if (isInDark) ColorBlendToken.Pured_Thick_Dark else ColorBlendToken.Pured_Thick_Light,
+            s["Overlay Thin"] to if (isInDark) ColorBlendToken.Overlay_Thin_Light else ColorBlendToken.Overlay_Thin_Light,
+            s["Overlay Thick"] to if (isInDark) ColorBlendToken.Overlay_Thick_Dark else ColorBlendToken.Overlay_Thick_Light,
         )
     }
     var blendModeIndex by remember { mutableIntStateOf(5) }
@@ -155,7 +158,7 @@ fun BlurDemo() {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Texture Blur | R=${blurRadiusX.toInt()}",
+                            text = str("Texture Blur") + " | R=${blurRadiusX.toInt()}",
                             style = COUITheme.textStyles.headline2,
                         )
                         Spacer(Modifier.height(4.dp))
@@ -169,7 +172,7 @@ fun BlurDemo() {
             }
 
             OverlayDropdownPreference(
-                title = "Blend Mode",
+                title = str("Blend Mode"),
                 items = blendModeItems,
                 selectedIndex = blendModeIndex,
                 onSelectedIndexChange = { blendModeIndex = it },
@@ -178,7 +181,7 @@ fun BlurDemo() {
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
 
             OverlayDropdownPreference(
-                title = "Highlight",
+                title = str("Highlight"),
                 items = containerItems,
                 selectedIndex = containerIndex,
                 onSelectedIndexChange = { containerIndex = it },
@@ -187,7 +190,7 @@ fun BlurDemo() {
             HorizontalDivider(Modifier.fillMaxWidth().padding(horizontal = 16.dp))
 
             SliderPreference(
-                title = "Blur Radius",
+                title = str("Blur Radius"),
                 valueText = "${blurRadiusX.toInt()}",
                 value = blurRadiusX / 200f,
                 onValueChange = {
@@ -198,7 +201,7 @@ fun BlurDemo() {
             )
 
             SliderPreference(
-                title = "Noise",
+                title = str("Noise"),
                 valueText = "${(noiseCoefficient * 10000).toInt() / 10000f}",
                 value = noiseCoefficient / 0.1f,
                 onValueChange = { noiseCoefficient = it * 0.1f },
@@ -206,7 +209,7 @@ fun BlurDemo() {
             )
 
             SliderPreference(
-                title = "Brightness",
+                title = str("Brightness"),
                 valueText = "${(brightness * 100).toInt() / 100f}",
                 value = (brightness + 1f) / 2f,
                 onValueChange = { brightness = it * 2f - 1f },
@@ -214,7 +217,7 @@ fun BlurDemo() {
             )
 
             SliderPreference(
-                title = "Contrast",
+                title = str("Contrast"),
                 valueText = "${(contrast * 100).toInt() / 100f}",
                 value = contrast / 3f,
                 onValueChange = { contrast = it * 3f },
@@ -222,7 +225,7 @@ fun BlurDemo() {
             )
 
             SliderPreference(
-                title = "Saturation",
+                title = str("Saturation"),
                 valueText = "${(saturation * 100).toInt() / 100f}",
                 value = saturation / 3f,
                 onValueChange = { saturation = it * 3f },
@@ -261,16 +264,17 @@ fun ForegroundBlurDemo() {
             )
         }
     }
-    val blendConfigs = remember(isInDark, onBackground) {
+    val s = LocalAppStrings.current
+    val blendConfigs = remember(isInDark, onBackground, s) {
         listOf(
-            "None" to emptyList(),
-            "Logo Blend" to logoBlend,
-            "Colored Thin" to if (isInDark) ColorBlendToken.Colored_Thin_Dark else ColorBlendToken.Colored_Thin_Light,
-            "Colored Regular" to if (isInDark) ColorBlendToken.Colored_Regular_Dark else ColorBlendToken.Colored_Regular_Light,
-            "Colored Thick" to if (isInDark) ColorBlendToken.Colored_Thick_Dark else ColorBlendToken.Colored_Thick_Light,
-            "Pured Regular" to if (isInDark) ColorBlendToken.Pured_Regular_Dark else ColorBlendToken.Pured_Regular_Light,
-            "Overlay Thin" to if (isInDark) ColorBlendToken.Overlay_Thin_Light else ColorBlendToken.Overlay_Thin_Light,
-            "Info Colored" to ColorBlendToken.Info_Colored_Regular,
+            s["None"] to emptyList(),
+            s["Logo Blend"] to logoBlend,
+            s["Colored Thin"] to if (isInDark) ColorBlendToken.Colored_Thin_Dark else ColorBlendToken.Colored_Thin_Light,
+            s["Colored Regular"] to if (isInDark) ColorBlendToken.Colored_Regular_Dark else ColorBlendToken.Colored_Regular_Light,
+            s["Colored Thick"] to if (isInDark) ColorBlendToken.Colored_Thick_Dark else ColorBlendToken.Colored_Thick_Light,
+            s["Pured Regular"] to if (isInDark) ColorBlendToken.Pured_Regular_Dark else ColorBlendToken.Pured_Regular_Light,
+            s["Overlay Thin"] to if (isInDark) ColorBlendToken.Overlay_Thin_Light else ColorBlendToken.Overlay_Thin_Light,
+            s["Info Colored"] to ColorBlendToken.Info_Colored_Regular,
         )
     }
     var blendModeIndex by remember { mutableIntStateOf(1) }
@@ -295,7 +299,7 @@ fun ForegroundBlurDemo() {
             ) {
                 // Foreground blur text
                 Text(
-                    text = "Foreground Blur\nCOUI Demo",
+                    text = str("Foreground Blur\nCOUI Demo"),
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Black,
                     textAlign = TextAlign.Center,
@@ -321,7 +325,7 @@ fun ForegroundBlurDemo() {
 
             val effectVariantOptions = listOf("OS2", "OS3")
             OverlayDropdownPreference(
-                title = "Effect Variant",
+                title = str("Effect Variant"),
                 items = effectVariantOptions,
                 selectedIndex = if (isOs3Effect) 1 else 0,
                 onSelectedIndexChange = { isOs3Effect = (it == 1) },
@@ -330,7 +334,7 @@ fun ForegroundBlurDemo() {
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
 
             OverlayDropdownPreference(
-                title = "Blend Mode",
+                title = str("Blend Mode"),
                 items = blendModeItems,
                 selectedIndex = blendModeIndex,
                 onSelectedIndexChange = { blendModeIndex = it },
@@ -339,7 +343,7 @@ fun ForegroundBlurDemo() {
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
 
             SwitchPreference(
-                title = "Dynamic Background",
+                title = str("Dynamic Background"),
                 checked = dynamicBackground.value,
                 onCheckedChange = { dynamicBackground.value = it },
             )
@@ -347,7 +351,7 @@ fun ForegroundBlurDemo() {
             HorizontalDivider(Modifier.fillMaxWidth().padding(horizontal = 16.dp))
 
             SliderPreference(
-                title = "Blur Radius",
+                title = str("Blur Radius"),
                 valueText = "${blurRadiusX.toInt()}",
                 value = blurRadiusX / 200f,
                 onValueChange = {
@@ -358,7 +362,7 @@ fun ForegroundBlurDemo() {
             )
 
             SliderPreference(
-                title = "Noise",
+                title = str("Noise"),
                 valueText = "${(noiseCoefficient * 10000).toInt() / 10000f}",
                 value = noiseCoefficient / 0.1f,
                 onValueChange = { noiseCoefficient = it * 0.1f },
@@ -366,7 +370,7 @@ fun ForegroundBlurDemo() {
             )
 
             SliderPreference(
-                title = "Brightness",
+                title = str("Brightness"),
                 valueText = "${(brightness * 100).toInt() / 100f}",
                 value = (brightness + 1f) / 2f,
                 onValueChange = { brightness = it * 2f - 1f },
@@ -374,7 +378,7 @@ fun ForegroundBlurDemo() {
             )
 
             SliderPreference(
-                title = "Contrast",
+                title = str("Contrast"),
                 valueText = "${(contrast * 100).toInt() / 100f}",
                 value = contrast / 3f,
                 onValueChange = { contrast = it * 3f },
@@ -382,7 +386,7 @@ fun ForegroundBlurDemo() {
             )
 
             SliderPreference(
-                title = "Saturation",
+                title = str("Saturation"),
                 valueText = "${(saturation * 100).toInt() / 100f}",
                 value = saturation / 3f,
                 onValueChange = { saturation = it * 3f },

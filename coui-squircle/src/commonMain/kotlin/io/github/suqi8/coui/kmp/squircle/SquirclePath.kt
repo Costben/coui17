@@ -103,3 +103,88 @@ fun Path.addSquircleRect(
     cubicTo(0f, handle, handle, 0f, tile, 0f)
     close()
 }
+
+/**
+ * Appends a squircle-shaped rounded rectangle at an arbitrary [rect] with one radius per corner.
+ *
+ * [addSquircleRect] covers the static case: a rect at the origin with four equal corners. A
+ * silhouette that is interpolated frame by frame — the cascading popup's anchor-to-submenu morph —
+ * moves its rect and opens its corners at different rates, and it still has to trace the same corner
+ * family as the surface underneath it. A plain [RoundRect]'s circular corners part from the Lp
+ * superellipse along the diagonal by `0.0718 * radius`, which is 7.8px at the popup's 28dp radius.
+ *
+ * Radii are clamped exactly the way the shader-backed silhouette clamps them — to `min(radius,
+ * min(width, height) / 2)` — so a path built here and a rim highlight built from the same radii stay
+ * on one curve as the shape shrinks.
+ *
+ * @param rect The rectangle to append; nothing is appended when either side is not positive.
+ * @param topLeft Corner radius in pixels, measured from the corner centre.
+ * @param topRight Corner radius in pixels.
+ * @param bottomRight Corner radius in pixels.
+ * @param bottomLeft Corner radius in pixels.
+ * @param extension The corner-tile size as a multiple of the radius, clamped to
+ *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param squircleEnabled When `false`, appends a plain rounded rectangle instead.
+ */
+fun Path.addSquircleRoundRect(
+    rect: Rect,
+    topLeft: Float,
+    topRight: Float,
+    bottomRight: Float,
+    bottomLeft: Float,
+    extension: Float = SquircleDefaults.Extension,
+    squircleEnabled: Boolean = true,
+) {
+    val width = rect.width
+    val height = rect.height
+    if (width <= 0f || height <= 0f) return
+    val halfMin = min(width, height) * 0.5f
+    fun clamp(radius: Float): Float = max(0f, radius).coerceAtMost(halfMin)
+    if (!squircleEnabled) {
+        val tl = clamp(topLeft)
+        val tr = clamp(topRight)
+        val br = clamp(bottomRight)
+        val bl = clamp(bottomLeft)
+        if (tl <= 0f && tr <= 0f && br <= 0f && bl <= 0f) {
+            addRect(rect)
+        } else {
+            addRoundRect(
+                RoundRect(
+                    left = rect.left,
+                    top = rect.top,
+                    right = rect.right,
+                    bottom = rect.bottom,
+                    topLeftCornerRadius = CornerRadius(tl, tl),
+                    topRightCornerRadius = CornerRadius(tr, tr),
+                    bottomRightCornerRadius = CornerRadius(br, br),
+                    bottomLeftCornerRadius = CornerRadius(bl, bl),
+                ),
+            )
+        }
+        return
+    }
+    val extClamped = extension.coerceIn(SquircleDefaults.ExtensionMin, SquircleDefaults.ExtensionMax)
+    val tl = clamp(topLeft * extClamped)
+    val tr = clamp(topRight * extClamped)
+    val br = clamp(bottomRight * extClamped)
+    val bl = clamp(bottomLeft * extClamped)
+    if (tl <= 0f && tr <= 0f && br <= 0f && bl <= 0f) {
+        addRect(rect)
+        return
+    }
+    val l = rect.left
+    val t = rect.top
+    val r = rect.right
+    val b = rect.bottom
+    fun handle(tile: Float): Float = tile * (1f - SQUIRCLE_CONTROL)
+    moveTo(l + tl, t)
+    lineTo(r - tr, t)
+    cubicTo(r - handle(tr), t, r, t + handle(tr), r, t + tr)
+    lineTo(r, b - br)
+    cubicTo(r, b - handle(br), r - handle(br), b, r - br, b)
+    lineTo(l + bl, b)
+    cubicTo(l + handle(bl), b, l, b - handle(bl), l, b - bl)
+    lineTo(l, t + tl)
+    cubicTo(l, t + handle(tl), l + handle(tl), t, l + tl, t)
+    close()
+}

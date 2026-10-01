@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Stepper
@@ -34,8 +35,10 @@ fun LazyListScope.buttonSection() {
 /** Renders the "Button" gallery section content: text buttons, disabled and borderless variants, and a stepper row. */
 @Composable
 fun ButtonDemo() {
-    var buttonText by remember { mutableStateOf("Cancel") }
-    var submitButtonText by remember { mutableStateOf("Submit") }
+    val initialButtonText = str("Cancel")
+    val initialSubmitButtonText = str("Submit")
+    var buttonText by remember { mutableStateOf(initialButtonText) }
+    var submitButtonText by remember { mutableStateOf(initialSubmitButtonText) }
     var clickCount by remember { mutableIntStateOf(0) }
     var submitClickCount by remember { mutableIntStateOf(0) }
 
@@ -71,14 +74,14 @@ fun ButtonDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         TextButton(
-            text = "Disabled",
+            text = str("Disabled"),
             onClick = {},
             modifier = Modifier.weight(1f),
             enabled = false,
         )
         Spacer(Modifier.width(12.dp))
         TextButton(
-            text = "Disabled",
+            text = str("Disabled"),
             onClick = {},
             enabled = false,
             modifier = Modifier.weight(1f),
@@ -92,14 +95,14 @@ fun ButtonDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         TextButton(
-            text = "Borderless",
+            text = str("Borderless"),
             onClick = {},
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.textButtonColorsBorderless(),
         )
         Spacer(Modifier.width(12.dp))
         TextButton(
-            text = "Disabled",
+            text = str("Disabled"),
             onClick = {},
             enabled = false,
             modifier = Modifier.weight(1f),
@@ -114,7 +117,7 @@ fun ButtonDemo() {
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = "Stepper")
+        Text(text = str("Stepper"))
         Stepper(
             value = stepperValue,
             onValueChange = { stepperValue = it },

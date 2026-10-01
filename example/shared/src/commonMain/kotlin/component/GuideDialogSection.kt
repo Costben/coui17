@@ -15,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.LocalAppStrings
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.PageIndicator
@@ -52,8 +54,8 @@ fun GuideDialogDemo() {
             .padding(bottom = 16.dp),
     ) {
         ArrowPreference(
-            title = "GuideDialog (3 pages)",
-            summary = "A first-run guide with a skip button and an indicator",
+            title = str("GuideDialog (3 pages)"),
+            summary = str("A first-run guide with a skip button and an indicator"),
             onClick = {
                 showMultiPageGuide = true
                 multiPageGuideHoldDown = true
@@ -62,8 +64,8 @@ fun GuideDialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "GuideDialog (single page)",
-            summary = "One page: the skip button and the indicator are hidden",
+            title = str("GuideDialog (single page)"),
+            summary = str("One page: the skip button and the indicator are hidden"),
             onClick = {
                 showSinglePageGuide = true
                 singlePageGuideHoldDown = true
@@ -114,21 +116,22 @@ private fun MultiPageGuideDemo(
     onDismissFinished: () -> Unit,
 ) {
     val image = painterResource(Res.drawable.blur_test_bg)
-    val pages = remember(image) {
+    val s = LocalAppStrings.current
+    val pages = remember(image, s) {
         listOf(
             GuidePage(
-                title = "Welcome to COUI",
-                description = "A ColorOS component library for Compose Multiplatform.",
+                title = s["Welcome to COUI"],
+                description = s["A ColorOS component library for Compose Multiplatform."],
                 image = image,
             ),
             GuidePage(
-                title = "Every component is themed",
-                description = "The theme drives colours, text styles and shapes from a single place.",
+                title = s["Every component is themed"],
+                description = s["The theme drives colours, text styles and shapes from a single place."],
                 image = image,
             ),
             GuidePage(
-                title = "Ready to build",
-                description = "Browse the sections of this page and drop a component into your app.",
+                title = s["Ready to build"],
+                description = s["Browse the sections of this page and drop a component into your app."],
                 image = image,
             ),
         )
@@ -149,11 +152,12 @@ private fun SinglePageGuideDemo(
     onDismissFinished: () -> Unit,
 ) {
     val image = painterResource(Res.drawable.blur_test_bg)
-    val pages = remember(image) {
+    val s = LocalAppStrings.current
+    val pages = remember(image, s) {
         listOf(
             GuidePage(
-                title = "A single-page guide",
-                description = "With one page the indicator is hidden and the primary button fills the row.",
+                title = s["A single-page guide"],
+                description = s["With one page the indicator is hidden and the primary button fills the row."],
                 image = image,
             ),
         )

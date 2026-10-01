@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.dp
  */
 object Coui17Dimens {
 
+    /** Gallery's measured activity density relative to the device-wide 620dpi density. */
+    const val GALLERY_DENSITY_SCALE = 565f / 620f
+
     /**
      * The settings home's `app_bar_layout`: 343px from the top of the screen.
      *
@@ -40,11 +43,27 @@ object Coui17Dimens {
      */
     val HomeSearchBandHeight = 52.13.dp
 
+    /** The empty title band above the search pill; it includes the status-bar-safe space. */
+    val HomeTitleBandHeight = HomeAppBarBottom - HomeSearchBandHeight
+
     /** The search pill inside that band: 296.3dp wide, 40dp tall, 16dp in from each edge. */
     val SearchPillHeight = 40.dp
 
     /** The bar's horizontal padding: 16dp (the pill spans x 62..1210px). */
     val BarHorizontalPadding = 16.dp
+
+    /**
+     * The leading magnifier's slot in the collapsed search pill: 40dp.
+     *
+     * On the device the glyph spans x 112..180px and the label starts at x=218px, so the slot itself
+     * ends at x=217px — 62px (the pill's start edge) + 155px = 40dp.
+     */
+    val SearchLeadingIconSlot = 40.dp
+
+    /** Inset before the magnifier inside its slot, and the gap after it. */
+    val SearchLeadingIconIndent = 10.dp
+
+    val SearchLeadingIconEndGap = 7.dp
 
     /** A second-level page's toolbar: `toolbar` spans y 141..343px, so 202px tall. */
     val CompactToolbarHeight = 52.13.dp
@@ -59,29 +78,25 @@ object Coui17Dimens {
      */
     val ToolbarTitleStart = 65.8.dp
 
-    /**
-     * A settings list row: 202px.
-     *
-     * The device has three heights — 202px for a one-line row, 205px for the first row under the bar,
-     * and 209px for rows with a taller subtitle. The common case is used here, and no dividers: the
-     * device's home list has none, only a 62px empty band between groups.
-     */
-    val ListRowHeight = 52.13.dp
+    /** A compact section heading measured from the Settings second-level page. */
+    val ListRowHeight = 32.dp
 
-    /** Where a list row's text starts: x=279px. */
-    val ListTextIndent = 72.dp
+    /** Heading text inset inside the 16dp card-aligned heading container. */
+    val ListTextIndent = 16.dp
+
+    /** The measured gap from a section heading's text baseline box to its first card. */
+    val ListHeadingContentGap = 3.5.dp
 
     /** How far a list row's card is inset from the screen edge: 62px (the card spans x 62..1210px). */
     val ListCardInset = 16.dp
 
-    /** The empty band between two list groups: 62px. */
-    val ListGroupGap = 16.dp
+    /** Shared demo cards already carry their own 16dp bottom spacing. */
+    val ListGroupGap = 0.dp
 
     /**
      * How much room the bottom content must leave for the accessory bar.
      *
-     * The bar's own 56dp capsule plus the 8dp lift COUI leaves above the navigation bar and the app's
-     * 24dp bottom gap.
+     * The Gallery-scaled 56dp capsule plus its lift and the app's navigation-bar inset.
      */
-    val BottomBarSpace = 88.dp
+    val BottomBarSpace = 80.dp
 }

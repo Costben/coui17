@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -32,22 +33,22 @@ fun BasicComponentDemo() {
             .padding(bottom = 16.dp),
     ) {
         BasicComponent(
-            title = "Title",
-            summary = "Summary",
+            title = str("Title"),
+            summary = str("Summary"),
             startAction = {
                 Text(
-                    text = "Start",
+                    text = str("Start"),
                 )
             },
             endActions = {
                 Text(
-                    text = "End1",
+                    text = str("End1"),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = COUITheme.colorScheme.onSurfaceVariantActions,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "End2",
+                    text = str("End2"),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = COUITheme.colorScheme.onSurfaceVariantActions,
                 )
@@ -56,23 +57,23 @@ fun BasicComponentDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         BasicComponent(
-            title = "Title",
-            summary = "Summary",
+            title = str("Title"),
+            summary = str("Summary"),
             startAction = {
                 Text(
-                    text = "Start",
+                    text = str("Start"),
                     color = COUITheme.colorScheme.disabledOnSecondaryVariant,
                 )
             },
             endActions = {
                 Text(
-                    text = "End1",
+                    text = str("End1"),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = COUITheme.colorScheme.disabledOnSecondaryVariant,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "End2",
+                    text = str("End2"),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = COUITheme.colorScheme.disabledOnSecondaryVariant,
                 )

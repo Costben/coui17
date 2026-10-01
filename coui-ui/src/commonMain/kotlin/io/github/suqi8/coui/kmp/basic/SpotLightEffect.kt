@@ -11,6 +11,10 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
@@ -148,6 +152,25 @@ object SpotLightDefaults {
         diffuseStrength = 0.4f,
         ditherN = 0f,
         noise = 0.1f,
+    )
+
+    /** `COUISpotLightEffect.TYPE_OPAQUE_MEDIUM_2`, used by the COS17 bottom navigation capsule. */
+    val OpaqueMedium2Light: SpotLightParams = SpotLightParams(
+        blendMode = BlendMode.Overlay,
+        startIntensity = 0f,
+        endIntensity = 1f,
+        startRadius = 100f,
+        endRadius = 500f,
+        lightHeight = 200f,
+        ambientStrength = 0.4f,
+        diffuseStrength = 0.4f,
+        ditherN = 0f,
+        noise = 0.08f,
+    )
+
+    val OpaqueMedium2Dark: SpotLightParams = OpaqueMedium2Light.copy(
+        blendMode = BlendMode.Plus,
+        endIntensity = 0.15f,
     )
 
     /** `COUISpotLightEffect.CIRCLE_PARAMS_1_LIGHT` — a circular light, added on top. */
@@ -297,6 +320,8 @@ object SpotLightDefaults {
     /** Resolves `CAPSULE_PARAMS_2_LIGHT` / `_DARK` by night mode. */
     fun capsuleParams2(isDark: Boolean): SpotLightParams = if (isDark) CapsuleParams2Dark else CapsuleParams2Light
 
+    fun opaqueMedium2(isDark: Boolean): SpotLightParams = if (isDark) OpaqueMedium2Dark else OpaqueMedium2Light
+
     /** Resolves `CIRCLE_PARAMS_1_LIGHT` / `_DARK` by night mode. */
     fun circleParams1(isDark: Boolean): SpotLightParams = if (isDark) CircleParams1Dark else CircleParams1Light
 
@@ -361,6 +386,7 @@ fun Modifier.spotLight(
     dither: Float = 0f,
     blendMode: BlendMode = BlendMode.SrcOver,
     enabled: Boolean = true,
+    clipShape: Shape? = null,
 ): Modifier {
     // A runtime shader is compiled by the driver on first use, so a source the platform rejects
     // would otherwise throw mid-composition; the fallback keeps the caller rendering.
@@ -396,8 +422,24 @@ fun Modifier.spotLight(
             noise,
             dither,
         )
-        onDrawBehind { drawRect(brush = shader.asBrush(), size = size, blendMode = blendMode) }
+        val lightBrush = shader.asBrush()
+        val lightPath = clipShape?.createOutline(size, layoutDirection, this)?.toPath()
+        onDrawBehind {
+            if (lightPath == null) {
+                drawRect(brush = lightBrush, size = size, blendMode = blendMode)
+            } else {
+                clipPath(lightPath) {
+                    drawRect(brush = lightBrush, size = size, blendMode = blendMode)
+                }
+            }
+        }
     }
+}
+
+private fun Outline.toPath(): Path = when (this) {
+    is Outline.Rectangle -> Path().apply { addRect(rect) }
+    is Outline.Rounded -> Path().apply { addRoundRect(roundRect) }
+    is Outline.Generic -> path
 }
 
 /** Compiles (and remembers) the spotlight shader; `null` when runtime shaders are unavailable. */

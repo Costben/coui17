@@ -3,6 +3,7 @@
 package io.github.suqi8.coui17
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -97,6 +98,7 @@ import component.TopTipsDemoContent
 import component.TopTipsStylesDemo
 import component.TouchSearchViewDemoContent
 import component.VerticalSliderDemo
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -221,16 +223,23 @@ fun Coui17HomePage(
 }
 
 /**
- * One gallery entry in ColorOS 17 list form: a group-title row, the entry's content in a card inset
- * 16dp from each edge, and the 16dp band the device leaves between groups.
+ * One gallery entry in ColorOS 17 list form: a compact group-title row and the entry's content.
+ * Shared demos own their 16dp card inset and bottom spacing, so this wrapper adds neither again.
+ *
+ * The content sits in a [Column], not a box: several demos emit more than one root — `ButtonDemo`
+ * alone emits four rows — and a box stacks its children on the same origin, which drew those rows on
+ * top of one another. The coui16 gallery never showed it because its sections push their roots as
+ * separate lazy-list items.
  */
 private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> Unit) {
     item(key = "title:$title") { Coui17GroupTitle(title) }
+    item(key = "heading-gap:$title") {
+        Spacer(modifier = Modifier.height(Coui17Dimens.ListHeadingContentGap))
+    }
     item(key = "content:$title") {
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Coui17Dimens.ListCardInset),
+                .fillMaxWidth(),
         ) {
             content()
         }
@@ -238,17 +247,23 @@ private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> 
     item(key = "gap:$title") { Spacer(modifier = Modifier.height(Coui17Dimens.ListGroupGap)) }
 }
 
-/** A COS17 list row holding the entry's name: 52.13dp tall, text starting at x=72dp. */
+/**
+ * A compact Settings section heading aligned with the text inside its card.
+ *
+ * [title] is the English source string; the heading resolves it here, so the entry list above stays
+ * a plain list of keys and the language can change under it.
+ */
 @Composable
 private fun Coui17GroupTitle(title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = Coui17Dimens.ListCardInset)
             .height(Coui17Dimens.ListRowHeight),
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(
-            text = title,
+            text = str(title),
             modifier = Modifier.padding(start = Coui17Dimens.ListTextIndent),
             style = COUITheme.textStyles.headline2,
             color = COUITheme.colorScheme.onSurface,

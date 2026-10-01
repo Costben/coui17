@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.CodeTextField
 import io.github.suqi8.coui.kmp.basic.InputView
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -55,12 +56,12 @@ fun InputViewCardSingleInputDemo(focusManager: FocusManager) {
     InputView(
         value = nickname,
         onValueChange = { nickname = it },
-        title = "Nickname",
-        label = "Enter your nickname",
+        title = str("Nickname"),
+        label = str("Enter your nickname"),
         showCount = true,
         maxCount = 10,
         showClearButton = true,
-        errorMessage = if (nickname.contains(' ')) "Nickname cannot contain spaces" else "",
+        errorMessage = if (nickname.contains(' ')) str("Nickname cannot contain spaces") else "",
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp),
@@ -70,10 +71,10 @@ fun InputViewCardSingleInputDemo(focusManager: FocusManager) {
     InputView(
         value = password,
         onValueChange = { password = it },
-        title = "Password",
-        label = "At least 8 characters",
+        title = str("Password"),
+        label = str("At least 8 characters"),
         showPasswordToggle = true,
-        errorMessage = if (password.isNotEmpty() && password.length < 8) "Password is too short" else "",
+        errorMessage = if (password.isNotEmpty() && password.length < 8) str("Password is too short") else "",
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp),
@@ -90,7 +91,7 @@ fun InputViewCardMultiInputDemo(focusManager: FocusManager) {
     InputView(
         value = signature,
         onValueChange = { signature = it },
-        label = "Signature (multi line)",
+        label = str("Signature (multi line)"),
         showCount = true,
         maxCount = 100,
         singleLine = false,

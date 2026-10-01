@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TextField
@@ -59,7 +60,7 @@ fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
     TextField(
         value = dialogText,
         onValueChange = { dialogText = it },
-        label = "Device name",
+        label = str("Device name"),
         showClearButton = true,
         singleLine = true,
         modifier = Modifier
@@ -70,7 +71,7 @@ fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
     )
     TextField(
         state = stateText,
-        label = "State-based",
+        label = str("State-based"),
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp),
@@ -80,7 +81,7 @@ fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
     TextField(
         value = passwordText,
         onValueChange = { passwordText = it },
-        label = "Password",
+        label = str("Password"),
         showPasswordToggle = true,
         singleLine = true,
         modifier = Modifier
@@ -92,7 +93,7 @@ fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
     TextField(
         value = countText,
         onValueChange = { countText = it },
-        label = "Max 10 characters",
+        label = str("Max 10 characters"),
         maxCount = 10,
         singleLine = true,
         modifier = Modifier
@@ -104,7 +105,7 @@ fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
     TextField(
         value = errorText,
         onValueChange = { errorText = it },
-        label = "Digits only (error state)",
+        label = str("Digits only (error state)"),
         isError = errorText.isNotEmpty() && !errorText.all { it.isDigit() },
         singleLine = true,
         modifier = Modifier
@@ -131,7 +132,7 @@ fun TextFieldInCardSettingsPreferenceFormDemo(focusManager: FocusManager) {
             TextField(
                 value = focusLineText,
                 onValueChange = { focusLineText = it },
-                label = "Focus line only (COUIInputPreference)",
+                label = str("Focus line only (COUIInputPreference)"),
                 justShowFocusLine = true,
                 singleLine = true,
                 modifier = Modifier.padding(vertical = 6.dp),
@@ -141,7 +142,7 @@ fun TextFieldInCardSettingsPreferenceFormDemo(focusManager: FocusManager) {
             TextField(
                 value = cardText,
                 onValueChange = { cardText = it },
-                label = "No decoration (card input)",
+                label = str("No decoration (card input)"),
                 backgroundMode = TextFieldMode.None,
                 singleLine = true,
                 modifier = Modifier.padding(vertical = 6.dp),
@@ -161,7 +162,7 @@ fun TextFieldRectangleFloatingLabelDemo(focusManager: FocusManager) {
     TextField(
         value = rectText,
         onValueChange = { rectText = it },
-        label = "Rectangle (stroke only)",
+        label = str("Rectangle (stroke only)"),
         backgroundMode = TextFieldMode.Rectangle,
         singleLine = true,
         modifier = Modifier
@@ -173,7 +174,7 @@ fun TextFieldRectangleFloatingLabelDemo(focusManager: FocusManager) {
     TextField(
         value = floatingText,
         onValueChange = { floatingText = it },
-        label = "Floating label (couiHintEnabled)",
+        label = str("Floating label (couiHintEnabled)"),
         useLabelAsPlaceholder = false,
         backgroundMode = TextFieldMode.Rectangle,
         singleLine = true,

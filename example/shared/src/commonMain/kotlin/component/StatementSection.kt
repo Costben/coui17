@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.FullPageStatement
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -42,7 +43,14 @@ fun FullPageStatementDemoContent() {
 
 @Composable
 private fun FullPageStatementDemo() {
-    var result by remember { mutableStateOf("Waiting for action…") }
+    val waiting = str("Waiting for action…")
+    val intro = str("Welcome! Before you continue, please read the user agreement and privacy policy carefully. ")
+    val collect = str("We collect only the data required to provide core features, and we never share your personal information with third parties without your consent. ")
+    val withdraw = str("You can withdraw your consent at any time in Settings. ")
+    val continuing = str("Continuing means you have read and agreed to the full statement. ")
+    val agreed = str("Agreed")
+    val exited = str("Exited")
+    var result by remember { mutableStateOf(waiting) }
 
     Column {
         // The statement page is designed to fill a whole window; the demo hosts it in a
@@ -53,19 +61,19 @@ private fun FullPageStatementDemo() {
                 .height(420.dp),
         ) {
             FullPageStatement(
-                title = "User Agreement & Privacy Policy",
+                title = str("User Agreement & Privacy Policy"),
                 content = buildString {
-                    append("Welcome! Before you continue, please read the user agreement and privacy policy carefully. ")
-                    append("We collect only the data required to provide core features, and we never share your personal information with third parties without your consent. ")
+                    append(intro)
+                    append(collect)
                     repeat(6) {
-                        append("You can withdraw your consent at any time in Settings. ")
-                        append("Continuing means you have read and agreed to the full statement. ")
+                        append(withdraw)
+                        append(continuing)
                     }
                 },
-                primaryButtonText = "Agree",
-                onPrimaryButtonClick = { result = "Agreed" },
-                secondaryButtonText = "Disagree and exit",
-                onSecondaryButtonClick = { result = "Exited" },
+                primaryButtonText = str("Agree"),
+                onPrimaryButtonClick = { result = agreed },
+                secondaryButtonText = str("Disagree and exit"),
+                onSecondaryButtonClick = { result = exited },
             )
         }
         Text(

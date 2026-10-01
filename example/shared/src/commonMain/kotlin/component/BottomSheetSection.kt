@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -42,8 +43,6 @@ import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import io.github.suqi8.coui.kmp.window.WindowBottomSheet
-
-private val BottomSheetDropdownOptions = listOf("Option 1", "Option 2")
 
 fun LazyListScope.bottomSheetSection() {
     item(key = "bottomSheet") {
@@ -68,8 +67,8 @@ fun BottomSheetDemo() {
             .padding(bottom = 16.dp),
     ) {
         ArrowPreference(
-            title = "BottomSheet (O)",
-            summary = "Click to show an OverlayBottomSheet",
+            title = str("BottomSheet (O)"),
+            summary = str("Click to show an OverlayBottomSheet"),
             onClick = {
                 showSuperBottomSheet = true
                 superBottomSheetHoldDown = true
@@ -78,8 +77,8 @@ fun BottomSheetDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "BottomSheet (W)",
-            summary = "Click to show a WindowBottomSheet",
+            title = str("BottomSheet (W)"),
+            summary = str("Click to show a WindowBottomSheet"),
             onClick = {
                 showWindowBottomSheet = true
                 windowBottomSheetHoldDown = true
@@ -120,9 +119,10 @@ private fun SuperBottomSheetDemo(
 ) {
     var allowDismiss by remember { mutableStateOf(true) }
     var enableNestedScroll by remember { mutableStateOf(true) }
+    val dropdownOptions = listOf(str("Option 1"), str("Option 2"))
 
     OverlayBottomSheet(
-        title = "BottomSheet (O)",
+        title = str("BottomSheet (O)"),
         show = show,
         allowDismiss = allowDismiss,
         enableNestedScroll = enableNestedScroll,
@@ -134,7 +134,7 @@ private fun SuperBottomSheetDemo(
             ) {
                 Icon(
                     imageVector = COUIIcons.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = str("Cancel"),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
@@ -145,7 +145,7 @@ private fun SuperBottomSheetDemo(
             ) {
                 Icon(
                     imageVector = COUIIcons.Ok,
-                    contentDescription = "Confirm",
+                    contentDescription = str("Confirm"),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
@@ -158,7 +158,7 @@ private fun SuperBottomSheetDemo(
         ) {
             item {
                 SmallTitle(
-                    text = "Behavior Settings",
+                    text = str("Behavior Settings"),
                     insideMargin = PaddingValues(16.dp, 8.dp),
                 )
                 Card(
@@ -168,15 +168,15 @@ private fun SuperBottomSheetDemo(
                     ),
                 ) {
                     SwitchPreference(
-                        title = "Allow Dismiss",
-                        summary = "Drag or Back to dismiss",
+                        title = str("Allow Dismiss"),
+                        summary = str("Drag or Back to dismiss"),
                         checked = allowDismiss,
                         onCheckedChange = { allowDismiss = it },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Enable NestedScroll",
-                        summary = "Scroll content vs Drag sheet",
+                        title = str("Enable NestedScroll"),
+                        summary = str("Scroll content vs Drag sheet"),
                         checked = enableNestedScroll,
                         onCheckedChange = { enableNestedScroll = it },
                     )
@@ -185,7 +185,7 @@ private fun SuperBottomSheetDemo(
             item {
                 var sliderValue by remember { mutableFloatStateOf(0.5f) }
                 SliderPreference(
-                    title = "Slider",
+                    title = str("Slider"),
                     value = sliderValue,
                     onValueChange = { sliderValue = it },
                     modifier = Modifier.padding(bottom = 12.dp),
@@ -194,7 +194,7 @@ private fun SuperBottomSheetDemo(
                 TextField(
                     value = textFieldValue,
                     onValueChange = { textFieldValue = it },
-                    label = "TextField",
+                    label = str("TextField"),
                     modifier = Modifier.padding(bottom = 12.dp),
                 )
                 Card(
@@ -204,14 +204,14 @@ private fun SuperBottomSheetDemo(
                     ),
                 ) {
                     OverlayDropdownPreference(
-                        title = "DropdownPref (O)",
-                        items = BottomSheetDropdownOptions,
+                        title = str("DropdownPref (O)"),
+                        items = dropdownOptions,
                         selectedIndex = dropdownSelectedIndex,
                         onSelectedIndexChange = onDropdownSelectedIndexChange,
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "SwitchPref",
+                        title = str("SwitchPref"),
                         checked = switchChecked,
                         onCheckedChange = onSwitchCheckedChange,
                     )
@@ -239,9 +239,10 @@ private fun WindowBottomSheetDemo(
 ) {
     var allowDismiss by remember { mutableStateOf(true) }
     var enableNestedScroll by remember { mutableStateOf(true) }
+    val dropdownOptions = listOf(str("Option 1"), str("Option 2"))
 
     WindowBottomSheet(
-        title = "BottomSheet (W)",
+        title = str("BottomSheet (W)"),
         show = show,
         allowDismiss = allowDismiss,
         enableNestedScroll = enableNestedScroll,
@@ -254,7 +255,7 @@ private fun WindowBottomSheetDemo(
             ) {
                 Icon(
                     imageVector = COUIIcons.Close,
-                    contentDescription = "Cancel",
+                    contentDescription = str("Cancel"),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
@@ -266,7 +267,7 @@ private fun WindowBottomSheetDemo(
             ) {
                 Icon(
                     imageVector = COUIIcons.Ok,
-                    contentDescription = "Confirm",
+                    contentDescription = str("Confirm"),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
@@ -279,7 +280,7 @@ private fun WindowBottomSheetDemo(
         ) {
             item {
                 SmallTitle(
-                    text = "Behavior Settings",
+                    text = str("Behavior Settings"),
                     insideMargin = PaddingValues(16.dp, 8.dp),
                 )
                 Card(
@@ -289,15 +290,15 @@ private fun WindowBottomSheetDemo(
                     ),
                 ) {
                     SwitchPreference(
-                        title = "Allow Dismiss",
-                        summary = "Drag or Back to dismiss",
+                        title = str("Allow Dismiss"),
+                        summary = str("Drag or Back to dismiss"),
                         checked = allowDismiss,
                         onCheckedChange = { allowDismiss = it },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Enable NestedScroll",
-                        summary = "Scroll content vs Drag sheet",
+                        title = str("Enable NestedScroll"),
+                        summary = str("Scroll content vs Drag sheet"),
                         checked = enableNestedScroll,
                         onCheckedChange = { enableNestedScroll = it },
                     )
@@ -306,7 +307,7 @@ private fun WindowBottomSheetDemo(
             item {
                 var sliderValue by remember { mutableFloatStateOf(0.5f) }
                 SliderPreference(
-                    title = "Slider",
+                    title = str("Slider"),
                     value = sliderValue,
                     onValueChange = { sliderValue = it },
                     modifier = Modifier.padding(bottom = 12.dp),
@@ -315,7 +316,7 @@ private fun WindowBottomSheetDemo(
                 TextField(
                     value = textFieldValue,
                     onValueChange = { textFieldValue = it },
-                    label = "TextField",
+                    label = str("TextField"),
                     modifier = Modifier.padding(bottom = 12.dp),
                 )
                 Card(
@@ -325,14 +326,14 @@ private fun WindowBottomSheetDemo(
                     ),
                 ) {
                     WindowDropdownPreference(
-                        title = "DropdownPref (W)",
-                        items = BottomSheetDropdownOptions,
+                        title = str("DropdownPref (W)"),
+                        items = dropdownOptions,
                         selectedIndex = dropdownSelectedIndex,
                         onSelectedIndexChange = onDropdownSelectedIndexChange,
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "SwitchPref",
+                        title = str("SwitchPref"),
                         checked = switchChecked,
                         onCheckedChange = onSwitchCheckedChange,
                     )

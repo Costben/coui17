@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.BreadcrumbBar
 import io.github.suqi8.coui.kmp.basic.BreadcrumbItem
 import io.github.suqi8.coui.kmp.basic.Card
@@ -35,11 +36,12 @@ fun LazyListScope.breadcrumbBarSection() {
 /** Renders the "BreadcrumbBar" gallery section content (a breadcrumb bar plus a card of variants). */
 @Composable
 fun BreadcrumbBarDemo() {
-    val items = remember {
+    val internalStorage = str("Internal storage")
+    val items = remember(internalStorage) {
         listOf(
             BreadcrumbItem(
                 path = "/storage/emulated/0",
-                text = "Internal storage",
+                text = internalStorage,
             ),
             BreadcrumbItem(path = "DataBackup"),
             BreadcrumbItem(path = "apps"),
@@ -73,11 +75,11 @@ fun BreadcrumbBarDemo() {
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(
-                text = "Full path: ${items.joinToPath()}",
+                text = str("Full path: {}", items.joinToPath()),
                 color = COUITheme.colorScheme.onSurfaceVariantSummary,
             )
             Text(
-                text = "Current: ${items.subList(0, highlightIndex + 1).joinToPath()}",
+                text = str("Current: {}", items.subList(0, highlightIndex + 1).joinToPath()),
                 color = COUITheme.colorScheme.onSurfaceVariantSummary,
             )
             BreadcrumbBar(

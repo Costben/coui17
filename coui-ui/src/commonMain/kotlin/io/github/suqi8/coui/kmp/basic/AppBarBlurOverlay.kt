@@ -50,20 +50,25 @@ object AppBarBlurOverlayDefaults {
     /**
      * The dark-theme material base colour.
      *
-     * The framework resolves the dark base from `?couiColorBackgroundWithCard`, and that attribute is
-     * `#ffffff` in the night configuration — a colour that cannot produce the profile measured on the
-     * device. There the material's top edge lands at 60 over a `#454545` card, and with the dark
-     * ramp's hard-coded top alpha `0.4 * B + 0.6 * 69 = 60` gives `B ≈ 46.5`. The nearest ColorOS
-     * night token is `coui_color_background_top` / `coui_color_surface_top` = `#333333`.
+     * The device renders the dark page background as a flat `48 / 48 / 48` (`#303030`), measured on
+     * two native surfaces with `std = 0.0` across the whole page — `com.android.settings` home
+     * (`y = 0 / 150 / 260 / 600 / 1200 / 2300`) and `ColorOS` album view. `#303030` is
+     * also the platform's own dark background (`background_material_dark` → `material_grey_850` =
+     * `#ff303030` in `framework-res`), so this is a colour the platform declares, not one inferred
+     * from a screenshot mean. The material's top edge over a `#454545` card lands at 60, and the dark
+     * ramp's hard-coded top alpha `0.4 * B + 0.6 * 69 = 60` gives `B ≈ 46.5`, consistent with 48.
      *
-     * No explicit colour can be hiding the gap: `AppBarBlurHelper.setGradientBlurBgColor` has no call
-     * site anywhere in the Settings APK's fourteen dex files, so its static never leaves `null` and
-     * the page fallback is what resolves. The dark path therefore carries a darkening layer this port
-     * cannot read — the framework's `com.oplus.view.*`, of which the repository only has the call
-     * site `COUIMaterialEffect.java:94-113`. The measured value is used here instead, with the
+     * The resource key that produces the value could not be read: the framework resolves the dark
+     * base from `?couiColorBackgroundWithCard`, which is `#ffffff` in the night configuration of the
+     * Settings APK, and an enabled RRO (`com.android.settings.overlay.common` /
+     * `SettingsResCommon_Sys.apk`) sits on top of it — that APK is not readable from the device and
+     * is not in the repository. `AppBarBlurHelper.setGradientBlurBgColor` also has no call site in
+     * the Settings APK's fourteen dex files, so its static never leaves `null`. The darkening layer
+     * is therefore the framework's own `com.oplus.view.*`, of which the repository only has the call
+     * site `COUIMaterialEffect.java:94-113`. The rendered value is used here instead, with the
      * light-sensing glass's own alpha ramp doing the rest.
      */
-    val DarkContainerColor = Color(0xFF333333)
+    val DarkContainerColor = Color(0xFF303030)
 
     /**
      * The material base colour for the current theme: the light theme's `surface`, which is

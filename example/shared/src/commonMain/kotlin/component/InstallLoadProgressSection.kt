@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.InstallLoadProgress
@@ -82,7 +83,7 @@ private fun InstallLoadStyleDemo() {
                     onClick = { state = state.toggled() },
                     state = state,
                     progress = progress,
-                    text = if (state == LoadProgressState.Loading) "$progress%" else "Download",
+                    text = if (state == LoadProgressState.Loading) "$progress%" else str("Download"),
                     style = style,
                 )
                 Text(
@@ -93,7 +94,7 @@ private fun InstallLoadStyleDemo() {
             }
         }
         Text(
-            text = "state: ${state.name} (${state.value}) · progress: $progress / 100",
+            text = str("state: {} ({}) · progress: {} / 100", state.name, state.value, progress),
             color = COUITheme.colorScheme.onBackgroundVariant,
             style = COUITheme.textStyles.footnote1,
         )
@@ -136,7 +137,7 @@ private fun InstallLoadSpecialStatesDemo() {
                 onClick = { },
                 state = LoadProgressState.Fail,
                 progress = progress,
-                text = "Retry",
+                text = str("Retry"),
                 style = InstallLoadStyle.Default,
             )
             // mState == 4 matches no onDraw branch: the shape is never painted, only the label.
@@ -144,12 +145,12 @@ private fun InstallLoadSpecialStatesDemo() {
                 onClick = { },
                 state = LoadProgressState.InstallHaveGift,
                 progress = progress,
-                text = "Gift",
+                text = str("Gift"),
                 style = InstallLoadStyle.Default,
             )
         }
         Text(
-            text = "Fail fills the whole shape; InstallHaveGift paints none",
+            text = str("Fail fills the whole shape; InstallHaveGift paints none"),
             color = COUITheme.colorScheme.onBackgroundVariant,
             style = COUITheme.textStyles.footnote1,
         )

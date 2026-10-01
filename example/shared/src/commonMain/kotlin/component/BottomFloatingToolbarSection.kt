@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingToolbar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingToolbarGroup
 import io.github.suqi8.coui.kmp.basic.BottomFloatingToolbarItem
@@ -93,17 +94,17 @@ fun BottomFloatingToolbarDemo() {
                 BottomFloatingToolbar(visible = visible) {
                     BottomFloatingToolbarGroup {
                         BottomFloatingToolbarItem(
-                            label = "Copy",
+                            label = str("Copy"),
                             icon = COUIIcons.Copy,
                             onClick = {},
                         )
                         BottomFloatingToolbarItem(
-                            label = "Cut",
+                            label = str("Cut"),
                             icon = COUIIcons.Cut,
                             onClick = {},
                         )
                         BottomFloatingToolbarItem(
-                            label = "Delete",
+                            label = str("Delete"),
                             icon = COUIIcons.Delete,
                             onClick = {},
                             enabled = false,
@@ -113,18 +114,18 @@ fun BottomFloatingToolbarDemo() {
                 BottomFloatingToolbar(visible = visible) {
                     BottomFloatingToolbarGroup {
                         BottomFloatingToolbarItem(
-                            label = "Select all",
+                            label = str("Select all"),
                             icon = COUIIcons.SelectAll,
                             onClick = {},
                         )
                         BottomFloatingToolbarItem(
-                            label = "Translate",
+                            label = str("Translate"),
                             onClick = {},
                         )
                     }
                     BottomFloatingToolbarGroup {
                         BottomFloatingToolbarItem(
-                            label = "Share",
+                            label = str("Share"),
                             icon = COUIIcons.Share,
                             onClick = {},
                         )
@@ -140,7 +141,7 @@ fun BottomFloatingToolbarDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "Visible")
+        Text(text = str("Visible"))
         Switch(checked = visible, onCheckedChange = { visible = it })
     }
 }

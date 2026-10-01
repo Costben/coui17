@@ -12,6 +12,11 @@ import androidx.compose.ui.unit.LayoutDirection
 /**
  * Caches [Shape] outlines. [shapeBlock] is mutable so a single provider survives modifier
  * updates; the outline cache is keyed on the resolved [Shape] instance.
+ *
+ * A shape whose geometry moves must therefore return a value that changes with it — the cache
+ * compares with `equals`, so re-emitting an equal value reuses the outline while a new one
+ * invalidates it. Handing back one frozen instance that reads the animation inside
+ * [Shape.createOutline] pins the first outline forever.
  */
 @Stable
 internal class ShapeProvider(var shapeBlock: () -> Shape) {

@@ -15,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.LocalAppStrings
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.HorizontalPopupMenu
 import io.github.suqi8.coui.kmp.basic.HorizontalPopupMenuItem
@@ -41,7 +43,8 @@ fun LazyListScope.horizontalPopupMenuSection() {
 fun HorizontalPopupMenuDemo() {
     var showPopup by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableIntStateOf(0) }
-    val rows = remember { listOf("Option 1", "Option 2", "Option 3") }
+    val s = LocalAppStrings.current
+    val rows = remember(s) { listOf(s["Option 1"], s["Option 2"], s["Option 3"]) }
 
     Box(
         modifier = Modifier
@@ -51,7 +54,7 @@ fun HorizontalPopupMenuDemo() {
         contentAlignment = Alignment.Center,
     ) {
         TextButton(
-            text = "Show HorizontalPopupMenu",
+            text = str("Show HorizontalPopupMenu"),
             onClick = { showPopup = true },
         )
         WindowListPopup(
@@ -64,17 +67,17 @@ fun HorizontalPopupMenuDemo() {
                 HorizontalPopupMenu {
                     HorizontalPopupMenuItem(
                         icon = COUIIcons.Copy,
-                        label = "Copy",
+                        label = str("Copy"),
                         onClick = { dismiss?.invoke() },
                     )
                     HorizontalPopupMenuItem(
                         icon = COUIIcons.Share,
-                        label = "Share",
+                        label = str("Share"),
                         onClick = { dismiss?.invoke() },
                     )
                     HorizontalPopupMenuItem(
                         icon = COUIIcons.Delete,
-                        label = "Delete",
+                        label = str("Delete"),
                         onClick = { dismiss?.invoke() },
                     )
                 }
@@ -82,22 +85,22 @@ fun HorizontalPopupMenuDemo() {
                 HorizontalPopupMenu {
                     HorizontalPopupMenuItem(
                         icon = COUIIcons.Copy,
-                        contentDescription = "Copy",
+                        contentDescription = str("Copy"),
                         onClick = { dismiss?.invoke() },
                     )
                     HorizontalPopupMenuItem(
                         icon = COUIIcons.Share,
-                        contentDescription = "Share",
+                        contentDescription = str("Share"),
                         onClick = { dismiss?.invoke() },
                     )
                     HorizontalPopupMenuItem(
                         icon = COUIIcons.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = str("Delete"),
                         onClick = { dismiss?.invoke() },
                     )
                     HorizontalPopupMenuItem(
                         icon = COUIIcons.More,
-                        contentDescription = "More",
+                        contentDescription = str("More"),
                         onClick = { dismiss?.invoke() },
                     )
                 }

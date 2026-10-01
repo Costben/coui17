@@ -5,17 +5,18 @@ package io.github.suqi8.coui.kmp.overlay
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.layout.CascadingListPopupLayout
 import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.PopupLayout
 
@@ -36,6 +37,9 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.PopupLayout
  * @param renderInRootScaffold Whether to render in the outermost Scaffold.
  * @param dropdownColors Colors used by every row.
  * @param collapseOnSelection When true, selecting any leaf dismisses the popup.
+ * @param enableGlass Whether to draw the ColorOS 17 popup glass behind the content. Only the
+ *   in-window overlay host enables it; the `Dialog` host has no coordinates in the host window for
+ *   a backdrop to sample.
  */
 @Composable
 fun OverlayCascadingListPopup(
@@ -48,11 +52,16 @@ fun OverlayCascadingListPopup(
     alignment: PopupPositionProvider.Align = PopupPositionProvider.Align.End,
     enableWindowDim: Boolean = true,
     maxHeight: Dp? = null,
-    minWidth: Dp = 200.dp,
+    minWidth: Dp = ListPopupDefaults.MinWidth,
     renderInRootScaffold: Boolean = true,
     dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
     collapseOnSelection: Boolean = true,
+    enableGlass: Boolean = true,
 ) {
+    // The popup composes in the root Scaffold's overlay rather than here, so the backdrop this call
+    // site sees has to be published again inside it: a surface reads whatever is current where it
+    // composes, and at the root that is nothing, which silently drops the glass to its opaque fill.
+    val backdrop = LocalBackdrop.current
     CascadingListPopupLayout(
         show = show,
         popupHost = { visible, hostContent ->
@@ -66,7 +75,9 @@ fun OverlayCascadingListPopup(
                 exitTransition = ExitTransition.None,
                 renderInRootScaffold = renderInRootScaffold,
             ) {
-                hostContent()
+                CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                    hostContent()
+                }
             }
         },
         entries = entries,
@@ -80,5 +91,6 @@ fun OverlayCascadingListPopup(
         minWidth = minWidth,
         dropdownColors = dropdownColors,
         collapseOnSelection = collapseOnSelection,
+        enableGlass = enableGlass,
     )
 }

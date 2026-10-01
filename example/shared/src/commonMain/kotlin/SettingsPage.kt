@@ -23,6 +23,9 @@ import appstate.LocalAppState
 import appstate.LocalIsWideScreen
 import appstate.LocalNavigator
 import appstate.LocalUpdateAppState
+import i18n.AppLanguage
+import i18n.LocalLanguageSwitchEnabled
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -77,7 +80,7 @@ fun SettingsPage(
             // never inside it — LocalBackdrop is provided to the bar slot alone.
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
-                    title = "Settings",
+                    title = str("Settings"),
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
@@ -88,10 +91,8 @@ fun SettingsPage(
         },
     ) { innerPadding ->
         SettingsContent(
-            padding = PaddingValues(
-                top = innerPadding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding(),
-            ),
+            innerPadding = innerPadding,
+            outerPadding = padding,
             topAppBarScrollBehavior = topAppBarScrollBehavior,
             backdrop = backdrop,
         )
@@ -100,7 +101,8 @@ fun SettingsPage(
 
 @Composable
 private fun SettingsContent(
-    padding: PaddingValues,
+    innerPadding: PaddingValues,
+    outerPadding: PaddingValues,
     topAppBarScrollBehavior: ScrollBehavior,
     backdrop: LayerBackdrop?,
 ) {
@@ -110,7 +112,10 @@ private fun SettingsContent(
     val navigator = LocalNavigator.current
     val lazyListState = rememberLazyListState()
 
-    val contentPadding = pageContentPadding(padding, padding, isWideScreen, extraTop = 12.dp)
+    // The host reserves its own bar's band and the scaffold reserves this page's: both are handed to
+    // the padding helper so the content starts clear of whichever bar is actually in the way. Keeping
+    // only the scaffold's inset here is what used to let the first row start under the host's toolbar.
+    val contentPadding = pageContentPadding(innerPadding, outerPadding, isWideScreen, extraTop = 12.dp)
     Box(modifier = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier) {
         LazyColumn(
             state = lazyListState,
@@ -121,6 +126,29 @@ private fun SettingsContent(
             ),
             contentPadding = contentPadding,
         ) {
+            // The language entry sits above everything else and is the only row that changes what
+            // the rest of the page says, so it leads rather than hides among the switches.
+            item(key = "settingsLanguage") {
+                if (LocalLanguageSwitchEnabled.current) {
+                    SmallTitle(str("Language"))
+                    Card(
+                        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
+                    ) {
+                        OverlayDropdownPreference(
+                            title = str("Language"),
+                            // Each language names itself, so the entry a user is hunting for reads
+                            // the same whichever language the app is currently showing.
+                            items = AppLanguage.entries.map { it.label },
+                            selectedIndex = appState.language.ordinal,
+                            onSelectedIndexChange = { index ->
+                                updateAppState { state ->
+                                    state.copy(language = AppLanguage.entries[index])
+                                }
+                            },
+                        )
+                    }
+                }
+            }
             item(key = "settingsUi") {
                 Card(
                     modifier = Modifier
@@ -128,7 +156,7 @@ private fun SettingsContent(
                         .padding(bottom = 16.dp),
                 ) {
                     SwitchPreference(
-                        title = "Show FPS Monitor",
+                        title = str("Show FPS Monitor"),
                         checked = appState.showFPSMonitor,
                         onCheckedChange = { updateAppState { state -> state.copy(showFPSMonitor = it) } },
                     )
@@ -136,7 +164,7 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             SwitchPreference(
-                                title = "Enable Squircle Shapes",
+                                title = str("Enable Squircle Shapes"),
                                 checked = appState.enableSquircle,
                                 onCheckedChange = { updateAppState { state -> state.copy(enableSquircle = it) } },
                             )
@@ -146,7 +174,7 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             SwitchPreference(
-                                title = "Enable Blur Effect",
+                                title = str("Enable Blur Effect"),
                                 checked = appState.enableBlur,
                                 onCheckedChange = { updateAppState { state -> state.copy(enableBlur = it) } },
                             )
@@ -154,13 +182,13 @@ private fun SettingsContent(
                     }
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Show TopAppBar",
+                        title = str("Show TopAppBar"),
                         checked = appState.showTopAppBar,
                         onCheckedChange = { updateAppState { state -> state.copy(showTopAppBar = it) } },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = if (isWideScreen) "Show NavigationRail" else "Show NavigationBar",
+                        title = if (isWideScreen) str("Show NavigationRail") else str("Show NavigationBar"),
                         checked = appState.showNavigationBar,
                         onCheckedChange = { updateAppState { state -> state.copy(showNavigationBar = it) } },
                     )
@@ -168,8 +196,8 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "NavigationBar Mode",
-                                items = NavigationBarDisplayModeOptions,
+                                title = str("NavigationBar Mode"),
+                                items = NavigationBarDisplayModeOptions.map { str(it) },
                                 selectedIndex = appState.navigationBarMode,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(navigationBarMode = it) } },
                             )
@@ -179,8 +207,8 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "NavigationRail Mode",
-                                items = NavigationRailDisplayModeOptions,
+                                title = str("NavigationRail Mode"),
+                                items = NavigationRailDisplayModeOptions.map { str(it) },
                                 selectedIndex = appState.navigationRailMode,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(navigationRailMode = it) } },
                             )
@@ -190,7 +218,7 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             SwitchPreference(
-                                title = "Use FloatingNavigationBar",
+                                title = str("Use FloatingNavigationBar"),
                                 checked = appState.useFloatingNavigationBar,
                                 onCheckedChange = { updateAppState { state -> state.copy(useFloatingNavigationBar = it) } },
                             )
@@ -198,8 +226,8 @@ private fun SettingsContent(
                                 Column {
                                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                                     OverlayDropdownPreference(
-                                        title = "FloatingNavigationBar Style",
-                                        items = FloatingNavigationBarStyleOptions,
+                                        title = str("FloatingNavigationBar Style"),
+                                        items = FloatingNavigationBarStyleOptions.map { str(it) },
                                         selectedIndex = appState.floatingNavigationBarStyle,
                                         onSelectedIndexChange = { updateAppState { state -> state.copy(floatingNavigationBarStyle = it) } },
                                     )
@@ -207,8 +235,8 @@ private fun SettingsContent(
                                         Column {
                                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                                             OverlayDropdownPreference(
-                                                title = "FloatingNavigationBar Position",
-                                                items = FloatingNavigationBarPositionOptions,
+                                                title = str("FloatingNavigationBar Position"),
+                                                items = FloatingNavigationBarPositionOptions.map { str(it) },
                                                 selectedIndex = appState.floatingNavigationBarPosition,
                                                 onSelectedIndexChange = { updateAppState { state -> state.copy(floatingNavigationBarPosition = it) } },
                                             )
@@ -220,7 +248,7 @@ private fun SettingsContent(
                     }
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Show FloatingToolbar",
+                        title = str("Show FloatingToolbar"),
                         checked = appState.showFloatingToolbar,
                         onCheckedChange = { updateAppState { state -> state.copy(showFloatingToolbar = it) } },
                     )
@@ -228,15 +256,15 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "FloatingToolbar Position",
-                                items = FloatingToolbarPositionOptions,
+                                title = str("FloatingToolbar Position"),
+                                items = FloatingToolbarPositionOptions.map { str(it) },
                                 selectedIndex = appState.floatingToolbarPosition,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(floatingToolbarPosition = it) } },
                             )
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "FloatingToolbar Orientation",
-                                items = FloatingToolbarOrientationOptions,
+                                title = str("FloatingToolbar Orientation"),
+                                items = FloatingToolbarOrientationOptions.map { str(it) },
                                 selectedIndex = appState.floatingToolbarOrientation,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(floatingToolbarOrientation = it) } },
                             )
@@ -244,7 +272,7 @@ private fun SettingsContent(
                     }
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Show FloatingActionButton",
+                        title = str("Show FloatingActionButton"),
                         checked = appState.showFloatingActionButton,
                         onCheckedChange = { updateAppState { state -> state.copy(showFloatingActionButton = it) } },
                     )
@@ -252,8 +280,8 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "FloatingActionButton Position",
-                                items = FabPositionOptions,
+                                title = str("FloatingActionButton Position"),
+                                items = FabPositionOptions.map { str(it) },
                                 selectedIndex = appState.floatingActionButtonPosition,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(floatingActionButtonPosition = it) } },
                             )
@@ -261,20 +289,20 @@ private fun SettingsContent(
                     }
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Enable Scroll End Haptic",
+                        title = str("Enable Scroll End Haptic"),
                         checked = appState.enableScrollEndHaptic,
                         onCheckedChange = { updateAppState { state -> state.copy(enableScrollEndHaptic = it) } },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Enable Page User Scroll",
+                        title = str("Enable Page User Scroll"),
                         checked = appState.enablePageUserScroll,
                         onCheckedChange = { updateAppState { state -> state.copy(enablePageUserScroll = it) } },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     OverlayDropdownPreference(
-                        title = "Color Mode",
-                        items = ColorModeOptions,
+                        title = str("Color Mode"),
+                        items = ColorModeOptions.map { str(it) },
                         selectedIndex = appState.colorMode,
                         onSelectedIndexChange = { updateAppState { state -> state.copy(colorMode = it) } },
                     )
@@ -282,8 +310,8 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "Key Color",
-                                items = KeyColorOptions,
+                                title = str("Key Color"),
+                                items = KeyColorOptions.map { str(it) },
                                 selectedIndex = appState.seedIndex,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(seedIndex = it) } },
                             )
@@ -293,14 +321,14 @@ private fun SettingsContent(
                         Column {
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "Palette Style",
+                                title = str("Palette Style"),
                                 items = PaletteStyleOptions,
                                 selectedIndex = appState.paletteStyle,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(paletteStyle = it) } },
                             )
                             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                             OverlayDropdownPreference(
-                                title = "Color Spec",
+                                title = str("Color Spec"),
                                 items = ColorSpecOptions,
                                 selectedIndex = appState.colorSpec,
                                 onSelectedIndexChange = { updateAppState { state -> state.copy(colorSpec = it) } },
@@ -310,47 +338,47 @@ private fun SettingsContent(
                 }
             }
             item(key = "settingsTransition") {
-                SmallTitle("Navigation3")
+                SmallTitle(str("Navigation3"))
                 Card(
                     modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                 ) {
                     SwitchPreference(
-                        title = "Enable Corner Clip",
-                        summary = "Clip the top scene with rounded corners during transitions",
+                        title = str("Enable Corner Clip"),
+                        summary = str("Clip the top scene with rounded corners during transitions"),
                         checked = appState.enableCornerClip,
                         onCheckedChange = { updateAppState { state -> state.copy(enableCornerClip = it) } },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Enable Dim",
-                        summary = "Dim the scene behind during transitions",
+                        title = str("Enable Dim"),
+                        summary = str("Dim the scene behind during transitions"),
                         checked = appState.enableDim,
                         onCheckedChange = { updateAppState { state -> state.copy(enableDim = it) } },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Block Input During Transition",
-                        summary = "Block touch input on the non-target scene",
+                        title = str("Block Input During Transition"),
+                        summary = str("Block touch input on the non-target scene"),
                         checked = appState.blockInputDuringTransition,
                         onCheckedChange = { updateAppState { state -> state.copy(blockInputDuringTransition = it) } },
                     )
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                     SwitchPreference(
-                        title = "Pop Follows Swipe Edge",
-                        summary = "Pop animation direction follows the finger swipe edge",
+                        title = str("Pop Follows Swipe Edge"),
+                        summary = str("Pop animation direction follows the finger swipe edge"),
                         checked = appState.popDirectionFollowsSwipeEdge,
                         onCheckedChange = { updateAppState { state -> state.copy(popDirectionFollowsSwipeEdge = it) } },
                     )
                 }
             }
             item(key = "settingsAbout") {
-                SmallTitle("Other")
+                SmallTitle(str("Other"))
                 Card(
                     modifier = Modifier.padding(horizontal = 16.dp),
                 ) {
                     ArrowPreference(
-                        title = "About",
-                        summary = "About this example App",
+                        title = str("About"),
+                        summary = str("About this example App"),
                         onClick = { navigator.push(Route.About) },
                     )
                 }

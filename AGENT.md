@@ -433,14 +433,27 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
 现在 `semantics` 与 `pointerInput` 一起，只在该浮层真的铺满屏幕时才挂。两者都不参与绘制，故**渲染不变**，
 但因为动的是 `example/shared`，同轮单独构建 `:example:android:assembleDebug` 通过。
 
-**已知缺口**（留待 Phase 4）：搜索浮层的返回键要按两次才关闭——`coui-ui` 的 `SearchBar`
-（`isBackEnabled = expanded`）与 `SearchPager` 各注册一个 `NavigationBackHandler`，第一次被前者吃掉，
-属既有 shared / coui-ui 行为，本轮未改；展开态的搜索框自身没有语义节点；首页搜索 pill 的 leading icon
-从 pill 起始边占 44dp，设备的对应槽位是 40dp（36dp 图标视图 + 4dp 内缩，文字 x 216px vs 本实现 233px），
-但设备 `search_src_text` 的 `EditText` 自带 padding，实测分不清差值属槽位还是文本框内缩，按「查不清就挂起」
-留到视觉层比对；`OtherDemo` 的三条导航箭头在 coui17 里是惰性的（只给了空 `Navigator` 栈，没有 `NavDisplay`）；
-删除复刻页后 `SideNavigationBar` / `SidePaneLayout` / `CardEntrancePreference` / `CardInstructionPreference` /
-`ListDetailView` / `LunarDatePicker` 不再有任何展廊条目。
+**已知缺口**（留待 Phase 4）：
+
+- **「搜索浮层的返回键要按两次才关闭」前提已证伪，未做代码改动**。真机与实现行为一致：键盘弹起时第一次
+  返回只收键盘（`dumpsys input_method` 的 `mInputShown` true→false），第二次才关浮层；键盘收起时一次即关。
+  源码复核确认搜索浮层里只有**一处** `NavigationBackHandler`（`example/shared/src/commonMain/kotlin/component/SuperSearchBar.kt`
+  的 `SearchPager` 内），此处先前的「`coui-ui` 的 `SearchBar` 与 `SearchPager` 各注册一个 handler」是读码误判。
+- **展开态搜索框的语义节点已对齐**（commit `fix(coui17): 展开态搜索栏的放大镜移出输入框，位置与真机对齐`）。
+  真机 `search_src_text` 是 `android.widget.EditText`、`clickable/focusable`、`[216,164][763,319]`；本实现为
+  `EditText`、`clickable/focusable`、`[217,149][937,335]`——角色、输入能力、左沿（217 vs 216）与竖向中心
+  （242 vs 241.5）对齐。残余两条，均为平台/组件限制：高度 186px vs 155px（Compose 把可点击节点的触摸框
+  抬到 a11y 下限之上，视觉胶囊本身实测 y≈165..315）；右沿 937 vs 763（真机右沿由「启动小布助手」入口决定，
+  本实现无此入口）。文本一侧，真机 `EditText` 在空文本时把 hint 报成 `text="搜索设置项"`，compose-ui 1.11.1
+  的 `SemanticsProperties` 没有 Hint，不能伪造 Text 节点。
+- 首页搜索 pill 的 leading icon 已由 44dp 改为 40dp 槽位（commit `fix(coui17): 首页搜索胶囊的放大镜与文字起点对齐真机`）。
+- `OtherDemo` 的三条导航箭头在 coui17 里是惰性的（只给了空 `Navigator` 栈，没有 `NavDisplay`）；
+  删除复刻页后 `SideNavigationBar` / `SidePaneLayout` / `CardEntrancePreference` / `CardInstructionPreference` /
+  `ListDetailView` / `LunarDatePicker` 不再有任何展廊条目。以上两项**范围外，仅记录**。
+- **深色展开态搜索浮层整屏渲染为黑**（新增记录，未修）：浅色展开态正常（整屏 231.9），深色展开态除搜索栏
+  一行外整屏 0（mean 16.1，真机深色展开态恒 48）。该现象在基线 `4199933c` 的 APK 上同样复现（mean 16.2），
+  与本次 6 个 commit 及本轮改动无关，属既有缺陷，根因未证（浅色下不可见：展开态整屏 surface 未上色，
+  浅色页面底色与 surface 接近；深色下页面层被渲染成黑）。**范围外，仅记录**。
 
 **Phase 4 复核结论（2026-09-30）**：
 
@@ -448,14 +461,37 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
   胶囊因此离屏底 32dp。去掉多余的一层后为 24.0dp，与同机 Clock 底栏（`[62,2462][1210,2679]`、
   底距屏底 93px = 24.0dp）逐像素吻合；本机 `navigationBars` inset 实测 16dp（62px）。
 - 条目拓扑：源码声明 **82** 条（`Coui17HomePage.kt` 的 `coui17Entry`，含 1 条跨行标题），coui16 为 81 条，
-  多出的 1 条是 `Snackbar`（`MainPage.kt` 从未调用 `snackbarSection()`）。真机滚动遍历（5 轮、约 250 次
-  `uiautomator dump`）按序观察到 81/82 条标题；唯一从未抓到的是第 70 条 `MarqueeText`——它是标题行落在
-  两次滑动之间的跳空带里，属抓取缺口而非渲染缺失（它与其余 81 条结构完全相同），**该项运行时未验到**。
-- **待解决：app bar 下方 14dp 带有一条材质色带并止于硬边**。本实现 `AppBarBlurOverlay` 的
-  `progressiveTextureBlur` 把采样到的 backdrop 铺满整个节点，而该带的材质 α 按设计恒为 0；本仓 backdrop
-  记录的是壁纸（`Coui17App.kt` 的 `drawWallpaper`），页面本身并不画壁纸，于是该带露出壁纸色并在节点底边
-  （y=397px）出现硬跳变：实测左留白 x∈[2,58] 在 y=343..396 恒为 (199,214,207) / 深色 (201,217,208)，
-  397 起突变为页面底色 (250,250,250) / (48,48,48)。真机在该处没有跳变（plan §九 已记该带来源未坐实）。
-  材质自身的 α 剖面是对的，缺口只在 backdrop 与屏上内容不一致；两种可行修法（按 α 遮蔽模糊、或让页面
-  真的铺壁纸底色）都会改动已验证过的行为，故按「查不清就挂起」留待裁定。
+  多出的 1 条是 `Snackbar`（`MainPage.kt` 从未调用 `snackbarSection()`），**该条保留**。真机滚动遍历
+  （5 轮、约 250 次 `uiautomator dump`）按序观察到 81/82 条标题；第 70 条 `MarqueeText` 当时未抓到，
+  后用慢速右侧滑动（从 x=1230 起、约 900ms、每步立即 `adb pull`）**已取证**：
+  `<node text="MarqueeText" class="android.widget.TextView" clickable="false" bounds="[279,2637][657,2710]"/>`，
+  包名 `io.github.suqi8.coui17`（证据 `/tmp/marquee_70_evidence.xml` + `/tmp/marquee_70_evidence.png`）。
+  真机运行遍历 82/82 全部验到。
+- **已解决：app bar 下方 14dp 带的那条材质色带与 397px 硬边**。根因是本仓 backdrop 与屏上内容不一致：
+  `Coui17App.kt` 的 `drawWallpaper` 往记录给玻璃采样的那一层里垫了壁纸，而页面本身并不画壁纸，于是
+  `AppBarBlurOverlay` 的 `progressiveTextureBlur` 把壁纸铺满整个节点（含 α 恒为 0 的 14dp 带），并在
+  节点底边 y=397px 收成硬边：实测左留白 x=5 从 y=0 的 240.8 一路压到 y=390 的 **208.7**，y=400 起突变为
+  250。修法（commit `fix(coui17): 顶栏材质不再压出色带，页面底色对齐真机`）：记录两层——顶栏只读页面
+  那层（`pageBackdrop`），页内的玻璃组件仍读带壁纸的那层；页面底色改用材质基色 `containerColor()`。
+  装机复测：顶栏区域 y∈[0,520] 恒为 **240.8**，y=397 处无跳变，与真机一致（真机同处 240.8）。
+  真机这一带**不是材质**，是**搜索栏自己的投影**（`SHADOW_LV3_A`，收起态才出现），来源与证据见
+  `docs/coui17-gallery-plan.md` §九。
+- **已解决：搜索栏投影本身**（commit `feat(coui17): 顶栏搜索栏补上真机投影，随收起态淡入`）。真机的
+  `OplusView.setOverrideLightSourceGeometry(-1, -200dp, 10000dp, 2000dp, 0)` 走 Skia 的
+  `SkDrawShadowMetrics::GetSpotParams`，没有闭式解；`Coui17Shadows.kt` 的 `searchBarShadow` 复用
+  `ListPopup.PopupShadow` 同一套推导，把它折成一个普通 `Shadow`：`zRatio = 100/(10000−100) = 0.01010`、
+  `blurRadius = 2000dp × zRatio ≈ 20.20dp`、`offsetY = +2.02dp`、`offsetX = 0`，颜色 α 浅色 34/255、
+  深色 68/255（token `coui_shadow_color_lv3a`），再乘 `scrollFraction`，形状绑 40dp 高胶囊。
+  装机复测（浅色、收起态、滚动后）：x=50 深度 −10.0（真机 −11.9）、x=5 深度 −3.6（真机 −6.1），
+  左右逐像素对称（x=50 与 x=1222 差值全为 0.0），远场残 ~2–4 luma；展开态无投影（与真机一致）。
+  原本直接套用 `Modifier.shadow(elevation = 100.dp, black@34/255)` 得到的全屏均匀压暗 −2.8 形状不对，已弃用。
+- **深色顶栏滚动后发白：既有缺陷，已修**（commit `fix(coui17): 顶栏材质采样不透明页面层，深色滚动不再发白`）。
+  现象是深色主题滚动后顶栏 y∈[0,343] 抬到 146–195（真机恒 48）；基线 `4199933c` 构建后同样复现，不是本轮引入。
+  隔离实验定位到根因：给顶栏采样的 `pageBackdrop` 是用 `rememberLayerBackdrop { drawContent() }` 录的，
+  **背景透明**；`progressiveTextureBlur` 读到透明层后把顶栏洗成近白。浅色看不出来是因为浅色 ramp 顶层
+  α=1（`AppBarGlassDefaults.GradientAlpha2`）把模糊层盖住，深色 ramp 顶层 α 只有 0.4（`GradientAlphaDark`）。
+  修法：新增 `barBackdrop = rememberLayerBackdrop { drawRect(pageColor); drawLayer(pageBackdrop.graphicsLayer) }`
+  专供顶栏/工具栏采样，修饰符链改 `.layerBackdrop(backdrop).layerBackdrop(barBackdrop).layerBackdrop(pageBackdrop)`，
+  页内玻璃仍读 `backdrop`。装机复测：深色滚动 y30=50.0（修前 144.7）、y100=85.0，与真机同级；
+  浅色静止点值不变；三层都只是 `drawLayer` 复用已录图层，没有多出 `drawContent()`。
 
