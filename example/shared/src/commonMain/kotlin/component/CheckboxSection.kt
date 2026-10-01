@@ -133,7 +133,7 @@ private fun CheckboxPreferenceDemo() {
 
     CheckboxPreference(
         title = str("Checkbox"),
-        summary = "State: $checked",
+        summary = str("State: {}", checked),
         checked = checked,
         onCheckedChange = { checked = it },
     )

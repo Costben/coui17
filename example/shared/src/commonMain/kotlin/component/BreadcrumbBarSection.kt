@@ -75,11 +75,11 @@ fun BreadcrumbBarDemo() {
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(
-                text = "Full path: ${items.joinToPath()}",
+                text = str("Full path: {}", items.joinToPath()),
                 color = COUITheme.colorScheme.onSurfaceVariantSummary,
             )
             Text(
-                text = "Current: ${items.subList(0, highlightIndex + 1).joinToPath()}",
+                text = str("Current: {}", items.subList(0, highlightIndex + 1).joinToPath()),
                 color = COUITheme.colorScheme.onSurfaceVariantSummary,
             )
             BreadcrumbBar(

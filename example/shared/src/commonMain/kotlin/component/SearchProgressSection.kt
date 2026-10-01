@@ -145,7 +145,7 @@ private fun MagneticSearchBarDemo() {
             )
         }
         Text(
-            text = "query: \"$query\"",
+            text = str("query: \"{}\"", query),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -174,7 +174,7 @@ private fun LoadProgressStatesDemo() {
             }
         }
         Text(
-            text = "state: ${state.name} (${state.value})",
+            text = str("state: {} ({})", state.name, state.value),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -209,7 +209,7 @@ private fun LoadProgressPillDemo() {
             size = LoadProgressButtonSize.Large,
         )
         Text(
-            text = "state: ${state.name}, progress: $progress / 100",
+            text = str("state: {}, progress: {} / 100", state.name, progress),
             style = COUITheme.textStyles.footnote1,
         )
     }

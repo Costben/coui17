@@ -98,7 +98,7 @@ fun TopAppBarGlassDemo() {
                 ) {
                     repeat(12) { index ->
                         Text(
-                            text = "Scroll row $index",
+                            text = str("Scroll row {}", index),
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         )
                     }

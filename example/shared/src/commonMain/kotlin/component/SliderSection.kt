@@ -176,7 +176,7 @@ fun VerticalSliderDemo() {
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = "Normal\n${(verticalValue1 * 100).toInt()}%",
+                    text = str("Normal\n{}%", (verticalValue1 * 100).toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
@@ -196,7 +196,7 @@ fun VerticalSliderDemo() {
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = "Steps\n${verticalValue2.toInt()}/6",
+                    text = str("Steps\n{}/6", verticalValue2.toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
@@ -217,7 +217,7 @@ fun VerticalSliderDemo() {
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = "Points\n${verticalValue3.toInt()}/6",
+                    text = str("Points\n{}/6", verticalValue3.toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
@@ -238,7 +238,7 @@ fun VerticalSliderDemo() {
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = "Custom\n${verticalValue4.toInt()}%",
+                    text = str("Custom\n{}%", verticalValue4.toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
@@ -256,7 +256,7 @@ fun VerticalSliderDemo() {
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = "Disabled\n${(disabledVerticalValue * 100).toInt()}%",
+                    text = str("Disabled\n{}%", (disabledVerticalValue * 100).toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),

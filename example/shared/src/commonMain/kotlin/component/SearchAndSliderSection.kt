@@ -119,7 +119,7 @@ private fun IntentSeekBarDemo() {
             .padding(16.dp),
     ) {
         Text(
-            text = "Played ${(played * 100).toInt()}%  ·  Buffered ${(buffered * 100).toInt()}%",
+            text = str("Played {}%  ·  Buffered {}%", (played * 100).toInt(), (buffered * 100).toInt()),
             style = COUITheme.textStyles.footnote1,
         )
         IntentSeekBar(
@@ -199,7 +199,7 @@ private fun TouchSearchViewDemo() {
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
     ) {
         Text(
-            text = "Selected: $selectedKey",
+            text = str("Selected: {}", selectedKey),
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .padding(end = 56.dp),
@@ -241,7 +241,7 @@ private fun SearchHistoryViewDemo() {
                 deleteIconDescription = str("Delete search history"),
             )
             Text(
-                text = "Last clicked: $lastClicked",
+                text = str("Last clicked: {}", lastClicked),
                 style = COUITheme.textStyles.footnote1,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             )

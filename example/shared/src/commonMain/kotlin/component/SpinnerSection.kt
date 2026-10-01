@@ -310,7 +310,6 @@ private fun groupedSpinnerOptions(
     DropdownEntry(
         items = spinnerOptions.mapIndexed { index, item ->
             item.copy(
-                text = "Option ${index + 1}",
                 enabled = index % 2 == 0,
                 selected = group3SelectedIndex == index,
                 onClick = {

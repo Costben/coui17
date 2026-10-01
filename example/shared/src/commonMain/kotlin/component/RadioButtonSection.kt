@@ -51,21 +51,21 @@ private fun SuperRadioButtonDemo() {
     Column {
         RadioButtonPreference(
             title = str("Option A"),
-            summary = "Selected: ${selectedIndex == 0}",
+            summary = str("Selected: {}", selectedIndex == 0),
             selected = selectedIndex == 0,
             onClick = { selectedIndex = 0 },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         RadioButtonPreference(
             title = str("Option B"),
-            summary = "Selected: ${selectedIndex == 1}",
+            summary = str("Selected: {}", selectedIndex == 1),
             selected = selectedIndex == 1,
             onClick = { selectedIndex = 1 },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         RadioButtonPreference(
             title = str("Option C"),
-            summary = "Selected: ${selectedIndex == 2}",
+            summary = str("Selected: {}", selectedIndex == 2),
             selected = selectedIndex == 2,
             onClick = { selectedIndex = 2 },
         )

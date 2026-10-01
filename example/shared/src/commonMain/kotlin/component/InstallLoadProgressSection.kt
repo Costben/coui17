@@ -94,7 +94,7 @@ private fun InstallLoadStyleDemo() {
             }
         }
         Text(
-            text = "state: ${state.name} (${state.value}) · progress: $progress / 100",
+            text = str("state: {} ({}) · progress: {} / 100", state.name, state.value, progress),
             color = COUITheme.colorScheme.onBackgroundVariant,
             style = COUITheme.textStyles.footnote1,
         )

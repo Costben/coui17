@@ -158,7 +158,7 @@ fun BlurDemo() {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Texture Blur | R=${blurRadiusX.toInt()}",
+                            text = str("Texture Blur") + " | R=${blurRadiusX.toInt()}",
                             style = COUITheme.textStyles.headline2,
                         )
                         Spacer(Modifier.height(4.dp))

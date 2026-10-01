@@ -77,7 +77,7 @@ fun TabRowDemo() {
             key = { it },
             pageContent = { page ->
                 Text(
-                    text = "Content of ${segmentTabs[page]}",
+                    text = str("Content of {}", segmentTabs[page]),
                     modifier = Modifier
                         .fillMaxWidth(),
                 )

@@ -102,11 +102,11 @@ private fun HintAnimationDemo() {
             )
         }
         Text(
-            text = "query: \"$query\"",
+            text = str("query: \"{}\"", query),
             style = COUITheme.textStyles.footnote1,
         )
         Text(
-            text = "last hint: $lastHint",
+            text = str("last hint: {}", lastHint),
             style = COUITheme.textStyles.footnote1,
         )
     }
@@ -155,7 +155,7 @@ private fun TopTipsAiPaymentDemo() {
             )
         }
         Text(
-            text = "last action: $lastAction",
+            text = str("last action: {}", lastAction),
             style = COUITheme.textStyles.footnote1,
         )
     }
