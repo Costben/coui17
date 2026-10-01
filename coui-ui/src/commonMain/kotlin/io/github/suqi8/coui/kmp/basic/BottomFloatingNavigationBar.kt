@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -284,6 +285,8 @@ private fun BottomFloatingNavigationBarCapsule(
         SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val highlight = rememberGlassHighlight(GlassContainer.Medium, backdrop)
+    val touchState = rememberCOUITouchMotionState()
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
     BoxWithConstraints(
         modifier = Modifier.fillMaxWidth(),
@@ -323,7 +326,11 @@ private fun BottomFloatingNavigationBarCapsule(
                             fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
                             highlight = highlight,
                         )
-                        .bottomFloatingTouchHighlight(shape)
+                        .couiTouchMotion(
+                            shape = shape,
+                            lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                            motionState = touchState,
+                        )
                         .then(modifier),
                     content = content,
                 )
@@ -355,6 +362,8 @@ private fun BottomFloatingNavigationBarMeltBall(
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
     val expansionSize = BottomFloatingNavigationBarDefaults.ExpansionSize
     val sideSpacing = BottomFloatingNavigationBarDefaults.SideSpacing
+    val expansionTouchState = rememberCOUITouchMotionState()
+    val menuTouchState = rememberCOUITouchMotionState()
 
     // COUI drives the expansion view with a spring at response 0.55 / bounce 0.35 once the melt ball
     // is supported; Compose's spring takes `stiffness` = omega0^2 = (2*pi / 0.55)^2 and
@@ -370,10 +379,6 @@ private fun BottomFloatingNavigationBarMeltBall(
     val expansionFootprint = expansionSize * progress
 
     val squircleEnabled = isSquircleEnabled()
-    val capsuleShape = remember(cornerRadius, squircleEnabled) {
-        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
-    }
-
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
@@ -404,20 +409,26 @@ private fun BottomFloatingNavigationBarMeltBall(
                         if (capsuleWidthPx > 0) {
                             add(
                                 MetaBallParticle(
-                                    centerX = capsuleWidth / 2,
-                                    centerY = barHeight / 2,
-                                    width = capsuleWidth,
-                                    height = barHeight,
+                                    centerX = capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
+                                    centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
+                                    width = capsuleWidth * menuTouchState.scaleX,
+                                    height = barHeight * menuTouchState.scaleY,
                                     cornerRadius = cornerRadius,
                                 ),
                             )
                         }
                         if (expansionFootprint > 0.dp) {
                             add(
-                                MetaBallParticle.circle(
-                                    centerX = capsuleWidth + gap + expansionFootprint / 2,
-                                    centerY = barHeight / 2,
-                                    diameter = expansionFootprint,
+                                MetaBallParticle(
+                                    centerX = capsuleWidth + gap + expansionFootprint / 2 + with(density) {
+                                        expansionTouchState.translation.x.toDp()
+                                    },
+                                    centerY = barHeight / 2 + with(density) {
+                                        expansionTouchState.translation.y.toDp()
+                                    },
+                                    width = expansionFootprint * expansionTouchState.scaleX,
+                                    height = expansionFootprint * expansionTouchState.scaleY,
+                                    cornerRadius = expansionSize / 2,
                                 ),
                             )
                         }
@@ -433,7 +444,11 @@ private fun BottomFloatingNavigationBarMeltBall(
                     FloatingCapsuleRow(
                         modifier = Modifier
                             .onSizeChanged { capsuleWidthPx = it.width }
-                            .bottomFloatingTouchHighlight(capsuleShape),
+                            .couiTouchMotion(
+                                shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled),
+                                lightParams = SpotLightDefaults.opaqueMedium2(COUITheme.colorScheme.background.luminance() < 0.5f),
+                                motionState = menuTouchState,
+                            ),
                         // COUI narrows the menu view by exactly the expansion view's footprint plus the
                         // side spacing while the expansion view is active, and hands it the full width
                         // back once it is inactive (`COUIBottomFloatingNavigationBar.onMeasure`).
@@ -452,6 +467,14 @@ private fun BottomFloatingNavigationBarMeltBall(
                         Box(
                             modifier = Modifier
                                 .size(expansionSize)
+                                .couiTouchMotion(
+                                    enabled = expanded,
+                                    shape = CircleShape,
+                                    lightParams = SpotLightDefaults.opaqueMedium2(
+                                        COUITheme.colorScheme.background.luminance() < 0.5f,
+                                    ),
+                                    motionState = expansionTouchState,
+                                )
                                 .graphicsLayer {
                                     scaleX = progress
                                     scaleY = progress
@@ -492,6 +515,7 @@ private fun BottomFloatingNavigationBarMeltBall(
  *   `null` disables the long press.
  */
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun RowScope.BottomFloatingNavigationBarItem(
     selected: Boolean,
     onClick: () -> Unit,
@@ -502,9 +526,14 @@ fun RowScope.BottomFloatingNavigationBarItem(
     largeIcon: Boolean = false,
     redDot: BottomFloatingRedDot? = null,
     overflowMenu: (@Composable () -> Unit)? = null,
+    selectedIcon: ImageVector? = null,
+    motionSpec: COUITouchMotionSpec = COUITouchMotionSpec(),
+    lightSpec: SpotLightParams = SpotLightDefaults.opaqueMedium2(
+        COUITheme.colorScheme.background.luminance() < 0.5f,
+    ),
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     val colorScheme = COUITheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
 
     // COUI item label/icon colors: couiColorLabelTertiary / couiColorLabelPrimary /
     // couiColorLabelPrimaryVariant. The same color tints both the icon and the label.
@@ -513,19 +542,6 @@ fun RowScope.BottomFloatingNavigationBarItem(
         selected -> colorScheme.onSurface
         else -> colorScheme.labelPrimaryVariant
     }
-
-    // `COUIBottomFloatingToolbarItemView` wears a `COUIMaskRippleDrawable` background, enabled for
-    // the navi item styles (`applyNaviVerticalStyle` -> `setDrawableEnabled(true)`); the large-icon
-    // form turns it off. Its mask is the item cell upset by
-    // `coui_bottom_floating_navigation_bar_item_bg_horizontal_padding` on each side, rounded by half
-    // the item height, and its colour is `?attr/couiColorPress`.
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val pressProgress by animateFloatAsState(
-        targetValue = if (enabled && !largeIcon && isPressed) 1f else 0f,
-        animationSpec = BottomFloatingNavigationBarDefaults.PressMaskSpring,
-        label = "bottomFloatingItemPress",
-    )
-    val pressColor = BottomFloatingNavigationBarDefaults.pressColor(COUITheme.colorScheme.background)
 
     // COUIBottomFloatingNavigationBarMenuView opens the overflow menu on a long press and the native
     // item's onLongClick returns true, so the click that ends that same gesture is swallowed —
@@ -536,18 +552,6 @@ fun RowScope.BottomFloatingNavigationBarItem(
         modifier = modifier
             .height(BottomFloatingNavigationBarDefaults.ItemHeight)
             .widthIn(max = BottomFloatingNavigationBarDefaults.ItemMaxWidth)
-            .drawWithContent {
-                if (pressProgress > 0f) {
-                    val outset = BottomFloatingNavigationBarDefaults.PressMaskHorizontalOutset.toPx()
-                    drawRoundRect(
-                        color = pressColor.copy(alpha = pressColor.alpha * pressProgress),
-                        topLeft = Offset(-outset, 0f),
-                        size = Size(size.width + outset * 2f, size.height),
-                        cornerRadius = CornerRadius(size.height / 2f),
-                    )
-                }
-                drawContent()
-            }
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -592,7 +596,7 @@ fun RowScope.BottomFloatingNavigationBarItem(
                             BottomFloatingNavigationBarDefaults.IconSize
                         },
                     ),
-                    imageVector = icon,
+                    imageVector = selectedIcon.takeIf { selected } ?: icon,
                     contentDescription = label,
                     colorFilter = ColorFilter.tint(tint),
                 )

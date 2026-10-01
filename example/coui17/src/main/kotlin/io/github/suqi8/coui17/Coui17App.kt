@@ -14,9 +14,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,16 +22,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -48,9 +42,13 @@ import i18n.LocalAppStrings
 import i18n.LocalLanguageSwitchEnabled
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
+import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Scaffold
+import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SnackbarHost
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
+import io.github.suqi8.coui.kmp.basic.TopAppBarDefaults
+import io.github.suqi8.coui.kmp.basic.rememberTopAppBarState
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
@@ -88,6 +86,8 @@ enum class Coui17Page(val title: String) {
     /** Whether this page is reached from the panel rather than the capsule, so it carries a back key. */
     val isPanelPage: Boolean get() = this == TextStyle || this == Settings
 }
+
+private enum class Coui17PanelAnchor { TopBar, BottomBar }
 
 /**
  * COUI 17 — the component gallery wearing ColorOS 17's clothes.
@@ -164,7 +164,11 @@ private fun Coui17Root() {
     val snackbarHostState = remember { SnackbarHostState() }
     val pagerState = rememberPagerState(pageCount = { Coui17Page.entries.size })
     val coroutineScope = rememberCoroutineScope()
-    val scrollOffset = remember { ScrollOffset() }
+    // One behavior is shared by the visible page and its top bar. The pager keeps the page
+    // content alive while swiping, so resetting the state on a page change avoids carrying the
+    // previous page's collapsed title into the next one.
+    val topBarState = rememberTopAppBarState()
+    val topBarScrollBehavior = COUIScrollBehavior(state = topBarState)
     // The device's hint reads `搜索设置项` (`Settings.apk` string table, length-prefixed 5), and the
     // collapsed pill draws five glyphs at x 219..501px.
     val searchLabel = str("Search settings")
@@ -173,19 +177,22 @@ private fun Coui17Root() {
     // be carried into it; re-seeding the state instead would throw away a search in progress.
     LaunchedEffect(searchLabel) { searchStatus = searchStatus.copy(label = searchLabel) }
     var panelOpen by remember { mutableStateOf(false) }
+    var panelAnchor by remember { mutableStateOf(Coui17PanelAnchor.BottomBar) }
     var lastCapsulePage by remember { mutableIntStateOf(0) }
-    val density = LocalDensity.current
-    val scrollFraction = AppBarBlurOverlayDefaults.scrollAlpha(
-        scrollPx = scrollOffset.value,
-        density = density,
-    )
     val bottomSpace = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
         Coui17Dimens.BottomBarSpace
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val expandedTopBarHeight = statusBar + TopAppBarDefaults.ExpandedHeight
+    val expandedHomeTopBarHeight = expandedTopBarHeight + Coui17Dimens.HomeSearchBandHeight
     val onSearch = {
         searchStatus = searchStatus.copy(current = SearchStatus.Status.EXPANDING)
     }
     val currentPage = Coui17Page.entries[pagerState.currentPage]
+    LaunchedEffect(currentPage) {
+        topBarState.heightOffset = 0f
+        topBarState.contentOffset = 0f
+        panelOpen = false
+    }
 
     CompositionLocalProvider(LocalBackdrop provides backdrop) {
         Scaffold(
@@ -211,11 +218,11 @@ private fun Coui17Root() {
                         Coui17PageContent(
                             page = Coui17Page.entries[page],
                             snackbarHostState = snackbarHostState,
-                            scrollOffset = scrollOffset,
+                            scrollBehavior = topBarScrollBehavior,
                             contentTop = if (page == Coui17Page.Home.ordinal) {
-                                Coui17Dimens.HomeAppBarBottom
+                                expandedHomeTopBarHeight
                             } else {
-                                statusBar + Coui17Dimens.CompactToolbarHeight
+                                expandedTopBarHeight
                             },
                             contentBottom = bottomSpace,
                         )
@@ -228,35 +235,41 @@ private fun Coui17Root() {
                 // through to the wallpaper the user cannot see behind the bar, so its capsules and
                 // accessory balls came out at the wallpaper's own brightness instead of the page's.
                 CompositionLocalProvider(LocalBackdrop provides barBackdrop) {
-                    if (currentPage == Coui17Page.Home) {
-                        Coui17HomeTopBar(
-                            title = str(currentPage.title),
-                            searchLabel = searchLabel,
-                            onSearchClick = onSearch,
-                            scrollFraction = scrollFraction,
-                            modifier = Modifier.align(Alignment.TopCenter),
-                        )
-                    } else {
-                        Coui17CompactToolbar(
-                            title = str(currentPage.title),
-                            onBack = if (currentPage.isPanelPage) {
-                                { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
-                            } else {
-                                null
-                            },
-                            scrollFraction = scrollFraction,
-                            modifier = Modifier.align(Alignment.TopCenter),
-                        )
-                    }
+                    Coui17TopAppBar(
+                        title = str(currentPage.title),
+                        searchLabel = searchLabel,
+                        showSearchField = currentPage == Coui17Page.Home,
+                        onBack = if (currentPage.isPanelPage) {
+                            { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
+                        } else {
+                            {}
+                        },
+                        onSearch = onSearch,
+                        panelOpen = panelOpen && panelAnchor == Coui17PanelAnchor.TopBar,
+                        onOpenPanel = {
+                            panelAnchor = Coui17PanelAnchor.TopBar
+                            panelOpen = true
+                        },
+                        onPanelSelect = { page ->
+                            panelOpen = false
+                            coroutineScope.launch { pagerState.animateScrollToPage(page) }
+                        },
+                        onPanelDismiss = { panelOpen = false },
+                        scrollBehavior = topBarScrollBehavior,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                    )
                     Coui17AccessoryBar(
                         currentPage = pagerState.currentPage,
-                        panelOpen = panelOpen,
+                        panelOpen = panelOpen && panelAnchor == Coui17PanelAnchor.BottomBar,
                         onSelectPage = { page ->
                             lastCapsulePage = page
                             coroutineScope.launch { pagerState.animateScrollToPage(page) }
                         },
                         onSearch = onSearch,
-                        onOpenPanel = { panelOpen = true },
+                        onOpenPanel = {
+                            panelAnchor = Coui17PanelAnchor.BottomBar
+                            panelOpen = true
+                        },
                         onPanelSelect = { page ->
                             panelOpen = false
                             coroutineScope.launch { pagerState.animateScrollToPage(page) }
@@ -267,7 +280,7 @@ private fun Coui17Root() {
                 }
                 searchStatus.SearchPager(
                     onSearchStatusChange = { searchStatus = it },
-                    offsetY = Coui17Dimens.HomeAppBarBottom,
+                    offsetY = expandedHomeTopBarHeight,
                     surfaceColor = pageColor,
                     defaultResult = {},
                     result = {},
@@ -282,27 +295,13 @@ private fun Coui17Root() {
 private fun Coui17PageContent(
     page: Coui17Page,
     snackbarHostState: SnackbarHostState,
-    scrollOffset: ScrollOffset,
+    scrollBehavior: ScrollBehavior,
     contentTop: Dp,
     contentBottom: Dp,
 ) {
-    // The pages keep their own scroll state, so the bar's fade is driven from here instead of from
-    // a behaviour the pages do not share.
-    val accumulator = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                scrollOffset.value = (scrollOffset.value - consumed.y).coerceAtLeast(0f)
-                return Offset.Zero
-            }
-        }
-    }
     val pagePadding = PaddingValues(top = contentTop, bottom = contentBottom)
 
-    Box(modifier = Modifier.fillMaxSize().nestedScroll(accumulator)) {
+    Box(modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection)) {
         when (page) {
             Coui17Page.Home -> Coui17HomePage(
                 snackbarHostState = snackbarHostState,
@@ -319,12 +318,6 @@ private fun Coui17PageContent(
             Coui17Page.Settings -> SettingsPage(padding = pagePadding)
         }
     }
-}
-
-/** How far the content under a page's app bar has scrolled, in pixels. */
-@Stable
-private class ScrollOffset {
-    var value by mutableFloatStateOf(0f)
 }
 
 /**

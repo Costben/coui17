@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -293,8 +294,19 @@ private fun SegmentButtonRow(
                 indicatorCenterX.snapTo(targetCenter)
                 indicatorWidth.snapTo(targetWidth)
             } else {
-                launch { indicatorCenterX.animateTo(targetCenter, SegmentButtonSpring) }
-                launch { indicatorWidth.animateTo(targetWidth, SegmentButtonSpring) }
+                val widthDelta = abs(indicatorWidth.value - targetWidth)
+                val widthRatio = (widthDelta / max(indicatorWidth.value, targetWidth)).coerceIn(0f, 1f)
+                val widthBounce = 0.5f - 0.4f * widthRatio * widthRatio
+                val widthResponse = 0.6f - 0.2f * widthRatio * widthRatio
+                val widthSpring = couiSegmentSpring(widthResponse, widthBounce)
+                val positionBounce = if (targetWidth > indicatorWidth.value) {
+                    0.1f - 0.07f * widthDelta / max(indicatorWidth.value, targetWidth)
+                } else {
+                    0.1f
+                }
+                val positionSpring = couiSegmentSpring(0.4f, positionBounce)
+                launch { indicatorCenterX.animateTo(targetCenter, positionSpring) }
+                launch { indicatorWidth.animateTo(targetWidth, widthSpring, initialVelocity = 1000f) }
             }
         }
 
@@ -667,7 +679,10 @@ data class TabRowColors(
  * COUISpringForce(response = 0.3f, bounce = 0f): a critically damped spring with stiffness
  * (2 * PI / 0.3)^2 ~= 438.65, used for the indicator springs and the press scale.
  */
-private val SegmentButtonSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
+private val SegmentButtonSpring = couiSegmentSpring(response = 0.3f, bounce = 0f)
+
+/** COUISpringForce conversion used by the native segment indicator. */
+private fun couiSegmentSpring(response: Float, bounce: Float): androidx.compose.animation.core.SpringSpec<Float> = spring(dampingRatio = 1f - bounce, stiffness = ((2f * kotlin.math.PI.toFloat() / response) * (2f * kotlin.math.PI.toFloat() / response)))
 
 /** COUIMoveEaseInterpolator: PathInterpolator(0.3f, 0f, 0.1f, 1f). */
 private val TextColorEasing = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)

@@ -13,7 +13,6 @@ import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -50,7 +49,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
@@ -1087,9 +1085,6 @@ private fun TopAppBarLayout(
             )
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .clipToBounds()
-            .pointerInput(Unit) {
-                detectTapGestures { /* Consume click */ }
-            }
             .then(
                 if (showDivider) {
                     Modifier.drawWithContent {
@@ -1397,9 +1392,6 @@ private fun SmallTopAppBarLayout(
             )
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .clipToBounds()
-            .pointerInput(Unit) {
-                detectTapGestures { /* Consume click */ }
-            }
             .then(
                 if (showDivider) {
                     Modifier.drawWithContent {

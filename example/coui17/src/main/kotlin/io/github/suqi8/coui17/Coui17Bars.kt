@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui17
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,12 +21,16 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
@@ -36,13 +42,17 @@ import component.searchBarShadow
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
+import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarDefaults
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
-import io.github.suqi8.coui.kmp.basic.DropdownEntry
-import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
+import io.github.suqi8.coui.kmp.basic.NavigationPopupMenu
+import io.github.suqi8.coui.kmp.basic.NavigationPopupMenuItem
+import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.TopAppBar
+import io.github.suqi8.coui.kmp.basic.couiTopAppBarActionItem
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.icon.extended.Back
@@ -52,7 +62,6 @@ import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Settings
 import io.github.suqi8.coui.kmp.icon.extended.Theme
 import io.github.suqi8.coui.kmp.icon.extended.Translate
-import io.github.suqi8.coui.kmp.overlay.OverlayCascadingListPopup
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /** One capsule tab of the accessory bar. [label] is the English source string `str` resolves. */
@@ -64,6 +73,81 @@ private val Coui17Tabs = listOf(
     Coui17Tab("Icons", COUIIcons.Image),
     Coui17Tab("Color", COUIIcons.Theme),
 )
+
+/**
+ * The shared ColorOS 17 page chrome. The library's [TopAppBar] owns the native large-title
+ * transition, so every page follows the same 32dp expanded title -> 24dp toolbar title motion.
+ * Search and overflow actions stay in the 40dp toolbar slots throughout the transition.
+ */
+@Composable
+fun Coui17TopAppBar(
+    title: String,
+    searchLabel: String,
+    showSearchField: Boolean,
+    onBack: () -> Unit,
+    onSearch: () -> Unit,
+    panelOpen: Boolean,
+    onOpenPanel: () -> Unit,
+    onPanelSelect: (Int) -> Unit,
+    onPanelDismiss: () -> Unit,
+    scrollBehavior: ScrollBehavior,
+    modifier: Modifier = Modifier,
+) {
+    TopAppBar(
+        title = title,
+        largeTitle = title,
+        modifier = modifier.fillMaxWidth(),
+        scrollBehavior = scrollBehavior,
+        gradientGlass = true,
+        defaultWindowInsetsPadding = true,
+        showDivider = true,
+        navigationIcon = {
+            HighlightedIconButton(
+                onClick = onBack,
+                modifier = Modifier.couiTopAppBarActionItem(),
+            ) {
+                Icon(imageVector = COUIIcons.Back, contentDescription = str("Back"))
+            }
+        },
+        actions = {
+            HighlightedIconButton(
+                onClick = onSearch,
+                modifier = Modifier.couiTopAppBarActionItem(),
+            ) {
+                Icon(imageVector = COUIIcons.Basic.Search, contentDescription = str("Search"))
+            }
+            Box {
+                HighlightedIconButton(
+                    onClick = onOpenPanel,
+                    modifier = Modifier.couiTopAppBarActionItem(),
+                ) {
+                    Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
+                }
+                Coui17Panel(
+                    show = panelOpen,
+                    onSelect = onPanelSelect,
+                    onDismiss = onPanelDismiss,
+                )
+            }
+        },
+        bottomContent = {
+            if (showSearchField) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Coui17Dimens.HomeSearchBandHeight),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Coui17SearchPill(
+                        label = searchLabel,
+                        onClick = onSearch,
+                        scrollFraction = scrollBehavior.state.collapsedFraction,
+                    )
+                }
+            }
+        },
+    )
+}
 
 /**
  * The settings home's app bar: the title band over the search band, with the material overlay.
@@ -310,9 +394,28 @@ private fun Coui17AccessoryBall(
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressProgress by animateFloatAsState(
+        targetValue = if (isPressed) 1f else 0f,
+        animationSpec = BottomFloatingNavigationBarDefaults.PressMaskSpring,
+        label = "coui17AccessoryPress",
+    )
+    val pressColor = BottomFloatingNavigationBarDefaults.pressColor(COUITheme.colorScheme.background)
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .drawWithContent {
+                if (pressProgress > 0f) {
+                    val outset = 8.dp.toPx()
+                    drawRoundRect(
+                        color = pressColor.copy(alpha = pressColor.alpha * pressProgress),
+                        topLeft = Offset(-outset, 0f),
+                        size = Size(size.width + outset * 2f, size.height),
+                        cornerRadius = CornerRadius(size.height / 2f),
+                    )
+                }
+                drawContent()
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -334,40 +437,19 @@ fun Coui17Panel(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val iconTint = COUITheme.colorScheme.onSurfaceContainer
-    val entries = listOf(
-        DropdownEntry(
-            items = listOf(
-                DropdownItem(
-                    text = str("Text style"),
-                    icon = { modifier ->
-                        Icon(
-                            modifier = modifier,
-                            imageVector = COUIIcons.Translate,
-                            tint = iconTint,
-                            contentDescription = null,
-                        )
-                    },
-                    onClick = { onSelect(Coui17Page.TextStyle.ordinal) },
-                ),
-                DropdownItem(
-                    text = str("Settings items"),
-                    icon = { modifier ->
-                        Icon(
-                            modifier = modifier,
-                            imageVector = COUIIcons.Settings,
-                            tint = iconTint,
-                            contentDescription = null,
-                        )
-                    },
-                    onClick = { onSelect(Coui17Page.Settings.ordinal) },
-                ),
-            ),
-        ),
-    )
-    OverlayCascadingListPopup(
-        show = show,
-        entries = entries,
+    NavigationPopupMenu(
+        expanded = show,
         onDismissRequest = onDismiss,
-    )
+    ) {
+        NavigationPopupMenuItem(
+            label = str("Text style"),
+            icon = COUIIcons.Translate,
+            onClick = { onSelect(Coui17Page.TextStyle.ordinal) },
+        )
+        NavigationPopupMenuItem(
+            label = str("Settings items"),
+            icon = COUIIcons.Settings,
+            onClick = { onSelect(Coui17Page.Settings.ordinal) },
+        )
+    }
 }

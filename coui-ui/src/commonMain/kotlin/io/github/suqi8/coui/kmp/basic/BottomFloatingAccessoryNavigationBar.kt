@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -31,12 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -131,6 +124,9 @@ fun BottomFloatingAccessoryNavigationBar(
     val endAccessoryActive = endAccessory != null && endAccessoryVisible
     val startExpansion = rememberAccessoryExpansion(startAccessoryActive)
     val endExpansion = rememberAccessoryExpansion(endAccessoryActive)
+    val startTouchState = if (startAccessory != null) rememberCOUITouchMotionState() else null
+    val endTouchState = if (endAccessory != null) rememberCOUITouchMotionState() else null
+    val menuTouchState = rememberCOUITouchMotionState()
 
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
@@ -162,17 +158,10 @@ fun BottomFloatingAccessoryNavigationBar(
 
             // The blob and the row share this box, so the particles below are expressed in the
             // capsule's own coordinates, and the whole group is lifted off the bar's bottom edge.
-            //
-            // The press feedback rides on this box rather than on the items: the native bar hands
-            // `COUITouchMotionAnimator` to `BaseBottomFloatingMenuView` and to each
-            // `COUIBottomFloatingAccessoryView`, so the whole bar springs as one surface, and the
-            // merged blob has no way to follow a transform applied to one of its particles alone.
-            val press = rememberBarPress(barWidth, barHeight)
             Box(
                 modifier = Modifier
                     .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance)
-                    .onSizeChanged { barWidthPx = it.width }
-                    .then(press),
+                    .onSizeChanged { barWidthPx = it.width },
             ) {
                 // The device lifts the bar with COUI's `SHADOW_LV_B` spot shadow. Each view casts its
                 // own — `ShadowUtils.setElevationToView(this, 2, ...)` runs both in
@@ -186,6 +175,12 @@ fun BottomFloatingAccessoryNavigationBar(
                             modifier = Modifier
                                 .offset(x = reserve, y = 0.dp)
                                 .size(capsuleWidth, barHeight)
+                                .graphicsLayer {
+                                    translationX = menuTouchState.translation.x
+                                    translationY = menuTouchState.translation.y
+                                    scaleX = menuTouchState.scaleX
+                                    scaleY = menuTouchState.scaleY
+                                }
                                 .dropShadow(
                                     shape = RoundedCornerShape(cornerRadius),
                                     shadow = barShadow,
@@ -222,29 +217,33 @@ fun BottomFloatingAccessoryNavigationBar(
                         if (capsuleWidthPx > 0) {
                             add(
                                 MetaBallParticle(
-                                    centerX = reserve + capsuleWidth / 2,
-                                    centerY = barHeight / 2,
-                                    width = capsuleWidth,
-                                    height = barHeight,
+                                    centerX = reserve + capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
+                                    centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
+                                    width = capsuleWidth * menuTouchState.scaleX,
+                                    height = barHeight * menuTouchState.scaleY,
                                     cornerRadius = cornerRadius,
                                 ),
                             )
                         }
                         if (barWidthPx > 0 && startAccessory != null) {
                             add(
-                                MetaBallParticle.circle(
-                                    centerX = accessorySize / 2 + startTuck,
-                                    centerY = barHeight / 2,
-                                    diameter = accessorySize * startExpansion.scale,
+                                MetaBallParticle(
+                                    centerX = accessorySize / 2 + startTuck + with(density) { startTouchState?.translation?.x?.toDp() ?: 0.dp },
+                                    centerY = barHeight / 2 + with(density) { startTouchState?.translation?.y?.toDp() ?: 0.dp },
+                                    width = accessorySize * startExpansion.scale * (startTouchState?.scaleX ?: 1f),
+                                    height = accessorySize * startExpansion.scale * (startTouchState?.scaleY ?: 1f),
+                                    cornerRadius = accessorySize / 2,
                                 ),
                             )
                         }
                         if (barWidthPx > 0 && endAccessory != null) {
                             add(
-                                MetaBallParticle.circle(
-                                    centerX = barWidth - accessorySize / 2 - endTuck,
-                                    centerY = barHeight / 2,
-                                    diameter = accessorySize * endExpansion.scale,
+                                MetaBallParticle(
+                                    centerX = barWidth - accessorySize / 2 - endTuck + with(density) { endTouchState?.translation?.x?.toDp() ?: 0.dp },
+                                    centerY = barHeight / 2 + with(density) { endTouchState?.translation?.y?.toDp() ?: 0.dp },
+                                    width = accessorySize * endExpansion.scale * (endTouchState?.scaleX ?: 1f),
+                                    height = accessorySize * endExpansion.scale * (endTouchState?.scaleY ?: 1f),
+                                    cornerRadius = accessorySize / 2,
                                 ),
                             )
                         }
@@ -284,12 +283,19 @@ fun BottomFloatingAccessoryNavigationBar(
                             tuckDirection = 1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
+                            motionState = startTouchState,
                             content = startAccessory,
                         )
                         Spacer(Modifier.width(sideSpacing))
                     }
                     FloatingCapsuleRow(
-                        modifier = Modifier.onSizeChanged { capsuleWidthPx = it.width },
+                        modifier = Modifier
+                            .onSizeChanged { capsuleWidthPx = it.width }
+                            .couiTouchMotion(
+                                shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = isSquircleEnabled()),
+                                lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                                motionState = menuTouchState,
+                            ),
                         // `layoutPositionsSmallScreen` reserves the end accessory's footprint plus its
                         // side spacing out of the menu view's width, and centres the capsule in what is
                         // left over.
@@ -303,6 +309,7 @@ fun BottomFloatingAccessoryNavigationBar(
                             tuckDirection = -1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
+                            motionState = endTouchState,
                             content = endAccessory,
                         )
                     }
@@ -326,11 +333,20 @@ private fun AccessorySlot(
     tuckDirection: Float,
     size: Dp,
     sideSpacing: Dp,
+    motionState: COUITouchMotionState?,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
         modifier = Modifier
             .size(size)
+            .couiTouchMotion(
+                enabled = expansion.alpha > 0.01f,
+                shape = CircleShape,
+                lightParams = SpotLightDefaults.opaqueMedium2(
+                    COUITheme.colorScheme.background.luminance() < 0.5f,
+                ),
+                motionState = motionState,
+            )
             .graphicsLayer {
                 alpha = expansion.alpha
                 scaleX = expansion.scale
@@ -341,64 +357,6 @@ private fun AccessorySlot(
     ) {
         content()
     }
-}
-
-/**
- * Remembers the press feedback of the whole bar.
- *
- * `BaseBottomFloatingMenuView.initTouchMotionAnim` hands a `COUITouchMotionAnimator` to the menu view
- * with `setPressScaleEnable(true)`, and `COUIBottomFloatingAccessoryView` gives the two accessory views
- * one each; the feedback those units drive is a uniform scale whose target comes from
- * `PressPhysicsEngine.calculateTargetScaleBreakdown`, the same mapping
- * [BottomFloatingNavigationBarDefaults.pressScale] reproduces. The bar applies it once, over the box
- * that holds the merged blob, the shadows and the row, so the capsule and both accessories spring
- * together — a transform on one particle alone would tear the metaball apart.
- *
- * The pivot sits on the bar's bottom edge rather than at its centre, so the scale reads as the bar
- * being pushed down and coming back. `COUIFloatingButton` anchors its own label background the same
- * way (`setPivotY(height)`) for exactly that effect.
- *
- * The pointer is tracked in [PointerEventPass.Initial] and consumed nowhere, so every item and every
- * accessory still receives the whole press.
- *
- * @param width The bar's measured width; drives the area channel of the press mapping.
- * @param height The bar's height; drives the aspect channel.
- */
-@Composable
-private fun rememberBarPress(width: Dp, height: Dp): Modifier {
-    var pressed by remember { mutableStateOf(false) }
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(pressed) {
-        if (pressed) {
-            progress.animateTo(
-                targetValue = 1f,
-                animationSpec = BottomFloatingNavigationBarDefaults.PressScalePressSpring,
-            )
-        } else {
-            progress.animateTo(
-                targetValue = 0f,
-                animationSpec = BottomFloatingNavigationBarDefaults.PressScaleReleaseSpring,
-            )
-        }
-    }
-    val target = BottomFloatingNavigationBarDefaults.pressScale(width, height)
-    return Modifier
-        .pointerInput(Unit) {
-            awaitPointerEventScope {
-                while (true) {
-                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                    pressed = true
-                    waitForUpOrCancellation(pass = PointerEventPass.Initial)
-                    pressed = false
-                }
-            }
-        }
-        .graphicsLayer {
-            val scale = 1f - (1f - target) * progress.value
-            scaleX = scale
-            scaleY = scale
-            transformOrigin = TransformOrigin(0.5f, 1f)
-        }
 }
 
 /** The animated alpha / scale / tuck of one accessory view. */
@@ -453,6 +411,8 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
         SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val highlight = rememberGlassHighlight(GlassContainer.Medium, backdrop)
+    val touchState = rememberCOUITouchMotionState()
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
@@ -488,7 +448,11 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
                             fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
                             highlight = highlight,
                         )
-                        .bottomFloatingTouchHighlight(shape),
+                        .couiTouchMotion(
+                            shape = shape,
+                            lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                            motionState = touchState,
+                        ),
                     content = content,
                 )
             }
