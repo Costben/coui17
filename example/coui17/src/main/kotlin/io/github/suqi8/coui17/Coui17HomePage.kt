@@ -226,6 +226,9 @@ fun Coui17HomePage(
  */
 private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> Unit) {
     item(key = "title:$title") { Coui17GroupTitle(title) }
+    item(key = "heading-gap:$title") {
+        Spacer(modifier = Modifier.height(Coui17Dimens.ListHeadingContentGap))
+    }
     item(key = "content:$title") {
         Box(
             modifier = Modifier

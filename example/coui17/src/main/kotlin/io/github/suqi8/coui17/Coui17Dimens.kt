@@ -75,6 +75,9 @@ object Coui17Dimens {
     /** Heading text inset inside the 16dp card-aligned heading container. */
     val ListTextIndent = 16.dp
 
+    /** The measured gap from a section heading's text baseline box to its first card. */
+    val ListHeadingContentGap = 3.5.dp
+
     /** How far a list row's card is inset from the screen edge: 62px (the card spans x 62..1210px). */
     val ListCardInset = 16.dp
 
