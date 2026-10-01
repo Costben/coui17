@@ -56,7 +56,12 @@ fun pageContentPadding(
     extraEnd: Dp = 0.dp,
     extraBottom: Dp = 0.dp,
 ): PaddingValues {
-    val topPadding = innerPadding.calculateTopPadding() + extraTop
+    // The host may already be holding a bar's worth of room: the ColorOS 17 gallery passes the
+    // toolbar band it draws as a sibling through [outerPadding], while the page's own scaffold only
+    // knows the system bars. Taking the larger of the two keeps the content clear of whichever bar
+    // is actually in the way instead of letting it start underneath the toolbar. Where a host passes
+    // the same inset it applies itself — the coui16 home does — the two are equal and nothing moves.
+    val topPadding = maxOf(innerPadding.calculateTopPadding(), outerPadding.calculateTopPadding()) + extraTop
     val bottomPadding = outerPadding.calculateBottomPadding() + extraBottom + if (isWideScreen) {
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + WindowInsets.captionBar.asPaddingValues()
             .calculateBottomPadding()

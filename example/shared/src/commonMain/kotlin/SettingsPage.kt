@@ -88,10 +88,8 @@ fun SettingsPage(
         },
     ) { innerPadding ->
         SettingsContent(
-            padding = PaddingValues(
-                top = innerPadding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding(),
-            ),
+            innerPadding = innerPadding,
+            outerPadding = padding,
             topAppBarScrollBehavior = topAppBarScrollBehavior,
             backdrop = backdrop,
         )
@@ -100,7 +98,8 @@ fun SettingsPage(
 
 @Composable
 private fun SettingsContent(
-    padding: PaddingValues,
+    innerPadding: PaddingValues,
+    outerPadding: PaddingValues,
     topAppBarScrollBehavior: ScrollBehavior,
     backdrop: LayerBackdrop?,
 ) {
@@ -110,7 +109,10 @@ private fun SettingsContent(
     val navigator = LocalNavigator.current
     val lazyListState = rememberLazyListState()
 
-    val contentPadding = pageContentPadding(padding, padding, isWideScreen, extraTop = 12.dp)
+    // The host reserves its own bar's band and the scaffold reserves this page's: both are handed to
+    // the padding helper so the content starts clear of whichever bar is actually in the way. Keeping
+    // only the scaffold's inset here is what used to let the first row start under the host's toolbar.
+    val contentPadding = pageContentPadding(innerPadding, outerPadding, isWideScreen, extraTop = 12.dp)
     Box(modifier = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier) {
         LazyColumn(
             state = lazyListState,
