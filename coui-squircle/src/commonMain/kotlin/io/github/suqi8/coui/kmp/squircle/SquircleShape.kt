@@ -6,6 +6,8 @@ import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -62,13 +64,29 @@ class SquircleShape(
         bottomStart: Float,
         layoutDirection: LayoutDirection,
     ): Outline {
+        // The disabled silhouette is a plain rounded rectangle, and it is handed back as one: a
+        // consumer can then tell the two corner families apart from the outline alone — the rim
+        // highlight does exactly that, tracing an Lp superellipse for a [Outline.Generic] smooth
+        // corner and a circular arc for a [Outline.Rounded] one.
+        if (!squircleEnabled) {
+            val radius = topStart.coerceAtMost(size.minDimension * 0.5f)
+            return Outline.Rounded(
+                RoundRect(
+                    left = 0f,
+                    top = 0f,
+                    right = size.width,
+                    bottom = size.height,
+                    cornerRadius = CornerRadius(radius, radius),
+                ),
+            )
+        }
         val path = Path()
         path.addSquircleRect(
             width = size.width,
             height = size.height,
             cornerRadius = topStart,
             extension = extension,
-            squircleEnabled = squircleEnabled,
+            squircleEnabled = true,
         )
         return Outline.Generic(path)
     }

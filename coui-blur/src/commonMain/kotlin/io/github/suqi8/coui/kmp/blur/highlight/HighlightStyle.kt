@@ -8,6 +8,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -282,6 +283,10 @@ internal fun applyLightUniforms(
 internal fun DrawScope.setCornerRadiiUniform(shader: RuntimeShader, shape: Shape) {
     val sizePx = size
     val maxRadius = sizePx.minDimension / 2f
+    // A Generic outline is a path the shape built itself — the smooth corner. Anything else
+    // (Rounded / Rectangle) is an arc, and the stroke has to fall back to n = 2.0 to stay on it.
+    val smoothCorner = shape.createOutline(sizePx, layoutDirection, this) is Outline.Generic
+    shader.setFloatUniform("cornerExponent", if (smoothCorner) 2.5f else 2.0f)
     val cornerShape = shape as? CornerBasedShape
     if (cornerShape == null) {
         shader.setFloatUniform("cornerRadii", maxRadius, maxRadius, maxRadius, maxRadius)

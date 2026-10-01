@@ -425,6 +425,10 @@ uniform float2 axis2;
 uniform float2 halfView;
 uniform float2 halfViewFloor;
 uniform float4 cornerRadii;
+// Exponent of the corner superellipse |x|^n + |y|^n = r^n the stroke traces. 2.5 traces the ColorOS
+// 17 smooth corner the surface path uses; 2.0 is exactly a circular arc, for shapes whose outline is
+// a plain rounded rectangle.
+uniform float cornerExponent;
 uniform float strokeWidth;
 uniform float innerBlurRadius;
 uniform float innerBlurRadiusSq;
@@ -446,11 +450,28 @@ float pickRadius(float2 fragCoord, float4 radii) {
     return fragCoord.x < halfView.x ? up.x : up.y;
 }
 
+// Corner of the silhouette this stroke traces. The surface below is drawn from the ColorOS 17 hwui
+// "G2" corner — `SquirclePath.addSquircleRect`, Lp superellipse |x|^n + |y|^n = r^n with n = 2.5 —
+// and native feeds its rim stroke and its silhouette mask from one SDF of that same family
+// (ShadowEdge's `d`, CornerType NEW_G2). A circular-arc corner instead parts from the surface along
+// the corner diagonal by 0.0718 * r, which is 7.8px at the popup's 28dp radius and reads as the
+// highlight not lying on the outline. Both curves keep tile = r, so the straight edges coincide.
+// `cornerExponent` carries n, so a surface that falls back to a plain rounded rectangle gets the
+// circular arc back (n = 2.0) and the stroke still lies on it.
+float superellipseCornerSDF(float2 q, float radius) {
+    float n = cornerExponent;
+    return pow(pow(q.x, n) + pow(q.y, n), 1.0 / n) - radius;
+}
+
 // caller passes non-negative pos (already abs-folded), so skip the redundant abs.
 float roundedBoxSDF(float2 pos, float2 halfSize, float radius) {
     radius = min(radius, min(halfSize.x, halfSize.y));
     float2 d = pos - halfSize + radius;
-    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
+    float2 q = max(d, 0.0);
+    if (q.x > 0.0 && q.y > 0.0) {
+        return superellipseCornerSDF(q, radius);
+    }
+    return max(d.x, d.y) - radius;
 }
 
 float3 getNormal(float2 fragCoord, float sdf, float R) {
