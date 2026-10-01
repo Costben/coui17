@@ -222,6 +222,10 @@ fun Coui17CompactToolbar(
 /**
  * The accessory bar: a three-item capsule flanked by a search ball and a panel ball.
  *
+ * Both accessories retract into the capsule while the `配色` tab is the current page — the state
+ * Gallery reaches by hiding its two side views on the `创作` tab — and spring back out on the other
+ * two, leaving the capsule alone in the middle either way.
+ *
  * The merged blob already carries each accessory's circle, so the slots draw the icon alone; the tap
  * target is the whole 56dp accessory square.
  *
@@ -249,6 +253,13 @@ fun Coui17AccessoryBar(
             fontScale = systemDensity.fontScale,
         )
     }
+    // Gallery retracts both accessories once the third capsule tab is selected: `TabFragment`'s page
+    // listener calls `hideStartAccessoryView(true)` / `hideEndAccessoryView(true)` for the 创作 tab and
+    // shows them again for 照片 and 图集, so 创作 leaves a bare three-item capsule. `配色` is this bar's
+    // third tab, so it takes the same state; the capsule keeps its items and stays centred, because the
+    // reserve is computed from the *configured* accessory icons, not from the active ones
+    // (`computeSideReserveForConfiguredIcons`).
+    val accessoriesVisible = Coui17Page.entries[currentPage] != Coui17Page.Color
     // Gallery creates this bar in its 565dpi activity while Settings and the device window use
     // 620dpi. Scope that physical scaling to the bar only; the anchored popup is restored below.
     CompositionLocalProvider(LocalDensity provides galleryDensity) {
@@ -256,6 +267,8 @@ fun Coui17AccessoryBar(
             modifier = modifier
                 .fillMaxWidth()
                 .navigationBarsPadding(),
+            startAccessoryVisible = accessoriesVisible,
+            endAccessoryVisible = accessoriesVisible,
             startAccessory = {
                 Coui17AccessoryBall(
                     icon = COUIIcons.Basic.Search,

@@ -3,6 +3,7 @@
 package io.github.suqi8.coui17
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -224,6 +225,11 @@ fun Coui17HomePage(
 /**
  * One gallery entry in ColorOS 17 list form: a compact group-title row and the entry's content.
  * Shared demos own their 16dp card inset and bottom spacing, so this wrapper adds neither again.
+ *
+ * The content sits in a [Column], not a box: several demos emit more than one root — `ButtonDemo`
+ * alone emits four rows — and a box stacks its children on the same origin, which drew those rows on
+ * top of one another. The coui16 gallery never showed it because its sections push their roots as
+ * separate lazy-list items.
  */
 private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> Unit) {
     item(key = "title:$title") { Coui17GroupTitle(title) }
@@ -231,7 +237,7 @@ private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> 
         Spacer(modifier = Modifier.height(Coui17Dimens.ListHeadingContentGap))
     }
     item(key = "content:$title") {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth(),
         ) {
