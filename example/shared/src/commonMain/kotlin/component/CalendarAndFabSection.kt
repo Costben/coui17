@@ -101,9 +101,10 @@ private fun CalendarViewDemo() {
             .fillMaxWidth()
             .padding(16.dp),
     ) {
+        val selectedDate = value.day.toString().padStart(2, '0') + "." +
+            value.month.toString().padStart(2, '0') + "." + value.year
         Text(
-            text = "Selected " + value.day.toString().padStart(2, '0') + "." +
-                value.month.toString().padStart(2, '0') + "." + value.year,
+            text = str("Selected {}", selectedDate),
             color = COUITheme.colorScheme.onBackgroundVariant,
             style = COUITheme.textStyles.footnote1,
         )

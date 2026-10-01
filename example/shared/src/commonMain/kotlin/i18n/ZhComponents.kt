@@ -524,6 +524,7 @@ internal val zhComponents: Map<String, String> = mapOf(
     // call site passes to `str`, so a language is free to move them around.
     "State: {}" to "状态：{}",
     "Selected: {}" to "已选中：{}",
+    "Selected {}" to "已选中 {}",
     "Normal\n{}%" to "常规\n{}%",
     "Steps\n{}/6" to "步进\n{}/6",
     "Points\n{}/6" to "关键点\n{}/6",
