@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.SliderDefaults
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -55,14 +56,14 @@ fun SliderDemo() {
         SliderPreference(
             value = sliderValue,
             onValueChange = { sliderValue = it },
-            title = "Normal",
+            title = str("Normal"),
             valueText = "${(sliderValue * 100).toInt()}%",
         )
         var stepsValue by remember { mutableFloatStateOf(100f) }
         SliderPreference(
             value = stepsValue,
             onValueChange = { stepsValue = it },
-            title = "Steps",
+            title = str("Steps"),
             valueText = "${stepsValue.toInt()}/200",
             valueRange = 0f..200f,
             steps = 199,
@@ -72,7 +73,7 @@ fun SliderDemo() {
         SliderPreference(
             value = stepsWithKeyPointsValue,
             onValueChange = { stepsWithKeyPointsValue = it },
-            title = "Steps with Key Points",
+            title = str("Steps with Key Points"),
             valueText = "${stepsWithKeyPointsValue.toInt()}/8",
             valueRange = 0f..8f,
             steps = 7,
@@ -83,7 +84,7 @@ fun SliderDemo() {
         SliderPreference(
             value = customKeyPointsValue,
             onValueChange = { customKeyPointsValue = it },
-            title = "Custom Key Points",
+            title = str("Custom Key Points"),
             valueText = "${customKeyPointsValue.toInt()}%",
             valueRange = 0f..100f,
             showKeyPoints = true,
@@ -94,7 +95,7 @@ fun SliderDemo() {
         SliderPreference(
             value = disabledValue,
             onValueChange = {},
-            title = "Disabled",
+            title = str("Disabled"),
             valueText = "${(disabledValue * 100).toInt()}%",
             enabled = false,
         )
@@ -113,14 +114,14 @@ fun RangeSliderDemo() {
         RangeSliderPreference(
             value = rangeValue,
             onValueChange = { rangeValue = it },
-            title = "Range",
+            title = str("Range"),
             valueText = "${(rangeValue.start * 100).toInt()}% - ${(rangeValue.endInclusive * 100).toInt()}%",
         )
         var rangeStepsValue by remember { mutableStateOf(2f..8f) }
         RangeSliderPreference(
             value = rangeStepsValue,
             onValueChange = { rangeStepsValue = it },
-            title = "Range with Key Points",
+            title = str("Range with Key Points"),
             valueText = "${rangeStepsValue.start.toInt()} - ${rangeStepsValue.endInclusive.toInt()}",
             valueRange = 0f..8f,
             steps = 7,
@@ -131,7 +132,7 @@ fun RangeSliderDemo() {
         RangeSliderPreference(
             value = customRangeValue,
             onValueChange = { customRangeValue = it },
-            title = "Custom Range Points",
+            title = str("Custom Range Points"),
             valueText = "${customRangeValue.start.toInt()}% - ${customRangeValue.endInclusive.toInt()}%",
             valueRange = 0f..100f,
             showKeyPoints = true,
@@ -142,7 +143,7 @@ fun RangeSliderDemo() {
         RangeSliderPreference(
             value = disabledRangeValue,
             onValueChange = {},
-            title = "Disabled",
+            title = str("Disabled"),
             valueText = "${(disabledRangeValue.start * 100).toInt()}% - ${(disabledRangeValue.endInclusive * 100).toInt()}%",
             enabled = false,
         )

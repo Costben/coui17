@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -54,8 +55,8 @@ fun DialogDemo() {
             .padding(bottom = 16.dp),
     ) {
         ArrowPreference(
-            title = "Dialog (O)",
-            summary = "Click to show an OverlayDialog",
+            title = str("Dialog (O)"),
+            summary = str("Click to show an OverlayDialog"),
             onClick = {
                 showSuperDialog = true
                 superDialogHoldDown = true
@@ -64,8 +65,8 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "Dialog (W)",
-            summary = "Click to show a WindowDialog",
+            title = str("Dialog (W)"),
+            summary = str("Click to show a WindowDialog"),
             onClick = {
                 showWindowDialog = true
                 windowDialogHoldDown = true
@@ -74,8 +75,8 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "Loading Dialog (O)",
-            summary = "Click to show an OverlayLoadingDialog",
+            title = str("Loading Dialog (O)"),
+            summary = str("Click to show an OverlayLoadingDialog"),
             onClick = {
                 showLoadingDialog = true
                 loadingDialogHoldDown = true
@@ -84,8 +85,8 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "Stacked Button Bar (O)",
-            summary = "Long labels flip the bar to a vertical stack",
+            title = str("Stacked Button Bar (O)"),
+            summary = str("Long labels flip the bar to a vertical stack"),
             onClick = {
                 showStackedDialog = true
                 stackedDialogHoldDown = true
@@ -94,8 +95,8 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "Recommended Button Bar (O)",
-            summary = "One action is highlighted as the recommend button",
+            title = str("Recommended Button Bar (O)"),
+            summary = str("One action is highlighted as the recommend button"),
             onClick = {
                 showRecommendedDialog = true
                 recommendedDialogHoldDown = true
@@ -104,8 +105,8 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "Security Dialog (O)",
-            summary = "Click to show an OverlaySecurityDialog",
+            title = str("Security Dialog (O)"),
+            summary = str("Click to show an OverlaySecurityDialog"),
             onClick = {
                 showSecurityDialog = true
                 securityDialogHoldDown = true
@@ -144,17 +145,17 @@ fun DialogDemo() {
     }
     OverlayLoadingDialog(
         show = showLoadingDialog,
-        text = "Loading...",
+        text = str("Loading..."),
         onDismissRequest = { showLoadingDialog = false },
         onDismissFinished = { loadingDialogHoldDown = false },
     )
 
     OverlaySecurityDialog(
         show = showSecurityDialog,
-        title = "Security Notice",
-        summary = "This feature needs to connect to the network.",
-        statement = "Tap and view Privacy Policy for more information.",
-        statementLinkText = "Privacy Policy",
+        title = str("Security Notice"),
+        summary = str("This feature needs to connect to the network."),
+        statement = str("Tap and view Privacy Policy for more information."),
+        statementLinkText = str("Privacy Policy"),
         onLinkClick = { /* Open the privacy policy */ },
         onConfirm = { _ -> showSecurityDialog = false },
         onCancel = { showSecurityDialog = false },
@@ -174,15 +175,15 @@ private fun StackedButtonBarDialogDemo(
 ) {
     OverlayDialog(
         show = show,
-        title = "Delete Backup",
-        summary = "The button labels below do not fit side by side, so the bar stacks them.",
+        title = str("Delete Backup"),
+        summary = str("The button labels below do not fit side by side, so the bar stacks them."),
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         content = {
             DialogButtonBar(
-                negative = DialogButtonBarAction(text = "Not Now", onClick = onDismissRequest),
+                negative = DialogButtonBarAction(text = str("Not Now"), onClick = onDismissRequest),
                 positive = DialogButtonBarAction(
-                    text = "Delete Backup And Local Copies",
+                    text = str("Delete Backup And Local Copies"),
                     onClick = onDismissRequest,
                 ),
             )
@@ -198,14 +199,14 @@ private fun SuperDialogDemo(
 ) {
     OverlayDialog(
         show = show,
-        title = "Dialog (O)",
-        summary = "A dialog component inside COUIPopupHost.",
+        title = str("Dialog (O)"),
+        summary = str("A dialog component inside COUIPopupHost."),
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         content = {
             DialogButtonBar(
-                negative = DialogButtonBarAction(text = "Cancel", onClick = onDismissRequest),
-                positive = DialogButtonBarAction(text = "Confirm", onClick = onDismissRequest),
+                negative = DialogButtonBarAction(text = str("Cancel"), onClick = onDismissRequest),
+                positive = DialogButtonBarAction(text = str("Confirm"), onClick = onDismissRequest),
             )
         },
     )
@@ -219,15 +220,15 @@ private fun WindowDialogDemo(
 ) {
     WindowDialog(
         show = show,
-        title = "Dialog (W)",
-        summary = "A window-level dialog, no COUIPopupHost required.",
+        title = str("Dialog (W)"),
+        summary = str("A window-level dialog, no COUIPopupHost required."),
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         content = {
             val dismissState = LocalDismissState.current
             DialogButtonBar(
-                negative = DialogButtonBarAction(text = "Cancel", onClick = { dismissState?.invoke() }),
-                positive = DialogButtonBarAction(text = "Confirm", onClick = { dismissState?.invoke() }),
+                negative = DialogButtonBarAction(text = str("Cancel"), onClick = { dismissState?.invoke() }),
+                positive = DialogButtonBarAction(text = str("Confirm"), onClick = { dismissState?.invoke() }),
             )
         },
     )
@@ -247,15 +248,15 @@ private fun RecommendedButtonBarDialogDemo(
 ) {
     OverlayDialog(
         show = show,
-        title = "Install Update",
-        summary = "The positive action below is the bar's recommend button.",
+        title = str("Install Update"),
+        summary = str("The positive action below is the bar's recommend button."),
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         content = {
             DialogButtonBar(
-                negative = DialogButtonBarAction(text = "Later", onClick = onDismissRequest),
+                negative = DialogButtonBarAction(text = str("Later"), onClick = onDismissRequest),
                 positive = DialogButtonBarAction(
-                    text = "Install",
+                    text = str("Install"),
                     onClick = onDismissRequest,
                     recommended = true,
                 ),

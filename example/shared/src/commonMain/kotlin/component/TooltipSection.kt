@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
@@ -46,21 +47,21 @@ fun TooltipDemo() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                TooltipBox(text = "Edit") {
+                TooltipBox(text = str("Edit")) {
                     IconButton(onClick = {}) {
-                        Icon(imageVector = COUIIcons.Edit, contentDescription = "Edit")
+                        Icon(imageVector = COUIIcons.Edit, contentDescription = str("Edit"))
                     }
                 }
                 RichTooltipBox(
-                    title = "Rich tooltip",
-                    text = "Rich tooltips show a title, supporting text, and an optional action. " +
-                        "Move onto the tooltip to use the action, or tap outside to dismiss.",
-                    actionText = "Got it",
+                    title = str("Rich tooltip"),
+                    text = str("Rich tooltips show a title, supporting text, and an optional action. ") +
+                        str("Move onto the tooltip to use the action, or tap outside to dismiss."),
+                    actionText = str("Got it"),
                     onActionClick = {},
                     state = richState,
                 ) {
                     IconButton(onClick = {}) {
-                        Icon(imageVector = COUIIcons.Info, contentDescription = "Rich tooltip")
+                        Icon(imageVector = COUIIcons.Info, contentDescription = str("Rich tooltip"))
                     }
                 }
             }

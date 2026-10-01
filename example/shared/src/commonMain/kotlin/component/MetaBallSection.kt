@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.MetaBallParticle
 import io.github.suqi8.coui.kmp.basic.MetaBallSurface
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -111,7 +112,7 @@ fun MetaBallSurfaceDemo() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = "Melt into one")
+            Text(text = str("Melt into one"))
             Switch(checked = merged, onCheckedChange = { merged = it })
         }
     }

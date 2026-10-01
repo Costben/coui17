@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -35,7 +36,7 @@ fun RadioButtonDemo() {
         SuperRadioButtonDemo()
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         RadioButtonPreference(
-            title = "Disabled RadioButton",
+            title = str("Disabled RadioButton"),
             selected = true,
             enabled = false,
             onClick = {},
@@ -49,21 +50,21 @@ private fun SuperRadioButtonDemo() {
 
     Column {
         RadioButtonPreference(
-            title = "Option A",
+            title = str("Option A"),
             summary = "Selected: ${selectedIndex == 0}",
             selected = selectedIndex == 0,
             onClick = { selectedIndex = 0 },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         RadioButtonPreference(
-            title = "Option B",
+            title = str("Option B"),
             summary = "Selected: ${selectedIndex == 1}",
             selected = selectedIndex == 1,
             onClick = { selectedIndex = 1 },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         RadioButtonPreference(
-            title = "Option C",
+            title = str("Option C"),
             summary = "Selected: ${selectedIndex == 2}",
             selected = selectedIndex == 2,
             onClick = { selectedIndex = 2 },

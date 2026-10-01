@@ -25,6 +25,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import appstate.LocalAppState
 import appstate.LocalIsWideScreen
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
@@ -91,7 +92,7 @@ fun TextStylePage(
             // never inside it — LocalBackdrop is provided to the bar slot alone.
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
-                    title = "Text Style",
+                    title = str("Text Style"),
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
@@ -113,7 +114,7 @@ fun TextStylePage(
                 contentPadding = contentPadding,
             ) {
                 item(key = "title_header") {
-                    SmallTitle("Title Styles")
+                    SmallTitle(str("Title Styles"))
                 }
                 item(key = "title_card") {
                     Card(
@@ -131,7 +132,7 @@ fun TextStylePage(
                     }
                 }
                 item(key = "headline_header") {
-                    SmallTitle("Headline Styles")
+                    SmallTitle(str("Headline Styles"))
                 }
                 item(key = "headline_card") {
                     Card(
@@ -149,7 +150,7 @@ fun TextStylePage(
                     }
                 }
                 item(key = "body_header") {
-                    SmallTitle("Body Styles")
+                    SmallTitle(str("Body Styles"))
                 }
                 item(key = "body_card") {
                     Card(
@@ -167,7 +168,7 @@ fun TextStylePage(
                     }
                 }
                 item(key = "footnote_header") {
-                    SmallTitle("Footnote Styles")
+                    SmallTitle(str("Footnote Styles"))
                 }
                 item(key = "footnote_card") {
                     Card(
@@ -185,7 +186,7 @@ fun TextStylePage(
                     }
                 }
                 item(key = "all_header") {
-                    SmallTitle("All Styles Overview")
+                    SmallTitle(str("All Styles Overview"))
                 }
                 item(key = "all_card") {
                     Card(
@@ -243,7 +244,7 @@ private fun TextStyleItem(entry: TextStyleEntry) {
         )
         Spacer(modifier = Modifier.height(2.dp))
         LazyText(
-            text = SAMPLE_TEXT_EN,
+            text = str(SAMPLE_TEXT_EN),
             style = entry.style,
             color = COUITheme.colorScheme.onSurface,
         )

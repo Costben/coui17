@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import appstate.LocalNavigator
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -31,22 +32,22 @@ fun OtherDemo() {
             .padding(horizontal = 16.dp),
     ) {
         ArrowPreference(
-            title = "PullToRefresh Test",
-            summary = "Navigate to a PullToRefresh Page",
+            title = str("PullToRefresh Test"),
+            summary = str("Navigate to a PullToRefresh Page"),
             onClick = {
                 navigator.push(Route.PullToRefresh)
             },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "Navigation test",
-            summary = "Navigate to a Navigation Page",
+            title = str("Navigation test"),
+            summary = str("Navigate to a Navigation Page"),
             onClick = { navigator.push(Route.Navigation(Random.nextLong().toString())) },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = "MultiScaffold Test",
-            summary = "Navigate to a MultiScaffold Page",
+            title = str("MultiScaffold Test"),
+            summary = str("Navigate to a MultiScaffold Page"),
             onClick = { navigator.push(Route.MultiScaffold) },
         )
     }

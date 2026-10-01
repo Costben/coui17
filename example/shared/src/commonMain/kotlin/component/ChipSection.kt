@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Chip
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -85,7 +86,7 @@ private fun MultiSelectChipsDemo() {
         Chip(
             selected = recommended,
             onClick = { recommended = !recommended },
-            label = "Recommended",
+            label = str("Recommended"),
             icon = {
                 Icon(
                     imageVector = COUIIcons.Basic.Check,
@@ -97,12 +98,12 @@ private fun MultiSelectChipsDemo() {
         Chip(
             selected = nearby,
             onClick = { nearby = !nearby },
-            label = "Nearby",
+            label = str("Nearby"),
         )
         Chip(
             selected = popular,
             onClick = { popular = !popular },
-            label = "Popular",
+            label = str("Popular"),
         )
     }
 }
@@ -110,7 +111,7 @@ private fun MultiSelectChipsDemo() {
 @Composable
 private fun SingleSelectChipsDemo() {
     var selectedIndex by remember { mutableIntStateOf(0) }
-    val labels = remember { listOf("All", "Photos", "Videos", "Documents") }
+    val labels = listOf(str("All"), str("Photos"), str("Videos"), str("Documents"))
 
     Row(
         modifier = Modifier
@@ -141,13 +142,13 @@ private fun DisabledChipsDemo() {
         Chip(
             selected = false,
             onClick = {},
-            label = "Disabled",
+            label = str("Disabled"),
             enabled = false,
         )
         Chip(
             selected = true,
             onClick = {},
-            label = "Disabled Selected",
+            label = str("Disabled Selected"),
             enabled = false,
         )
     }
@@ -162,7 +163,7 @@ private fun TopTipsDemo() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TopTips(
-            text = "Closable tips with a start icon",
+            text = str("Closable tips with a start icon"),
             visible = closableVisible,
             startIcon = {
                 Icon(
@@ -175,20 +176,20 @@ private fun TopTipsDemo() {
             modifier = Modifier.fillMaxWidth(),
         )
         TopTips(
-            text = "New security update available",
-            actionText = "Update",
+            text = str("New security update available"),
+            actionText = str("Update"),
             onAction = {},
             modifier = Modifier.fillMaxWidth(),
         )
         TopTips(
-            text = "This longer message shows how the action label drops to its own row when the text would collide with it",
-            actionText = "Turn on",
+            text = str("This longer message shows how the action label drops to its own row when the text would collide with it"),
+            actionText = str("Turn on"),
             onAction = {},
             modifier = Modifier.fillMaxWidth(),
         )
         if (!closableVisible) {
             TextButton(
-                text = "Show closable tips again",
+                text = str("Show closable tips again"),
                 onClick = { closableVisible = true },
                 modifier = Modifier.fillMaxWidth(),
             )

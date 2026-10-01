@@ -5,10 +5,13 @@ package appstate
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import i18n.AppLanguage
 import navigation3.Navigator
 
 @Stable
 data class AppState(
+    // Language
+    val language: AppLanguage = AppLanguage.Chinese,
     // Theme
     val colorMode: Int = 0,
     val seedIndex: Int = 0,

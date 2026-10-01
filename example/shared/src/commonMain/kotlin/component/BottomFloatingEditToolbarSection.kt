@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingEditToolbar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingEditToolbarItem
 import io.github.suqi8.coui.kmp.basic.BottomFloatingRedDot
@@ -89,18 +90,18 @@ fun BottomFloatingEditToolbarDemo() {
                     BottomFloatingEditToolbarItem(
                         onClick = {},
                         icon = COUIIcons.Copy,
-                        label = "Copy",
+                        label = str("Copy"),
                     )
                     BottomFloatingEditToolbarItem(
                         onClick = {},
                         icon = COUIIcons.Delete,
-                        label = "Delete",
+                        label = str("Delete"),
                         redDot = BottomFloatingRedDot.Count(3),
                     )
                     BottomFloatingEditToolbarItem(
                         onClick = {},
                         icon = COUIIcons.Share,
-                        label = "Share",
+                        label = str("Share"),
                         enabled = false,
                     )
                 }
@@ -114,7 +115,7 @@ fun BottomFloatingEditToolbarDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "Visible")
+        Text(text = str("Visible"))
         Switch(checked = visible, onCheckedChange = { visible = it })
     }
 }

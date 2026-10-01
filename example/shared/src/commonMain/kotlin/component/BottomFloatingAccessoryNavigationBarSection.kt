@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
 import io.github.suqi8.coui.kmp.basic.Icon
@@ -56,10 +57,12 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
     var selectedIndex by remember { mutableIntStateOf(0) }
     var startVisible by remember { mutableStateOf(true) }
     var endVisible by remember { mutableStateOf(true) }
-    val items = remember {
+    val homeLabel = str("Home")
+    val messagesLabel = str("Messages")
+    val items = remember(homeLabel, messagesLabel) {
         listOf(
-            "Home" to COUIIcons.Home,
-            "Messages" to COUIIcons.Messages,
+            homeLabel to COUIIcons.Home,
+            messagesLabel to COUIIcons.Messages,
         )
     }
     val backdrop = rememberBlurBackdrop()
@@ -104,13 +107,13 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
                     startAccessory = {
                         Icon(
                             imageVector = COUIIcons.Search,
-                            contentDescription = "Search",
+                            contentDescription = str("Search"),
                         )
                     },
                     endAccessory = {
                         Icon(
                             imageVector = COUIIcons.Add,
-                            contentDescription = "Add",
+                            contentDescription = str("Add"),
                         )
                     },
                 ) {
@@ -133,7 +136,7 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "Start accessory")
+        Text(text = str("Start accessory"))
         Switch(checked = startVisible, onCheckedChange = { startVisible = it })
     }
     Row(
@@ -144,7 +147,7 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "End accessory")
+        Text(text = str("End accessory"))
         Switch(checked = endVisible, onCheckedChange = { endVisible = it })
     }
 }

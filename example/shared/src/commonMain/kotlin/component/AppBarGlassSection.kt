@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -85,8 +86,8 @@ fun TopAppBarGlassDemo() {
         CompositionLocalProvider(LocalBackdrop provides backdrop) {
             Column(modifier = Modifier.fillMaxSize()) {
                 SmallTopAppBar(
-                    title = "TopAppBar",
-                    subtitle = "glass",
+                    title = str("TopAppBar"),
+                    subtitle = str("glass"),
                     defaultWindowInsetsPadding = false,
                 )
                 Column(
@@ -143,12 +144,12 @@ fun TopAppBarColorOS17FormsDemo() {
             Column(modifier = Modifier.fillMaxSize()) {
                 // G1: the title is centred, with the responsive 16 / 24 / 40dp side clearance.
                 SmallTopAppBar(
-                    title = "Center title",
+                    title = str("Center title"),
                     centerTitle = true,
                     defaultWindowInsetsPadding = false,
                     navigationIcon = {
                         IconButton(onClick = { /* Handle click event */ }) {
-                            Icon(COUIIcons.Back, contentDescription = "Back")
+                            Icon(COUIIcons.Back, contentDescription = str("Back"))
                         }
                     },
                     actions = {
@@ -158,17 +159,17 @@ fun TopAppBarColorOS17FormsDemo() {
                             onClick = { /* Handle click event */ },
                             modifier = Modifier.couiTopAppBarActionItem(),
                         ) {
-                            Icon(COUIIcons.More, contentDescription = "More")
+                            Icon(COUIIcons.More, contentDescription = str("More"))
                         }
                     },
                 )
                 // G2: the inline 32dp segment slot; mutually exclusive with the centred title.
                 SmallTopAppBar(
-                    title = "Segment",
+                    title = str("Segment"),
                     defaultWindowInsetsPadding = false,
                     segmentButton = {
                         TabRowWithContour(
-                            tabs = listOf("Tab", "Tab"),
+                            tabs = listOf(str("Tab"), str("Tab")),
                             selectedTabIndex = selectedTab,
                             onTabSelected = { selectedTab = it },
                             height = 32.dp,
@@ -176,13 +177,13 @@ fun TopAppBarColorOS17FormsDemo() {
                     },
                     actions = {
                         IconButton(onClick = { /* Handle click event */ }) {
-                            Icon(COUIIcons.More, contentDescription = "More")
+                            Icon(COUIIcons.More, contentDescription = str("More"))
                         }
                     },
                 )
                 // G13: the uniform blur is replaced by the 30px -> 0 progressive blur.
                 SmallTopAppBar(
-                    title = "Gradient glass",
+                    title = str("Gradient glass"),
                     defaultWindowInsetsPadding = false,
                     gradientGlass = true,
                 )

@@ -97,6 +97,7 @@ import component.TopTipsDemoContent
 import component.TopTipsStylesDemo
 import component.TouchSearchViewDemoContent
 import component.VerticalSliderDemo
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -240,7 +241,12 @@ private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> 
     item(key = "gap:$title") { Spacer(modifier = Modifier.height(Coui17Dimens.ListGroupGap)) }
 }
 
-/** A compact Settings section heading aligned with the text inside its card. */
+/**
+ * A compact Settings section heading aligned with the text inside its card.
+ *
+ * [title] is the English source string; the heading resolves it here, so the entry list above stays
+ * a plain list of keys and the language can change under it.
+ */
 @Composable
 private fun Coui17GroupTitle(title: String) {
     Box(
@@ -251,7 +257,7 @@ private fun Coui17GroupTitle(title: String) {
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(
-            text = title,
+            text = str(title),
             modifier = Modifier.padding(start = Coui17Dimens.ListTextIndent),
             style = COUITheme.textStyles.headline2,
             color = COUITheme.colorScheme.onSurface,

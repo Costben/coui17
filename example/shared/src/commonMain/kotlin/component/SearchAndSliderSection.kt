@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.IntentSeekBar
@@ -213,7 +214,8 @@ private fun TouchSearchViewDemo() {
 
 @Composable
 private fun SearchHistoryViewDemo() {
-    var history by remember { mutableStateOf(DemoHistory) }
+    val demoHistory = DemoHistory.map { str(it) }
+    var history by remember { mutableStateOf(demoHistory) }
     var lastClicked by remember { mutableStateOf("-") }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -225,18 +227,18 @@ private fun SearchHistoryViewDemo() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "History cleared",
+                    text = str("History cleared"),
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(text = "Restore", onClick = { history = DemoHistory })
+                TextButton(text = str("Restore"), onClick = { history = demoHistory })
             }
         } else {
             SearchHistoryView(
                 items = history,
                 onItemClick = { lastClicked = it },
                 onDeleteClick = { history = emptyList() },
-                title = "Recent searches",
-                deleteIconDescription = "Delete search history",
+                title = str("Recent searches"),
+                deleteIconDescription = str("Delete search history"),
             )
             Text(
                 text = "Last clicked: $lastClicked",
@@ -249,7 +251,8 @@ private fun SearchHistoryViewDemo() {
 
 @Composable
 private fun FoldableSearchHistoryViewDemo() {
-    var history by remember { mutableStateOf(DemoHistory.take(9)) }
+    val demoHistory = DemoHistory.map { str(it) }
+    var history by remember { mutableStateOf(demoHistory.take(9)) }
 
     if (history.isEmpty()) {
         Row(
@@ -259,17 +262,17 @@ private fun FoldableSearchHistoryViewDemo() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "History cleared",
+                text = str("History cleared"),
                 modifier = Modifier.weight(1f),
             )
-            TextButton(text = "Restore", onClick = { history = DemoHistory.take(9) })
+            TextButton(text = str("Restore"), onClick = { history = demoHistory.take(9) })
         }
     } else {
         SearchHistoryView(
             items = history,
             onItemClick = {},
             onDeleteClick = { history = emptyList() },
-            title = "Recent searches (folded to 2 rows)",
+            title = str("Recent searches (folded to 2 rows)"),
             maxRowFolded = 2,
         )
     }

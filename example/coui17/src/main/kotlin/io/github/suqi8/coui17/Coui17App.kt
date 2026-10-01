@@ -13,6 +13,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -43,6 +44,9 @@ import appstate.LocalAppState
 import appstate.LocalNavigator
 import appstate.LocalUpdateAppState
 import component.SearchPager
+import i18n.LocalAppStrings
+import i18n.LocalLanguageSwitchEnabled
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.SnackbarHost
@@ -69,13 +73,16 @@ import kotlin.math.max
  *
  * The first three are what the accessory capsule carries; the last two are the panel entries, which
  * is how the coui16 gallery's five pages map onto ColorOS 17's one-third-two split.
+ *
+ * [title] is the English source string the bar renders; `str` resolves it for the language the user
+ * picked, so nothing here has to know which language is selected.
  */
 enum class Coui17Page(val title: String) {
-    Home("设置"),
-    Icons("图标"),
-    Color("配色"),
-    TextStyle("文字样式"),
-    Settings("设置项"),
+    Home("Settings"),
+    Icons("Icons"),
+    Color("Color"),
+    TextStyle("Text style"),
+    Settings("Settings items"),
     ;
 
     /** Whether this page is reached from the panel rather than the capsule, so it carries a back key. */
@@ -111,6 +118,10 @@ fun Coui17App() {
             LocalUpdateAppState provides updateAppState,
             LocalNavigator provides navigator,
             LocalSquircleEnabled provides appState.enableSquircle,
+            // One provider for the whole app: every screen resolves its copy through this, so
+            // changing the language in the settings page recomposes all of them at once.
+            LocalAppStrings provides appState.language.strings,
+            LocalLanguageSwitchEnabled provides true,
         ) {
             Coui17Root()
         }
@@ -156,7 +167,11 @@ private fun Coui17Root() {
     val scrollOffset = remember { ScrollOffset() }
     // The device's hint reads `搜索设置项` (`Settings.apk` string table, length-prefixed 5), and the
     // collapsed pill draws five glyphs at x 219..501px.
-    var searchStatus by remember { mutableStateOf(SearchStatus(label = "搜索设置项")) }
+    val searchLabel = str("Search settings")
+    var searchStatus by remember { mutableStateOf(SearchStatus(label = searchLabel)) }
+    // The pill's hint is part of the search state rather than of the bar, so a language change has to
+    // be carried into it; re-seeding the state instead would throw away a search in progress.
+    LaunchedEffect(searchLabel) { searchStatus = searchStatus.copy(label = searchLabel) }
     var panelOpen by remember { mutableStateOf(false) }
     var lastCapsulePage by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
@@ -215,15 +230,15 @@ private fun Coui17Root() {
                 CompositionLocalProvider(LocalBackdrop provides barBackdrop) {
                     if (currentPage == Coui17Page.Home) {
                         Coui17HomeTopBar(
-                            title = currentPage.title,
-                            searchLabel = "搜索设置项",
+                            title = str(currentPage.title),
+                            searchLabel = searchLabel,
                             onSearchClick = onSearch,
                             scrollFraction = scrollFraction,
                             modifier = Modifier.align(Alignment.TopCenter),
                         )
                     } else {
                         Coui17CompactToolbar(
-                            title = currentPage.title,
+                            title = str(currentPage.title),
                             onBack = if (currentPage.isPanelPage) {
                                 { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
                             } else {

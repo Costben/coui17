@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Banner
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -74,7 +75,12 @@ fun LockAndBannerDemo() {
 private fun LockPatternDemo() {
     var mode by remember { mutableStateOf(LockPatternDisplayMode.Correct) }
     var pattern by remember { mutableStateOf(listOf(0, 4, 8)) }
-    var status by remember { mutableStateOf("Draw a pattern") }
+    val drawAPatternStatus = str("Draw a pattern")
+    var status by remember { mutableStateOf(drawAPatternStatus) }
+    val patternPrefix = str("Pattern: ")
+    val correctStatus = str("Pattern: 0-1-2-5-8 (correct)")
+    val wrongStatus = str("Pattern: 0-1-2-5-8 (wrong)")
+    val replayStatus = str("Replaying 0-3-6-7-8")
 
     Column(
         modifier = Modifier
@@ -85,7 +91,7 @@ private fun LockPatternDemo() {
         LockPatternView(
             onPatternComplete = { drawn ->
                 pattern = drawn
-                status = "Pattern: " + drawn.joinToString("-")
+                status = patternPrefix + drawn.joinToString("-")
             },
             mode = mode,
             pattern = pattern,
@@ -101,29 +107,29 @@ private fun LockPatternDemo() {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             TextButton(
-                text = "Correct",
+                text = str("Correct"),
                 onClick = {
                     pattern = listOf(0, 1, 2, 5, 8)
                     mode = LockPatternDisplayMode.Correct
-                    status = "Pattern: 0-1-2-5-8 (correct)"
+                    status = correctStatus
                 },
                 modifier = Modifier.weight(1f),
             )
             TextButton(
-                text = "Wrong",
+                text = str("Wrong"),
                 onClick = {
                     pattern = listOf(0, 1, 2, 5, 8)
                     mode = LockPatternDisplayMode.Wrong
-                    status = "Pattern: 0-1-2-5-8 (wrong)"
+                    status = wrongStatus
                 },
                 modifier = Modifier.weight(1f),
             )
             TextButton(
-                text = "Replay",
+                text = str("Replay"),
                 onClick = {
                     pattern = listOf(0, 3, 6, 7, 8)
                     mode = LockPatternDisplayMode.Animate
-                    status = "Replaying 0-3-6-7-8"
+                    status = replayStatus
                 },
                 modifier = Modifier.weight(1f),
             )
@@ -141,7 +147,7 @@ private fun NumericKeyboardDemo() {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = if (pin.isEmpty()) "Enter a PIN" else pin)
+        Text(text = if (pin.isEmpty()) str("Enter a PIN") else pin)
         Box(
             modifier = Modifier
                 .padding(top = 12.dp)
@@ -178,7 +184,7 @@ private fun SimpleLockDemo() {
             failed = failed,
         )
         Text(
-            text = "Filled " + count.toString() + " of " + type.dotCount.toString(),
+            text = str("Filled ") + count.toString() + str(" of ") + type.dotCount.toString(),
             modifier = Modifier.padding(top = 12.dp),
         )
         Row(
@@ -188,7 +194,7 @@ private fun SimpleLockDemo() {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             TextButton(
-                text = "Add",
+                text = str("Add"),
                 onClick = {
                     failed = false
                     count = (count + 1).coerceAtMost(type.dotCount)
@@ -196,7 +202,7 @@ private fun SimpleLockDemo() {
                 modifier = Modifier.weight(1f),
             )
             TextButton(
-                text = "Remove",
+                text = str("Remove"),
                 onClick = {
                     failed = false
                     count = (count - 1).coerceAtLeast(0)
@@ -204,7 +210,7 @@ private fun SimpleLockDemo() {
                 modifier = Modifier.weight(1f),
             )
             TextButton(
-                text = "Fail",
+                text = str("Fail"),
                 onClick = { failed = !failed },
                 modifier = Modifier.weight(1f),
             )
@@ -216,7 +222,7 @@ private fun SimpleLockDemo() {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             TextButton(
-                text = "4 dots",
+                text = str("4 dots"),
                 onClick = {
                     type = SimpleLockType.Four
                     count = count.coerceAtMost(type.dotCount)
@@ -224,7 +230,7 @@ private fun SimpleLockDemo() {
                 modifier = Modifier.weight(1f),
             )
             TextButton(
-                text = "6 dots",
+                text = str("6 dots"),
                 onClick = {
                     type = SimpleLockType.Six
                     count = count.coerceAtMost(type.dotCount)
@@ -238,7 +244,10 @@ private fun SimpleLockDemo() {
 @Composable
 private fun LockScreenPwdInputDemo() {
     var password by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf("Type a password") }
+    val typeAPasswordStatus = str("Type a password")
+    var status by remember { mutableStateOf(typeAPasswordStatus) }
+    val nextPrefix = str("Next: ")
+    val charactersSuffix = str(" characters")
 
     Column(
         modifier = Modifier
@@ -250,9 +259,9 @@ private fun LockScreenPwdInputDemo() {
             value = password,
             onValueChange = { password = it },
             modifier = Modifier.fillMaxWidth(),
-            label = "Password",
+            label = str("Password"),
             minCount = 4,
-            onNextClick = { status = "Next: " + it.length.toString() + " characters" },
+            onNextClick = { status = nextPrefix + it.length.toString() + charactersSuffix },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         )
         Text(
@@ -264,12 +273,16 @@ private fun LockScreenPwdInputDemo() {
 
 @Composable
 private fun BannerDemo() {
-    val pages = remember {
+    val cardOne = str("Card one")
+    val cardTwo = str("Card two")
+    val cardThree = str("Card three")
+    val cardFour = str("Card four")
+    val pages = remember(cardOne, cardTwo, cardThree, cardFour) {
         listOf(
-            Color(0xFF3A6EA5) to "Card one",
-            Color(0xFF7A4FA3) to "Card two",
-            Color(0xFF2E8B6E) to "Card three",
-            Color(0xFFB4553C) to "Card four",
+            Color(0xFF3A6EA5) to cardOne,
+            Color(0xFF7A4FA3) to cardTwo,
+            Color(0xFF2E8B6E) to cardThree,
+            Color(0xFFB4553C) to cardFour,
         )
     }
 

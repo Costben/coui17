@@ -12,6 +12,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.LocalAppStrings
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Badge
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
@@ -44,21 +46,22 @@ fun DropdownDemo() {
     var windowDropdownOptionSelected by remember { mutableIntStateOf(0) }
     var overlayExpanded by remember { mutableStateOf(false) }
     var windowExpanded by remember { mutableStateOf(false) }
-    val dropdownOptions = remember { listOf("Option 1", "Option 2", "Option 3", "Option 4") }
-    val dropdownLongOptions = remember {
+    val s = LocalAppStrings.current
+    val dropdownOptions = remember(s) { listOf(s["Option 1"], s["Option 2"], s["Option 3"], s["Option 4"]) }
+    val dropdownLongOptions = remember(s) {
         listOf(
-            "Option 1",
-            "Long Option 2",
-            "Long Long Option 3",
-            "Long Long Long Option 4",
-            "Long Long Long Long Option 5",
-            "Long Long Long Long Long Option 6",
-            "Long Long Long Long Long Long Option 7",
-            "Long Long Long Long Long Long Long Option 8",
-            "Long Long Long Long Long Long Long Long Option 9",
-            "Long Long Long Long Long Long Long Long Long Option 10",
-            "Long Long Long Long Long Long Long Long Long Long Option 11",
-            "Long Long Long Long Long Long Long Long Long Long Long Option 12",
+            s["Option 1"],
+            s["Long Option 2"],
+            s["Long Long Option 3"],
+            s["Long Long Long Option 4"],
+            s["Long Long Long Long Option 5"],
+            s["Long Long Long Long Long Option 6"],
+            s["Long Long Long Long Long Long Option 7"],
+            s["Long Long Long Long Long Long Long Option 8"],
+            s["Long Long Long Long Long Long Long Long Option 9"],
+            s["Long Long Long Long Long Long Long Long Long Option 10"],
+            s["Long Long Long Long Long Long Long Long Long Long Option 11"],
+            s["Long Long Long Long Long Long Long Long Long Long Long Option 12"],
         )
     }
 
@@ -67,13 +70,14 @@ fun DropdownDemo() {
     var overlayGroup2DropdownOptionSelected by remember { mutableIntStateOf(0) }
     var overlayGroup3DropdownOptionSelected by remember { mutableIntStateOf(0) }
     val overlayMultiGroupOptions = remember(
+        s,
         overlayGroup1DropdownOptionSelected,
         overlayGroup2DropdownOptionSelected,
         overlayGroup3DropdownOptionSelected,
     ) {
         listOf(
             DropdownEntry(
-                items = listOf("Option A-1", "Option A-2")
+                items = listOf(s["Option A-1"], s["Option A-2"])
                     .mapIndexed { index, text ->
                         DropdownItem(
                             text = text,
@@ -83,7 +87,7 @@ fun DropdownDemo() {
                     },
             ),
             DropdownEntry(
-                items = listOf("Option B-1", "Option B-2", "Option B-3")
+                items = listOf(s["Option B-1"], s["Option B-2"], s["Option B-3"])
                     .mapIndexed { index, text ->
                         DropdownItem(
                             text = text,
@@ -93,7 +97,7 @@ fun DropdownDemo() {
                     },
             ),
             DropdownEntry(
-                items = listOf("Option C-1", "Option C-2", "Option C-3", "Option C-4")
+                items = listOf(s["Option C-1"], s["Option C-2"], s["Option C-3"], s["Option C-4"])
                     .mapIndexed { index, string ->
                         DropdownItem(
                             text = string,
@@ -111,13 +115,14 @@ fun DropdownDemo() {
     var windowGroup2DropdownOptionSelected by remember { mutableIntStateOf(0) }
     var windowGroup3DropdownOptionSelected by remember { mutableIntStateOf(0) }
     val windowMultiGroupOptions = remember(
+        s,
         windowGroup1DropdownOptionSelected,
         windowGroup2DropdownOptionSelected,
         windowGroup3DropdownOptionSelected,
     ) {
         listOf(
             DropdownEntry(
-                items = listOf("Option A-1", "Option A-2")
+                items = listOf(s["Option A-1"], s["Option A-2"])
                     .mapIndexed { index, text ->
                         DropdownItem(
                             text = text,
@@ -127,7 +132,7 @@ fun DropdownDemo() {
                     },
             ),
             DropdownEntry(
-                items = listOf("Option B-1", "Option B-2", "Option B-3")
+                items = listOf(s["Option B-1"], s["Option B-2"], s["Option B-3"])
                     .mapIndexed { index, text ->
                         DropdownItem(
                             text = text,
@@ -137,7 +142,7 @@ fun DropdownDemo() {
                     },
             ),
             DropdownEntry(
-                items = listOf("Option C-1", "Option C-2", "Option C-3", "Option C-4")
+                items = listOf(s["Option C-1"], s["Option C-2"], s["Option C-3"], s["Option C-4"])
                     .mapIndexed { index, string ->
                         DropdownItem(
                             text = string,
@@ -156,8 +161,8 @@ fun DropdownDemo() {
             .padding(bottom = 16.dp),
     ) {
         OverlayDropdownPreference(
-            title = "DropdownPref (O)",
-            summary = if (overlayExpanded) "Expanded" else "Collapsed",
+            title = str("DropdownPref (O)"),
+            summary = if (overlayExpanded) str("Expanded") else str("Collapsed"),
             items = dropdownOptions,
             selectedIndex = overlayDropdownOptionSelected,
             onSelectedIndexChange = { newOption ->
@@ -167,8 +172,8 @@ fun DropdownDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowDropdownPreference(
-            title = "DropdownPref (W)",
-            summary = if (windowExpanded) "Expanded" else "Collapsed",
+            title = str("DropdownPref (W)"),
+            summary = if (windowExpanded) str("Expanded") else str("Collapsed"),
             items = dropdownLongOptions,
             selectedIndex = windowDropdownOptionSelected,
             onSelectedIndexChange = { newOption ->
@@ -178,32 +183,32 @@ fun DropdownDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         OverlayDropdownPreference(
-            title = "Grouped DropdownPref (O)",
-            summary = if (overlayGroupedExpanded) "Expanded" else "Collapsed",
+            title = str("Grouped DropdownPref (O)"),
+            summary = if (overlayGroupedExpanded) str("Expanded") else str("Collapsed"),
             entries = overlayMultiGroupOptions,
             collapseOnSelection = false,
             onExpandedChange = { overlayGroupedExpanded = it },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowDropdownPreference(
-            title = "Grouped DropdownPref (W)",
-            summary = if (windowGroupedExpanded) "Expanded" else "Collapsed",
+            title = str("Grouped DropdownPref (W)"),
+            summary = if (windowGroupedExpanded) str("Expanded") else str("Collapsed"),
             entries = windowMultiGroupOptions,
             collapseOnSelection = false,
             onExpandedChange = { windowGroupedExpanded = it },
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         OverlayDropdownPreference(
-            title = "Disabled DropdownPref (O)",
-            items = listOf("Option 1"),
+            title = str("Disabled DropdownPref (O)"),
+            items = listOf(str("Option 1")),
             selectedIndex = 0,
             onSelectedIndexChange = {},
             enabled = false,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowDropdownPreference(
-            title = "Disabled DropdownPref (W)",
-            items = listOf("Option 1"),
+            title = str("Disabled DropdownPref (W)"),
+            items = listOf(str("Option 1")),
             selectedIndex = 0,
             onSelectedIndexChange = {},
             enabled = false,
@@ -220,13 +225,14 @@ fun DropdownItemVariants() {
     var variantsSelected by remember { mutableIntStateOf(0) }
     var headersSelected by remember { mutableIntStateOf(0) }
     val iconTint = COUITheme.colorScheme.onSurfaceContainer
+    val s = LocalAppStrings.current
 
-    val variantEntries = remember(variantsSelected, iconTint) {
+    val variantEntries = remember(s, variantsSelected, iconTint) {
         listOf(
             DropdownEntry(
                 items = listOf(
                     DropdownItem(
-                        text = "Icon row",
+                        text = s["Icon row"],
                         icon = { modifier ->
                             Icon(
                                 modifier = modifier,
@@ -239,26 +245,26 @@ fun DropdownItemVariants() {
                         onClick = { variantsSelected = 0 },
                     ),
                     DropdownItem(
-                        text = "Row with description",
-                        summary = "A second line that explains what this option changes",
+                        text = s["Row with description"],
+                        summary = s["A second line that explains what this option changes"],
                         selected = variantsSelected == 1,
                         onClick = { variantsSelected = 1 },
                     ),
                     DropdownItem(
-                        text = "Row with red dot",
+                        text = s["Row with red dot"],
                         hint = { Badge() },
                         selected = variantsSelected == 2,
                         onClick = { variantsSelected = 2 },
                     ),
                     DropdownItem(
-                        text = "Row with count badge",
+                        text = s["Row with count badge"],
                         hint = { Badge(count = 12) },
                         selected = variantsSelected == 3,
                         onClick = { variantsSelected = 3 },
                     ),
                     DropdownItem(
-                        text = "Icon, description and hint",
-                        summary = "All three slots at once",
+                        text = s["Icon, description and hint"],
+                        summary = s["All three slots at once"],
                         icon = { modifier ->
                             Icon(
                                 modifier = modifier,
@@ -272,18 +278,18 @@ fun DropdownItemVariants() {
                         onClick = { variantsSelected = 4 },
                     ),
                     DropdownItem(
-                        text = "Disabled row (hint hidden)",
+                        text = s["Disabled row (hint hidden)"],
                         hint = { Badge(count = 9) },
                         enabled = false,
                     ),
                     DropdownItem(
-                        text = "Very long title that runs past the 248dp clamp and therefore " +
-                            "wraps onto a third line before it finally ellipsizes",
+                        text = s["Very long title that runs past the 248dp clamp and therefore "] +
+                            s["wraps onto a third line before it finally ellipsizes"],
                         selected = variantsSelected == 6,
                         onClick = { variantsSelected = 6 },
                     ),
                     DropdownItem(
-                        text = "Delete everything",
+                        text = s["Delete everything"],
                         alert = true,
                         selected = variantsSelected == 7,
                         onClick = { variantsSelected = 7 },
@@ -293,11 +299,11 @@ fun DropdownItemVariants() {
         )
     }
 
-    val headerEntries = remember(headersSelected) {
+    val headerEntries = remember(s, headersSelected) {
         listOf(
             DropdownEntry(
-                title = "Sort by",
-                items = listOf("Name", "Date modified").mapIndexed { index, text ->
+                title = s["Sort by"],
+                items = listOf(s["Name"], s["Date modified"]).mapIndexed { index, text ->
                     DropdownItem(
                         text = text,
                         selected = headersSelected == index,
@@ -306,15 +312,15 @@ fun DropdownItemVariants() {
                 },
             ),
             DropdownEntry(
-                title = "A group header long enough to need its own second line before ellipsizing",
+                title = s["A group header long enough to need its own second line before ellipsizing"],
                 items = listOf(
-                    DropdownItem(text = "Ascending", hint = { Badge() }),
-                    DropdownItem(text = "Descending"),
+                    DropdownItem(text = s["Ascending"], hint = { Badge() }),
+                    DropdownItem(text = s["Descending"]),
                 ),
             ),
             DropdownEntry(
-                title = "Danger zone",
-                items = listOf(DropdownItem(text = "Reset all settings", alert = true)),
+                title = s["Danger zone"],
+                items = listOf(DropdownItem(text = s["Reset all settings"], alert = true)),
             ),
         )
     }
@@ -326,29 +332,29 @@ fun DropdownItemVariants() {
     ) {
         OverlayDropdownMenu(
             entries = variantEntries,
-            title = "Item variants (O)",
-            summary = "Icon, description, hint, alert, clamping",
+            title = str("Item variants (O)"),
+            summary = str("Icon, description, hint, alert, clamping"),
             collapseOnSelection = false,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowDropdownMenu(
             entries = variantEntries,
-            title = "Item variants (W)",
-            summary = "Same rows in a window popup",
+            title = str("Item variants (W)"),
+            summary = str("Same rows in a window popup"),
             collapseOnSelection = false,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         OverlayDropdownMenu(
             entries = headerEntries,
-            title = "Group headers (O)",
-            summary = "Non-clickable 32dp header rows",
+            title = str("Group headers (O)"),
+            summary = str("Non-clickable 32dp header rows"),
             collapseOnSelection = false,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         WindowDropdownMenu(
             entries = headerEntries,
-            title = "Group headers (W)",
-            summary = "Headers plus group dividers",
+            title = str("Group headers (W)"),
+            summary = str("Headers plus group dividers"),
             collapseOnSelection = false,
         )
     }

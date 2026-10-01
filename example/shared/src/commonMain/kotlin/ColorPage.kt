@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import appstate.LocalAppState
 import appstate.LocalIsWideScreen
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
@@ -82,7 +83,7 @@ fun ColorPage(
             // never inside it — LocalBackdrop is provided to the bar slot alone.
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
-                    title = "Color",
+                    title = str("Color"),
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
@@ -104,7 +105,7 @@ fun ColorPage(
                 contentPadding = contentPadding,
             ) {
                 item(key = "current") {
-                    SmallTitle("Current Theme Colors")
+                    SmallTitle(str("Current Theme Colors"))
                     Card(
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                         colors = CardDefaults.defaultColors(color = COUITheme.colorScheme.surfaceContainer),
@@ -115,7 +116,7 @@ fun ColorPage(
                     }
                 }
                 item(key = "light") {
-                    SmallTitle("Light Theme Colors")
+                    SmallTitle(str("Light Theme Colors"))
                     Card(
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                         colors = CardDefaults.defaultColors(color = lightColors.surfaceContainer),
@@ -126,7 +127,7 @@ fun ColorPage(
                     }
                 }
                 item(key = "dynamic_light") {
-                    SmallTitle("Dynamic Light Colors")
+                    SmallTitle(str("Dynamic Light Colors"))
                     Card(
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                         colors = CardDefaults.defaultColors(color = dynLight.surfaceContainer),
@@ -137,7 +138,7 @@ fun ColorPage(
                     }
                 }
                 item(key = "dark") {
-                    SmallTitle("Dark Theme Colors")
+                    SmallTitle(str("Dark Theme Colors"))
                     Card(
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                         colors = CardDefaults.defaultColors(color = darkColors.surfaceContainer),
@@ -148,7 +149,7 @@ fun ColorPage(
                     }
                 }
                 item(key = "dynamic_dark") {
-                    SmallTitle("Dynamic Dark Colors")
+                    SmallTitle(str("Dynamic Dark Colors"))
                     Card(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         colors = CardDefaults.defaultColors(color = dynDark.surfaceContainer),
@@ -253,7 +254,7 @@ fun ColorsPreview(colors: Colors) {
             ) {
                 rowColors.forEachIndexed { idx, block ->
                     ColorBlock(
-                        displayName = block.displayName,
+                        displayName = str(block.displayName),
                         surfaceColor = block.surfaceColor,
                         textColor = block.textColor,
                         modifier = Modifier

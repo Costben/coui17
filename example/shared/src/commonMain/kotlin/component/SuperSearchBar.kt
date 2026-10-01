@@ -65,6 +65,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
 import io.github.suqi8.coui.kmp.basic.SearchBarDefaults
@@ -309,7 +310,7 @@ fun SearchBar(
                         Icon(
                             imageVector = COUIIcons.Basic.SearchCleanup,
                             tint = COUITheme.colorScheme.onSurface,
-                            contentDescription = "Clean",
+                            contentDescription = str("Clean"),
                             modifier = Modifier
                                 .size(44.dp)
                                 .padding(start = 8.dp, end = 16.dp)
@@ -357,7 +358,7 @@ fun SearchBarFake(
         leadingIcon = {
             Icon(
                 imageVector = COUIIcons.Basic.Search,
-                contentDescription = "Search",
+                contentDescription = str("Search"),
                 modifier = Modifier
                     .size(44.dp)
                     .padding(start = 16.dp, end = 8.dp),

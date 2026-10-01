@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.DatePicker
 import io.github.suqi8.coui.kmp.basic.DateValue
@@ -61,8 +62,8 @@ fun TimePicker24HourDemo() {
         TimePicker(
             value = time,
             onValueChange = { time = it },
-            hourUnit = "h",
-            minuteUnit = "min",
+            hourUnit = str("h"),
+            minuteUnit = str("min"),
         )
     }
 }

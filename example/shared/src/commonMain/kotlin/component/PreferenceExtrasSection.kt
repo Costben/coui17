@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -70,8 +71,8 @@ fun SwitchLoadingPreferenceDemo() {
                 loadingTarget.value = it
                 isLoading.value = true
             },
-            title = "Async Switch",
-            summary = "Applies the change after a short delay",
+            title = str("Async Switch"),
+            summary = str("Applies the change after a short delay"),
             isLoading = isLoading.value,
             cardListPosition = CardListPosition.Head,
         )
@@ -79,8 +80,8 @@ fun SwitchLoadingPreferenceDemo() {
         SwitchLoadingPreference(
             checked = true,
             onCheckedChange = {},
-            title = "Always Loading",
-            summary = "A switch stuck in the loading state",
+            title = str("Always Loading"),
+            summary = str("A switch stuck in the loading state"),
             isLoading = true,
             cardListPosition = CardListPosition.Tail,
         )
@@ -92,7 +93,12 @@ fun SwitchLoadingPreferenceDemo() {
 fun MarkPreferenceDemo() {
     // MarkPreference: a single-select group where the mark follows the checked row.
     val selectedMark = remember { mutableIntStateOf(0) }
-    val markOptions = remember { listOf("Every day", "Workdays only", "Never") }
+    val everyDayLabel = str("Every day")
+    val workdaysOnlyLabel = str("Workdays only")
+    val neverLabel = str("Never")
+    val markOptions = remember(everyDayLabel, workdaysOnlyLabel, neverLabel) {
+        listOf(everyDayLabel, workdaysOnlyLabel, neverLabel)
+    }
 
     Card(
         modifier = Modifier
@@ -121,7 +127,7 @@ fun MarkPreferenceStandaloneFullDemo() {
             .padding(bottom = 16.dp),
     ) {
         MarkPreference(
-            title = "Only option",
+            title = str("Only option"),
             checked = true,
             onClick = {},
             cardListPosition = CardListPosition.Full,
@@ -141,21 +147,21 @@ fun ButtonPreferenceDemo() {
             .padding(bottom = 16.dp),
     ) {
         ButtonPreference(
-            title = "Account",
+            title = str("Account"),
             summary = if (signInCount.intValue > 0) {
                 "Button clicked ${signInCount.intValue} time(s)"
             } else {
-                "Sign in to sync your data"
+                str("Sign in to sync your data")
             },
-            buttonText = "Sign in",
+            buttonText = str("Sign in"),
             onButtonClick = { signInCount.intValue++ },
             cardListPosition = CardListPosition.Head,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ButtonPreference(
-            title = "Disabled Row",
-            summary = "Button and row are disabled",
-            buttonText = "Action",
+            title = str("Disabled Row"),
+            summary = str("Button and row are disabled"),
+            buttonText = str("Action"),
             onButtonClick = {},
             enabled = false,
             cardListPosition = CardListPosition.Tail,
@@ -167,16 +173,19 @@ fun ButtonPreferenceDemo() {
 @Composable
 fun RecommendedPreferenceDemo() {
     // RecommendedPreference: a standalone rounded card with related settings entries.
-    val recommendedItems = remember {
+    val displayAndBrightness = str("Display & brightness")
+    val wallpapersAndStyle = str("Wallpapers & style")
+    val batteryItem = str("Battery")
+    val recommendedItems = remember(displayAndBrightness, wallpapersAndStyle, batteryItem) {
         listOf(
-            RecommendedItem(text = "Display & brightness", onClick = {}),
-            RecommendedItem(text = "Wallpapers & style", onClick = {}),
-            RecommendedItem(text = "Battery", onClick = {}),
+            RecommendedItem(text = displayAndBrightness, onClick = {}),
+            RecommendedItem(text = wallpapersAndStyle, onClick = {}),
+            RecommendedItem(text = batteryItem, onClick = {}),
         )
     }
 
     RecommendedPreference(
-        title = "You might be looking for:",
+        title = str("You might be looking for:"),
         items = recommendedItems,
         modifier = Modifier
             .padding(horizontal = 16.dp)

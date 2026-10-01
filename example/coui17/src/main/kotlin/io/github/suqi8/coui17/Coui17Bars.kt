@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import component.searchBarShadow
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
@@ -54,14 +55,14 @@ import io.github.suqi8.coui.kmp.icon.extended.Translate
 import io.github.suqi8.coui.kmp.overlay.OverlayCascadingListPopup
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
-/** One capsule tab of the accessory bar. */
+/** One capsule tab of the accessory bar. [label] is the English source string `str` resolves. */
 private class Coui17Tab(val label: String, val icon: ImageVector)
 
-/** The capsule's three tabs. ColorOS 17 accessory bars label their tabs in Chinese. */
+/** The capsule's three tabs, in the order the pages sit in the pager. */
 private val Coui17Tabs = listOf(
-    Coui17Tab("首页", COUIIcons.Home),
-    Coui17Tab("图标", COUIIcons.Image),
-    Coui17Tab("配色", COUIIcons.Theme),
+    Coui17Tab("Home", COUIIcons.Home),
+    Coui17Tab("Icons", COUIIcons.Image),
+    Coui17Tab("Color", COUIIcons.Theme),
 )
 
 /**
@@ -202,7 +203,7 @@ fun Coui17CompactToolbar(
                             .align(Alignment.CenterStart)
                             .padding(start = Coui17Dimens.BarHorizontalPadding),
                     ) {
-                        Icon(imageVector = COUIIcons.Back, contentDescription = "返回")
+                        Icon(imageVector = COUIIcons.Back, contentDescription = str("Back"))
                     }
                 }
                 Text(
@@ -258,14 +259,14 @@ fun Coui17AccessoryBar(
             startAccessory = {
                 Coui17AccessoryBall(
                     icon = COUIIcons.Basic.Search,
-                    description = "搜索",
+                    description = str("Search"),
                     onClick = onSearch,
                 )
             },
             endAccessory = {
                 Coui17AccessoryBall(
                     icon = COUIIcons.More,
-                    description = "更多",
+                    description = str("More"),
                     onClick = onOpenPanel,
                 )
                 CompositionLocalProvider(LocalDensity provides systemDensity) {
@@ -282,7 +283,7 @@ fun Coui17AccessoryBar(
                     selected = currentPage == index,
                     onClick = { onSelectPage(index) },
                     icon = tab.icon,
-                    label = tab.label,
+                    label = str(tab.label),
                 )
             }
         }
@@ -325,7 +326,7 @@ fun Coui17Panel(
         DropdownEntry(
             items = listOf(
                 DropdownItem(
-                    text = "文字样式",
+                    text = str("Text style"),
                     icon = { modifier ->
                         Icon(
                             modifier = modifier,
@@ -337,7 +338,7 @@ fun Coui17Panel(
                     onClick = { onSelect(Coui17Page.TextStyle.ordinal) },
                 ),
                 DropdownItem(
-                    text = "设置项",
+                    text = str("Settings items"),
                     icon = { modifier ->
                         Icon(
                             modifier = modifier,
