@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownDefaults
@@ -48,7 +47,7 @@ fun WindowCascadingListPopup(
     alignment: PopupPositionProvider.Align = PopupPositionProvider.Align.End,
     enableWindowDim: Boolean = true,
     maxHeight: Dp? = null,
-    minWidth: Dp = 200.dp,
+    minWidth: Dp = ListPopupDefaults.MinWidth,
     dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
     collapseOnSelection: Boolean = true,
 ) {
