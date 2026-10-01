@@ -127,6 +127,8 @@ object MetaBallDefaults {
  * @param extensionFactorY The vertical reach multiplier.
  * @param rimColor The light traced along the merged outline, or `null` to skip it.
  * @param rimBlur How far that light bleeds inward before it dies, in dp.
+ * @param rimBottomScale Weight of the rim on the *bottom* edge, against its weight of 1 on the top
+ *   one. `0` keeps the rim on the top edge alone, which is what a plain glass surface does.
  * @param bottomGlowColor A directional light that diffuses below the silhouette, or `null` to skip it.
  * @param bottomGlowBlur How far the bottom light diffuses outside the silhouette, in dp.
  * @param content The content drawn on top of the silhouette.
@@ -144,6 +146,7 @@ fun MetaBallSurface(
     extensionFactorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
     rimColor: Color? = Color.White.copy(alpha = 0.55f),
     rimBlur: Dp = MetaBallDefaults.RimBlur,
+    rimBottomScale: Float = 0f,
     bottomGlowColor: Color? = null,
     bottomGlowBlur: Dp = 8.dp,
     content: @Composable BoxScope.() -> Unit = {},
@@ -154,6 +157,10 @@ fun MetaBallSurface(
 
     Box(modifier = modifier) {
         if (bottomGlowColor != null && shader != null) {
+            // The bloom is painted *outside* the merged outline, so this layer asks for a rect that
+            // reaches [bottomGlowBlur] below the node. Compose does not clip a node's drawing to its
+            // bounds, and the shader works in this node's own coordinates, so the particles stay where
+            // the caller put them; only the rasterised area grows.
             Canvas(modifier = Modifier.matchParentSize()) {
                 drawMetaBall(
                     shader = shader,
@@ -166,6 +173,7 @@ fun MetaBallSurface(
                     rimBlur = rimBlur,
                     bottomGlow = bottomGlowColor,
                     bottomGlowBlur = bottomGlowBlur,
+                    glowOutsetPx = bottomGlowBlur.toPx(),
                 )
             }
         }
@@ -210,6 +218,7 @@ fun MetaBallSurface(
                         extensionFactorX = extensionFactorX,
                         extensionFactorY = extensionFactorY,
                         rimBlur = rimBlur,
+                        rimBottomScale = rimBottomScale,
                     )
                 }
             }
@@ -224,6 +233,7 @@ fun MetaBallSurface(
                     extensionFactorX = extensionFactorX,
                     extensionFactorY = extensionFactorY,
                     rimBlur = rimBlur,
+                    rimBottomScale = rimBottomScale,
                 )
             }
         } else {
@@ -255,8 +265,10 @@ private fun DrawScope.drawMetaBall(
     extensionFactorX: Float,
     extensionFactorY: Float,
     rimBlur: Dp,
+    rimBottomScale: Float = 0f,
     bottomGlow: Color = Color.Transparent,
     bottomGlowBlur: Dp = 0.dp,
+    glowOutsetPx: Float = 0f,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
     if (count == 0) return
@@ -288,8 +300,11 @@ private fun DrawScope.drawMetaBall(
     shader.setFloatUniform("in_rimBlur", rimBlur.toPx())
     shader.setFloatUniform("in_glow", bottomGlow.red, bottomGlow.green, bottomGlow.blue, bottomGlow.alpha)
     shader.setFloatUniform("in_glowRadius", bottomGlowBlur.toPx())
+    shader.setFloatUniform("in_rimBottom", rimBottomScale)
 
-    drawRect(brush = shader.asBrush(), size = size)
+    // The rect keeps its origin at the node's own (0, 0) — the shader reads this node's coordinates,
+    // so the particles stay put — and only grows downwards, where the bloom is painted.
+    drawRect(brush = shader.asBrush(), size = Size(size.width, size.height + glowOutsetPx))
 }
 
 /** Degraded path for platforms without runtime shaders: the silhouettes, but not merged. */
@@ -333,6 +348,7 @@ uniform float4 in_body;
 uniform float4 in_rim;
 uniform float in_rimWidth;
 uniform float in_rimBlur;
+uniform float in_rimBottom;
 uniform float4 in_glow;
 uniform float in_glowRadius;
 
@@ -401,14 +417,18 @@ half4 main(float2 xy) {
     // sides: on Gallery's accessory bar the top edge sits ~48/255 above the body while the capsule's
     // side edges show no highlight at all. `-d` is the depth inside the merged silhouette, so the
     // mask keeps full strength for `in_rimWidth` and fades out over `in_rimBlur`; `up` is 1 on the
-    // top edge of the ownership silhouette and 0 at its vertical centre.
+    // top edge of the ownership silhouette and 0 at its vertical centre, and `down` mirrors it on the
+    // bottom edge. COUI's `GradientStrokeStyleSpec` strokes both long edges of a silhouette — its
+    // width and alpha arrays carry one entry per edge — so `in_rimBottom` weights the lower line
+    // against the upper one instead of leaving the bottom dark.
     half4 body = half4(in_body.x, in_body.y, in_body.z, in_body.w);
     half4 rim = half4(in_rim.x, in_rim.y, in_rim.z, in_rim.w);
     float rimMask = smoothstep(in_rimWidth + in_rimBlur, in_rimWidth, -d);
     half srcA = half(0.0);
     if (rimMask > 0.0) {
         float up = clamp(-rel.y, 0.0, 1.0);
-        srcA = rim.a * half(rimMask * up * up);
+        float down = clamp(rel.y, 0.0, 1.0);
+        srcA = rim.a * half(rimMask * (up * up + in_rimBottom * down * down));
     }
     half4 result = half4(0.0, 0.0, 0.0, 0.0);
     half baseA = (srcA + body.a * (1.0 - srcA)) * half(cover);

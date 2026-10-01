@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
@@ -161,10 +162,17 @@ fun BottomFloatingAccessoryNavigationBar(
 
             // The blob and the row share this box, so the particles below are expressed in the
             // capsule's own coordinates, and the whole group is lifted off the bar's bottom edge.
+            //
+            // The press feedback rides on this box rather than on the items: the native bar hands
+            // `COUITouchMotionAnimator` to `BaseBottomFloatingMenuView` and to each
+            // `COUIBottomFloatingAccessoryView`, so the whole bar springs as one surface, and the
+            // merged blob has no way to follow a transform applied to one of its particles alone.
+            val press = rememberBarPress(barWidth, barHeight)
             Box(
                 modifier = Modifier
                     .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance)
-                    .onSizeChanged { barWidthPx = it.width },
+                    .onSizeChanged { barWidthPx = it.width }
+                    .then(press),
             ) {
                 // The device lifts the bar with COUI's `SHADOW_LV_B` spot shadow. Each view casts its
                 // own — `ShadowUtils.setElevationToView(this, 2, ...)` runs both in
@@ -262,6 +270,12 @@ fun BottomFloatingAccessoryNavigationBar(
                         null
                     },
                     bottomGlowBlur = 8.dp,
+                    // COUI strokes both long edges of a silhouette — `GradientStrokeStyleSpec` carries
+                    // a width and an alpha per edge — so the capsule wears a lower line as well as the
+                    // upper one. Measured on Gallery's accessory bar the two read the same height
+                    // (both ~+40/255 over the body), which is what a weight of 1 gives; the sides stay
+                    // dark because both terms are gated on the vertical axis alone.
+                    rimBottomScale = 1f,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (startAccessory != null) {
@@ -270,7 +284,6 @@ fun BottomFloatingAccessoryNavigationBar(
                             tuckDirection = 1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
-                            active = startAccessoryActive,
                             content = startAccessory,
                         )
                         Spacer(Modifier.width(sideSpacing))
@@ -290,7 +303,6 @@ fun BottomFloatingAccessoryNavigationBar(
                             tuckDirection = -1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
-                            active = endAccessoryActive,
                             content = endAccessory,
                         )
                     }
@@ -304,16 +316,9 @@ fun BottomFloatingAccessoryNavigationBar(
  * One side's accessory view: a fixed [size] square whose content scales, fades and slides out of the
  * capsule exactly like the native `AccessorySideExpansionController` drives its accessory view.
  *
- * While a finger is down the square also springs to
- * [BottomFloatingAccessoryNavigationBarDefaults.PressScale], the `COUIBottomFloatingAccessoryView`
- * press feedback: its own `COUITouchMotionAnimator` runs `setPressScaleEnable(true)` and drives the
- * view's `scaleX` / `scaleY`. `AccessorySideExpansionController` disables that animator while the
- * accessory is collapsed (`setExpansionViewTouchMotionAnimEnabled(false)`), so [active] gates it.
- *
  * @param expansion The animated alpha / scale / tuck of this side.
  * @param tuckDirection `+1` for the start side, `-1` for the end side: the sign that points from the
  *   accessory's resting place back towards the capsule.
- * @param active Whether the accessory is expanded and therefore takes press feedback.
  */
 @Composable
 private fun AccessorySlot(
@@ -321,18 +326,15 @@ private fun AccessorySlot(
     tuckDirection: Float,
     size: Dp,
     sideSpacing: Dp,
-    active: Boolean,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val press = rememberAccessoryPress(active)
     Box(
         modifier = Modifier
             .size(size)
-            .then(press.modifier)
             .graphicsLayer {
                 alpha = expansion.alpha
-                scaleX = expansion.scale * press.scale
-                scaleY = expansion.scale * press.scale
+                scaleX = expansion.scale
+                scaleY = expansion.scale
                 translationX = tuckDirection * expansion.tuck * (size + sideSpacing).toPx()
             },
         contentAlignment = Alignment.Center,
@@ -341,47 +343,62 @@ private fun AccessorySlot(
     }
 }
 
-/** The accessory's press scale, plus the pointer tracking that drives it. */
-private class AccessoryPress(val modifier: Modifier, val scale: Float)
-
 /**
- * Remembers the accessory's press feedback.
+ * Remembers the press feedback of the whole bar.
  *
- * The target is [BottomFloatingAccessoryNavigationBarDefaults.PressScale]; the two springs are the
- * jelly pair `COUIPressAnimatorUnit` picks for a 1:1 view
- * ([BottomFloatingAccessoryNavigationBarDefaults.PressSpring] going down,
- * [BottomFloatingAccessoryNavigationBarDefaults.ReleaseSpring] coming back up).
+ * `BaseBottomFloatingMenuView.initTouchMotionAnim` hands a `COUITouchMotionAnimator` to the menu view
+ * with `setPressScaleEnable(true)`, and `COUIBottomFloatingAccessoryView` gives the two accessory views
+ * one each; the feedback those units drive is a uniform scale whose target comes from
+ * `PressPhysicsEngine.calculateTargetScaleBreakdown`, the same mapping
+ * [BottomFloatingNavigationBarDefaults.pressScale] reproduces. The bar applies it once, over the box
+ * that holds the merged blob, the shadows and the row, so the capsule and both accessories spring
+ * together — a transform on one particle alone would tear the metaball apart.
+ *
+ * The pivot sits on the bar's bottom edge rather than at its centre, so the scale reads as the bar
+ * being pushed down and coming back. `COUIFloatingButton` anchors its own label background the same
+ * way (`setPivotY(height)`) for exactly that effect.
+ *
+ * The pointer is tracked in [PointerEventPass.Initial] and consumed nowhere, so every item and every
+ * accessory still receives the whole press.
+ *
+ * @param width The bar's measured width; drives the area channel of the press mapping.
+ * @param height The bar's height; drives the aspect channel.
  */
 @Composable
-private fun rememberAccessoryPress(active: Boolean): AccessoryPress {
+private fun rememberBarPress(width: Dp, height: Dp): Modifier {
     var pressed by remember { mutableStateOf(false) }
     val progress = remember { Animatable(0f) }
-    LaunchedEffect(pressed, active) {
-        if (pressed && active) {
+    LaunchedEffect(pressed) {
+        if (pressed) {
             progress.animateTo(
                 targetValue = 1f,
-                animationSpec = BottomFloatingAccessoryNavigationBarDefaults.PressSpring,
+                animationSpec = BottomFloatingNavigationBarDefaults.PressScalePressSpring,
             )
         } else {
             progress.animateTo(
                 targetValue = 0f,
-                animationSpec = BottomFloatingAccessoryNavigationBarDefaults.ReleaseSpring,
+                animationSpec = BottomFloatingNavigationBarDefaults.PressScaleReleaseSpring,
             )
         }
     }
-    val target = BottomFloatingAccessoryNavigationBarDefaults.PressScale
-    val modifier = Modifier.pointerInput(active) {
-        if (!active) return@pointerInput
-        awaitPointerEventScope {
-            while (true) {
-                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                pressed = true
-                waitForUpOrCancellation(pass = PointerEventPass.Initial)
-                pressed = false
+    val target = BottomFloatingNavigationBarDefaults.pressScale(width, height)
+    return Modifier
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    pressed = true
+                    waitForUpOrCancellation(pass = PointerEventPass.Initial)
+                    pressed = false
+                }
             }
         }
-    }
-    return AccessoryPress(modifier = modifier, scale = 1f - (1f - target) * progress.value)
+        .graphicsLayer {
+            val scale = 1f - (1f - target) * progress.value
+            scaleX = scale
+            scaleY = scale
+            transformOrigin = TransformOrigin(0.5f, 1f)
+        }
 }
 
 /** The animated alpha / scale / tuck of one accessory view. */
@@ -492,36 +509,6 @@ object BottomFloatingAccessoryNavigationBarDefaults {
 
     /** The gap between the capsule and an accessory view. COUI `mSideViewSpacing`. */
     val SideSpacing = 12.dp
-
-    /**
-     * The scale the accessory springs to while pressed, from
-     * [BottomFloatingNavigationBarDefaults.pressScale] on the [AccessorySize] square: 56^2 falls at
-     * (3136 - 400) / (22500 - 400) = 0.1238 of the `PressParams` area mapping, so the area channel
-     * lands at 0.85 + 0.12 * 0.1238 = 0.8649; a square has no aspect channel and the clamp does not
-     * bite.
-     */
-    val PressScale = BottomFloatingNavigationBarDefaults.pressScale(AccessorySize, AccessorySize)
-
-    /**
-     * The press spring. `COUIPressAnimatorUnit` picks the candy pair only when the view is more than
-     * twice as wide as it is tall, and the accessory is a square, so it is the jelly pair:
-     * `PressParams.jellyPressSpring` is bounce 0 / response 0.25.
-     */
-    val PressSpring = folmeSpring<Float>(
-        damping = 1f,
-        response = 0.25f,
-        visibilityThreshold = 0.001f,
-    )
-
-    /**
-     * The release spring: `PressParams.jellyHandupSpring`, bounce 0.6 / response 0.5, cut at
-     * `CommonParams.iolPressHandUpMinimumVisibleChange` (1.0E-4).
-     */
-    val ReleaseSpring = folmeSpring<Float>(
-        damping = 0.4f,
-        response = 0.5f,
-        visibilityThreshold = 1.0E-4f,
-    )
 
     /** The outside padding on a small screen. COUI `coui_bottom_floating_navigation_bar_padding_horizontal`. */
     val PaddingHorizontal = 16.dp
