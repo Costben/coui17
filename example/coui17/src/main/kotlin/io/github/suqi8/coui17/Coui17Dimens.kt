@@ -20,6 +20,15 @@ object Coui17Dimens {
      */
     val HomeAppBarBottom = 88.52.dp
 
+    /** Expanded page header height including the status-bar inset. */
+    val ExpandedHeaderHeight = 144.dp
+
+    /** The compact toolbar height excluding the status-bar inset. */
+    val CollapsedHeaderHeight = 52.dp
+
+    /** Distance over which a large title transitions into the compact toolbar. */
+    val HeaderCollapseRange = ExpandedHeaderHeight - CollapsedHeaderHeight
+
     /**
      * `homepage_appbar_blur_extra_height` (`res/values/dimens.xml:2812`): how far the material overlay
      * reaches past the bar's bottom edge. The device's `blur_overlay` measures 397px = 343px + 54px.

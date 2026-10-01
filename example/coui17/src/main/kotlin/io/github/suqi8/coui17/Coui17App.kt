@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.navigation3.runtime.NavKey
 import appstate.AppState
 import appstate.LocalAppState
@@ -74,7 +75,7 @@ enum class Coui17Page(val title: String) {
     Icons("图标"),
     Color("配色"),
     TextStyle("文字样式"),
-    Settings("设置项"),
+    Settings("设置"),
     ;
 
     /** Whether this page is reached from the panel rather than the capsule, so it carries a back key. */
@@ -142,6 +143,16 @@ private fun Coui17Root() {
     val bottomSpace = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
         Coui17Dimens.BottomBarSpace
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val collapseFraction = (
+        scrollOffset.value / with(density) {
+            (Coui17Dimens.ExpandedHeaderHeight - (statusBar + Coui17Dimens.CollapsedHeaderHeight)).toPx()
+        }
+        ).coerceIn(0f, 1f)
+    val contentTop = lerp(
+        Coui17Dimens.ExpandedHeaderHeight,
+        statusBar + Coui17Dimens.CollapsedHeaderHeight,
+        collapseFraction,
+    )
     val onSearch = {
         searchStatus = searchStatus.copy(current = SearchStatus.Status.EXPANDING)
     }
@@ -166,56 +177,45 @@ private fun Coui17Root() {
                             page = Coui17Page.entries[page],
                             snackbarHostState = snackbarHostState,
                             scrollOffset = scrollOffset,
-                            contentTop = if (page == Coui17Page.Home.ordinal) {
-                                Coui17Dimens.HomeAppBarBottom
-                            } else {
-                                statusBar + Coui17Dimens.CompactToolbarHeight
-                            },
+                            contentTop = contentTop,
                             contentBottom = bottomSpace,
                         )
                     }
                 }
-                if (currentPage == Coui17Page.Home) {
-                    Coui17HomeTopBar(
-                        title = currentPage.title,
-                        searchLabel = "搜索组件",
-                        onSearchClick = onSearch,
-                        scrollFraction = scrollFraction,
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
-                } else {
-                    Coui17CompactToolbar(
-                        title = currentPage.title,
-                        onBack = if (currentPage.isPanelPage) {
-                            { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
-                        } else {
-                            null
-                        },
-                        scrollFraction = scrollFraction,
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
-                }
+                Coui17PageTopBar(
+                    title = currentPage.title,
+                    collapseFraction = collapseFraction,
+                    scrollFraction = scrollFraction,
+                    onBack = if (currentPage.isPanelPage) {
+                        { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
+                    } else {
+                        {}
+                    },
+                    onSearch = onSearch,
+                    onMore = { panelOpen = true },
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
                 Coui17AccessoryBar(
                     currentPage = pagerState.currentPage,
                     onSelectPage = { page ->
                         lastCapsulePage = page
+                        scrollOffset.value = 0f
                         coroutineScope.launch { pagerState.animateScrollToPage(page) }
                     },
                     onSearch = onSearch,
                     onOpenPanel = { panelOpen = true },
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-                Coui17Panel(
-                    show = panelOpen,
-                    onSelect = { page ->
+                    onClosePanel = { panelOpen = false },
+                    panelOpen = panelOpen,
+                    onSelectPanel = { page ->
                         panelOpen = false
+                        scrollOffset.value = 0f
                         coroutineScope.launch { pagerState.animateScrollToPage(page) }
                     },
-                    onDismiss = { panelOpen = false },
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
                 searchStatus.SearchPager(
                     onSearchStatusChange = { searchStatus = it },
-                    offsetY = Coui17Dimens.HomeAppBarBottom,
+                    offsetY = contentTop,
                     defaultResult = {},
                     result = {},
                 )
