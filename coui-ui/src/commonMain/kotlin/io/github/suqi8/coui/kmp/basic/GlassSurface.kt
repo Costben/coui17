@@ -32,6 +32,15 @@ enum class GlassContainer {
 
     /** Full-width sheets and dialogs. */
     Large,
+
+    /**
+     * A popup panel: the same size class as [Large], lit on both long edges.
+     *
+     * COUI's `ShadowEdge` strokes both edges of a panel's silhouette (`EDGE_STYLE_0` carries a width
+     * and an alpha per edge), while the glass bloom only reaches the top edge unless a light is placed
+     * below the surface. Panels use the preset that has one.
+     */
+    Panel,
 }
 
 /** Default values for the ColorOS 17 light-sensing glass surfaces. */
@@ -75,8 +84,16 @@ fun rememberGlassHighlight(
         } else {
             when (container) {
                 GlassContainer.Small -> if (isDark) Highlight.GlassStrokeSmallDark else Highlight.GlassStrokeSmallLight
+
                 GlassContainer.Medium -> if (isDark) Highlight.GlassStrokeMiddleDark else Highlight.GlassStrokeMiddleLight
+
                 GlassContainer.Large -> if (isDark) Highlight.GlassStrokeBigDark else Highlight.GlassStrokeBigLight
+
+                GlassContainer.Panel -> if (isDark) {
+                    Highlight.GlassStrokePanelDark
+                } else {
+                    Highlight.GlassStrokePanelLight
+                }
             }
         }
     }

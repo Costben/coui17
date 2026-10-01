@@ -83,7 +83,7 @@ internal fun CascadingPrimaryContent(
         SquircleShape(cornerRadius = CascadingPopupCornerRadius, squircleEnabled = squircleEnabled)
     }
     val backdrop = if (enableGlass) LocalBackdrop.current else null
-    val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
+    val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
     // Both boxes propagate the minimum width: [CascadingListPopupLayout] already floors the panel at
     // the caller's `minWidth`, and without passing that floor down to the list the two sizes
     // disagree — the column clamps to its own `ListPopupDefaults.MinWidth` while the panel takes the
@@ -258,7 +258,7 @@ internal fun CascadingSecondaryContent(
     val secondaryTopLeft = secondaryLocalInUnion.topLeft
     val secondaryWidth = secondaryLocalInUnion.width
     val backdrop = if (enableGlass) LocalBackdrop.current else null
-    val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
+    val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
     val squircleEnabled = isSquircleEnabled()
     // Read at outline/draw time, never at composition time: the morph runs on its own animation and
     // must not recompose this subtree every frame.

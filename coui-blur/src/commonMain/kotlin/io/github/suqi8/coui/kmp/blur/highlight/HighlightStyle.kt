@@ -220,6 +220,55 @@ data class BloomStroke(
             ),
         )
 
+        /**
+         * Large panel preset, light theme: the [GlassStrokeBigLight] geometry with its second light
+         * moved under the surface, so the rim is lit on the bottom edge as well as the top.
+         *
+         * COUI's `ShadowEdge` traces two rim lines on one silhouette, not one — `GradientStrokeStyleSpec`
+         * carries a `rectLineWidth` / `rectLineAlpha` pair per edge, and `EDGE_STYLE_0` runs
+         * `{2, 6}` against `{2, 3}` with alphas `{0.7, 1.0}`, i.e. both long edges are stroked. The
+         * glass bloom this port uses reaches the bottom edge only through a light placed below the
+         * surface: `applyLightUniforms` folds a light's position into `axis`, and the shader gates each
+         * light by `max(dot(axis, n), 0)`, so a light at `y = 0.5` or `0.6` — above the `(0.5, 0.7)`
+         * reference — can only ever light a normal pointing up.
+         *
+         * A light at `y = 1.0` normalizes to `dot(n, L) = 0.514` on the bottom edge where the primary
+         * reaches `0.371` on the top one, so `0.16` against the primary's `0.3` gives both edges the
+         * same `0.041` contribution.
+         */
+        @Stable
+        val GlassStrokePanelLight: BloomStroke = BloomStroke(
+            color = Color.White.copy(alpha = 0.05f),
+            innerBlurRadius = 3.5.dp,
+            primaryLight = LightSource(
+                position = LightPosition(0.5f, 0.5f, -0.5f),
+                intensity = 0.3f,
+            ),
+            secondaryLight = LightSource(
+                position = LightPosition(0.5f, 1f, -0.5f),
+                intensity = 0.16f,
+            ),
+        )
+
+        /**
+         * Large panel preset, dark theme: [GlassStrokeBigDark] with the second light moved under the
+         * surface. `0.21` against the primary's `0.4` evens the two edges at `0.055`, matching
+         * [GlassStrokePanelLight]'s construction.
+         */
+        @Stable
+        val GlassStrokePanelDark: BloomStroke = BloomStroke(
+            color = Color.White.copy(alpha = 0.05f),
+            innerBlurRadius = 1.7.dp,
+            primaryLight = LightSource(
+                position = LightPosition(0.5f, 0.5f, -0.5f),
+                intensity = 0.4f,
+            ),
+            secondaryLight = LightSource(
+                position = LightPosition(0.5f, 1f, -0.5f),
+                intensity = 0.21f,
+            ),
+        )
+
         /** Standard card preset, dark theme. */
         @Stable
         val GlassStrokeMiddleDark: BloomStroke = BloomStroke(

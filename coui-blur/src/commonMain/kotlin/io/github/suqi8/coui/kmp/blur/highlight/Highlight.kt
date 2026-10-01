@@ -52,6 +52,14 @@ data class Highlight(
         @Stable
         val GlassStrokeSmallDark: Highlight = Highlight(style = BloomStroke.GlassStrokeSmallDark)
 
+        /** Large panel preset, light theme. Lit on the bottom edge as well as the top. */
+        @Stable
+        val GlassStrokePanelLight: Highlight = Highlight(style = BloomStroke.GlassStrokePanelLight)
+
+        /** Large panel preset, dark theme. Lit on the bottom edge as well as the top. */
+        @Stable
+        val GlassStrokePanelDark: Highlight = Highlight(style = BloomStroke.GlassStrokePanelDark)
+
         /** Default highlight — aliases [GlassStrokeMiddleLight]. */
         @Stable
         val Default: Highlight = GlassStrokeMiddleLight
