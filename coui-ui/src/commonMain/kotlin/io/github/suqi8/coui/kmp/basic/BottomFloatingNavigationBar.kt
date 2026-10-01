@@ -757,14 +757,8 @@ object BottomFloatingNavigationBarDefaults {
     /** The minimum spacing kept with a slide view. COUI `coui_bottom_floating_navigation_bar_Minimum_spacing_with_slide_view`. */
     val MinimumSpacingWithSlideView = 12.dp
 
-    /**
-     * The label font size. COUI `coui_navigation_item_text_size`.
-     *
-     * Inferred, not measured: the native item's textAppearance is `couiTextButtonM` (14sp), while
-     * 10sp here is derived from the 48dp item height budget (4 + 24 + 2 leaves room for roughly a
-     * 10sp line).
-     */
-    val LabelFontSize = 10.sp
+    /** Native `couiTextButtonM` is 14sp; the 48dp cell leaves exactly enough room for it. */
+    val LabelFontSize = 14.sp
 
     /**
      * The capsule corner radius. The native code computes
