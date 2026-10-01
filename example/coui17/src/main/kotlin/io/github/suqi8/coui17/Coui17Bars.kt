@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,8 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import component.searchBarShadow
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
@@ -78,7 +81,6 @@ fun Coui17HomeTopBar(
     scrollFraction: Float,
     modifier: Modifier = Modifier,
 ) {
-    val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     AppBarBlurOverlay(
         modifier = modifier
             .fillMaxWidth()
@@ -87,20 +89,10 @@ fun Coui17HomeTopBar(
         scrollFraction = scrollFraction,
     ) {
         Column(modifier = Modifier.fillMaxWidth().height(Coui17Dimens.HomeAppBarBottom)) {
-            Box(
-                modifier = Modifier.fillMaxWidth().height(statusBar),
-                contentAlignment = Alignment.BottomStart,
-            ) {
-                Text(
-                    text = title,
-                    modifier = Modifier.padding(
-                        start = Coui17Dimens.BarHorizontalPadding,
-                        bottom = 6.dp,
-                    ),
-                    style = COUITheme.textStyles.title3,
-                    color = COUITheme.colorScheme.onSurface,
-                )
-            }
+            // The system Settings home leaves this band clear so its status-bar clock never
+            // collides with a large title. Keeping the measured band preserves the search pill's
+            // y=164px position while removing the overlapping "设置" text.
+            Spacer(modifier = Modifier.height(Coui17Dimens.HomeTitleBandHeight))
             Box(
                 modifier = Modifier.fillMaxWidth().height(Coui17Dimens.HomeSearchBandHeight),
                 contentAlignment = Alignment.Center,
@@ -249,37 +241,50 @@ fun Coui17AccessoryBar(
     onPanelDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BottomFloatingAccessoryNavigationBar(
-        modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding(),
-        startAccessory = {
-            Coui17AccessoryBall(
-                icon = COUIIcons.Basic.Search,
-                description = "搜索",
-                onClick = onSearch,
-            )
-        },
-        endAccessory = {
-            Coui17AccessoryBall(
-                icon = COUIIcons.More,
-                description = "更多",
-                onClick = onOpenPanel,
-            )
-            Coui17Panel(
-                show = panelOpen,
-                onSelect = onPanelSelect,
-                onDismiss = onPanelDismiss,
-            )
-        },
-    ) {
-        Coui17Tabs.forEachIndexed { index, tab ->
-            BottomFloatingNavigationBarItem(
-                selected = currentPage == index,
-                onClick = { onSelectPage(index) },
-                icon = tab.icon,
-                label = tab.label,
-            )
+    val systemDensity = LocalDensity.current
+    val galleryDensity = remember(systemDensity) {
+        Density(
+            density = systemDensity.density * Coui17Dimens.GALLERY_DENSITY_SCALE,
+            fontScale = systemDensity.fontScale,
+        )
+    }
+    // Gallery creates this bar in its 565dpi activity while Settings and the device window use
+    // 620dpi. Scope that physical scaling to the bar only; the anchored popup is restored below.
+    CompositionLocalProvider(LocalDensity provides galleryDensity) {
+        BottomFloatingAccessoryNavigationBar(
+            modifier = modifier
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+            startAccessory = {
+                Coui17AccessoryBall(
+                    icon = COUIIcons.Basic.Search,
+                    description = "搜索",
+                    onClick = onSearch,
+                )
+            },
+            endAccessory = {
+                Coui17AccessoryBall(
+                    icon = COUIIcons.More,
+                    description = "更多",
+                    onClick = onOpenPanel,
+                )
+                CompositionLocalProvider(LocalDensity provides systemDensity) {
+                    Coui17Panel(
+                        show = panelOpen,
+                        onSelect = onPanelSelect,
+                        onDismiss = onPanelDismiss,
+                    )
+                }
+            },
+        ) {
+            Coui17Tabs.forEachIndexed { index, tab ->
+                BottomFloatingNavigationBarItem(
+                    selected = currentPage == index,
+                    onClick = { onSelectPage(index) },
+                    icon = tab.icon,
+                    label = tab.label,
+                )
+            }
         }
     }
 }

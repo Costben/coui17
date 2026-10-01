@@ -238,12 +238,13 @@ private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> 
     item(key = "gap:$title") { Spacer(modifier = Modifier.height(Coui17Dimens.ListGroupGap)) }
 }
 
-/** A COS17 list row holding the entry's name: 52.13dp tall, text starting at x=72dp. */
+/** A compact Settings section heading aligned with the text inside its card. */
 @Composable
 private fun Coui17GroupTitle(title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = Coui17Dimens.ListCardInset)
             .height(Coui17Dimens.ListRowHeight),
         contentAlignment = Alignment.CenterStart,
     ) {
