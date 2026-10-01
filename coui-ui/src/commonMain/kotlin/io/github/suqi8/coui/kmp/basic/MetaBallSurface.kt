@@ -127,6 +127,8 @@ object MetaBallDefaults {
  * @param extensionFactorY The vertical reach multiplier.
  * @param rimColor The light traced along the merged outline, or `null` to skip it.
  * @param rimBlur How far that light bleeds inward before it dies, in dp.
+ * @param bottomGlowColor A directional light that diffuses below the silhouette, or `null` to skip it.
+ * @param bottomGlowBlur How far the bottom light diffuses outside the silhouette, in dp.
  * @param content The content drawn on top of the silhouette.
  */
 @Composable
@@ -142,6 +144,8 @@ fun MetaBallSurface(
     extensionFactorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
     rimColor: Color? = Color.White.copy(alpha = 0.55f),
     rimBlur: Dp = MetaBallDefaults.RimBlur,
+    bottomGlowColor: Color? = null,
+    bottomGlowBlur: Dp = 8.dp,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val runsShader = isRuntimeShaderSupported()
@@ -149,6 +153,22 @@ fun MetaBallSurface(
     val glass = backdrop != null && shader != null
 
     Box(modifier = modifier) {
+        if (bottomGlowColor != null && shader != null) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawMetaBall(
+                    shader = shader,
+                    particles = particles,
+                    body = Color.Transparent,
+                    rim = Color.Transparent,
+                    extension = extension,
+                    extensionFactorX = extensionFactorX,
+                    extensionFactorY = extensionFactorY,
+                    rimBlur = rimBlur,
+                    bottomGlow = bottomGlowColor,
+                    bottomGlowBlur = bottomGlowBlur,
+                )
+            }
+        }
         if (glass) {
             Box(
                 modifier = Modifier
@@ -235,6 +255,8 @@ private fun DrawScope.drawMetaBall(
     extensionFactorX: Float,
     extensionFactorY: Float,
     rimBlur: Dp,
+    bottomGlow: Color = Color.Transparent,
+    bottomGlowBlur: Dp = 0.dp,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
     if (count == 0) return
@@ -264,6 +286,8 @@ private fun DrawScope.drawMetaBall(
     shader.setFloatUniform("in_rim", rim.red, rim.green, rim.blue, rim.alpha)
     shader.setFloatUniform("in_rimWidth", MetaBallDefaults.RimWidth.toPx())
     shader.setFloatUniform("in_rimBlur", rimBlur.toPx())
+    shader.setFloatUniform("in_glow", bottomGlow.red, bottomGlow.green, bottomGlow.blue, bottomGlow.alpha)
+    shader.setFloatUniform("in_glowRadius", bottomGlowBlur.toPx())
 
     drawRect(brush = shader.asBrush(), size = size)
 }
@@ -309,6 +333,8 @@ uniform float4 in_body;
 uniform float4 in_rim;
 uniform float in_rimWidth;
 uniform float in_rimBlur;
+uniform float4 in_glow;
+uniform float in_glowRadius;
 
 float couiSdRoundBox(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
@@ -359,7 +385,14 @@ half4 main(float2 xy) {
     // 0.6 device pixels approximates the one-pixel antialiasing band fwidth would have measured.
     float aa = 0.6;
     float cover = 1.0 - smoothstep(-aa, aa, d);
-    if (cover <= 0.003) {
+    float2 rel = (xy - nearest) / max(nearestHalf, float2(1.0, 1.0));
+    // The native bottom-bar material sends a small amount of light through the lower edge. It is
+    // directional: the upper and side edges stay dark while the light fans out below the shape.
+    float outside = step(0.0, d);
+    float distanceFade = 1.0 - smoothstep(0.0, max(in_glowRadius, 0.001), d);
+    float down = smoothstep(0.0, 1.0, rel.y);
+    half glowA = in_glow.w * half(outside * distanceFade * down);
+    if (cover <= 0.003 && glowA <= 0.003) {
         return half4(0.0);
     }
 
@@ -374,13 +407,15 @@ half4 main(float2 xy) {
     float rimMask = smoothstep(in_rimWidth + in_rimBlur, in_rimWidth, -d);
     half srcA = half(0.0);
     if (rimMask > 0.0) {
-        float2 rel = (xy - nearest) / max(nearestHalf, float2(1.0, 1.0));
         float up = clamp(-rel.y, 0.0, 1.0);
         srcA = rim.a * half(rimMask * up * up);
     }
     half4 result = half4(0.0, 0.0, 0.0, 0.0);
-    result.a = srcA + body.a * (1.0 - srcA);
-    result.rgb = rim.rgb * srcA + body.rgb * body.a * (1.0 - srcA);
-    return half4(result.rgb * half(cover), result.a * half(cover));
+    half baseA = (srcA + body.a * (1.0 - srcA)) * half(cover);
+    half3 baseRgb = (rim.rgb * srcA + body.rgb * body.a * (1.0 - srcA)) * half(cover);
+    result.a = glowA + baseA * (1.0 - glowA);
+    half3 glowRgb = half3(in_glow.x, in_glow.y, in_glow.z);
+    result.rgb = glowRgb * glowA + baseRgb * (1.0 - glowA);
+    return result;
 }
 """

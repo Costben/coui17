@@ -254,6 +254,14 @@ fun BottomFloatingAccessoryNavigationBar(
                     } else {
                         null
                     },
+                    // Gallery's material sends a weak, directional bloom through the lower edge;
+                    // keep it separate from the top rim so the capsule does not become a white ring.
+                    bottomGlowColor = if (backdrop != null) {
+                        Color.White.copy(alpha = if (isDark) 0.08f else 0.12f)
+                    } else {
+                        null
+                    },
+                    bottomGlowBlur = 8.dp,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (startAccessory != null) {
