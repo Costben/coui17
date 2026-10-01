@@ -5,6 +5,9 @@ package io.github.suqi8.coui.kmp.layout
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -13,6 +16,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -28,7 +32,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -48,6 +51,7 @@ import io.github.suqi8.coui.kmp.basic.popupGlassBlendColors
 import io.github.suqi8.coui.kmp.basic.rememberGlassHighlight
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 
@@ -80,7 +84,13 @@ internal fun CascadingPrimaryContent(
     }
     val backdrop = if (enableGlass) LocalBackdrop.current else null
     val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
+    // Both boxes propagate the minimum width: [CascadingListPopupLayout] already floors the panel at
+    // the caller's `minWidth`, and without passing that floor down to the list the two sizes
+    // disagree — the column clamps to its own `ListPopupDefaults.MinWidth` while the panel takes the
+    // floor, and the row press/selected mask (8dp in from each side of the *row*) then sits
+    // left-aligned inside a wider panel instead of spanning it. Native gives the floor to the list.
     Box(
+        propagateMinConstraints = true,
         modifier = Modifier
             .graphicsLayer {
                 val s = ENTER_SCALE_FROM + ENTER_SCALE_RANGE * enterFraction()
@@ -110,7 +120,7 @@ internal fun CascadingPrimaryContent(
                 highlight = highlight,
             ),
     ) {
-        Box {
+        Box(propagateMinConstraints = true) {
             ListPopupColumn {
                 val lastEntryIdx = entries.lastIndex
                 entries.forEachIndexed { entryIndex, entry ->
@@ -249,6 +259,7 @@ internal fun CascadingSecondaryContent(
     val secondaryWidth = secondaryLocalInUnion.width
     val backdrop = if (enableGlass) LocalBackdrop.current else null
     val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
+    val squircleEnabled = isSquircleEnabled()
     // Read at outline/draw time, never at composition time: the morph runs on its own animation and
     // must not recompose this subtree every frame.
     val currentMorph = {
@@ -258,6 +269,7 @@ internal fun CascadingSecondaryContent(
             secondary = secondaryLocalInUnion,
             cornerPx = cornerPx,
             anchorIsLast = isAnchorPopupLast,
+            squircleEnabled = squircleEnabled,
         )
     }
 
@@ -270,16 +282,13 @@ internal fun CascadingSecondaryContent(
                 alpha = enterAlpha()
                 this.transformOrigin = transformOrigin
             }
-            .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, isSquircleEnabled())
+            .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, squircleEnabled)
             // Silhouette clip for the pass: the glass surface's own shape only clips its content
             // layer, so the blurred backdrop — and the fallback fill when glass is off — are cut
             // here, in draw phase, where the morph fraction is current.
             .drawWithCache {
-                val innerPath = Path()
                 onDrawWithContent {
-                    innerPath.rewind()
-                    innerPath.addRoundRect(currentMorph().roundRect)
-                    clipPath(innerPath) {
+                    clipPath(currentMorph().path) {
                         this@onDrawWithContent.drawContent()
                     }
                 }
@@ -412,6 +421,16 @@ internal fun CascadingSecondaryColumn(
  * Equality is by value, which is what the glass surface's outline cache reads — re-emitting an
  * unchanged fraction keeps the cached outline, a moved one invalidates it. Emitting the same
  * instance instead would pin whichever outline it produced first.
+ *
+ * It is a [CornerBasedShape] rather than a bare [Shape] for the same reason [SquircleShape] is: the
+ * rim highlight reads the radii off the shape and falls back to `min(width, height) / 2` otherwise,
+ * which during a morph would draw a stadium that does not follow the silhouette. The four corner
+ * sizes mirror [rect] exactly.
+ *
+ * The outline itself is the same corner family the static surface uses — [addSquircleRoundRect], the
+ * Lp superellipse — not a [RoundRect]. A circular corner parts from that superellipse along the
+ * diagonal by `0.0718 * radius` (7.8px at 28dp), so a morph traced with arcs would slide the rim
+ * highlight off its own silhouette for the whole animation, the very defect the static surface had.
  */
 private class MorphClipShape(
     private val fraction: Float,
@@ -419,21 +438,53 @@ private class MorphClipShape(
     private val secondary: IntRect,
     private val cornerPx: Float,
     private val anchorIsLast: Boolean,
-) : Shape {
+    private val squircleEnabled: Boolean,
+) : CornerBasedShape(
+    topStart = CornerSize(cornerPx * fraction),
+    topEnd = CornerSize(cornerPx * fraction),
+    bottomEnd = CornerSize(if (anchorIsLast) cornerPx else cornerPx * fraction),
+    bottomStart = CornerSize(if (anchorIsLast) cornerPx else cornerPx * fraction),
+) {
 
-    val roundRect: RoundRect
+    val rect: Rect
+        get() = Rect(
+            left = lerp(anchor.left.toFloat(), secondary.left.toFloat(), fraction),
+            top = lerp(anchor.top.toFloat(), secondary.top.toFloat(), fraction),
+            right = lerp(anchor.right.toFloat(), secondary.right.toFloat(), fraction),
+            bottom = lerp(anchor.bottom.toFloat(), secondary.bottom.toFloat(), fraction),
+        )
+
+    /** Rebuilt per frame: the mask below is wiped between hits and the geometry is moving. */
+    val path: Path
         get() {
             val rTop = cornerPx * fraction
             // Last-row anchors share primary's rounded bottom — keep both bottom corners full.
             // Mid-list anchors must shrink uniformly into a flat internal row.
             val rBottom = if (anchorIsLast) cornerPx else rTop
+            return Path().apply {
+                addSquircleRoundRect(
+                    rect = rect,
+                    topLeft = rTop,
+                    topRight = rTop,
+                    bottomRight = rBottom,
+                    bottomLeft = rBottom,
+                    squircleEnabled = squircleEnabled,
+                )
+            }
+        }
+
+    val roundRect: RoundRect
+        get() {
+            val rTop = cornerPx * fraction
+            val rBottom = if (anchorIsLast) cornerPx else rTop
             val topRadius = CornerRadius(rTop, rTop)
             val bottomRadius = CornerRadius(rBottom, rBottom)
+            val r = rect
             return RoundRect(
-                left = lerp(anchor.left.toFloat(), secondary.left.toFloat(), fraction),
-                top = lerp(anchor.top.toFloat(), secondary.top.toFloat(), fraction),
-                right = lerp(anchor.right.toFloat(), secondary.right.toFloat(), fraction),
-                bottom = lerp(anchor.bottom.toFloat(), secondary.bottom.toFloat(), fraction),
+                left = r.left,
+                top = r.top,
+                right = r.right,
+                bottom = r.bottom,
                 topLeftCornerRadius = topRadius,
                 topRightCornerRadius = topRadius,
                 bottomRightCornerRadius = bottomRadius,
@@ -443,9 +494,31 @@ private class MorphClipShape(
 
     override fun createOutline(
         size: Size,
+        topStart: Float,
+        topEnd: Float,
+        bottomEnd: Float,
+        bottomStart: Float,
         layoutDirection: LayoutDirection,
-        density: Density,
-    ): Outline = Outline.Rounded(roundRect)
+    ): Outline = if (squircleEnabled) {
+        Outline.Generic(path)
+    } else {
+        Outline.Rounded(roundRect)
+    }
+
+    override fun copy(
+        topStart: CornerSize,
+        topEnd: CornerSize,
+        bottomEnd: CornerSize,
+        bottomStart: CornerSize,
+    ): CornerBasedShape = if (topStart == this.topStart && topEnd == this.topEnd &&
+        bottomEnd == this.bottomEnd && bottomStart == this.bottomStart
+    ) {
+        this
+    } else {
+        // The silhouette is a lerped rect, not a rect at the shape's origin, so a per-corner request
+        // is not representable as one; hand back the plain rounded rectangle instead.
+        RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -454,7 +527,8 @@ private class MorphClipShape(
             anchor == other.anchor &&
             secondary == other.secondary &&
             cornerPx == other.cornerPx &&
-            anchorIsLast == other.anchorIsLast
+            anchorIsLast == other.anchorIsLast &&
+            squircleEnabled == other.squircleEnabled
     }
 
     override fun hashCode(): Int {
@@ -463,6 +537,7 @@ private class MorphClipShape(
         result = 31 * result + secondary.hashCode()
         result = 31 * result + cornerPx.hashCode()
         result = 31 * result + anchorIsLast.hashCode()
+        result = 31 * result + squircleEnabled.hashCode()
         return result
     }
 }

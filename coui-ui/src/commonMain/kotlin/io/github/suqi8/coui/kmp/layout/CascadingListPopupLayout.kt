@@ -3,6 +3,8 @@
 package io.github.suqi8.coui.kmp.layout
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -64,6 +66,8 @@ import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.sign
 import kotlin.time.TimeSource
 
 /** Corner radius of the cascading popup container, shared with [PopupCornerRadius] (28dp squircle). */
@@ -95,14 +99,31 @@ private const val ARROW_COLLAPSE_SPRING_RESPONSE = 0.3f
 private val PanelDragMaxStretch = 28.dp
 
 /**
- * Rubber-curve ratio of the panel (`TouchMotionTierParams.iolRubberCurveRatio`, 0.05). The offset is
- * `(1 - 1 / (1 + ratio * d / max)) * max`, so the panel saturates at [PanelDragMaxStretch] instead of
- * following the finger.
+ * Rubber-curve ratio of the panel (`TouchMotionTierParams.iolRubberCurveRatio`, 0.05). Feeds
+ * [panelDragRubber], which saturates at [PanelDragMaxStretch] instead of following the finger.
  */
 private const val PANEL_DRAG_CURVE_RATIO = 0.05f
 
 /** Cap on the release velocity fed back into the hand-up spring (`iolHandUpMaxInitialVelocity`). */
 private const val PANEL_DRAG_MAX_VELOCITY = 1000f
+
+/**
+ * `COUIVelocityTrackerHelper.mVelocityScale` — COUI scales the tracker's px/s by this before the
+ * hand-up path sees it.
+ */
+private const val PANEL_DRAG_VELOCITY_SCALE = 0.3f
+
+/**
+ * A release whose last movement sample is older than this counts as a stopped finger: COUI reads its
+ * velocity tracker at ACTION_UP, and a finger already resting before it lifted contributes none.
+ */
+private const val PANEL_DRAG_VELOCITY_STALE_MS = 100L
+
+/**
+ * Samples [PanelVelocityTracker] keeps. The horizon above is the binding limit at 60Hz; this only
+ * stops a panic-driven event burst from growing the window without bound.
+ */
+private const val PANEL_DRAG_VELOCITY_SAMPLES = 8
 
 /**
  * Spring the panel follows the finger with (`TouchMotionTierParams.iolDragSpring`, response 0.15 /
@@ -112,13 +133,51 @@ private const val PANEL_DRAG_MAX_VELOCITY = 1000f
 private val PanelDragFollowSpring =
     folmeSpring<Float>(damping = 0.85f, response = 0.15f, visibilityThreshold = 0.5f)
 
+/** `TouchMotionTierParams.iolHandUpSpring` — response 0.65, bounce 0.42 (dampingRatio 0.58). */
+private const val PANEL_HAND_UP_RESPONSE = 0.65f
+private const val PANEL_HAND_UP_BOUNCE = 0.42f
+
+/** `TouchMotionTierParams.iolHandUpSpringLargeArea` — response 0.65, bounce 0.45. */
+private const val PANEL_HAND_UP_BOUNCE_LARGE_AREA = 0.45f
+
+/** `iolHandUpSmallAreaRefWidthDp` / `iolHandUpLargeAreaRefWidthDp`, the area ramp's endpoints. */
+private val PanelHandUpSmallAreaRefWidth = 56.dp
+private val PanelHandUpLargeAreaRefWidth = 100.dp
+
+/** `TouchMotionTierParams.iolHandUpAreaBezier`, a cubic-bezier easing `(x1, y1, x2, y2)`. */
+private val PanelHandUpAreaBezier = CubicBezierEasing(0.55026454f, 0f, 0.8915344f, 0.18783069f)
+
 /**
- * Spring that hands the panel back to its anchor on release
- * (`TouchMotionTierParams.iolHandUpSpring`, response 0.65 / bounce 0.42 → dampingRatio 0.58,
- * stiffness (2π / 0.65)²).
+ * `TouchMotionHandUpSpringResolver.resolve` — the hand-up bounce attenuates with the popup's area
+ * between the 56dp and 100dp reference squares through [PanelHandUpAreaBezier]; the response is
+ * 0.65 at both ends of the ramp.
  */
-private val PanelDragHandUpSpring =
-    folmeSpring<Float>(damping = 0.58f, response = 0.65f, visibilityThreshold = 0.5f)
+internal fun panelHandUpAreaBounce(areaPx: Float, density: Density): Float {
+    val smallArea = with(density) { PanelHandUpSmallAreaRefWidth.toPx().let { it * it } }
+    val largeArea = with(density) { PanelHandUpLargeAreaRefWidth.toPx().let { it * it } }
+    val ramp = if (largeArea <= smallArea) {
+        1f
+    } else {
+        PanelHandUpAreaBezier.transform(
+            ((areaPx - smallArea) / (largeArea - smallArea)).coerceIn(0f, 1f),
+        )
+    }
+    return PANEL_HAND_UP_BOUNCE + (PANEL_HAND_UP_BOUNCE_LARGE_AREA - PANEL_HAND_UP_BOUNCE) * ramp
+}
+
+/** The hand-up spring for a given area bounce and release velocity, in [folmeSpring]'s terms. */
+private fun panelHandUpSpring(areaBounce: Float, initialVelocity: Float): SpringSpec<Float> = folmeSpring<Float>(
+    damping = 1f - panelHandUpBounce(initialVelocity, areaBounce),
+    response = PANEL_HAND_UP_RESPONSE,
+    visibilityThreshold = 0.5f,
+)
+
+/**
+ * `COUIITouchMotionUnit.computeHandUpBounce` under `useNormalizedHandUpVelocity` (the shipping
+ * default): the spring's bounce is the larger of the area-resolved value and the release velocity
+ * normalised by `iolHandUpMaxInitialVelocity`, so a flick springs back harder than a slow release.
+ */
+internal fun panelHandUpBounce(initialVelocity: Float, areaBounce: Float): Float = maxOf(abs(initialVelocity) / PANEL_DRAG_MAX_VELOCITY, areaBounce).coerceAtMost(1f)
 
 /** COUI DefaultScreenAnimationController.mMainMenuScalePercent. */
 private const val PRIMARY_SHRUNK_SCALE = 0.9f
@@ -263,21 +322,36 @@ internal fun CascadingListPopupLayout(
 
     // COUISpringDragHelper's model: the panel chases the finger on the drag spring and, on release,
     // travels back to the anchored offset — 0 — on the hand-up spring, carrying the release velocity
-    // COUI clamps at iolHandUpMaxInitialVelocity. Driving the target through snapshotFlow rather
-    // than snapping keeps the follow lag the native spring produces.
+    // the native pipeline normalises and clamps at iolHandUpMaxInitialVelocity. Driving the target
+    // through snapshotFlow rather than snapping keeps the follow lag the native spring produces.
+    val panelDensity = LocalDensity.current
+    val panelMaxStretchPx = with(panelDensity) { PanelDragMaxStretch.toPx() }
+    val panelAreaHandUpBounce = remember(primarySize, panelDensity) {
+        panelHandUpAreaBounce(primarySize.width.toFloat() * primarySize.height, panelDensity)
+    }
     val panelDragOffset = remember { Animatable(0f) }
     var panelDragTarget by remember { mutableFloatStateOf(0f) }
     var panelDragging by remember { mutableStateOf(false) }
-    // Finger travel accumulated over the gesture, plus the last sample it was timed against, so the
-    // hand-up spring can start from the speed the finger actually let go at.
+    // Finger travel accumulated over the gesture and the speed of the latest sample, so the hand-up
+    // spring can start from the velocity the finger actually let go at.
     var panelTravel by remember { mutableFloatStateOf(0f) }
-    var panelLastTravel by remember { mutableFloatStateOf(0f) }
+    var panelFingerVelocity by remember { mutableFloatStateOf(0f) }
     var panelReleaseVelocity by remember { mutableFloatStateOf(0f) }
     var panelLastMoveAt by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
-    val endPanelDrag = remember {
+    var panelDragStartedAt by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
+    val panelVelocity = remember { PanelVelocityTracker() }
+    val endPanelDrag = remember(panelMaxStretchPx, panelAreaHandUpBounce) {
         {
-            panelDragging = false
+            panelReleaseVelocity =
+                if (panelLastMoveAt.elapsedNow().inWholeMilliseconds > PANEL_DRAG_VELOCITY_STALE_MS) {
+                    0f
+                } else {
+                    panelHandUpInitialVelocity(panelFingerVelocity, panelDragOffset.value, panelMaxStretchPx)
+                }
             panelTravel = 0f
+            panelFingerVelocity = 0f
+            panelVelocity.reset()
+            panelDragging = false
             panelDragTarget = 0f
         }
     }
@@ -286,7 +360,11 @@ internal fun CascadingListPopupLayout(
             .collectLatest { (target, dragging) ->
                 panelDragOffset.animateTo(
                     target,
-                    if (dragging) PanelDragFollowSpring else PanelDragHandUpSpring,
+                    if (dragging) {
+                        PanelDragFollowSpring
+                    } else {
+                        panelHandUpSpring(panelAreaHandUpBounce, panelReleaseVelocity)
+                    },
                     initialVelocity = if (dragging) 0f else panelReleaseVelocity,
                 )
             }
@@ -328,7 +406,6 @@ internal fun CascadingListPopupLayout(
     // keeps the drag while it still has a scroll range and the panel rubber-bands on what is left
     // over. Compose states the same split as nested scroll: the list consumes what it can and hands
     // the remainder to this connection.
-    val panelMaxStretchPx = with(LocalDensity.current) { PanelDragMaxStretch.toPx() }
     val panelNestedScroll = remember(panelMaxStretchPx) {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -338,22 +415,17 @@ internal fun CascadingListPopupLayout(
             ): Offset {
                 if (source != NestedScrollSource.UserInput || available.y == 0f) return Offset.Zero
                 val now = TimeSource.Monotonic.markNow()
-                if (panelDragging) {
-                    val elapsed = panelLastMoveAt.elapsedNow().inWholeMilliseconds
-                    if (elapsed > 0) {
-                        panelReleaseVelocity =
-                            ((panelTravel - panelLastTravel) * 1000f / elapsed)
-                                .coerceIn(-PANEL_DRAG_MAX_VELOCITY, PANEL_DRAG_MAX_VELOCITY)
-                        panelLastTravel = panelTravel
-                    }
-                } else {
+                panelLastMoveAt = now
+                if (!panelDragging) {
                     panelDragging = true
                     panelTravel = 0f
-                    panelLastTravel = 0f
-                    panelReleaseVelocity = 0f
+                    panelFingerVelocity = 0f
+                    panelVelocity.reset()
+                    panelDragStartedAt = now
                 }
-                panelLastMoveAt = now
                 panelTravel += available.y
+                panelVelocity.add(panelDragStartedAt.elapsedNow().inWholeMilliseconds, panelTravel)
+                panelFingerVelocity = panelVelocity.velocityPxPerSecond()
                 panelDragTarget = panelDragRubber(panelTravel, panelMaxStretchPx)
                 return available
             }
@@ -763,10 +835,77 @@ private fun CascadingMorphSubLayout(
  * because the popup's list has no scroll range for the drag to live in — so the panel is compressed
  * from the first pixel and 28dp is the asymptote no drag can pass. Measured on the device, the native
  * Gallery ⋮ menu travels 37px for a 1000px drag and 41px for 1160px, which is this curve.
+ *
+ * The magnitude and the sign are separated exactly as the native does: `abs` keeps the denominator
+ * away from zero for upward drags (a signed numerator would hit `1 + ratio * d / max == 0` at
+ * `d == -max / ratio`, i.e. -2170px at 620dpi, and diverge past it), and `sign` gives the odd
+ * symmetry the two drag directions need.
  */
-private fun panelDragRubber(distance: Float, maxStretchPx: Float): Float {
+internal fun panelDragRubber(distance: Float, maxStretchPx: Float): Float {
     if (maxStretchPx <= 0f) return 0f
-    return (1f - 1f / (1f + PANEL_DRAG_CURVE_RATIO * distance / maxStretchPx)) * maxStretchPx
+    val magnitude = abs(distance) * PANEL_DRAG_CURVE_RATIO / maxStretchPx
+    return sign(distance) * (1f - 1f / (magnitude + 1f)) * maxStretchPx
+}
+
+/**
+ * Finger speed over the drag, in raw pointer px/s.
+ *
+ * COUI reads `VelocityTracker.computeCurrentVelocity()` at ACTION_UP, which fits the samples of the
+ * last `VelocityTracker.HORIZON` (100ms) rather than reading one frame — the same 100ms this
+ * horizon uses, and the same one [PANEL_DRAG_VELOCITY_STALE_MS] treats as a stopped finger. Across
+ * the horizon it takes the secant, which is what the fit converges to for a steady drag and stays
+ * bounded for an accelerating one, where a single-frame difference spikes. It is an approximation of
+ * the fit, not the fit itself: a finger that reverses inside the horizon reports the net travel.
+ */
+internal class PanelVelocityTracker(
+    private val horizonMs: Long = PANEL_DRAG_VELOCITY_STALE_MS,
+    private val capacity: Int = PANEL_DRAG_VELOCITY_SAMPLES,
+) {
+    private val times = ArrayDeque<Long>()
+    private val travels = ArrayDeque<Float>()
+
+    fun reset() {
+        times.clear()
+        travels.clear()
+    }
+
+    fun add(elapsedMs: Long, travel: Float) {
+        times.addLast(elapsedMs)
+        travels.addLast(travel)
+        while (times.size > 1 && elapsedMs - times.first() > horizonMs) {
+            times.removeFirst()
+            travels.removeFirst()
+        }
+        while (times.size > capacity) {
+            times.removeFirst()
+            travels.removeFirst()
+        }
+    }
+
+    fun velocityPxPerSecond(): Float {
+        if (times.size < 2) return 0f
+        val window = (times.last() - times.first()).toFloat()
+        if (window <= 0f) return 0f
+        return (travels.last() - travels.first()) * 1000f / window
+    }
+}
+
+/**
+ * `TouchMotionHandUpHelper.computeInitialVelocity`: the velocity the hand-up spring starts from is
+ * `clamp(velocity / totalDistancePx * |startValue|, ±maxVelocity)`, where `velocity` is the finger's
+ * px/s already scaled by `COUIVelocityTrackerHelper`'s `velocityScale` (0.3) and `totalDistancePx`
+ * is the rubber asymptote. The result is a PANEL-space velocity — the offset it is paired with is
+ * the rubber-compressed one, not the finger travel — so it must not be fed the raw finger speed.
+ */
+internal fun panelHandUpInitialVelocity(
+    fingerVelocityPx: Float,
+    panelOffsetPx: Float,
+    maxStretchPx: Float,
+): Float {
+    if (maxStretchPx <= 0f) return 0f
+    val scaled = fingerVelocityPx * PANEL_DRAG_VELOCITY_SCALE
+    return (scaled / maxStretchPx * abs(panelOffsetPx))
+        .coerceIn(-PANEL_DRAG_MAX_VELOCITY, PANEL_DRAG_MAX_VELOCITY)
 }
 
 private fun unionOf(a: IntRect, b: IntRect): IntRect = IntRect(
