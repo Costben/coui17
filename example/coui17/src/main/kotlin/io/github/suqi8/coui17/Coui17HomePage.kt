@@ -218,6 +218,32 @@ fun Coui17HomePage(
         coui17Entry("FullPageStatement") { FullPageStatementDemoContent() }
         coui17Entry("Texture Blur") { BlurDemo() }
         coui17Entry("Foreground Blur") { ForegroundBlurDemo() }
+        coui17Entry("EmptyState") { EmptyStateDemo() }
+        coui17Entry("CompleteState") { CompleteStateDemo() }
+        coui17Entry("FlowLayout") { FlowLayoutDemo() }
+        coui17Entry("ListDetailView") { ListDetailViewDemo() }
+        coui17Entry("SideNavigationBar") { SideNavigationBarDemo() }
+        coui17Entry("SidePaneLayout") { SidePaneLayoutDemo() }
+        coui17Entry("LunarDatePicker") { LunarDatePickerDemo() }
+        coui17Entry("BannerIndicator") { BannerIndicatorDemo() }
+        coui17Entry("CheckBoxWithDivider / SwitchWithDivider / MarkWithDivider") {
+            DividerPreferenceGroupDemo()
+        }
+        coui17Entry("EditTextPreference") { EditTextPreferenceDemo() }
+        coui17Entry("InputPreference") { InputPreferenceDemo() }
+        coui17Entry("LoadInstallProgressPreference") { LoadInstallProgressPreferenceDemo() }
+        coui17Entry("AppInfoPreference") { AppInfoPreferenceDemo() }
+        coui17Entry("CardEntrancePreference") { CardEntrancePreferenceDemo() }
+        coui17Entry("CardInstructionPreference") { CardInstructionPreferenceDemo() }
+        coui17Entry("PagerHeaderPreference / PagerFooterPreference") {
+            PagerHeaderFooterPreferenceDemo()
+        }
+        coui17Entry("SpannablePreference") { SpannablePreferenceDemo() }
+        coui17Entry("StepperPreference") { StepperPreferenceDemo() }
+        coui17Entry("StatusSwitchingPreference") { StatusSwitchingPreferenceDemo() }
+        coui17Entry("CheckBoxPreferenceCategory / LoadingPreferenceCategory / BottomPreference") {
+            CategoryHeaderPreferenceDemo()
+        }
         coui17Entry("Other") { OtherDemo() }
     }
 }
