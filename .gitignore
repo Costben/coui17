@@ -55,3 +55,5 @@ example/ios/iosApp/Generated.xcconfig
 
 # ColorOS 17 forensics artifacts
 .ground-truth/
+artifacts/
+.codex-artifacts/
