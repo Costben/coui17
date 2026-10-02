@@ -117,8 +117,13 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import navigation3.Navigator
 import navigation3.Route
+import pages.AboutPage
 import pages.ColorPage
 import pages.IconsPage
+import pages.LicensePage
+import pages.MultiScaffoldTestPage
+import pages.NavTestPage
+import pages.PullToRefreshPage
 import pages.SettingsPage
 import pages.TextStylePage
 import ui.isInDarkTheme

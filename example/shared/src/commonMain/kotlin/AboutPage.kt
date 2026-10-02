@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 @file:OptIn(ExperimentalScrollBarApi::class)
 
+package pages
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures

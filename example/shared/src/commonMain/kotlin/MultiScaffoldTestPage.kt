@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+package pages
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues

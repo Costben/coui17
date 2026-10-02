@@ -32,10 +32,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavKey
 import appstate.AppState
 import appstate.LocalAppState
-import appstate.LocalNavigator
 import appstate.LocalUpdateAppState
 import component.SearchPager
 import i18n.LocalAppStrings
@@ -55,10 +53,9 @@ import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
-import navigation3.Navigator
-import navigation3.Route
 import pages.ColorPage
 import pages.IconsPage
+import pages.SecondaryPagesNavHost
 import pages.SettingsPage
 import pages.TextStylePage
 import ui.AppTheme
@@ -103,10 +100,9 @@ fun Coui17App() {
     val updateAppState: ((AppState) -> AppState) -> Unit = remember {
         { transform -> appState = transform(appState).copy(showTopAppBar = false) }
     }
-    // The "Other" entry's arrows push routes the coui16 gallery renders for itself. COUI 17 has no
-    // navigation surface of its own, so the stack lives here and nothing draws it: the arrows stay
-    // inert instead of throwing when the entry scrolls into view.
-    val navigator = remember { Navigator(mutableListOf<NavKey>(Route.Main)) }
+    // The "Other" entry's arrows push routes. The stack, the `LocalNavigator` and the pages that
+    // answer those routes all live in `SecondaryPagesNavHost`, which wraps this root; the root
+    // itself only has to stay inside it so the pushes resolve to a surface that draws them.
     AppTheme(
         colorMode = appState.colorMode,
         keyColor = keyColorFor(appState.seedIndex),
@@ -116,14 +112,20 @@ fun Coui17App() {
         CompositionLocalProvider(
             LocalAppState provides appState,
             LocalUpdateAppState provides updateAppState,
-            LocalNavigator provides navigator,
             LocalSquircleEnabled provides appState.enableSquircle,
             // One provider for the whole app: every screen resolves its copy through this, so
             // changing the language in the settings page recomposes all of them at once.
             LocalAppStrings provides appState.language.strings,
             LocalLanguageSwitchEnabled provides true,
         ) {
-            Coui17Root()
+            // The gallery root is the nav host's `Route.Main` entry, so the pages it pushes land in
+            // the same window instead of on a stack nothing draws.
+            SecondaryPagesNavHost(
+                padding = PaddingValues(0.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Coui17Root()
+            }
         }
     }
 }
