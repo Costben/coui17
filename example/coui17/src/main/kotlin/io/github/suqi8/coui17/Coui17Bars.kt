@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import component.searchBarShadow
@@ -84,6 +85,7 @@ fun Coui17TopAppBar(
     title: String,
     searchLabel: String,
     showSearchField: Boolean,
+    showBack: Boolean,
     onBack: () -> Unit,
     onSearch: () -> Unit,
     panelOpen: Boolean,
@@ -100,13 +102,20 @@ fun Coui17TopAppBar(
         scrollBehavior = scrollBehavior,
         gradientGlass = true,
         defaultWindowInsetsPadding = true,
-        showDivider = true,
+        // ColorOS 17's home bar carries no hairline: the material ramps out on its own, and the
+        // library's line would otherwise fade in under the search pill as soon as the page scrolls.
+        showDivider = false,
         navigationIcon = {
-            HighlightedIconButton(
-                onClick = onBack,
-                modifier = Modifier.couiTopAppBarActionItem(),
-            ) {
-                Icon(imageVector = COUIIcons.Back, contentDescription = str("Back"))
+            // Only a panel page has somewhere to go back to; the capsule pages would otherwise show
+            // a dead key. Dropping it also moves the collapsed title to the 16dp start edge, which is
+            // what the device's keyless toolbars do.
+            if (showBack) {
+                HighlightedIconButton(
+                    onClick = onBack,
+                    modifier = Modifier.couiTopAppBarActionItem(),
+                ) {
+                    Icon(imageVector = COUIIcons.Back, contentDescription = str("Back"))
+                }
             }
         },
         actions = {
@@ -132,17 +141,25 @@ fun Coui17TopAppBar(
         },
         bottomContent = {
             if (showSearchField) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(Coui17Dimens.HomeSearchBandHeight),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Coui17SearchPill(
-                        label = searchLabel,
-                        onClick = onSearch,
-                        scrollFraction = scrollBehavior.state.collapsedFraction,
-                    )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(Coui17Dimens.HomeSearchBandHeight),
+                        contentAlignment = Alignment.TopCenter,
+                    ) {
+                        Coui17SearchPill(
+                            label = searchLabel,
+                            onClick = onSearch,
+                            scrollFraction = scrollBehavior.state.collapsedFraction,
+                        )
+                    }
+                    // The device's `blur_overlay` runs `homepage_appbar_blur_extra_height` past
+                    // `app_bar_layout`'s bottom edge. That band is empty material, but it is also the
+                    // room the collapsed pill's shadow falls into: without it the bar's own layer ends
+                    // a few px under the pill and the shadow is cut off flat along the bar's bottom
+                    // edge instead of fading out.
+                    Spacer(modifier = Modifier.height(Coui17Dimens.AppBarBlurExtra))
                 }
             }
         },
@@ -331,9 +348,10 @@ fun Coui17AccessoryBar(
     modifier: Modifier = Modifier,
 ) {
     val systemDensity = LocalDensity.current
-    val galleryDensity = remember(systemDensity) {
+    val windowSize = LocalWindowInfo.current.containerSize
+    val galleryDensity = remember(systemDensity, windowSize) {
         Density(
-            density = systemDensity.density * Coui17Dimens.GALLERY_DENSITY_SCALE,
+            density = Coui17Dimens.galleryDensity(minOf(windowSize.width, windowSize.height)),
             fontScale = systemDensity.fontScale,
         )
     }
@@ -344,8 +362,8 @@ fun Coui17AccessoryBar(
     // reserve is computed from the *configured* accessory icons, not from the active ones
     // (`computeSideReserveForConfiguredIcons`).
     val accessoriesVisible = Coui17Page.entries[currentPage] != Coui17Page.Color
-    // Gallery creates this bar in its 565dpi activity while Settings and the device window use
-    // 620dpi. Scope that physical scaling to the bar only; the anchored popup is restored below.
+    // Gallery uses a 360dp short edge (540dpi on the 15T, 565dpi on the earlier reference).
+    // Scope that density to the bar; the anchored popup uses the device density below.
     CompositionLocalProvider(LocalDensity provides galleryDensity) {
         BottomFloatingAccessoryNavigationBar(
             modifier = modifier
@@ -394,28 +412,9 @@ private fun Coui17AccessoryBall(
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val pressProgress by animateFloatAsState(
-        targetValue = if (isPressed) 1f else 0f,
-        animationSpec = BottomFloatingNavigationBarDefaults.PressMaskSpring,
-        label = "coui17AccessoryPress",
-    )
-    val pressColor = BottomFloatingNavigationBarDefaults.pressColor(COUITheme.colorScheme.background)
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .drawWithContent {
-                if (pressProgress > 0f) {
-                    val outset = 8.dp.toPx()
-                    drawRoundRect(
-                        color = pressColor.copy(alpha = pressColor.alpha * pressProgress),
-                        topLeft = Offset(-outset, 0f),
-                        size = Size(size.width + outset * 2f, size.height),
-                        cornerRadius = CornerRadius(size.height / 2f),
-                    )
-                }
-                drawContent()
-            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

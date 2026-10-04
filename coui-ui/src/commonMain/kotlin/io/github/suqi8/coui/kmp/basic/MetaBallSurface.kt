@@ -18,6 +18,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
@@ -41,7 +45,10 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @property centerY The vertical centre of the particle.
  * @property width The full width of the particle.
  * @property height The full height of the particle.
- * @property cornerRadius The corner radius; defaults to a full capsule.
+ * @property cornerRadius The untransformed corner radius; defaults to a full capsule.
+ * @property scaleX Horizontal transform of the original silhouette, about its centre.
+ * @property scaleY Vertical transform; a stretched circle remains an ellipse.
+ * @property alpha Opacity of this member of the material chain.
  */
 @Immutable
 data class MetaBallParticle(
@@ -50,6 +57,9 @@ data class MetaBallParticle(
     val width: Dp,
     val height: Dp,
     val cornerRadius: Dp = minOf(width, height) / 2,
+    val scaleX: Float = 1f,
+    val scaleY: Float = 1f,
+    val alpha: Float = 1f,
 ) {
     companion object {
         /** A circular particle; COUI's melt ball itself is one of these. */
@@ -106,7 +116,9 @@ object MetaBallDefaults {
  * renders their union as one blob, so the menu melts out of the bar instead of landing on top of it.
  * The recipe is `OplusMaterialMetaBallParams(MODE, 0, extension, factorX, factorY)`.
  *
- * The union is computed per pixel from each silhouette's signed distance: the distances are folded
+ * On compatible ColorOS devices the system material renderer draws the chain, including its
+ * proximity deformation and outline. Other platforms compute the union per pixel from each
+ * silhouette's signed distance: the distances are folded
  * together with a smooth minimum whose radius is [extension] stretched by [extensionFactorX] /
  * [extensionFactorY] along the direction joining the two silhouettes. The result is a single
  * silhouette with an anti-aliased fillet where the shapes meet — a metaball, not an overlap.
@@ -156,93 +168,137 @@ fun MetaBallSurface(
     val glass = backdrop != null && shader != null
 
     Box(modifier = modifier) {
-        if (bottomGlowColor != null && shader != null) {
-            // The bloom is painted *outside* the merged outline, so this layer asks for a rect that
-            // reaches [bottomGlowBlur] below the node. Compose does not clip a node's drawing to its
-            // bounds, and the shader works in this node's own coordinates, so the particles stay where
-            // the caller put them; only the rasterised area grows.
-            Canvas(modifier = Modifier.matchParentSize()) {
-                drawMetaBall(
-                    shader = shader,
-                    particles = particles,
-                    body = Color.Transparent,
-                    rim = Color.Transparent,
-                    extension = extension,
-                    extensionFactorX = extensionFactorX,
-                    extensionFactorY = extensionFactorY,
-                    rimBlur = rimBlur,
-                    bottomGlow = bottomGlowColor,
-                    bottomGlowBlur = bottomGlowBlur,
-                    glowOutsetPx = bottomGlowBlur.toPx(),
-                )
-            }
-        }
-        if (glass) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .textureBlur(
-                        backdrop = backdrop,
-                        shape = RectangleShape,
-                        blurRadius = blurRadius,
-                        colors = BlurDefaults.blurColors(
-                            blendColors = listOf(BlendColorEntry(color = color.copy(alpha = containerAlpha))),
-                        ),
-                        // The blob is this node's content, so DstIn keeps exactly the blur that
-                        // falls inside the merged outline.
-                        contentBlendMode = BlendMode.DstIn,
-                    ),
-            ) {
+        // Both the blur mask and the native material nodes need drawing room outside the resting
+        // bar. Reserve paint space without changing the measured size or the caller's coordinates.
+        MetaBallPaintArea(particles = particles, modifier = Modifier.matchParentSize()) { paintedParticles ->
+            if (bottomGlowColor != null && shader != null) {
+                // The bloom is painted *outside* the merged outline, so this layer asks for a rect that
+                // reaches [bottomGlowBlur] below the node. Compose does not clip a node's drawing to its
+                // bounds, and the shader works in this node's own coordinates, so the particles stay where
+                // the caller put them; only the rasterised area grows.
                 Canvas(modifier = Modifier.matchParentSize()) {
                     drawMetaBall(
                         shader = shader,
-                        particles = particles,
-                        body = Color.White,
+                        particles = paintedParticles,
+                        body = Color.Transparent,
                         rim = Color.Transparent,
                         extension = extension,
                         extensionFactorX = extensionFactorX,
                         extensionFactorY = extensionFactorY,
                         rimBlur = rimBlur,
+                        bottomGlow = bottomGlowColor,
+                        bottomGlowBlur = bottomGlowBlur,
+                        glowOutsetPx = bottomGlowBlur.toPx(),
                     )
                 }
             }
-            // A sibling, not a child: inside the mask the rim's own alpha would punch the blur out.
-            if (rimColor != null) {
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    drawMetaBall(
+            if (glass) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .textureBlur(
+                            backdrop = backdrop,
+                            shape = RectangleShape,
+                            blurRadius = blurRadius,
+                            colors = BlurDefaults.blurColors(
+                                blendColors = listOf(BlendColorEntry(color = color.copy(alpha = containerAlpha))),
+                            ),
+                            // The blob is this node's content, so DstIn keeps exactly the blur that
+                            // falls inside the merged outline.
+                            contentBlendMode = BlendMode.DstIn,
+                        ),
+                ) {
+                    MetaBallSilhouette(
+                        particles = paintedParticles,
+                        modifier = Modifier.matchParentSize(),
                         shader = shader,
-                        particles = particles,
+                        body = Color.White,
+                        rim = Color.Transparent,
+                        extension = extension,
+                        factorX = extensionFactorX,
+                        factorY = extensionFactorY,
+                        rimBlur = rimBlur,
+                    )
+                }
+                // A sibling, not a child: inside the mask the rim's own alpha would punch the blur out.
+                if (rimColor != null) {
+                    MetaBallSilhouette(
+                        particles = paintedParticles,
+                        modifier = Modifier.matchParentSize(),
+                        shader = shader,
                         body = Color.Transparent,
                         rim = rimColor,
                         extension = extension,
-                        extensionFactorX = extensionFactorX,
-                        extensionFactorY = extensionFactorY,
+                        factorX = extensionFactorX,
+                        factorY = extensionFactorY,
                         rimBlur = rimBlur,
                         rimBottomScale = rimBottomScale,
                     )
                 }
-            }
-        } else if (shader != null) {
-            Canvas(modifier = Modifier.matchParentSize()) {
-                drawMetaBall(
+            } else if (shader != null) {
+                MetaBallSilhouette(
+                    particles = paintedParticles,
+                    modifier = Modifier.matchParentSize(),
                     shader = shader,
-                    particles = particles,
                     body = color,
                     rim = rimColor ?: Color.Transparent,
                     extension = extension,
-                    extensionFactorX = extensionFactorX,
-                    extensionFactorY = extensionFactorY,
+                    factorX = extensionFactorX,
+                    factorY = extensionFactorY,
                     rimBlur = rimBlur,
                     rimBottomScale = rimBottomScale,
                 )
-            }
-        } else {
-            Canvas(modifier = Modifier.matchParentSize()) {
-                drawUnmergedParticles(particles = particles, color = color)
+            } else {
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    drawUnmergedParticles(particles = paintedParticles, color = color)
+                }
             }
         }
         content()
     }
+}
+
+/** A surface can move by 28dp and stretch; its offscreen mask must contain those pixels. */
+@Composable
+private fun MetaBallPaintArea(
+    particles: List<MetaBallParticle>,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.(List<MetaBallParticle>) -> Unit,
+) {
+    val outset = 40.dp
+    val outsetPx = with(LocalDensity.current) { outset.roundToPx() }
+    val shifted = particles.map { it.copy(centerX = it.centerX + outset, centerY = it.centerY + outset) }
+    Layout(modifier = modifier, content = { Box { content(shifted) } }) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val paint = measurables.single().measure(Constraints.fixed(width + 2 * outsetPx, height + 2 * outsetPx))
+        layout(width, height) { paint.place(-outsetPx, -outsetPx) }
+    }
+}
+
+@Composable
+private fun MetaBallSilhouette(
+    particles: List<MetaBallParticle>,
+    shader: RuntimeShader,
+    body: Color,
+    rim: Color,
+    extension: Dp,
+    factorX: Float,
+    factorY: Float,
+    rimBlur: Dp,
+    modifier: Modifier = Modifier,
+    rimBottomScale: Float = 0f,
+) {
+    val renderer = rememberPlatformMetaBallRenderer()
+    val fallback: @Composable () -> Unit = {
+        Canvas(modifier = modifier) {
+            drawMetaBall(
+                shader, particles, body, rim, extension, factorX, factorY, rimBlur,
+                rimBottomScale = rimBottomScale,
+            )
+        }
+    }
+    if (renderer == null) fallback() else renderer.Draw(particles, body, rim, extension, factorX, factorY, modifier, fallback)
 }
 
 /** Compiles (and remembers) the melt ball shader; `null` when runtime shaders are unavailable. */
@@ -276,6 +332,8 @@ private fun DrawScope.drawMetaBall(
     val centers = FloatArray(META_BALL_MAX_PARTICLES * 2)
     val halves = FloatArray(META_BALL_MAX_PARTICLES * 2)
     val corners = FloatArray(META_BALL_MAX_PARTICLES)
+    val scales = FloatArray(META_BALL_MAX_PARTICLES * 2) { 1f }
+    val alphas = FloatArray(META_BALL_MAX_PARTICLES) { 1f }
     for (i in 0 until count) {
         val particle = particles[i]
         centers[i * 2] = particle.centerX.toPx()
@@ -283,10 +341,15 @@ private fun DrawScope.drawMetaBall(
         halves[i * 2] = particle.width.toPx() / 2
         halves[i * 2 + 1] = particle.height.toPx() / 2
         corners[i] = particle.cornerRadius.toPx()
+        scales[i * 2] = particle.scaleX.coerceAtLeast(0.001f)
+        scales[i * 2 + 1] = particle.scaleY.coerceAtLeast(0.001f)
+        alphas[i] = particle.alpha.coerceIn(0f, 1f)
     }
     shader.setFloatUniform("in_center", centers)
     shader.setFloatUniform("in_half", halves)
     shader.setFloatUniform("in_corner", corners)
+    shader.setFloatUniform("in_scale", scales)
+    shader.setFloatUniform("in_alpha", alphas)
     shader.setFloatUniform("in_count", count.toFloat())
     shader.setFloatUniform("in_extension", extension.toPx())
     shader.setFloatUniform("in_factor", extensionFactorX, extensionFactorY)
@@ -310,15 +373,15 @@ private fun DrawScope.drawMetaBall(
 /** Degraded path for platforms without runtime shaders: the silhouettes, but not merged. */
 private fun DrawScope.drawUnmergedParticles(particles: List<MetaBallParticle>, color: Color) {
     particles.forEach { particle ->
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(
-                (particle.centerX - particle.width / 2).toPx(),
-                (particle.centerY - particle.height / 2).toPx(),
-            ),
-            size = Size(particle.width.toPx(), particle.height.toPx()),
-            cornerRadius = CornerRadius(particle.cornerRadius.toPx()),
-        )
+        val centre = Offset(particle.centerX.toPx(), particle.centerY.toPx())
+        withTransform({ scale(particle.scaleX, particle.scaleY, pivot = centre) }) {
+            drawRoundRect(
+                color = color.copy(alpha = color.alpha * particle.alpha),
+                topLeft = Offset((particle.centerX - particle.width / 2).toPx(), (particle.centerY - particle.height / 2).toPx()),
+                size = Size(particle.width.toPx(), particle.height.toPx()),
+                cornerRadius = CornerRadius(particle.cornerRadius.toPx()),
+            )
+        }
     }
 }
 
@@ -341,6 +404,8 @@ private val META_BALL_SHADER = """
 uniform float2 in_center[8];
 uniform float2 in_half[8];
 uniform float in_corner[8];
+uniform float2 in_scale[8];
+uniform float in_alpha[8];
 uniform float in_count;
 uniform float in_extension;
 uniform float2 in_factor;
@@ -368,16 +433,19 @@ half4 main(float2 xy) {
     float2 nearest = float2(0.0, 0.0);
     float2 nearestHalf = float2(1.0, 1.0);
     float has = 0.0;
+    float opacity = 0.0;
     for (int i = 0; i < 8; i++) {
         if (float(i) >= in_count) {
             break;
         }
         float2 c = in_center[i];
-        float di = couiSdRoundBox(xy - c, in_half[i], in_corner[i]);
+        float di = couiSdRoundBox((xy - c) / in_scale[i], in_half[i],
+            min(in_corner[i], min(in_half[i].x, in_half[i].y)));
         if (has < 0.5) {
             d = di;
             nearest = c;
-            nearestHalf = in_half[i];
+            nearestHalf = in_half[i] * in_scale[i];
+            opacity = in_alpha[i];
             has = 1.0;
         } else {
             float2 delta = c - nearest;
@@ -388,7 +456,8 @@ half4 main(float2 xy) {
             d = couiSmin(d, di, k);
             if (di < prev) {
                 nearest = c;
-                nearestHalf = in_half[i];
+                nearestHalf = in_half[i] * in_scale[i];
+            opacity = in_alpha[i];
             }
         }
     }
@@ -400,7 +469,7 @@ half4 main(float2 xy) {
     // silently degrades to the unmerged silhouettes. The SDF gradient magnitude is ~1, so a fixed
     // 0.6 device pixels approximates the one-pixel antialiasing band fwidth would have measured.
     float aa = 0.6;
-    float cover = 1.0 - smoothstep(-aa, aa, d);
+    float cover = (1.0 - smoothstep(-aa, aa, d)) * opacity;
     float2 rel = (xy - nearest) / max(nearestHalf, float2(1.0, 1.0));
     // The native bottom-bar material sends a small amount of light through the lower edge. It is
     // directional: the upper and side edges stay dark while the light fans out below the shape.

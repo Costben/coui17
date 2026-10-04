@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
@@ -156,6 +157,23 @@ fun BottomFloatingAccessoryNavigationBar(
             val startTuck = (accessorySize + sideSpacing) * startExpansion.tuck
             val endTuck = (accessorySize + sideSpacing) * endExpansion.tuck
 
+            val menuBounds = Rect(
+                with(density) { (reserve + capsuleWidth / 2).toPx() } + menuTouchState.translation.x - capsuleWidthPx * menuTouchState.scaleX / 2,
+                with(density) { barHeight.toPx() } / 2 + menuTouchState.translation.y - with(density) { barHeight.toPx() } * menuTouchState.scaleY / 2,
+                with(density) { (reserve + capsuleWidth / 2).toPx() } + menuTouchState.translation.x + capsuleWidthPx * menuTouchState.scaleX / 2,
+                with(density) { barHeight.toPx() } / 2 + menuTouchState.translation.y + with(density) { barHeight.toPx() } * menuTouchState.scaleY / 2,
+            )
+            fun accessoryAlpha(center: Dp, expansion: AccessoryExpansion, motion: COUITouchMotionState?): Float {
+                if (capsuleWidthPx == 0) return expansion.alpha
+                val centreX = with(density) { center.toPx() } + (motion?.translation?.x ?: 0f)
+                val centreY = with(density) { barHeight.toPx() } / 2 + (motion?.translation?.y ?: 0f)
+                val halfWidth = with(density) { accessorySize.toPx() } * expansion.scale * (motion?.scaleX ?: 1f) / 2
+                val halfHeight = with(density) { accessorySize.toPx() } * expansion.scale * (motion?.scaleY ?: 1f) / 2
+                return couiAccessoryOverlapAlpha(Rect(centreX - halfWidth, centreY - halfHeight, centreX + halfWidth, centreY + halfHeight), menuBounds)
+            }
+            val startAlpha = accessoryAlpha(accessorySize / 2 + startTuck, startExpansion, startTouchState)
+            val endAlpha = accessoryAlpha(barWidth - accessorySize / 2 - endTuck, endExpansion, endTouchState)
+
             // The blob and the row share this box, so the particles below are expressed in the
             // capsule's own coordinates, and the whole group is lifted off the bar's bottom edge.
             Box(
@@ -196,6 +214,16 @@ fun BottomFloatingAccessoryNavigationBar(
                                     y = (barHeight - diameter) / 2,
                                 )
                                 .size(diameter)
+                                // The shadow rides the same touch transform as the particle the blob
+                                // draws, so a dragged ball keeps its shadow under it instead of
+                                // leaving it behind on the resting position.
+                                .graphicsLayer {
+                                    alpha = startAlpha
+                                    translationX = startTouchState?.translation?.x ?: 0f
+                                    translationY = startTouchState?.translation?.y ?: 0f
+                                    scaleX = startTouchState?.scaleX ?: 1f
+                                    scaleY = startTouchState?.scaleY ?: 1f
+                                }
                                 .dropShadow(shape = CircleShape, shadow = barShadow),
                         )
                     }
@@ -208,6 +236,13 @@ fun BottomFloatingAccessoryNavigationBar(
                                     y = (barHeight - diameter) / 2,
                                 )
                                 .size(diameter)
+                                .graphicsLayer {
+                                    alpha = endAlpha
+                                    translationX = endTouchState?.translation?.x ?: 0f
+                                    translationY = endTouchState?.translation?.y ?: 0f
+                                    scaleX = endTouchState?.scaleX ?: 1f
+                                    scaleY = endTouchState?.scaleY ?: 1f
+                                }
                                 .dropShadow(shape = CircleShape, shadow = barShadow),
                         )
                     }
@@ -219,8 +254,10 @@ fun BottomFloatingAccessoryNavigationBar(
                                 MetaBallParticle(
                                     centerX = reserve + capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
                                     centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
-                                    width = capsuleWidth * menuTouchState.scaleX,
-                                    height = barHeight * menuTouchState.scaleY,
+                                    width = capsuleWidth,
+                                    height = barHeight,
+                                    scaleX = menuTouchState.scaleX,
+                                    scaleY = menuTouchState.scaleY,
                                     cornerRadius = cornerRadius,
                                 ),
                             )
@@ -230,9 +267,12 @@ fun BottomFloatingAccessoryNavigationBar(
                                 MetaBallParticle(
                                     centerX = accessorySize / 2 + startTuck + with(density) { startTouchState?.translation?.x?.toDp() ?: 0.dp },
                                     centerY = barHeight / 2 + with(density) { startTouchState?.translation?.y?.toDp() ?: 0.dp },
-                                    width = accessorySize * startExpansion.scale * (startTouchState?.scaleX ?: 1f),
-                                    height = accessorySize * startExpansion.scale * (startTouchState?.scaleY ?: 1f),
-                                    cornerRadius = accessorySize / 2,
+                                    width = accessorySize * startExpansion.scale,
+                                    height = accessorySize * startExpansion.scale,
+                                    scaleX = startTouchState?.scaleX ?: 1f,
+                                    scaleY = startTouchState?.scaleY ?: 1f,
+                                    alpha = startAlpha,
+                                    cornerRadius = accessorySize * startExpansion.scale / 2,
                                 ),
                             )
                         }
@@ -241,9 +281,12 @@ fun BottomFloatingAccessoryNavigationBar(
                                 MetaBallParticle(
                                     centerX = barWidth - accessorySize / 2 - endTuck + with(density) { endTouchState?.translation?.x?.toDp() ?: 0.dp },
                                     centerY = barHeight / 2 + with(density) { endTouchState?.translation?.y?.toDp() ?: 0.dp },
-                                    width = accessorySize * endExpansion.scale * (endTouchState?.scaleX ?: 1f),
-                                    height = accessorySize * endExpansion.scale * (endTouchState?.scaleY ?: 1f),
-                                    cornerRadius = accessorySize / 2,
+                                    width = accessorySize * endExpansion.scale,
+                                    height = accessorySize * endExpansion.scale,
+                                    scaleX = endTouchState?.scaleX ?: 1f,
+                                    scaleY = endTouchState?.scaleY ?: 1f,
+                                    alpha = endAlpha,
+                                    cornerRadius = accessorySize * endExpansion.scale / 2,
                                 ),
                             )
                         }
@@ -279,7 +322,7 @@ fun BottomFloatingAccessoryNavigationBar(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (startAccessory != null) {
                         AccessorySlot(
-                            expansion = startExpansion,
+                            expansion = startExpansion.copy(alpha = startAlpha),
                             tuckDirection = 1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
@@ -305,7 +348,7 @@ fun BottomFloatingAccessoryNavigationBar(
                     if (endAccessory != null) {
                         Spacer(Modifier.width(sideSpacing))
                         AccessorySlot(
-                            expansion = endExpansion,
+                            expansion = endExpansion.copy(alpha = endAlpha),
                             tuckDirection = -1f,
                             size = accessorySize,
                             sideSpacing = sideSpacing,
@@ -346,16 +389,18 @@ private fun AccessorySlot(
                     COUITheme.colorScheme.background.luminance() < 0.5f,
                 ),
                 motionState = motionState,
+                applyTransform = false,
             )
             .graphicsLayer {
                 alpha = expansion.alpha
-                scaleX = expansion.scale
-                scaleY = expansion.scale
-                translationX = tuckDirection * expansion.tuck * (size + sideSpacing).toPx()
+                scaleX = expansion.scale * (motionState?.scaleX ?: 1f)
+                scaleY = expansion.scale * (motionState?.scaleY ?: 1f)
+                translationX = tuckDirection * expansion.tuck * (size + sideSpacing).toPx() + (motionState?.translation?.x ?: 0f)
+                translationY = motionState?.translation?.y ?: 0f
             },
         contentAlignment = Alignment.Center,
     ) {
-        content()
+        if (expansion.alpha > 0.01f) content()
     }
 }
 
@@ -458,6 +503,16 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
             }
         }
     }
+}
+
+/** Native BottomFloatingOverlapHelper: fade only after 50% of the scaled view is covered. */
+internal fun couiAccessoryOverlapAlpha(accessory: Rect, menu: Rect): Float {
+    val area = accessory.width * accessory.height
+    if (area <= 0f || menu.isEmpty) return 1f
+    val overlapWidth = (minOf(accessory.right, menu.right) - maxOf(accessory.left, menu.left)).coerceAtLeast(0f)
+    val overlapHeight = (minOf(accessory.bottom, menu.bottom) - maxOf(accessory.top, menu.top)).coerceAtLeast(0f)
+    val ratio = (overlapWidth * overlapHeight / area).coerceIn(0f, 1f)
+    return if (ratio <= 0.5f) 1f else 2f * (1f - ratio)
 }
 
 /**

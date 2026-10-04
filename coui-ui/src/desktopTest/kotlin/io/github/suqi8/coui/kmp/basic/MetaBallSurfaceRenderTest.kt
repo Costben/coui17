@@ -5,6 +5,7 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -78,6 +79,43 @@ private fun gapMidpointX(circleCenterX: Dp): Dp = (CapsuleRightEdge + circleLeft
  */
 @OptIn(ExperimentalTestApi::class)
 class MetaBallSurfaceRenderTest {
+
+    @Test
+    fun aStretchedCircleKeepsItsEllipticalOutline() = runSkikoComposeUiTest(size = CanvasSize, density = Density(1f)) {
+        setContent {
+            Box(Modifier.fillMaxSize().background(BackgroundColor)) {
+                MetaBallSurface(
+                    particles = listOf(MetaBallParticle.circle(60.dp, 60.dp, 40.dp).copy(scaleX = 1.5f)),
+                    modifier = Modifier.fillMaxSize(),
+                    color = BlobColor,
+                    backdrop = null,
+                    rimColor = null,
+                )
+            }
+        }
+        waitForIdle()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        assertTrue(greenChannel(pixels[85, 73]) >= 200, "a stadium would incorrectly fill this pixel")
+        assertTrue(blueChannel(pixels[80, 60]) >= 200, "the stretched horizontal axis must remain filled")
+    }
+
+    @Test
+    fun aDraggedParticleCanPaintOutsideTheRestingSurfaceBounds() = runSkikoComposeUiTest(size = CanvasSize, density = Density(1f)) {
+        setContent {
+            Box(Modifier.fillMaxSize().background(BackgroundColor)) {
+                MetaBallSurface(
+                    particles = listOf(MetaBallParticle.circle(40.dp, 50.dp, 40.dp)),
+                    modifier = Modifier.size(80.dp, 40.dp),
+                    color = BlobColor,
+                    backdrop = null,
+                    rimColor = null,
+                )
+            }
+        }
+        waitForIdle()
+        val pixel = onRoot().captureToImage().toPixelMap()[40, 60]
+        assertTrue(blueChannel(pixel) >= 200, "the moving particle must not be cut at the resting 40dp bottom")
+    }
 
     @Test
     fun silhouettesThatMeetMeltIntoOneBlob() = runSkikoComposeUiTest(

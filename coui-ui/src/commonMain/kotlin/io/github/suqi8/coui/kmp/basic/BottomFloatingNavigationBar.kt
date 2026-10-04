@@ -28,12 +28,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -204,7 +206,9 @@ internal fun FloatingCapsuleRow(
 
     Layout(
         modifier = modifier,
-        content = { BottomFloatingCapsuleRowScope.content() },
+        content = {
+            CompositionLocalProvider(LocalFloatingMenuTouchOwner provides true) { BottomFloatingCapsuleRowScope.content() }
+        },
     ) { measurables, constraints ->
         val count = measurables.size
         if (count == 0) {
@@ -258,6 +262,8 @@ internal fun FloatingCapsuleRow(
  * menu view, which has no weight concept and places each child at its own computed x. The
  * alignment-line entry points are inert for the same reason.
  */
+internal val LocalFloatingMenuTouchOwner = staticCompositionLocalOf { false }
+
 private object BottomFloatingCapsuleRowScope : RowScope {
     override fun Modifier.weight(weight: Float, fill: Boolean): Modifier = this
 
@@ -411,8 +417,10 @@ private fun BottomFloatingNavigationBarMeltBall(
                                 MetaBallParticle(
                                     centerX = capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
                                     centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
-                                    width = capsuleWidth * menuTouchState.scaleX,
-                                    height = barHeight * menuTouchState.scaleY,
+                                    width = capsuleWidth,
+                                    height = barHeight,
+                                    scaleX = menuTouchState.scaleX,
+                                    scaleY = menuTouchState.scaleY,
                                     cornerRadius = cornerRadius,
                                 ),
                             )
@@ -426,9 +434,11 @@ private fun BottomFloatingNavigationBarMeltBall(
                                     centerY = barHeight / 2 + with(density) {
                                         expansionTouchState.translation.y.toDp()
                                     },
-                                    width = expansionFootprint * expansionTouchState.scaleX,
-                                    height = expansionFootprint * expansionTouchState.scaleY,
-                                    cornerRadius = expansionSize / 2,
+                                    width = expansionFootprint,
+                                    height = expansionFootprint,
+                                    scaleX = expansionTouchState.scaleX,
+                                    scaleY = expansionTouchState.scaleY,
+                                    cornerRadius = expansionFootprint / 2,
                                 ),
                             )
                         }
@@ -474,10 +484,13 @@ private fun BottomFloatingNavigationBarMeltBall(
                                         COUITheme.colorScheme.background.luminance() < 0.5f,
                                     ),
                                     motionState = expansionTouchState,
+                                    applyTransform = false,
                                 )
                                 .graphicsLayer {
-                                    scaleX = progress
-                                    scaleY = progress
+                                    scaleX = progress * expansionTouchState.scaleX
+                                    scaleY = progress * expansionTouchState.scaleY
+                                    translationX = expansionTouchState.translation.x
+                                    translationY = expansionTouchState.translation.y
                                     alpha = progress
                                 },
                         ) {
@@ -513,9 +526,15 @@ private fun BottomFloatingNavigationBarMeltBall(
  * @param overflowMenu The rows of the long-press overflow menu, usually
  *   [NavigationPopupMenuItem]s; they are shown in a [NavigationPopupMenu] anchored to this item.
  *   `null` disables the long press.
+ * @param motionSpec The touch-motion parameters of the item's own [couiTouchMotion]. A nav item is a
+ *   very wide, very short silhouette, so `COUITouchMotionSpec`'s area and aspect terms put its press
+ *   scale at the small end (`couiPressScale`).
+ * @param lightSpec The spotlight preset the item wears while pressed. COUI hands
+ *   `COUIBottomFloatingToolbarItemView` no press background at all — `shouldStripPressedForContainerTouch`
+ *   drops `state_pressed` — so this is the whole of the item's press feedback, alongside the label
+ *   tint.
  */
 @Composable
-@Suppress("UNUSED_PARAMETER")
 fun RowScope.BottomFloatingNavigationBarItem(
     selected: Boolean,
     onClick: () -> Unit,
@@ -552,6 +571,7 @@ fun RowScope.BottomFloatingNavigationBarItem(
         modifier = modifier
             .height(BottomFloatingNavigationBarDefaults.ItemHeight)
             .widthIn(max = BottomFloatingNavigationBarDefaults.ItemMaxWidth)
+            .couiTouchMotion(enabled = !LocalFloatingMenuTouchOwner.current, spec = motionSpec, lightParams = lightSpec)
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,

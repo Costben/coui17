@@ -6,6 +6,8 @@ Both accessory views are 56dp circles separated from the capsule by a 12dp gap. 
 
 The bar samples the content behind it through `LocalBackdrop`; when no backdrop is available it keeps an opaque fill.
 
+On compatible ColorOS devices, the merged silhouette uses the system material renderer. Other platforms use the portable shader. Dragging preserves spring velocity when the target changes, and release springs use the control area and release velocity. During collapse, an accessory stays opaque until half of its transformed area overlaps the capsule, then fades as the overlap grows. Stretching transforms the original circle into an ellipse. The navigation capsule owns item press motion, so its items do not apply a second scale.
+
 ## Import
 
 ```kotlin

@@ -13,8 +13,8 @@ import androidx.compose.ui.unit.dp
  */
 object Coui17Dimens {
 
-    /** Gallery's measured activity density relative to the device-wide 620dpi density. */
-    const val GALLERY_DENSITY_SCALE = 565f / 620f
+    /** Gallery activity density: 540dpi at 1216px, 565dpi at 1272px. */
+    fun galleryDensity(shortSidePixels: Int): Float = kotlin.math.round(shortSidePixels / 360f * 160f).coerceAtLeast(160f) / 160f
 
     /**
      * The settings home's `app_bar_layout`: 343px from the top of the screen.
@@ -43,10 +43,24 @@ object Coui17Dimens {
      */
     val HomeSearchBandHeight = 52.13.dp
 
-    /** The empty title band above the search pill; it includes the status-bar-safe space. */
+    /**
+     * The empty title band above the search pill; it includes the status-bar-safe space.
+     *
+     * The device's `blur_overlay` is 54px (14dp) taller than `app_bar_layout`, and it is drawn as a
+     * sibling *over* the whole 343px bar, so the extra 14dp reaches 14dp past the search band's bottom
+     * edge. The band is therefore what the material actually covers — the pill's own 40dp plus the
+     * 14dp of extra material below it.
+     */
     val HomeTitleBandHeight = HomeAppBarBottom - HomeSearchBandHeight
 
-    /** The search pill inside that band: 296.3dp wide, 40dp tall, 16dp in from each edge. */
+    /**
+     * The search pill inside that band: 296.3dp wide, 40dp tall, 16dp in from each edge.
+     *
+     * The pill is *not* centred in the band: `app_bar_layout` puts the search band flush against the
+     * 141px title band, so the 40dp pill sits 26.13dp from the band's top and leaves 26.13dp below
+     * it. Compose's `contentAlignment = Center` in a 52.13dp band happens to reproduce that, but only
+     * while the band is exactly the pill plus the 12.13dp the device has no content for.
+     */
     val SearchPillHeight = 40.dp
 
     /** The bar's horizontal padding: 16dp (the pill spans x 62..1210px). */

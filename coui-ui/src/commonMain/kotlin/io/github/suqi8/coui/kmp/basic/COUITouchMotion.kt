@@ -3,18 +3,22 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.animateTo
+import androidx.compose.animation.core.isFinished
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
@@ -23,6 +27,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -42,10 +47,15 @@ import kotlin.math.sign
 @Immutable
 data class COUITouchMotionSpec(
     val deadZone: Dp = 5.dp,
-    val maxDeformRubberDistance: Dp = 28.dp,
-    val deformRubberCurveRatio: Float = 0.05f,
-    val maxStretchDistance: Dp = 150.dp,
-    val rubberCurveRatio: Float = 0.55f,
+    // `TouchMotionTierParamsExtKt.touchMotionTierParamsDefault` builds the tier as
+    // `TouchMotionTierParams(28f, 0.05f, 150f, 0.55f, ...)`, and the constructor's parameter order is
+    // `(iolMaxStretchDistance, iolRubberCurveRatio, iolMaxDeformRubberDistance,
+    // iolDeformRubberCurveRatio)`. The two budgets are therefore 28dp of translation against a 0.05
+    // curve, and 150dp of deformation against a 0.55 one — not the other way round.
+    val maxStretchDistance: Dp = 28.dp,
+    val rubberCurveRatio: Float = 0.05f,
+    val maxDeformRubberDistance: Dp = 150.dp,
+    val deformRubberCurveRatio: Float = 0.55f,
     val maxScale: Float = 1.2f,
     val k1: Int = 350000,
     val k2: Int = 15,
@@ -97,12 +107,10 @@ data class COUITouchMotionValues(
 /** Observable transform for a touch owner, useful when a material particle shares the owner. */
 @Stable
 class COUITouchMotionState internal constructor() {
-    var translation by mutableStateOf(Offset.Zero)
-        internal set
-    var scaleX by mutableFloatStateOf(1f)
-        internal set
-    var scaleY by mutableFloatStateOf(1f)
-        internal set
+    internal var values by mutableStateOf<State<COUITouchMotionValues>>(mutableStateOf(COUITouchMotionValues()))
+    val translation: Offset get() = values.value.translation
+    val scaleX: Float get() = values.value.scaleX
+    val scaleY: Float get() = values.value.scaleY
 }
 
 @Composable
@@ -149,6 +157,9 @@ internal fun couiSpotlightRadius(
     val radius = start + (end - start) * t
     return if (extinguishing) radius + (extinguishExtra - start) * (1f - t) else radius
 }
+
+/** Native VelocityTracker uses units=1 (px/ms), followed by its 0.3 velocity gain. */
+internal fun couiNativeTouchVelocity(pixelsPerSecond: Float): Float = pixelsPerSecond * 0.3f / 1000f
 
 internal fun couiTouchMotionScaleContribution(deformScale: Float, pressScale: Float): Float = deformScale + pressScale - 1f
 
@@ -209,7 +220,7 @@ internal fun couiResolveHandUpSpring(
     val initialVelocity = if (maxInitialVelocity <= 0f || totalDistance <= 0f) {
         0f
     } else {
-        ((pan / totalDistance) * previousVelocity).coerceIn(-maxInitialVelocity, maxInitialVelocity)
+        ((abs(pan) / totalDistance) * previousVelocity).coerceIn(-maxInitialVelocity, maxInitialVelocity)
     }
     val velocityBounce = if (maxInitialVelocity <= 0f) {
         0f
@@ -277,6 +288,22 @@ internal fun couiPressScale(width: Float, height: Float, spec: COUITouchMotionSp
     return ((areaScale + aspectScale) / 2f).coerceIn(0.4f, 1f)
 }
 
+/** A retargetable native-style spring that keeps its velocity when a drag target changes. */
+@Stable
+internal class COUITouchSpring(initialValue: Float) {
+    private var animation by mutableStateOf(AnimationState(initialValue))
+    val value: Float get() = animation.value
+    val velocity: Float get() = animation.velocity
+
+    suspend fun animateTo(target: Float, spec: SpringSpec<Float>, initialVelocity: Float = velocity) {
+        // Preserve the clock of an interrupted spring, so per-frame drag targets still advance.
+        // A completed spring starts a fresh clock rather than consuming the idle time between gestures.
+        val lastFrame = if (animation.isFinished) Long.MIN_VALUE else animation.lastFrameTimeNanos
+        animation = AnimationState(initialValue = value, initialVelocity = initialVelocity, lastFrameTimeNanos = lastFrame)
+        animation.animateTo(target, spec, sequentialAnimation = true)
+    }
+}
+
 @Composable
 internal fun Modifier.couiTouchMotion(
     enabled: Boolean = true,
@@ -284,6 +311,7 @@ internal fun Modifier.couiTouchMotion(
     shape: Shape? = null,
     lightParams: SpotLightParams = SpotLightDefaults.capsuleParams2(false),
     motionState: COUITouchMotionState? = null,
+    applyTransform: Boolean = true,
 ): Modifier {
     val ownerState = motionState ?: rememberCOUITouchMotionState()
     val density = LocalDensity.current
@@ -294,11 +322,11 @@ internal fun Modifier.couiTouchMotion(
     val lightHeight = with(density) { lightParams.lightHeight.toDp() }
     val widthPx = remember { mutableFloatStateOf(0f) }
     val heightPx = remember { mutableFloatStateOf(0f) }
-    val translateXAnim = remember { Animatable(0f) }
-    val translateYAnim = remember { Animatable(0f) }
-    val scaleXAnim = remember { Animatable(1f) }
-    val scaleYAnim = remember { Animatable(1f) }
-    val pressProgress = remember { Animatable(0f) }
+    val translateXAnim = remember { COUITouchSpring(0f) }
+    val translateYAnim = remember { COUITouchSpring(0f) }
+    val scaleXAnim = remember { COUITouchSpring(1f) }
+    val scaleYAnim = remember { COUITouchSpring(1f) }
+    val pressProgress = remember { COUITouchSpring(0f) }
     val lightProgress = remember { Animatable(0f) }
     var pressed by remember { mutableStateOf(false) }
     var extinguishing by remember { mutableStateOf(false) }
@@ -314,17 +342,14 @@ internal fun Modifier.couiTouchMotion(
         val releaseSpec = if (usesCandySpring) spec.candyReleaseSpring else spec.releaseSpring
         pressProgress.animateTo(if (pressed) 1f else 0f, if (pressed) pressSpec else releaseSpec)
     }
-    LaunchedEffect(ownerState, translateXAnim, translateYAnim, scaleXAnim, scaleYAnim) {
-        snapshotFlow {
+    ownerState.values = remember(translateXAnim, translateYAnim, scaleXAnim, scaleYAnim, pressTarget) {
+        derivedStateOf {
+            val pressScale = 1f - (1f - pressTarget) * pressProgress.value
             COUITouchMotionValues(
                 translation = Offset(translateXAnim.value, translateYAnim.value),
-                scaleX = scaleXAnim.value + (1f - (1f - pressTarget) * pressProgress.value) - 1f,
-                scaleY = scaleYAnim.value + (1f - (1f - pressTarget) * pressProgress.value) - 1f,
+                scaleX = couiTouchMotionScaleContribution(scaleXAnim.value, pressScale),
+                scaleY = couiTouchMotionScaleContribution(scaleYAnim.value, pressScale),
             )
-        }.collect { values ->
-            ownerState.translation = values.translation
-            ownerState.scaleX = values.scaleX
-            ownerState.scaleY = values.scaleY
         }
     }
 
@@ -333,19 +358,31 @@ internal fun Modifier.couiTouchMotion(
             widthPx.value = it.width.toFloat()
             heightPx.value = it.height.toFloat()
         }
-        .pointerInput(enabled, spec) {
+        .pointerInput(enabled, spec, density.density) {
             if (!enabled) return@pointerInput
             coroutineScope {
                 val motionScope = this
+                var motionJob: Job? = null
                 awaitPointerEventScope {
                     while (true) {
                         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
                         var pointerId = down.id
+                        motionJob?.cancel()
                         var start = down.position
+                        val rubberRest = Offset(
+                            couiRubberBandInverse(translateXAnim.value, spec.rubberCurveRatio, maxStretchPx),
+                            couiRubberBandInverse(translateYAnim.value, spec.rubberCurveRatio, maxStretchPx),
+                        )
+                        val deformDistance = with(density) { spec.maxDeformRubberDistance.toPx() }
+                        val deformRange = (couiScaleWithK(widthPx.value, heightPx.value, spec.maxScale, spec.k1, spec.k2) - 1f).coerceAtLeast(0.001f)
+                        val deformRest = Offset(
+                            couiRubberBandInverse(((scaleXAnim.value - 1f) / deformRange).coerceAtMost(1f) * deformDistance, spec.deformRubberCurveRatio, deformDistance),
+                            couiRubberBandInverse(((scaleYAnim.value - 1f) / deformRange).coerceAtMost(1f) * deformDistance, spec.deformRubberCurveRatio, deformDistance),
+                        )
                         var last = start
+                        val tracker = VelocityTracker()
+                        tracker.addPosition(down.uptimeMillis, down.position)
                         var dragging = false
-                        var previousPosition = start
-                        var previousUptime = down.uptimeMillis
                         var velocityX = 0f
                         var velocityY = 0f
                         pressed = true
@@ -355,29 +392,30 @@ internal fun Modifier.couiTouchMotion(
                             (start.y / heightPx.value.coerceAtLeast(1f)).coerceIn(0f, 1f),
                         )
                         launch { lightProgress.animateTo(1f, SpotLightDefaults.GlowSpring) }
-                        var motionJob: Job? = null
                         var finished = false
                         try {
                             while (!finished) {
                                 val event = awaitPointerEvent(PointerEventPass.Initial)
                                 var change = event.changes.firstOrNull { it.id == pointerId }
                                 if (change == null || change.changedToUpIgnoreConsumed()) {
+                                    if (change != null) tracker.addPosition(change.uptimeMillis, change.position)
                                     val replacement = event.changes.firstOrNull { it.pressed }
                                     if (replacement == null) {
+                                        val velocity = tracker.calculateVelocity()
+                                        velocityX = couiNativeTouchVelocity(velocity.x)
+                                        velocityY = couiNativeTouchVelocity(velocity.y)
                                         finished = true
                                         continue
                                     }
-                                    pointerId = replacement.id
-                                    val offset = last - replacement.position
-                                    start = replacement.position + offset
+                                    // Keep the accumulated displacement when the active finger changes.
+                                    start = replacement.position - (last - start)
                                     change = replacement
+                                    pointerId = replacement.id
+                                    tracker.resetTracking()
                                 }
                                 val position = change.position
-                                val elapsedMillis = (change.uptimeMillis - previousUptime).coerceAtLeast(1L)
-                                velocityX = ((position.x - previousPosition.x) / elapsedMillis) * 1000f * 0.3f
-                                velocityY = ((position.y - previousPosition.y) / elapsedMillis) * 1000f * 0.3f
-                                previousPosition = position
-                                previousUptime = change.uptimeMillis
+                                change.historical.forEach { tracker.addPosition(it.uptimeMillis, it.position) }
+                                tracker.addPosition(change.uptimeMillis, position)
                                 val dx = position.x - start.x
                                 val dy = position.y - start.y
                                 last = position
@@ -386,21 +424,21 @@ internal fun Modifier.couiTouchMotion(
                                     (position.y / heightPx.value.coerceAtLeast(1f)).coerceIn(0f, 1f),
                                 )
                                 if (!dragging && (abs(dx) >= deadZonePx || abs(dy) >= deadZonePx)) dragging = true
-                                if (dragging) {
+                                if (dragging && (abs(dx) >= deadZonePx || abs(dy) >= deadZonePx)) {
                                     change.consume()
-                                    val deform = couiDeformationScales(dx, dy, spec, widthPx.value, heightPx.value, density.density)
+                                    val deform = couiDeformationScales(dx + deformRest.x, dy + deformRest.y, spec, widthPx.value, heightPx.value, density.density)
                                     motionJob?.cancel()
                                     motionJob = motionScope.launch {
                                         coroutineScope {
                                             launch {
                                                 translateXAnim.animateTo(
-                                                    couiRubberBandApply(dx, spec.rubberCurveRatio, maxStretchPx),
+                                                    couiRubberBandApply(dx + rubberRest.x, spec.rubberCurveRatio, maxStretchPx),
                                                     spec.dragSpring,
                                                 )
                                             }
                                             launch {
                                                 translateYAnim.animateTo(
-                                                    couiRubberBandApply(dy, spec.rubberCurveRatio, maxStretchPx),
+                                                    couiRubberBandApply(dy + rubberRest.y, spec.rubberCurveRatio, maxStretchPx),
                                                     spec.dragSpring,
                                                 )
                                             }
@@ -411,6 +449,7 @@ internal fun Modifier.couiTouchMotion(
                                 }
                             }
                         } finally {
+                            motionJob?.cancel()
                             pressed = false
                             extinguishing = true
                             motionScope.launch { lightProgress.animateTo(0f, SpotLightDefaults.ExtinguishSpring) }
@@ -455,18 +494,44 @@ internal fun Modifier.couiTouchMotion(
                                 spec.handUpMaxInitialVelocity,
                                 spec.handUpBounceGain,
                             )
-                            motionScope.launch {
-                                translateXAnim.animateTo(0f, bounceSpring, initialVelocity = handUp.initialVelocity)
+                            fun deformationHandUp(scale: Float, velocity: Float): COUIHandUpSpringValues = couiResolveHandUpSpring(
+                                widthPx.value, heightPx.value, density.density,
+                                abs(scale - 1f), maxStretchPx, velocity,
+                                spec.handUpBaseResponse, spec.handUpBaseBounce,
+                                spec.handUpLargeAreaResponse, spec.handUpLargeAreaBounce,
+                                spec.handUpSmallAreaRefWidthDp, spec.handUpLargeAreaRefWidthDp,
+                                spec.handUpAreaBezierX1, spec.handUpAreaBezierY1,
+                                spec.handUpAreaBezierX2, spec.handUpAreaBezierY2,
+                                spec.handUpMaxInitialVelocity, spec.handUpBounceGain,
+                            )
+                            val deformX = deformationHandUp(scaleXAnim.value, velocityX)
+                            val deformY = deformationHandUp(scaleYAnim.value, velocityY)
+                            motionJob = motionScope.launch {
+                                coroutineScope {
+                                    launch { translateXAnim.animateTo(0f, bounceSpring, initialVelocity = handUp.initialVelocity) }
+                                    launch {
+                                        translateYAnim.animateTo(
+                                            0f,
+                                            folmeSpring(damping = 1f - handUpY.bounce, response = handUpY.response),
+                                            initialVelocity = handUpY.initialVelocity,
+                                        )
+                                    }
+                                    launch {
+                                        scaleXAnim.animateTo(
+                                            1f,
+                                            folmeSpring(damping = 1f - deformX.bounce, response = deformX.response, visibilityThreshold = 0.0005f),
+                                            initialVelocity = deformX.initialVelocity,
+                                        )
+                                    }
+                                    launch {
+                                        scaleYAnim.animateTo(
+                                            1f,
+                                            folmeSpring(damping = 1f - deformY.bounce, response = deformY.response, visibilityThreshold = 0.0005f),
+                                            initialVelocity = deformY.initialVelocity,
+                                        )
+                                    }
+                                }
                             }
-                            motionScope.launch {
-                                translateYAnim.animateTo(
-                                    0f,
-                                    folmeSpring<Float>(damping = 1f - handUpY.bounce, response = handUpY.response),
-                                    initialVelocity = handUpY.initialVelocity,
-                                )
-                            }
-                            motionScope.launch { scaleXAnim.animateTo(1f, bounceSpring) }
-                            motionScope.launch { scaleYAnim.animateTo(1f, bounceSpring) }
                         }
                     }
                 }
@@ -519,5 +584,5 @@ internal fun Modifier.couiTouchMotion(
             clipShape = shape,
         )
     }
-    return this.then(pointerModifier).then(lightModifier).then(visualModifier)
+    return this.then(pointerModifier).then(lightModifier).then(if (applyTransform) visualModifier else Modifier)
 }
