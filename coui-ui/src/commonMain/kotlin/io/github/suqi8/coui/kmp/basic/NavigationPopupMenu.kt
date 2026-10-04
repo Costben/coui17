@@ -3,7 +3,6 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,9 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -28,8 +25,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
-import io.github.suqi8.coui.kmp.utils.COUIIndication
 import io.github.suqi8.coui.kmp.window.WindowListPopup
+
+private val NavigationPopupMenuGroupKey = Any()
 
 /**
  * The COUI bottom-navigation overflow menu (`COUINavigationPopupMenu`).
@@ -72,9 +70,9 @@ fun NavigationPopupMenu(
         minWidth = NavigationPopupMenuDefaults.MinWidth,
         onDismissRequest = onDismissRequest,
     ) {
-        // `COUINavigationPopupMenu.tryShow()` calls `listView.setDivider(null)`, so the rows sit
-        // flush against each other — no popup list divider band between them.
-        Column {
+        // `COUINavigationPopupMenu.tryShow()` calls `listView.setDivider(null)`. Sharing one group
+        // key keeps the native rounded press mask while suppressing divider bands.
+        ListPopupColumn {
             content()
         }
     }
@@ -112,18 +110,15 @@ fun NavigationPopupMenuItem(
     val colorScheme = COUITheme.colorScheme
     val labelColor = if (enabled) colorScheme.onSurfaceSecondary else colorScheme.disabledOnSurface
     val iconTint = if (enabled) colorScheme.onSurfaceContainer else colorScheme.disabledOnSurface
-    val indication = remember { COUIIndication() }
-
     Row(
         modifier = modifier
             .widthIn(min = NavigationPopupMenuDefaults.MinWidth)
-            .selectable(
+            .popupListItem(
                 selected = false,
-                interactionSource = null,
-                indication = indication,
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
+                groupKey = NavigationPopupMenuGroupKey,
             )
             .padding(vertical = NavigationPopupMenuDefaults.ItemPaddingVertical),
         verticalAlignment = Alignment.CenterVertically,
