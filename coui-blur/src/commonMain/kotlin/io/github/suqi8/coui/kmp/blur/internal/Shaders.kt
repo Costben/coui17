@@ -517,6 +517,11 @@ half4 main(float2 fragCoord) {
     half3 rgb = strokeColor.rgb * half(strokeAlphaMul * strokeAlpha * strokeAlpha);
 
     float3 n = getNormal(fragCoord, sdf, R);
+    // The normal's circular construction can reach deeper into a smooth corner than into a
+    // straight edge. Bound its light by the same silhouette distance as the fill/stroke, fading
+    // to zero at the inward halo limit instead of leaving bright lobes in the corner interior.
+    float rimLightMask = smoothstep(-max(innerBlurRadius, 0.001), 0.0, sdf);
+    n *= rimLightMask;
 $lightBlock
     return half4(rgb * half(highlightAlpha), 1.0) * outMask;
 }

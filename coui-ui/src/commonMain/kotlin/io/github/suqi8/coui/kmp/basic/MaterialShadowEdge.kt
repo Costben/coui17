@@ -263,6 +263,9 @@ object MaterialShadowEdgeDefaults {
     /** The `u_commonArray[10]` corner weight of a surface with more than one item. */
     val CornerWeight = 1f
 
+    /** The corner weight of COUI's smooth squircle silhouette (Lp exponent 2.5). */
+    val SquircleCornerWeight = 2.5f
+
     /**
      * The `u_commonArray[10]` corner weight of a surface with exactly one item
      * (`COUIBottomFloatingToolbarMenuView.SINGLE_ITEM_CORNER_WEIGHT = 2.0f`, returned by

@@ -222,9 +222,9 @@ private fun Placeable.PlacementScope.placeRelativeGroups(
  * of content padding at either end. `menu_view_padding` is applied inside the capsule rather than
  * around it, so the capsule hugs its items — see [BottomFloatingToolbarDefaults.MenuViewPadding].
  *
- * A capsule holding exactly one item is drawn with
- * [MaterialShadowEdgeDefaults.SingleItemCornerWeight], so its rim is a full capsule rather than a
- * wide rounded rectangle. The count comes from the items this group measured.
+ * Smooth-corner surfaces use [MaterialShadowEdgeDefaults.SquircleCornerWeight] so the material rim
+ * follows the glass silhouette. Plain rounded surfaces retain the native single-item versus
+ * multi-item weights; the count comes from the items this group measured.
  *
  * @param modifier The modifier to be applied to the capsule.
  * @param content The content of the capsule, usually [BottomFloatingToolbarItem]s.
@@ -273,7 +273,11 @@ fun BottomFloatingToolbarGroup(
             // fallback.
             .materialShadowEdge(
                 stroke = stroke,
-                cornerWeight = if (itemCount == 1) {
+                cornerWeight = if (squircleEnabled) {
+                    // The glass fill and highlight use the same Lp(2.5) squircle. Keeping the
+                    // material rim on that geometry prevents bright corner lobes outside the fill.
+                    MaterialShadowEdgeDefaults.SquircleCornerWeight
+                } else if (itemCount == 1) {
                     MaterialShadowEdgeDefaults.SingleItemCornerWeight
                 } else {
                     MaterialShadowEdgeDefaults.CornerWeight
