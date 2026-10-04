@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -29,6 +28,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -316,7 +316,25 @@ private fun Coui17PageContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset { IntOffset(0, scrollBehavior.state.heightOffset.roundToInt()) }
+            // Keep the content's bottom edge attached to the viewport while the top follows
+            // the collapsing app bar. A plain offset on a fillMaxSize node leaves a gap at the
+            // bottom once heightOffset becomes negative, exposing the Scaffold's base colour.
+            .layout { measurable, constraints ->
+                val offsetY = scrollBehavior.state.heightOffset.roundToInt()
+                val extraHeight = (-offsetY).coerceAtLeast(0)
+                val expandedConstraints = constraints.copy(
+                    minHeight = constraints.minHeight + extraHeight,
+                    maxHeight = if (constraints.hasBoundedHeight) {
+                        constraints.maxHeight + extraHeight
+                    } else {
+                        constraints.maxHeight
+                    },
+                )
+                val placeable = measurable.measure(expandedConstraints)
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    placeable.place(0, offsetY)
+                }
+            }
             .nestedScroll(scrollBehavior.nestedScrollConnection),
     ) {
         when (page) {
