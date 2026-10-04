@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -49,7 +50,6 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -325,17 +325,17 @@ private fun BottomFloatingNavigationBarCapsule(
             ) {
                 FloatingCapsuleRow(
                     modifier = Modifier
-                        .couiGlassSurface(
-                            backdrop = backdrop,
-                            shape = shape,
-                            containerColor = containerColor,
-                            fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
-                            highlight = highlight,
-                        )
                         .couiTouchMotion(
                             shape = shape,
                             lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                             motionState = touchState,
+                            surface = Modifier.couiGlassSurface(
+                                backdrop = backdrop,
+                                shape = shape,
+                                containerColor = containerColor,
+                                fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                                highlight = highlight,
+                            ),
                         )
                         .then(modifier),
                     content = content,
@@ -384,7 +384,6 @@ private fun BottomFloatingNavigationBarMeltBall(
     val gap = sideSpacing * progress
     val expansionFootprint = expansionSize * progress
 
-    val squircleEnabled = isSquircleEnabled()
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
@@ -455,7 +454,7 @@ private fun BottomFloatingNavigationBarMeltBall(
                         modifier = Modifier
                             .onSizeChanged { capsuleWidthPx = it.width }
                             .couiTouchMotion(
-                                shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled),
+                                shape = RoundedCornerShape(cornerRadius),
                                 lightParams = SpotLightDefaults.opaqueMedium2(COUITheme.colorScheme.background.luminance() < 0.5f),
                                 motionState = menuTouchState,
                             ),
@@ -484,15 +483,12 @@ private fun BottomFloatingNavigationBarMeltBall(
                                         COUITheme.colorScheme.background.luminance() < 0.5f,
                                     ),
                                     motionState = expansionTouchState,
-                                    applyTransform = false,
-                                )
-                                .graphicsLayer {
-                                    scaleX = progress * expansionTouchState.scaleX
-                                    scaleY = progress * expansionTouchState.scaleY
-                                    translationX = expansionTouchState.translation.x
-                                    translationY = expansionTouchState.translation.y
-                                    alpha = progress
-                                },
+                                    extraTransform = {
+                                        scaleX *= progress
+                                        scaleY *= progress
+                                        alpha = progress
+                                    },
+                                ),
                         ) {
                             expansion()
                         }

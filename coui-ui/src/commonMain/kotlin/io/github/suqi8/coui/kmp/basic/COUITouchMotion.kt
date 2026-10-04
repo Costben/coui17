@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -306,12 +307,13 @@ internal class COUITouchSpring(initialValue: Float) {
 
 @Composable
 internal fun Modifier.couiTouchMotion(
+    surface: Modifier = Modifier,
     enabled: Boolean = true,
     spec: COUITouchMotionSpec = COUITouchMotionSpec(),
     shape: Shape? = null,
     lightParams: SpotLightParams = SpotLightDefaults.capsuleParams2(false),
     motionState: COUITouchMotionState? = null,
-    applyTransform: Boolean = true,
+    extraTransform: GraphicsLayerScope.() -> Unit = {},
 ): Modifier {
     val ownerState = motionState ?: rememberCOUITouchMotionState()
     val density = LocalDensity.current
@@ -546,6 +548,7 @@ internal fun Modifier.couiTouchMotion(
         scaleX = scaleXAnim.value + pressScale - 1f
         scaleY = scaleYAnim.value + pressScale - 1f
         transformOrigin = TransformOrigin(0.5f, 0.5f)
+        extraTransform()
     }
     val lightRadius = with(density) {
         couiSpotlightRadius(
@@ -584,5 +587,7 @@ internal fun Modifier.couiTouchMotion(
             clipShape = shape,
         )
     }
-    return this.then(pointerModifier).then(lightModifier).then(if (applyTransform) visualModifier else Modifier)
+    // Keep the surface, clipped light and content inside one transform. The pointer detector stays
+    // outside it so the moving visual layer does not alter the gesture's displacement coordinates.
+    return this.then(pointerModifier).then(visualModifier).then(surface).then(lightModifier)
 }

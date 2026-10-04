@@ -335,7 +335,7 @@ fun BottomFloatingAccessoryNavigationBar(
                         modifier = Modifier
                             .onSizeChanged { capsuleWidthPx = it.width }
                             .couiTouchMotion(
-                                shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = isSquircleEnabled()),
+                                shape = RoundedCornerShape(cornerRadius),
                                 lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                                 motionState = menuTouchState,
                             ),
@@ -389,15 +389,13 @@ private fun AccessorySlot(
                     COUITheme.colorScheme.background.luminance() < 0.5f,
                 ),
                 motionState = motionState,
-                applyTransform = false,
-            )
-            .graphicsLayer {
-                alpha = expansion.alpha
-                scaleX = expansion.scale * (motionState?.scaleX ?: 1f)
-                scaleY = expansion.scale * (motionState?.scaleY ?: 1f)
-                translationX = tuckDirection * expansion.tuck * (size + sideSpacing).toPx() + (motionState?.translation?.x ?: 0f)
-                translationY = motionState?.translation?.y ?: 0f
-            },
+                extraTransform = {
+                    alpha = expansion.alpha
+                    scaleX *= expansion.scale
+                    scaleY *= expansion.scale
+                    translationX += tuckDirection * expansion.tuck * (size + sideSpacing).toPx()
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         if (expansion.alpha > 0.01f) content()
@@ -486,17 +484,17 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
             ) {
                 FloatingCapsuleRow(
                     modifier = Modifier
-                        .couiGlassSurface(
-                            backdrop = backdrop,
-                            shape = shape,
-                            containerColor = containerColor,
-                            fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
-                            highlight = highlight,
-                        )
                         .couiTouchMotion(
                             shape = shape,
                             lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                             motionState = touchState,
+                            surface = Modifier.couiGlassSurface(
+                                backdrop = backdrop,
+                                shape = shape,
+                                containerColor = containerColor,
+                                fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                                highlight = highlight,
+                            ),
                         ),
                     content = content,
                 )
