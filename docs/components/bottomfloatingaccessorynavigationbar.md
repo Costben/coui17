@@ -8,6 +8,12 @@ The bar samples the content behind it through `LocalBackdrop`; when no backdrop 
 
 On compatible ColorOS devices, the merged silhouette uses the system material renderer. Other platforms use the portable shader. Dragging preserves spring velocity when the target changes, and release springs use the control area and release velocity. During collapse, an accessory stays opaque until half of its transformed area overlaps the capsule, then fades as the overlap grows. Stretching transforms the original circle into an ellipse. The navigation capsule owns item press motion, so its items do not apply a second scale.
 
+Press lighting belongs to the region where the gesture starts: the start circle, menu capsule, or end circle. Its spring follows the finger with unclamped coordinates while drawing stays clipped to that region. A nearby exit leaves part of the halo visible, a distant exit leaves none, and returning restores it without transferring the light to another region. All navigation items share the menu capsule's light.
+
+The lower light uses native caustic shadows: level-4 for the bar (bottom offset 4.899994dp, SDF width 10.399994dp) and level-5 for accessories (11.199982dp, 20dp). Both use the same vertical power falloff and coui_caustic_color_2, without a 75° angular mask. ColorOS calls the system API; other platforms run the recovered formula.
+
+Upper and lower rims use TYPE_FRAMEWORK_CAPSULE_3 / EDGE_STYLE_0: width 2.5dp, alpha 0.8 in dark mode and 0.25 in light mode. The upper far line is narrower; the lower near line is broader and weaker. Caustic light and contour highlights are separate, and both rims remain present with backdrop blur disabled.
+
 ## Import
 
 ```kotlin
@@ -102,3 +108,5 @@ The capsule itself is measured the way `BaseBottomFloatingMenuView.onMeasure` me
 ## Relationship to BottomFloatingNavigationBar
 
 Both bars share their items, red dots and defaults: `BottomFloatingNavigationBarItem` and `BottomFloatingRedDot` are used here unchanged, and the capsule height, corner radius, item metrics and touch highlight come from `BottomFloatingNavigationBarDefaults`. Use `BottomFloatingNavigationBar` when no side accessory is needed, and this component when the bar carries one or two round actions next to the capsule.
+
+The upper/lower rim now samples the actual blurred backdrop before tinting and follows libhwui `blendEdge` brightness correction and RGB mixing. Alpha 0.8/0.25 controls that material blend, rather than an opaque white overlay. The same formula is used by toolbar circles, with their own native circle parameters. Exterior caustic profiles remain unchanged.

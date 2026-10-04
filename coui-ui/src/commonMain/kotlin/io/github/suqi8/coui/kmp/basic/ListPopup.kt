@@ -8,6 +8,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -392,6 +393,9 @@ internal class PopupListGestureHost {
 
 internal val LocalPopupListGestureHost = staticCompositionLocalOf<PopupListGestureHost?> { null }
 
+/** Exit keeps the host alive, but native RoundFrameLayout stops dispatching row input immediately. */
+internal val LocalPopupInteractionEnabled = staticCompositionLocalOf { true }
+
 /**
  * Records where an anchor was last touched, so a popup can open at the finger rather than centred on
  * the anchor — COUI `PreciseClickHelper` / `PreciseLongPressHelper`, which stash the DOWN `(x, y)`
@@ -505,16 +509,17 @@ internal fun Modifier.popupListItem(
     onClick: () -> Unit,
     groupKey: Any? = null,
 ): Modifier {
+    val interactionEnabled = enabled && LocalPopupInteractionEnabled.current
     val host = LocalPopupListGestureHost.current ?: return this.selectable(
         selected = selected,
-        enabled = enabled,
+        enabled = interactionEnabled,
         role = role,
         onClick = onClick,
     )
 
     val handle = remember { PopupListItemHandle() }
     val currentOnClick by rememberUpdatedState(onClick)
-    handle.enabled = enabled
+    handle.enabled = interactionEnabled
     handle.onClick = remember { { currentOnClick() } }
 
     DisposableEffect(host, handle) {
@@ -554,7 +559,7 @@ internal fun Modifier.popupListItem(
         .semantics(mergeDescendants = true) {
             this.role = role
             this.selected = selected
-            if (enabled) {
+            if (interactionEnabled) {
                 onClick {
                     currentOnClick()
                     true
@@ -592,6 +597,7 @@ fun ListPopupColumn(
     val performHaptic = rememberCouiHaptic()
     val touchSlop = LocalViewConfiguration.current.touchSlop
     val dividerColor = COUITheme.colorScheme.dividerLine
+    val interactionEnabled = LocalPopupInteractionEnabled.current
 
     host.isDynamicSelection = !scrollState.canScrollForward && !scrollState.canScrollBackward
     host.isScrolling = scrollState.isScrollInProgress
@@ -726,7 +732,7 @@ fun ListPopupColumn(
             // the per-row padding. The band sits outside the scroller, i.e. clipToPadding stays on.
             .padding(vertical = PopupListVerticalPadding)
             .verticalScroll(state = scrollState)
-            .popupListGestures(host, coroutineScope, touchSlop, performHaptic)
+            .popupListGestures(host, coroutineScope, touchSlop, performHaptic, interactionEnabled)
             .drawWithContent {
                 drawContent()
                 drawPopupItemDividers(host, dividerColor)
@@ -746,14 +752,16 @@ private fun Modifier.popupListGestures(
     scope: CoroutineScope,
     touchSlop: Float,
     performHaptic: (CouiHapticEffect) -> Unit,
-): Modifier = pointerInput(host) {
-    awaitPointerEventScope {
-        while (true) {
-            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            val downY = down.position.y
-            var pressed = host.onDown(downY, scope) != null
-            var released = false
+    enabled: Boolean,
+): Modifier = pointerInput(host, enabled) {
+    if (!enabled) return@pointerInput
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        val downY = down.position.y
+        var pressed = host.onDown(downY, scope) != null
+        var released = false
 
+        try {
             while (pressed && !released) {
                 val event = awaitPointerEvent(PointerEventPass.Initial)
                 val change: PointerInputChange = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -765,22 +773,33 @@ private fun Modifier.popupListGestures(
                     break
                 }
 
+                // Resolve both axes and the final UP position. Leaving the menu cancels the row,
+                // while returning during the same gesture restores dynamic selection.
+                val inside = change.position.x >= 0f && change.position.x < size.width
+                if (!inside) {
+                    host.cancel(scope)
+                } else if (host.isDynamicSelection) {
+                    val crossing = host.willChangeRow(change.position.y)
+                    host.onMoveTo(change.position.y, scope)
+                    if (crossing) performHaptic(CouiHapticEffect.Switch)
+                }
+
                 if (change.changedToUpIgnoreConsumed()) {
-                    host.onUp(scope)
+                    // Compose represents ACTION_CANCEL as an already-consumed synthetic UP.
+                    // It must release the mask without activating the item under the pointer.
+                    if (change.isConsumed) host.cancel(scope) else host.onUp(scope)
                     released = true
                     break
                 }
 
                 val y = change.position.y
-                if (host.isDynamicSelection) {
-                    val crossing = host.willChangeRow(y)
-                    host.onMoveTo(y, scope)
-                    if (crossing) performHaptic(CouiHapticEffect.Switch)
-                } else if (abs(y - downY) > touchSlop) {
+                if (!host.isDynamicSelection && abs(y - downY) > touchSlop) {
                     host.cancel(scope)
                     pressed = false
                 }
             }
+        } finally {
+            host.cancel(scope)
         }
     }
 }
@@ -1144,6 +1163,16 @@ object ListPopupDefaults {
  * `couiRoundCornerM` / `coui_round_corner_m` radius the layout declares is overridden on ColorOS 17.
  */
 internal val PopupCornerRadius = 28.dp
+
+/** RoundFrameLayout.initMaterialEffects: SHADOW_STYLE_2 / EDGE_STYLE_2 with per-theme overrides. */
+private val PopupStrokeLight = MaterialStrokeParams(edgeAlpha = 0.9f, edgeWidth = 4.dp, shadowFadeIn = 0.9f)
+private val PopupStrokeDark = MaterialStrokeParams(edgeAlpha = 0.4f, edgeWidth = 2.dp, shadowFadeIn = 0.1f)
+
+/** RoundFrameLayout.DEFAULT_BLUR_RADIUS_PX, authored in physical pixels. */
+private const val POPUP_BLUR_RADIUS_PX = 160f
+
+/** Gallery's weight_16_1_normal, shared by the popup silhouette and its NEW_G2 material rim. */
+private const val POPUP_CORNER_WEIGHT = 2.5f
 
 /** COUI popup surface in light themes (coui_popup_window_background -> ?couiColorBackgroundTop, coui_color_background_top #FFFFFF). */
 private val PopupSurfaceLight = Color.White
@@ -1531,6 +1560,8 @@ fun popupGravityPath(
  * @param enableGlass Whether to draw the ColorOS 17 popup glass behind the content. Only the
  *   in-window overlay host enables it; the `Dialog` host has no coordinates in the host window for
  *   a backdrop to sample.
+ * @param interactionEnabled Whether the mounted surface accepts touches and row actions. Hosts
+ *   disable it as soon as dismissal starts, while retaining the surface for its exit animation.
  * @param content The content of the popup.
  */
 @Composable
@@ -1545,6 +1576,7 @@ fun ListPopupContent(
     localTransformOrigin: TransformOrigin,
     modifier: Modifier = Modifier,
     enableGlass: Boolean = false,
+    interactionEnabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val backgroundColor = popupSurfaceColor()
@@ -1553,7 +1585,19 @@ fun ListPopupContent(
     val glassShape = remember(PopupCornerRadius, squircleEnabled) {
         SquircleShape(cornerRadius = PopupCornerRadius, squircleEnabled = squircleEnabled)
     }
-    val highlight = rememberGlassHighlight(GlassContainer.Large, backdrop)
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val blurRadius = with(LocalDensity.current) { POPUP_BLUR_RADIUS_PX.toDp().value }
+    val materialEdge = if (backdrop != null) {
+        Modifier.materialShadowEdge(
+            stroke = if (isDark) PopupStrokeDark else PopupStrokeLight,
+            cornerRadius = PopupCornerRadius,
+            cornerWeight = if (squircleEnabled) POPUP_CORNER_WEIGHT else 1f,
+            edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
+            shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
+        )
+    } else {
+        Modifier
+    }
 
     Box(
         modifier = modifier
@@ -1561,11 +1605,29 @@ fun ListPopupContent(
                 val size = coordinates.size
                 if (popupContentSize != size) onPopupContentSizeChange(size)
             }
-            .graphicsLayer {
+            .couiTouchMotion(
+                enabled = interactionEnabled,
+                pressScaleEnabled = false,
+                consumeDrag = false,
+                lightEnabled = backdrop != null,
+                shape = glassShape,
+                lightParams = SpotLightDefaults.translucentLarge1(isDark),
+                surface = Modifier
+                    .dropShadow(shape = glassShape, shadow = PopupShadow)
+                    .couiGlassSurface(
+                        backdrop = backdrop,
+                        shape = glassShape,
+                        containerColor = backgroundColor,
+                        fallback = Modifier.squircleSurface(color = backgroundColor, cornerRadius = PopupCornerRadius),
+                        blurRadius = blurRadius,
+                        blendColors = popupGlassBlendColors(),
+                    )
+                    .then(materialEdge),
+            ) {
                 // COUI's main menu scales a true 0 -> 1; only the small-screen sub-menu clip-reveals.
                 val scale = fractionProgress()
-                scaleX = scale
-                scaleY = scale
+                scaleX *= scale
+                scaleY *= scale
                 alpha = alphaProgress()
                 transformOrigin = localTransformOrigin
                 // COUI COUIPopupTouchMotionAnimator.collect() leaves the scale pivot where
@@ -1574,20 +1636,13 @@ fun ListPopupContent(
                 // size * (0.5 - pivotRatio) * (1 - scale) cancels the pivot and lets the trajectory
                 // start at the path anchor rather than at the pivot point.
                 val pathPoint = gravityPath.pointAt(pathProgress())
-                translationX = pathPoint.x + size.width * (0.5f - localTransformOrigin.pivotFractionX) * (1f - scale)
-                translationY = pathPoint.y + size.height * (0.5f - localTransformOrigin.pivotFractionY) * (1f - scale)
-            }
-            .dropShadow(shape = glassShape, shadow = PopupShadow)
-            .couiGlassSurface(
-                backdrop = backdrop,
-                shape = glassShape,
-                containerColor = backgroundColor,
-                fallback = Modifier.squircleSurface(color = backgroundColor, cornerRadius = PopupCornerRadius),
-                blendColors = popupGlassBlendColors(),
-                highlight = highlight,
-            ),
+                translationX += pathPoint.x + size.width * (0.5f - localTransformOrigin.pivotFractionX) * (1f - scale)
+                translationY += pathPoint.y + size.height * (0.5f - localTransformOrigin.pivotFractionY) * (1f - scale)
+            },
     ) {
-        content()
+        CompositionLocalProvider(LocalPopupInteractionEnabled provides interactionEnabled) {
+            content()
+        }
     }
 }
 

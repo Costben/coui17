@@ -81,6 +81,28 @@ private fun gapMidpointX(circleCenterX: Dp): Dp = (CapsuleRightEdge + circleLeft
 class MetaBallSurfaceRenderTest {
 
     @Test
+    fun capsuleGlowFollowsItsLowerOutlineAcrossTheFullWidth() = runSkikoComposeUiTest(size = Size(800f, 480f), density = Density(4f)) {
+        setContent {
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                MetaBallSurface(
+                    particles = listOf(MetaBallParticle(100.dp, 60.dp, 140.dp, 40.dp, cornerRadius = 20.dp)),
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.Blue,
+                    backdrop = null,
+                    rimColor = null,
+                    bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
+                )
+            }
+        }
+        waitForIdle()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        val samples = listOf(220, 310, 400, 490, 580).map { pixels[it, 330].red }
+        println("[bottom-halo-fade] capsule_lower_edge=$samples")
+        assertTrue(samples.all { it > 0.02f }, "Directional fading must follow the capsule's surface normal and preserve the whole lower edge")
+        assertTrue(samples.max() - samples.min() < 0.008f, "The straight lower edge must carry consistent glow")
+    }
+
+    @Test
     fun aStretchedCircleKeepsItsEllipticalOutline() = runSkikoComposeUiTest(size = CanvasSize, density = Density(1f)) {
         setContent {
             Box(Modifier.fillMaxSize().background(BackgroundColor)) {

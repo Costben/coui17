@@ -306,6 +306,7 @@ internal fun ListPopupLayout(
                     popupLayoutPosition = layoutInfo.popupLayoutPosition,
                     localTransformOrigin = layoutInfo.localTransformOrigin,
                     enableGlass = enableGlass,
+                    interactionEnabled = show && backProgress.value == 0f,
                     content = {
                         CompositionLocalProvider(LocalDismissState provides requestDismiss) {
                             content()

@@ -70,6 +70,25 @@ data class SpotLightParams(
 /** Defaults for [Modifier.spotLight], the presets and constants of `COUISpotLightEffect`. */
 object SpotLightDefaults {
 
+    /** `COUISpotLightEffect.TYPE_TRANSLUCENT_LARGE_1_LIGHT`, used by popup RoundFrameLayout. */
+    val TranslucentLarge1Light: SpotLightParams = SpotLightParams(
+        blendMode = BlendMode.Overlay,
+        startIntensity = 0f,
+        endIntensity = 0.6f,
+        startRadius = 100f,
+        endRadius = 800f,
+        lightHeight = 200f,
+        ambientStrength = 0.4f,
+        diffuseStrength = 0.4f,
+        ditherN = 0f,
+        noise = 0.08f,
+    )
+
+    /** The popup's dark preset retains Overlay and only lowers the light intensity. */
+    val TranslucentLarge1Dark: SpotLightParams = TranslucentLarge1Light.copy(endIntensity = 0.1f)
+
+    fun translucentLarge1(isDark: Boolean): SpotLightParams = if (isDark) TranslucentLarge1Dark else TranslucentLarge1Light
+
     /**
      * `SpotLightShader.mLightHeight` — the height of the light above the surface, in the shader's
      * pixel space like [SpotLightParams.lightHeight]. [Modifier.spotLight] takes a `Dp`, so its
@@ -347,8 +366,10 @@ object SpotLightDefaults {
  * the round rectangle, `SRC_OVER` for the dark chip tab — over whatever the callers have already
  * painted, so the light brightens the surface underneath it instead of replacing it.
  *
- * [position] is normalised inside the node, exactly like `COUISpotLightEffectDrawable`, which
- * divides the touch point by `mBounds.width()` / `mBounds.height()`; [radius] and [lightHeight] are
+ * [position] is normalised to the node's size, exactly like `COUISpotLightEffectDrawable`, which
+ * divides the touch point by `mBounds.width()` / `mBounds.height()` without clamping. Coordinates
+ * may leave 0..1: the owner's clip shows only the part of the halo still inside it, and a distant
+ * light no longer intersects the surface. [radius] and [lightHeight] are
  * [Dp] because the shader works in the node's pixels, whereas the native presets store those two in
  * raw pixels (see [SpotLightParams.startRadius]).
  *
@@ -356,7 +377,7 @@ object SpotLightDefaults {
  * [intensity] with [SpotLightDefaults.GlowSpring], [SpotLightDefaults.ExtinguishSpring] and
  * [SpotLightDefaults.MoveSpring] the way `COUISpotLightEffect.animate` / `glow` / `extinguish` do.
  *
- * @param position The light position, normalised 0..1 inside this node.
+ * @param position The light position normalised to this node; values outside 0..1 are valid.
  * @param radius The radius at which the light dies out, `u_lightPosAndHeight.z`.
  * @param intensity The intensity multiplier, `u_lightPosAndHeight.w`.
  * @param modifier Modifiers applied outside the light layer; the light is painted behind the inner

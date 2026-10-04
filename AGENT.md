@@ -478,7 +478,7 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
   `docs/coui17-gallery-plan.md` §九。
 - **已解决：搜索栏投影本身**（commit `feat(coui17): 顶栏搜索栏补上真机投影，随收起态淡入`）。真机的
   `OplusView.setOverrideLightSourceGeometry(-1, -200dp, 10000dp, 2000dp, 0)` 走 Skia 的
-  `SkDrawShadowMetrics::GetSpotParams`，没有闭式解；`Coui17Shadows.kt` 的 `searchBarShadow` 复用
+  `SkDrawShadowMetrics::GetSpotParams`，没有闭式解；`SearchBarShadow.kt` 的 `searchBarShadow` 复用
   `ListPopup.PopupShadow` 同一套推导，把它折成一个普通 `Shadow`：`zRatio = 100/(10000−100) = 0.01010`、
   `blurRadius = 2000dp × zRatio ≈ 20.20dp`、`offsetY = +2.02dp`、`offsetX = 0`，颜色 α 浅色 34/255、
   深色 68/255（token `coui_shadow_color_lv3a`），再乘 `scrollFraction`，形状绑 40dp 高胶囊。

@@ -44,10 +44,18 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * blurRadius = lightRadius * zRatio                                            = 20.20 dp
  * ```
  *
- * The offset is horizontally centred: lightX is the literal -1 COUI passes. `radius` transfers 1:1
- * because Skia's `ConvertRadiusToSigma` (`0.57735r + 0.5`) is the rule Compose's shadow painter
- * uses too. The omni-directional ambient half of the native shadow is dropped, as it is for
- * `PopupShadow`: this modifier draws one shadow.
+ * The offset is horizontally centred: lightX is the literal -1 COUI passes. `radius` is handed to
+ * the platform blur as-is: Compose's shadow painter feeds `Shadow.radius` straight into
+ * `android.graphics.BlurMaskFilter(radius, Blur.NORMAL)` (`DropShadowRenderer`), which takes
+ * sigma = 0.57735 · radius internally — there is no `ConvertRadiusToSigma` step on this path, so
+ * `radius` is *not* the sigma. The soft tail therefore runs about 2 sigma ≈ 1.15 · radius past the
+ * shape, which is what the 20.20dp above is sized for.
+ *
+ * The omni-directional ambient half of the native shadow is dropped, as it is for `PopupShadow`:
+ * this modifier draws one shadow. That is the known residual — the far field comes out ~2.6 luma
+ * lighter than the device with a tail ~40px short (see `docs/coui17-gallery-plan.md` §九). A second
+ * wide [Shadow] standing in for the ambient half was tried and made the near field worse, so it is
+ * left out.
  *
  * @param fraction how much of the shadow to show. The collapsed home pill fades it in with the
  *   scroll (`min(1, scrollPx / 30dp)`); the expanded search field shows all of it.

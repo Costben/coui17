@@ -13,6 +13,8 @@ popupHost: COUIPopupHost
 
 `OverlayListPopup` 是 COUI 中的弹出列表组件，用于显示包含多个选项的弹出菜单。它提供了一个轻量级的、浮动的临时列表，适用于各种下拉菜单、上下文菜单等场景。
 
+ColorOS 17 菜单的玻璃背景、渐变边缘、触摸光效和内容共用整体变换。拖动时菜单拉伸，松手后弹性回弹；静止按住时保持原尺寸。`ListPopupColumn` 的行高亮内缩绘制，跟随当前行，移出或取消手势后清除。退出开始时立即禁用菜单项，退出中重新打开会取消原来的关闭。导航动作使用 `DropdownImpl(role = Role.Button, ...)`。
+
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=overlayListPopup" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </div>

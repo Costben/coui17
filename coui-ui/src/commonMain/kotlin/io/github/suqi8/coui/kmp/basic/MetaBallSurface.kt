@@ -22,11 +22,10 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
-import io.github.suqi8.coui.kmp.blur.BlendColorEntry
-import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.RuntimeShader
 import io.github.suqi8.coui.kmp.blur.asBrush
@@ -138,11 +137,12 @@ object MetaBallDefaults {
  * @param extensionFactorX The horizontal reach multiplier.
  * @param extensionFactorY The vertical reach multiplier.
  * @param rimColor The light traced along the merged outline, or `null` to skip it.
- * @param rimBlur How far that light bleeds inward before it dies, in dp.
- * @param rimBottomScale Weight of the rim on the *bottom* edge, against its weight of 1 on the top
- *   one. `0` keeps the rim on the top edge alone, which is what a plain glass surface does.
+ * @param rimBlur Retained for source compatibility; native near/far gradients determine the rim fade.
+ * @param rimBottomScale Additional weight for the native lower perimeter ramp. `1` preserves the
+ *   system's near/far alpha and width difference; `0` suppresses the lower ramp.
  * @param bottomGlowColor A directional light that diffuses below the silhouette, or `null` to skip it.
- * @param bottomGlowBlur How far the bottom light diffuses outside the silhouette, in dp.
+ *   It uses the native caustic SDF and vertical attenuation, with per-component layout profiles.
+ * @param bottomGlowBlur Retained for source compatibility; native caustic profiles determine the falloff.
  * @param content The content drawn on top of the silhouette.
  */
 @Composable
@@ -171,38 +171,35 @@ fun MetaBallSurface(
         // Both the blur mask and the native material nodes need drawing room outside the resting
         // bar. Reserve paint space without changing the measured size or the caller's coordinates.
         MetaBallPaintArea(particles = particles, modifier = Modifier.matchParentSize()) { paintedParticles ->
-            if (bottomGlowColor != null && shader != null) {
-                // The bloom is painted *outside* the merged outline, so this layer asks for a rect that
-                // reaches [bottomGlowBlur] below the node. Compose does not clip a node's drawing to its
-                // bounds, and the shader works in this node's own coordinates, so the particles stay where
-                // the caller put them; only the rasterised area grows.
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    drawMetaBall(
-                        shader = shader,
-                        particles = paintedParticles,
-                        body = Color.Transparent,
-                        rim = Color.Transparent,
-                        extension = extension,
-                        extensionFactorX = extensionFactorX,
-                        extensionFactorY = extensionFactorY,
-                        rimBlur = rimBlur,
-                        bottomGlow = bottomGlowColor,
-                        bottomGlowBlur = bottomGlowBlur,
-                        glowOutsetPx = bottomGlowBlur.toPx(),
-                    )
-                }
+            if (bottomGlowColor != null) {
+                MaterialCausticShadow(
+                    particles = paintedParticles.map {
+                        CausticShadowParticle(
+                            it,
+                            if (it.width == it.height) CausticShadowProfile.Accessory else CausticShadowProfile.Bar,
+                        )
+                    },
+                    color = bottomGlowColor,
+                    modifier = Modifier.matchParentSize(),
+                )
             }
             if (glass) {
                 Box(
                     modifier = Modifier
                         .matchParentSize()
+                        .nativeMaterialEdge(
+                            particles = paintedParticles,
+                            rim = rimColor ?: Color.Transparent,
+                            bottomScale = rimBottomScale,
+                            tint = color.copy(alpha = containerAlpha),
+                            extension = extension,
+                            factorX = extensionFactorX,
+                            factorY = extensionFactorY,
+                        )
                         .textureBlur(
                             backdrop = backdrop,
                             shape = RectangleShape,
                             blurRadius = blurRadius,
-                            colors = BlurDefaults.blurColors(
-                                blendColors = listOf(BlendColorEntry(color = color.copy(alpha = containerAlpha))),
-                            ),
                             // The blob is this node's content, so DstIn keeps exactly the blur that
                             // falls inside the merged outline.
                             contentBlendMode = BlendMode.DstIn,
@@ -220,28 +217,20 @@ fun MetaBallSurface(
                         rimBlur = rimBlur,
                     )
                 }
-                // A sibling, not a child: inside the mask the rim's own alpha would punch the blur out.
-                if (rimColor != null) {
-                    MetaBallSilhouette(
-                        particles = paintedParticles,
-                        modifier = Modifier.matchParentSize(),
-                        shader = shader,
-                        body = Color.Transparent,
-                        rim = rimColor,
-                        extension = extension,
-                        factorX = extensionFactorX,
-                        factorY = extensionFactorY,
-                        rimBlur = rimBlur,
-                        rimBottomScale = rimBottomScale,
-                    )
-                }
             } else if (shader != null) {
                 MetaBallSilhouette(
                     particles = paintedParticles,
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.matchParentSize().nativeMaterialEdge(
+                        particles = paintedParticles,
+                        rim = rimColor ?: Color.Transparent,
+                        bottomScale = rimBottomScale,
+                        extension = extension,
+                        factorX = extensionFactorX,
+                        factorY = extensionFactorY,
+                    ),
                     shader = shader,
                     body = color,
-                    rim = rimColor ?: Color.Transparent,
+                    rim = Color.Transparent,
                     extension = extension,
                     factorX = extensionFactorX,
                     factorY = extensionFactorY,
@@ -298,7 +287,9 @@ private fun MetaBallSilhouette(
             )
         }
     }
-    if (renderer == null) fallback() else renderer.Draw(particles, body, rim, extension, factorX, factorY, modifier, fallback)
+    // Native blendEdge preserves the base alpha. A transparent rim-only RenderNode therefore
+    // produces no visible light; paint the recovered edge formula over the merged SDF instead.
+    if (renderer == null || rim.alpha > 0f) fallback() else renderer.Draw(particles, body, rim, extension, factorX, factorY, modifier, fallback)
 }
 
 /** Compiles (and remembers) the melt ball shader; `null` when runtime shaders are unavailable. */
@@ -322,9 +313,23 @@ private fun DrawScope.drawMetaBall(
     extensionFactorY: Float,
     rimBlur: Dp,
     rimBottomScale: Float = 0f,
-    bottomGlow: Color = Color.Transparent,
-    bottomGlowBlur: Dp = 0.dp,
-    glowOutsetPx: Float = 0f,
+) {
+    setMetaBallUniforms(shader, particles, body, rim, extension, extensionFactorX, extensionFactorY, rimBlur, rimBottomScale)
+    drawRect(brush = shader.asBrush())
+}
+
+internal fun Density.setMetaBallUniforms(
+    shader: RuntimeShader,
+    particles: List<MetaBallParticle>,
+    body: Color,
+    rim: Color,
+    extension: Dp,
+    extensionFactorX: Float,
+    extensionFactorY: Float,
+    rimBlur: Dp,
+    rimBottomScale: Float,
+    edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+    lineWidth: Dp = 2.5.dp,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
     if (count == 0) return
@@ -334,6 +339,7 @@ private fun DrawScope.drawMetaBall(
     val corners = FloatArray(META_BALL_MAX_PARTICLES)
     val scales = FloatArray(META_BALL_MAX_PARTICLES * 2) { 1f }
     val alphas = FloatArray(META_BALL_MAX_PARTICLES) { 1f }
+    val edgeArrays = FloatArray(META_BALL_MAX_PARTICLES * 16)
     for (i in 0 until count) {
         val particle = particles[i]
         centers[i * 2] = particle.centerX.toPx()
@@ -344,12 +350,22 @@ private fun DrawScope.drawMetaBall(
         scales[i * 2] = particle.scaleX.coerceAtLeast(0.001f)
         scales[i * 2 + 1] = particle.scaleY.coerceAtLeast(0.001f)
         alphas[i] = particle.alpha.coerceIn(0f, 1f)
+        GradientStrokeStyleMapper.toEdgeArray16(
+            style = edgeStyle,
+            width = particle.width.toPx(),
+            height = particle.height.toPx(),
+            lineWidth = lineWidth.toPx(),
+            lineAlpha = rim.alpha,
+            lineAngle = 0f,
+            density = density,
+        ).copyInto(edgeArrays, i * 16)
     }
     shader.setFloatUniform("in_center", centers)
     shader.setFloatUniform("in_half", halves)
     shader.setFloatUniform("in_corner", corners)
     shader.setFloatUniform("in_scale", scales)
     shader.setFloatUniform("in_alpha", alphas)
+    shader.setFloatUniform("in_edge", edgeArrays)
     shader.setFloatUniform("in_count", count.toFloat())
     shader.setFloatUniform("in_extension", extension.toPx())
     shader.setFloatUniform("in_factor", extensionFactorX, extensionFactorY)
@@ -361,13 +377,7 @@ private fun DrawScope.drawMetaBall(
     shader.setFloatUniform("in_rim", rim.red, rim.green, rim.blue, rim.alpha)
     shader.setFloatUniform("in_rimWidth", MetaBallDefaults.RimWidth.toPx())
     shader.setFloatUniform("in_rimBlur", rimBlur.toPx())
-    shader.setFloatUniform("in_glow", bottomGlow.red, bottomGlow.green, bottomGlow.blue, bottomGlow.alpha)
-    shader.setFloatUniform("in_glowRadius", bottomGlowBlur.toPx())
     shader.setFloatUniform("in_rimBottom", rimBottomScale)
-
-    // The rect keeps its origin at the node's own (0, 0) — the shader reads this node's coordinates,
-    // so the particles stay put — and only grows downwards, where the bloom is painted.
-    drawRect(brush = shader.asBrush(), size = Size(size.width, size.height + glowOutsetPx))
 }
 
 /** Degraded path for platforms without runtime shaders: the silhouettes, but not merged. */
@@ -388,6 +398,21 @@ private fun DrawScope.drawUnmergedParticles(particles: List<MetaBallParticle>, c
 /** COUI's melt ball chain is short; the shader has one slot per silhouette. */
 private const val META_BALL_MAX_PARTICLES = 8
 
+// SkSL ES2 requires constant uniform indices. Select an owner through branches rather than
+// dynamically indexing the native 16-float edge profiles.
+private val META_BALL_EDGE_OWNER_DISPATCH = buildString {
+    append("float couiOwnerEdgeAlpha(float2 pos, float2 halfSize, float d, int owner) {\n")
+    repeat(META_BALL_MAX_PARTICLES) { owner ->
+        val offset = owner * 16
+        fun slot(index: Int): String = "in_edge[${offset + index}]"
+        append("if (owner == $owner) return couiEdgeAlpha(pos, halfSize, d, ")
+        append("float2(${slot(3)}, ${slot(4)}), float2(${slot(5)}, ${slot(6)}), ")
+        append("float2(${slot(7)}, ${slot(8)}), float4(${slot(9)}, ${slot(10)}, ${slot(11)}, ${slot(12)}), ")
+        append("${slot(13)}, ${slot(14)}, ${slot(15)});\n")
+    }
+    append("return 0.0;\n}\n")
+}
+
 /**
  * Smooth-union metaball over up to [META_BALL_MAX_PARTICLES] rounded rectangles.
  *
@@ -406,6 +431,7 @@ uniform float2 in_half[8];
 uniform float in_corner[8];
 uniform float2 in_scale[8];
 uniform float in_alpha[8];
+uniform float in_edge[128];
 uniform float in_count;
 uniform float in_extension;
 uniform float2 in_factor;
@@ -414,8 +440,6 @@ uniform float4 in_rim;
 uniform float in_rimWidth;
 uniform float in_rimBlur;
 uniform float in_rimBottom;
-uniform float4 in_glow;
-uniform float in_glowRadius;
 
 float couiSdRoundBox(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
@@ -428,10 +452,61 @@ float couiSmin(float a, float b, float k) {
     return mix(b, a, h) - kk * h * (1.0 - h);
 }
 
+float getDis(float2 pos, float2 halfsize) {
+    float2 rect = abs(pos - halfsize);
+    return rect.x + rect.y;
+}
+
+float couiEdgeAlpha(float2 pos, float2 halfSize, float d, float2 uRectLineNear,
+    float2 uRectLineFar, float2 uRectLineAlpha, float4 uRectLineFade, float uAngle,
+    float uRectLinePara1, float uRectLinePara2) {
+        float2 rectLineNear=uRectLineNear;
+        float2 rectLineFar=uRectLineFar;
+        float4 rectLineFade=uRectLineFade;
+
+        if(d<-max(rectLineNear.y, rectLineFar.y)){
+            return 0.0;
+        }
+
+        float distanceAll = (halfSize.x+halfSize.y)*2.0;
+
+        float ratio = fract(uAngle+halfSize.x/distanceAll*0.5+0.5);
+        float2 dir_pos= normalize(pos);
+        float2 dirAbs_pos = abs(dir_pos);
+        float2 pos_n = min(float2(dirAbs_pos.xy*halfSize.yx/max(float2(0.001),dirAbs_pos.yx)),halfSize)*sign(dir_pos);
+        float2 halfSize_symobol = float2(-halfSize.y,halfSize.x);
+        float flag = mix(-1.0,1.0, step(ratio,0.5))*dot(halfSize_symobol,pos_n);
+        float dis_point = distanceAll*min(ratio,1.0-ratio)*2.0;
+        float dis_pos = getDis(pos_n,halfSize);
+        float distance_near = mix(dis_point+dis_pos,abs(dis_point-dis_pos),step(0.,flag));
+        distance_near=min(2.*distanceAll-distance_near,distance_near);
+        float lineNearAlpha = uRectLineAlpha.x*smoothstep(rectLineFade.y*distanceAll, rectLineFade.x*distanceAll, distance_near);
+        float lineFarAlpha = uRectLineAlpha.y*smoothstep(rectLineFade.w*distanceAll, rectLineFade.z*distanceAll, distanceAll-distance_near);
+
+        float lineNearSdf=smoothstep(-rectLineNear.y,-rectLineNear.x,d);
+        float lineFarSdf=smoothstep(-rectLineFar.y,-rectLineFar.x,d);
+
+        if(uRectLinePara2 > 0.001){
+            lineNearSdf = pow(lineNearSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
+            lineFarSdf = pow(lineFarSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
+        }
+
+        lineNearAlpha*=lineNearSdf;
+        lineFarAlpha*=lineFarSdf;
+
+        float lineAlpha = clamp(lineNearAlpha+lineFarAlpha,0.,1.);
+
+        return lineAlpha;
+}
+
+$META_BALL_EDGE_OWNER_DISPATCH
+
 half4 main(float2 xy) {
     float d = 1e6;
     float2 nearest = float2(0.0, 0.0);
     float2 nearestHalf = float2(1.0, 1.0);
+    float2 nearestScale = float2(1.0);
+    int owner = 0;
     float has = 0.0;
     float opacity = 0.0;
     for (int i = 0; i < 8; i++) {
@@ -444,7 +519,9 @@ half4 main(float2 xy) {
         if (has < 0.5) {
             d = di;
             nearest = c;
-            nearestHalf = in_half[i] * in_scale[i];
+            nearestHalf = in_half[i];
+            nearestScale = in_scale[i];
+            owner = i;
             opacity = in_alpha[i];
             has = 1.0;
         } else {
@@ -456,8 +533,10 @@ half4 main(float2 xy) {
             d = couiSmin(d, di, k);
             if (di < prev) {
                 nearest = c;
-                nearestHalf = in_half[i] * in_scale[i];
-            opacity = in_alpha[i];
+                nearestHalf = in_half[i];
+                nearestScale = in_scale[i];
+                owner = i;
+                opacity = in_alpha[i];
             }
         }
     }
@@ -470,41 +549,37 @@ half4 main(float2 xy) {
     // 0.6 device pixels approximates the one-pixel antialiasing band fwidth would have measured.
     float aa = 0.6;
     float cover = (1.0 - smoothstep(-aa, aa, d)) * opacity;
-    float2 rel = (xy - nearest) / max(nearestHalf, float2(1.0, 1.0));
-    // The native bottom-bar material sends a small amount of light through the lower edge. It is
-    // directional: the upper and side edges stay dark while the light fans out below the shape.
-    float outside = step(0.0, d);
-    float distanceFade = 1.0 - smoothstep(0.0, max(in_glowRadius, 0.001), d);
-    float down = smoothstep(0.0, 1.0, rel.y);
-    half glowA = in_glow.w * half(outside * distanceFade * down);
-    if (cover <= 0.003 && glowA <= 0.003) {
-        return half4(0.0);
-    }
+    float2 localPos = (xy - nearest) / nearestScale;
+    if (cover <= 0.003) return half4(0.0);
 
-    // The rim is the glass highlight, not a drawn outline. COUI lights it with a flat 0.05-alpha
-    // stroke plus two directional lights, so the light gathers along the top edge and dies at the
-    // sides: on Gallery's accessory bar the top edge sits ~48/255 above the body while the capsule's
-    // side edges show no highlight at all. `-d` is the depth inside the merged silhouette, so the
-    // mask keeps full strength for `in_rimWidth` and fades out over `in_rimBlur`; `up` is 1 on the
-    // top edge of the ownership silhouette and 0 at its vertical centre, and `down` mirrors it on the
-    // bottom edge. COUI's `GradientStrokeStyleSpec` strokes both long edges of a silhouette — its
-    // width and alpha arrays carry one entry per edge — so `in_rimBottom` weights the lower line
-    // against the upper one instead of leaving the bottom dark.
-    half4 body = half4(in_body.x, in_body.y, in_body.z, in_body.w);
-    half4 rim = half4(in_rim.x, in_rim.y, in_rim.z, in_rim.w);
-    float rimMask = smoothstep(in_rimWidth + in_rimBlur, in_rimWidth, -d);
-    half srcA = half(0.0);
-    if (rimMask > 0.0) {
-        float up = clamp(-rel.y, 0.0, 1.0);
-        float down = clamp(rel.y, 0.0, 1.0);
-        srcA = rim.a * half(rimMask * (up * up + in_rimBottom * down * down));
-    }
+    // TYPE_FRAMEWORK_CAPSULE_3 uses the native EDGE_STYLE_0 near/far perimeter ramps.
+    // The top is the narrow far line, the bottom the broader near line; both follow the union SDF.
+    half4 body = half4(in_body);
+    half4 rim = half4(in_rim);
+    float bottomWeight = localPos.y > 0.0 ? in_rimBottom : 1.0;
+    half srcA = half(couiOwnerEdgeAlpha(float2(localPos.x, -localPos.y), nearestHalf, d, owner) * bottomWeight);
     half4 result = half4(0.0, 0.0, 0.0, 0.0);
     half baseA = (srcA + body.a * (1.0 - srcA)) * half(cover);
     half3 baseRgb = (rim.rgb * srcA + body.rgb * body.a * (1.0 - srcA)) * half(cover);
-    result.a = glowA + baseA * (1.0 - glowA);
-    half3 glowRgb = half3(in_glow.x, in_glow.y, in_glow.z);
-    result.rgb = glowRgb * glowA + baseRgb * (1.0 - glowA);
+    result.a = baseA;
+    result.rgb = baseRgb;
     return result;
+}
+"""
+
+/** The same merged outline, evaluated against a sampled material rather than a white overlay. */
+internal val META_BALL_NATIVE_EDGE_SHADER = META_BALL_SHADER.substringBefore("half4 main(float2 xy)") + """
+uniform shader child;
+uniform float4 in_tint;
+""" + NATIVE_MATERIAL_EDGE_BLEND + META_BALL_SHADER.substringAfter("$META_BALL_EDGE_OWNER_DISPATCH").substringBefore("    // TYPE_FRAMEWORK_CAPSULE_3") + """
+    half4 inputColor = child.eval(xy);
+    if (inputColor.a <= 0.000001) return inputColor;
+    half3 rawColor = inputColor.rgb / inputColor.a;
+    half3 materialColor = mix(rawColor, half3(in_tint.rgb), half(in_tint.a));
+    float bottomWeight = localPos.y > 0.0 ? in_rimBottom : 1.0;
+    float lineAlpha = couiOwnerEdgeAlpha(float2(localPos.x, -localPos.y), nearestHalf, d, owner) * bottomWeight;
+    half3 result = couiNativeEdgeBlend(materialColor, rawColor, half3(in_rim.rgb), lineAlpha);
+    // The child already carries silhouette coverage and member alpha: never apply them twice.
+    return half4(result * inputColor.a, inputColor.a);
 }
 """

@@ -296,6 +296,10 @@ internal class COUITouchSpring(initialValue: Float) {
     val value: Float get() = animation.value
     val velocity: Float get() = animation.velocity
 
+    fun snapTo(value: Float) {
+        animation = AnimationState(value)
+    }
+
     suspend fun animateTo(target: Float, spec: SpringSpec<Float>, initialVelocity: Float = velocity) {
         // Preserve the clock of an interrupted spring, so per-frame drag targets still advance.
         // A completed spring starts a fresh clock rather than consuming the idle time between gestures.
@@ -313,6 +317,9 @@ internal fun Modifier.couiTouchMotion(
     shape: Shape? = null,
     lightParams: SpotLightParams = SpotLightDefaults.capsuleParams2(false),
     motionState: COUITouchMotionState? = null,
+    pressScaleEnabled: Boolean = true,
+    consumeDrag: Boolean = true,
+    lightEnabled: Boolean = true,
     extraTransform: GraphicsLayerScope.() -> Unit = {},
 ): Modifier {
     val ownerState = motionState ?: rememberCOUITouchMotionState()
@@ -329,20 +336,34 @@ internal fun Modifier.couiTouchMotion(
     val scaleXAnim = remember { COUITouchSpring(1f) }
     val scaleYAnim = remember { COUITouchSpring(1f) }
     val pressProgress = remember { COUITouchSpring(0f) }
+    val lightX = remember { COUITouchSpring(0.5f) }
+    val lightY = remember { COUITouchSpring(0.5f) }
     val lightProgress = remember { Animatable(0f) }
     var pressed by remember { mutableStateOf(false) }
     var extinguishing by remember { mutableStateOf(false) }
-    var lightPosition by remember { mutableStateOf(Offset(0.5f, 0.5f)) }
+    val lightPosition = Offset(lightX.value, lightY.value)
 
     val widthDp = with(density) { widthPx.value.toDp().value }
     val heightDp = with(density) { heightPx.value.toDp().value }
-    val pressTarget = couiPressScale(widthDp, heightDp, spec)
+    val pressTarget = if (pressScaleEnabled) couiPressScale(widthDp, heightDp, spec) else 1f
     val usesCandySpring = widthDp > 0f && heightDp > 0f &&
         max(widthDp / heightDp, heightDp / widthDp) > spec.pressAspectActivationThreshold
     LaunchedEffect(pressed, pressTarget, usesCandySpring) {
         val pressSpec = if (usesCandySpring) spec.candyPressSpring else spec.pressSpring
         val releaseSpec = if (usesCandySpring) spec.candyReleaseSpring else spec.releaseSpring
         pressProgress.animateTo(if (pressed) 1f else 0f, if (pressed) pressSpec else releaseSpec)
+    }
+    // A popup remains mounted during exit. Cancelling its pointer coroutine must also clear the
+    // contributions whose release jobs belonged to that coroutine, before a possible re-entry.
+    LaunchedEffect(enabled) {
+        if (!enabled) {
+            pressed = false
+            translateXAnim.snapTo(0f)
+            translateYAnim.snapTo(0f)
+            scaleXAnim.snapTo(1f)
+            scaleYAnim.snapTo(1f)
+            lightProgress.snapTo(0f)
+        }
     }
     ownerState.values = remember(translateXAnim, translateYAnim, scaleXAnim, scaleYAnim, pressTarget) {
         derivedStateOf {
@@ -351,6 +372,7 @@ internal fun Modifier.couiTouchMotion(
                 translation = Offset(translateXAnim.value, translateYAnim.value),
                 scaleX = couiTouchMotionScaleContribution(scaleXAnim.value, pressScale),
                 scaleY = couiTouchMotionScaleContribution(scaleYAnim.value, pressScale),
+                pressed = pressed,
             )
         }
     }
@@ -360,11 +382,30 @@ internal fun Modifier.couiTouchMotion(
             widthPx.value = it.width.toFloat()
             heightPx.value = it.height.toFloat()
         }
-        .pointerInput(enabled, spec, density.density) {
+        .pointerInput(enabled, spec, density.density, consumeDrag) {
             if (!enabled) return@pointerInput
             coroutineScope {
                 val motionScope = this
                 var motionJob: Job? = null
+                var lightMotionJob: Job? = null
+                fun updateLight(position: Offset) {
+                    // Native coordinates remain unbounded. Only the owner's silhouette clips the
+                    // moving halo, allowing it to leave the surface and return in the same gesture.
+                    val x = position.x / widthPx.value.coerceAtLeast(1f)
+                    val y = position.y / heightPx.value.coerceAtLeast(1f)
+                    lightMotionJob?.cancel()
+                    if (lightProgress.value == 0f) {
+                        lightX.snapTo(x)
+                        lightY.snapTo(y)
+                    } else {
+                        lightMotionJob = motionScope.launch {
+                            coroutineScope {
+                                launch { lightX.animateTo(x, SpotLightDefaults.MoveSpring) }
+                                launch { lightY.animateTo(y, SpotLightDefaults.MoveSpring) }
+                            }
+                        }
+                    }
+                }
                 awaitPointerEventScope {
                     while (true) {
                         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -389,10 +430,7 @@ internal fun Modifier.couiTouchMotion(
                         var velocityY = 0f
                         pressed = true
                         extinguishing = false
-                        lightPosition = Offset(
-                            (start.x / widthPx.value.coerceAtLeast(1f)).coerceIn(0f, 1f),
-                            (start.y / heightPx.value.coerceAtLeast(1f)).coerceIn(0f, 1f),
-                        )
+                        updateLight(down.position)
                         launch { lightProgress.animateTo(1f, SpotLightDefaults.GlowSpring) }
                         var finished = false
                         try {
@@ -400,7 +438,10 @@ internal fun Modifier.couiTouchMotion(
                                 val event = awaitPointerEvent(PointerEventPass.Initial)
                                 var change = event.changes.firstOrNull { it.id == pointerId }
                                 if (change == null || change.changedToUpIgnoreConsumed()) {
-                                    if (change != null) tracker.addPosition(change.uptimeMillis, change.position)
+                                    if (change != null) {
+                                        tracker.addPosition(change.uptimeMillis, change.position)
+                                        updateLight(change.position)
+                                    }
                                     val replacement = event.changes.firstOrNull { it.pressed }
                                     if (replacement == null) {
                                         val velocity = tracker.calculateVelocity()
@@ -421,13 +462,10 @@ internal fun Modifier.couiTouchMotion(
                                 val dx = position.x - start.x
                                 val dy = position.y - start.y
                                 last = position
-                                lightPosition = Offset(
-                                    (position.x / widthPx.value.coerceAtLeast(1f)).coerceIn(0f, 1f),
-                                    (position.y / heightPx.value.coerceAtLeast(1f)).coerceIn(0f, 1f),
-                                )
+                                updateLight(position)
                                 if (!dragging && (abs(dx) >= deadZonePx || abs(dy) >= deadZonePx)) dragging = true
                                 if (dragging && (abs(dx) >= deadZonePx || abs(dy) >= deadZonePx)) {
-                                    change.consume()
+                                    if (consumeDrag) change.consume()
                                     val deform = couiDeformationScales(dx + deformRest.x, dy + deformRest.y, spec, widthPx.value, heightPx.value, density.density)
                                     motionJob?.cancel()
                                     motionJob = motionScope.launch {
@@ -570,7 +608,7 @@ internal fun Modifier.couiTouchMotion(
             noise = lightParams.noise,
             dither = lightParams.ditherN,
             blendMode = lightParams.blendMode,
-            enabled = enabled,
+            enabled = enabled && lightEnabled,
         )
     } else {
         Modifier.spotLight(
@@ -583,7 +621,7 @@ internal fun Modifier.couiTouchMotion(
             noise = lightParams.noise,
             dither = lightParams.ditherN,
             blendMode = lightParams.blendMode,
-            enabled = enabled,
+            enabled = enabled && lightEnabled,
             clipShape = shape,
         )
     }

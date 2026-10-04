@@ -4,6 +4,8 @@
 
 ColorOS 给这两个键做的是同一套处理：一个**正圆 40dp**——不是 squircle——配一层「中心暗、边缘亮」的径向填充、一圈按角度分布的白描边，以及边缘外侧随主题不同的光晕。按下时整块控件弹到 `HighlightedIconButtonDefaults.PressedScale`，描边与外光晕消失，填充与图标变亮；两个主题表现一致。
 
+深色主题的下光晕直接调用 ColorOS 焦散阴影接口，使用 level-2 的偏移矩形距离场与纵向幂次衰减。其他平台使用还原的着色器公式；不再使用角度蒙版。光晕与按钮共用形变，按压时淡出。拖动使用系统 TouchMotion 的橡皮筋位移和面积守恒弹性形变，松手回弹；填充、图标、描边和外光晕共用变换。
+
 光晕绘制在节点直径之外，因此调用方的修饰符链上不能有任何裁剪（不要 `clip`，也不要裁剪形状的父级）。
 
 ## 引入
@@ -75,23 +77,25 @@ HighlightedIconButton(onClick = onClick) {
 | FillEdgeLight         | Color                  | 浅色主题径向填充的边缘色                                   | `#FBFBFB` |
 | PressedFillBrighten   | Float                  | 按压时填充向白色插值的比例                                 | 0.06f（名义值） |
 | PressedContentBrighten| Float                  | 按压时内容色向白色插值的比例                               | 0.1f（名义值） |
-| StrokeAlpha           | Float                  | 描边透明度                                                 | 0.15f |
-| StrokeWidth           | Dp                     | 描边宽度                                                   | 1.dp |
-| StrokeShadowFadeIn    | Float                  | 描边内阴影的淡入比例                                       | 0.01f |
+| StrokeAlpha           | Float                  | 描边透明度                                                 | 0.6f（暗色）；`LightStrokeAlpha` 0.2f |
+| StrokeWidth           | Dp                     | 描边宽度                                                   | 1.9.dp |
+| StrokeShadowFadeIn    | Float                  | 描边内阴影的淡入比例                                       | 0.1f |
 | Stroke                | MaterialStrokeParams   | 描边参数：`StrokeAlpha` 白、`StrokeWidth` 宽、无内阴影      | — |
-| DarkHaloColor         | Color                  | 深色主题外辉光的颜色                                       | 白 @ 8% |
-| DarkHaloExtent        | Dp                     | 深色主题外辉光越过边缘的距离                               | 5.2.dp |
-| DarkHaloStartAngle    | Float                  | 辉光弧的起始角；0° 为 3 点钟方向，故 90° 朝正下             | 60f |
-| DarkHaloSweepAngle    | Float                  | 辉光弧的扫过角度                                           | 60f |
+| DarkHaloColor | Color | 系统深色焦散颜色 | white @ 20% |
+| DarkHaloExtent | Dp | level-2 底边偏移 | 4.899994.dp |
+| DarkHaloSdfWidth | Dp | level-2 距离场宽度 | 9.22998.dp |
+
+
+
 | LightHaloColor        | Color                  | 浅色主题光晕的颜色                                         | 黑 @ 5% |
 | LightHaloRadius       | Dp                     | 浅色主题光晕越过边缘的距离                                 | 15.5.dp |
-| LightHaloOffsetY      | Dp                     | 浅色主题光晕的垂直偏移                                     | 1.dp |
+| LightHaloOffsetY      | Dp                     | 浅色主题光晕的垂直偏移                                     | 1.9.dp |
 
 `fillCenter(isDark)` 与 `fillEdge(isDark)` 按当前主题解析这两个填充色。`PressedFillBrighten` 与 `PressedContentBrighten` 是名义值：测量只记录了按压时填充与图标会变亮，没给出幅度，这两个值并非实测所得。
 
 ## 取值溯源
 
-下表每个值都在真机上测过（UI dump 加像素采样，1dp = 3.875px），或取自 `ShadowEdge` 着色器；**没有一项是从工具栏自身的属性表反编译所得**，因为那张表尚未定位。两层证据在此分开列出。
+描边沿 `ToolbarMaterialEffectDelegate.applyStroke` → `ToolbarMaterialEffectResolver.getCircleStrokeEffectType` 使用普通顶栏 `TYPE_FRAMEWORK_CIRCLE_1`：暗色 alpha 0.6、浅色 0.2、宽 1.9dp。与底栏共用框架 `blendEdge` 的材质亮度混合，保留表面透明度，图标和外焦散光不参与该混合。填充和按压尺寸仍沿用此前实测。
 
 | Token | 值 | 证据层 |
 | :--- | :--- | :--- |
@@ -103,7 +107,7 @@ HighlightedIconButton(onClick = onClick) {
 | 填充 | 径向，中心暗边缘亮；透明度 ≈0.78（两点估算） | 真机实测 |
 | 填充·深色 | r = 0 处 `#1e1e1e` → r = 70px 处 `#242424` | 真机实测 |
 | 填充·浅色 | r = 0 处 249 → r = 68px 处 251 | 真机实测 |
-| 外辉光·深色 | 只在 60°–120° 下半弧，到 R + 20px ≈ 5.2dp，贴边 1px 处 ≈8% 白 | 真机实测 |
+| 外辉光·深色 | level-2: bottom=4.899994dp, sdf=9.22998dp; factors=0.6/0.6, speed=18; color=0x33ffffff | ToolbarMaterialEffectDelegate + COUICausticShadowEffect + libhwui |
 | 光晕·浅色 | 近对称的柔和暗投影，半径 ≈60px ≈ 15.5dp，最深 −13 luma 且底部加权（底 −13 / 左右 −11 / 上 −8） | 真机实测 |
 | 按压态 | 整块控件缩放到 ≈0.89（半径 77.5px → 69px）；描边与辉光淡出，填充与图标变亮 | 真机实测 |
 | 按压弹簧 | `folmeSpring(damping = 1f, response = 0.3f, visibilityThreshold = 0.001f)` | `COUISpringForce`，本库的按压反馈弹簧 |
@@ -111,5 +115,7 @@ HighlightedIconButton(onClick = onClick) {
 ## 未移植 / 偏差
 
 - **工具栏自身的属性表** —— 因为 `coui_toolbar_back_view` 的 `ShadowEdge` uniform（`u_edgeArray` / `u_commonArray` 各分量）尚未反编译，参数标注为实测所得；本移植只使用 `EDGE_STYLE_1` / `SHADOW_STYLE_1` 预设与上表的实测值。
-- **`ShadowEdge` 着色器自带的光晕** —— shader 只覆盖节点自身边界，故填充与光晕由本组件绘制，描边仍走 shader。
+- 外光晕独立调用系统焦散接口；`ShadowEdge` 负责内部边缘。非 ColorOS 平台的背景亮度衰减以主题背景为输入。
 - **工具栏自身的布局** —— 40dp 圆距工具栏起始边的距离与它的垂直居中属于工具栏的职责，不属于本按钮。
+
+原生高光读取实际表面亮度，按 `0.1 × (1 − clamp(1.2 × luma))⁴` 修正后进行材质混合；不再把白色描边直接盖到填充上。普通顶栏圆形样式与窗口浮层圆形样式分别处理。

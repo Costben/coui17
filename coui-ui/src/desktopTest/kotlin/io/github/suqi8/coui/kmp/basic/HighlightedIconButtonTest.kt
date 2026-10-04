@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -21,6 +22,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
+import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -44,6 +46,29 @@ private val BackgroundColor = Color(0xFF0000FF)
  */
 @OptIn(ExperimentalTestApi::class)
 class HighlightedIconButtonTest {
+
+    @Test
+    fun draggingStretchesTheButtonAndReleasesBackToItsRestingShape() = runSkikoComposeUiTest(
+        size = CanvasSize,
+        density = Density(1f),
+    ) {
+        setContent { Scene() }
+        waitForIdle()
+        val rest = onNodeWithTag(BUTTON_TAG).fetchSemanticsNode().boundsInRoot
+        onNodeWithTag(BUTTON_TAG).performTouchInput {
+            down(center)
+            moveTo(center + Offset(80f, 0f))
+        }
+        waitForIdle()
+        val dragged = onNodeWithTag(BUTTON_TAG).fetchSemanticsNode().boundsInRoot
+        assertTrue(dragged.width / dragged.height > 1.08f, "Dragging must deform the two axes, beyond uniform press shrink: $dragged")
+        assertTrue(dragged.center.x > rest.center.x + 1f, "The button must follow the finger with rubber-band translation")
+        onNodeWithTag(BUTTON_TAG).performTouchInput { up() }
+        waitForIdle()
+        val released = onNodeWithTag(BUTTON_TAG).fetchSemanticsNode().boundsInRoot
+        assertTrue(abs(released.width - rest.width) < 1f && abs(released.height - rest.height) < 1f, "Release must restore the circular shape")
+        assertTrue(abs(released.center.x - rest.center.x) < 1f, "Release must restore the center")
+    }
 
     @Test
     fun theNodeScalesDownWhilePressedAndReturnsToFullSizeWhenReleased() = runSkikoComposeUiTest(

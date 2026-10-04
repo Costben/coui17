@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -62,6 +63,7 @@ import ui.AppTheme
 import ui.keyColorFor
 import utils.SearchStatus
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 /**
  * The app's five pages.
@@ -73,7 +75,7 @@ import kotlin.math.max
  * picked, so nothing here has to know which language is selected.
  */
 enum class Coui17Page(val title: String) {
-    Home("Settings"),
+    Home("COUI"),
     Icons("Icons"),
     Color("Color"),
     TextStyle("Text style"),
@@ -241,6 +243,7 @@ private fun Coui17Root() {
                         title = str(currentPage.title),
                         searchLabel = searchLabel,
                         showSearchField = currentPage == Coui17Page.Home,
+                        showBack = currentPage.isPanelPage,
                         onBack = if (currentPage.isPanelPage) {
                             { coroutineScope.launch { pagerState.animateScrollToPage(lastCapsulePage) } }
                         } else {
@@ -303,7 +306,19 @@ private fun Coui17PageContent(
 ) {
     val pagePadding = PaddingValues(top = contentTop, bottom = contentBottom)
 
-    Box(modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection)) {
+    // The list rides up with the bar instead of waiting for it to finish collapsing. The bar's live
+    // height is `expandedHeight + heightOffset`, so shifting the content by that same offset keeps the
+    // two locked frame-for-frame — the native `COUIFloatingScrollingViewBehavior` reaches the same
+    // coupling by writing the bar's height into the content view's top padding.
+    //
+    // The lambda overload is deliberate: it is read in the layout phase only, so a scrolling page
+    // re-lays out without recomposing the list. `Modifier.offset(y = dp)` would recompose every frame.
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .offset { IntOffset(0, scrollBehavior.state.heightOffset.roundToInt()) }
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+    ) {
         when (page) {
             Coui17Page.Home -> Coui17HomePage(
                 snackbarHostState = snackbarHostState,

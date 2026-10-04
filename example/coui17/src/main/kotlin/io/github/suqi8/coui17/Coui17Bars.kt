@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import component.searchBarShadow
@@ -45,11 +46,13 @@ import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarDefaults
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
+import io.github.suqi8.coui.kmp.basic.DropdownImpl
+import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
-import io.github.suqi8.coui.kmp.basic.NavigationPopupMenu
-import io.github.suqi8.coui.kmp.basic.NavigationPopupMenuItem
+import io.github.suqi8.coui.kmp.basic.ListPopupColumn
+import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TopAppBar
@@ -63,6 +66,7 @@ import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Settings
 import io.github.suqi8.coui.kmp.icon.extended.Theme
 import io.github.suqi8.coui.kmp.icon.extended.Translate
+import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /** One capsule tab of the accessory bar. [label] is the English source string `str` resolves. */
@@ -436,19 +440,36 @@ fun Coui17Panel(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    NavigationPopupMenu(
-        expanded = show,
+    OverlayListPopup(
+        show = show,
+        alignment = PopupPositionProvider.Align.End,
         onDismissRequest = onDismiss,
     ) {
-        NavigationPopupMenuItem(
-            label = str("Text style"),
-            icon = COUIIcons.Translate,
-            onClick = { onSelect(Coui17Page.TextStyle.ordinal) },
-        )
-        NavigationPopupMenuItem(
-            label = str("Settings items"),
-            icon = COUIIcons.Settings,
-            onClick = { onSelect(Coui17Page.Settings.ordinal) },
-        )
+        ListPopupColumn {
+            DropdownImpl(
+                item = DropdownItem(
+                    text = str("Text style"),
+                    icon = { Icon(imageVector = COUIIcons.Translate, contentDescription = null, modifier = it) },
+                ),
+                optionSize = 2,
+                isSelected = false,
+                index = 0,
+                groupKey = "coui17-panel",
+                role = Role.Button,
+                onSelectedIndexChange = { onSelect(Coui17Page.TextStyle.ordinal) },
+            )
+            DropdownImpl(
+                item = DropdownItem(
+                    text = str("Settings items"),
+                    icon = { Icon(imageVector = COUIIcons.Settings, contentDescription = null, modifier = it) },
+                ),
+                optionSize = 2,
+                isSelected = false,
+                index = 1,
+                groupKey = "coui17-panel",
+                role = Role.Button,
+                onSelectedIndexChange = { onSelect(Coui17Page.Settings.ordinal) },
+            )
+        }
     }
 }

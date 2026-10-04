@@ -19,11 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
@@ -38,15 +36,13 @@ import io.github.suqi8.coui.kmp.theme.LocalContentColor
  *
  * ColorOS gives the toolbar's back key and overflow key the same effect: a true 40dp circle — not a
  * squircle — carrying a radial fill that is darker in the middle and brighter at the rim, an
- * angle-distributed white perimeter stroke, and a theme-dependent halo outside the edge. While
+ * angle-distributed material perimeter highlight, and a theme-dependent halo outside the edge. While
  * pressed the whole control springs to [HighlightedIconButtonDefaults.PressedScale], the rim and the
  * halo disappear and the fill and icon brighten; both themes behave identically.
  *
- * The rim is [Modifier.materialShadowEdge], the port of the `ShadowEdge` runtime shader whose
- * `u_edgeArray[13]` angle is what distributes the stroke alpha around the perimeter — strong at the
- * top and bottom, nearly invisible at the left and right. The halo and the fill are painted here
- * because the shader only covers the surface's own bounds: the halo reaches outside the node, so
- * nothing in the caller's chain may clip it.
+ * The rim uses the framework's material-luminance blend with TYPE_FRAMEWORK_CIRCLE_1 and
+ * EDGE_STYLE_1. Its near/far ramps keep the top sharp and the lower edge softer. Fill and rim
+ * share one sampled surface, while icons and exterior caustics remain outside the RGB effect.
  *
  * The content colour is published through [LocalContentColor], so a default [Icon] in [content]
  * follows the fill as it brightens.
@@ -65,10 +61,11 @@ fun HighlightedIconButton(
     enabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val touchMotion = rememberCOUITouchMotionState()
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val pressProgress by animateFloatAsState(
-        targetValue = if (enabled && isPressed) 1f else 0f,
+        targetValue = if (enabled && (isPressed || touchMotion.values.value.pressed)) 1f else 0f,
         animationSpec = HighlightedIconButtonDefaults.PressSpring,
         label = "highlightedIconButtonPress",
     )
@@ -100,85 +97,78 @@ fun HighlightedIconButton(
         Box(
             modifier = modifier
                 .size(size)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }
-                .drawWithContent {
-                    val radius = this.size.minDimension / 2f
-                    val center = this.center
-                    val highlight = 1f - pressProgress
-                    if (highlight > 0f) {
-                        if (isDark) {
-                            drawLowerArcGlow(center, radius, highlight)
-                        } else {
-                            drawSoftDropHalo(center, radius, highlight)
-                        }
-                    }
-                    val brighten = HighlightedIconButtonDefaults.PressedFillBrighten * pressProgress
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colorStops = arrayOf(
-                                0f to lerp(
-                                    HighlightedIconButtonDefaults.fillCenter(isDark),
-                                    Color.White,
-                                    brighten,
-                                ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
-                                HighlightedIconButtonDefaults.FillEdgeStop to lerp(
-                                    HighlightedIconButtonDefaults.fillEdge(isDark),
-                                    Color.White,
-                                    brighten,
-                                ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
-                            ),
-                            center = center,
-                            radius = radius,
-                        ),
-                        radius = radius,
-                        center = center,
-                    )
-                    drawContent()
-                }
-                .materialShadowEdge(
-                    stroke = rimStroke(pressProgress),
-                    cornerRadius = size / 2,
-                    edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
-                    shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
+                .couiTouchMotion(
+                    enabled = enabled,
+                    motionState = touchMotion,
+                    pressScaleEnabled = false,
+                    lightEnabled = false,
+                    extraTransform = {
+                        // Press shrink and native drag deformation belong to one visual layer.
+                        scaleX += scale - 1f
+                        scaleY += scale - 1f
+                    },
                 )
                 .then(clickableModifier),
             contentAlignment = Alignment.Center,
-            content = content,
-        )
+        ) {
+            if (isDark) {
+                MaterialCausticShadow(
+                    particles = listOf(
+                        CausticShadowParticle(
+                            MetaBallParticle.circle(size / 2, size / 2, size),
+                            CausticShadowProfile.Toolbar,
+                        ),
+                    ),
+                    color = HighlightedIconButtonDefaults.DarkHaloColor.copy(
+                        alpha = HighlightedIconButtonDefaults.DarkHaloColor.alpha * (1f - pressProgress).coerceIn(0f, 1f),
+                    ),
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
+            Box(
+                modifier = Modifier.matchParentSize()
+                    .drawWithContent {
+                        if (!isDark && pressProgress < 1f) drawSoftDropHalo(center, this.size.minDimension / 2f, 1f - pressProgress)
+                        drawContent()
+                    }
+                    .nativeMaterialEdge(
+                        particles = listOf(MetaBallParticle.circle(size / 2, size / 2, size)),
+                        rim = Color.White.copy(alpha = HighlightedIconButtonDefaults.stroke(isDark).edgeAlpha * (1f - pressProgress).coerceIn(0f, 1f)),
+                        edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
+                        lineWidth = HighlightedIconButtonDefaults.StrokeWidth,
+                        extension = 0.dp,
+                    )
+                    .drawWithContent {
+                        val radius = this.size.minDimension / 2f
+                        val center = this.center
+                        val brighten = HighlightedIconButtonDefaults.PressedFillBrighten * pressProgress
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colorStops = arrayOf(
+                                    0f to lerp(
+                                        HighlightedIconButtonDefaults.fillCenter(isDark),
+                                        Color.White,
+                                        brighten,
+                                    ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
+                                    HighlightedIconButtonDefaults.FillEdgeStop to lerp(
+                                        HighlightedIconButtonDefaults.fillEdge(isDark),
+                                        Color.White,
+                                        brighten,
+                                    ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
+                                ),
+                                center = center,
+                                radius = radius,
+                            ),
+                            radius = radius,
+                            center = center,
+                        )
+                        drawContent()
+                    },
+            )
+            // Keep the icon out of the material RGB effect.
+            Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.Center, content = content)
+        }
     }
-}
-
-/**
- * The dark theme's halo: a glow confined to the lower arc outside the rim.
- *
- * The measured profile is brightest right at the edge — ≈8% white 1px outside — and dies at
- * [HighlightedIconButtonDefaults.DarkHaloExtent] past it, with nothing above or beside the button.
- * The gradient's inner half is transparent; the fill covers that region anyway.
- */
-private fun DrawScope.drawLowerArcGlow(center: Offset, radius: Float, progress: Float) {
-    val outerRadius = radius + HighlightedIconButtonDefaults.DarkHaloExtent.toPx()
-    val color = HighlightedIconButtonDefaults.DarkHaloColor.copy(
-        alpha = HighlightedIconButtonDefaults.DarkHaloColor.alpha * progress,
-    )
-    drawArc(
-        brush = Brush.radialGradient(
-            colorStops = arrayOf(
-                0f to Color.Transparent,
-                (radius / outerRadius) to color,
-                1f to Color.Transparent,
-            ),
-            center = center,
-            radius = outerRadius,
-        ),
-        startAngle = HighlightedIconButtonDefaults.DarkHaloStartAngle,
-        sweepAngle = HighlightedIconButtonDefaults.DarkHaloSweepAngle,
-        useCenter = true,
-        topLeft = Offset(center.x - outerRadius, center.y - outerRadius),
-        size = Size(outerRadius * 2f, outerRadius * 2f),
-    )
 }
 
 /**
@@ -207,15 +197,6 @@ private fun DrawScope.drawSoftDropHalo(center: Offset, radius: Float, progress: 
         center = haloCenter,
     )
 }
-
-/**
- * The rim parameters for the current press, with the stroke and the inner shadow faded out as the
- * button goes down — the measured pressed state loses its outer stroke and glow entirely.
- */
-private fun rimStroke(pressProgress: Float): MaterialStrokeParams = HighlightedIconButtonDefaults.Stroke.copy(
-    edgeAlpha = HighlightedIconButtonDefaults.StrokeAlpha * (1f - pressProgress),
-    shadowFadeIn = HighlightedIconButtonDefaults.StrokeShadowFadeIn * (1f - pressProgress),
-)
 
 /** Defaults for [HighlightedIconButton]. */
 object HighlightedIconButtonDefaults {
@@ -277,39 +258,42 @@ object HighlightedIconButtonDefaults {
      */
     val PressedContentBrighten = 0.1f
 
-    /** The rim alpha. Measurement: the perimeter stroke is ≈15% white. */
-    val StrokeAlpha = 0.15f
+    /** TYPE_FRAMEWORK_CIRCLE_1 dark edge alpha; applied through native material RGB blending. */
+    val StrokeAlpha = 0.6f
 
-    /** The rim width. Measurement: ≈0.8dp at the top of the circle and ≈1.2dp at the bottom. */
-    val StrokeWidth = 1.dp
+    /** TYPE_FRAMEWORK_CIRCLE_1 light edge alpha. */
+    val LightStrokeAlpha = 0.2f
 
-    /**
-     * The rim's inner-shadow fade-in scale. Measurement: the button carries no inner shadow, so the
-     * shader's fade is kept at the `TYPE_FRAMEWORK_CAPSULE_13` dark value where it is invisible.
-     */
-    val StrokeShadowFadeIn = 0.01f
+    /** TYPE_FRAMEWORK_CIRCLE_1 edge width in both themes. */
+    val StrokeWidth = 1.9.dp
 
-    /** The rim: [StrokeAlpha] white, [StrokeWidth] wide, no inner shadow. */
+    /** TYPE_FRAMEWORK_CIRCLE_1 dark inner-shadow parameter, retained with the native preset. */
+    val StrokeShadowFadeIn = 0.1f
+
+    /** The regular dark toolbar circle preset, not the popup-window circle variant. */
     val Stroke = MaterialStrokeParams(
         edgeAlpha = StrokeAlpha,
         edgeWidth = StrokeWidth,
         edgeAngle = 0f,
         shadowFadeIn = StrokeShadowFadeIn,
-        shadowFadeOut = 0f,
+        shadowFadeOut = 1f,
         shadowFadeScale = 1f,
     )
 
-    /** The dark theme's glow colour. Measurement: ≈8% white 1px outside the edge. */
-    val DarkHaloColor = Color.White.copy(alpha = 0.08f)
+    /** TYPE_FRAMEWORK_CIRCLE_1_LIGHT from ToolbarMaterialEffectResolver. */
+    val LightStroke = Stroke.copy(edgeAlpha = LightStrokeAlpha, shadowFadeIn = 0.15f)
 
-    /** How far the dark theme's glow reaches past the edge. Measurement: R+20px ≈ 5.2dp. */
-    val DarkHaloExtent = 5.2.dp
+    /** Resolves the regular toolbar edge parameters by theme. */
+    fun stroke(isDark: Boolean): MaterialStrokeParams = if (isDark) Stroke else LightStroke
 
-    /** The glow arc's start angle; 0° is 3 o'clock, so 90° points straight down. */
-    val DarkHaloStartAngle = 60f
+    /** ToolbarMaterialEffectDelegate uses coui_caustic_color_1: 0x33ffffff at night. */
+    val DarkHaloColor = Color.White.copy(alpha = 51f / 255f)
 
-    /** The glow arc's sweep. Measurement: the glow occupies only the lower 60°–120° arc. */
-    val DarkHaloSweepAngle = 60f
+    /** Native level-2 bottom layout offset; the SDF fades before reaching the draw rectangle. */
+    val DarkHaloExtent = 4.899994.dp
+
+    /** Native level-2 distance field width. */
+    val DarkHaloSdfWidth = 9.22998.dp
 
     /**
      * The light theme's halo colour. Measurement: a soft dark drop shadow, deepest -13 luma over the

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -130,7 +131,7 @@ fun BottomFloatingAccessoryNavigationBar(
     val menuTouchState = rememberCOUITouchMotionState()
 
     BoxWithConstraints(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().wrapContentHeight(Alignment.Bottom),
         contentAlignment = Alignment.Center,
     ) {
         // COUIBottomFloatingAccessoryNavigationBar.changePadding: 16dp on a small screen only.
@@ -295,28 +296,10 @@ fun BottomFloatingAccessoryNavigationBar(
                     color = containerColor,
                     backdrop = backdrop,
                     containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
-                    // The highlight is the same bloom the other glass surfaces get, so it is only as
-                    // strong as `Highlight.GlassStroke*` would make it. Measured on Gallery's dark
-                    // accessory bar the top edge lands at 89 over a 41 body, which a 0.24 white
-                    // stroke reproduces; the old 0.55 drew a ring the device does not have.
-                    rimColor = if (backdrop != null) {
-                        Color.White.copy(alpha = if (isDark) 0.24f else 0.45f)
-                    } else {
-                        null
-                    },
-                    // Gallery's material sends a weak, directional bloom through the lower edge;
-                    // keep it separate from the top rim so the capsule does not become a white ring.
-                    bottomGlowColor = if (backdrop != null) {
-                        Color.White.copy(alpha = if (isDark) 0.08f else 0.12f)
-                    } else {
-                        null
-                    },
-                    bottomGlowBlur = 8.dp,
-                    // COUI strokes both long edges of a silhouette — `GradientStrokeStyleSpec` carries
-                    // a width and an alpha per edge — so the capsule wears a lower line as well as the
-                    // upper one. Measured on Gallery's accessory bar the two read the same height
-                    // (both ~+40/255 over the body), which is what a weight of 1 gives; the sides stay
-                    // dark because both terms are gated on the vertical axis alone.
+                    // Both the bar and accessory views request TYPE_FRAMEWORK_CAPSULE_3.
+                    // Its native near/far ramps draw a sharp upper line and a weaker lower line.
+                    rimColor = Color.White.copy(alpha = if (isDark) 0.8f else 0.25f),
+                    bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
                     rimBottomScale = 1f,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -458,7 +441,7 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
     BoxWithConstraints(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().wrapContentHeight(Alignment.Bottom),
         contentAlignment = Alignment.Center,
     ) {
         val horizontalPadding = COUIResponsiveUtils.pick(

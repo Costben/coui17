@@ -5,6 +5,7 @@ package i18n
 /** The shell around the pages: page titles, section headings, the accessory bar and the panel. */
 internal val zhChrome: Map<String, String> = mapOf(
     // Page titles
+    "COUI" to "COUI",
     "Settings" to "设置",
     "Icons" to "图标",
     "Color" to "配色",

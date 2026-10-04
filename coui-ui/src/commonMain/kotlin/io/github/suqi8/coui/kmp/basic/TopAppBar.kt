@@ -1074,6 +1074,12 @@ private fun TopAppBarLayout(
         },
         modifier = modifier
             .appBarSurface(color, gradient = gradientGlass)
+            // The clip has to wrap the *padded* node, not sit inside it. A toolbar icon's halo
+            // reaches ~8dp above its 40dp button, past the top of the content box once the status
+            // bar inset has pushed that box down, and clipping after the inset cut the halo off flat
+            // along the status-bar line. Out here the clip still bounds the bar while the inset
+            // padding stays inside it.
+            .clipToBounds()
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier
@@ -1084,7 +1090,6 @@ private fun TopAppBarLayout(
                 },
             )
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-            .clipToBounds()
             .then(
                 if (showDivider) {
                     Modifier.drawWithContent {
@@ -1381,6 +1386,12 @@ private fun SmallTopAppBarLayout(
         },
         modifier = modifier
             .appBarSurface(color, gradient = gradientGlass)
+            // The clip has to wrap the *padded* node, not sit inside it. A toolbar icon's halo
+            // reaches ~8dp above its 40dp button, past the top of the content box once the status
+            // bar inset has pushed that box down, and clipping after the inset cut the halo off flat
+            // along the status-bar line. Out here the clip still bounds the bar while the inset
+            // padding stays inside it.
+            .clipToBounds()
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier
@@ -1391,7 +1402,6 @@ private fun SmallTopAppBarLayout(
                 },
             )
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-            .clipToBounds()
             .then(
                 if (showDivider) {
                     Modifier.drawWithContent {

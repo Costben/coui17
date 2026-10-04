@@ -84,6 +84,8 @@ fun RowScope.DropdownArrowEndAction(
  *   handle as parent data on the node it is applied to, and the column's measure policy only reads
  *   parent data from its own children. Wrap nothing around the row — pass what the wrapper would have
  *   carried through this parameter instead.
+ * @param role The accessibility role. Use [Role.Button] for actions that navigate rather than
+ *   select a persistent option; options retain [Role.RadioButton] by default.
  */
 @Composable
 fun DropdownImpl(
@@ -100,6 +102,7 @@ fun DropdownImpl(
     isLast: Boolean = index == optionSize - 1,
     onSelectedIndexChange: (Int) -> Unit = {},
     groupKey: Any? = null,
+    role: Role = if (hasSubmenu) Role.Button else Role.RadioButton,
 ) {
     val additionalTopPadding =
         if (!dialogMode && isFirst) {
@@ -165,7 +168,6 @@ fun DropdownImpl(
     }
 
     val currentOnSelectedIndexChange by rememberUpdatedState(onSelectedIndexChange)
-    val role = if (hasSubmenu) Role.Button else Role.RadioButton
     // COUI DefaultAdapter.setHint hides the whole hint layout on a disabled row, so the
     // surrounding gaps collapse with it (setGap only reserves them for a visible hint).
     val hint = item.hint?.takeIf { enabled }
