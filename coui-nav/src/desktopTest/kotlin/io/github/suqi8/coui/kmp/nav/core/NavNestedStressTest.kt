@@ -181,14 +181,20 @@ class NavNestedStressTest {
         waitForIdle()
 
         fun settleFully() {
-            repeat(4) {
-                mainClock.advanceTimeBy(600)
+            // A settle is always one of the driver's own curves: the 500ms programmatic tween
+            // from rest, or the shared spring when the retarget inherits the previous tween's
+            // velocity (a full step converges in well under a second either way). Two 500ms
+            // windows leave both at rest. The clock has to supply the frames itself — with
+            // autoAdvance off, waitForIdle() never advances time, so it settles nothing.
+            repeat(2) {
+                mainClock.advanceTimeBy(500)
                 waitForIdle()
             }
         }
 
         fun probe(step: String) {
-            settleFully()
+            // Every call site settles immediately before probing, so probing does not settle
+            // again: doing so only re-rendered the already-resting scene a second time.
             val before = pageClicks
             onNodeWithTag("pageProbe").performClick()
             mainClock.advanceTimeBy(100)
