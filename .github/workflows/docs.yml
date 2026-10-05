@@ -36,11 +36,23 @@ jobs:
           java-version: "21"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Build Docs
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: docs/.nvmrc
+          cache: yarn
+          cache-dependency-path: docs/yarn.lock
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Build API Docs
         run: |
-          ./gradlew :coui-ui:dokkaGenerate -Prelease
-          mkdir -p ./docs/public/dokka
-          mv ./coui-ui/build/dokka/html/* ./docs/public/dokka
+          # Every published module generates its own Dokka HTML; the script collects
+          # them into one tree so the site exposes all nine modules behind the stable
+          # /coui/dokka/index.html entry point.
+          ./gradlew dokkaGenerate -Prelease
+          bash .github/scripts/build-dokka-site.sh
+      - name: Build Web Demos
+        run: |
           ./gradlew :docs:demo:jsBrowserDistribution
           mkdir -p ./docs/public/compose
           mv ./docs/demo/build/dist/js/productionExecutable/* ./docs/public/compose
@@ -48,9 +60,18 @@ jobs:
           mkdir -p ./docs/public/example
           mv ./example/web/build/dist/wasmJs/productionExecutable/* ./docs/public/example
           ./gradlew :docs:iconGen:generateIcons
+      - name: Build Docs
+        run: |
           cd ./docs
-          yarn install
+          yarn install --immutable
           yarn docs:build
+      - name: Upload Dokka output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dokka-html
+          path: ./docs/public/dokka
+          if-no-files-found: warn
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact

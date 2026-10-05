@@ -35,14 +35,16 @@ xcuserdata
 .kotlin
 .konan_cache
 *.lock
+!docs/yarn.lock
 convention-plugins/bin
 docs/node_modules
+docs/.yarn/install-state.gz
 docs/.vitepress/dist
 docs/.vitepress/cache
 docs/public/dokka
 docs/public/compose
 docs/public/icons
-miuix-ui/**/generated/baselineProfiles/**
+coui-*/src/*/generated/baselineProfiles/**
 example/ios/iosApp/Generated.xcconfig
 /build-plugins/bin
 /docs/iconGen/bin

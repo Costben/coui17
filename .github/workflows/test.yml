@@ -1,64 +1,227 @@
-name: Build All Tests
+name: CI
 
 on:
   push:
     branches: ["main"]
-    paths-ignore:
-      - "README.md"
-      - "CLAUDE.md"
-      - "AGENTS.md"
-      - "docs/**"
   pull_request:
     branches: ["main"]
-    paths-ignore:
-      - "README.md"
-      - "CLAUDE.md"
-      - "AGENTS.md"
-      - "docs/**"
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - target: "iosSimulatorArm64Test"
-            os: macos-26
-          - target: "desktopTest"
-            os: ubuntu-latest
-          - target: "assembleAndroidTest"
-            os: ubuntu-latest
-          - target: "wasmJsBrowserTest"
-            os: ubuntu-latest
-    runs-on: ${{ matrix.os }}
+  workflow-lint:
+    name: Lint workflows
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v7
-      - name: Set up JDK
+      - name: Download actionlint
+        run: bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+      - name: Run actionlint
+        run: ./actionlint -color
+
+  checks:
+    name: Formatting and API compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
         uses: actions/setup-java@v5
         with:
           distribution: "zulu"
           java-version: "21"
-      - name: Build with Gradle
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Raise JVM heap for CI
-        shell: bash
-        run: |
-          echo "org.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8" >> gradle.properties
-          echo "kotlin.daemon.jvmargs=-Xmx6g" >> gradle.properties
-          echo "kotlin.native.jvmArgs=-Xmx6g" >> gradle.properties
-      - name: Run check
-        if: matrix.os == 'macos-26'
-        run: ./gradlew check
-      - name: Run test
-        run: ./gradlew ${{ matrix.target }}
+      - name: spotlessCheck and apiCheck
+        run: ./gradlew spotlessCheck apiCheck --no-daemon
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: reports
+          name: check-reports
           path: |
             **/build/reports/**
+          if-no-files-found: ignore
+
+  desktop-tests:
+    name: Desktop tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Run the desktop test suites
+        run: ./gradlew :coui-nav:desktopTest :coui-ui:desktopTest --no-daemon
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-test-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+
+  android-build:
+    name: Android compile and instrumented-test APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Assemble the library instrumented test APK and the sample app
+        run: ./gradlew :coui-ui:assembleAndroidTest :example:android:assembleDebug --no-daemon
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-reports
+          path: |
+            **/build/reports/**
+          if-no-files-found: ignore
+
+  native-compile:
+    name: Native tests and compile
+    runs-on: macos-26
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      # The iOS/macOS targets currently carry no dedicated assertions; running the
+      # simulator test task and the macOS compile is the real gate here rather than a
+      # claim that the native suites are as thorough as the desktop ones.
+      - name: Run native test and compile targets
+        run: ./gradlew :coui-ui:iosSimulatorArm64Test :coui-ui:compileKotlinMacosArm64 --no-daemon
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+
+  web-compile:
+    name: Web tests and compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      # Same caveat as the native job: wasmJsBrowserTest has no dedicated assertions
+      # beyond compilation, so the JS/Wasm compile is what actually guards the change.
+      - name: Run web test and compile targets
+        run: ./gradlew :coui-ui:wasmJsBrowserTest :coui-ui:compileKotlinJs --no-daemon
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+
+  docs:
+    name: Docs build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: docs/.nvmrc
+          cache: yarn
+          cache-dependency-path: docs/yarn.lock
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Generate Dokka and the doc demos
+        run: |
+          ./gradlew dokkaGenerate -Prelease --no-daemon
+          bash .github/scripts/build-dokka-site.sh
+          ./gradlew :docs:demo:jsBrowserDistribution :docs:iconGen:generateIcons --no-daemon
+          mkdir -p ./docs/public/compose
+          mv ./docs/demo/build/dist/js/productionExecutable/* ./docs/public/compose
+      - name: Install docs dependencies
+        working-directory: docs
+        run: yarn install --immutable
+      - name: Build the docs site
+        working-directory: docs
+        run: yarn docs:build
+      - name: Upload Dokka
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dokka-html
+          path: docs/public/dokka
+          if-no-files-found: warn
+
+  publish-smoke:
+    name: Local publication smoke
+    runs-on: ubuntu-latest
+    needs: checks
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Resolve the version under test
+        run: echo "COUI_VERSION=$(./gradlew -q printReleaseVersion --no-daemon)" >> "$GITHUB_ENV"
+      - name: Publish every module to the shared local repository
+        run: ./gradlew publishAllToLocalRepository verifyLocalPublication --no-daemon --no-configuration-cache
+      - name: Consume every published module from the local repository
+        run: |
+          set -euo pipefail
+          ./gradlew -p smoke compileKotlin \
+            -PcouiVersion="$COUI_VERSION" \
+            -PsmokeRepo="file://$PWD/build/repository/local" \
+            --no-daemon
