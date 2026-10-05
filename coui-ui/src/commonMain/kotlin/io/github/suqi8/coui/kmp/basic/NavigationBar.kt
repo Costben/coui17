@@ -183,7 +183,7 @@ fun NavigationBar(
  * [NavigationBarMotion.EnterAlphaDurationMillis] and a translationY of one bar height settling to 0
  * over [NavigationBarMotion.EnterTranslateDurationMillis], both on `COUIInEaseInterpolator`.
  *
- * This is a different transition from [NavigationBar]'s [NavigationBar.visible]: COUI plays it when
+ * This is a different transition from [NavigationBar]'s `NavigationBar.visible`: COUI plays it when
  * the menu *content* is swapped, not when the bar itself is shown or hidden.
  *
  * @param visible Whether the content is entering (`true`) or exiting (`false`).

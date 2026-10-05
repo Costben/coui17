@@ -53,5 +53,14 @@ kotlin {
             api(projects.couiUi)
             api(libs.jetbrains.compose.foundation)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+        val desktopTest by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation(libs.jetbrains.compose.ui.test)
+            }
+        }
     }
 }

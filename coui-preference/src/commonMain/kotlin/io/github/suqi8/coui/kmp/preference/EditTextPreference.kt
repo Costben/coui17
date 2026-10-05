@@ -30,6 +30,7 @@ import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TextField
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -65,6 +66,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param renderInRootScaffold Whether to render the sheet in the root (outermost) Scaffold.
  * @param onExpandedChange The callback when the sheet is shown or dismissed.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun EditTextPreference(
     title: String,

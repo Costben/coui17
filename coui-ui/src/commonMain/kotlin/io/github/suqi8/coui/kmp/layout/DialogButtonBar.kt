@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TextButtonColors
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -204,6 +205,7 @@ private fun labelsFitInRow(
  * `resetHorDividerVisibility`): equal-weight cells ordered negative / neutral / positive, with a
  * 1dp divider between each pair of present buttons.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 private fun RowButtonBar(
     negative: DialogButtonBarAction?,
@@ -258,6 +260,7 @@ private fun RowButtonBar(
  * `resetVerDividerVisibility`): full-width buttons ordered neutral / positive / negative, each
  * 52dp tall except the bottom-most one at 64dp, split by 0.33dp dividers inset 24dp.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 private fun StackedButtonBar(
     negative: DialogButtonBarAction?,

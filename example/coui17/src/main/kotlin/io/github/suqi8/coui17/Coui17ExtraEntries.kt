@@ -1,6 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
 @file:Suppress("ktlint:compose:multiple-emitters-check")
+@file:OptIn(ExperimentalCOUIApi::class)
 
 package io.github.suqi8.coui17
 
@@ -51,6 +52,7 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.cardListPositionOf
 import io.github.suqi8.coui.kmp.basic.rememberSideNavigationBarState
 import io.github.suqi8.coui.kmp.basic.rememberSidePaneLayoutState
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.ChevronForward
 import io.github.suqi8.coui.kmp.icon.extended.Download

@@ -246,14 +246,14 @@ fun CalendarView(
  *
  * @property titleColor The month/year title and the chevron buttons. The header `TextView` resolves
  *   `?attr/couiColorPrimaryNeutral` (`coui_color_primary_neutral`, `#e6000000` light /
- *   `#e6ffffff` night), which is the theme's [COUITheme.colorScheme.onSurface].
+ *   `#e6ffffff` night), which is the theme's `COUITheme.colorScheme.onSurface`.
  * @property weekdayColor The column headers. `TextAppearance.Material.Widget.Calendar.DayOfWeek`
  *   resolves `?attr/couiColorHintNeutral` (`coui_color_hint_neutral`, `#42000000` / `#4dffffff`),
- *   the theme's [COUITheme.colorScheme.disabledOnSurface].
+ *   the theme's `COUITheme.colorScheme.disabledOnSurface`.
  * @property dayColor The days of the displayed month. The default item of the day state list
  *   `color/coui_primary_text_inverse_when_activated_material_light` is
  *   `?attr/couiColorPrimaryNeutral` (`#e6000000` / `#e6ffffff`), i.e.
- *   [COUITheme.colorScheme.onSurface].
+ *   `COUITheme.colorScheme.onSurface`.
  * @property otherMonthDayColor The days of the neighbouring months. `COUIDateMonthView.mDisabledText`
  *   is `?attr/couiColorDisabledNeutral` (`coui_color_disabled_neutral`, `#42000000` / `#4dffffff`).
  * @property disabledDayColor The days of the displayed month that fall outside the selectable range.
@@ -362,7 +362,7 @@ object CalendarViewDefaults {
 
     /**
      * The header title style. `coui_calendar_picker_header_material`'s `TextView` is 16sp in
-     * `sans-serif-medium`, the theme's [COUITheme.textStyles.button] tier.
+     * `sans-serif-medium`, the theme's `COUITheme.textStyles.button` tier.
      */
     @Composable
     fun titleTextStyle(): TextStyle = COUITheme.textStyles.button
@@ -370,7 +370,7 @@ object CalendarViewDefaults {
     /**
      * The day number style. `TextAppearance.Material.Widget.Calendar.Day` inherits
      * `couiTextAppearanceHeadline6` (16sp, `sans-serif-medium`), which is the theme's
-     * [COUITheme.textStyles.button] tier.
+     * `COUITheme.textStyles.button` tier.
      */
     @Composable
     fun dayTextStyle(): TextStyle = COUITheme.textStyles.button
@@ -378,7 +378,7 @@ object CalendarViewDefaults {
     /**
      * The weekday label style. `TextAppearance.Material.Widget.Calendar.DayOfWeek` inherits
      * `couiTextAppearanceButton` (14sp, `sans-serif-medium`); the theme has no 14sp medium tier, so
-     * its 14sp [COUITheme.textStyles.body2] carries the native weight.
+     * its 14sp `COUITheme.textStyles.body2` carries the native weight.
      */
     @Composable
     fun weekdayTextStyle(): TextStyle = COUITheme.textStyles.body2.copy(fontWeight = FontWeight.Medium)

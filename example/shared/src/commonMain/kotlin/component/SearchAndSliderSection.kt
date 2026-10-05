@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(ExperimentalCOUIApi::class)
+
 package component
 
 import androidx.compose.foundation.background
@@ -34,6 +36,7 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TouchSearchView
 import io.github.suqi8.coui.kmp.basic.TouchSearchViewDefaults
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 private val DemoHistory = listOf(

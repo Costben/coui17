@@ -361,7 +361,7 @@ object CardInstructionPreferenceDefaults {
 
     /**
      * The default [CardInstructionColors]. [containerColor] follows `?couiColorCardBackground`
-     * ([COUITheme.colorScheme.surfaceContainer]); [titleColor] `?couiColorPrimaryNeutral` and
+     * (`COUITheme.colorScheme.surfaceContainer`); [titleColor] `?couiColorPrimaryNeutral` and
      * [summaryColor] `?couiColorSecondNeutral`.
      */
     @Composable

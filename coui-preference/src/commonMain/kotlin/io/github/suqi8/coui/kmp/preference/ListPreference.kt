@@ -43,6 +43,7 @@ import io.github.suqi8.coui.kmp.basic.DropdownArrowEndAction
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Check
 import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
@@ -89,6 +90,7 @@ data class ListPreferenceEntry(
  * @param renderInRootScaffold Whether to render the panel in the root (outermost) Scaffold.
  * @param onExpandedChange The callback when the panel is shown or dismissed.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun ListPreference(
     entries: List<ListPreferenceEntry>,

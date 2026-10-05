@@ -84,7 +84,7 @@ import kotlin.math.abs
  * The colours are the two styles the constructor picks between,
  * `Widget.COUI.COUILockPatternView` and `Widget.COUI.COUILockPatternView.Dark`
  * (`COUIContextUtil.isCOUIDarkTheme(context)`). `COUITheme.colorScheme` has no slot for any of them:
- * the closest is [COUITheme.colorScheme.error] (`#ffdb382c` light / `#ffff6c61` dark) against the
+ * the closest is `COUITheme.colorScheme.error` (`#ffdb382c` light / `#ffff6c61` dark) against the
  * native `#ffea3447`, so the recovered values are file constants behind
  * [LockPatternViewDefaults.colors].
  *
@@ -557,7 +557,7 @@ enum class LockPatternDisplayMode {
     Correct,
 
     /**
-     * Replays [LockPatternView.pattern] one cell per [LockPatternViewDefaults.AnimateStepMillis].
+     * Replays `LockPatternView.pattern` one cell per [LockPatternViewDefaults.AnimateStepMillis].
      * `DisplayMode.Animate`.
      */
     Animate,

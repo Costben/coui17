@@ -7,6 +7,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Indication
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -33,12 +34,17 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.icon.COUIIcons
+import io.github.suqi8.coui.kmp.icon.basic.Close
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -63,6 +69,16 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param icon The optional leading icon of the [Chip], laid out in a [ChipDefaults.IconSize] box.
  *   [LocalContentColor] is provided with the current label color so a default [Icon] is tinted
  *   like COUIChip with chipIconApplyTint enabled.
+ * @param onDismiss The optional callback invoked when the trailing dismiss affordance is clicked.
+ *   When non-null the chip grows a trailing close button that is an independent [Role.Button]
+ *   target: it never toggles [selected] and is disabled together with the chip. New in 1.2.0.
+ * @param dismissIcon The optional content of the dismiss affordance. Defaults to the built-in
+ *   [COUIIcons.Basic.Close] glyph when `null`. New in 1.2.0.
+ * @param dismissContentDescription The content description of the dismiss affordance, exposed as
+ *   semantics so accessibility services and UI tests can find it. New in 1.2.0.
+ * @param dismissButtonSize The touch target of the dismiss affordance. Defaults to
+ *   [ChipDefaults.DismissButtonSize] (48dp) so the close button meets the minimum touch target
+ *   size. New in 1.2.0.
  * @param cornerRadius The corner radius of the [Chip]. COUIChip uses a capsule (half of the
  *   default 32dp height) drawn on the smooth-corner path.
  * @param minWidth The minimum width of the [Chip].
@@ -74,6 +90,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param indication The [Indication] to be used for the [Chip]. Defaults to `null` because the
  *   COUI press feedback (scale + press tint) is built into the chip itself.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun Chip(
     selected: Boolean,
@@ -82,6 +99,10 @@ fun Chip(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: (@Composable () -> Unit)? = null,
+    onDismiss: (() -> Unit)? = null,
+    dismissIcon: (@Composable () -> Unit)? = null,
+    dismissContentDescription: String = ChipDefaults.DISMISS_CONTENT_DESCRIPTION,
+    dismissButtonSize: Dp = ChipDefaults.DismissButtonSize,
     cornerRadius: Dp = ChipDefaults.CornerRadius,
     minWidth: Dp = ChipDefaults.MinWidth,
     minHeight: Dp = ChipDefaults.MinHeight,
@@ -93,6 +114,7 @@ fun Chip(
 ) {
     @Suppress("NAME_SHADOWING")
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
+    val dismissInteractionSource = remember { MutableInteractionSource() }
 
     // COUIChipDrawable.TintAnimation: the checked/unchecked background, label and icon colors are
     // evaluated by an ArgbEvaluator driven by COUISpringForce(response 0.3, bounce 0).
@@ -189,6 +211,31 @@ fun Chip(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.widthIn(max = ChipDefaults.TextMaxWidth),
                 )
+                if (onDismiss != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(dismissButtonSize)
+                            .clickable(
+                                interactionSource = dismissInteractionSource,
+                                indication = null,
+                                enabled = enabled,
+                                role = Role.Button,
+                                onClick = onDismiss,
+                            )
+                            .semantics { contentDescription = dismissContentDescription },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (dismissIcon != null) {
+                            dismissIcon()
+                        } else {
+                            Icon(
+                                imageVector = COUIIcons.Basic.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(ChipDefaults.DismissIconSize),
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -213,6 +260,32 @@ object ChipDefaults {
      * half of the background height, i.e. a capsule for the default 32dp height.
      */
     val CornerRadius = 16.dp
+
+    /**
+     * The size of the built-in dismiss affordance icon.
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val DismissIconSize = 16.dp
+
+    /**
+     * The touch target of the dismiss affordance. At least 48dp so the close button meets the 48dp
+     * minimum touch target size.
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val DismissButtonSize = 48.dp
+
+    /**
+     * The content description of the built-in dismiss affordance, so the close button is reachable
+     * from accessibility services and UI tests.
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    const val DISMISS_CONTENT_DESCRIPTION = "Dismiss"
 
     /** The size of the leading icon (COUI coui_chip_selection_style_chip_icon_size). */
     val IconSize = 16.dp

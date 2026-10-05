@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -667,6 +668,7 @@ fun TooltipBox(
  * @param colors the [RichTooltipColors] of the tooltip.
  * @param content the anchor content.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun RichTooltipBox(
     text: String,

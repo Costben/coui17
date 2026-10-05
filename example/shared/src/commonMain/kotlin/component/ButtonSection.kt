@@ -1,6 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
 @file:Suppress("ktlint:compose:multiple-emitters-check")
+@file:OptIn(ExperimentalCOUIApi::class)
 
 package component
 
@@ -20,10 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
+import io.github.suqi8.coui.kmp.basic.ButtonSize
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Stepper
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 
 fun LazyListScope.buttonSection() {
     item(key = "button") {
@@ -107,6 +110,24 @@ fun ButtonDemo() {
             enabled = false,
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.textButtonColorsBorderless(),
+        )
+    }
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        TextButton(
+            text = str("Tiny"),
+            onClick = {},
+            size = ButtonSize.Tiny,
+        )
+        TextButton(
+            text = str("Tiny Primary"),
+            onClick = {},
+            size = ButtonSize.Tiny,
+            colors = ButtonDefaults.textButtonColorsPrimary(),
         )
     }
     var stepperValue by remember { mutableIntStateOf(2) }

@@ -19,10 +19,10 @@ import kotlin.math.roundToInt
  * `com/coui/appcompat/poplist/MenuRotationHelper$RotationQuarter` and the
  * `COUIRotatingPopupListWindow` that consumes it.
  *
- * `COUIContextMenu`'s *positioning* is already covered in this library: [ListPopup] ports the same
+ * `COUIContextMenu`'s *positioning* is already covered in this library: `ListPopup` ports the same
  * `PreciseLongPressHelper` as [preciseClickAnchor], the same `PopupMenuLocateHelper.setAnchor` as
  * [ListPopupDefaults.dropdownPositionProvider] and [ListPopupDefaults.ContextMenuPositionProvider],
- * and the same overlay/window containers as [OverlayListPopup] / [WindowListPopup]. What was missing
+ * and the same overlay/window containers as `OverlayListPopup` / `WindowListPopup`. What was missing
  * is the rotation: nothing in this library rotates menu content, and none of the ported classes carry
  * `MenuRotationHelper`'s geometry. This file ports exactly that missing half — the quarter-angle
  * classifier, the rotated footprint and axis-bounds maths, and the fit-rect clamp the rotating

@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(ExperimentalCOUIApi::class)
+
 package component
 
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +26,7 @@ import io.github.suqi8.coui.kmp.basic.SnackbarDuration
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.SnackbarResult
 import io.github.suqi8.coui.kmp.basic.TextButton
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import kotlinx.coroutines.launch
 
 fun LazyListScope.snackbarSection(snackbarHostState: SnackbarHostState) {

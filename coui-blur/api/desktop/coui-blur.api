@@ -1,0 +1,403 @@
+public abstract interface class io/github/suqi8/coui/kmp/blur/Backdrop {
+	public abstract fun drawBackdrop (Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/layout/LayoutCoordinates;Lkotlin/jvm/functions/Function1;I)V
+	public static synthetic fun drawBackdrop$default (Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/layout/LayoutCoordinates;Lkotlin/jvm/functions/Function1;IILjava/lang/Object;)V
+	public fun getOffsetResidualX ()F
+	public fun getOffsetResidualY ()F
+	public abstract fun isCoordinatesDependent ()Z
+}
+
+public final class io/github/suqi8/coui/kmp/blur/Backdrop$DefaultImpls {
+	public static synthetic fun drawBackdrop$default (Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/layout/LayoutCoordinates;Lkotlin/jvm/functions/Function1;IILjava/lang/Object;)V
+	public static fun getOffsetResidualX (Lio/github/suqi8/coui/kmp/blur/Backdrop;)F
+	public static fun getOffsetResidualY (Lio/github/suqi8/coui/kmp/blur/Backdrop;)F
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/blur/BackdropEffectScope : androidx/compose/ui/unit/Density, io/github/suqi8/coui/kmp/blur/RuntimeShaderCache {
+	public abstract fun getDownscaleFactor ()I
+	public abstract fun getLayoutDirection ()Landroidx/compose/ui/unit/LayoutDirection;
+	public abstract fun getNoiseCoefficient ()F
+	public abstract fun getPadding ()F
+	public abstract fun getRenderEffect ()Landroidx/compose/ui/graphics/RenderEffect;
+	public abstract fun getShape ()Landroidx/compose/ui/graphics/Shape;
+	public abstract fun getSize-NH-jbRc ()J
+	public abstract fun setDownscaleFactor (I)V
+	public abstract fun setNoiseCoefficient (F)V
+	public abstract fun setPadding (F)V
+	public abstract fun setRenderEffect (Landroidx/compose/ui/graphics/RenderEffect;)V
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BackdropEffectScope$DefaultImpls {
+	public static fun roundToPx--R2X_6o (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;J)I
+	public static fun roundToPx-0680j_4 (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;F)I
+	public static fun toDp-GaN1DYA (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;J)F
+	public static fun toDp-u2uoSUM (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;F)F
+	public static fun toDp-u2uoSUM (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;I)F
+	public static fun toDpSize-k-rfVVM (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;J)J
+	public static fun toPx--R2X_6o (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;J)F
+	public static fun toPx-0680j_4 (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;F)F
+	public static fun toRect (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;Landroidx/compose/ui/unit/DpRect;)Landroidx/compose/ui/geometry/Rect;
+	public static fun toSize-XkaWNTQ (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;J)J
+	public static fun toSp-0xMU5do (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;F)J
+	public static fun toSp-kPz2Gy4 (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;F)J
+	public static fun toSp-kPz2Gy4 (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;I)J
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BackdropEffectScopeKt {
+	public static final fun colorControls (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFF)V
+	public static synthetic fun colorControls$default (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFFILjava/lang/Object;)V
+	public static final fun effect (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;Landroidx/compose/ui/graphics/RenderEffect;)V
+	public static final fun runtimeShaderEffect (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BackdropEffectsKt {
+	public static final fun blendColors (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;Lio/github/suqi8/coui/kmp/blur/BlurColors;)V
+	public static final fun blur (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FF)V
+	public static synthetic fun blur$default (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFILjava/lang/Object;)V
+	public static final fun noiseDither (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;F)V
+	public static final fun progressiveBlur (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;)V
+	public static synthetic fun progressiveBlur$default (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;ILjava/lang/Object;)V
+	public static final fun progressiveTextureBlurEffect (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;FLio/github/suqi8/coui/kmp/blur/BlurColors;)V
+	public static synthetic fun progressiveTextureBlurEffect$default (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;FLio/github/suqi8/coui/kmp/blur/BlurColors;ILjava/lang/Object;)V
+	public static final fun textureBlurEffect (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;)V
+	public static synthetic fun textureBlurEffect$default (Lio/github/suqi8/coui/kmp/blur/BackdropEffectScope;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;ILjava/lang/Object;)V
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BlendColorEntry {
+	public static final field $stable I
+	public synthetic fun <init> (JIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-0d7_KjU ()J
+	public final fun component2-BQoAJ0Q ()I
+	public final fun copy--G-Qwp8 (JI)Lio/github/suqi8/coui/kmp/blur/BlendColorEntry;
+	public static synthetic fun copy--G-Qwp8$default (Lio/github/suqi8/coui/kmp/blur/BlendColorEntry;JIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/BlendColorEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor-0d7_KjU ()J
+	public final fun getMode-BQoAJ0Q ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BlurBlendMode {
+	public static final field Companion Lio/github/suqi8/coui/kmp/blur/BlurBlendMode$Companion;
+	public static final synthetic fun box-impl (I)Lio/github/suqi8/coui/kmp/blur/BlurBlendMode;
+	public static fun constructor-impl (I)I
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (ILjava/lang/Object;)Z
+	public static final fun equals-impl0 (II)Z
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public static fun hashCode-impl (I)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (I)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()I
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BlurBlendMode$Companion {
+	public final fun getAlphaBlend-BQoAJ0Q ()I
+	public final fun getClear-BQoAJ0Q ()I
+	public final fun getColor-BQoAJ0Q ()I
+	public final fun getColorBurn-BQoAJ0Q ()I
+	public final fun getColorDodge-BQoAJ0Q ()I
+	public final fun getDarken-BQoAJ0Q ()I
+	public final fun getDifference-BQoAJ0Q ()I
+	public final fun getDst-BQoAJ0Q ()I
+	public final fun getDstAtop-BQoAJ0Q ()I
+	public final fun getDstIn-BQoAJ0Q ()I
+	public final fun getDstOut-BQoAJ0Q ()I
+	public final fun getDstOver-BQoAJ0Q ()I
+	public final fun getExclusion-BQoAJ0Q ()I
+	public final fun getHardLight-BQoAJ0Q ()I
+	public final fun getHue-BQoAJ0Q ()I
+	public final fun getLab-BQoAJ0Q ()I
+	public final fun getLabDarkenWithGreyscale-BQoAJ0Q ()I
+	public final fun getLabLightenWithGreyscale-BQoAJ0Q ()I
+	public final fun getLighten-BQoAJ0Q ()I
+	public final fun getLinearLight-BQoAJ0Q ()I
+	public final fun getLinearLightLab-BQoAJ0Q ()I
+	public final fun getLinearLightWithGreyscale-BQoAJ0Q ()I
+	public final fun getLuminosity-BQoAJ0Q ()I
+	public final fun getMiBrightness-BQoAJ0Q ()I
+	public final fun getMiColorBurn-BQoAJ0Q ()I
+	public final fun getMiColorDodge-BQoAJ0Q ()I
+	public final fun getMiDifference-BQoAJ0Q ()I
+	public final fun getMiLuminance-BQoAJ0Q ()I
+	public final fun getMiSaturation-BQoAJ0Q ()I
+	public final fun getModulate-BQoAJ0Q ()I
+	public final fun getMultiply-BQoAJ0Q ()I
+	public final fun getOverlay-BQoAJ0Q ()I
+	public final fun getPlus-BQoAJ0Q ()I
+	public final fun getPlusDarker-BQoAJ0Q ()I
+	public final fun getPlusLighter-BQoAJ0Q ()I
+	public final fun getSaturation-BQoAJ0Q ()I
+	public final fun getScreen-BQoAJ0Q ()I
+	public final fun getSoftLight-BQoAJ0Q ()I
+	public final fun getSrc-BQoAJ0Q ()I
+	public final fun getSrcAtop-BQoAJ0Q ()I
+	public final fun getSrcIn-BQoAJ0Q ()I
+	public final fun getSrcOut-BQoAJ0Q ()I
+	public final fun getSrcOver-BQoAJ0Q ()I
+	public final fun getXor-BQoAJ0Q ()I
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BlurColors {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;FFF)V
+	public synthetic fun <init> (Ljava/util/List;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (Ljava/util/List;FFF)Lio/github/suqi8/coui/kmp/blur/BlurColors;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/blur/BlurColors;Ljava/util/List;FFFILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/BlurColors;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlendColors ()Ljava/util/List;
+	public final fun getBrightness ()F
+	public final fun getContrast ()F
+	public final fun getSaturation ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/BlurDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/blur/BlurDefaults;
+	public final fun blurColors (Ljava/util/List;FFFLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/BlurColors;
+	public final fun getBlurRadius ()F
+	public final fun getMaxBlurRadius ()F
+	public final fun getNoiseCoefficient ()F
+	public final fun getProgressiveNoiseCoefficient ()F
+}
+
+public final class io/github/suqi8/coui/kmp/blur/DrawBackdropModifierKt {
+	public static final fun drawBackdrop-xK6vTOc (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILio/github/suqi8/coui/kmp/blur/ProgressiveBlur;Z)Landroidx/compose/ui/Modifier;
+	public static synthetic fun drawBackdrop-xK6vTOc$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILio/github/suqi8/coui/kmp/blur/ProgressiveBlur;ZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/LayerBackdrop : io/github/suqi8/coui/kmp/blur/Backdrop {
+	public static final field $stable I
+	public fun drawBackdrop (Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/layout/LayoutCoordinates;Lkotlin/jvm/functions/Function1;I)V
+	public final fun getGraphicsLayer ()Landroidx/compose/ui/graphics/layer/GraphicsLayer;
+	public fun getOffsetResidualX ()F
+	public fun getOffsetResidualY ()F
+	public fun isCoordinatesDependent ()Z
+}
+
+public final class io/github/suqi8/coui/kmp/blur/LayerBackdropKt {
+	public static final fun rememberLayerBackdrop (Landroidx/compose/ui/graphics/layer/GraphicsLayer;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/LayerBackdrop;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/LayerBackdropModifierKt {
+	public static final fun layerBackdrop (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/LayerBackdrop;)Landroidx/compose/ui/Modifier;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/LocalBackdropKt {
+	public static final fun getLocalBackdrop ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/ProgressiveBlur {
+	public static final field $stable I
+	public static final field Companion Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur;FFFFILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAngle ()F
+	public final fun getCurve ()F
+	public final fun getEndFraction ()F
+	public final fun getStartFraction ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/ProgressiveBlur$Companion {
+	public final fun getBottom ()Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur;
+	public final fun getLeft ()Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur;
+	public final fun getRight ()Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur;
+	public final fun getTop ()Lio/github/suqi8/coui/kmp/blur/ProgressiveBlur;
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/blur/RuntimeShaderCache {
+	public abstract fun obtainRuntimeShader (Ljava/lang/String;Ljava/lang/String;)Lio/github/suqi8/coui/kmp/shader/RuntimeShader;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/RuntimeShaderCacheKt {
+	public static final fun getLocalRuntimeShaderCache ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/RuntimeShaderKt {
+	public static final fun RuntimeShader (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/shader/RuntimeShader;
+	public static final fun asBrush (Lio/github/suqi8/coui/kmp/shader/RuntimeShader;)Landroidx/compose/ui/graphics/ShaderBrush;
+	public static final fun asComposeShader (Lio/github/suqi8/coui/kmp/shader/RuntimeShader;)Landroidx/compose/ui/graphics/Shader;
+	public static final fun isRuntimeShaderSupported ()Z
+}
+
+public final class io/github/suqi8/coui/kmp/blur/TextureEffectKt {
+	public static final fun progressiveTextureBlur-MkX_jMk (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;FLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun progressiveTextureBlur-MkX_jMk$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;FLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun progressiveTextureBlur-lOnTF60 (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;FLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun progressiveTextureBlur-lOnTF60$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/ProgressiveBlur;FLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun textureBlur-MkX_jMk (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun textureBlur-MkX_jMk$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun textureBlur-vspqH90 (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static final fun textureBlur-vspqH90 (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun textureBlur-vspqH90$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun textureBlur-vspqH90$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun textureEffect-MkX_jMk (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static final fun textureEffect-MkX_jMk (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun textureEffect-MkX_jMk$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun textureEffect-MkX_jMk$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;FFFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static final fun textureEffect-vspqH90 (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static final fun textureEffect-vspqH90 (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZ)Landroidx/compose/ui/Modifier;
+	public static synthetic fun textureEffect-vspqH90$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun textureEffect-vspqH90$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;FFLio/github/suqi8/coui/kmp/blur/BlurColors;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;IZILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/BloomStroke : io/github/suqi8/coui/kmp/blur/highlight/HighlightStyle {
+	public static final field $stable I
+	public static final field Companion Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke$Companion;
+	public synthetic fun <init> (JIFLio/github/suqi8/coui/kmp/blur/highlight/LightSource;Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JIFLio/github/suqi8/coui/kmp/blur/highlight/LightSource;Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-0d7_KjU ()J
+	public final fun component2-0nO6VwU ()I
+	public final fun component3-D9Ej5fM ()F
+	public final fun component4 ()Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;
+	public final fun component5 ()Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;
+	public final fun component6 ()Z
+	public final fun copy-cVaNGlY (JIFLio/github/suqi8/coui/kmp/blur/highlight/LightSource;Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;Z)Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public static synthetic fun copy-cVaNGlY$default (Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;JIFLio/github/suqi8/coui/kmp/blur/highlight/LightSource;Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;ZILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public fun createShader (Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/RuntimeShaderCache;)Landroidx/compose/ui/graphics/Shader;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getBlendMode-0nO6VwU ()I
+	public fun getColor-0d7_KjU ()J
+	public final fun getDualPeak ()Z
+	public final fun getInnerBlurRadius-D9Ej5fM ()F
+	public final fun getPrimaryLight ()Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;
+	public final fun getSecondaryLight ()Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/BloomStroke$Companion {
+	public final fun getGlassStrokeBigDark ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public final fun getGlassStrokeBigLight ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public final fun getGlassStrokeMiddleDark ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public final fun getGlassStrokeMiddleLight ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public final fun getGlassStrokePanelDark ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public final fun getGlassStrokePanelLight ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public final fun getGlassStrokeSmallDark ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+	public final fun getGlassStrokeSmallLight ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/Highlight {
+	public static final field $stable I
+	public static final field Companion Lio/github/suqi8/coui/kmp/blur/highlight/Highlight$Companion;
+	public synthetic fun <init> (FFLio/github/suqi8/coui/kmp/blur/highlight/HighlightStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFLio/github/suqi8/coui/kmp/blur/highlight/HighlightStyle;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-D9Ej5fM ()F
+	public final fun component2 ()F
+	public final fun component3 ()Lio/github/suqi8/coui/kmp/blur/highlight/HighlightStyle;
+	public final fun copy-8Feqmps (FFLio/github/suqi8/coui/kmp/blur/highlight/HighlightStyle;)Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public static synthetic fun copy-8Feqmps$default (Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;FFLio/github/suqi8/coui/kmp/blur/highlight/HighlightStyle;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlpha ()F
+	public final fun getStyle ()Lio/github/suqi8/coui/kmp/blur/highlight/HighlightStyle;
+	public final fun getWidth-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/Highlight$Companion {
+	public final fun getDefault ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokeBigDark ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokeBigLight ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokeMiddleDark ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokeMiddleLight ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokePanelDark ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokePanelLight ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokeSmallDark ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+	public final fun getGlassStrokeSmallLight ()Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/blur/highlight/HighlightStyle {
+	public static final field Companion Lio/github/suqi8/coui/kmp/blur/highlight/HighlightStyle$Companion;
+	public abstract fun createShader (Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/graphics/Shape;FFLio/github/suqi8/coui/kmp/blur/RuntimeShaderCache;)Landroidx/compose/ui/graphics/Shader;
+	public abstract fun getBlendMode-0nO6VwU ()I
+	public abstract fun getColor-0d7_KjU ()J
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/HighlightStyle$Companion {
+	public final fun getDefault ()Lio/github/suqi8/coui/kmp/blur/highlight/BloomStroke;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/LightPosition {
+	public static final field $stable I
+	public fun <init> (FFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;FFFILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/LightSource {
+	public static final field $stable I
+	public synthetic fun <init> (Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;JFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;JFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;
+	public final fun component2-0d7_KjU ()J
+	public final fun component3 ()F
+	public final fun copy-bw27NRU (Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;JF)Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;
+	public static synthetic fun copy-bw27NRU$default (Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;JFILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor-0d7_KjU ()J
+	public final fun getIntensity ()F
+	public final fun getPosition ()Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/highlight/TiltLightKt {
+	public static final fun rememberTiltLight-sW7UJKQ (Lio/github/suqi8/coui/kmp/blur/highlight/LightPosition;JFFLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/highlight/LightSource;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/sensor/DeviceTilt {
+	public static final field $stable I
+	public static final field Companion Lio/github/suqi8/coui/kmp/blur/sensor/DeviceTilt$Companion;
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lio/github/suqi8/coui/kmp/blur/sensor/DeviceTilt;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/blur/sensor/DeviceTilt;FFFFILjava/lang/Object;)Lio/github/suqi8/coui/kmp/blur/sensor/DeviceTilt;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGravityX ()F
+	public final fun getGravityY ()F
+	public final fun getPitch ()F
+	public final fun getRoll ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/sensor/DeviceTilt$Companion {
+	public final fun getZero ()Lio/github/suqi8/coui/kmp/blur/sensor/DeviceTilt;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/sensor/DeviceTilt_skikoKt {
+	public static final fun rememberDeviceTilt (FLandroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+}
+

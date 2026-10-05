@@ -1651,7 +1651,7 @@ fun ListPopupContent(
  * spawn direction encoded by [popupLayoutPosition] as [fractionProgress] moves 0 → 1: from the top
  * when shown below the anchor, from the bottom when shown above, and outwards from the center
  * otherwise. The band itself is shaped as a squircle (via [addSquircleRect]) so the four corners
- * stay aligned with the surrounding [squircleSurface] / [squircleClip] during reveal — when
+ * stay aligned with the surrounding [squircleSurface] / `squircleClip` during reveal — when
  * [squircleEnabled] is `false`, [addSquircleRect] falls back to a plain rounded rectangle to
  * match the squircle modifiers' fallback rendering.
  */

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.basic.CircularProgressIndicator
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.preference.internal.CategoryHeader
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -48,6 +49,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  *   `coui_loading_after_layout` / `coui_loading_before_layout`).
  * @param titleColor The color of the title.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 @NonRestartableComposable
 fun LoadingPreferenceCategory(

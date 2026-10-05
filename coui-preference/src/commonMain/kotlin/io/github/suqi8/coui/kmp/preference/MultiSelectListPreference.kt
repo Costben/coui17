@@ -34,6 +34,7 @@ import io.github.suqi8.coui.kmp.basic.Checkbox
 import io.github.suqi8.coui.kmp.basic.CheckboxColors
 import io.github.suqi8.coui.kmp.basic.CheckboxDefaults
 import io.github.suqi8.coui.kmp.basic.TextButton
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -70,6 +71,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param onExpandedChange The callback when the panel is shown or dismissed.
  */
 // The staged selection mirrors the public Set<Int> API; boxing is bounded by the entry count.
+@OptIn(ExperimentalCOUIApi::class)
 @Suppress("ktlint:compose:mutable-state-autoboxing")
 @Composable
 fun MultiSelectListPreference(

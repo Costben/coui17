@@ -35,7 +35,7 @@ import io.github.suqi8.coui.kmp.theme.LocalTextStyles
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses [LocalTextStyles.current.main]. If you are setting your own style, you
+ * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *
@@ -137,7 +137,7 @@ fun Text(
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses [LocalTextStyles.current.main]. If you are setting your own style, you
+ * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *
@@ -234,7 +234,7 @@ fun Text(
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses [LocalTextStyles.current.main]. If you are setting your own style, you
+ * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *
@@ -343,7 +343,7 @@ fun Text(
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses [LocalTextStyles.current.main]. If you are setting your own style, you
+ * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *

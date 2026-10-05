@@ -46,7 +46,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param titleColor The color of the title of the [OverlaySpinnerPreference].
  * @param summary The summary of the [OverlaySpinnerPreference].
  * @param summaryColor The color of the summary of the [OverlaySpinnerPreference].
- * @param spinnerColors The [SpinnerColors] of the [OverlaySpinnerPreference].
+ * @param spinnerColors The `SpinnerColors` of the [OverlaySpinnerPreference].
  * @param startAction The [Composable] content on the start side of the [OverlaySpinnerPreference].
  * @param bottomAction The [Composable] content at the bottom of the [OverlaySpinnerPreference].
  * @param insideMargin The [PaddingValues] to be applied inside the [OverlaySpinnerPreference].

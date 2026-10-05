@@ -21,7 +21,7 @@ import kotlin.math.roundToInt
  * `com/coui/appcompat/poplist/MainMenuPlacementSpec` (`SIDE_AUTO`, `SIDE_ABOVE`, `SIDE_BELOW`,
  * `SIDE_START`, `SIDE_END`).
  *
- * [Above] and [Below] force the vertical side, [Start] and [End] force the menu beside the anchor
+ * [Above] and [Below] force the vertical side, `Start` and `End` force the menu beside the anchor
  * instead of above/below it, and [Auto] lets the fit test in
  * [ClickSelectMenuDefaults.locateMainMenuY] pick the side. `MainMenuPlacementSpec.isValidSide`
  * accepts exactly these five values; the enum makes the native's int validation structural.
@@ -53,7 +53,7 @@ enum class ClickSelectMenuSide(val value: Int) {
         get() = this == Above || this == Below
 
     /**
-     * `RotatingPopupMenuLocateHelper.isExplicitHorizontalSide`: [Start] or [End], i.e. the side that
+     * `RotatingPopupMenuLocateHelper.isExplicitHorizontalSide`: `Start` or `End`, i.e. the side that
      * bypasses the locate rules entirely and is resolved by
      * [ClickSelectMenuDefaults.explicitSideBounds].
      */
@@ -91,7 +91,7 @@ enum class ClickSelectMenuAlignment(val value: Int) {
  * The physical edge an alignment resolves to for the current layout direction, mirroring
  * `MenuRotationHelper$PhysicalHAlign` (`LEFT`, `CENTER`, `RIGHT`).
  *
- * `MenuRotationHelper.physicalHAlignForCrossAxis` flips [Start] and [End] under RTL, because the
+ * `MenuRotationHelper.physicalHAlignForCrossAxis` flips `Start` and `End` under RTL, because the
  * native works in physical coordinates while the placement spec is written logically.
  */
 enum class ClickSelectMenuPhysicalAlignment {
@@ -202,14 +202,14 @@ data class IsolatedPopupAnchor(
  * `COUIClickSelectMenu` itself is thin: `registerForClickSelectItems` makes the anchor clickable,
  * stores the item list on a `COUIPopupListWindow` and wires a `PreciseClickHelper` whose click
  * callback collapses the anchor to the recorded DOWN point before showing the menu. Both halves of
- * that are already in this library — [Modifier.preciseClickAnchor] ports the helper, and
- * [ListPopupLayout] collapses the point into the anchor bounds — so what is ported here is the part
+ * that are already in this library — `Modifier.preciseClickAnchor` ports the helper, and
+ * `ListPopupLayout` collapses the point into the anchor bounds — so what is ported here is the part
  * that was still missing: the `MainMenuPlacementSpec` side/alignment rules that
  * `RotatingPopupMenuLocateHelper` applies to the located rectangle, and the isolated window's dummy
  * anchor contract.
  *
  * The locate helpers themselves are not re-ported. `PopupMenuLocateHelper.setAnchor`'s point
- * collapse is [ListPopupLayout], `PreciseClickHelper` is [Modifier.preciseClickAnchor],
+ * collapse is `ListPopupLayout`, `PreciseClickHelper` is `Modifier.preciseClickAnchor`,
  * `MenuRotationHelper`'s quarter classification and clamp are [PopupMenuRotationDefaults], and the
  * dropdown/context placement is [ListPopupDefaults.DropdownPositionProvider] /
  * [ListPopupDefaults.ContextMenuPositionProvider]. What those do **not** carry is any notion of a
@@ -476,7 +476,7 @@ object ClickSelectMenuDefaults {
      *   `PopupMenuDomain.getAnchorRealRect` — the 8dp `VerticalGapToAnchor` lives here.
      * @param placement The placement spec.
      * @param locateFromAboveAnchorToBelow The `mLocateFromAboveAnchorToBelow` flag; the click-select
-     *   path passes `false`, i.e. below first. [RotatingPopupMenuLocateHelper.prepareShowMainMenu]
+     *   path passes `false`, i.e. below first. `RotatingPopupMenuLocateHelper.prepareShowMainMenu`
      *   overrides it to `true` for [ClickSelectMenuSide.Above] and `false` for
      *   [ClickSelectMenuSide.Below].
      * @param menuHeight The measured menu height.

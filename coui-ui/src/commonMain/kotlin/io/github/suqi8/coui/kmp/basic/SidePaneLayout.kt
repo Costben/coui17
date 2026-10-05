@@ -100,7 +100,7 @@ interface SidePanePanelSlideListener {
  */
 fun interface SidePaneMaskListener {
 
-    /** `PanelMaskListener#clickMask` — the mask was pressed while [SidePaneLayout.alwaysShowMask]. */
+    /** `PanelMaskListener#clickMask` — the mask was pressed while `SidePaneLayout.alwaysShowMask`. */
     fun clickMask()
 }
 
@@ -236,7 +236,7 @@ fun rememberSidePaneLayoutState(initiallyOpen: Boolean = true): SidePaneLayoutSt
  * @param scrimColor The scrim color, COUI `coui_color_mask` (`#33000000`), painted at its own alpha
  *   multiplied by the slide offset.
  * @param paneColor The pane background. `COUISidePaneLayout` paints none on the pane child, so the
- *   port defaults to [COUITheme.colorScheme.surface] to read as a card over the page.
+ *   port defaults to `COUITheme.colorScheme.surface` to read as a card over the page.
  * @param foldIconColors The colors of the fold button; see [SidePaneFoldIconColors].
  * @param content The page content the pane slides over.
  */
@@ -537,7 +537,7 @@ object SidePaneDefaults {
     @Composable
     fun scrimColor(): Color = COUITheme.colorScheme.windowDimming
 
-    /** The default pane background: [COUITheme.colorScheme.surface], a port stand-in for a host card. */
+    /** The default pane background: `COUITheme.colorScheme.surface`, a port stand-in for a host card. */
     @Composable
     fun paneColor(): Color = COUITheme.colorScheme.surface
 

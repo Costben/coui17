@@ -1,6 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
 @file:Suppress("ktlint:compose:multiple-emitters-check")
+@file:OptIn(ExperimentalCOUIApi::class)
 
 package component
 
@@ -20,11 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.CircularProgressIndicator
+import io.github.suqi8.coui.kmp.basic.CircularProgressState
 import io.github.suqi8.coui.kmp.basic.InfiniteProgressIndicator
 import io.github.suqi8.coui.kmp.basic.LinearProgressIndicator
 import io.github.suqi8.coui.kmp.basic.ProgressIndicatorDefaults
 import io.github.suqi8.coui.kmp.basic.RotatingProgressIndicator
 import io.github.suqi8.coui.kmp.basic.SmallTitle
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 
 fun LazyListScope.progressIndicatorSection() {
     item(key = "progressIndicator") {
@@ -75,6 +78,12 @@ fun ProgressIndicatorDemo() {
                 progress = progressValue,
             )
         }
+        CircularProgressIndicator(
+            state = CircularProgressState.Error,
+        )
+        CircularProgressIndicator(
+            state = CircularProgressState.Paused,
+        )
         InfiniteProgressIndicator(
             modifier = Modifier
                 .align(alignment = Alignment.CenterVertically),

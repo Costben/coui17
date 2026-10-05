@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
 
@@ -119,6 +120,29 @@ fun LinearProgressIndicator(
 }
 
 /**
+ * The explicit state of a [CircularProgressIndicator].
+ *
+ * [Loading] and [Determinate] reproduce the legacy behavior keyed off the `progress` argument
+ * (`null` means loading); [Error] and [Paused] are static states added in 1.2.0.
+ *
+ * Not annotated with [ExperimentalCOUIApi]: it is a parameter type of the long-stable
+ * [CircularProgressIndicator], and marking it would force every call site onto an opt-in.
+ */
+enum class CircularProgressState {
+    /** Indeterminate: the arc spins and sweeps forever. */
+    Loading,
+
+    /** Determinate: the arc is swept to the current `progress` fraction. */
+    Determinate,
+
+    /** Static error state: a filled error dot with an exclamation glyph, no animation. */
+    Error,
+
+    /** Static paused state: a full accent ring with a pause glyph, no animation. */
+    Paused,
+}
+
+/**
  * A [CircularProgressIndicator] with COUI style.
  *
  * @param modifier The modifier to be applied to the indicator.
@@ -126,7 +150,11 @@ fun LinearProgressIndicator(
  * @param colors The colors used for the indicator.
  * @param strokeWidth The width of the circular stroke.
  * @param size The size (diameter) of the circular indicator.
+ * @param state The explicit [CircularProgressState] override. Left `null` (the default) the legacy
+ *   behavior is kept: [CircularProgressState.Loading] when [progress] is `null`,
+ *   [CircularProgressState.Determinate] otherwise. New in 1.2.0.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun CircularProgressIndicator(
     modifier: Modifier = Modifier,
@@ -134,11 +162,80 @@ fun CircularProgressIndicator(
     colors: ProgressIndicatorColors = ProgressIndicatorDefaults.circularProgressIndicatorColors(),
     strokeWidth: Dp = ProgressIndicatorDefaults.DefaultCircularProgressIndicatorStrokeWidth,
     size: Dp = ProgressIndicatorDefaults.DefaultCircularProgressIndicatorSize,
+    state: CircularProgressState? = null,
+) {
+    val currentBackgroundColor = colors.backgroundColor()
+    val currentForegroundColor = colors.foregroundColor(true)
+    val resolvedState = state
+        ?: if (progress == null) CircularProgressState.Loading else CircularProgressState.Determinate
+
+    when (resolvedState) {
+        CircularProgressState.Error -> {
+            Canvas(
+                modifier = modifier
+                    .semantics { progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate }
+                    .size(size),
+            ) {
+                val strokeWidthPx = strokeWidth.toPx()
+                val diameterPx = size.toPx()
+                val radius = (diameterPx - strokeWidthPx) / 2
+                val center = Offset(diameterPx / 2f, diameterPx / 2f)
+
+                drawCircle(
+                    color = colors.errorColor(),
+                    radius = radius + strokeWidthPx / 2f,
+                    center = center,
+                )
+                drawErrorGlyph(colors.onErrorColor(), diameterPx)
+            }
+        }
+
+        CircularProgressState.Paused -> {
+            Canvas(
+                modifier = modifier
+                    .semantics { progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate }
+                    .size(size),
+            ) {
+                val strokeWidthPx = strokeWidth.toPx()
+                val diameterPx = size.toPx()
+                val radius = (diameterPx - strokeWidthPx) / 2
+                val center = Offset(diameterPx / 2f, diameterPx / 2f)
+
+                drawCircularBackground(currentBackgroundColor, radius, center, strokeWidthPx)
+                drawCircle(
+                    color = currentForegroundColor,
+                    radius = radius,
+                    center = center,
+                    style = Stroke(width = strokeWidthPx),
+                )
+                drawPauseGlyph(currentForegroundColor, diameterPx)
+            }
+        }
+
+        else -> CircularProgressIndicatorBody(
+            modifier = modifier,
+            progress = progress,
+            colors = colors,
+            strokeWidth = strokeWidth,
+            size = size,
+            determinate = resolvedState == CircularProgressState.Determinate,
+        )
+    }
+}
+
+@Composable
+private fun CircularProgressIndicatorBody(
+    progress: Float?,
+    determinate: Boolean,
+    modifier: Modifier = Modifier,
+    colors: ProgressIndicatorColors = ProgressIndicatorDefaults.circularProgressIndicatorColors(),
+    strokeWidth: Dp = ProgressIndicatorDefaults.DefaultCircularProgressIndicatorStrokeWidth,
+    size: Dp = ProgressIndicatorDefaults.DefaultCircularProgressIndicatorSize,
 ) {
     val currentBackgroundColor = colors.backgroundColor()
     val currentForegroundColor = colors.foregroundColor(true)
 
-    if (progress == null) {
+    if (!determinate) {
         val transition = rememberInfiniteTransition()
 
         // COUILoadingView.onDraw: the arc angle is derived from a wall clock as
@@ -182,7 +279,7 @@ fun CircularProgressIndicator(
             }
         }
     } else {
-        val progressValue = progress.coerceIn(0f, 1f)
+        val progressValue = (progress ?: 0f).coerceIn(0f, 1f)
 
         Canvas(
             modifier = modifier
@@ -250,7 +347,7 @@ fun InfiniteProgressIndicator(
  * `coui_rotating_loading.json`, which `Theme.COUI` binds to `couiRotatingSpinnerJsonName` and
  * `COUILottieLoadingView` renders (the same animation also ships as the `fb_loading.xml`
  * AnimatedVectorDrawable). The asset is one ellipse driven by one trim path, so it is reproduced
- * here with a single [drawArc] and needs no Lottie runtime.
+ * here with a single `drawArc` and needs no Lottie runtime.
  *
  * @param modifier The modifier to be applied to the indicator.
  * @param color The color of the arc.
@@ -429,6 +526,54 @@ private fun DrawScope.drawCircularBackground(
 }
 
 /**
+ * Draws the exclamation glyph of [CircularProgressState.Error], centered in a [diameterPx] box.
+ */
+private fun DrawScope.drawErrorGlyph(color: Color, diameterPx: Float) {
+    val center = Offset(diameterPx / 2f, diameterPx / 2f)
+    val barWidth = diameterPx * 0.10f
+    val barHeight = diameterPx * 0.32f
+    val barTop = center.y - diameterPx * 0.20f
+
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(center.x - barWidth / 2f, barTop),
+        size = Size(barWidth, barHeight),
+        cornerRadius = CornerRadius(barWidth / 2f),
+    )
+
+    val dotRadius = barWidth * 0.65f
+    drawCircle(
+        color = color,
+        radius = dotRadius,
+        center = Offset(center.x, barTop + barHeight + dotRadius * 1.8f),
+    )
+}
+
+/**
+ * Draws the pause glyph of [CircularProgressState.Paused], centered in a [diameterPx] box.
+ */
+private fun DrawScope.drawPauseGlyph(color: Color, diameterPx: Float) {
+    val center = Offset(diameterPx / 2f, diameterPx / 2f)
+    val barWidth = diameterPx * 0.10f
+    val barHeight = diameterPx * 0.34f
+    val gap = diameterPx * 0.10f
+    val top = center.y - barHeight / 2f
+
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(center.x - gap / 2f - barWidth, top),
+        size = Size(barWidth, barHeight),
+        cornerRadius = CornerRadius(barWidth / 2f),
+    )
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(center.x + gap / 2f, top),
+        size = Size(barWidth, barHeight),
+        cornerRadius = CornerRadius(barWidth / 2f),
+    )
+}
+
+/**
  * Runs [block] inside an offscreen layer so the progress arc drawn with [BlendMode.Src]
  * replaces the track pixels underneath it instead of stacking on top of them.
  * COUICircularProgressDrawable does the same with saveLayerAlpha + PorterDuff.Mode.SRC,
@@ -519,34 +664,45 @@ object ProgressIndicatorDefaults {
      * The default [ProgressIndicatorColors] used by [LinearProgressIndicator]
      * (COUIProgressHorizontal style: progress = couiColorPrimary, track = couiColorDivider).
      */
+    @OptIn(ExperimentalCOUIApi::class)
     @Composable
     fun progressIndicatorColors(
         foregroundColor: Color = COUITheme.colorScheme.primary,
         disabledForegroundColor: Color = COUITheme.colorScheme.disabledPrimarySlider,
         backgroundColor: Color = COUITheme.colorScheme.dividerLine,
-    ): ProgressIndicatorColors = remember(foregroundColor, disabledForegroundColor, backgroundColor) {
+        errorColor: Color = COUITheme.colorScheme.error,
+        onErrorColor: Color = COUITheme.colorScheme.onError,
+    ): ProgressIndicatorColors = remember(foregroundColor, disabledForegroundColor, backgroundColor, errorColor, onErrorColor) {
         ProgressIndicatorColors(
             foregroundColor = foregroundColor,
             disabledForegroundColor = disabledForegroundColor,
             backgroundColor = backgroundColor,
+            errorColor = errorColor,
+            onErrorColor = onErrorColor,
         )
     }
 
     /**
      * The default [ProgressIndicatorColors] used by [CircularProgressIndicator]
      * (Widget.COUI.COUICircularProgressBar style: progress = couiColorHintNeutral,
-     * track = couiColorDivider).
+     * track = couiColorDivider). `errorColor` / `onErrorColor` tint
+     * [CircularProgressState.Error]. New in 1.2.0.
      */
+    @OptIn(ExperimentalCOUIApi::class)
     @Composable
     fun circularProgressIndicatorColors(
         foregroundColor: Color = COUITheme.colorScheme.onSurfaceContainerHigh,
         disabledForegroundColor: Color = COUITheme.colorScheme.disabledPrimarySlider,
         backgroundColor: Color = COUITheme.colorScheme.dividerLine,
-    ): ProgressIndicatorColors = remember(foregroundColor, disabledForegroundColor, backgroundColor) {
+        errorColor: Color = COUITheme.colorScheme.error,
+        onErrorColor: Color = COUITheme.colorScheme.onError,
+    ): ProgressIndicatorColors = remember(foregroundColor, disabledForegroundColor, backgroundColor, errorColor, onErrorColor) {
         ProgressIndicatorColors(
             foregroundColor = foregroundColor,
             disabledForegroundColor = disabledForegroundColor,
             backgroundColor = backgroundColor,
+            errorColor = errorColor,
+            onErrorColor = onErrorColor,
         )
     }
 }
@@ -556,10 +712,22 @@ data class ProgressIndicatorColors(
     private val foregroundColor: Color,
     private val disabledForegroundColor: Color,
     private val backgroundColor: Color,
+    @property:ExperimentalCOUIApi private val errorColor: Color = backgroundColor,
+    @property:ExperimentalCOUIApi private val onErrorColor: Color = foregroundColor,
 ) {
     @Stable
     internal fun foregroundColor(enabled: Boolean): Color = if (enabled) foregroundColor else disabledForegroundColor
 
     @Stable
     internal fun backgroundColor(): Color = backgroundColor
+
+    /** The fill color of [CircularProgressState.Error]. New in 1.2.0. */
+    @OptIn(ExperimentalCOUIApi::class)
+    @Stable
+    internal fun errorColor(): Color = errorColor
+
+    /** The glyph color of [CircularProgressState.Error]. New in 1.2.0. */
+    @OptIn(ExperimentalCOUIApi::class)
+    @Stable
+    internal fun onErrorColor(): Color = onErrorColor
 }

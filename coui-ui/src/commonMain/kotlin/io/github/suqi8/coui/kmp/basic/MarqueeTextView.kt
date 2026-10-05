@@ -73,7 +73,7 @@ import kotlin.math.roundToInt
  * @param color The color of the text. [Color.Unspecified] keeps the style's colour.
  * @param style The text style. `COUIMarqueeTextView` declares no text appearance of its own — it is
  *   an `AppCompatTextView` whose style comes from the app — so the port defaults to the theme's
- *   [COUITheme.textStyles.main], the same default as [Text].
+ *   `COUITheme.textStyles.main`, the same default as [Text].
  * @param marqueeEnabled Whether the text may scroll. Mirrors `COUIMarqueeTextView.setMarqueeEnable`,
  *   which the native keeps `false` until the app enables it.
  * @param speed The scroll speed. COUI `coui_top_tips_scroll_speed`
@@ -241,7 +241,7 @@ object MarqueeTextDefaults {
 
     /**
      * The default text style. `COUIMarqueeTextView` is an `AppCompatTextView` and declares no text
-     * appearance, so the port uses the theme's [COUITheme.textStyles.main] like [Text].
+     * appearance, so the port uses the theme's `COUITheme.textStyles.main` like [Text].
      */
     @Composable
     fun textStyle(): TextStyle = COUITheme.textStyles.main

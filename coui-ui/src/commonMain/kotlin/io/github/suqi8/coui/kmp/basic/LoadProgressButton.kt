@@ -51,7 +51,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * its subclass `COUIInstallLoadProgress`, driven by the style
  * `Widget.COUI.COUILoadProgress` and `Widget.COUI.COUILoadProgress.InstallDownloadSmall`.
  *
- * It is a *button*, not a progress indicator: [ProgressIndicator] ports `COUILoadingView` and
+ * It is a *button*, not a progress indicator: `ProgressIndicator` ports `COUILoadingView` and
  * `COUICircularProgressDrawable`, which are read-only spinners, while this widget is clickable and
  * owns a five-value state machine (`COUILoadProgress.DEFAULT_UP_OR_DOWN` = 0,
  * `UPING_OR_DOWNING` = 1, `UP_OR_DOWN_WAIT` = 2, `UP_OR_DOWN_FAIL` = 3, `INSTALL_HAVE_GIFT` = 4)

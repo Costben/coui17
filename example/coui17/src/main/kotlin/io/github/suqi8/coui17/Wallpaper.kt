@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui17
 
+import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -37,11 +38,13 @@ internal data class Wallpaper(
 /**
  * The picture the ColorOS 17 glass samples.
  *
- * Reading a wallpaper needs no permission, but a live wallpaper has no static image at all: the
- * system state then reports an engine and an empty wallpaper file, and both [WallpaperManager]
- * lookups answer `null`. The bundled still is the last resort so the light-sensing material always
- * has something to refract.
+ * Reading a wallpaper needs no permission on API < 34; from API 34 the lookup is gated behind
+ * `READ_WALLPAPER_INTERNAL`, which only system apps hold, so the calls are suppressed and left
+ * best-effort. A live wallpaper has no static image at all either: the system state then reports an
+ * engine and an empty wallpaper file, and both [WallpaperManager] lookups answer `null`. The bundled
+ * still is the last resort so the light-sensing material always has something to refract.
  */
+@SuppressLint("MissingPermission")
 @Composable
 internal fun rememberWallpaper(): Wallpaper {
     val context = LocalContext.current
@@ -50,7 +53,7 @@ internal fun rememberWallpaper(): Wallpaper {
         readWallpaper { manager.drawable }?.let {
             return@remember Wallpaper(it, WallpaperSource.System)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             readWallpaper { manager.getDrawable(WallpaperManager.FLAG_LOCK) }?.let {
                 return@remember Wallpaper(it, WallpaperSource.Lock)
             }

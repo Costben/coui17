@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 
@@ -62,6 +63,7 @@ import io.github.suqi8.coui.kmp.theme.LocalContentColor
  * @param indication The [Indication] to be used for the [LoadingButton]. Defaults to `null`
  *   because the COUI press feedback (scale + press tint) is built into the button itself.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun LoadingButton(
     text: String,

@@ -1,0 +1,1404 @@
+public final class io/github/suqi8/coui/kmp/icon/extended/AddCircleKt {
+	public static final fun getAddCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/AddFolderKt {
+	public static final fun getAddFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAddFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/AddKt {
+	public static final fun getAdd (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAdd (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAdd (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAdd (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAdd (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAdd (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/AlarmKt {
+	public static final fun getAlarm (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlarm (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlarm (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlarm (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlarm (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlarm (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/AlbumKt {
+	public static final fun getAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/AllKt {
+	public static final fun getAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/AnswerKt {
+	public static final fun getAnswer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAnswer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAnswer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAnswer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAnswer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAnswer (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/AppRecordingKt {
+	public static final fun getAppRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAppRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAppRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAppRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAppRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getAppRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/BackKt {
+	public static final fun getBack (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBack (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBack (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBack (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBack (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBack (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/BackgroundKt {
+	public static final fun getBackground (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackground (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackground (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackground (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackground (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackground (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/BackupKt {
+	public static final fun getBackup (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackup (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackup (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackup (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackup (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBackup (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/BankCardsKt {
+	public static final fun getBankCards (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBankCards (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBankCards (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBankCards (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBankCards (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBankCards (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/BlocklistKt {
+	public static final fun getBlocklist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBlocklist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBlocklist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBlocklist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBlocklist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getBlocklist (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CallRecordingKt {
+	public static final fun getCallRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCallRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCallRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCallRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCallRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCallRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CarrierKt {
+	public static final fun getCarrier (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCarrier (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCarrier (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCarrier (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCarrier (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCarrier (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ChevronBackwardKt {
+	public static final fun getChevronBackward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronBackward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronBackward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronBackward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronBackward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronBackward (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ChevronForwardKt {
+	public static final fun getChevronForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getChevronForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ClearKt {
+	public static final fun getClear (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClear (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClear (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClear (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClear (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClear (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Close2Kt {
+	public static final fun getClose2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CloseKt {
+	public static final fun getClose (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getClose (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CloudFillKt {
+	public static final fun getCloudFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCloudFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCloudFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCloudFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCloudFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCloudFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CommunityKt {
+	public static final fun getCommunity (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCommunity (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCommunity (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCommunity (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCommunity (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCommunity (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ContactsBookKt {
+	public static final fun getContactsBook (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsBook (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsBook (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsBook (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsBook (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsBook (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ContactsCircleKt {
+	public static final fun getContactsCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContactsCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ContactsKt {
+	public static final fun getContacts (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContacts (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContacts (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContacts (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContacts (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getContacts (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ConvertFileKt {
+	public static final fun getConvertFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getConvertFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getConvertFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getConvertFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getConvertFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getConvertFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CopyKt {
+	public static final fun getCopy (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCopy (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCopy (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCopy (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCopy (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCopy (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CreateKt {
+	public static final fun getCreate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCreate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCreate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCreate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCreate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCreate (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/CutKt {
+	public static final fun getCut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getCut (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/DeleteKt {
+	public static final fun getDelete (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDelete (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDelete (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDelete (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDelete (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDelete (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/DownloadKt {
+	public static final fun getDownload (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDownload (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDownload (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDownload (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDownload (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getDownload (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/EditKt {
+	public static final fun getEdit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEdit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEdit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEdit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEdit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEdit (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/EmailKt {
+	public static final fun getEmail (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEmail (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEmail (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEmail (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEmail (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getEmail (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ExpandLessKt {
+	public static final fun getExpandLess (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandLess (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandLess (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandLess (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandLess (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandLess (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ExpandMoreKt {
+	public static final fun getExpandMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getExpandMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/FavoritesFillKt {
+	public static final fun getFavoritesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavoritesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavoritesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavoritesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavoritesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavoritesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/FavoritesKt {
+	public static final fun getFavorites (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavorites (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavorites (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavorites (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavorites (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFavorites (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/FileDownloadsKt {
+	public static final fun getFileDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFileDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFileDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFileDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFileDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFileDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/FileKt {
+	public static final fun getFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/FilterKt {
+	public static final fun getFilter (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFilter (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFilter (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFilter (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFilter (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFilter (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/FolderFillKt {
+	public static final fun getFolderFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolderFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolderFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolderFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolderFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolderFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/FolderKt {
+	public static final fun getFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getFolder (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ForwardKt {
+	public static final fun getForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getForward (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/GridViewKt {
+	public static final fun getGridView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getGridView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getGridView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getGridView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getGridView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getGridView (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/HelpKt {
+	public static final fun getHelp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHelp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHelp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHelp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHelp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHelp (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/HideKt {
+	public static final fun getHide (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHide (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHide (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHide (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHide (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHide (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/HomeKt {
+	public static final fun getHome (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHome (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHome (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHome (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHome (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHome (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/HorizontalSplitKt {
+	public static final fun getHorizontalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHorizontalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHorizontalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHorizontalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHorizontalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getHorizontalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ImageKt {
+	public static final fun getImage (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImage (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImage (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImage (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImage (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImage (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ImportKt {
+	public static final fun getImport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getImport (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/InfoKt {
+	public static final fun getInfo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getInfo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getInfo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getInfo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getInfo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getInfo (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/LayersKt {
+	public static final fun getLayers (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLayers (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLayers (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLayers (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLayers (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLayers (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/LinkKt {
+	public static final fun getLink (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLink (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLink (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLink (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLink (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLink (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ListViewKt {
+	public static final fun getListView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getListView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getListView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getListView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getListView (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getListView (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/LocationKt {
+	public static final fun getLocation (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLocation (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLocation (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLocation (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLocation (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLocation (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/LockKt {
+	public static final fun getLock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getLock (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MapAlbumKt {
+	public static final fun getMapAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMapAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMapAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMapAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMapAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMapAlbum (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MergeKt {
+	public static final fun getMerge (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMerge (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMerge (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMerge (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMerge (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMerge (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MessagesKt {
+	public static final fun getMessages (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMessages (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMessages (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMessages (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMessages (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMessages (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MicKt {
+	public static final fun getMic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMic (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MicSlashKt {
+	public static final fun getMicSlash (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMicSlash (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMicSlash (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMicSlash (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMicSlash (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMicSlash (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MindMapKt {
+	public static final fun getMindMap (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMindMap (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMindMap (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMindMap (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMindMap (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMindMap (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MonthsKt {
+	public static final fun getMonths (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMonths (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMonths (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMonths (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMonths (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMonths (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MoreCircleKt {
+	public static final fun getMoreCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoreCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoreCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoreCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoreCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoreCircle (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MoreKt {
+	public static final fun getMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMore (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MoveFileKt {
+	public static final fun getMoveFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoveFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoveFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoveFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoveFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMoveFile (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/MusicKt {
+	public static final fun getMusic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMusic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMusic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMusic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMusic (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getMusic (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/NotesFillKt {
+	public static final fun getNotesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotesFill (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/NotesKt {
+	public static final fun getNotes (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotes (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotes (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotes (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotes (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getNotes (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/OkKt {
+	public static final fun getOk (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getOk (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getOk (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getOk (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getOk (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getOk (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PasteKt {
+	public static final fun getPaste (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPaste (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPaste (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPaste (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPaste (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPaste (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PauseKt {
+	public static final fun getPause (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPause (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPause (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPause (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPause (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPause (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PhoneKt {
+	public static final fun getPhone (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhone (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhone (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhone (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhone (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhone (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PhotosKt {
+	public static final fun getPhotos (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhotos (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhotos (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhotos (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhotos (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPhotos (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PinKt {
+	public static final fun getPin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPin (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PlayKt {
+	public static final fun getPlay (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlay (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlay (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlay (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlay (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlay (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PlaylistKt {
+	public static final fun getPlaylist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlaylist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlaylist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlaylist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlaylist (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPlaylist (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/PromotionsKt {
+	public static final fun getPromotions (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPromotions (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPromotions (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPromotions (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPromotions (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getPromotions (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RecentKt {
+	public static final fun getRecent (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecent (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecent (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecent (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecent (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecent (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RecordingKt {
+	public static final fun getRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecording (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RecordingTapeKt {
+	public static final fun getRecordingTape (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecordingTape (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecordingTape (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecordingTape (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecordingTape (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRecordingTape (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RedoKt {
+	public static final fun getRedo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRedo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRedo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRedo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRedo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRedo (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RefreshKt {
+	public static final fun getRefresh (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRefresh (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRefresh (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRefresh (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRefresh (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRefresh (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RemoveContactKt {
+	public static final fun getRemoveContact (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemoveContact (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemoveContact (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemoveContact (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemoveContact (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemoveContact (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RemoveKt {
+	public static final fun getRemove (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemove (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemove (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemove (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemove (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRemove (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RenameKt {
+	public static final fun getRename (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRename (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRename (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRename (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRename (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRename (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ReplaceKt {
+	public static final fun getReplace (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplace (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplace (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplace (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplace (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplace (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ReplyAllKt {
+	public static final fun getReplyAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplyAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplyAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplyAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplyAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReplyAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ReplyKt {
+	public static final fun getReply (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReply (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReply (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReply (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReply (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReply (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ReportKt {
+	public static final fun getReport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReport (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReport (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ResetKt {
+	public static final fun getReset (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReset (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReset (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReset (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReset (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getReset (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/RotateLeftKt {
+	public static final fun getRotateLeft (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRotateLeft (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRotateLeft (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRotateLeft (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRotateLeft (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getRotateLeft (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ScanKt {
+	public static final fun getScan (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScan (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScan (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScan (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScan (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScan (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ScreenCaptureKt {
+	public static final fun getScreenCapture (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenCapture (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenCapture (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenCapture (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenCapture (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenCapture (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ScreenMirroringKt {
+	public static final fun getScreenMirroring (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenMirroring (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenMirroring (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenMirroring (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenMirroring (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getScreenMirroring (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/SearchDeviceKt {
+	public static final fun getSearchDevice (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearchDevice (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearchDevice (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearchDevice (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearchDevice (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearchDevice (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/SearchKt {
+	public static final fun getSearch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSearch (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/SelectAllKt {
+	public static final fun getSelectAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSelectAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSelectAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSelectAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSelectAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSelectAll (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/SendKt {
+	public static final fun getSend (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSend (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSend (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSend (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSend (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSend (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/SettingsKt {
+	public static final fun getSettings (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSettings (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSettings (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSettings (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSettings (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSettings (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ShareKt {
+	public static final fun getShare (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShare (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShare (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShare (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShare (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShare (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ShowKt {
+	public static final fun getShow (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShow (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShow (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShow (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShow (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getShow (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/SidebarKt {
+	public static final fun getSidebar (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSidebar (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSidebar (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSidebar (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSidebar (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSidebar (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/SortKt {
+	public static final fun getSort (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSort (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSort (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSort (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSort (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getSort (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/StopwatchKt {
+	public static final fun getStopwatch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStopwatch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStopwatch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStopwatch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStopwatch (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStopwatch (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/StoreKt {
+	public static final fun getStore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStore (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getStore (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/TasksKt {
+	public static final fun getTasks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTasks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTasks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTasks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTasks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTasks (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th10Kt {
+	public static final fun getTh10 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh10 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh10 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh10 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh10 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh10 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th11Kt {
+	public static final fun getTh11 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh11 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh11 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh11 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh11 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh11 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th12Kt {
+	public static final fun getTh12 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh12 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh12 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh12 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh12 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh12 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th13Kt {
+	public static final fun getTh13 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh13 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh13 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh13 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh13 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh13 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th14Kt {
+	public static final fun getTh14 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh14 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh14 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh14 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh14 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh14 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th15Kt {
+	public static final fun getTh15 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh15 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh15 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh15 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh15 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh15 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th16Kt {
+	public static final fun getTh16 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh16 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh16 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh16 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh16 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh16 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th17Kt {
+	public static final fun getTh17 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh17 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh17 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh17 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh17 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh17 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th18Kt {
+	public static final fun getTh18 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh18 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh18 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh18 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh18 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh18 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th19Kt {
+	public static final fun getTh19 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh19 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh19 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh19 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh19 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh19 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th1Kt {
+	public static final fun getTh1 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh1 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh1 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh1 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh1 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh1 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th20Kt {
+	public static final fun getTh20 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh20 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh20 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh20 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh20 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh20 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th21Kt {
+	public static final fun getTh21 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh21 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh21 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh21 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh21 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh21 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th22Kt {
+	public static final fun getTh22 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh22 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh22 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh22 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh22 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh22 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th23Kt {
+	public static final fun getTh23 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh23 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh23 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh23 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh23 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh23 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th24Kt {
+	public static final fun getTh24 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh24 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh24 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh24 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh24 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh24 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th25Kt {
+	public static final fun getTh25 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh25 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh25 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh25 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh25 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh25 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th26Kt {
+	public static final fun getTh26 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh26 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh26 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh26 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh26 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh26 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th27Kt {
+	public static final fun getTh27 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh27 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh27 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh27 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh27 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh27 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th28Kt {
+	public static final fun getTh28 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh28 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh28 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh28 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh28 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh28 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th29Kt {
+	public static final fun getTh29 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh29 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh29 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh29 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh29 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh29 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th2Kt {
+	public static final fun getTh2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh2 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th30Kt {
+	public static final fun getTh30 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh30 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh30 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh30 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh30 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh30 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th31Kt {
+	public static final fun getTh31 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh31 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh31 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh31 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh31 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh31 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th3Kt {
+	public static final fun getTh3 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh3 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh3 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh3 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh3 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh3 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th4Kt {
+	public static final fun getTh4 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh4 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh4 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh4 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh4 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh4 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th5Kt {
+	public static final fun getTh5 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh5 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh5 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh5 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh5 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh5 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th6Kt {
+	public static final fun getTh6 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh6 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh6 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh6 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh6 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh6 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th7Kt {
+	public static final fun getTh7 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh7 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh7 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh7 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh7 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh7 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th8Kt {
+	public static final fun getTh8 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh8 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh8 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh8 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh8 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh8 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/Th9Kt {
+	public static final fun getTh9 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh9 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh9 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh9 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh9 (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTh9 (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ThemeKt {
+	public static final fun getTheme (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTheme (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTheme (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTheme (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTheme (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTheme (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/TimerKt {
+	public static final fun getTimer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTimer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTimer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTimer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTimer (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTimer (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/TopDownloadsKt {
+	public static final fun getTopDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTopDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTopDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTopDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTopDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTopDownloads (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/TranslateKt {
+	public static final fun getTranslate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTranslate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTranslate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTranslate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTranslate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTranslate (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/TrimKt {
+	public static final fun getTrim (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTrim (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTrim (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTrim (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTrim (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTrim (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/TuneKt {
+	public static final fun getTune (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTune (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTune (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTune (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTune (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getTune (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/UndoKt {
+	public static final fun getUndo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUndo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUndo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUndo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUndo (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUndo (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/UnlockKt {
+	public static final fun getUnlock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnlock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnlock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnlock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnlock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnlock (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/UnpinKt {
+	public static final fun getUnpin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnpin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnpin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnpin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnpin (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUnpin (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/UpdateKt {
+	public static final fun getUpdate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUpdate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUpdate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUpdate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUpdate (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUpdate (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/UploadCloudKt {
+	public static final fun getUploadCloud (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUploadCloud (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUploadCloud (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUploadCloud (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUploadCloud (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getUploadCloud (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/VerticalSplitKt {
+	public static final fun getVerticalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVerticalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVerticalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVerticalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVerticalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVerticalSplit (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/VolumeOffKt {
+	public static final fun getVolumeOff (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeOff (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeOff (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeOff (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeOff (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeOff (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/VolumeUpKt {
+	public static final fun getVolumeUp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeUp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeUp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeUp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeUp (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getVolumeUp (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/WeeksKt {
+	public static final fun getWeeks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWeeks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWeeks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWeeks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWeeks (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWeeks (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/WorldClockKt {
+	public static final fun getWorldClock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWorldClock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWorldClock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWorldClock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWorldClock (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getWorldClock (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/YearsKt {
+	public static final fun getYears (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getYears (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getYears (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getYears (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getYears (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getYears (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
+public final class io/github/suqi8/coui/kmp/icon/extended/ZoomOutKt {
+	public static final fun getZoomOut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Demibold;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getZoomOut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Light;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getZoomOut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Medium;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getZoomOut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Normal;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getZoomOut (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Regular;)Landroidx/compose/ui/graphics/vector/ImageVector;
+	public static final fun getZoomOut (Lio/github/suqi8/coui/kmp/icon/COUIIcons;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+

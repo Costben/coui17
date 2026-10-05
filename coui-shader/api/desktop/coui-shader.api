@@ -1,0 +1,27 @@
+public final class io/github/suqi8/coui/kmp/shader/RenderEffect_skikoKt {
+	public static final fun isRenderEffectSupported ()Z
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/shader/RuntimeShader {
+	public abstract fun setColorUniform-4WTKRHQ (Ljava/lang/String;J)V
+	public abstract fun setFloatUniform (Ljava/lang/String;F)V
+	public abstract fun setFloatUniform (Ljava/lang/String;FF)V
+	public abstract fun setFloatUniform (Ljava/lang/String;FFF)V
+	public abstract fun setFloatUniform (Ljava/lang/String;FFFF)V
+	public abstract fun setFloatUniform (Ljava/lang/String;[F)V
+	public abstract fun setInputShader (Ljava/lang/String;Landroidx/compose/ui/graphics/Shader;)V
+	public abstract fun setIntUniform (Ljava/lang/String;I)V
+	public abstract fun setIntUniform (Ljava/lang/String;II)V
+	public abstract fun setIntUniform (Ljava/lang/String;III)V
+	public abstract fun setIntUniform (Ljava/lang/String;IIII)V
+	public abstract fun setIntUniform (Ljava/lang/String;[I)V
+}
+
+public final class io/github/suqi8/coui/kmp/shader/RuntimeShader_skikoKt {
+	public static final fun RuntimeShader (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/shader/RuntimeShader;
+	public static final fun asBrush (Lio/github/suqi8/coui/kmp/shader/RuntimeShader;)Landroidx/compose/ui/graphics/ShaderBrush;
+	public static final fun asComposeShader (Lio/github/suqi8/coui/kmp/shader/RuntimeShader;)Landroidx/compose/ui/graphics/Shader;
+	public static final fun asSkikoRuntimeShader (Lio/github/suqi8/coui/kmp/shader/RuntimeShader;)Lorg/jetbrains/skia/RuntimeShaderBuilder;
+	public static final fun isRuntimeShaderSupported ()Z
+}
+

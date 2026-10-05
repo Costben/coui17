@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
 import kotlin.math.max
@@ -86,6 +87,9 @@ import kotlin.math.roundToInt
  *   Values should be within [valueRange]. For example, for a range of 0f..100f, you might specify listOf(0f, 25f, 50f, 75f, 100f).
  * @param magnetThreshold The magnetic snap threshold as a fraction (0.0 to 1.0). When the slider value is within this
  *   distance from a key point, it will snap to that point. Default is 0.02 (2%). Only applies when [keyPoints] is set.
+ * @param secondaryProgress The optional secondary progress ("intent tier") drawn behind the primary active track.
+ *   It is coerced into [valueRange]; the part beyond the primary value stays visible, matching the secondary layer
+ *   [IntentSeekBar] draws. `null` (the default) draws nothing. New in 1.2.0.
  */
 @Composable
 fun Slider(
@@ -103,6 +107,7 @@ fun Slider(
     showKeyPoints: Boolean = false,
     keyPoints: List<Float>? = null,
     magnetThreshold: Float = 0.02f,
+    secondaryProgress: Float? = null,
 ) {
     require(steps >= 0) { "steps should be >= 0" }
     require(valueRange.start < valueRange.endInclusive) { "valueRange start should be less than end" }
@@ -278,6 +283,8 @@ fun Slider(
             stepFractions = keyPointFractions,
             thumbScaleProvider = { thumbScaleState.value },
             reverseDirection = effectiveReverseDirection,
+            secondaryProgressFraction = secondaryProgress?.let { secondaryProgressFraction(it, valueRange) },
+            secondaryProgressColor = colors.secondaryProgressColor(enabled),
             modifier = Modifier.fillMaxWidth().height(height),
         )
     }
@@ -305,6 +312,9 @@ fun Slider(
  *   Values should be within [valueRange].
  * @param magnetThreshold The magnetic snap threshold as a fraction (0.0 to 1.0). When the slider value is within this
  *   distance from a key point, it will snap to that point. Default is 0.02 (2%). Only applies when [keyPoints] is set.
+ * @param secondaryProgress The optional secondary progress ("intent tier") drawn behind the primary active track.
+ *   It is coerced into [valueRange]; the part beyond the primary value stays visible, matching the secondary layer
+ *   [IntentSeekBar] draws. `null` (the default) draws nothing. New in 1.2.0.
  */
 @Composable
 fun VerticalSlider(
@@ -323,6 +333,7 @@ fun VerticalSlider(
     showKeyPoints: Boolean = false,
     keyPoints: List<Float>? = null,
     magnetThreshold: Float = 0.02f,
+    secondaryProgress: Float? = null,
 ) {
     require(steps >= 0) { "steps should be >= 0" }
     require(valueRange.start < valueRange.endInclusive) { "valueRange start should be less than end" }
@@ -493,6 +504,8 @@ fun VerticalSlider(
             stepFractions = keyPointFractions,
             thumbScaleProvider = { thumbScaleState.value },
             reverseDirection = reverseDirection,
+            secondaryProgressFraction = secondaryProgress?.let { secondaryProgressFraction(it, valueRange) },
+            secondaryProgressColor = colors.secondaryProgressColor(enabled),
             modifier = Modifier.width(width).fillMaxHeight(),
         )
     }
@@ -520,6 +533,9 @@ fun VerticalSlider(
  *   Values should be within [valueRange].
  * @param magnetThreshold The magnetic snap threshold as a fraction (0.0 to 1.0). When the slider value is within this
  *   distance from a key point, it will snap to that point. Default is 0.02 (2%). Only applies when [keyPoints] is set.
+ * @param secondaryProgress The optional secondary progress ("intent tier") drawn behind the primary active track.
+ *   It is coerced into [valueRange]; the part beyond the primary value stays visible, matching the secondary layer
+ *   [IntentSeekBar] draws. `null` (the default) draws nothing. New in 1.2.0.
  */
 @Composable
 fun RangeSlider(
@@ -536,6 +552,7 @@ fun RangeSlider(
     showKeyPoints: Boolean = false,
     keyPoints: List<Float>? = null,
     magnetThreshold: Float = 0.02f,
+    secondaryProgress: Float? = null,
 ) {
     require(steps >= 0) { "steps should be >= 0" }
     require(valueRange.start < valueRange.endInclusive) { "valueRange start should be less than end" }
@@ -839,6 +856,8 @@ fun RangeSlider(
             showKeyPoints = showKeyPoints,
             stepFractions = keyPointFractions,
             isRtl = isRtl,
+            secondaryProgressFraction = secondaryProgress?.let { secondaryProgressFraction(it, valueRange) },
+            secondaryProgressColor = colors.secondaryProgressColor(enabled),
             modifier = Modifier.fillMaxWidth().height(height),
         )
     }
@@ -863,6 +882,8 @@ private fun SliderTrack(
     stepFractions: FloatArray,
     thumbScaleProvider: () -> Float,
     reverseDirection: Boolean,
+    secondaryProgressFraction: Float?,
+    secondaryProgressColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val trackGrowFraction by animateFloatAsState(
@@ -893,6 +914,20 @@ private fun SliderTrack(
                 size = Size(backgroundWidth, availableHeight + backgroundWidth),
                 cornerRadius = CornerRadius(backgroundWidth / 2f),
             )
+
+            if (secondaryProgressFraction != null) {
+                val halfTrackSecondary = trackWidth / 2f
+                val effectiveSecondary = if (reverseDirection) secondaryProgressFraction else 1f - secondaryProgressFraction
+                val secondaryCenterY = capInset + effectiveSecondary * availableHeight
+                val secondaryTop = if (reverseDirection) capInset - halfTrackSecondary else secondaryCenterY - halfTrackSecondary
+                val secondaryBottom = if (reverseDirection) secondaryCenterY + halfTrackSecondary else barHeight - capInset + halfTrackSecondary
+                drawRoundRect(
+                    color = secondaryProgressColor,
+                    topLeft = Offset(centerX - halfTrackSecondary, secondaryTop),
+                    size = Size(trackWidth, (secondaryBottom - secondaryTop).coerceAtLeast(0f)),
+                    cornerRadius = CornerRadius(halfTrackSecondary),
+                )
+            }
 
             val halfTrack = trackWidth / 2f
             val progressTop = if (reverseDirection) capInset - halfTrack else thumbCenterY - halfTrack
@@ -940,6 +975,20 @@ private fun SliderTrack(
                 size = Size(availableWidth + backgroundHeight, backgroundHeight),
                 cornerRadius = CornerRadius(backgroundHeight / 2f),
             )
+
+            if (secondaryProgressFraction != null) {
+                val halfTrackSecondary = trackHeight / 2f
+                val effectiveSecondary = if (reverseDirection) 1f - secondaryProgressFraction else secondaryProgressFraction
+                val secondaryCenterX = capInset + effectiveSecondary * availableWidth
+                val secondaryLeft = if (reverseDirection) secondaryCenterX - halfTrackSecondary else capInset - halfTrackSecondary
+                val secondaryRight = if (reverseDirection) barWidth - capInset + halfTrackSecondary else secondaryCenterX + halfTrackSecondary
+                drawRoundRect(
+                    color = secondaryProgressColor,
+                    topLeft = Offset(secondaryLeft, centerY - halfTrackSecondary),
+                    size = Size((secondaryRight - secondaryLeft).coerceAtLeast(0f), trackHeight),
+                    cornerRadius = CornerRadius(halfTrackSecondary),
+                )
+            }
 
             val halfTrack = trackHeight / 2f
             val progressLeft = if (reverseDirection) thumbCenterX - halfTrack else capInset - halfTrack
@@ -996,6 +1045,8 @@ private fun RangeSliderTrack(
     showKeyPoints: Boolean,
     stepFractions: FloatArray,
     isRtl: Boolean,
+    secondaryProgressFraction: Float?,
+    secondaryProgressColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val trackGrowFraction by animateFloatAsState(
@@ -1034,6 +1085,18 @@ private fun RangeSliderTrack(
         val halfTrack = trackHeight / 2f
         val rangeLeft = min(startX, endX)
         val rangeRight = max(startX, endX)
+        if (secondaryProgressFraction != null) {
+            val effectiveSecondary = if (isRtl) 1f - secondaryProgressFraction else secondaryProgressFraction
+            val secondaryX = capInset + effectiveSecondary * availableWidth
+            val secondaryLeft = if (isRtl) secondaryX - halfTrack else capInset - halfTrack
+            val secondaryRight = if (isRtl) barWidth - capInset + halfTrack else secondaryX + halfTrack
+            drawRoundRect(
+                color = secondaryProgressColor,
+                topLeft = Offset(secondaryLeft, centerY - halfTrack),
+                size = Size((secondaryRight - secondaryLeft).coerceAtLeast(0f), trackHeight),
+                cornerRadius = CornerRadius(halfTrack),
+            )
+        }
         drawRoundRect(
             color = foregroundColor,
             topLeft = Offset(rangeLeft - halfTrack, centerY - halfTrack),
@@ -1406,6 +1469,20 @@ private fun verticalVisualFraction(offsetY: Float, sizeHeight: Int, sizeWidth: I
 }
 
 /**
+ * Normalizes `secondaryProgress` into the 0..1 fraction of [valueRange] the secondary track spans.
+ *
+ * The value is coerced into [valueRange] first, so values outside the range clamp to the track
+ * ends, matching the `ProgressBar.setSecondaryProgress` layer [IntentSeekBar] draws.
+ */
+internal fun secondaryProgressFraction(
+    secondaryProgress: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+): Float {
+    val span = valueRange.endInclusive - valueRange.start
+    return ((secondaryProgress - valueRange.start) / span).coerceIn(0f, 1f)
+}
+
+/**
  * Converts point values to normalized fractions within the value range.
  */
 private fun pointsToFractions(
@@ -1475,6 +1552,7 @@ object SliderDefaults {
      */
     val DefaultHapticEffect = SliderHapticEffect.Edge
 
+    @OptIn(ExperimentalCOUIApi::class)
     @Composable
     fun sliderColors(
         foregroundColor: Color = COUITheme.colorScheme.primary,
@@ -1485,6 +1563,8 @@ object SliderDefaults {
         disabledThumbColor: Color = COUITheme.colorScheme.disabledOnPrimary,
         keyPointColor: Color = COUITheme.colorScheme.sliderKeyPoint,
         keyPointForegroundColor: Color = COUITheme.colorScheme.sliderKeyPointForeground,
+        secondaryProgressColor: Color = COUITheme.colorScheme.secondaryVariant,
+        disabledSecondaryProgressColor: Color = COUITheme.colorScheme.disabledSecondaryVariant,
     ): SliderColors = remember(
         foregroundColor,
         disabledForegroundColor,
@@ -1494,6 +1574,8 @@ object SliderDefaults {
         disabledThumbColor,
         keyPointColor,
         keyPointForegroundColor,
+        secondaryProgressColor,
+        disabledSecondaryProgressColor,
     ) {
         SliderColors(
             foregroundColor = foregroundColor,
@@ -1504,6 +1586,8 @@ object SliderDefaults {
             disabledThumbColor = disabledThumbColor,
             keyPointColor = keyPointColor,
             keyPointForegroundColor = keyPointForegroundColor,
+            secondaryProgressColor = secondaryProgressColor,
+            disabledSecondaryProgressColor = disabledSecondaryProgressColor,
         )
     }
 }
@@ -1518,6 +1602,8 @@ data class SliderColors(
     private val disabledThumbColor: Color,
     private val keyPointColor: Color,
     private val keyPointForegroundColor: Color,
+    @property:ExperimentalCOUIApi private val secondaryProgressColor: Color,
+    @property:ExperimentalCOUIApi private val disabledSecondaryProgressColor: Color,
 ) {
     @Stable
     internal fun foregroundColor(enabled: Boolean): Color = if (enabled) foregroundColor else disabledForegroundColor
@@ -1533,4 +1619,9 @@ data class SliderColors(
 
     @Stable
     internal fun keyPointForegroundColor(): Color = keyPointForegroundColor
+
+    /** The color of the secondary progress layer, used when `secondaryProgress` is drawn. New in 1.2.0. */
+    @OptIn(ExperimentalCOUIApi::class)
+    @Stable
+    internal fun secondaryProgressColor(enabled: Boolean): Color = if (enabled) secondaryProgressColor else disabledSecondaryProgressColor
 }

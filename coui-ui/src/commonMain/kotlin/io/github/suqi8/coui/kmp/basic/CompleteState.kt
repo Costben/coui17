@@ -192,7 +192,7 @@ object CompleteStateDefaults {
 
     /**
      * The subtitle text style: COUI couiTextBodyXS (12sp, line spacing multiplier 1.0). The theme
-     * has no 12sp tier, so its 13sp [COUITheme.textStyles.footnote1] carries the line height under
+     * has no 12sp tier, so its 13sp `COUITheme.textStyles.footnote1` carries the line height under
      * the native size.
      */
     @Composable

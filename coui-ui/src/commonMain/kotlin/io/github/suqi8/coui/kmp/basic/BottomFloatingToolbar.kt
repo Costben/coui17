@@ -386,8 +386,8 @@ fun BottomFloatingToolbarItem(
 /**
  * The color scheme each [BottomFloatingToolbarGroup] draws its capsule with.
  *
- * The toolbar publishes it so the groups nested in [BottomFloatingToolbar.content] pick up the
- * caller's [BottomFloatingToolbar.containerColor] without having to thread it through themselves.
+ * The toolbar publishes it so the groups nested in `BottomFloatingToolbar.content` pick up the
+ * caller's `BottomFloatingToolbar.containerColor` without having to thread it through themselves.
  * Defaults to `null`, which the group reads as [COUITheme.colorScheme]'s `bar`.
  */
 internal val LocalBottomFloatingToolbarContainerColor = compositionLocalOf<Color?> { null }

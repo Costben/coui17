@@ -374,7 +374,7 @@ private fun AboutContent(
                                     color = COUITheme.colorScheme.onSurfaceVariantActions,
                                 )
                             },
-                            onClick = { uriHandler.openUri("https://github.com/compose-coui-ui/coui") },
+                            onClick = { uriHandler.openUri("https://github.com/suqi8/coui") },
                         )
                         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                         ArrowPreference(

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -51,37 +52,46 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param pressScaleEnabled Whether the [Button] shrinks while pressed (COUIButton `scaleEnable`).
  *   Defaults to `true`, matching COUIButton's own default; `COUIAlertDialogBottomButtonNewNormal`
  *   also sets `scaleEnable=true` explicitly. Set to `false` only where the device style does.
- * @param cornerRadius The corner radius of the [Button].
- * @param minWidth The minimum width of the [Button].
- * @param minHeight The minimum height of the [Button].
+ * @param cornerRadius The corner radius of the [Button]. `null` uses the radius of [size].
+ * @param minWidth The minimum width of the [Button]. `null` uses the width of [size].
+ * @param minHeight The minimum height of the [Button]. `null` uses the height of [size].
  * @param colors The [ButtonColors] of the [Button].
- * @param insideMargin The margin inside the [Button].
+ * @param insideMargin The margin inside the [Button]. `null` uses the margin of [size].
  * @param interactionSource The [MutableInteractionSource] to be used for the [Button].
  * @param indication The [Indication] to be used for the [Button]. Defaults to `null` because
  *   the COUI press feedback (scale + press tint) is built into the button itself.
+ * @param size The [ButtonSize] tier providing the default metrics when the explicit
+ *   `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` arguments are `null`.
+ *   [ButtonSize.Regular] keeps the original [ButtonDefaults] metrics. New in 1.2.0.
  * @param content The [Composable] content of the [Button].
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun Button(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     pressScaleEnabled: Boolean = true,
-    cornerRadius: Dp = ButtonDefaults.CornerRadius,
-    minWidth: Dp = ButtonDefaults.MinWidth,
-    minHeight: Dp = ButtonDefaults.MinHeight,
+    cornerRadius: Dp? = null,
+    minWidth: Dp? = null,
+    minHeight: Dp? = null,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
-    insideMargin: PaddingValues = ButtonDefaults.InsideMargin,
+    insideMargin: PaddingValues? = null,
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
+    size: ButtonSize = ButtonSize.Regular,
     content: @Composable RowScope.() -> Unit,
 ) {
     @Suppress("NAME_SHADOWING")
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
-    val rowModifier = remember(minWidth, minHeight, insideMargin) {
+    val resolvedCornerRadius = cornerRadius ?: size.cornerRadiusValue()
+    val resolvedMinWidth = minWidth ?: size.minWidthValue()
+    val resolvedMinHeight = minHeight ?: size.minHeightValue()
+    val resolvedInsideMargin = insideMargin ?: size.insideMarginValue()
+    val rowModifier = remember(resolvedMinWidth, resolvedMinHeight, resolvedInsideMargin) {
         Modifier
-            .defaultMinSize(minWidth = minWidth, minHeight = minHeight)
-            .padding(insideMargin)
+            .defaultMinSize(minWidth = resolvedMinWidth, minHeight = resolvedMinHeight)
+            .padding(resolvedInsideMargin)
     }
     val containerColor = if (enabled) colors.color else colors.disabledColor
     val contentColor = if (enabled) colors.contentColor else colors.disabledContentColor
@@ -128,12 +138,12 @@ fun Button(
                     // Branch inside the block so the modifier chain keeps a single graphicsLayer
                     // node instead of swapping nodes when the flag changes.
                     if (pressScaleEnabled) {
-                        val scale = 1f - (1f - pressedScaleEndRatio(size)) * scaleProgress
+                        val scale = 1f - (1f - pressedScaleEndRatio(this.size)) * scaleProgress
                         scaleX = scale
                         scaleY = scale
                     }
                 }
-                .squircleSurface(color = fillColor, cornerRadius = cornerRadius)
+                .squircleSurface(color = fillColor, cornerRadius = resolvedCornerRadius)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = indication,
@@ -162,17 +172,21 @@ fun Button(
  * @param pressScaleEnabled Whether the [TextButton] shrinks while pressed (COUIButton
  *   `scaleEnable`). Set to `false` for buttons that fill a container cell, such as the alert dialog
  *   button bar, leaving the full-cell press tint as the only feedback.
- * @param cornerRadius The corner radius of the [TextButton].
- * @param minWidth The minimum width of the [TextButton].
- * @param minHeight The minimum height of the [TextButton].
+ * @param cornerRadius The corner radius of the [TextButton]. `null` uses the radius of [size].
+ * @param minWidth The minimum width of the [TextButton]. `null` uses the width of [size].
+ * @param minHeight The minimum height of the [TextButton]. `null` uses the height of [size].
  * @param colors The [TextButtonColors] of the [TextButton].
- * @param insideMargin The margin inside the [TextButton].
+ * @param insideMargin The margin inside the [TextButton]. `null` uses the margin of [size].
  * @param textStyle The [TextStyle] of the label. Pass a 14sp style together with the `Small`
  *   metrics from [ButtonDefaults] to get the COUI small size tier.
  * @param interactionSource The [MutableInteractionSource] to be used for the [TextButton].
  * @param indication The [Indication] to be used for the [TextButton]. Defaults to `null` because
  *   the COUI press feedback (scale + press tint) is built into the button itself.
+ * @param size The [ButtonSize] tier providing the default metrics when the explicit
+ *   `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` arguments are `null`.
+ *   New in 1.2.0.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun TextButton(
     text: String,
@@ -180,14 +194,15 @@ fun TextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     pressScaleEnabled: Boolean = true,
-    cornerRadius: Dp = ButtonDefaults.CornerRadius,
-    minWidth: Dp = ButtonDefaults.MinWidth,
-    minHeight: Dp = ButtonDefaults.MinHeight,
+    cornerRadius: Dp? = null,
+    minWidth: Dp? = null,
+    minHeight: Dp? = null,
     colors: TextButtonColors = ButtonDefaults.textButtonColors(),
-    insideMargin: PaddingValues = ButtonDefaults.InsideMargin,
+    insideMargin: PaddingValues? = null,
     textStyle: TextStyle = COUITheme.textStyles.button,
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
+    size: ButtonSize = ButtonSize.Regular,
 ) {
     val mappedColors = remember(colors) {
         ButtonColors(
@@ -209,12 +224,65 @@ fun TextButton(
         insideMargin = insideMargin,
         interactionSource = interactionSource,
         indication = indication,
+        size = size,
     ) {
         Text(
             text = text,
             style = textStyle,
         )
     }
+}
+
+/**
+ * The size tier of a [Button] / [TextButton].
+ *
+ * Each tier maps to a set of metrics in [ButtonDefaults]: [Regular] uses the plain
+ * `MinWidth` / `MinHeight` / `CornerRadius` / `InsideMargin` constants, [Small] the `...Small`
+ * ones and [Tiny] the `...Tiny` ones. Explicit `minWidth`, `minHeight`, `cornerRadius` and
+ * `insideMargin` arguments override the selected tier.
+ *
+ * New in 1.2.0.
+ *
+ * Not annotated with [ExperimentalCOUIApi]: it is a parameter type of the long-stable `Button`, and
+ * marking it would force every `Button(...)` call site onto an opt-in.
+ */
+enum class ButtonSize {
+    /** The default size tier ([ButtonDefaults.MinWidth] / `MinHeight` / `CornerRadius` / `InsideMargin`). */
+    Regular,
+
+    /** The small size tier (`ButtonDefaults.MinWidthSmall` / `MinHeightSmall` / `CornerRadiusSmall` / `InsideMarginSmall`). */
+    Small,
+
+    /** The tiny size tier (`ButtonDefaults.MinWidthTiny` / `MinHeightTiny` / `CornerRadiusTiny` / `InsideMarginTiny`). */
+    Tiny,
+}
+
+@OptIn(ExperimentalCOUIApi::class)
+private fun ButtonSize.minWidthValue(): Dp = when (this) {
+    ButtonSize.Regular -> ButtonDefaults.MinWidth
+    ButtonSize.Small -> ButtonDefaults.MinWidthSmall
+    ButtonSize.Tiny -> ButtonDefaults.MinWidthTiny
+}
+
+@OptIn(ExperimentalCOUIApi::class)
+private fun ButtonSize.minHeightValue(): Dp = when (this) {
+    ButtonSize.Regular -> ButtonDefaults.MinHeight
+    ButtonSize.Small -> ButtonDefaults.MinHeightSmall
+    ButtonSize.Tiny -> ButtonDefaults.MinHeightTiny
+}
+
+@OptIn(ExperimentalCOUIApi::class)
+private fun ButtonSize.cornerRadiusValue(): Dp = when (this) {
+    ButtonSize.Regular -> ButtonDefaults.CornerRadius
+    ButtonSize.Small -> ButtonDefaults.CornerRadiusSmall
+    ButtonSize.Tiny -> ButtonDefaults.CornerRadiusTiny
+}
+
+@OptIn(ExperimentalCOUIApi::class)
+private fun ButtonSize.insideMarginValue(): PaddingValues = when (this) {
+    ButtonSize.Regular -> ButtonDefaults.InsideMargin
+    ButtonSize.Small -> ButtonDefaults.InsideMarginSmall
+    ButtonSize.Tiny -> ButtonDefaults.InsideMarginTiny
 }
 
 object ButtonDefaults {
@@ -273,6 +341,32 @@ object ButtonDefaults {
      * The inside margin of the small size tier (COUI Widget.COUI.Button.Small padding 12dp/4dp).
      */
     val InsideMarginSmall = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+
+    /**
+     * The min width of the tiny size tier. New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val MinWidthTiny = 44.dp
+
+    /**
+     * The min height of the tiny size tier. New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val MinHeightTiny = 20.dp
+
+    /**
+     * The corner radius of the tiny size tier (height-derived capsule: radius = [MinHeightTiny] / 2).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val CornerRadiusTiny = 10.dp
+
+    /**
+     * The inside margin of the tiny size tier. New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val InsideMarginTiny = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
 
     /**
      * The default [ButtonColors] for all buttons.

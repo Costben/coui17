@@ -22,6 +22,7 @@ import io.github.suqi8.coui.kmp.basic.ButtonColors
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -112,6 +113,7 @@ fun ButtonPreference(
     )
 }
 
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 private fun ButtonPreferenceEndAction(
     buttonText: String,

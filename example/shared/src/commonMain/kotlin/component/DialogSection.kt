@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(ExperimentalCOUIApi::class)
+
 package component
 
 import androidx.compose.foundation.layout.padding
@@ -16,10 +18,14 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.SmallTitle
+import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.layout.DialogButtonBar
 import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
+import io.github.suqi8.coui.kmp.overlay.OverlayAlertDialog
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.overlay.OverlayLoadingDialog
+import io.github.suqi8.coui.kmp.overlay.OverlayProgressDialog
 import io.github.suqi8.coui.kmp.overlay.OverlaySecurityDialog
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
@@ -48,6 +54,11 @@ fun DialogDemo() {
     var stackedDialogHoldDown by remember { mutableStateOf(false) }
     var showRecommendedDialog by remember { mutableStateOf(false) }
     var recommendedDialogHoldDown by remember { mutableStateOf(false) }
+    var showAlertDialog by remember { mutableStateOf(false) }
+    var alertDialogHoldDown by remember { mutableStateOf(false) }
+    var showProgressDialog by remember { mutableStateOf(false) }
+    var progressDialogHoldDown by remember { mutableStateOf(false) }
+    var progressDialogValue by remember { mutableStateOf<Float?>(null) }
 
     Card(
         modifier = Modifier
@@ -102,6 +113,26 @@ fun DialogDemo() {
                 recommendedDialogHoldDown = true
             },
             holdDownState = recommendedDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = str("Alert Dialog (O)"),
+            summary = str("Centered warning dialog with a confirm / cancel row"),
+            onClick = {
+                showAlertDialog = true
+                alertDialogHoldDown = true
+            },
+            holdDownState = alertDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = str("Progress Dialog (O)"),
+            summary = str("Horizontal progress dialog, indefinite then determinate"),
+            onClick = {
+                showProgressDialog = true
+                progressDialogHoldDown = true
+            },
+            holdDownState = progressDialogHoldDown,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
@@ -160,6 +191,64 @@ fun DialogDemo() {
         onConfirm = { _ -> showSecurityDialog = false },
         onCancel = { showSecurityDialog = false },
         onDismissFinished = { securityDialogHoldDown = false },
+    )
+
+    AlertDialogDemo(
+        show = showAlertDialog,
+        onDismissRequest = { showAlertDialog = false },
+        onDismissFinished = { alertDialogHoldDown = false },
+    )
+
+    // Walk the horizontal progress dialog through both of its modes: indefinite first, then
+    // determinate, like a download that only learns its size once the request is accepted.
+    LaunchedEffect(showProgressDialog) {
+        if (showProgressDialog) {
+            progressDialogValue = null
+            delay(1200)
+            repeat(40) { step ->
+                progressDialogValue = step / 40f
+                delay(60)
+            }
+            progressDialogValue = 1f
+            delay(400)
+            showProgressDialog = false
+        }
+    }
+    OverlayProgressDialog(
+        show = showProgressDialog,
+        progress = progressDialogValue,
+        text = if (progressDialogValue == null) {
+            str("Connecting...")
+        } else {
+            str("Downloading...")
+        },
+        onDismissRequest = { showProgressDialog = false },
+        onDismissFinished = { progressDialogHoldDown = false },
+    )
+}
+
+/**
+ * Shows the centered alert variant: the panel is always centered (unlike [OverlayDialog]'s
+ * bottom-anchored presentation on compact windows) and closes through a cancel / confirm row.
+ */
+@Composable
+private fun AlertDialogDemo(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    onDismissFinished: () -> Unit,
+) {
+    OverlayAlertDialog(
+        show = show,
+        onConfirm = onDismissRequest,
+        onCancel = onDismissRequest,
+        title = str("Delete this backup?"),
+        summary = str("The backup will be removed from the cloud and from every synced device."),
+        confirmText = str("Delete"),
+        cancelText = str("Cancel"),
+        onDismissFinished = onDismissFinished,
+        content = {
+            Text(text = str("This action cannot be undone."))
+        },
     )
 }
 

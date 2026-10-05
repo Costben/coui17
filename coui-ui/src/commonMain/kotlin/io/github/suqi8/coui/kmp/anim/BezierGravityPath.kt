@@ -15,7 +15,7 @@ import kotlin.math.sqrt
  *
  * @property dMin Shortest anchor→menu centre distance, in pixels, that still produces arc sag.
  *   At or below it the trajectory is a straight line.
- * @property dMax Distance, in pixels, at which the sag reaches its full [gMax].
+ * @property dMax Distance, in pixels, at which the sag reaches its full `gMax`.
  * @property gMax Sag amplitude cap, in pixels, reached at [dMax] and beyond.
  */
 @Immutable
@@ -95,7 +95,7 @@ object BezierGravityPathMath {
     private const val PATH_T_CENTER_FACTOR = 0.5f
 
     /**
-     * Arc sag in pixels (COUI `BezierGravityPathMath.adaptiveGravityPx`): ramps from 0 to [gMax]
+     * Arc sag in pixels (COUI `BezierGravityPathMath.adaptiveGravityPx`): ramps from 0 to `gMax`
      * as the chord grows from `dMin` to `dMax`, scaled down by how axis-aligned the chord is
      * (`min(|dx|,|dy|) / max(|dx|,|dy|)`), so a diagonal hop sags the most and a purely
      * horizontal/vertical one sag is unchanged.

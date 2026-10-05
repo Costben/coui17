@@ -218,11 +218,11 @@ data class FloatingButtonItem(
  * @property containerColor The fill of the main and child buttons.
  *   `style/FloatingButton.Icon.Medium.Main` resolves `mainFloatingButtonBackgroundColor` from
  *   `color/coui_floating_button_main_button_color_selector`, whose enabled item is
- *   `?attr/couiColorPrimary` (`coui_color_primary`), the theme's [COUITheme.colorScheme.primary]. The
+ *   `?attr/couiColorPrimary` (`coui_color_primary`), the theme's `COUITheme.colorScheme.primary`. The
  *   label item's `ShapeableImageView` carries the same attribute as its background.
  * @property contentColor The glyphs, which are drawn over that primary container:
  *   `?attr/couiColorOnPrimary` (`coui_color_on_primary`, `#ffffffff`), the theme's
- *   [COUITheme.colorScheme.onPrimary] — the same white as
+ *   `COUITheme.colorScheme.onPrimary` — the same white as
  *   `color/coui_floating_button_label_text_color_enable`.
  * @property disabledContainerColor The fill of a disabled button:
  *   `color/coui_floating_button_main_button_color_selector`'s `state_enabled=false` item,
@@ -360,7 +360,7 @@ object FloatingButtonDefaults {
 
     /**
      * The label text style: `coui_floating_button_item_label_label_text_size` is 12sp, and the theme
-     * has no 12sp tier, so its 13sp [COUITheme.textStyles.footnote1] carries the line height under
+     * has no 12sp tier, so its 13sp `COUITheme.textStyles.footnote1` carries the line height under
      * the native size.
      */
     @Composable

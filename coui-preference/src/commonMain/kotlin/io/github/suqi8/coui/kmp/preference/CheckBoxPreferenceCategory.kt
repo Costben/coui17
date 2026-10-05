@@ -24,7 +24,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * `coui_preference_category_widget_layout_padding_end` (16dp) and a `layout_marginVertical` of
  * `coui_preference_category_widget_layout_margin_vertical` (4dp). It also carries a
  * `default_checkbox_state` attribute, which only picks the starting state and is therefore not part
- * of this port's signature — the caller owns [checked].
+ * of this port's signature — the caller owns `checked`.
  *
  * `COUICheckBox` is a tri-state box and the device's `OnStateChangeListener` reports all three, so
  * [state] is a [ToggleableState] rather than a `Boolean` — a category-level "select all" box reads

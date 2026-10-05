@@ -211,7 +211,7 @@ object TagViewDefaults {
      * `app:couiTagBackgroundColor="?attr/couiColorContainer8"` and
      * `app:couiTagViewTextColor="@color/coui_color_label_secondary"` — which resolves to the
      * container8 fill (`#14000000` light / `#1affffff` dark) and the secondary label colour
-     * ([COUITheme.colorScheme.onSurfaceSecondary], `#8a000000` / `#8affffff`).
+     * (`COUITheme.colorScheme.onSurfaceSecondary`, `#8a000000` / `#8affffff`).
      */
     @Composable
     fun tagViewColors(

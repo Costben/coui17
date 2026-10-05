@@ -22,6 +22,7 @@ import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
 import io.github.suqi8.coui.kmp.basic.TextButton
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 
@@ -149,6 +150,7 @@ fun OverlayDropdownDialog(
  * Groups are separated by dividers. Item clicks call [io.github.suqi8.coui.kmp.basic.DropdownItem.onClick], and [collapseOnSelection]
  * controls whether the dialog is dismissed after a click.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun OverlayDropdownDialog(
     entries: List<DropdownEntry>,

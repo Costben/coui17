@@ -356,7 +356,7 @@ object NotificationSnackBarDefaults {
     /**
      * The subtitle style. `tv_snack_bar_sub_content` uses `?attr/couiTextAppearanceDescription`
      * (`style/couiTextAppearanceDescription`, 12sp); the theme's closest tier is
-     * [COUITheme.textStyles.footnote2].
+     * `COUITheme.textStyles.footnote2`.
      */
     @Composable
     fun subtitleStyle(): TextStyle = COUITheme.textStyles.footnote2
@@ -377,7 +377,7 @@ object NotificationSnackBarDefaults {
      * `coui_snack_bar_action_text_enable` white (`#ffffffff`) as a file constant; the close icon
      * uses `?attr/couiColorLabelTertiary` (`onSurfaceVariantActions`). The container follows
      * `?attr/couiColorBackgroundTop` (`#ffffffff` light / `#ff333333` dark); the nearest theme slot
-     * is [COUITheme.colorScheme.surfaceContainerHighest], which is exact in light and `#ff1e1e1e`
+     * is `COUITheme.colorScheme.surfaceContainerHighest`, which is exact in light and `#ff1e1e1e`
      * rather than `#ff333333` in dark.
      */
     @Composable

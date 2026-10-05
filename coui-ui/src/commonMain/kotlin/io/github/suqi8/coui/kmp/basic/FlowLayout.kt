@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
  * `sum(lineHeights) + lineSpacing * (lineCount - 1)` (`calculateLinesHeight`), and children are
  * placed at the line's top edge, which is exactly where the native `Line.layout` puts them
  * (`view.layout(left, offsetTop, right, offsetTop + measuredHeight)`). Horizontal placement uses
- * [Placeable.placeRelative], mirroring the native `isRtl` branch that lays a child out at
+ * `Placeable.placeRelative`, mirroring the native `isRtl` branch that lays a child out at
  * `maxWidth - offsetLeft - childWidth`.
  *
  * Folding is the one place this port departs from the native implementation. The native keeps every

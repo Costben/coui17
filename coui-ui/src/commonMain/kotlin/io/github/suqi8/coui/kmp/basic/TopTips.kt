@@ -103,7 +103,8 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param text The message of the banner. `COUIDefaultTopTipsView`'s `content`, a
  *   `COUIMarqueeTextView` styled `couiTextBodyS` (13sp, `coui_spacing_multiplier_body_s`) in
  *   `?attr/couiColorLabelSecondary`, with `coui_toptips_view_content_min_height` (20dp) and the
- *   `coui_toptips_view_content_*` margins.
+ *   `coui_toptips_view_content_*` margins. Ignored when [content] is non-null; pass an empty
+ *   string for a slot-only banner.
  * @param modifier The modifier to be applied to the banner.
  * @param visible Whether the banner is visible. Changing this plays `COUICustomTopTips`'
  *   `showWithAnim` / `dismissWithAnim` scale.
@@ -135,6 +136,11 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  *   [TopTipsDefaults.SingleLineCornerRadius] for an untitled single-line banner and
  *   [TopTipsDefaults.CornerRadius] otherwise.
  * @param colors The [TopTipsColors] of the banner.
+ * @param content An optional custom message slot, the Compose equivalent of
+ *   `COUICustomTopTips`'s fully custom content view. When non-null it replaces the plain [text]
+ *   body and keeps the same row layout, padding and [TopTipsColors] as the built-in message, but
+ *   it is not measured for the trailing-cluster wraparound decision and is never marqueed.
+ *   New in 1.2.0.
  */
 @Composable
 fun TopTips(
@@ -154,6 +160,7 @@ fun TopTips(
     backgroundOverlay: (@Composable () -> Unit)? = null,
     cornerRadius: Dp? = null,
     colors: TopTipsColors = TopTipsDefaults.topTipsColors(backgroundStyle),
+    content: (@Composable () -> Unit)? = null,
 ) {
     val visibility = remember { Animatable(if (visible) 1f else 0f) }
     LaunchedEffect(visible) {
@@ -179,7 +186,9 @@ fun TopTips(
         val density = LocalDensity.current
         val textMeasurer = rememberTextMeasurer()
         val titleWidthPx = displayTitle?.let { textMeasurer.labelWidthPx(it, titleStyle) } ?: 0
-        val contentWidthPx = textMeasurer.labelWidthPx(text, contentStyle)
+        // A custom slot has no single-line width to measure, so it never forces the trailing
+        // cluster onto its own row; the built-in message is measured exactly as before.
+        val contentWidthPx = if (content == null) textMeasurer.labelWidthPx(text, contentStyle) else 0
         val leadingWidthPx = with(density) {
             if (startIcon == null) {
                 CONTENT_END_MARGIN.toPx()
@@ -243,6 +252,7 @@ fun TopTips(
                     TopTipsTextArea(
                         title = displayTitle,
                         text = text,
+                        content = content,
                         startIcon = startIcon,
                         marqueeEnabled = marqueeEnabled,
                         titleStyle = titleStyle,
@@ -277,6 +287,7 @@ fun TopTips(
                 TopTipsTextArea(
                     title = displayTitle,
                     text = text,
+                    content = content,
                     startIcon = startIcon,
                     marqueeEnabled = marqueeEnabled,
                     titleStyle = titleStyle,
@@ -305,11 +316,16 @@ fun TopTips(
  * `coui_toptips_view_icon_start_margin` (16dp) from the start, then a column whose title sits
  * `coui_toptips_view_content_top_margin` (12dp) below the top and
  * `coui_toptips_view_title_content_gap` (0dp) above the content.
+ *
+ * The message is the built-in marquee text when [content] is null, and the caller's custom slot —
+ * `COUICustomTopTips`'s custom content view — otherwise. Both take the same `weight(1f)` column
+ * and the same minimum height, so the surrounding row layout, padding and colours are unchanged.
  */
 @Composable
 private fun RowScope.TopTipsTextArea(
     title: String?,
     text: String,
+    content: (@Composable () -> Unit)?,
     startIcon: (@Composable () -> Unit)?,
     marqueeEnabled: Boolean,
     titleStyle: TextStyle,
@@ -353,13 +369,21 @@ private fun RowScope.TopTipsTextArea(
                 modifier = Modifier.defaultMinSize(minHeight = TopTipsDefaults.TitleMinHeight),
             )
         }
-        MarqueeText(
-            text = text,
-            color = contentColor,
-            style = contentStyle,
-            marqueeEnabled = marqueeEnabled,
-            modifier = Modifier.defaultMinSize(minHeight = TopTipsDefaults.TextMinHeight),
-        )
+        if (content != null) {
+            // COUICustomTopTips' custom content view: the same slot, min height and text column,
+            // so the message colour and the trailing-cluster layout still apply to it.
+            Box(modifier = Modifier.defaultMinSize(minHeight = TopTipsDefaults.TextMinHeight)) {
+                content()
+            }
+        } else {
+            MarqueeText(
+                text = text,
+                color = contentColor,
+                style = contentStyle,
+                marqueeEnabled = marqueeEnabled,
+                modifier = Modifier.defaultMinSize(minHeight = TopTipsDefaults.TextMinHeight),
+            )
+        }
     }
 }
 

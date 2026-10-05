@@ -87,7 +87,7 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Internal shared layout logic for [OverlayBottomSheet] and [WindowBottomSheet].
+ * Internal shared layout logic for `OverlayBottomSheet` and `WindowBottomSheet`.
  *
  * @param show Whether the bottom sheet is currently shown.
  * @param backgroundColor The background color of the bottom sheet.

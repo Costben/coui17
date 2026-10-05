@@ -50,11 +50,11 @@ import io.github.suqi8.coui.kmp.icon.basic.ArrowRight
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * A single segment in a [BreadcrumbBar]. Each item carries a [path] segment used to reconstruct the
- * full path, and an optional [text] for display. When [text] is null, [path] is shown.
+ * A single segment in a [BreadcrumbBar]. Each item carries a `path` segment used to reconstruct the
+ * full path, and an optional [text] for display. When [text] is null, `path` is shown.
  *
  * @param path The path segment, used by [joinToPath] to reconstruct the full path.
- * @param text The display text. If null, [path] is used for display.
+ * @param text The display text. If null, `path` is used for display.
  */
 @Stable
 data class BreadcrumbItem(
@@ -324,7 +324,7 @@ data class BreadcrumbBarColors(
 )
 
 /**
- * Joins the [path] segments of all [BreadcrumbItem]s in this list into a single path string using
+ * Joins the `path` segments of all [BreadcrumbItem]s in this list into a single path string using
  * the given [separator].
  *
  * @param separator The separator placed between path segments. Defaults to `"/"`.

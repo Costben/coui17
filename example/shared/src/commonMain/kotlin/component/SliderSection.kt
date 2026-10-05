@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.Slider
 import io.github.suqi8.coui.kmp.basic.SliderDefaults
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
@@ -99,6 +100,16 @@ fun SliderDemo() {
             valueText = "${(disabledValue * 100).toInt()}%",
             enabled = false,
         )
+        var secondaryValue by remember { mutableFloatStateOf(0.25f) }
+        Slider(
+            value = secondaryValue,
+            onValueChange = { secondaryValue = it },
+            secondaryProgress = 0.75f,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+        )
     }
 }
 
@@ -173,6 +184,7 @@ fun VerticalSliderDemo() {
                 VerticalSlider(
                     value = verticalValue1,
                     onValueChange = { verticalValue1 = it },
+                    secondaryProgress = 0.8f,
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(

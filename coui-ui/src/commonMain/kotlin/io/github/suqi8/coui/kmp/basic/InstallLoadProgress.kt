@@ -547,7 +547,7 @@ object InstallLoadProgressDefaults {
      * theme; `style/COUIOverlay.Theme.Blue.Default` binds them to `color/couiBlueTintControlNormal`
      * (`#ff006aff`) and `color/couiBlueTintLightNormal` (`#26007aff`) respectively. The port maps the
      * primary to the theme accent and the secondary — a 15% alpha wash of the accent — to
-     * [COUITheme.colorScheme.tertiaryContainer] (`0x260080FF`), the role the theme already carries
+     * `COUITheme.colorScheme.tertiaryContainer` (`0x260080FF`), the role the theme already carries
      * for exactly that wash.
      *
      * @param primaryColor `R.attr.couiColorPrimary`.
@@ -556,7 +556,7 @@ object InstallLoadProgressDefaults {
      * @param surpassProgressColor `mSurpassProgressColor`, the same `#ffffffff`.
      * @param disabledColor `disabledColor` = `?attr/couiBtnDrawableColorDisabled` =
      *   `color/coui_btn_drawable_color_disabled` (`#14000000`), the value the theme's
-     *   [COUITheme.colorScheme.disabledSecondaryVariant] carries.
+     *   `COUITheme.colorScheme.disabledSecondaryVariant` carries.
      * @param textPadding `couiInstallPadding` (6dp).
      */
     @Composable

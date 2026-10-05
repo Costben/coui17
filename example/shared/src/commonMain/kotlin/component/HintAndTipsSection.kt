@@ -1,19 +1,26 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(ExperimentalCOUIApi::class)
+
 package component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
@@ -27,6 +34,7 @@ import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TopTips
 import io.github.suqi8.coui.kmp.basic.TopTipsBackgroundStyle
 import io.github.suqi8.coui.kmp.basic.TopTipsStyle
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -65,6 +73,8 @@ fun TopTipsStylesDemo() {
         TopTipsAiPaymentDemo()
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         TopTipsBackgroundDemo()
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        TopTipsCustomContentDemo()
     }
 }
 
@@ -183,5 +193,60 @@ private fun TopTipsBackgroundDemo() {
             onClose = {},
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+/**
+ * Renders the custom-content slot of [TopTips]: the message body is the caller's composable, while
+ * the icon, title, trailing buttons and the row layout stay the built-in ones. The `text` argument
+ * is omitted entirely, which the default `""` now allows.
+ */
+@Composable
+private fun TopTipsCustomContentDemo() {
+    var visible by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        TopTips(
+            text = "",
+            visible = visible,
+            title = str("Custom content"),
+            startIcon = {
+                Icon(
+                    imageVector = COUIIcons.Basic.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp),
+                )
+            },
+            actionText = str("Got it"),
+            onAction = { visible = false },
+            onClose = { visible = false },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = str("The message body is a custom slot."),
+                    color = COUITheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    style = COUITheme.textStyles.footnote1,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = str("Keep it short."),
+                    style = COUITheme.textStyles.footnote1,
+                )
+            }
+        }
+        if (!visible) {
+            TextButton(
+                text = str("Show again"),
+                onClick = { visible = true },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

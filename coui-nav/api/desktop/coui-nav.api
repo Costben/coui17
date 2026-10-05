@@ -1,0 +1,337 @@
+public final class io/github/suqi8/coui/kmp/nav/core/ComposableSingletons$NavDisplayKt {
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/nav/core/ComposableSingletons$NavDisplayKt;
+	public fun <init> ()V
+	public final fun getLambda$-677508069$io_github_suqi8_coui_kmp_coui_nav ()Lkotlin/jvm/functions/Function3;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavBackStackKt {
+	public static final fun getNavBackStackJson ()Lkotlinx/serialization/json/Json;
+	public static final fun navBackStackOf ([Lio/github/suqi8/coui/kmp/nav/core/NavKey;)Landroidx/compose/runtime/snapshots/SnapshotStateList;
+	public static final fun navBackStackSaver (Lkotlinx/serialization/KSerializer;)Landroidx/compose/runtime/saveable/Saver;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavController {
+	public static final field $stable I
+	public fun <init> (Landroidx/compose/runtime/snapshots/SnapshotStateList;)V
+	public final fun getBackStack ()Landroidx/compose/runtime/snapshots/SnapshotStateList;
+	public final fun pop ()Z
+	public final fun popUntil (Lkotlin/jvm/functions/Function1;)V
+	public final fun push (Lio/github/suqi8/coui/kmp/nav/core/NavKey;)V
+	public final fun replace (Lio/github/suqi8/coui/kmp/nav/core/NavKey;)V
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavCornerClipMode : java/lang/Enum {
+	public static final field All Lio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;
+	public static final field Leading Lio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavDisplayEffects {
+	public static final field $stable I
+	public static final field Companion Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects$Companion;
+	public synthetic fun <init> (ZFLio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;FZJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (ZFLio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;FZJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2-D9Ej5fM ()F
+	public final fun component3 ()Lio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;
+	public final fun component4 ()F
+	public final fun component5 ()Z
+	public final fun component6-0d7_KjU ()J
+	public final fun copy-b-CFFPg (ZFLio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;FZJ)Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects;
+	public static synthetic fun copy-b-CFFPg$default (Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects;ZFLio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;FZJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackdropColor-0d7_KjU ()J
+	public final fun getBlockInputDuringTransition ()Z
+	public final fun getCornerClipMode ()Lio/github/suqi8/coui/kmp/nav/core/NavCornerClipMode;
+	public final fun getCornerClipRadius-D9Ej5fM ()F
+	public final fun getDimAmount ()F
+	public final fun getEnableCornerClip ()Z
+	public fun hashCode ()I
+	public final fun shouldBlockInputAt (F)Z
+	public final fun shouldClipCornersAt (F)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavDisplayEffects$Companion {
+	public final fun getDefault ()Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects;
+	public final fun getNone ()Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavDisplayKt {
+	public static final field NAV_SWIPE_DISMISS_METADATA_KEY Ljava/lang/String;
+	public static final field NAV_TRANSITION_METADATA_KEY Ljava/lang/String;
+	public static final fun NavDisplay (Landroidx/compose/runtime/snapshots/SnapshotStateList;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun NavDisplay (Lio/github/suqi8/coui/kmp/nav/core/NavController;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;Lio/github/suqi8/coui/kmp/nav/core/NavDisplayEffects;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavEntry {
+	public static final field $stable I
+	public fun <init> (Lio/github/suqi8/coui/kmp/nav/core/NavKey;Ljava/lang/Object;Ljava/util/Map;Lkotlin/jvm/functions/Function3;)V
+	public final fun Content (Landroidx/compose/runtime/Composer;I)V
+	public final fun adoptFrom (Lio/github/suqi8/coui/kmp/nav/core/NavEntry;)V
+	public final fun getContentKey ()Ljava/lang/Object;
+	public final fun getKey ()Lio/github/suqi8/coui/kmp/nav/core/NavKey;
+	public final fun getMetadata ()Ljava/util/Map;
+	public final fun getPresentation ()Lio/github/suqi8/coui/kmp/nav/core/NavPresentationState;
+	public final fun setPresentation (Lio/github/suqi8/coui/kmp/nav/core/NavPresentationState;)V
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavEntryBuilder {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun build ()Lkotlin/jvm/functions/Function1;
+	public final fun register (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/nav/core/NavKey {
+}
+
+public final class io/github/suqi8/coui/kmp/nav/core/NavSystemCornerRadius_skikoKt {
+	public static final fun rememberNavSystemCornerRadius (Landroidx/compose/runtime/Composer;I)F
+}
+
+public final class io/github/suqi8/coui/kmp/nav/gesture/NavBackEvent {
+	public static final field $stable I
+	public fun <init> (FLio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;FJ)V
+	public synthetic fun <init> (FLio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;FJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFrameTimeMillis ()J
+	public final fun getProgress ()F
+	public final fun getSwipeEdge ()Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;
+	public final fun getTouchY ()F
+}
+
+public final class io/github/suqi8/coui/kmp/nav/gesture/NavSwipeDismissKt {
+	public static final fun navSwipeDismiss (Landroidx/compose/ui/Modifier;ZLio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;Landroidx/compose/animation/core/Animatable;ILio/github/suqi8/coui/kmp/nav/transition/NavMotion;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+	public static synthetic fun navSwipeDismiss$default (Landroidx/compose/ui/Modifier;ZLio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;Landroidx/compose/animation/core/Animatable;ILio/github/suqi8/coui/kmp/nav/transition/NavMotion;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/gesture/PredictiveBackHandlerKt {
+	public static final fun PredictiveBackHandler (ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPop : io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+	public static final field $stable I
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPop;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPop;IILjava/lang/Object;)Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPop;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPush : io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+	public static final field $stable I
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPush;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPush;IILjava/lang/Object;)Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$MultiPush;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavChange$None : io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$None;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavChange$Pop : io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$Pop;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavChange$Push : io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$Push;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavChange$Replace : io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$Replace;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavChange$ReplaceAll : io/github/suqi8/coui/kmp/nav/runtime/NavChange {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/nav/runtime/NavChange$ReplaceAll;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/runtime/NavSettleEasingKt {
+	public static final fun getNavProgrammaticEasing ()Landroidx/compose/animation/core/Easing;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavDirectionalTransitionKt {
+	public static final fun navDirectionalTransition (Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;)Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;
+	public static synthetic fun navDirectionalTransition$default (Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavGesture {
+	public static final field $stable I
+	public fun <init> (FLio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;FF)V
+	public synthetic fun <init> (FLio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInitialTouchY ()F
+	public final fun getProgress ()F
+	public final fun getSwipeEdge ()Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;
+	public final fun getTouchY ()F
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavMotion {
+	public static final field $stable I
+	public static final field Companion Lio/github/suqi8/coui/kmp/nav/transition/NavMotion$Companion;
+	public fun <init> ()V
+	public fun <init> (Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;)V
+	public synthetic fun <init> (Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCancel ()Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;
+	public final fun getCommit ()Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;
+	public final fun getProgrammatic ()Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavMotion$Companion {
+	public final fun getDefault ()Lio/github/suqi8/coui/kmp/nav/transition/NavMotion;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavRole : java/lang/Enum {
+	public static final field Covered Lio/github/suqi8/coui/kmp/nav/transition/NavRole;
+	public static final field Incoming Lio/github/suqi8/coui/kmp/nav/transition/NavRole;
+	public static final field Outgoing Lio/github/suqi8/coui/kmp/nav/transition/NavRole;
+	public static final field Top Lio/github/suqi8/coui/kmp/nav/transition/NavRole;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/nav/transition/NavRole;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/nav/transition/NavRole;
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/nav/transition/NavSettle {
+	public abstract fun getElapsedMillis ()F
+	public abstract fun getPhase ()Lio/github/suqi8/coui/kmp/nav/transition/NavSettlePhase;
+	public abstract fun getReleaseVelocity ()F
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavSettlePhase : java/lang/Enum {
+	public static final field Cancel Lio/github/suqi8/coui/kmp/nav/transition/NavSettlePhase;
+	public static final field Commit Lio/github/suqi8/coui/kmp/nav/transition/NavSettlePhase;
+	public static final field Programmatic Lio/github/suqi8/coui/kmp/nav/transition/NavSettlePhase;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/nav/transition/NavSettlePhase;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/nav/transition/NavSettlePhase;
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/nav/transition/NavSettleSpec {
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Spring : io/github/suqi8/coui/kmp/nav/transition/NavSettleSpec {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (FFZ)V
+	public synthetic fun <init> (FFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Z
+	public final fun copy (FFZ)Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Spring;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Spring;FFZILjava/lang/Object;)Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Spring;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClampOvershoot ()Z
+	public final fun getDampingRatio ()F
+	public final fun getStiffness ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Tween : io/github/suqi8/coui/kmp/nav/transition/NavSettleSpec {
+	public static final field $stable I
+	public fun <init> (ILandroidx/compose/animation/core/Easing;)V
+	public final fun component1 ()I
+	public final fun component2 ()Landroidx/compose/animation/core/Easing;
+	public final fun copy (ILandroidx/compose/animation/core/Easing;)Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Tween;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Tween;ILandroidx/compose/animation/core/Easing;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/nav/transition/NavSettleSpec$Tween;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDurationMillis ()I
+	public final fun getEasing ()Landroidx/compose/animation/core/Easing;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection : java/lang/Enum {
+	public static final field BottomToTop Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public static final field LeftToRight Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public static final field None Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public static final field RightToLeft Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public static final field TopToBottom Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge : java/lang/Enum {
+	public static final field Left Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;
+	public static final field None Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;
+	public static final field Right Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeEdge;
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/nav/transition/NavTransition {
+	public fun getDismissDirection ()Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public fun getMotion ()Lio/github/suqi8/coui/kmp/nav/transition/NavMotion;
+	public fun getOpaqueDepth ()F
+	public fun scrimFraction (Lio/github/suqi8/coui/kmp/nav/transition/NavTransitionScope;)F
+	public abstract fun transformEntry (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/nav/transition/NavTransitionScope;)Landroidx/compose/ui/Modifier;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavTransition$DefaultImpls {
+	public static fun getDismissDirection (Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;)Lio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;
+	public static fun getMotion (Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;)Lio/github/suqi8/coui/kmp/nav/transition/NavMotion;
+	public static fun getOpaqueDepth (Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;)F
+	public static fun scrimFraction (Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;Lio/github/suqi8/coui/kmp/nav/transition/NavTransitionScope;)F
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavTransitionKt {
+	public static final fun navGraphicsTransition (FLio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;Lio/github/suqi8/coui/kmp/nav/transition/NavMotion;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;
+	public static synthetic fun navGraphicsTransition$default (FLio/github/suqi8/coui/kmp/nav/transition/NavSwipeDirection;Lio/github/suqi8/coui/kmp/nav/transition/NavMotion;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/nav/transition/NavTransitionScope {
+	public abstract fun getChange ()Lio/github/suqi8/coui/kmp/nav/runtime/NavChange;
+	public abstract fun getDensity ()Landroidx/compose/ui/unit/Density;
+	public abstract fun getGesture ()Lio/github/suqi8/coui/kmp/nav/transition/NavGesture;
+	public abstract fun getLayoutDirection ()Landroidx/compose/ui/unit/LayoutDirection;
+	public abstract fun getLayoutSize-YbymL2g ()J
+	public abstract fun getRelativeDepth ()F
+	public abstract fun getRole ()Lio/github/suqi8/coui/kmp/nav/transition/NavRole;
+	public fun getSettle ()Lio/github/suqi8/coui/kmp/nav/transition/NavSettle;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavTransitionScope$DefaultImpls {
+	public static fun getSettle (Lio/github/suqi8/coui/kmp/nav/transition/NavTransitionScope;)Lio/github/suqi8/coui/kmp/nav/transition/NavSettle;
+}
+
+public final class io/github/suqi8/coui/kmp/nav/transition/NavTransitions {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/nav/transition/NavTransitions;
+	public final fun getCOUIDefault ()Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;
+	public final fun getModal ()Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;
+	public final fun getNone ()Lio/github/suqi8/coui/kmp/nav/transition/NavTransition;
+}
+

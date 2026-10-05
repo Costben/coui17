@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package component
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
@@ -184,11 +185,20 @@ fun RecommendedPreferenceDemo() {
         )
     }
 
-    RecommendedPreference(
-        title = str("You might be looking for:"),
-        items = recommendedItems,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    )
+    Column(modifier = Modifier.padding(bottom = 16.dp)) {
+        RecommendedPreference(
+            title = str("You might be looking for:"),
+            items = recommendedItems,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        // A disabled card greys out the header and every row and swallows all row clicks.
+        RecommendedPreference(
+            title = str("Not available right now:"),
+            items = recommendedItems,
+            enabled = false,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp),
+        )
+    }
 }

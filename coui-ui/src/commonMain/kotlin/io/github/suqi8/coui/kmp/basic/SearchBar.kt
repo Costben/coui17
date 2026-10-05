@@ -111,8 +111,10 @@ fun SearchBar(
                 inputField()
             }
             // COUISearchBar edit-state transition: background resize, button slide and fade,
-            // all with COUIMoveEaseInterpolator.
-            if (outsideEndAction != null) {
+            // all with COUIMoveEaseInterpolator. Bound to a local so the non-null branch
+            // stays smart-cast inside the trailing lambdas below.
+            val endAction = outsideEndAction
+            if (endAction != null) {
                 AnimatedVisibility(
                     visible = expanded,
                     enter = expandHorizontally(animationSpec = tween(BackgroundResizeDurationMillis, easing = MoveEase)) +
@@ -134,7 +136,7 @@ fun SearchBar(
                             end = ActionEndPadding,
                         ),
                     ) {
-                        outsideEndAction?.invoke()
+                        endAction()
                     }
                 }
             }

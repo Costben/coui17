@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -64,6 +65,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  *   (COUI coui_full_page_statement_padding_horizontal/top/bottom).
  * @param scrollState The [ScrollState] of the statement text area.
  */
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun FullPageStatement(
     title: String,

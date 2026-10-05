@@ -50,7 +50,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param bottomAction The [Composable] content at the bottom of the [OverlayDropdownPreference].
  * @param insideMargin The margin inside the [OverlayDropdownPreference].
  * @param cardListPosition The row's position inside its card group. Rounded outer edges receive extra padding.
- * @param maxHeight The maximum height of the [OverlayListPopup].
+ * @param maxHeight The maximum height of the `OverlayListPopup`.
  * @param enabled Whether the [OverlayDropdownPreference] is enabled.
  * @param showValue Whether to show the selected value of the [OverlayDropdownPreference].
  * @param renderInRootScaffold Whether to render the popup in the root (outermost) Scaffold.

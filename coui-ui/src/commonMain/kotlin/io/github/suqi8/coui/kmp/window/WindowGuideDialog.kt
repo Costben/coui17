@@ -51,6 +51,7 @@ import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.PageIndicator
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.layout.DialogContentLayout
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -355,6 +356,7 @@ private fun GuidePageContent(page: GuidePage, imageHeight: Dp) {
     }
 }
 
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 private fun GuideButtonBar(
     isSinglePage: Boolean,

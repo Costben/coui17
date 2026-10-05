@@ -47,10 +47,10 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param currentIndex The index of the active page. Clamped into `0 until count`.
  * @param modifier The modifier to be applied to the indicator.
  * @param activeColor The colour of the active dot. `Widget.COUI.COUIPageIndicator` resolves
- *   `traceDotColor` from `coui_color_label_primary`, the theme's [COUITheme.colorScheme.onSurface].
+ *   `traceDotColor` from `coui_color_label_primary`, the theme's `COUITheme.colorScheme.onSurface`.
  * @param inactiveColor The colour of the other dots. `Widget.COUI.COUIPageIndicator` resolves
  *   `dotColor` from `coui_color_hint_neutral`, the theme's
- *   [COUITheme.colorScheme.disabledOnSurface].
+ *   `COUITheme.colorScheme.disabledOnSurface`.
  */
 @Composable
 fun PageIndicator(

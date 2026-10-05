@@ -141,7 +141,7 @@ private object UIConstants {
     const val COLOR_PAGE_INDEX = 2
     const val TEXT_STYLE_PAGE_INDEX = 3
     const val PAGE_COUNT = 5
-    const val GITHUB_URL = "https://github.com/compose-coui-ui/coui"
+    const val GITHUB_URL = "https://github.com/suqi8/coui"
 
     val PAGE_TITLES = listOf("Home", "Icon", "Color", "TextStyle", "Settings")
 }

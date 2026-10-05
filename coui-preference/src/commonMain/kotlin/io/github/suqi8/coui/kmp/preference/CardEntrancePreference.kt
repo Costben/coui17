@@ -245,7 +245,7 @@ object CardEntrancePreferenceDefaults {
 
     /**
      * The default [CardEntranceColors]. [containerColor] follows `?couiColorCardBackground`
-     * ([COUITheme.colorScheme.surfaceContainer]); [titleColor] `?couiColorPrimaryNeutral`,
+     * (`COUITheme.colorScheme.surfaceContainer`); [titleColor] `?couiColorPrimaryNeutral`,
      * [summaryColor] `?couiColorSecondNeutral` and [activeSummaryColor] `?couiColorPrimaryText`.
      */
     @Composable

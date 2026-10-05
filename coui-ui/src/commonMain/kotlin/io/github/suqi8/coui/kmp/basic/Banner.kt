@@ -83,7 +83,7 @@ import kotlinx.coroutines.delay
  * @param itemCornerRadius The corner radius of a card. The native has no item styling at all — the
  *   cards are host-provided views — so the port draws a [squircleSurface] card and borrows
  *   [CardDefaults.CornerRadius], the same 17dp the ColorOS 17 [Card] uses.
- * @param itemColor The fill of a card, [COUITheme.colorScheme.surfaceContainer] by default.
+ * @param itemColor The fill of a card, `COUITheme.colorScheme.surfaceContainer` by default.
  * @param contentPadding The horizontal inset of the card row, `setPadding(24, 0, 24, 0)`, 24dp.
  * @param itemSpacing The gap between two cards, `coui_item_decoration_8dp`, 8dp.
  * @param indicatorMarginBottom The space under the indicator, the layout's `layout_marginBottom`,
@@ -341,9 +341,9 @@ object BannerDefaults {
      * default when it sits on an ordinary surface rather than over a photo.
      *
      * @param dotColor The inactive dots. The style resolves `dotColor` from `?attr/couiColorHintNeutral`,
-     *   the theme's [COUITheme.colorScheme.disabledOnSurface].
+     *   the theme's `COUITheme.colorScheme.disabledOnSurface`.
      * @param traceColor The trace pill. The style resolves `traceDotColor` from
-     *   `@color/coui_color_label_primary`, the theme's [COUITheme.colorScheme.onSurface].
+     *   `@color/coui_color_label_primary`, the theme's `COUITheme.colorScheme.onSurface`.
      */
     @Composable
     fun indicatorColors(

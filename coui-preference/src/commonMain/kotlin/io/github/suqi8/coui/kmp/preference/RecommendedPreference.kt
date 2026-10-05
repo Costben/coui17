@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -37,6 +38,10 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param items The recommended entries of the card. Build the list inside a `remember` block to
  *   keep it stable across recompositions.
  * @param modifier The modifier to be applied to the [RecommendedPreference].
+ * @param enabled Whether the card is enabled. When false every row stops responding to clicks —
+ *   the [RecommendedItem.onClick] callbacks are suppressed — and the header and rows are drawn
+ *   with the `disabled*` colors below. Each row also reports a disabled state to accessibility
+ *   services. New in 1.2.0.
  * @param cornerRadius The corner radius of the card.
  * @param colors The [RecommendedPreferenceColors] of the [RecommendedPreference].
  * @param insideMargin The horizontal margin between the card edge and the texts.
@@ -46,6 +51,7 @@ fun RecommendedPreference(
     title: String,
     items: List<RecommendedItem>,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     cornerRadius: Dp = RecommendedPreferenceDefaults.CornerRadius,
     colors: RecommendedPreferenceColors = RecommendedPreferenceDefaults.recommendedPreferenceColors(),
     insideMargin: PaddingValues = RecommendedPreferenceDefaults.InsideMargin,
@@ -73,7 +79,7 @@ fun RecommendedPreference(
                 text = title,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = colors.titleColor,
+                color = colors.titleColor(enabled),
             )
         }
         items.forEachIndexed { index, item ->
@@ -82,11 +88,16 @@ fun RecommendedPreference(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(
-                        if (onClick != null) {
-                            // COUI marks the recommended rows as buttons for accessibility.
-                            Modifier.clickable(role = Role.Button) { onClick() }
-                        } else {
-                            Modifier
+                        when {
+                            onClick != null ->
+                                // COUI marks the recommended rows as buttons for accessibility.
+                                Modifier.clickable(enabled = enabled, role = Role.Button) { onClick() }
+
+                            // A disabled row keeps reporting its state even without a handler, so an
+                            // accessibility or UI-test query can still observe it.
+                            !enabled -> Modifier.clickable(enabled = false, role = Role.Button) {}
+
+                            else -> Modifier
                         },
                     )
                     .padding(insideMargin)
@@ -105,7 +116,7 @@ fun RecommendedPreference(
                     text = item.text,
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     fontWeight = FontWeight.Medium,
-                    color = colors.itemColor,
+                    color = colors.itemColor(enabled),
                 )
             }
         }
@@ -160,6 +171,7 @@ object RecommendedPreferenceDefaults {
      * The default [RecommendedPreferenceColors]. [containerColor] follows COUI couiColorContainer4
      * (#0A000000 light / #14FFFFFF dark), inferred from the background luminance.
      */
+    @OptIn(ExperimentalCOUIApi::class)
     @Composable
     fun recommendedPreferenceColors(
         containerColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
@@ -169,11 +181,21 @@ object RecommendedPreferenceDefaults {
         },
         titleColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
         itemColor: Color = COUITheme.colorScheme.onSurface,
-    ): RecommendedPreferenceColors = remember(containerColor, titleColor, itemColor) {
+        disabledTitleColor: Color = COUITheme.colorScheme.disabledOnSecondaryVariant,
+        disabledItemColor: Color = COUITheme.colorScheme.disabledOnSecondaryVariant,
+    ): RecommendedPreferenceColors = remember(
+        containerColor,
+        titleColor,
+        itemColor,
+        disabledTitleColor,
+        disabledItemColor,
+    ) {
         RecommendedPreferenceColors(
             containerColor = containerColor,
             titleColor = titleColor,
             itemColor = itemColor,
+            disabledTitleColor = disabledTitleColor,
+            disabledItemColor = disabledItemColor,
         )
     }
 }
@@ -184,10 +206,39 @@ object RecommendedPreferenceDefaults {
  * @param containerColor The background color of the card.
  * @param titleColor The color of the header text.
  * @param itemColor The color of the row texts.
+ * @param disabledTitleColor The color of the header text when `enabled` is false.
+ * @param disabledItemColor The color of the row texts when `enabled` is false.
  */
 @Immutable
 data class RecommendedPreferenceColors(
     val containerColor: Color,
     val titleColor: Color,
     val itemColor: Color,
-)
+    @property:ExperimentalCOUIApi val disabledTitleColor: Color,
+    @property:ExperimentalCOUIApi val disabledItemColor: Color,
+) {
+    /**
+     * The three-color form of the card, kept so callers written before `enabled` existed still
+     * compile; it falls back to the enabled colors for the disabled state.
+     */
+    @OptIn(ExperimentalCOUIApi::class)
+    constructor(
+        containerColor: Color,
+        titleColor: Color,
+        itemColor: Color,
+    ) : this(
+        containerColor = containerColor,
+        titleColor = titleColor,
+        itemColor = itemColor,
+        disabledTitleColor = titleColor,
+        disabledItemColor = itemColor,
+    )
+
+    @OptIn(ExperimentalCOUIApi::class)
+    @Stable
+    internal fun titleColor(enabled: Boolean): Color = if (enabled) titleColor else disabledTitleColor
+
+    @OptIn(ExperimentalCOUIApi::class)
+    @Stable
+    internal fun itemColor(enabled: Boolean): Color = if (enabled) itemColor else disabledItemColor
+}

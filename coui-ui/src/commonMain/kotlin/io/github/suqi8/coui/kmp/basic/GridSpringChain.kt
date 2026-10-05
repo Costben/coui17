@@ -55,7 +55,7 @@ import kotlin.math.sign
  * The damping curve and the release animation reuse the repository's existing overscroll engine —
  * [SpringMath.obtainDampingDistance] for the drag and `SpringEngine.runSettleAnimation`
  * (`utils/SpringUtils.kt`, the same spring `utils/Overscroll.kt` drives) for the settle — instead of
- * a second integrator. The node layout follows [Modifier.overScrollVertical].
+ * a second integrator. The node layout follows `Modifier.overScrollVertical`.
  *
  * Not ported, because these device classes are Android View infrastructure with no Compose-side
  * equivalent: `COUIGridSpringChainScrollView` (`java.lang.Object` -> `COUIScrollView` ->
