@@ -1,0 +1,14 @@
+COUI
+Copyright 2025-2026, compose-coui-ui contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product includes software developed as part of Miuix
+(https://github.com/compose-miuix-ui/miuix), Copyright YuKongA and the
+compose-miuix-ui contributors, licensed under the Apache License, Version 2.0.
+COUI is a fork of Miuix, rethemed to the ColorOS design language; substantial
+portions of the component implementations, build tooling and documentation
+structure originate from that project.
+
+Third-party dependencies and their licenses are listed in
+THIRD-PARTY-LICENSES.md.
