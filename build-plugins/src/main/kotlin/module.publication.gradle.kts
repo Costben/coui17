@@ -7,6 +7,7 @@ import java.util.Properties
 plugins {
     `maven-publish`
     signing
+    id("org.jetbrains.dokka")
 }
 
 val versionSuffix = when {
@@ -34,20 +35,34 @@ version = "${BuildConfig.LIBRARY_VERSION}$versionSuffix"
 
 val publicationExt = extensions.create<COUIPublicationExtension>("couiPublication")
 
-val javadocJar by tasks.registering(Jar::class) {
-    description = "javadocJar"
-    archiveClassifier.set("javadoc")
-}
-
 val projectUrl = "https://github.com/suqi8/coui"
 val githubPackagesUrl = "https://maven.pkg.github.com/suqi8/coui"
-val sonatypePackageUrl = layout.buildDirectory.dir("publishing/mavenCentral")
-val localPackageUrl = layout.buildDirectory.dir("repository/local")
+
+// Every published module stages into the same root-level directories, so a release
+// produces exactly one Maven Central bundle and one local repository that a smoke
+// consumer can resolve the whole coordinate set from.
+val sonatypePackageUrl = rootProject.layout.buildDirectory.dir("publishing/mavenCentral")
+val localPackageUrl = rootProject.layout.buildDirectory.dir("repository/local")
 
 val localPropertiesFile: File = project.rootProject.file("local.properties")
 val localProperties = Properties()
 if (localPropertiesFile.exists()) {
     FileInputStream(localPropertiesFile).use { localProperties.load(it) }
+}
+
+val javadocJar by tasks.registering(Jar::class) {
+    description = "javadocJar"
+    archiveClassifier.set("javadoc")
+}
+
+// Wire the real Dokka HTML output into the javadoc artifact. Without this the module
+// would ship a javadoc jar that contains nothing but a MANIFEST, which Maven Central
+// accepts but which is useless (and is rejected by strict consumers).
+pluginManager.withPlugin("org.jetbrains.dokka") {
+    javadocJar.configure {
+        dependsOn("dokkaGenerate")
+        from(layout.buildDirectory.dir("dokka/html"))
+    }
 }
 
 publishing {
@@ -73,7 +88,7 @@ publishing {
         artifact(javadocJar.get())
         pom {
             name.set(project.name)
-            description.set(publicationExt.description)
+            description.set(publicationExt.description.orElse("COUI module ${project.name}"))
             url.set(projectUrl)
             licenses {
                 license {
@@ -86,7 +101,8 @@ publishing {
                 url.set("$projectUrl/issues")
             }
             scm {
-                connection.set("$projectUrl.git")
+                connection.set("scm:git:$projectUrl.git")
+                developerConnection.set("scm:git:ssh://git@github.com/suqi8/coui.git")
                 url.set(projectUrl)
             }
             developers {
@@ -98,28 +114,6 @@ publishing {
             }
         }
     }
-}
-
-tasks.register<CentralPublisherUploadTask>("publishToMavenCentralUsingCentralApi") {
-    description = "Upload the staged Maven Central bundle via the Central Publisher API"
-    dependsOn("publishAllPublicationsToSonatypeRepository")
-    sonatypeRepoDir.set(sonatypePackageUrl)
-    bundleFileName.set(provider { "${project.name}-${project.version}.zip" })
-    bundleFile.set(
-        layout.buildDirectory.file(
-            provider { "publishing/${project.name}-${project.version}.zip" },
-        ),
-    )
-    centralTokenId.set(
-        provider {
-            System.getenv("CENTRAL_TOKEN_ID") ?: localProperties.getProperty("CENTRAL_TOKEN_ID")
-        },
-    )
-    centralTokenSecret.set(
-        provider {
-            System.getenv("CENTRAL_TOKEN_SECRET") ?: localProperties.getProperty("CENTRAL_TOKEN_SECRET")
-        },
-    )
 }
 
 val signingKey = System.getenv("GPG_SIGNING_KEY") ?: localProperties.getProperty("GPG_SIGNING_KEY")

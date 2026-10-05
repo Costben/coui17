@@ -2,4 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 plugins {
     id("module.spotless")
+    id("module.central-release")
+    alias(libs.plugins.binaryCompatibilityValidator)
+}
+
+// Only the nine published libraries are under API compatibility guard; the sample
+// apps, the docs tooling and the baseline-profile generator are not part of the
+// public surface and would otherwise drown the dump in demo noise.
+apiValidation {
+    ignoredProjects.addAll(
+        listOf("baselineprofile", "shared", "android", "coui17", "desktop", "web", "macos", "demo", "iconGen"),
+    )
 }

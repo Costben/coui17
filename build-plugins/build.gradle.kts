@@ -9,4 +9,5 @@ dependencies {
     implementation(libs.android.gradle.plugin)
     implementation(libs.kotlin.gradle.plugin)
     implementation(libs.spotless.plugin.gradle)
+    implementation(libs.dokka.gradle.plugin)
 }

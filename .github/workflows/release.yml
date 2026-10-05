@@ -1,0 +1,150 @@
+name: Release
+
+on:
+  push:
+    # Tags are matched without a paths filter: a tag push carries no reliable file
+    # list, so combining `tags` with `paths` silently skips every release. The CI
+    # workflow already gates main-branch content.
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. v1.2.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Assert the tag matches the library version
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/.*LIBRARY_VERSION = "\([^"]*\)".*/\1/p' build-plugins/src/main/kotlin/BuildConfig.kt)
+          test -n "$version"
+          test "v$version" = "$TAG" || { echo "tag $TAG does not match BuildConfig version v$version"; exit 1; }
+      - name: Check formatting
+        run: ./gradlew spotlessCheck --no-daemon
+      - name: Check binary compatibility
+        run: ./gradlew apiCheck --no-daemon
+
+  publish:
+    name: Publish to Maven Central
+    needs: preflight
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Stage and verify the Maven Central repository
+        run: ./gradlew verifyStagedMavenCentral -Prelease --no-daemon --no-configuration-cache --stacktrace
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Consume every module from the local repository before uploading
+        run: |
+          set -euo pipefail
+          ./gradlew publishAllToLocalRepository verifyLocalPublication -Prelease --no-daemon --no-configuration-cache
+          ./gradlew -p smoke compileKotlin \
+            -PcouiVersion="${TAG#v}" \
+            -PsmokeRepo="file://$PWD/build/repository/local" \
+            --no-daemon
+      - name: Upload the verified bundle to Maven Central
+        run: ./gradlew publishToMavenCentral -Prelease --no-daemon --no-configuration-cache --stacktrace
+        env:
+          CENTRAL_TOKEN_ID: ${{ secrets.CENTRAL_TOKEN_ID }}
+          CENTRAL_TOKEN_SECRET: ${{ secrets.CENTRAL_TOKEN_SECRET }}
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Upload the release bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: maven-central-bundle
+          path: build/publishing/*.zip
+          if-no-files-found: error
+
+  github-release:
+    name: GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$TAG" --title "COUI $TAG" --generate-notes --latest
+
+  central-smoke:
+    name: Maven Central consumption smoke
+    needs: github-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v7
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Wait until Maven Central serves the release
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          for poll in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              "https://repo1.maven.org/maven2/io/github/suqi8/coui/kmp/coui-ui/$version/coui-ui-$version.pom")
+            if [ "$code" = "200" ]; then
+              echo "coui-ui $version is available on Maven Central (poll $poll)"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "coui-ui $version did not appear on Maven Central within 30 minutes"
+          exit 1
+      - name: Consume every published module from Maven Central
+        run: |
+          set -euo pipefail
+          ./gradlew -p smoke compileKotlin -PcouiVersion="${TAG#v}" --no-daemon

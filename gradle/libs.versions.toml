@@ -3,6 +3,8 @@ agp = "9.3.1"
 kotlin = "2.4.10"
 kotlinx-serialization = "1.11.0"
 kotlinx-collections-immutable = "0.5.1"
+kotlinx-coroutines = "1.11.0"
+binary-compatibility-validator = "0.18.2"
 
 about-libraries = "15.0.4"
 androidx-activity = "1.13.0"
@@ -31,6 +33,9 @@ spotless-plugin-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradl
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+
+dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "jetbrains-dokka" }
 
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "about-libraries" }
 androidx-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
@@ -64,6 +69,7 @@ composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "k
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "jetbrains-compose-hotReload" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "jetbrains-compose-multiplatform" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "jetbrains-dokka" }
+binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
 
 androidTest = { id = "com.android.test" } # AGP
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }

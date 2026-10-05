@@ -1,9 +1,8 @@
-name: Publish to GitHub Packages
+name: Publish SNAPSHOT
 
 on:
   push:
     branches: ["main"]
-    tags: ["*"]
     paths:
       - "coui-core/**"
       - "coui-ui/**"
@@ -19,18 +18,21 @@ on:
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - "gradle.properties"
+      - ".github/workflows/publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish-snapshot
   cancel-in-progress: true
 
 jobs:
-  publish_snapshot:
+  snapshot:
     runs-on: ubuntu-latest
     if: github.ref_type == 'branch'
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v7
@@ -44,7 +46,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Publish SNAPSHOT to GitHub Packages
-        run: ./gradlew --no-daemon --stacktrace publishAllPublicationsToGithubRepository --no-configuration-cache
+        run: ./gradlew --no-daemon --stacktrace publishAllToGithubPackages --no-configuration-cache
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
