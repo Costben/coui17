@@ -1,3 +1,3 @@
-HSPLtop/yukonga/miuix/kmp/shader/AndroidRuntimeShader;->**(**)**
-HSPLtop/yukonga/miuix/kmp/shader/RuntimeShader_androidKt**->**(**)**
-Ltop/yukonga/miuix/kmp/shader/RuntimeShader;
+Lio/github/suqi8/coui/kmp/shader/RuntimeShader;
+SPLio/github/suqi8/coui/kmp/shader/AndroidRuntimeShader;->**(**)**
+SPLio/github/suqi8/coui/kmp/shader/RuntimeShader_androidKt**->**(**)**
