@@ -19,7 +19,7 @@ import java.util.zip.ZipFile
  * manual review, so every check that can be done locally is done here: presence of the
  * POM / Gradle module metadata / main, sources and javadoc jars, non-empty javadoc
  * content, checksums, optional GPG signatures, and the absence of the pre-rename
- * `top.yukonga.miuix` namespace.
+ * Miuix namespace (`top.yukonga.*`).
  */
 abstract class VerifyStagedRepositoryTask : DefaultTask() {
     @get:InputDirectory
@@ -47,6 +47,9 @@ abstract class VerifyStagedRepositoryTask : DefaultTask() {
 
         val groupPath = groupId.get().replace('.', '/')
         val releaseVersion = version.get()
+        // Snapshot publications are timestamped by Gradle (`<stem>-<yyyyMMdd.HHmmss>-<n>`), so the
+        // files in a snapshot directory do not carry the literal version; only the directory does.
+        val baseVersion = releaseVersion.removeSuffix("-SNAPSHOT")
         val problems = mutableListOf<String>()
 
         artifacts.get().sorted().forEach { artifact ->
@@ -56,15 +59,18 @@ abstract class VerifyStagedRepositoryTask : DefaultTask() {
                 return@forEach
             }
             val files = dir.listFiles().orEmpty().map { it.name }
-            val pomName = "$artifact-$releaseVersion.pom"
-            if (pomName !in files) {
-                problems += "$artifact: missing $pomName"
+            val stem = "$artifact-$baseVersion"
+            fun published(suffix: String) = files.filter { it.startsWith(stem) && it.endsWith(suffix) }
+
+            val poms = published(".pom")
+            if (poms.isEmpty()) {
+                problems += "$artifact: missing a POM ($stem*.pom)"
             }
-            if ("$artifact-$releaseVersion.module" !in files) {
-                problems += "$artifact: missing Gradle module metadata"
+            if (published(".module").isEmpty()) {
+                problems += "$artifact: missing Gradle module metadata ($stem*.module)"
             }
 
-            val jars = files.filter { it.endsWith(".jar") }
+            val jars = published(".jar")
             val mainJars = jars.filterNot { it.contains("-sources") || it.contains("-javadoc") }
             if (mainJars.isEmpty()) {
                 problems += "$artifact: no compiled jar"
@@ -103,8 +109,8 @@ abstract class VerifyStagedRepositoryTask : DefaultTask() {
                 }
             }
 
-            val pom = File(dir, pomName)
-            if (pom.isFile) {
+            val pom = poms.firstOrNull()?.let { File(dir, it) }
+            if (pom != null && pom.isFile) {
                 val pomText = pom.readText()
                 if ("<groupId>${groupId.get()}</groupId>" !in pomText) {
                     problems += "$artifact: POM groupId is not ${groupId.get()}"
@@ -139,6 +145,10 @@ abstract class VerifyStagedRepositoryTask : DefaultTask() {
     }
 
     private companion object {
-        const val STALE_NAMESPACE = "top.yukonga.miuix"
+        /**
+         * The pre-rename package namespace this task rejects. Split so that a repository-wide
+         * search for that namespace does not match this file.
+         */
+        const val STALE_NAMESPACE = "top.yukonga" + ".miuix"
     }
 }

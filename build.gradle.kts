@@ -14,3 +14,11 @@ apiValidation {
         listOf("baselineprofile", "shared", "android", "coui17", "desktop", "web", "macos", "demo", "iconGen"),
     )
 }
+
+// `apiCheck` reads the dump files that `apiDump` rewrites. Requesting both in one invocation leaves
+// Gradle unable to order them and it fails validation, so declare the ordering explicitly.
+subprojects {
+    tasks.matching { it.name.endsWith("ApiCheck") }.configureEach {
+        mustRunAfter(tasks.matching { it.name.endsWith("ApiDump") })
+    }
+}

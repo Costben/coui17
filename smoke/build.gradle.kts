@@ -14,7 +14,7 @@ plugins {
 //
 //   ./gradlew -p smoke compileKotlin -PcouiVersion=<version> \
 //       -PsmokeRepo=<file:///path/to/repository/local>
-val couiVersion: String = providers.gradleProperty("couiVersion").getOrElse("1.1.0")
+val couiVersion: String = providers.gradleProperty("couiVersion").getOrElse("1.2.0")
 
 val publishedModules = listOf(
     "coui-core",
