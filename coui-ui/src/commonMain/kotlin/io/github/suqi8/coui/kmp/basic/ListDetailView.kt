@@ -48,7 +48,7 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * @param dividerWidth The width of the hairline between the panes (COUI `coui_fragment_gap_width`,
  *   0.33000004dp).
  * @param dividerColor The divider color. The device reads `?attr/couiColorDivider`, whose
- *   `coui_color_divider` value is `#1f000000` in light and `#1fffffff` in dark.
+ *   `coui_color_divider` value is `#1f000000` in light and `#33ffffff` in dark.
  */
 @Composable
 fun ListDetailView(
