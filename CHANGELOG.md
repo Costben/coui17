@@ -34,8 +34,9 @@ All notable user-visible changes are documented here. The format follows
 
 - The release workflow no longer combines tag triggers with a path filter, which previously
   prevented tagged releases from running at all.
-- Regenerated the Android baseline profiles so they reference the current
-  `io.github.suqi8.coui.kmp` package instead of the pre-rename namespace.
+- The Android baseline profiles now resolve against the current library: entries that named
+  classes removed or renamed before 1.2.0 are updated or dropped, so the shipped profiles no longer
+  spend startup budget on classes that do not exist.
 - Removed the redundant clock settling in `NavNestedStressTest`. The helper advanced the manual test
   clock roughly 4x past the driver's own settle curves and settled a second time after every arm was
   already at rest, so its wall time grew with machine load until it crossed the framework's 60s
