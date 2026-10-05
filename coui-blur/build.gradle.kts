@@ -46,10 +46,6 @@ kotlin {
         browser()
     }
 
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
-
     applyCOUISourceSetHierarchy()
 
     sourceSets {
