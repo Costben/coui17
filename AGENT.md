@@ -1,6 +1,6 @@
 # COUI16 AGENT Guide
 
-本文件汇总后续 AI 在本仓库里应遵守的核心规则。本仓库基于 [Miuix](https://github.com/compose-coui-ui/miuix) 改造，目标是**就地演进成一套 COUI（ColorOS 设计语言）Compose Multiplatform 组件库**。
+本文件汇总后续 AI 在本仓库里应遵守的核心规则。本仓库基于 [Miuix](https://github.com/compose-miuix-ui/miuix) 改造，目标是**就地演进成一套 COUI（ColorOS 设计语言）Compose Multiplatform 组件库**。
 
 > 工程规范（构建命令、代码风格、API 约定、性能约束）见 `CLAUDE.md`，那份仍然有效，写 COUI 组件时**必须同时遵守**。本文件只补充「COUI 改造」这条主线：项目定位、设计来源、逆向校准工作流。
 
@@ -18,7 +18,7 @@
 
 ## 2. 项目定位（已确认）
 
-- 本仓库由 `git clone` 自上游 Miuix（`origin = compose-coui-ui/miuix`），是改造基底。
+- 本仓库 fork 自上游 Miuix（[`compose-miuix-ui/miuix`](https://github.com/compose-miuix-ui/miuix)），是改造基底；<br>改造完成后以 [`suqi8/coui`](https://github.com/suqi8/coui) 为唯一对外仓库，Maven 坐标为 `io.github.suqi8.coui.kmp`。
 - **定位：就地改造成 coui 库。** Miuix 作为基底，不再单独对齐上游；最终可改包名 / Maven 坐标为 coui。
 - **改动深度：主题换肤优先（渐进）。** 先调 `theme/` 层默认值让现有组件整体呈现 COUI 观感，之后再按需逐个深挖组件。先不做大规模组件重构，除非某个组件的结构/交互和 ColorOS 差异大到换肤补不平。
 - 目标设计系统：**COUI 16 = ColorOS 16 的设计语言**（仓库目录名 `COUI16` 即源于此）。

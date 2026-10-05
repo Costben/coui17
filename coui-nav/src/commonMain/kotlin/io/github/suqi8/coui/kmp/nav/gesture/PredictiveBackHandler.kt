@@ -47,7 +47,7 @@ class NavBackEvent(
 )
 
 /**
- * Back-navigation bridge registered on the [androidx.navigationevent] dispatcher.
+ * Back-navigation bridge registered on the `androidx.navigationevent` dispatcher.
  *
  * One common implementation serves every platform: the dispatcher is provided by the host
  * ([LocalNavigationEventDispatcherOwner]) and fed by platform inputs — the system predictive-back

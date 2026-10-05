@@ -114,4 +114,4 @@ BottomFloatingEditToolbar(visible = isEditing) {
 | IconTitleGapHorizontal          | Dp                | 宽布局下图标与标题之间的水平间距           | 4.dp                        |
 | LabelFontSizeHorizontal         | TextUnit          | 宽布局下的标题字号                         | 14.sp                       |
 | LabelFontSizeVertical           | TextUnit          | 窄布局下的标题字号                         | 10.sp                       |
-| TranslationYSpring              | SpringSpec<Float> | 显示 / 隐藏弹簧                            | 响应 0.38 / 回弹 0.25       |
+| TranslationYSpring              | `SpringSpec<Float>` | 显示 / 隐藏弹簧                            | 响应 0.38 / 回弹 0.25       |

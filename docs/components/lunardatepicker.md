@@ -80,11 +80,11 @@ LunarDatePicker(
 | InsideMargin       | PaddingValues    | Padding around the wheel columns         | PaddingValues(vertical = 12.dp) |
 | NormalMonthCount   | Int              | Months in a year without a leap month    | 12            |
 | LeapYearMonthCount | Int              | Months in a year with a leap month       | 13            |
-| MonthNames         | List<String>     | The `coui_lunar_month` names             | 正月 .. 腊月   |
+| MonthNames         | `List<String>`     | The `coui_lunar_month` names             | 正月 .. 腊月   |
 | LeapPrefix         | String           | The `coui_lunar_leap_string` marker      | "闰"          |
-| YearLabel          | (Int) -> String  | Plain lunar year number                  | { it.toString() } |
+| YearLabel          | (Int) -> String  | Plain lunar year number                  | `{ it.toString() }` |
 | MonthLabel         | (Int, Boolean) -> String | Lunar month name with the leap prefix | 正月 .. 腊月 with 闰 |
-| DayLabel           | (Int) -> String  | Plain day number                         | { it.toString() } |
+| DayLabel           | (Int) -> String  | Plain day number                         | `{ it.toString() }` |
 
 ## LunarUtil
 

@@ -75,13 +75,38 @@ TopTips(
 )
 ```
 
+## Custom Content
+
+`content` is an optional message slot, the Compose equivalent of `COUICustomTopTips`'s fully custom content view. When non-null it replaces the plain `text` body and reuses the same row layout, padding, minimum height and `TopTipsColors`, so the start icon, title and trailing buttons behave exactly as before. Because a custom composable has no single-line width to measure, the slot never forces the trailing cluster onto its own row, and it is not marqueed.
+
+```kotlin
+TopTips(
+    text = "",
+    title = "Custom content",
+    startIcon = { Icon(COUIIcons.Basic.Search, contentDescription = null) },
+    actionText = "Got it",
+    onAction = { /* dismiss */ },
+    onClose = { /* dismiss */ },
+    modifier = Modifier.fillMaxWidth(),
+) {
+    Row {
+        Text(
+            text = "The body of this banner is a custom slot.",
+            color = COUITheme.colorScheme.primary,
+        )
+    }
+}
+```
+
+`text` stays required, so a slot-only banner passes an empty string for it.
+
 ## Properties
 
 ### TopTips
 
 | Property           | Type                       | Description                                                              | Default Value                              | Required |
 | ------------------ | -------------------------- | ------------------------------------------------------------------------ | ------------------------------------------ | -------- |
-| text               | String                     | The message of the banner                                                | -                                          | Yes      |
+| text               | String                     | The message of the banner; ignored when `content` is supplied            | -                                          | Yes      |
 | modifier           | Modifier                   | Modifier applied to the banner                                           | Modifier                                   | No       |
 | visible            | Boolean                    | Whether the banner is visible (animated in/out)                          | true                                       | No       |
 | title              | String?                    | Optional title above the message (2 lines max)                           | null                                       | No       |
@@ -97,6 +122,7 @@ TopTips(
 | backgroundOverlay  | (@Composable () -> Unit)?  | Overlay drawn over the fill; blanks the card fill when set               | null                                       | No       |
 | cornerRadius       | Dp?                        | Explicit corner radius; null follows the native radius rules            | null                                       | No       |
 | colors             | TopTipsColors              | Color configuration                                                      | TopTipsDefaults.topTipsColors(backgroundStyle) | No   |
+| content            | (@Composable () -> Unit)?  | Custom message slot; replaces `text` when non-null (new in 1.2.0)         | null                                       | No       |
 
 ### TopTipsDefaults
 
@@ -148,6 +174,7 @@ TopTips(
 - The trailing cluster is `ignore` then `action` then `close`, matching `COUIDefaultTopTipsView`. `close` is hidden in the AI payment dual-button layout (`changeLayoutWithDualButtons`).
 - When the single-line message would collide with the trailing cluster, the cluster drops to its own end-aligned row below the text (`isNeedMultiText`); in that layout the start icon aligns with the first text line.
 - The leading icon is `IconSize` (24dp) without a title and `TitleIconSize` (36dp) with one.
-- The message scrolls when it overflows, matching `COUIMarqueeTopTips.startRoll` / `stopRoll`; `marqueeEnabled` toggles the same state.
+- The message scrolls when it overflows, matching `COUIMarqueeTopTips.startRoll` / `stopRoll`; `marqueeEnabled` toggles the same state. It does not apply to a custom `content` slot.
+- When `content` is non-null it takes the place of the built-in message; the start icon, title, trailing cluster, row padding and `TopTipsColors` are unchanged.
 - Toggling `visible` plays the `COUICustomTopTips` show/dismiss animation: a 250ms vertical scale pivoting at the center; the banner leaves the composition once the dismiss animation finishes.
 - The message is 13sp (`couiTextBodyS`) and the button labels are 13sp medium; the title is 16sp medium (`couiTextHeadlineXS`).

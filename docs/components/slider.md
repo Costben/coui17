@@ -80,6 +80,21 @@ Slider(
 )
 ```
 
+## Secondary Progress
+
+`secondaryProgress` paints a second, lighter tier behind the played track, mirroring the buffered layer `IntentSeekBar` draws (`ProgressBar.setSecondaryProgress`). It is coerced into `valueRange`, and the part past the thumb stays visible; `null` (the default) draws nothing.
+
+```kotlin
+var value by remember { mutableFloatStateOf(0.25f) }
+var buffered by remember { mutableFloatStateOf(0.75f) }
+
+Slider(
+    value = value,
+    onValueChange = { value = it },
+    secondaryProgress = buffered,
+)
+```
+
 ## Properties
 
 ### Slider Properties
@@ -100,6 +115,7 @@ Slider(
 | showKeyPoints         | Boolean                           | Whether to show key point indicators on the slider. Only works when keyPoints is not null                                                                                      | false                              | No       |
 | keyPoints             | List\<Float\>?                    | Custom key point values to display on the slider. If null, uses step positions from steps parameter. Values should be within valueRange                                        | null                               | No       |
 | magnetThreshold       | Float                             | Magnetic snap threshold as a fraction (0.0 to 1.0). When slider value is within this distance from a key point, it will snap to that point. Only applies when keyPoints is set | 0.02f                              | No       |
+| secondaryProgress     | Float?                            | Optional secondary ("intent tier") drawn behind the played track; coerced into valueRange, the part past the thumb stays visible | null                               | No       |
 
 ### VerticalSlider Properties
 
@@ -120,6 +136,7 @@ Slider(
 | showKeyPoints         | Boolean                           | Whether to show key point indicators on the slider. Only works when keyPoints is not null                                                                                      | false                              | No       |
 | keyPoints             | List\<Float\>?                    | Custom key point values to display on the slider. If null, uses step positions from steps parameter. Values should be within valueRange                                        | null                               | No       |
 | magnetThreshold       | Float                             | Magnetic snap threshold as a fraction (0.0 to 1.0). When slider value is within this distance from a key point, it will snap to that point. Only applies when keyPoints is set | 0.02f                              | No       |
+| secondaryProgress     | Float?                            | Optional secondary ("intent tier") drawn behind the played track; coerced into valueRange, the part past the thumb stays visible | null                               | No       |
 
 ### RangeSlider Properties
 
@@ -138,6 +155,7 @@ Slider(
 | showKeyPoints         | Boolean                                     | Whether to show key point indicators on the slider. Only works when keyPoints is not null                                                                                      | false                              | No       |
 | keyPoints             | List\<Float\>?                              | Custom key point values to display on the slider. If null, uses step positions from steps parameter. Values should be within valueRange                                        | null                               | No       |
 | magnetThreshold       | Float                                       | Magnetic snap threshold as a fraction (0.0 to 1.0). When slider value is within this distance from a key point, it will snap to that point. Only applies when keyPoints is set | 0.02f                              | No       |
+| secondaryProgress     | Float?                                      | Optional secondary ("intent tier") drawn behind the played track; coerced into valueRange, the part past the thumb stays visible | null                               | No       |
 
 ### SliderDefaults Object
 
@@ -177,6 +195,7 @@ The SliderDefaults object provides default configurations for the Slider compone
 | disabledThumbColor      | Color | Thumb color when disabled                     |
 | keyPointColor           | Color | Color of key point indicators in background   |
 | keyPointForegroundColor | Color | Color of key point indicators in foreground   |
+| secondaryProgressColor  | Color | Color of the secondary progress layer         |
 
 ## Advanced Usage
 

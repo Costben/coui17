@@ -112,4 +112,4 @@ The item arrangement follows the window tier. On a small screen the toolbar uses
 | IconTitleGapHorizontal          | Dp         | The horizontal gap between icon and title in the wide layout             | 4.dp                                    |
 | LabelFontSizeHorizontal         | TextUnit   | The title size in the wide layout                                        | 14.sp                                   |
 | LabelFontSizeVertical           | TextUnit   | The title size in the narrow layout                                      | 10.sp                                   |
-| TranslationYSpring              | SpringSpec<Float> | The show / hide spring                                            | response 0.38 / bounce 0.25             |
+| TranslationYSpring              | `SpringSpec<Float>` | The show / hide spring                                            | response 0.38 / bounce 0.25             |

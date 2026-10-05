@@ -19,7 +19,7 @@ import io.github.suqi8.coui.kmp.basic.popupMenuRotationPositionProvider
 
 ## 原生来源
 
-`COUIContextMenu` 的**定位**部分在本库中已有覆盖。[ListPopup](../components/listpopup) 移植了同一个 `PreciseLongPressHelper`（即 `Modifier.preciseClickAnchor`）、同一个 `PopupMenuLocateHelper.setAnchor`（即 `ListPopupDefaults.dropdownPositionProvider`），以及同一套浮层与窗口容器（`OverlayListPopup` / `WindowListPopup`）。
+`COUIContextMenu` 的**定位**部分在本库中已有覆盖。[OverlayListPopup](../components/overlaylistpopup) 移植了同一个 `PreciseLongPressHelper`（即 `Modifier.preciseClickAnchor`）、同一个 `PopupMenuLocateHelper.setAnchor`（即 `ListPopupDefaults.dropdownPositionProvider`），以及同一套浮层与窗口容器（`OverlayListPopup` / `WindowListPopup`）。
 
 缺失的是旋转：本库中没有任何代码旋转菜单内容，也没有任何已移植的类包含 `MenuRotationHelper` 的几何计算。本文件补上的正是这个缺口。
 

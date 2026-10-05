@@ -90,12 +90,12 @@ BottomFloatingAccessoryNavigationBar(
 | SideSpacing              | Dp                | The gap between the capsule and an accessory view                  | 12.dp                       |
 | PaddingHorizontal        | Dp                | The outside padding kept on a small screen                         | 16.dp                       |
 | MinScale                 | Float             | The scale the accessory view starts from                           | 0.5f                        |
-| AlphaSpring              | SpringSpec<Float> | The accessory's alpha spring                                       | response 0.35 / bounce 0    |
-| ScaleSpring              | SpringSpec<Float> | The accessory's scale spring                                       | response 0.55 / bounce 0.35 |
-| TranslationXSpring       | SpringSpec<Float> | The spring that slides the accessory out of the capsule            | response 0.55 / bounce 0.35 |
-| LowEndAlphaSpring        | SpringSpec<Float> | The alpha spring used when the device reports a low animation level | response 0.2 / bounce 0     |
-| LowEndScaleSpring        | SpringSpec<Float> | The low-end scale spring                                           | response 0.5 / bounce 0.3   |
-| LowEndTranslationXSpring | SpringSpec<Float> | The low-end translation spring                                     | response 0.5 / bounce 0.3   |
+| AlphaSpring              | `SpringSpec<Float>` | The accessory's alpha spring                                       | response 0.35 / bounce 0    |
+| ScaleSpring              | `SpringSpec<Float>` | The accessory's scale spring                                       | response 0.55 / bounce 0.35 |
+| TranslationXSpring       | `SpringSpec<Float>` | The spring that slides the accessory out of the capsule            | response 0.55 / bounce 0.35 |
+| LowEndAlphaSpring        | `SpringSpec<Float>` | The alpha spring used when the device reports a low animation level | response 0.2 / bounce 0     |
+| LowEndScaleSpring        | `SpringSpec<Float>` | The low-end scale spring                                           | response 0.5 / bounce 0.3   |
+| LowEndTranslationXSpring | `SpringSpec<Float>` | The low-end translation spring                                     | response 0.5 / bounce 0.3   |
 
 ## Responsive Padding
 

@@ -36,7 +36,7 @@ CardInstructionPreference(
 
 | 属性名                | 类型                              | 说明                                                | 默认值                                                     | 是否必须 |
 | --------------------- | --------------------------------- | --------------------------------------------------- | ---------------------------------------------------------- | -------- |
-| items                 | List<CardInstructionItem>         | 页(Description)或选项(Selector)                   | -                                                          | 是       |
+| items                 | `List<CardInstructionItem>`         | 页(Description)或选项(Selector)                   | -                                                          | 是       |
 | modifier              | Modifier                          | 应用于卡片的修饰符                                  | Modifier                                                   | 否       |
 | cardType              | CardInstructionType               | 使用哪套设备适配器,见 [CardInstructionType](#cardinstructiontype) | CardInstructionType.Description            | 否       |
 | selectedIndex         | Int                               | 当前页或当前选中项                                  | 0                                                          | 否       |

@@ -19,7 +19,7 @@ import io.github.suqi8.coui.kmp.basic.popupMenuRotationPositionProvider
 
 ## Native Origin
 
-The *positioning* half of `COUIContextMenu` is already covered in this library. [ListPopup](../components/listpopup) ports the same `PreciseLongPressHelper` as `Modifier.preciseClickAnchor`, the same `PopupMenuLocateHelper.setAnchor` as `ListPopupDefaults.dropdownPositionProvider`, and the same overlay and window containers as `OverlayListPopup` / `WindowListPopup`.
+The *positioning* half of `COUIContextMenu` is already covered in this library. [OverlayListPopup](../components/overlaylistpopup) ports the same `PreciseLongPressHelper` as `Modifier.preciseClickAnchor`, the same `PopupMenuLocateHelper.setAnchor` as `ListPopupDefaults.dropdownPositionProvider`, and the same overlay and window containers as `OverlayListPopup` / `WindowListPopup`.
 
 What was missing is the rotation. Nothing in this library rotated menu content, and no ported class carried `MenuRotationHelper`'s geometry. That is the gap this file fills.
 

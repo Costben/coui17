@@ -87,6 +87,18 @@ TextButton(
 )
 ```
 
+### 极小尺寸档（Tiny Size Tier）
+
+使用 `ButtonSize.Tiny` 可得到紧凑尺寸档（`ButtonDefaults.MinWidthTiny` / `MinHeightTiny` / `CornerRadiusTiny` / `InsideMarginTiny`）。显式传入 `minWidth`、`minHeight`、`cornerRadius` 或 `insideMargin` 仍会覆盖该尺寸档：
+
+```kotlin
+TextButton(
+    text = "极小按钮",
+    onClick = { /* 处理点击事件 */ },
+    size = ButtonSize.Tiny,
+)
+```
+
 ## 组件状态
 
 ### 禁用状态
@@ -110,13 +122,14 @@ Button(
 | modifier          | Modifier                        | 应用于按钮的修饰符       | Modifier                      | 否       |
 | enabled           | Boolean                         | 按钮是否可点击           | true                          | 否       |
 | pressScaleEnabled | Boolean                         | 按压时按钮是否缩放（对应 COUIButton 的 `scaleEnable`）。填满容器单元格的按钮（如对话框按钮栏）应设为 `false`，此时按压反馈只有铺满整格的按压着色 | true | 否       |
-| cornerRadius      | Dp                              | 按钮圆角半径             | ButtonDefaults.CornerRadius   | 否       |
-| minWidth          | Dp                              | 按钮最小宽度             | ButtonDefaults.MinWidth       | 否       |
-| minHeight         | Dp                              | 按钮最小高度             | ButtonDefaults.MinHeight      | 否       |
+| cornerRadius      | Dp?                             | 按钮圆角半径;为 `null` 时使用 `size` 的圆角 | null                          | 否       |
+| minWidth          | Dp?                             | 按钮最小宽度;为 `null` 时使用 `size` 的宽度 | null                          | 否       |
+| minHeight         | Dp?                             | 按钮最小高度;为 `null` 时使用 `size` 的高度 | null                          | 否       |
 | colors            | ButtonColors                    | 按钮颜色配置             | ButtonDefaults.buttonColors() | 否       |
-| insideMargin      | PaddingValues                   | 按钮内部边距             | ButtonDefaults.InsideMargin   | 否       |
+| insideMargin      | PaddingValues?                  | 按钮内部边距;为 `null` 时使用 `size` 的边距 | null                        | 否       |
 | interactionSource | MutableInteractionSource?       | 按钮的交互源             | null                          | 否       |
 | indication        | Indication?                     | 点击交互的反馈效果；默认为 `null`，因为 COUI 按压反馈（缩放 + 按压着色）已内置于按钮 | null | 否       |
+| size              | ButtonSize                      | 尺寸档,为未显式传入的 `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` 提供默认值;显式传入时覆盖该尺寸档 | ButtonSize.Regular | 否       |
 | content           | @Composable RowScope.() -> Unit | 按钮内容区域的可组合函数 | -                             | 是       |
 
 ### TextButton 属性
@@ -129,13 +142,14 @@ Button(
 | enabled           | Boolean                   | 按钮是否可点击       | true                              | 否       |
 | pressScaleEnabled | Boolean                   | 按压时按钮是否缩放（对应 COUIButton 的 `scaleEnable`）。填满容器单元格的按钮（如对话框按钮栏）应设为 `false` | true | 否       |
 | colors            | TextButtonColors          | 文本按钮颜色配置     | ButtonDefaults.textButtonColors() | 否       |
-| cornerRadius      | Dp                        | 按钮圆角半径         | ButtonDefaults.CornerRadius       | 否       |
-| minWidth          | Dp                        | 按钮最小宽度         | ButtonDefaults.MinWidth           | 否       |
-| minHeight         | Dp                        | 按钮最小高度         | ButtonDefaults.MinHeight          | 否       |
-| insideMargin      | PaddingValues             | 按钮内部边距         | ButtonDefaults.InsideMargin       | 否       |
+| cornerRadius      | Dp?                       | 按钮圆角半径;为 `null` 时使用 `size` 的圆角 | null                              | 否       |
+| minWidth          | Dp?                       | 按钮最小宽度;为 `null` 时使用 `size` 的宽度 | null                              | 否       |
+| minHeight         | Dp?                       | 按钮最小高度;为 `null` 时使用 `size` 的高度 | null                              | 否       |
+| insideMargin      | PaddingValues?            | 按钮内部边距;为 `null` 时使用 `size` 的边距 | null                              | 否       |
 | textStyle         | TextStyle                 | 标签文字样式（配合 `Small` 系列常量与 14sp 样式可得到 COUI 小尺寸档） | COUITheme.textStyles.button | 否       |
 | interactionSource | MutableInteractionSource? | 按钮的交互源         | null                              | 否       |
 | indication        | Indication?               | 点击交互的反馈效果；默认为 `null`，因为 COUI 按压反馈（缩放 + 按压着色）已内置于按钮 | null | 否       |
+| size              | ButtonSize                | 尺寸档,为未显式传入的 `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` 提供默认值;显式传入时覆盖该尺寸档 | ButtonSize.Regular | 否       |
 
 ### ButtonDefaults 对象
 
@@ -155,6 +169,10 @@ ButtonDefaults 对象提供了按钮组件的默认值和颜色配置。
 | MinHeightSmall | Dp          | 小尺寸档的最小高度 | 28.dp |
 | CornerRadiusSmall | Dp       | 小尺寸档的圆角半径（随高度的胶囊） | 14.dp |
 | InsideMarginSmall | PaddingValues | 小尺寸档的内部边距 | PaddingValues(horizontal = 12.dp, vertical = 4.dp) |
+| MinWidthTiny  | Dp            | 极小尺寸档的最小宽度 | 44.dp           |
+| MinHeightTiny | Dp            | 极小尺寸档的最小高度 | 20.dp           |
+| CornerRadiusTiny | Dp         | 极小尺寸档的圆角半径（随高度的胶囊） | 10.dp |
+| InsideMarginTiny | PaddingValues | 极小尺寸档的内部边距 | PaddingValues(horizontal = 8.dp, vertical = 2.dp) |
 
 #### 方法
 

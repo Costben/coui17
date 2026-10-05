@@ -1,5 +1,45 @@
 # Upgrading
 
+## 1.1.0 → 1.2.0
+
+Update the version in every COUI coordinate you depend on:
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("io.github.suqi8.coui.kmp:coui-ui:1.2.0")
+            implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
+            implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
+        }
+    }
+}
+```
+
+**There are no breaking changes.** Every API added in 1.2.0 is additive, and the existing signatures
+are unchanged. Binary compatibility is verified for every published module, so a rebuild is not even
+strictly required — but update the version to pick up the new components.
+
+### New component capabilities
+
+- `Chip` gained a close button and its own dismiss touch target.
+- `Slider` gained `secondaryProgress`, and the range and vertical sliders gained the matching
+  secondary track.
+- `Button` gained a `Tiny` size tier.
+- `CircularProgressIndicator` gained `error` and `pause` states.
+- A centred warning dialog variant and a horizontal progress dialog variant are available for both
+  the overlay and window dialog hosts.
+- `TopTips` gained a custom content slot alongside the existing marquee behaviour.
+- `RecommendedPreference` gained `enabled` with a matching disabled visual state.
+
+All of the above are opt-in parameters with defaults that preserve the previous behaviour, so no call
+site needs to change.
+
+### Documentation and tooling
+
+The published `-javadoc` artifacts now contain the real Dokka output, and every module ships a
+committed API dump (`apiCheck` runs in CI).
+
 ## 1.0.0 → 1.1.0
 
 Update the version in every COUI coordinate you depend on:

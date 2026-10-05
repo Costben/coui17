@@ -118,6 +118,15 @@ LinearProgressIndicator(progress = null)
 CircularProgressIndicator(progress = null)
 ```
 
+### 错误与暂停状态
+
+`CircularProgressIndicator` 还可以通过 `state` 参数渲染两种静态状态：`CircularProgressState.Error` 绘制实心错误圆点加感叹号图形，`CircularProgressState.Paused` 绘制完整强调色圆环加暂停图形。两者都不播放动画，颜色来自 `ProgressIndicatorColors.errorColor` / `onErrorColor`。
+
+```kotlin
+CircularProgressIndicator(state = CircularProgressState.Error)
+CircularProgressIndicator(state = CircularProgressState.Paused)
+```
+
 ## 属性
 
 ### LinearProgressIndicator 属性
@@ -138,6 +147,7 @@ CircularProgressIndicator(progress = null)
 | colors      | ProgressIndicatorColors | 进度条的颜色配置               | ProgressIndicatorDefaults.circularProgressIndicatorColors()           | 否       |
 | strokeWidth | Dp                      | 环形进度条的描边宽度           | ProgressIndicatorDefaults.DefaultCircularProgressIndicatorStrokeWidth | 否       |
 | size        | Dp                      | 环形进度条的大小               | ProgressIndicatorDefaults.DefaultCircularProgressIndicatorSize        | 否       |
+| state       | CircularProgressState?  | 显式状态覆盖;为 `null` 时由 `progress` 推导 | null                                                     | 否       |
 
 ### InfiniteProgressIndicator 属性
 
@@ -197,6 +207,17 @@ ProgressIndicatorDefaults 对象提供了进度指示器组件的默认值和颜
 | foregroundColor         | Color | 进度指示器的前景色           |
 | disabledForegroundColor | Color | 禁用状态时进度指示器的前景色 |
 | backgroundColor         | Color | 进度指示器的背景色           |
+| errorColor              | Color | 错误状态的填充色             |
+| onErrorColor            | Color | 错误状态的图形色             |
+
+### CircularProgressState
+
+| 值          | 说明                                                     |
+| ----------- | -------------------------------------------------------- |
+| Loading     | 不确定状态:圆弧持续旋转并伸缩                            |
+| Determinate | 确定状态:圆弧扫到当前 `progress` 比例                    |
+| Error       | 静态错误圆点加感叹号图形                                 |
+| Paused      | 静态强调色圆环加暂停图形                                 |
 
 ## 进阶用法
 

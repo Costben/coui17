@@ -40,6 +40,23 @@ Chip(
 )
 ```
 
+## 带关闭按钮
+
+传入 `onDismiss` 会在尾部生成一个关闭按钮。它是独立的 48dp `Role.Button` 点击目标,不会切换 Chip 的选中状态,并随 Chip 一起禁用。`dismissIcon` 插槽可覆盖内置的 `COUIIcons.Basic.Close` 图标。
+
+```kotlin
+var visible by remember { mutableStateOf(true) }
+
+if (visible) {
+    Chip(
+        selected = false,
+        onClick = {},
+        label = "推荐",
+        onDismiss = { visible = false },
+    )
+}
+```
+
 ## 单选组
 
 ```kotlin
@@ -85,6 +102,10 @@ Chip(
 | modifier          | Modifier                   | 应用于 Chip 的修饰符             | Modifier                  | 否   |
 | enabled           | Boolean                    | 是否启用                         | true                      | 否   |
 | icon              | (@Composable () -> Unit)?  | 可选前置图标                     | null                      | 否   |
+| onDismiss         | (() -> Unit)?              | 尾部关闭回调;设置后显示关闭按钮   | null                      | 否   |
+| dismissIcon       | (@Composable () -> Unit)?  | 自定义关闭按钮内容               | null(内置 Close)         | 否   |
+| dismissContentDescription | String             | 关闭按钮的无障碍描述             | ChipDefaults.DISMISS_CONTENT_DESCRIPTION | 否 |
+| dismissButtonSize | Dp                         | 关闭按钮的点击目标尺寸           | ChipDefaults.DismissButtonSize | 否   |
 | cornerRadius      | Dp                         | 胶囊圆角                         | ChipDefaults.CornerRadius | 否   |
 | minWidth          | Dp                         | 最小宽度                         | ChipDefaults.MinWidth     | 否   |
 | minHeight         | Dp                         | 最小高度                         | ChipDefaults.MinHeight    | 否   |
@@ -105,6 +126,9 @@ Chip(
 | CornerRadius | Dp            | 16.dp                             | chipCornerRadius -1 → 胶囊(高度 / 2)          |
 | IconSize     | Dp            | 16.dp                             | coui_chip_selection_style_chip_icon_size         |
 | IconSpacing  | Dp            | 4.dp                              | coui_chip_selection_style_chip_icon_end_padding  |
+| DismissIconSize | Dp         | 16.dp                             | 内置关闭图标的大小                               |
+| DismissButtonSize | Dp       | 48.dp                             | 关闭按钮的点击目标尺寸                           |
+| DISMISS_CONTENT_DESCRIPTION | String | "Dismiss"                | 关闭按钮的无障碍描述                             |
 | InsideMargin | PaddingValues | PaddingValues(horizontal = 12.dp) | coui_chip_selection_style_chip_horizontal_padding |
 
 #### 方法
@@ -132,3 +156,4 @@ Chip(
 - 选中/取消选中时,胶囊、标签与图标颜色在临界阻尼弹簧上交叉渐变(COUIChipDrawable.TintAnimation,response 0.3s / bounce 0)。
 - 按压时 Chip 向 0.92 倍缩小并叠加按压色(COUIPressFeedbackHelper + COUIMaskEffectDrawable);快速点按也会明显闪现按压色。
 - 标签单行显示,超过 `TextMaxWidth` 省略;整个 Chip 宽度被钳制在 `MinWidth` 与 `MaxWidth` 之间。
+- 设置 `onDismiss` 后,尾部会出现一个 48dp 关闭按钮;它是独立的 `Role.Button` 点击目标,不会切换选中状态,并随 Chip 一起禁用。

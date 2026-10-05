@@ -80,6 +80,21 @@ Slider(
 )
 ```
 
+## 次级进度
+
+`secondaryProgress` 在主进度轨道后方绘制一层更浅的次级轨道,对应 `IntentSeekBar` 绘制的缓冲层(`ProgressBar.setSecondaryProgress`)。它会被钳制到 `valueRange` 内,超出滑块拇指的部分依然可见;为 `null`(默认)时不绘制。
+
+```kotlin
+var value by remember { mutableFloatStateOf(0.25f) }
+var buffered by remember { mutableFloatStateOf(0.75f) }
+
+Slider(
+    value = value,
+    onValueChange = { value = it },
+    secondaryProgress = buffered,
+)
+```
+
 ## 属性
 
 ### Slider 属性
@@ -100,6 +115,7 @@ Slider(
 | showKeyPoints         | Boolean                           | 是否显示关键点指示器。仅当 keyPoints 不为 null 时有效                                                            | false                              | 否       |
 | keyPoints             | List\<Float\>?                    | 要在滑块上显示的自定义关键点值。如果为 null,则使用 steps 参数的步长位置。值应在 valueRange 范围内                | null                               | 否       |
 | magnetThreshold       | Float                             | 磁吸对齐阈值,以分数表示 (0.0 到 1.0)。当滑块值与关键点的距离在此阈值内时,将对齐到该点。仅在设置 keyPoints 时生效 | 0.02f                              | 否       |
+| secondaryProgress     | Float?                            | 可选次级进度("意图层"),绘制在主进度轨道后方;钳制到 valueRange 内,超出拇指的部分可见 | null                               | 否       |
 
 ### VerticalSlider 属性
 
@@ -120,6 +136,7 @@ Slider(
 | showKeyPoints         | Boolean                           | 是否显示关键点指示器。仅当 keyPoints 不为 null 时有效                                                            | false                              | 否       |
 | keyPoints             | List\<Float\>?                    | 要在滑块上显示的自定义关键点值。如果为 null,则使用 steps 参数的步长位置。值应在 valueRange 范围内                | null                               | 否       |
 | magnetThreshold       | Float                             | 磁吸对齐阈值,以分数表示 (0.0 到 1.0)。当滑块值与关键点的距离在此阈值内时,将对齐到该点。仅在设置 keyPoints 时生效 | 0.02f                              | 否       |
+| secondaryProgress     | Float?                            | 可选次级进度("意图层"),绘制在主进度轨道后方;钳制到 valueRange 内,超出拇指的部分可见 | null                               | 否       |
 
 ### RangeSlider 属性
 
@@ -138,6 +155,7 @@ Slider(
 | showKeyPoints         | Boolean                                     | 是否显示关键点指示器。仅当 keyPoints 不为 null 时有效                                                            | false                              | 否       |
 | keyPoints             | List\<Float\>?                              | 要在滑块上显示的自定义关键点值。如果为 null,则使用 steps 参数的步长位置。值应在 valueRange 范围内                | null                               | 否       |
 | magnetThreshold       | Float                                       | 磁吸对齐阈值,以分数表示 (0.0 到 1.0)。当滑块值与关键点的距离在此阈值内时,将对齐到该点。仅在设置 keyPoints 时生效 | 0.02f                              | 否       |
+| secondaryProgress     | Float?                                      | 可选次级进度("意图层"),绘制在主进度轨道后方;钳制到 valueRange 内,超出拇指的部分可见 | null                               | 否       |
 
 ### SliderDefaults 对象
 
@@ -177,6 +195,7 @@ SliderDefaults 对象提供了 Slider 组件的默认配置。
 | disabledThumbColor      | Color | 禁用状态时拇指的颜色       |
 | keyPointColor           | Color | 背景中关键点指示器的颜色   |
 | keyPointForegroundColor | Color | 前景中关键点指示器的颜色   |
+| secondaryProgressColor  | Color | 次级进度层的颜色           |
 
 ## 进阶用法
 

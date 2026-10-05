@@ -65,7 +65,7 @@ NumberPicker(
 | modifier         | Modifier           | 应用于选择器的修饰符                                 | Modifier                         | 否       |
 | enabled          | Boolean            | 是否启用用户交互                                     | true                             | 否       |
 | range            | IntRange           | 可选择的值范围                                       | 0..10                            | 否       |
-| label            | (Int) -> String    | 将值转换为显示字符串的函数                           | { it.toString() }                | 否       |
+| label            | (Int) -> String    | 将值转换为显示字符串的函数                           | `{ it.toString() }`                | 否       |
 | visibleItemCount | Int                | 可见项数。必须为奇数且不小于 3                       | 3                                | 否       |
 | wrapAround       | Boolean            | 是否启用循环滚动（无限滚动）                         | false                            | 否       |
 | colors           | NumberPickerColors | 选择器的颜色配置                                     | NumberPickerDefaults.colors()    | 否       |

@@ -40,6 +40,23 @@ Chip(
 )
 ```
 
+## With a Dismiss Button
+
+Pass `onDismiss` to grow a trailing close affordance. It is a separate 48dp `Role.Button` target that never toggles the chip selection, and it is disabled together with the chip. The `dismissIcon` slot overrides the built-in `COUIIcons.Basic.Close` glyph.
+
+```kotlin
+var visible by remember { mutableStateOf(true) }
+
+if (visible) {
+    Chip(
+        selected = false,
+        onClick = {},
+        label = "Recommended",
+        onDismiss = { visible = false },
+    )
+}
+```
+
 ## Single Selection Group
 
 ```kotlin
@@ -85,6 +102,10 @@ Chip(
 | modifier          | Modifier                   | Modifier applied to the chip               | Modifier                  | No       |
 | enabled           | Boolean                    | Whether the chip is enabled                | true                      | No       |
 | icon              | (@Composable () -> Unit)?  | Optional leading icon                      | null                      | No       |
+| onDismiss         | (() -> Unit)?              | Trailing dismiss callback; adds a close button | null                  | No       |
+| dismissIcon       | (@Composable () -> Unit)?  | Custom dismiss affordance content          | null (built-in Close)     | No       |
+| dismissContentDescription | String             | Content description of the dismiss button  | ChipDefaults.DISMISS_CONTENT_DESCRIPTION | No |
+| dismissButtonSize | Dp                         | Touch target of the dismiss affordance     | ChipDefaults.DismissButtonSize | No   |
 | cornerRadius      | Dp                         | Corner radius of the capsule               | ChipDefaults.CornerRadius | No       |
 | minWidth          | Dp                         | Minimum width                              | ChipDefaults.MinWidth     | No       |
 | minHeight         | Dp                         | Minimum height                             | ChipDefaults.MinHeight    | No       |
@@ -105,6 +126,9 @@ Chip(
 | CornerRadius | Dp            | 16.dp                            | chipCornerRadius -1 → capsule (height / 2)     |
 | IconSize     | Dp            | 16.dp                            | coui_chip_selection_style_chip_icon_size       |
 | IconSpacing  | Dp            | 4.dp                             | coui_chip_selection_style_chip_icon_end_padding |
+| DismissIconSize | Dp         | 16.dp                            | Size of the built-in dismiss icon              |
+| DismissButtonSize | Dp       | 48.dp                            | Touch target of the dismiss affordance         |
+| DISMISS_CONTENT_DESCRIPTION | String | "Dismiss"              | Content description of the dismiss affordance  |
 | InsideMargin | PaddingValues | PaddingValues(horizontal = 12.dp) | coui_chip_selection_style_chip_horizontal_padding |
 
 #### Methods
@@ -132,3 +156,4 @@ Chip(
 - Selecting/deselecting cross-fades the capsule, label and icon colors on a critically damped spring (COUIChipDrawable.TintAnimation, response 0.3s / bounce 0).
 - Pressing shrinks the chip towards 0.92 of its size and overlays the press tint (COUIPressFeedbackHelper + COUIMaskEffectDrawable); a quick tap still flashes the tint visibly.
 - The label is single line and ellipsized beyond `TextMaxWidth`; the whole chip is clamped between `MinWidth` and `MaxWidth`.
+- With `onDismiss` set, a trailing 48dp close button appears; it is an independent `Role.Button` target that never toggles the selection and is disabled together with the chip.

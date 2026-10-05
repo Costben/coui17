@@ -34,7 +34,7 @@ object NavTransitions {
      * see below); RTL mirrored.
      *
      * The leading-edge corner clip and the dark scrim are NOT baked into this transition — they are
-     * the orthogonal [NavDisplayEffects] layer (`enableCornerClip` + `cornerClipRadius`, `dimAmount`),
+     * the orthogonal `NavDisplayEffects` layer (`enableCornerClip` + `cornerClipRadius`, `dimAmount`),
      * mirroring the reference implementation where the clip is an effect applied to the entering top.
      * Keeping it out here lets the clip radius follow the platform screen corner instead of a fixed
      * value, and avoids double-clipping when both a transition and the effect are in play.
@@ -58,7 +58,7 @@ object NavTransitions {
     /**
      * Bottom-up modal: the entering page slides up from the bottom edge (d: -1 -> 0,
      * translationY: +height -> 0). The layer below is kept fully visible and untouched, so
-     * [opaqueDepth] is raised to 2f to stop the host from culling it. Like every preset, swipe-to-
+     * `opaqueDepth` is raised to 2f to stop the host from culling it. Like every preset, swipe-to-
      * dismiss is opt-in: pass `entry(swipeDismiss = NavSwipeDirection.TopToBottom)` to let a downward
      * swipe dismiss it (the translation is linear, so the gesture follows the finger 1:1).
      */

@@ -25,17 +25,20 @@ repositories {
 
 3. Add dependencies to your project's `build.gradle.kts`:
 
-COUI is composed of several modules that can be used independently:
+COUI is composed of several modules that can be used independently. All modules are published under
+the group `io.github.suqi8.coui.kmp` and share one version number.
 
-| Module             | Description                                          |
-| ------------------ | ---------------------------------------------------- |
-| `coui-ui`         | Core UI component library                            |
-| `coui-preference` | Preference components library, depends on `coui-ui` |
-| `coui-icons`      | Extended icon library, can be used independently     |
-| `coui-blur`       | Blur effect library, can be used independently       |
-| `coui-squircle`   | Squircle shapes library, can be used independently   |
-| `coui-nav`        | Navigation library, can be used independently        |
-| `coui-shader`     | Low-level runtime shader / render effect abstraction |
+| Module                | Description                                                                                              | Platform notes |
+| --------------------- | -------------------------------------------------------------------------------------------------------- | -------------- |
+| `coui-ui`             | Core UI component library                                                                                | Android `minSdk` 23, all other platforms |
+| `coui-core`           | Shared primitives and platform utilities (transitively included by `coui-ui` / `coui-icons`)             | Android `minSdk` 23, all other platforms |
+| `coui-preference`     | Preference components library, depends on `coui-ui`                                                      | Android `minSdk` 23, all other platforms |
+| `coui-icons`          | Extended icon library, can be used independently                                                         | Android `minSdk` 23, all other platforms |
+| `coui-blur`           | Blur effect library, can be used independently                                                           | Android `minSdk` 33, all other platforms |
+| `coui-squircle`       | Squircle shapes library, can be used independently                                                       | Android `minSdk` 23, all other platforms |
+| `coui-shader`         | Low-level runtime shader / render effect abstraction                                                     | Android `minSdk` 23, all other platforms |
+| `coui-nav`            | Navigation runtime library, can be used independently                                                    | Android `minSdk` 23, all other platforms |
+| `coui-navigation3-ui` | Navigation3 UI integration, can be used independently                                                    | Android `minSdk` 23, all other platforms |
 
 - For Compose Multiplatform projects:
 
@@ -54,6 +57,10 @@ kotlin {
             implementation("io.github.suqi8.coui.kmp:coui-squircle:<version>")
             // Optional: Add coui-nav for navigation
             implementation("io.github.suqi8.coui.kmp:coui-nav:<version>")
+            // Optional: Add coui-shader for runtime shaders
+            implementation("io.github.suqi8.coui.kmp:coui-shader:<version>")
+            // Optional: Add coui-navigation3-ui for Navigation3 support
+            implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui:<version>")
         }
     }
 }
@@ -74,6 +81,10 @@ dependencies {
     implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")
     // Optional: Add coui-nav for navigation
     implementation("io.github.suqi8.coui.kmp:coui-nav-android:<version>")
+    // Optional: Add coui-shader for runtime shaders
+    implementation("io.github.suqi8.coui.kmp:coui-shader-android:<version>")
+    // Optional: Add coui-navigation3-ui for Navigation3 support
+    implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui-android:<version>")
 }
 ```
 

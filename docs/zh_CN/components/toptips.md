@@ -75,13 +75,38 @@ TopTips(
 )
 ```
 
+## 自定义内容
+
+`content` 是可选的文案插槽，对应 `COUICustomTopTips` 的完全自定义内容视图。非 null 时它会替换内置的 `text` 正文，并复用同一套行布局、内边距、最小高度与 `TopTipsColors`，因此前置图标、标题与尾部按钮的行为完全不变。由于自定义 Composable 没有可测量的单行宽度，该插槽不会把尾部区挤到单独一行，也不会参与跑马灯。
+
+```kotlin
+TopTips(
+    text = "",
+    title = "自定义内容",
+    startIcon = { Icon(COUIIcons.Basic.Search, contentDescription = null) },
+    actionText = "知道了",
+    onAction = { /* 关闭 */ },
+    onClose = { /* 关闭 */ },
+    modifier = Modifier.fillMaxWidth(),
+) {
+    Row {
+        Text(
+            text = "本提示条的主体是一个自定义插槽。",
+            color = COUITheme.colorScheme.primary,
+        )
+    }
+}
+```
+
+`text` 仍是必填参数，只用插槽时传空串即可。
+
 ## 属性
 
 ### TopTips
 
 | 属性              | 类型                       | 说明                                                     | 默认值                                     | 必需 |
 | ----------------- | -------------------------- | -------------------------------------------------------- | ------------------------------------------ | ---- |
-| text              | String                     | 提示文案                                                 | -                                          | 是   |
+| text              | String                     | 提示文案；提供 `content` 时被忽略                        | -                                          | 是   |
 | modifier          | Modifier                   | 应用于提示条的修饰符                                     | Modifier                                   | 否   |
 | visible           | Boolean                    | 是否可见（切换时播放进出动画）                            | true                                       | 否   |
 | title             | String?                    | 文案上方的可选标题（最多 2 行）                          | null                                       | 否   |
@@ -97,6 +122,7 @@ TopTips(
 | backgroundOverlay | (@Composable () -> Unit)?  | 覆盖在填充之上的叠层；设置后卡片填充变透明                | null                                       | 否   |
 | cornerRadius      | Dp?                        | 显式圆角；null 时遵循原生圆角规则                        | null                                       | 否   |
 | colors            | TopTipsColors              | 颜色配置                                                 | TopTipsDefaults.topTipsColors(backgroundStyle) | 否 |
+| content           | (@Composable () -> Unit)?  | 自定义文案插槽；非 null 时替换 `text`（1.2.0 新增）       | null                                       | 否   |
 
 ### TopTipsDefaults
 
@@ -148,6 +174,7 @@ TopTips(
 - 尾部区顺序为 `ignore`、`action`、`close`，与 `COUIDefaultTopTipsView` 一致。AI 支付双按钮布局（`changeLayoutWithDualButtons`）会隐藏 `close`。
 - 当单行文案将与尾部区相撞时，尾部区下移到文字下方靠右单独一行（`isNeedMultiText`）；此布局中前置图标与第一行文字对齐。
 - 前置图标在无标题时为 `IconSize`（24dp），有标题时为 `TitleIconSize`（36dp）。
-- 文案溢出时会滚动，对应 `COUIMarqueeTopTips.startRoll` / `stopRoll`；`marqueeEnabled` 切换的是同一状态。
+- 文案溢出时会滚动，对应 `COUIMarqueeTopTips.startRoll` / `stopRoll`；`marqueeEnabled` 切换的是同一状态。自定义 `content` 插槽不参与滚动。
+- `content` 非 null 时它替换内置文案；前置图标、标题、尾部区、行内边距与 `TopTipsColors` 均保持不变。
 - 切换 `visible` 会播放 `COUICustomTopTips` 的显示/消失动画：以中心为轴的 250ms 纵向缩放；消失动画结束后提示条移出组合。
 - 文案为 13sp（`couiTextBodyS`），按钮文案为 13sp Medium，标题为 16sp Medium（`couiTextHeadlineXS`）。

@@ -41,6 +41,7 @@ RecommendedPreference(
 | title         | String                       | Header text of the card                        | -                                                          | Yes      |
 | items         | List\<RecommendedItem\>      | Recommended entries; empty renders nothing     | -                                                          | Yes      |
 | modifier      | Modifier                     | Component modifier                             | Modifier                                                   | No       |
+| enabled       | Boolean                      | Whether the card responds to clicks; when false every row's `onClick` is suppressed and the disabled colors are drawn (new in 1.2.0) | true | No |
 | cornerRadius  | Dp                           | Corner radius of the card                      | RecommendedPreferenceDefaults.CornerRadius                 | No       |
 | colors        | RecommendedPreferenceColors  | Card color configuration                       | RecommendedPreferenceDefaults.recommendedPreferenceColors() | No      |
 | insideMargin  | PaddingValues                | Horizontal margin between card edge and texts  | RecommendedPreferenceDefaults.InsideMargin                 | No       |
@@ -66,11 +67,25 @@ RecommendedPreference(
 
 #### `recommendedPreferenceColors()` factory
 
-| Parameter      | Type  | Default                                                                     |
-| -------------- | ----- | --------------------------------------------------------------------------- |
-| containerColor | Color | couiColorContainer4 (#0A000000 light / #14FFFFFF dark, theme-aware)         |
-| titleColor     | Color | COUITheme.colorScheme.onSurfaceSecondary                                   |
-| itemColor      | Color | COUITheme.colorScheme.onSurface                                            |
+| Parameter          | Type  | Default                                                                     |
+| ------------------ | ----- | --------------------------------------------------------------------------- |
+| containerColor     | Color | couiColorContainer4 (#0A000000 light / #14FFFFFF dark, theme-aware)         |
+| titleColor         | Color | COUITheme.colorScheme.onSurfaceSecondary                                   |
+| itemColor          | Color | COUITheme.colorScheme.onSurface                                            |
+| disabledTitleColor | Color | COUITheme.colorScheme.disabledOnSecondaryVariant                           |
+| disabledItemColor  | Color | COUITheme.colorScheme.disabledOnSecondaryVariant                           |
+
+### RecommendedPreferenceColors Properties
+
+| Property Name      | Type  | Description                                       |
+| ------------------ | ----- | ------------------------------------------------- |
+| containerColor     | Color | Background color of the card                      |
+| titleColor         | Color | Color of the header text                          |
+| itemColor          | Color | Color of the row texts                            |
+| disabledTitleColor | Color | Color of the header text when `enabled` is false  |
+| disabledItemColor  | Color | Color of the row texts when `enabled` is false    |
+
+The three-color constructor `RecommendedPreferenceColors(containerColor, titleColor, itemColor)` is still available for callers written before `enabled` existed; it falls back to the enabled colors for the disabled state.
 
 ## Advanced Usage
 
@@ -84,6 +99,19 @@ RecommendedPreference(
         containerColor = COUITheme.colorScheme.surfaceContainer,
         itemColor = COUITheme.colorScheme.primary
     )
+)
+```
+
+### Disabled Card
+
+`enabled = false` greys out the header and every row and swallows all row clicks, so a card can be shown as unavailable without rebuilding the item list. Each row also reports a disabled state to accessibility services, so a UI test can assert it:
+
+```kotlin
+RecommendedPreference(
+    title = "Not available right now:",
+    items = items,
+    enabled = false,
+    modifier = Modifier.padding(horizontal = 16.dp)
 )
 ```
 

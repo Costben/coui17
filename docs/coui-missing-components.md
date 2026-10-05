@@ -6,6 +6,9 @@
 > 令牌溯源见同文件 §7.12.1–§7.12.6，工单与收口核验见 `docs/coui-coloros17-upgrade-plan.md` §2.4.1 与 §2.5。
 > 本文件保留 2026-07-26 的原始盘点口径（含当时使用的 Windows 逆向工作区路径），**不再逐条更新**，以免出现两处真相。
 
+> **状态回写（2026-10-06，1.2.0）**：§6「状态完备性结论」里「记录待立项（组件级）」的条目，连同仅记于同表 Dialog 行的横向进度对话框，共 **8 项已于 1.2.0 落地**：Chip 关闭 X 形态、Slider / RangeSlider / VerticalSlider `secondaryProgress`、居中警示对话框、横向进度对话框、TopTips 自定义插槽、Button `Tiny` 尺寸档、CircularProgress `error` / `pause` 状态、`RecommendedPreference.enabled`。逐项代码位置见新增的 §6.1。
+> 本文件的 2026-07-26 原始盘点口径与其余条目不变。
+
 > 盘点日期：2026-07-26。对照基线：`coui-ui/src/commonMain/.../basic/`（32 个文件）+ `overlay/`、`window/`、`layout/` + `coui-preference/`（19 个文件）。
 > COUI 全集来源（逆向工作区 `E:\AndroidStudioProjects\jadx\work\`，下文用缩写）：
 >
@@ -197,26 +200,42 @@
 | Snackbar | `Snackbar` 新增 `icon` 前置图标槽（30dp 盒 + 16dp 纵向净空 + 16dp 图文间距），经 `SnackbarHost` 的 `content` 插槽使用 | `coui_snack_bar_item.xml` 的 `iv_snack_bar_icon`；`coui_snack_bar_icon_width/height` 30dp、`coui_snack_bar_icon_margin_top_horizontal` 16dp、`coui_snack_bar_child_margin_horizontal_start` 16dp | `basic/Snackbar.kt` |
 | DialogButtonBar（`COUIButtonBarLayout`） | 新增公开 `DialogButtonBar` + `DialogButtonBarAction` + `DialogButtonBarDefaults`，实现**自动纵排**：按 `onMeasure` 判定「文案放得下 且 恰好 2 个按钮 且 无推荐按钮」才横排，否则整栏翻纵排；文案用 `TextMeasurer` 单行测量，可用宽度按 `needSetButVertical` 公式（栏宽夹到 392dp 后按按钮数均分、减分割线、再减两侧 24dp）。纵排度量：52dp 最小高（最底部 64dp = +12dp）、14dp 垂直内边距（顶部无内容时 +6dp、最底部 +12dp）、栏上边距 16dp（>1 按钮时）、0.33dp 分割线内缩 24dp；顺序按 `resortButton` 反转（纵排 neutral/positive/negative，横排 negative/neutral/positive）；单独 negative 按钮回退横排度量（58dp）。已接入 `SecurityDialogLayout`、示例 app、两个 docs demo | `S`: `buttonBar\COUIButtonBarLayout.java`（`onMeasure` L530、`needSetButVertical` L206、`setButtonsVertical` L371、`resetVerButsPadding` L243、`resortButton` L320）；dimens `coui_dialog_max_width` 392dp、`coui_alert_dialog_button_horizontal_padding` 24dp、`coui_alert_dialog_vertical_button_min_height` 52dp、`coui_center_alert_dialog_vertical_button_paddingbottom_vertical_extra` 12dp、`coui_bottom_alert_dialog_vertical_button_padding_vertical_new` 14dp、`..._top_extra_new` 6dp、`..._bottom_extra_new` 12dp、`coui_bottom_alert_dialog_buttonbar_margintop` 16dp、`coui_delete_alert_dialog_divider_height_verticalbutton` 0.33dp、`coui_bottom_alert_dialog_horizontal_button_margin_default` 24dp | `layout/DialogButtonBar.kt`（新文件） |
 
+### 已实施（✅，2026-10-06，1.2.0）
+
+#### 6.1 1.2.0 落地清单
+
+| 组件 | 补齐内容 | 代码位置与符号 |
+| :--- | :--- | :--- |
+| Chip | 关闭 / 移除 X 形态，独立第二触摸目标 | `basic/Chip.kt`：`Chip(onDismiss = …)`、`ChipDefaults.DismissButtonSize`（48dp）、`DismissIconSize`（16dp）、`DISMISS_CONTENT_DESCRIPTION`；dismiss 是独立 `Role.Button`，不改变 `selected` |
+| Slider | Intent 档 / 第二进度层 | `basic/Slider.kt`：`Slider.secondaryProgress` / `VerticalSlider.secondaryProgress` / `RangeSlider.secondaryProgress`；`SliderColors.secondaryProgressColor` / `disabledSecondaryProgressColor` |
+| Dialog · 居中警示 | 居中警示对话框形态 | `layout/AlertDialogLayout.kt`：`AlertDialogContentLayout` / `AlertDialogDefaults` / `AlertDialogColors`；`overlay/OverlayAlertDialog.kt`、`window/WindowAlertDialog.kt` |
+| Dialog · 横向进度 | 横向进度对话框形态 | `layout/ProgressDialogLayout.kt`：`ProgressDialogContentLayout` / `ProgressDialogDefaults` / `ProgressDialogColors`；`overlay/OverlayProgressDialog.kt`、`window/WindowProgressDialog.kt` |
+| TopTips | 自定义消息插槽 | `basic/TopTips.kt`：`TopTips(content = …)`；跑马灯沿用既有 `marqueeEnabled`（核心 `basic/MarqueeTextView.kt`） |
+| Button | `Tiny` 尺寸档 | `basic/Button.kt`：`ButtonSize.Tiny`、`ButtonDefaults.MinWidthTiny`（44dp）/ `MinHeightTiny`（20dp）/ `CornerRadiusTiny`（10dp）/ `InsideMarginTiny` |
+| ProgressIndicator | `error` / `pause` 状态 | `basic/ProgressIndicator.kt`：`CircularProgressState.Error` / `.Paused`、`CircularProgressIndicator(state = …)`、`ProgressIndicatorDefaults.circularProgressIndicatorColors()`（`errorColor` / `onErrorColor`） |
+| RecommendedPreference | `enabled` + 禁用视觉态 | `coui-preference/src/commonMain/kotlin/io/github/suqi8/coui/kmp/preference/RecommendedPreference.kt`：`RecommendedPreference(enabled = …)`、`RecommendedPreferenceColors.disabledTitleColor` / `disabledItemColor` |
+
 ### 状态完备性结论（逐组件）
 
 | 组件 | 结论 | 备注 |
 | :--- | :--- | :--- |
-| Button / TextButton / LoadingButton | 基本完备 | primary / secondary / borderless / disabled / loading（LoadingButton，含 loadingText 三点动画）齐；Small 档本轮补齐。COUI **无描边 outline 按钮**（styles 全查无 stroke 变体，无需补）。📝 剩余：Tiny 色系变体（`Large.TinyFull` / `Small.TinySmall` / `.HalfColor` 半色调 / `.Translate` 透明，中性灰按钮 + `couiRoundType=common` 直角圆角 + 专用 `coui_btn_tiny_*_text_color` selector），属颜色/圆角预设族，可后续以 `textButtonColorsTiny*` 工厂低成本补 |
+| Button / TextButton / LoadingButton | 基本完备 | primary / secondary / borderless / disabled / loading（LoadingButton，含 loadingText 三点动画）齐；Small 档本轮补齐。COUI **无描边 outline 按钮**（styles 全查无 stroke 变体，无需补）。📝 剩余：Tiny 色系变体（`Large.TinyFull` / `Small.TinySmall` / `.HalfColor` 半色调 / `.Translate` 透明，中性灰按钮 + `couiRoundType=common` 直角圆角 + 专用 `coui_btn_tiny_*_text_color` selector），属颜色/圆角预设族，可后续以 `textButtonColorsTiny*` 工厂低成本补 ✅ **1.2.0 已落地** `Tiny` 尺寸档（`ButtonSize.Tiny` 及 `ButtonDefaults` 的 `MinWidthTiny` / `MinHeightTiny` / `CornerRadiusTiny` / `InsideMarginTiny`）；本行原记的「Tiny 色系变体」是另一项，仍未落地。 |
 | Switch | 完备 | disabled / loading / disabled+checked（`disabledCheckedThumbColor` / `disabledCheckedTrackColor`）全有；loading 时吞点击与 COUISwitch 一致 |
 | Checkbox | 完备 | On / Off / Indeterminate 三态 + disabled 全套颜色 |
 | RadioButton | 完备 | enabled/disabled 全套（含 disabledSelectedColor） |
-| Slider / VerticalSlider | 大体完备 | disabled / steps（= SectionSeekBar 分段档，其样式仅关 physics）/ keyPoints / 竖向齐。📝 缺 **Intent 档**（`COUIIntentSeekBar`：secondaryProgress 第二进度层 `coui_seekbar_secondary_progress_color` + 4dp 固定轨道），需给 Slider 加 `secondaryValue` 层；📝 `couiSeekBarStartMiddle`（从中点起算的双向滑条）无对应参数 |
-| Chip | 选中态完备 | selected / unselected / disabled×2 齐（对应 `chip_checked/unchecked_text_disable_color` selector）。**无下拉箭头 chip**（styles/attrs 全查无 arrow，无需补）。📝 缺关闭 X 形态：`Widget.COUI.Chip.Suggestion`（28dp 高，closeIcon 12dp，touch bounds 24dp）与 Input 形态（32dp 高，close 14dp，touch bounds 28dp，`coui_chip_input_style_*`）——涉及第二触摸目标，组件级；📝 Icon 档（`coui_chip_icon_style_chip_icon_size` 20dp）随之评估；ChipGroup 单/多选容器见第一节 |
+| Slider / VerticalSlider | 大体完备 | disabled / steps（= SectionSeekBar 分段档，其样式仅关 physics）/ keyPoints / 竖向齐。📝 缺 **Intent 档**（`COUIIntentSeekBar`：secondaryProgress 第二进度层 `coui_seekbar_secondary_progress_color` + 4dp 固定轨道），需给 Slider 加 `secondaryValue` 层；📝 `couiSeekBarStartMiddle`（从中点起算的双向滑条）无对应参数 ✅ **1.2.0 已落地** `secondaryProgress` 第二进度层，镜像到 `Slider` / `VerticalSlider` / `RangeSlider`，色槽 `SliderColors.secondaryProgressColor`。 |
+| Chip | 选中态完备 | selected / unselected / disabled×2 齐（对应 `chip_checked/unchecked_text_disable_color` selector）。**无下拉箭头 chip**（styles/attrs 全查无 arrow，无需补）。📝 缺关闭 X 形态：`Widget.COUI.Chip.Suggestion`（28dp 高，closeIcon 12dp，touch bounds 24dp）与 Input 形态（32dp 高，close 14dp，touch bounds 28dp，`coui_chip_input_style_*`）——涉及第二触摸目标，组件级；📝 Icon 档（`coui_chip_icon_style_chip_icon_size` 20dp）随之评估；ChipGroup 单/多选容器见第一节 ✅ **1.2.0 已落地** 关闭 X 形态：`Chip(onDismiss = …)` 及 `ChipDefaults.DismissButtonSize`；实现为通用 48dp 触达目标，未逐条复刻原生 Suggestion / Input 两档尺寸。 |
 | Badge | 完备 | dot / 数字（1..999 三档宽度动画）/ 1000+ 省略号 / stroke 描边形态 / BadgeBox 锚定全有 |
-| ProgressIndicator | 大体完备 | 定值/不定值/large 档齐（本轮补 large）。**本轮补齐 `RotatingProgressIndicator`**：ColorOS 系统默认的不确定态旋转指示器（无背景环的裸圆弧、平头端点、1250ms 周期内转两整圈、弧长 273.6°↔50.4° 脉动），移植自 `coui_rotating_loading.json`，用单个 `drawArc` 实现、不依赖 Lottie。注意 COUI 的加载指示器**有两种形态并存**：强调色「圆环 + 环绕圆点」（刷新中状态用，见 `InfiniteProgressIndicator`）与中性色裸圆弧旋转器（`Theme.COUI` 的 `couiRotatingSpinnerJsonName` 默认值）。📝 COUICircularProgressBar 另有 **error / pause 图标态**（`coui_circular_progress_error_*` / `pause_icon_*` dimens），下载场景用，随 InstallLoadProgress 一并评估 |
+| ProgressIndicator | 大体完备 | 定值/不定值/large 档齐（本轮补 large）。**本轮补齐 `RotatingProgressIndicator`**：ColorOS 系统默认的不确定态旋转指示器（无背景环的裸圆弧、平头端点、1250ms 周期内转两整圈、弧长 273.6°↔50.4° 脉动），移植自 `coui_rotating_loading.json`，用单个 `drawArc` 实现、不依赖 Lottie。注意 COUI 的加载指示器**有两种形态并存**：强调色「圆环 + 环绕圆点」（刷新中状态用，见 `InfiniteProgressIndicator`）与中性色裸圆弧旋转器（`Theme.COUI` 的 `couiRotatingSpinnerJsonName` 默认值）。📝 COUICircularProgressBar 另有 **error / pause 图标态**（`coui_circular_progress_error_*` / `pause_icon_*` dimens），下载场景用，随 InstallLoadProgress 一并评估 ✅ **1.2.0 已落地** `error` / `pause` 态：枚举 `CircularProgressState.Error` / `.Paused` + `CircularProgressIndicator(state = …)`。 |
 | Stepper / NumberPicker / DatePicker / TimePicker | 完备 | 均有 `enabled` + disabled 颜色（Stepper 到边界还会单侧禁用）；NumberPicker disabled 吞手势 |
 | Snackbar | 大体完备 | action / dismiss / 单行大圆角自适应齐；图标槽本轮补齐。📝 通知样式 `COUINotificationSnackBar` 见第一节中优先级 |
-| TopTips | 大体完备 | 关闭型 / 按钮型互斥 + 图标 + 折行降级齐。📝 缺跑马灯 `COUIMarqueeTopTips`（依赖 MarqueeTextView，见第一节）与全自定义 `COUICustomTopTips` 插槽形态 |
-| preference 系 | 完备（一处例外） | 全部 preference 均带 `enabled` 且经 `BasicComponent` 将 title/summary 变灰、widget（Switch/Checkbox/箭头/对勾）走各自 disabled 色。例外：`RecommendedPreference` 无 `enabled` 参数（COUI 原件为链接卡，disabled 场景罕见，暂记录） |
-| Dialog / BottomSheet | 形态缺口 | Loading（rotating）/ Security 双宿主（overlay+window）齐；列表单选/多选由 List/MultiSelectListPreference 覆盖。📝 缺**居中警示形态**：`AlertDialogBuildStyle.Center` 家族 + `coui_center_alert_dialog_layout`（含 `.Tiny` / `.Rotate` 子形态），我们 Dialog 仅底部锚定，需 Dialog 增加 center 布局形态；📝 缺横向进度对话框 `coui_progress_dialog_horizontal.xml` |
+| TopTips | 大体完备 | 关闭型 / 按钮型互斥 + 图标 + 折行降级齐。📝 缺跑马灯 `COUIMarqueeTopTips`（依赖 MarqueeTextView，见第一节）与全自定义 `COUICustomTopTips` 插槽形态 ✅ **1.2.0 已落地** 自定义消息插槽（`TopTips(content = …)`）；跑马灯沿用既有 `marqueeEnabled` / `basic/MarqueeTextView.kt`。 |
+| preference 系 | 完备（一处例外） | 全部 preference 均带 `enabled` 且经 `BasicComponent` 将 title/summary 变灰、widget（Switch/Checkbox/箭头/对勾）走各自 disabled 色。例外：`RecommendedPreference` 无 `enabled` 参数（COUI 原件为链接卡，disabled 场景罕见，暂记录） ✅ **1.2.0 已落地** `RecommendedPreference(enabled = …)` + `RecommendedPreferenceColors` 的禁用色槽。 |
+| Dialog / BottomSheet | 形态缺口 | Loading（rotating）/ Security 双宿主（overlay+window）齐；列表单选/多选由 List/MultiSelectListPreference 覆盖。📝 缺**居中警示形态**：`AlertDialogBuildStyle.Center` 家族 + `coui_center_alert_dialog_layout`（含 `.Tiny` / `.Rotate` 子形态），我们 Dialog 仅底部锚定，需 Dialog 增加 center 布局形态；📝 缺横向进度对话框 `coui_progress_dialog_horizontal.xml` ✅ **1.2.0 两项均已落地**：居中警示与横向进度，代码位置见 §6.1；`.Tiny` / `.Rotate` 子形态未移植。 |
 
 ### 本轮结论摘要
 
 - 确凿缺失且已实施：Button Small 尺寸档、ProgressIndicator large 档、Snackbar 图标槽（3 项，均为小改）。
 - 记录待立项（组件级）：Chip 关闭 X 形态、Slider Intent 档（secondaryProgress）、Dialog 居中警示形态、TopTips 跑马灯、Button Tiny 色系、CircularProgress error/pause 态、RecommendedPreference enabled。
+- **1.2.0（2026-10-06）已闭合**：上列「记录待立项（组件级）」条目连同仅记于 Dialog 行的横向进度对话框共 8 项全部落地，逐项代码位置见 §6.1。其中 Button 落地的是 `Tiny` 尺寸档，原记的「Tiny 色系变体」仍属另一项、未落地。
 - 证实无需补：Button outline 描边变体、Chip 下拉箭头变体（COUI 均无此物）；Switch「disabled+checked」视觉已有专用色槽。

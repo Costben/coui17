@@ -1,4 +1,4 @@
-# Miuix
+# COUI
 
 Compose Multiplatform UI component library. Targets Android, iOS, Desktop (JVM), macOS, Web (Wasm/JS).
 
@@ -13,19 +13,24 @@ Compose Multiplatform UI component library. Targets Android, iOS, Desktop (JVM),
 
 ## Key Commands
 
-| Action              | Command                                                 |
-| :------------------ | :------------------------------------------------------ |
-| Build (full)        | `./gradlew assemble`                                    |
-| Build (quick check) | `./gradlew compileKotlinDesktop`                        |
-| Test                | `./gradlew check`                                       |
-| Check formatting    | `./gradlew spotlessCheck`                               |
-| **Fix formatting**  | `./gradlew spotlessApply`                               |
-| Run Android demo    | `./gradlew :example:android:installDebug`               |
-| Run Desktop demo    | `./gradlew :example:desktop:hotRunDesktop --auto`       |
-| Run WasmJs demo     | `./gradlew :example:web:wasmJsBrowserRun`               |
-| Run Js demo         | `./gradlew :example:web:jsBrowserDevelopmentRun`        |
-| Run macOS demo      | `./gradlew :example:macos:runDebugExecutableMacosArm64` |
-| Run iOS demo        | Open `example/ios/iosApp.xcodeproj` in Xcode and run    |
+| Action                | Command                                                          |
+| :-------------------- | :--------------------------------------------------------------- |
+| Build (full)          | `./gradlew assemble`                                             |
+| Build (quick check)   | `./gradlew compileKotlinDesktop`                                 |
+| Test                  | `./gradlew check`                                                |
+| Check formatting      | `./gradlew spotlessCheck`                                        |
+| **Fix formatting**    | `./gradlew spotlessApply`                                        |
+| **Check public API**  | `./gradlew apiCheck` (update the dumps with `./gradlew apiDump`) |
+| Generate API docs     | `./gradlew dokkaGenerate`                                        |
+| Verify local release  | `./gradlew publishAllToLocalRepository verifyLocalPublication`   |
+| Smoke-test published  | `./gradlew -p smoke compileKotlin -PcouiVersion=<version>`       |
+| Run Android demo      | `./gradlew :example:android:installDebug`                        |
+| Run Desktop demo      | `./gradlew :example:desktop:hotRunDesktop --auto`                |
+| Run WasmJs demo       | `./gradlew :example:web:wasmJsBrowserRun`                        |
+| Run Js demo           | `./gradlew :example:web:jsBrowserDevelopmentRun`                 |
+| Run macOS demo        | `./gradlew :example:macos:runDebugExecutableMacosArm64`          |
+| Run iOS demo          | Open `example/ios/iosApp.xcodeproj` in Xcode and run             |
+| Docs site             | `cd docs && corepack yarn docs:build` (needs `./gradlew :docs:iconGen:generateIcons` first) |
 
 Before committing, run `./gradlew spotlessCheck`; only run `./gradlew spotlessApply` if the check reports violations. CI will reject formatting violations.
 
@@ -37,8 +42,12 @@ Before committing, run `./gradlew spotlessCheck`; only run `./gradlew spotlessAp
 | `coui-ui/`             | Main UI library                                               |
 | `coui-preference/`     | Preference / menu / popup components                          |
 | `coui-blur/`           | Blur effects (Android minSdk=33)                              |
+| `coui-squircle/`       | Squircle (continuous corner) shape                            |
+| `coui-shader/`         | Runtime shader abstraction                                    |
+| `coui-nav/`            | Self-contained navigation runtime                             |
 | `coui-icons/`          | Extended icon resources                                       |
 | `coui-navigation3-ui/` | Navigation 3 UI (depends on `coui-squircle` for transition clip) |
+| `smoke/`               | Separate Gradle build that consumes the published artifacts   |
 | `example/`              | Demo app                                                      |
 | `baselineprofile/`      | Android baseline profile generation                           |
 | `docs/`                 | VitePress documentation site                                  |
@@ -200,9 +209,11 @@ data class ButtonColors(
 
 1. Create the `@Composable` function in `coui-ui/src/commonMain/kotlin/io/github/suqi8/coui/kmp/basic/` (or `preference/` in `coui-preference` for preference components)
 2. Follow API conventions above (parameter ordering, Defaults object, Colors data class)
-3. Add a demo section in `example/shared/src/commonMain/kotlin/component/`
-4. Register the demo in the example app
-5. Verify on at least Android and Desktop
+3. Add a behaviour or maths test under `coui-ui/src/desktopTest/` (or `coui-preference/src/desktopTest/`)
+4. Add a demo section in `example/shared/src/commonMain/kotlin/component/`
+5. Register the demo in the example app
+6. Update `docs/components/` and `docs/zh_CN/components/` in both languages
+7. Verify on at least Android and Desktop, and run `./gradlew apiDump` so the new public API is recorded
 
 ### Modifying a Component
 
@@ -211,19 +222,24 @@ When changing a component's API, defaults, or behavior, check and update all rel
 1. **Documentation** (`docs/components/` and `docs/zh_CN/components/`): update properties tables, Defaults object sections, and code examples in both English and Chinese docs
 2. **Docs demo code** (`docs/demo/`): update the interactive demo if it uses changed APIs
 3. **Example app** (`example/shared/src/commonMain/kotlin/component/`): update demo code to reflect the changes
+4. **API dump**: run `./gradlew apiDump` and commit the diff under `coui-*/api/`; `apiCheck` runs in CI
+5. **Changelog**: record user-visible changes in `CHANGELOG.md`
 
 ### Fixing Bugs
 
 1. Reproduce in the `example` app
 2. Fix in `coui-ui/` or `coui-preference/`
-3. If platform-specific, verify the fix across affected platforms
+3. Add a regression test that fails before the fix
+4. If platform-specific, verify the fix across affected platforms
 
 ## Git Commit Style
 
-Format: `<scope>: <summary>`
+Format: `<type>(<scope>): <subject>` ([Conventional Commits](https://www.conventionalcommits.org/))
 
-- Scopes: `library`, `docs`, `example`, `build`, `fix`, `fix(deps)`, `chore(deps)`
-- Keep subject line ≤ 72 characters, sentence case, no trailing period
+- Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `chore`, `chore(release)`, `revert`
+- Scopes: the library module or area (`coui-ui`, `coui-nav`, `docs`, `build`, `ci`, …); omit for cross-cutting chores
+- Keep subject line ≤ 72 characters, imperative mood, no trailing period
 - Reference PRs/issues as `(#1234)` at end
+- Write both subject and body with the reader's understanding in mind — no file lists, no step-by-step process, no signature lines
 - Check recent `git log --oneline` to stay consistent with current conventions
 - **Run `./gradlew spotlessCheck` before every commit; only run `./gradlew spotlessApply` if violations are reported**

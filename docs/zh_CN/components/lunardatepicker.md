@@ -80,11 +80,11 @@ LunarDatePicker(
 | InsideMargin       | PaddingValues    | 滚轮区域内边距               | PaddingValues(vertical = 12.dp) |
 | NormalMonthCount   | Int              | 无闰月年份的月数             | 12            |
 | LeapYearMonthCount | Int              | 有闰月年份的月数             | 13            |
-| MonthNames         | List<String>     | `coui_lunar_month` 月名      | 正月 .. 腊月   |
+| MonthNames         | `List<String>`     | `coui_lunar_month` 月名      | 正月 .. 腊月   |
 | LeapPrefix         | String           | `coui_lunar_leap_string` 标记 | "闰"         |
-| YearLabel          | (Int) -> String  | 纯年份数字                   | { it.toString() } |
+| YearLabel          | (Int) -> String  | 纯年份数字                   | `{ it.toString() }` |
 | MonthLabel         | (Int, Boolean) -> String | 带闰月前缀的农历月名 | 正月 .. 腊月，闰月前缀 闰 |
-| DayLabel           | (Int) -> String  | 纯日期数字                   | { it.toString() } |
+| DayLabel           | (Int) -> String  | 纯日期数字                   | `{ it.toString() }` |
 
 ## LunarUtil
 

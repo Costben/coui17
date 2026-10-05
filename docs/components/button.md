@@ -87,6 +87,18 @@ TextButton(
 )
 ```
 
+### Tiny Size Tier
+
+Select `ButtonSize.Tiny` for the compact tier (`ButtonDefaults.MinWidthTiny` / `MinHeightTiny` / `CornerRadiusTiny` / `InsideMarginTiny`). Passing `minWidth`, `minHeight`, `cornerRadius` or `insideMargin` explicitly still overrides the tier:
+
+```kotlin
+TextButton(
+    text = "Tiny Button",
+    onClick = { /* Handle click event */ },
+    size = ButtonSize.Tiny,
+)
+```
+
 ## Component States
 
 ### Disabled State
@@ -110,13 +122,14 @@ Button(
 | modifier          | Modifier                        | Modifier applied to the button         | Modifier                      | No       |
 | enabled           | Boolean                         | Whether the button is clickable        | true                          | No       |
 | pressScaleEnabled | Boolean                         | Whether the button shrinks while pressed (COUIButton `scaleEnable`). Set to `false` for buttons that fill a container cell, such as a dialog button bar, so the only press feedback is the full-cell press tint | true | No       |
-| cornerRadius      | Dp                              | Corner radius of the button            | ButtonDefaults.CornerRadius   | No       |
-| minWidth          | Dp                              | Minimum width of the button            | ButtonDefaults.MinWidth       | No       |
-| minHeight         | Dp                              | Minimum height of the button           | ButtonDefaults.MinHeight      | No       |
+| cornerRadius      | Dp?                             | Corner radius of the button; `null` uses the radius of `size` | null                          | No       |
+| minWidth          | Dp?                             | Minimum width of the button; `null` uses the width of `size` | null                          | No       |
+| minHeight         | Dp?                             | Minimum height of the button; `null` uses the height of `size` | null                          | No       |
 | colors            | ButtonColors                    | Button color configuration             | ButtonDefaults.buttonColors() | No       |
-| insideMargin      | PaddingValues                   | Internal padding of the button         | ButtonDefaults.InsideMargin   | No       |
+| insideMargin      | PaddingValues?                  | Internal padding of the button; `null` uses the margin of `size` | null                    | No       |
 | interactionSource | MutableInteractionSource?       | Interaction source for the button      | null                          | No       |
 | indication        | Indication?                     | Indication for click interactions; `null` because the COUI press feedback (scale + press tint) is built in | null | No       |
+| size              | ButtonSize                      | Size tier supplying the default metrics; explicit `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` override it | ButtonSize.Regular | No       |
 | content           | @Composable RowScope.() -> Unit | Composable function for button content | -                             | Yes      |
 
 ### TextButton Properties
@@ -129,13 +142,14 @@ Button(
 | enabled           | Boolean                   | Whether the button is clickable   | true                              | No       |
 | pressScaleEnabled | Boolean                   | Whether the button shrinks while pressed (COUIButton `scaleEnable`). Set to `false` for buttons that fill a container cell, such as a dialog button bar | true | No       |
 | colors            | TextButtonColors          | Text button color configuration   | ButtonDefaults.textButtonColors() | No       |
-| cornerRadius      | Dp                        | Corner radius of the button       | ButtonDefaults.CornerRadius       | No       |
-| minWidth          | Dp                        | Minimum width of the button       | ButtonDefaults.MinWidth           | No       |
-| minHeight         | Dp                        | Minimum height of the button      | ButtonDefaults.MinHeight          | No       |
-| insideMargin      | PaddingValues             | Internal padding of the button    | ButtonDefaults.InsideMargin       | No       |
+| cornerRadius      | Dp?                       | Corner radius of the button; `null` uses the radius of `size` | null                              | No       |
+| minWidth          | Dp?                       | Minimum width of the button; `null` uses the width of `size` | null                              | No       |
+| minHeight         | Dp?                       | Minimum height of the button; `null` uses the height of `size` | null                             | No       |
+| insideMargin      | PaddingValues?            | Internal padding of the button; `null` uses the margin of `size` | null                           | No       |
 | textStyle         | TextStyle                 | Text style of the label (pass a 14sp style with the `Small` metrics for the COUI small size tier) | COUITheme.textStyles.button | No       |
 | interactionSource | MutableInteractionSource? | Interaction source for the button | null                              | No       |
 | indication        | Indication?               | Indication for click interactions; `null` because the COUI press feedback (scale + press tint) is built in | null | No       |
+| size              | ButtonSize                | Size tier supplying the default metrics; explicit `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` override it | ButtonSize.Regular | No       |
 
 ### ButtonDefaults Object
 
@@ -155,6 +169,10 @@ The ButtonDefaults object provides default values and color configurations for b
 | MinHeightSmall | Dp           | Minimum height of the small size tier | 28.dp |
 | CornerRadiusSmall | Dp        | Corner radius of the small size tier (height-derived capsule) | 14.dp |
 | InsideMarginSmall | PaddingValues | Internal padding of the small size tier | PaddingValues(horizontal = 12.dp, vertical = 4.dp) |
+| MinWidthTiny  | Dp            | Minimum width of the tiny size tier | 44.dp           |
+| MinHeightTiny | Dp            | Minimum height of the tiny size tier | 20.dp          |
+| CornerRadiusTiny | Dp         | Corner radius of the tiny size tier (height-derived capsule) | 10.dp |
+| InsideMarginTiny | PaddingValues | Internal padding of the tiny size tier | PaddingValues(horizontal = 8.dp, vertical = 2.dp) |
 
 #### Methods
 

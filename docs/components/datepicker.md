@@ -75,7 +75,7 @@ DatePicker(
 | MonthColumnWidth | Dp              | Default width of the month column          | 96.dp                     |
 | DayColumnWidth   | Dp              | Default width of the day column            | 62.dp                     |
 | InsideMargin     | PaddingValues   | Default padding around the wheel columns   | PaddingValues(vertical = 12.dp) |
-| YearLabel        | (Int) -> String | Plain year number                          | { it.toString() }         |
+| YearLabel        | (Int) -> String | Plain year number                          | `{ it.toString() }`         |
 | MonthLabel       | (Int) -> String | Abbreviated English month names            | "Jan".."Dec"              |
 | DayLabel         | (Int) -> String | Zero-padded two digits                     | "01".."31"                |
 

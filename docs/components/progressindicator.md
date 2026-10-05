@@ -118,6 +118,15 @@ LinearProgressIndicator(progress = null)
 CircularProgressIndicator(progress = null)
 ```
 
+### Error and Paused States
+
+`CircularProgressIndicator` also renders two static states through the `state` parameter: `CircularProgressState.Error` paints a filled error dot with an exclamation glyph, and `CircularProgressState.Paused` a full accent ring with a pause glyph. Neither animates, and their colors come from `ProgressIndicatorColors.errorColor` / `onErrorColor`.
+
+```kotlin
+CircularProgressIndicator(state = CircularProgressState.Error)
+CircularProgressIndicator(state = CircularProgressState.Paused)
+```
+
 ## Properties
 
 ### LinearProgressIndicator Properties
@@ -138,6 +147,7 @@ CircularProgressIndicator(progress = null)
 | colors        | ProgressIndicatorColors | Color configuration for the progress indicator | ProgressIndicatorDefaults.circularProgressIndicatorColors()           | No       |
 | strokeWidth   | Dp                      | Stroke width of the circular track             | ProgressIndicatorDefaults.DefaultCircularProgressIndicatorStrokeWidth | No       |
 | size          | Dp                      | Size of the circular indicator                 | ProgressIndicatorDefaults.DefaultCircularProgressIndicatorSize        | No       |
+| state         | CircularProgressState?  | Explicit state override; `null` derives it from `progress` | null                                                    | No       |
 
 ### InfiniteProgressIndicator Properties
 
@@ -197,6 +207,17 @@ The ProgressIndicatorDefaults object provides default values and color configura
 | foregroundColor         | Color | Foreground color of the progress indicator  |
 | disabledForegroundColor | Color | Foreground color when indicator is disabled |
 | backgroundColor         | Color | Background color of the progress indicator  |
+| errorColor              | Color | Fill color of the error state               |
+| onErrorColor            | Color | Glyph color of the error state              |
+
+### CircularProgressState
+
+| Value       | Description                                                       |
+| ----------- | ----------------------------------------------------------------- |
+| Loading     | Indeterminate: the arc spins and sweeps forever                   |
+| Determinate | Determinate: the arc is swept to the current `progress` fraction  |
+| Error       | Static error dot with an exclamation glyph                        |
+| Paused      | Static accent ring with a pause glyph                             |
 
 ## Advanced Usage
 

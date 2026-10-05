@@ -164,12 +164,12 @@ internal const val PROGRESSIVE_LEVEL_FRACTION_2 = 0.13f
 
 /**
  * Multi-level progressive composite (Skiko multi-child runtime shader): three graduated Gaussian
- * levels ([blur0] strongest … [blur2] lightest) interpolated along the gradient so the blur
+ * levels (`blur0` strongest … `blur2` lightest) interpolated along the gradient so the blur
  * strength itself ramps — graduated levels are what make the ramp read as progressive rather than
- * one blur cross-faded with sharp. Runs on the downscaled layer with [clearChild] bound to the
+ * one blur cross-faded with sharp. Runs on the downscaled layer with `clearChild` bound to the
  * lightest level (degenerating the last mix segment; the true sharp end is a separate
  * full-resolution overlay masked by [PROGRESSIVE_LEVEL_MASK_SHADER]) — except at full resolution,
- * where [clearChild] binds the source and the blend to sharp completes in-stack. Android builds
+ * where `clearChild` binds the source and the blend to sharp completes in-stack. Android builds
  * the identical image as a blend-mode DAG of the same masks. Each segment's mix fraction is smoothstepped: the
  * walk's derivative kinks at the segment stops otherwise read as Mach-band stripes, and zeroing
  * the slope at the stops removes them without spatial noise (which would scale with the

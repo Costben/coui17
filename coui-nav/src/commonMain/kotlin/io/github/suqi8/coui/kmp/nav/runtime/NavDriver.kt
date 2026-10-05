@@ -214,7 +214,7 @@ internal suspend fun Animatable<Float, AnimationVector1D>.snapToFinger(
  * "settle mode"). Used for normal push/pop and for gesture release (commit -> `topIndex - 1`,
  * cancel -> `topIndex`).
  *
- * By default [initialVelocity] is [this] Animatable's own current [velocity], so the
+ * By default [initialVelocity] is [this] Animatable's own current `velocity`, so the
  * value AND its first derivative stay continuous across the snap->spring boundary,
  * eliminating the visual jolt a fresh-from-zero spring would cause. Callers that
  * track a separate finger velocity (e.g. an edge swipe whose drag delta differs
@@ -223,7 +223,7 @@ internal suspend fun Animatable<Float, AnimationVector1D>.snapToFinger(
  *
  * @param target destination value on the depth axis (an entry index, possibly fractional during interruption).
  * @param spec the settle curve; defaults to the default commit spring.
- * @param initialVelocity velocity (depth-units per second) to seed the curve with; defaults to the current [velocity].
+ * @param initialVelocity velocity (depth-units per second) to seed the curve with; defaults to the current `velocity`.
  */
 internal suspend fun Animatable<Float, AnimationVector1D>.settleTo(
     target: Float,
@@ -260,7 +260,7 @@ internal suspend fun Animatable<Float, AnimationVector1D>.settleCancel(
 }
 
 /**
- * Whether a settle starting with [velocity] over [distance] should play the programmatic
+ * Whether a settle starting with `velocity` over [distance] should play the programmatic
  * fixed-duration curve ([NavMotion.programmatic]) instead of the live spring.
  *
  * Only a from-rest, full-step settle qualifies — exactly the programmatic push/pop case, which

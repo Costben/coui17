@@ -64,8 +64,8 @@ import kotlin.math.abs
  * layout extent on that axis — linear, 1:1 with the finger (§7.1, no interpolation on this axis).
  *
  * On release the decision is delegated to [navBackCommitDecision] (**velocity-first,
- * position-fallback**, §7.2), using the shared thresholds [NavDriverSpec.COMMIT_VELOCITY_THRESHOLD] /
- * [NavDriverSpec.COMMIT_POSITION_THRESHOLD]. Release velocity is sampled with a [VelocityTracker]
+ * position-fallback**, §7.2), using the shared thresholds `NavDriverSpec.COMMIT_VELOCITY_THRESHOLD` /
+ * `NavDriverSpec.COMMIT_POSITION_THRESHOLD`. Release velocity is sampled with a [VelocityTracker]
  * (instantaneous, not a per-event delta proxy) and expressed in **progress-units per second** (axis
  * pixels/sec ÷ layout extent, signed toward the dismiss direction). That value feeds
  * [navBackCommitDecision] directly. For the convergence spring it is negated to the depth axis

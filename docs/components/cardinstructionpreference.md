@@ -36,7 +36,7 @@ CardInstructionPreference(
 
 | Property              | Type                              | Description                                                          | Default Value                                              | Required |
 | --------------------- | --------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- | -------- |
-| items                 | List<CardInstructionItem>         | The pages (Description) or selector choices (Selector)               | -                                                          | Yes      |
+| items                 | `List<CardInstructionItem>`         | The pages (Description) or selector choices (Selector)               | -                                                          | Yes      |
 | modifier              | Modifier                          | Modifier applied to the card                                         | Modifier                                                   | No       |
 | cardType              | CardInstructionType               | Which of the two device adapters to use; see [CardInstructionType](#cardinstructiontype) | CardInstructionType.Description       | No       |
 | selectedIndex         | Int                               | The active page or selected choice                                   | 0                                                          | No       |

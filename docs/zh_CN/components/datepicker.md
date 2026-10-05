@@ -75,7 +75,7 @@ DatePicker(
 | MonthColumnWidth | Dp              | 月份列默认宽度             | 96.dp                           |
 | DayColumnWidth   | Dp              | 日列默认宽度               | 62.dp                           |
 | InsideMargin     | PaddingValues   | 滚轮列周围的默认内边距     | PaddingValues(vertical = 12.dp) |
-| YearLabel        | (Int) -> String | 纯年份数字                 | { it.toString() }               |
+| YearLabel        | (Int) -> String | 纯年份数字                 | `{ it.toString() }`               |
 | MonthLabel       | (Int) -> String | 英文月份缩写               | "Jan".."Dec"                    |
 | DayLabel         | (Int) -> String | 两位补零数字               | "01".."31"                      |
 

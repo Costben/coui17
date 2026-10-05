@@ -41,6 +41,7 @@ RecommendedPreference(
 | title        | String                      | 卡片标题文本                     | -                                                           | 是       |
 | items        | List\<RecommendedItem\>     | 推荐条目；为空时不渲染           | -                                                           | 是       |
 | modifier     | Modifier                    | 应用于组件的修饰符               | Modifier                                                    | 否       |
+| enabled      | Boolean                     | 卡片是否响应点击；为 false 时所有行的 `onClick` 均被抑制，并使用禁用色渲染（1.2.0 新增） | true | 否 |
 | cornerRadius | Dp                          | 卡片圆角半径                     | RecommendedPreferenceDefaults.CornerRadius                  | 否       |
 | colors       | RecommendedPreferenceColors | 卡片颜色配置                     | RecommendedPreferenceDefaults.recommendedPreferenceColors() | 否       |
 | insideMargin | PaddingValues               | 卡片边缘与文字的水平间距         | RecommendedPreferenceDefaults.InsideMargin                  | 否       |
@@ -66,11 +67,25 @@ RecommendedPreference(
 
 #### `recommendedPreferenceColors()` 工厂方法
 
-| 参数           | 类型  | 默认值                                                              |
-| -------------- | ----- | ------------------------------------------------------------------- |
-| containerColor | Color | couiColorContainer4（浅色 #0A000000 / 深色 #14FFFFFF，随主题自动切换） |
-| titleColor     | Color | COUITheme.colorScheme.onSurfaceSecondary                           |
-| itemColor      | Color | COUITheme.colorScheme.onSurface                                    |
+| 参数               | 类型  | 默认值                                                              |
+| ------------------ | ----- | ------------------------------------------------------------------- |
+| containerColor     | Color | couiColorContainer4（浅色 #0A000000 / 深色 #14FFFFFF，随主题自动切换） |
+| titleColor         | Color | COUITheme.colorScheme.onSurfaceSecondary                           |
+| itemColor          | Color | COUITheme.colorScheme.onSurface                                    |
+| disabledTitleColor | Color | COUITheme.colorScheme.disabledOnSecondaryVariant                   |
+| disabledItemColor  | Color | COUITheme.colorScheme.disabledOnSecondaryVariant                   |
+
+### RecommendedPreferenceColors 属性
+
+| 属性名             | 类型  | 说明                              |
+| ------------------ | ----- | --------------------------------- |
+| containerColor     | Color | 卡片背景色                        |
+| titleColor         | Color | 标题文本颜色                      |
+| itemColor          | Color | 行文本颜色                        |
+| disabledTitleColor | Color | `enabled` 为 false 时的标题文本颜色 |
+| disabledItemColor  | Color | `enabled` 为 false 时的行文本颜色   |
+
+三色构造函数 `RecommendedPreferenceColors(containerColor, titleColor, itemColor)` 仍然可用，供在 `enabled` 出现之前编写的调用方使用；此时禁用态回退为启用态颜色。
 
 ## 进阶用法
 
@@ -84,6 +99,19 @@ RecommendedPreference(
         containerColor = COUITheme.colorScheme.surfaceContainer,
         itemColor = COUITheme.colorScheme.primary
     )
+)
+```
+
+### 禁用状态
+
+`enabled = false` 会把标题与所有行变灰，并吞掉全部行点击，因此无需重建条目列表即可展示「暂不可用」的卡片。每一行还会向无障碍服务上报禁用状态，便于 UI 测试断言：
+
+```kotlin
+RecommendedPreference(
+    title = "暂不可用：",
+    items = items,
+    enabled = false,
+    modifier = Modifier.padding(horizontal = 16.dp)
 )
 ```
 

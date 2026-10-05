@@ -136,6 +136,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [OverlayIconCascadingDropdownMenu](../components/overlayiconcascadingdropdownmenu) | 基于 IconButton 的二级级联动作菜单组件（使用 COUIPopupUtils，需在 `Scaffold` 中使用） | 含子菜单的工具栏动作   |
 | [OverlayBottomSheet](../components/overlaybottomsheet)         | 基于 BasicComponent 的底部抽屉组件（使用 COUIPopupUtils，需在 `Scaffold` 中使用） | 底部抽屉、附加选项     |
 | [OverlayDialog](../components/overlaydialog)                   | 基于 BasicComponent 的对话弹窗组件（使用 COUIPopupUtils，需在 `Scaffold` 中使用） | 提示、确认操作         |
+| [OverlayAlertDialog](../components/overlayalertdialog)         | 居中警示弹窗变体（使用 COUIPopupUtils，需在 `Scaffold` 中使用）                    | 破坏性操作、强提示     |
+| [OverlayProgressDialog](../components/overlayprogressdialog)   | 横向进度弹窗变体，带确定性进度条                                                   | 长任务的进度反馈       |
 | [LoadingDialog](../components/loadingdialog)                   | 带旋转加载指示的加载对话框（含 Overlay 与 Window 两种变体）                        | 阻塞式加载反馈         |
 | [SecurityDialog](../components/securitydialog)                 | 安全声明对话框（含 Overlay 与 Window 两种变体）                                    | 隐私声明、安全确认     |
 | [DialogButtonBar](../components/dialogbuttonbar)               | 对话框按钮栏，文案放不下时自动翻成纵排                                             | 对话框动作             |
@@ -148,4 +150,6 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [WindowIconCascadingDropdownMenu](../components/windowiconcascadingdropdownmenu) | 基于 IconButton 的窗口级二级级联动作菜单组件                                       | 含子菜单的工具栏动作   |
 | [WindowBottomSheet](../components/windowbottomsheet) | 窗口级底部抽屉组件                                                                 | 底部抽屉、附加选项     |
 | [WindowDialog](../components/windowdialog)           | 窗口级对话框组件                                                                   | 提示、确认操作         |
+| [WindowAlertDialog](../components/windowalertdialog) | 窗口级居中警示弹窗变体                                                             | 破坏性操作、强提示     |
+| [WindowProgressDialog](../components/windowprogressdialog) | 窗口级横向进度弹窗变体                                                       | 长任务的进度反馈       |
 | [GuideDialog](../components/guidedialog)             | 窗口级多页首次引导对话框                                                           | 新手引导、首次使用引导 |

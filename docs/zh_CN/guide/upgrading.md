@@ -1,5 +1,39 @@
 # 升级指南
 
+## 1.1.0 → 1.2.0
+
+把你依赖的每个 COUI 坐标都改成新版本：
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("io.github.suqi8.coui.kmp:coui-ui:1.2.0")
+            implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
+            implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
+        }
+    }
+}
+```
+
+**本版本没有破坏性变更。** 1.2.0 新增的 API 全部是增量式的，已有签名保持不变。每个发布模块都通过了二进制兼容校验，因此重新编译并非必须；但升级版本号才能拿到新组件。
+
+### 新增的组件能力
+
+- `Chip` 增加关闭按钮，并为它提供独立的触摸区域。
+- `Slider` 增加 `secondaryProgress`，区间与竖向滑条也同步支持次级进度轨道。
+- `Button` 增加 `Tiny` 尺寸档。
+- `CircularProgressIndicator` 增加 `error` 与 `pause` 状态。
+- Overlay 与 Window 两套弹窗宿主都新增了居中警示弹窗与横向进度弹窗。
+- `TopTips` 在原有跑马灯之外增加自定义内容插槽。
+- `RecommendedPreference` 增加 `enabled`，并带有对应的禁用视觉状态。
+
+以上参数都有保持旧行为的默认值，调用方无需修改任何代码。
+
+### 文档与工具链
+
+发布的 `-javadoc` 构件现在包含真实的 Dokka 输出；每个模块都提交了 API dump（CI 会执行 `apiCheck`）。
+
 ## 1.0.0 → 1.1.0
 
 把你依赖的每个 COUI 坐标都改成新版本：

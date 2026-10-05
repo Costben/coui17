@@ -92,12 +92,12 @@ BottomFloatingAccessoryNavigationBar(
 | SideSpacing              | Dp                | 胶囊与配件视图之间的间距                    | 12.dp                       |
 | PaddingHorizontal        | Dp                | 小屏下保留的外部内边距                      | 16.dp                       |
 | MinScale                 | Float             | 配件视图动画的起始缩放                      | 0.5f                        |
-| AlphaSpring              | SpringSpec<Float> | 配件的透明度弹簧                            | 响应 0.35 / 回弹 0          |
-| ScaleSpring              | SpringSpec<Float> | 配件的缩放弹簧                              | 响应 0.55 / 回弹 0.35       |
-| TranslationXSpring       | SpringSpec<Float> | 让配件从胶囊中滑出的弹簧                    | 响应 0.55 / 回弹 0.35       |
-| LowEndAlphaSpring        | SpringSpec<Float> | 设备报告低动效等级时使用的透明度弹簧        | 响应 0.2 / 回弹 0           |
-| LowEndScaleSpring        | SpringSpec<Float> | 低动效等级的缩放弹簧                        | 响应 0.5 / 回弹 0.3         |
-| LowEndTranslationXSpring | SpringSpec<Float> | 低动效等级的位移动画弹簧                    | 响应 0.5 / 回弹 0.3         |
+| AlphaSpring              | `SpringSpec<Float>` | 配件的透明度弹簧                            | 响应 0.35 / 回弹 0          |
+| ScaleSpring              | `SpringSpec<Float>` | 配件的缩放弹簧                              | 响应 0.55 / 回弹 0.35       |
+| TranslationXSpring       | `SpringSpec<Float>` | 让配件从胶囊中滑出的弹簧                    | 响应 0.55 / 回弹 0.35       |
+| LowEndAlphaSpring        | `SpringSpec<Float>` | 设备报告低动效等级时使用的透明度弹簧        | 响应 0.2 / 回弹 0           |
+| LowEndScaleSpring        | `SpringSpec<Float>` | 低动效等级的缩放弹簧                        | 响应 0.5 / 回弹 0.3         |
+| LowEndTranslationXSpring | `SpringSpec<Float>` | 低动效等级的位移动画弹簧                    | 响应 0.5 / 回弹 0.3         |
 
 ## 响应式边距
 

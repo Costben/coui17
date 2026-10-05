@@ -25,17 +25,19 @@ repositories {
 
 3. 在项目的 build.gradle.kts 中添加依赖：
 
-COUI 由多个可独立使用的模块组成：
+COUI 由多个可独立使用的模块组成。所有模块统一发布在 `io.github.suqi8.coui.kmp` 组下，并共用同一个版本号。
 
-| 模块 | 说明 |
-|---|---|
-| `coui-ui` | 核心 UI 组件库（自动包含 `coui-core`） |
-| `coui-preference` | Preference 组件（SwitchPreference、CheckboxPreference 等），依赖 `coui-ui` |
-| `coui-icons` | 扩展图标库，可独立使用，也可与 `coui-ui` 同时使用（自动包含 `coui-core`） |
-| `coui-blur` | 模糊效果库，可独立使用 |
-| `coui-squircle` | 平滑圆角形状，可独立使用（已由 `coui-ui` 传递包含） |
-| `coui-shader` | 底层运行时着色器 / 渲染效果抽象，已由 `coui-blur` / `coui-squircle` 传递包含 |
-| `coui-nav` | 自包含导航库，可独立使用 |
+| 模块 | 说明 | 平台限制 |
+|---|---|---|
+| `coui-ui` | 核心 UI 组件库（自动包含 `coui-core`） | Android minSdk 23，其余平台全支持 |
+| `coui-core` | 公共基础类型与平台工具（由 `coui-ui` / `coui-icons` 传递包含） | Android minSdk 23，其余平台全支持 |
+| `coui-preference` | Preference 组件（SwitchPreference、CheckboxPreference 等），依赖 `coui-ui` | Android minSdk 23，其余平台全支持 |
+| `coui-icons` | 扩展图标库，可独立使用，也可与 `coui-ui` 同时使用（自动包含 `coui-core`） | Android minSdk 23，其余平台全支持 |
+| `coui-blur` | 模糊效果库，可独立使用 | Android minSdk 33，其余平台全支持 |
+| `coui-squircle` | 平滑圆角形状，可独立使用（已由 `coui-ui` 传递包含） | Android minSdk 23，其余平台全支持 |
+| `coui-shader` | 底层运行时着色器 / 渲染效果抽象，已由 `coui-blur` / `coui-squircle` 传递包含 | Android minSdk 23，其余平台全支持 |
+| `coui-nav` | 自包含导航库，可独立使用 | Android minSdk 23，其余平台全支持 |
+| `coui-navigation3-ui` | Navigation3 UI 集成，可独立使用 | Android minSdk 23，其余平台全支持 |
 
 - 在 Compose Multiplatform 项目目录的 build.gradle.kts 中：
 
@@ -54,6 +56,10 @@ kotlin {
             implementation("io.github.suqi8.coui.kmp:coui-squircle:<version>")
             // 可选：添加 coui-nav 以获取导航支持
             implementation("io.github.suqi8.coui.kmp:coui-nav:<version>")
+            // 可选：添加 coui-shader 以获取运行时着色器
+            implementation("io.github.suqi8.coui.kmp:coui-shader:<version>")
+            // 可选：添加 coui-navigation3-ui 以获取 Navigation3 支持
+            implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui:<version>")
         }
     }
 }
@@ -74,6 +80,10 @@ dependencies {
     implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")
     // 可选：添加 coui-nav 以获取导航支持
     implementation("io.github.suqi8.coui.kmp:coui-nav-android:<version>")
+    // 可选：添加 coui-shader 以获取运行时着色器
+    implementation("io.github.suqi8.coui.kmp:coui-shader-android:<version>")
+    // 可选：添加 coui-navigation3-ui 以获取 Navigation3 支持
+    implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui-android:<version>")
 }
 ```
 

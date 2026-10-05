@@ -118,8 +118,8 @@ An icon is drawn at its own intrinsic size and tinted with `NumericKeyboardColor
 | PressEndScale             | Float | 2.5f     | initFadeAnimator FADE_END_SCALE                      |
 | PressShowDurationMillis   | Int   | 100      | initShowAnimator SHOW_ANIMATOR_TIME                  |
 | PressFadeDurationMillis   | Int   | 160      | initFadeAnimator FADE_ANIMATOR_TIME                  |
-| Numbers                   | List&lt;Int&gt; | { 1..9, -1, 0, -1 } | mKeyboardNumbers                    |
-| Letters                   | List&lt;String&gt; | { "", "", "ABC", ... } | array/coui_number_keyboard_letters |
+| Numbers                   | List&lt;Int&gt; | `{ 1..9, -1, 0, -1 }` | mKeyboardNumbers                    |
+| Letters                   | List&lt;String&gt; | `{ "", "", "ABC", ... }` | array/coui_number_keyboard_letters |
 | CircleMaxAlpha            | Float | 0.12f    | couiCircleMaxAlpha written literally                 |
 | DarkCircleMaxAlpha        | Float | 0.06f    | coui_numeric_keyboard_dark_circle_max_alpha          |
 | DarkDarkCircleMaxAlpha    | Float | 0.12f    | coui_numeric_keyboard_dark_circle_max_dark_alpha     |

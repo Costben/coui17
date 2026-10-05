@@ -136,6 +136,8 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [OverlayIconCascadingDropdownMenu](../components/overlayiconcascadingdropdownmenu) | Icon-button cascading two-level menu (uses COUIPopupUtils; requires `Scaffold`)         | Toolbar actions with submenus          |
 | [OverlayBottomSheet](../components/overlaybottomsheet)         | Bottom sheet based on BasicComponent (uses COUIPopupUtils; requires `Scaffold`)         | Bottom drawer, additional options      |
 | [OverlayDialog](../components/overlaydialog)                   | Dialog window based on BasicComponent (uses COUIPopupUtils; requires `Scaffold`)        | Prompts, action confirmation           |
+| [OverlayAlertDialog](../components/overlayalertdialog)         | Centred warning dialog variant (uses COUIPopupUtils; requires `Scaffold`)                | Destructive or blocking warnings      |
+| [OverlayProgressDialog](../components/overlayprogressdialog)   | Horizontal progress dialog variant with a determinate bar                                | Progress of a long-running operation  |
 | [LoadingDialog](../components/loadingdialog)                   | Loading dialog with spinner (Overlay and Window variants)                                | Blocking loading feedback              |
 | [SecurityDialog](../components/securitydialog)                 | Security statement dialog (Overlay and Window variants)                                  | Privacy statement, security confirmation |
 | [DialogButtonBar](../components/dialogbuttonbar)               | Dialog button bar that auto-stacks vertically when labels do not fit                      | Dialog actions                         |
@@ -148,4 +150,6 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [WindowIconCascadingDropdownMenu](../components/windowiconcascadingdropdownmenu) | Window-level icon-button cascading two-level menu                                        | Toolbar actions with submenus          |
 | [WindowBottomSheet](../components/windowbottomsheet) | Window-level bottom sheet component                                                      | Bottom drawer, additional options      |
 | [WindowDialog](../components/windowdialog)           | Window-level dialog component                                                            | Prompts, action confirmation           |
+| [WindowAlertDialog](../components/windowalertdialog) | Window-level centred warning dialog variant                                               | Destructive or blocking warnings      |
+| [WindowProgressDialog](../components/windowprogressdialog) | Window-level horizontal progress dialog variant                                    | Progress of a long-running operation  |
 | [GuideDialog](../components/guidedialog)             | Window-level first-run multi-page guide dialog                                           | Onboarding, first-run guides           |
