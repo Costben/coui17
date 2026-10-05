@@ -53,6 +53,7 @@ import component.FullPageStatementDemoContent
 import component.GuideDialogDemo
 import component.HintAnimationLayoutDemo
 import component.HorizontalPopupMenuDemo
+import component.HorizontalScrollBarDemo
 import component.InputViewCardMultiInputDemo
 import component.InputViewCardSingleInputDemo
 import component.InstallLoadProgressDemo
@@ -66,6 +67,7 @@ import component.MarkPreferenceStandaloneFullDemo
 import component.MarqueeTextDemo
 import component.MaterialShadowEdgeDemo
 import component.MetaBallSurfaceDemo
+import component.NavigationBarEnterExitDemo
 import component.NavigationPopupMenuDemo
 import component.NotificationSnackBarDemo
 import component.NumberPickerDemo
@@ -98,6 +100,8 @@ import component.TopTipsDemoContent
 import component.TopTipsStylesDemo
 import component.TouchSearchViewDemoContent
 import component.VerticalSliderDemo
+import component.WindowDialogVariantsDemo
+import component.WindowIconMenuVariantsDemo
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.Text
@@ -127,6 +131,10 @@ fun Coui17HomePage(
         coui17Entry("Switch") { SwitchDemo() }
         coui17Entry("Arrow") { ArrowDemo() }
         coui17Entry("Dialog") { DialogDemo() }
+        coui17Entry("WindowDialog variants") { WindowDialogVariantsDemo() }
+        coui17Entry("WindowIconMenu variants") { WindowIconMenuVariantsDemo() }
+        coui17Entry("HorizontalScrollBar") { HorizontalScrollBarDemo() }
+        coui17Entry("NavigationBarEnterExit") { NavigationBarEnterExitDemo() }
         coui17Entry("GuideDialog") { GuideDialogDemo() }
         coui17Entry("PageIndicator") { PageIndicatorDemo() }
         coui17Entry("BottomSheet") { BottomSheetDemo() }
