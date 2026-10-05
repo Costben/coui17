@@ -6,7 +6,13 @@ on:
     paths-ignore:
       - "README.md"
       - "CLAUDE.md"
-      - "AGENTS.md"
+      - "AGENT.md"
+      - "CONTRIBUTING.md"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+      - "CHANGELOG.md"
+      - "NOTICE"
+      - "THIRD-PARTY-LICENSES.md"
       - "docs/**"
 
 jobs:

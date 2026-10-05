@@ -1,7 +1,7 @@
 <component name="CopyrightManager">
   <settings>
     <module2copyright>
-      <element module="miuix" copyright="miuix" />
+      <element module="coui" copyright="coui" />
     </module2copyright>
     <LanguageOptions name="Kotlin" />
     <LanguageOptions name="__TEMPLATE__">
