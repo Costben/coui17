@@ -36,7 +36,9 @@ version = "${BuildConfig.LIBRARY_VERSION}$versionSuffix"
 val publicationExt = extensions.create<COUIPublicationExtension>("couiPublication")
 
 val projectUrl = "https://github.com/suqi8/coui"
-val githubPackagesUrl = "https://maven.pkg.github.com/suqi8/coui"
+// Snapshot publishing targets whichever repository the build runs in, so a downstream fork
+// publishes to its own GitHub Packages rather than failing against the upstream's ACL.
+val githubPackagesUrl = "https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "suqi8/coui"}"
 
 // Every published module stages into the same root-level directories, so a release
 // produces exactly one Maven Central bundle and one local repository that a smoke
