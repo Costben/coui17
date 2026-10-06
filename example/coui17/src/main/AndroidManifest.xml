@@ -5,8 +5,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-sdk tools:overrideLibrary="io.github.suqi8.coui.kmp.blur" />
-
     <application
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"
