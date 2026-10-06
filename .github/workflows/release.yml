@@ -125,7 +125,10 @@ jobs:
           RELEASE_VERSION: ${{ needs.resolve.outputs.release_version }}
         run: bash .github/scripts/render-release-notes.sh "$RELEASE_VERSION" "$RUNNER_TEMP/notes"
       - name: Stage and verify the Maven Central repository
-        run: ./gradlew verifyStagedMavenCentral $GRADLE_RELEASE_ARGS --no-daemon --no-configuration-cache --stacktrace
+        run: |
+          # GRADLE_RELEASE_ARGS carries several flags, so the word splitting below is intended.
+          # shellcheck disable=SC2086
+          ./gradlew verifyStagedMavenCentral $GRADLE_RELEASE_ARGS --no-daemon --no-configuration-cache --stacktrace
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -153,7 +156,9 @@ jobs:
           set -euo pipefail
           bash verification/apple-web-consumer/verify.sh "${TAG#v}" "file://$PWD/build/publishing/mavenCentral"
       - name: Upload the already-verified bundle to Maven Central
-        run: ./gradlew publishToMavenCentral $GRADLE_RELEASE_ARGS --no-daemon --no-configuration-cache --stacktrace
+        run: |
+          # shellcheck disable=SC2086
+          ./gradlew publishToMavenCentral $GRADLE_RELEASE_ARGS --no-daemon --no-configuration-cache --stacktrace
         env:
           CENTRAL_TOKEN_ID: ${{ secrets.CENTRAL_TOKEN_ID }}
           CENTRAL_TOKEN_SECRET: ${{ secrets.CENTRAL_TOKEN_SECRET }}
