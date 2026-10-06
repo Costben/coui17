@@ -51,6 +51,20 @@ yarn docs:build
 that breaks the published ABI needs a major version bump and an entry in `CHANGELOG.md`; do not
 silence the check.
 
+The committed dumps are JVM dumps, so they guard the desktop artifact and — because the Android
+artifact is built from the same `commonMain` — the same public surface there.
+`verification/compat-consumer` extends that guard end to end: it compiles a 1.1.0-shaped consumer
+against both releases and runs the 1.1.0-compiled bytecode against the candidate, so a compatibility
+entry point cannot be dropped by accident. Kotlin/Native (iOS, macOS) and web have no stable ABI
+contract — those consumers recompile from source — so source compatibility is what applies there.
+What does apply to them is artifact completeness, and `verification/apple-web-consumer` checks it: a
+downstream Kotlin Multiplatform project resolves the nine modules for `iosArm64`, `iosSimulatorArm64`,
+`macosArm64`, `js` and `wasmJs` from the repository under test, compiles against them and links the
+iOS and macOS frameworks. All three consumer projects are separate Gradle builds run through the root
+wrapper, e.g. `bash verification/apple-web-consumer/verify.sh <version> <repository-url>`. They are
+gated in CI on the staged candidate; the Apple/web one needs a macOS host, so it runs in the release
+workflow's macOS publish job rather than on every pull request.
+
 ## Style
 
 - Formatting is enforced by Spotless + ktlint with the Compose rules. Run `./gradlew spotlessCheck`
@@ -69,11 +83,17 @@ silence the check.
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <subject>`.
 
-- Types in use: `feat`, `fix`, `perf`, `refactor`, `docs`, `build`, `chore`, `test`.
-- Scopes in use: `coui-core`, `coui-ui`, `coui-preference`, `coui-shader`, `coui-blur`,
-  `coui-squircle`, `coui-icons`, `coui-nav`, `coui-navigation3-ui`, `coui17`, `docs`, `build`.
-- The subject describes the user-visible result, uses the imperative mood, and carries no trailing
-  period. Commits in this repository are written in Chinese.
+- Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `chore`, `chore(release)`, `revert`. The `build`,
+  `ci` and `test` types on older commits are legacy; fold that work under `chore` for new commits.
+- Scopes: `coui-core`, `coui-ui`, `coui-preference`, `coui-shader`, `coui-blur`, `coui-squircle`,
+  `coui-icons`, `coui-nav`, `coui-navigation3-ui`, `coui17`, `docs`, `build`. Omit the scope for
+  cross-cutting work.
+- The subject is written in Chinese, in the imperative mood, and states the user-visible result
+  rather than the process. Keep it within 40 characters with no trailing period — if it does not fit,
+  the change is two commits.
+- Write a body only when the reason for the change cannot be read off the subject and the code: the
+  motivation, the constraint, the trade-off. No file lists, no step-by-step process, no version-bump
+  narration.
 - Do not add signature lines (`Co-Authored-By`, "Generated with …", bot attributions).
 
 ## Pull requests

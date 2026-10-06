@@ -32,6 +32,12 @@ All notable user-visible changes are documented here. The format follows
 
 ### Fixed
 
+- Restored source and binary compatibility with 1.1.0. Every parameter added in 1.2.0 now carries a
+  default, and every public JVM member the 1.1.0 artifacts exposed is declared again, so an
+  application compiled against 1.1.0 keeps linking and running without a rebuild. Two
+  compiler-generated lambda accessors inside `ComposableSingletons$TopAppBarKt` cannot be
+  re-declared; they are referenced only from `TopAppBarKt` inside the library, never from consumer
+  bytecode, so no application can link against them.
 - The release workflow no longer combines tag triggers with a path filter, which previously
   prevented tagged releases from running at all.
 - The Android baseline profiles now resolve against the current library: entries that named

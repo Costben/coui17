@@ -51,13 +51,15 @@ same version number. Every module exposes the full target set: Android, iOS (`io
 
 #### Android `minSdk`
 
-| Module                                                     | Android `minSdk` |
-| ---------------------------------------------------------- | ---------------- |
-| `coui-blur`                                                | 33               |
-| All other modules (`coui-ui`, `coui-core`, `coui-preference`, `coui-icons`, `coui-squircle`, `coui-shader`, `coui-nav`, `coui-navigation3-ui`) | 23               |
+Every published module declares `minSdk` 23, so a plain consumer of `coui-ui` or `coui-preference`
+needs no `tools:overrideLibrary`:
 
-`coui-blur` requires API 33 (Android 13) for `RenderEffect`-backed blur; on lower API levels it is not
-published as a usable module — use the non-blur modules instead.
+| Module      | Android `minSdk` |
+| ----------- | ---------------- |
+| All modules | 23               |
+
+`coui-blur`'s effects need `RuntimeShader`, which exists from API 33. On lower API levels the effects
+are skipped and the content draws normally, so no module has to be left out of the dependency set.
 
 ### Getting Started
 
@@ -70,7 +72,7 @@ kotlin {
             implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
             // Optional: Extended icon set
             implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
-            // Optional: Blur effects (Android minSdk 33)
+            // Optional: Blur effects (no-op below Android API 33)
             implementation("io.github.suqi8.coui.kmp:coui-blur:1.2.0")
             // Optional: Squircle shapes
             implementation("io.github.suqi8.coui.kmp:coui-squircle:1.2.0")
@@ -104,7 +106,9 @@ kotlin {
   opt-in at the call site; the marker documents that the API may change in a minor release.
   `@ExperimentalScrollBarApi` and `@ExperimentalCOUIApi` are the current examples.
 - **Binary compatibility:** every release is checked with the Kotlin Binary Compatibility Validator;
-  the accepted API surface is committed under `coui-*/api/`.
+  the accepted API surface is committed under `coui-*/api/`. The dumps cover the JVM surface, i.e.
+  the desktop and Android artifacts; Kotlin/Native and web consumers recompile from source, so
+  source compatibility is the contract that applies to them.
 
 ### Usage
 
