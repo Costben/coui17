@@ -30,6 +30,7 @@ actual fun RuntimeShader.asComposeShader(): Shader = asAndroidRuntimeShader()
 actual fun RuntimeShader.asBrush(): ShaderBrush = (this as AndroidRuntimeShader).brush
 
 /** Returns the underlying [android.graphics.RuntimeShader] for interop with native render-effect APIs. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun RuntimeShader.asAndroidRuntimeShader(): android.graphics.RuntimeShader = (this as AndroidRuntimeShader).shader
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)

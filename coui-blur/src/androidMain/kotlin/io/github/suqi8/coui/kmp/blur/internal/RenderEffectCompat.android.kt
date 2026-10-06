@@ -4,12 +4,16 @@ package io.github.suqi8.coui.kmp.blur.internal
 
 import android.graphics.BlendMode
 import android.graphics.Shader
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import io.github.suqi8.coui.kmp.blur.BackdropEffectScopeImpl
 import io.github.suqi8.coui.kmp.shader.RuntimeShader
 import io.github.suqi8.coui.kmp.shader.asAndroidRuntimeShader
 
+/** Only reachable when [io.github.suqi8.coui.kmp.shader.isRenderEffectSupported] holds. */
+@RequiresApi(Build.VERSION_CODES.S)
 internal actual fun RenderEffect?.chain(other: RenderEffect): RenderEffect = if (this != null) {
     android.graphics.RenderEffect.createChainEffect(
         other.asAndroidRenderEffect(),
@@ -19,6 +23,8 @@ internal actual fun RenderEffect?.chain(other: RenderEffect): RenderEffect = if 
     other
 }
 
+/** Only reachable when [io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported] holds. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 internal actual fun runtimeShaderEffect(
     runtimeShader: RuntimeShader,
     uniformShaderName: String,
@@ -35,6 +41,7 @@ private fun sigmaToBlurRadius(sigma: Float): Float = ((sigma - 0.5f) / 0.57735f)
  * animating radius reuses them — their runtime-shader snapshots are the only expensive nodes in
  * the stack rebuild.
  */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 private class ProgressiveMaskCache {
     var ax = Float.NaN
     var ay = Float.NaN
@@ -58,6 +65,7 @@ private class ProgressiveMaskCache {
 // levels SrcOver-stacked over the unmasked lightest level ≡ PROGRESSIVE_COMPOSITE_SHADER's first
 // two mix segments (the blend to sharp is the caller's full-res overlay, or the in-stack source
 // level with nativeSharpEnd).
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 internal actual fun progressiveStackEffect(
     scope: BackdropEffectScopeImpl,
     sigma0X: Float,

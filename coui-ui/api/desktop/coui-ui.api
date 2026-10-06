@@ -517,7 +517,9 @@ public final class io/github/suqi8/coui/kmp/basic/ButtonDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/ButtonKt {
 	public static final fun Button-ZAyDCYU (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/ui/unit/Dp;Landroidx/compose/ui/unit/Dp;Landroidx/compose/ui/unit/Dp;Lio/github/suqi8/coui/kmp/basic/ButtonColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lio/github/suqi8/coui/kmp/basic/ButtonSize;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun Button-v3dQN_U (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZFFFLio/github/suqi8/coui/kmp/basic/ButtonColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TextButton-KPe0G4Y (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/ui/unit/Dp;Landroidx/compose/ui/unit/Dp;Landroidx/compose/ui/unit/Dp;Lio/github/suqi8/coui/kmp/basic/TextButtonColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lio/github/suqi8/coui/kmp/basic/ButtonSize;Landroidx/compose/runtime/Composer;III)V
+	public static final fun TextButton-kHuuYvo (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZFFFLio/github/suqi8/coui/kmp/basic/TextButtonColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ButtonSize : java/lang/Enum {
@@ -806,7 +808,8 @@ public final class io/github/suqi8/coui/kmp/basic/ChipDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ChipKt {
-	public static final fun Chip-tpM0-uc (ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Ljava/lang/String;FFFFFLio/github/suqi8/coui/kmp/basic/ChipColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Landroidx/compose/runtime/Composer;III)V
+	public static final fun Chip-2_rQPGY (ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;FFFFLio/github/suqi8/coui/kmp/basic/ChipColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Ljava/lang/String;FLandroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun Chip-FEmb9yg (ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;FFFFLio/github/suqi8/coui/kmp/basic/ChipColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ChipTabData {
@@ -1165,8 +1168,14 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SnackbarK
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBarKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBarKt;
 	public fun <init> ()V
+	public final fun getLambda$-1143318405$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1157972007$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-1425241651$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-1824787834$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-2046446912$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-357067351$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-801912990$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1161401538$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1414627886$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1628177070$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$457430988$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
@@ -1334,6 +1343,7 @@ public final class io/github/suqi8/coui/kmp/basic/DropdownItem {
 public final class io/github/suqi8/coui/kmp/basic/DropdownKt {
 	public static final fun DropdownArrowEndAction-3IgeMak (Landroidx/compose/foundation/layout/RowScope;JLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DropdownHeaderItem-cf5BqRc (Ljava/lang/String;Landroidx/compose/ui/Modifier;JZLandroidx/compose/runtime/Composer;II)V
+	public static final fun DropdownImpl (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILio/github/suqi8/coui/kmp/basic/DropdownColors;ZZZZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 	public static final fun DropdownImpl (Ljava/lang/String;IZILio/github/suqi8/coui/kmp/basic/DropdownColors;ZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DropdownImpl--7soICU (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILandroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/DropdownColors;ZZZZZLkotlin/jvm/functions/Function1;Ljava/lang/Object;ILandroidx/compose/runtime/Composer;III)V
 	public static final fun SpinnerItemImpl (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILio/github/suqi8/coui/kmp/basic/DropdownColors;ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
@@ -2009,6 +2019,7 @@ public final class io/github/suqi8/coui/kmp/basic/ListPopupDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/ListPopupKt {
 	public static final fun ListPopupColumn (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ListPopupContent-SIU0soY (JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;JLandroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ListPopupContent-e-ensJU (JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/anim/BezierGravityPathGeometry;Lio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;JLandroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun PopupListDivider-iJQMabo (Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;II)V
 	public static final fun popupGravityPath-mL-hObY (Landroidx/compose/ui/unit/IntRect;Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;JLio/github/suqi8/coui/kmp/anim/PopupGravityMotion;)Lio/github/suqi8/coui/kmp/anim/BezierGravityPathGeometry;
@@ -2020,15 +2031,18 @@ public final class io/github/suqi8/coui/kmp/basic/ListPopupKt {
 
 public final class io/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo {
 	public static final field $stable I
-	public synthetic fun <init> (Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Landroidx/compose/ui/unit/IntRect;
 	public final fun component2 ()Landroidx/compose/ui/unit/IntRect;
 	public final fun component3-SzJe1aQ ()J
 	public final fun component4-SzJe1aQ ()J
-	public final fun component5-nOcc-ac ()J
-	public final fun component6 ()Lio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;
-	public final fun copy-V_aDoiQ (Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;)Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;
-	public static synthetic fun copy-V_aDoiQ$default (Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;
+	public final fun component5 ()Lio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;
+	public final fun component6-nOcc-ac ()J
+	public final fun copy-DTcBgGg (Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;J)Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;
+	public static synthetic fun copy-DTcBgGg$default (Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;JILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;
+	public final synthetic fun copy-ZojVf7I (Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;)Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;
+	public static synthetic fun copy-ZojVf7I$default (Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;Landroidx/compose/ui/unit/IntRect;Landroidx/compose/ui/unit/IntRect;JJLio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCalculatedOffset-nOcc-ac ()J
 	public final fun getEffectiveTransformOrigin-SzJe1aQ ()J
@@ -2479,6 +2493,7 @@ public final class io/github/suqi8/coui/kmp/basic/NavigationBarDisplayMode : jav
 public final class io/github/suqi8/coui/kmp/basic/NavigationBarKt {
 	public static final fun FloatingNavigationBar-ZNt0Pmw (Landroidx/compose/ui/Modifier;JFLandroidx/compose/ui/Alignment$Horizontal;FFZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun FloatingNavigationBarItem (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun NavigationBar-OadGlvw (Landroidx/compose/ui/Modifier;JZZLio/github/suqi8/coui/kmp/basic/NavigationBarDisplayMode;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun NavigationBar-Y2L_72g (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;ZZZLio/github/suqi8/coui/kmp/basic/NavigationBarDisplayMode;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun NavigationBarEnterExit (ZLandroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun NavigationBarItem (Landroidx/compose/foundation/layout/RowScope;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
@@ -2908,8 +2923,11 @@ public final class io/github/suqi8/coui/kmp/basic/ProgressIndicatorColors {
 	public static final field $stable I
 	public synthetic fun <init> (JJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun copy-t635Npw (JJJJJ)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
 	public static synthetic fun copy-t635Npw$default (Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;JJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
+	public final synthetic fun copy-ysEtTa8 (JJJ)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
+	public static synthetic fun copy-ysEtTa8$default (Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;JJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -2918,6 +2936,7 @@ public final class io/github/suqi8/coui/kmp/basic/ProgressIndicatorColors {
 public final class io/github/suqi8/coui/kmp/basic/ProgressIndicatorDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorDefaults;
+	public final synthetic fun circularProgressIndicatorColors-RGew2ao (JJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
 	public final fun circularProgressIndicatorColors-zjMxDiM (JJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
 	public final fun getDefaultCircularProgressIndicatorSize-D9Ej5fM ()F
 	public final fun getDefaultCircularProgressIndicatorStrokeWidth-D9Ej5fM ()F
@@ -2935,10 +2954,12 @@ public final class io/github/suqi8/coui/kmp/basic/ProgressIndicatorDefaults {
 	public final fun getSmallRotatingProgressIndicatorRingDiameter-D9Ej5fM ()F
 	public final fun getSmallRotatingProgressIndicatorSize-D9Ej5fM ()F
 	public final fun getSmallRotatingProgressIndicatorStrokeWidth-D9Ej5fM ()F
+	public final synthetic fun progressIndicatorColors-RGew2ao (JJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
 	public final fun progressIndicatorColors-zjMxDiM (JJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ProgressIndicatorKt {
+	public static final synthetic fun CircularProgressIndicator-6PoWaU8 (Landroidx/compose/ui/Modifier;Ljava/lang/Float;Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;FFLandroidx/compose/runtime/Composer;II)V
 	public static final fun CircularProgressIndicator-nSlTg7c (Landroidx/compose/ui/Modifier;Ljava/lang/Float;Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;FFLio/github/suqi8/coui/kmp/basic/CircularProgressState;Landroidx/compose/runtime/Composer;II)V
 	public static final fun InfiniteProgressIndicator-oMI9zvI (Landroidx/compose/ui/Modifier;JFFLandroidx/compose/runtime/Composer;II)V
 	public static final fun LinearProgressIndicator--jt2gSs (Landroidx/compose/ui/Modifier;Ljava/lang/Float;Lio/github/suqi8/coui/kmp/basic/ProgressIndicatorColors;FLandroidx/compose/runtime/Composer;II)V
@@ -3508,9 +3529,13 @@ public final class io/github/suqi8/coui/kmp/basic/SimpleLockViewKt {
 
 public final class io/github/suqi8/coui/kmp/basic/SliderColors {
 	public static final field $stable I
+	public synthetic fun <init> (JJJJJJJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun copy--K518z4 (JJJJJJJJJJ)Lio/github/suqi8/coui/kmp/basic/SliderColors;
 	public static synthetic fun copy--K518z4$default (Lio/github/suqi8/coui/kmp/basic/SliderColors;JJJJJJJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/SliderColors;
+	public final synthetic fun copy-FD3wquc (JJJJJJJJ)Lio/github/suqi8/coui/kmp/basic/SliderColors;
+	public static synthetic fun copy-FD3wquc$default (Lio/github/suqi8/coui/kmp/basic/SliderColors;JJJJJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/SliderColors;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -3522,6 +3547,7 @@ public final class io/github/suqi8/coui/kmp/basic/SliderDefaults {
 	public final fun getDefaultHapticEffect ()Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;
 	public final fun getKeyPointRadius-D9Ej5fM ()F
 	public final fun getMinHeight-D9Ej5fM ()F
+	public final synthetic fun sliderColors-oq7We08 (JJJJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/SliderColors;
 	public final fun sliderColors-q0g_0yA (JJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lio/github/suqi8/coui/kmp/basic/SliderColors;
 }
 
@@ -3536,7 +3562,10 @@ public final class io/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEff
 
 public final class io/github/suqi8/coui/kmp/basic/SliderKt {
 	public static final fun RangeSlider-uuZZ4FU (Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun RangeSlider-xKBSf-U (Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLandroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun Slider-9UqVb8Q (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLandroidx/compose/runtime/Composer;III)V
 	public static final fun Slider-fs30GE4 (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun VerticalSlider-fs30GE4 (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;ZLio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLandroidx/compose/runtime/Composer;III)V
 	public static final fun VerticalSlider-uYRUAWA (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;ZLio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -4120,8 +4149,10 @@ public final class io/github/suqi8/coui/kmp/basic/TopAppBarDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/TopAppBarKt {
 	public static final fun COUIScrollBehavior (Lio/github/suqi8/coui/kmp/basic/TopAppBarState;Lkotlin/jvm/functions/Function0;Landroidx/compose/animation/core/AnimationSpec;Landroidx/compose/animation/core/DecayAnimationSpec;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;
+	public static final fun SmallTopAppBar-EJXvh-c (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun SmallTopAppBar-IzxjNzY (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZFLkotlin/jvm/functions/Function2;ZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TopAppBar-IrE0efM (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun TopAppBar-QVWyRLc (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun couiTopAppBarActionItem (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 	public static final fun rememberTopAppBarState (FFFLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TopAppBarState;
 }
@@ -4154,13 +4185,17 @@ public final class io/github/suqi8/coui/kmp/basic/TopTipsBackgroundStyle : java/
 
 public final class io/github/suqi8/coui/kmp/basic/TopTipsColors {
 	public static final field $stable I
+	public synthetic fun <init> (JJJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-0d7_KjU ()J
 	public final fun component2-0d7_KjU ()J
 	public final fun component3-0d7_KjU ()J
 	public final fun component4-0d7_KjU ()J
 	public final fun component5-0d7_KjU ()J
 	public final fun component6-0d7_KjU ()J
+	public final synthetic fun copy-t635Npw (JJJJJ)Lio/github/suqi8/coui/kmp/basic/TopTipsColors;
+	public static synthetic fun copy-t635Npw$default (Lio/github/suqi8/coui/kmp/basic/TopTipsColors;JJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TopTipsColors;
 	public final fun copy-tNS2XkQ (JJJJJJ)Lio/github/suqi8/coui/kmp/basic/TopTipsColors;
 	public static synthetic fun copy-tNS2XkQ$default (Lio/github/suqi8/coui/kmp/basic/TopTipsColors;JJJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TopTipsColors;
 	public fun equals (Ljava/lang/Object;)Z
@@ -4186,13 +4221,16 @@ public final class io/github/suqi8/coui/kmp/basic/TopTipsDefaults {
 	public final fun getTextMinHeight-D9Ej5fM ()F
 	public final fun getTitleIconSize-D9Ej5fM ()F
 	public final fun getTitleMinHeight-D9Ej5fM ()F
+	public final fun getVerticalPadding-D9Ej5fM ()F
 	public final fun textStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun titleStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun topTipsColors-dPtIKUs (Lio/github/suqi8/coui/kmp/basic/TopTipsBackgroundStyle;JJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TopTipsColors;
+	public final synthetic fun topTipsColors-zjMxDiM (JJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TopTipsColors;
 	public final fun topTipsContainerColor-XeAY9LY (Lio/github/suqi8/coui/kmp/basic/TopTipsBackgroundStyle;Landroidx/compose/runtime/Composer;I)J
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TopTipsKt {
+	public static final fun TopTips-gMrHQkA (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/TopTipsColors;Landroidx/compose/runtime/Composer;II)V
 	public static final fun TopTips-qubQmG4 (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLjava/lang/String;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ZLio/github/suqi8/coui/kmp/basic/TopTipsStyle;Lio/github/suqi8/coui/kmp/basic/TopTipsBackgroundStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/unit/Dp;Lio/github/suqi8/coui/kmp/basic/TopTipsColors;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -4471,13 +4509,17 @@ public final class io/github/suqi8/coui/kmp/layout/BottomSheetDefaults {
 
 public final class io/github/suqi8/coui/kmp/layout/DialogButtonBarAction {
 	public static final field $stable I
+	public fun <init> (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Z)V
 	public synthetic fun <init> (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Z
 	public final fun component3 ()Lkotlin/jvm/functions/Function0;
 	public final fun component4 ()Z
+	public final synthetic fun copy (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;)Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;
 	public final fun copy (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Z)Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;
 	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;ZILjava/lang/Object;)Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getEnabled ()Z
@@ -4504,6 +4546,7 @@ public final class io/github/suqi8/coui/kmp/layout/DialogButtonBarDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/layout/DialogButtonBarKt {
+	public static final fun DialogButtonBar-FItCLgY (Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;ZZZLio/github/suqi8/coui/kmp/basic/TextButtonColors;JLandroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DialogButtonBar-bZJ3-2A (Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;ZZZLio/github/suqi8/coui/kmp/basic/TextButtonColors;Lio/github/suqi8/coui/kmp/basic/TextButtonColors;JLandroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -4596,6 +4639,7 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomSheetKt {
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayCascadingListPopupKt {
+	public static final synthetic fun OverlayCascadingListPopup-EP_iJ18 (ZLjava/util/List;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider$Align;ZLandroidx/compose/ui/unit/Dp;FZLio/github/suqi8/coui/kmp/basic/DropdownColors;ZLandroidx/compose/runtime/Composer;III)V
 	public static final fun OverlayCascadingListPopup-NV3VI4Y (ZLjava/util/List;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider$Align;ZLandroidx/compose/ui/unit/Dp;FZLio/github/suqi8/coui/kmp/basic/DropdownColors;ZZLandroidx/compose/runtime/Composer;III)V
 }
 
@@ -4648,6 +4692,9 @@ public final class io/github/suqi8/coui/kmp/theme/ColorSchemeMode : java/lang/En
 public final class io/github/suqi8/coui/kmp/theme/Colors {
 	public static final field $stable I
 	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun copy-KOU1aag (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static synthetic fun copy-KOU1aag$default (Lio/github/suqi8/coui/kmp/theme/Colors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public final fun copy-t94DPes (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static synthetic fun copy-t94DPes$default (Lio/github/suqi8/coui/kmp/theme/Colors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public final fun getBackground-0d7_KjU ()J
@@ -4708,8 +4755,12 @@ public final class io/github/suqi8/coui/kmp/theme/Colors {
 }
 
 public final class io/github/suqi8/coui/kmp/theme/ColorsKt {
+	public static final synthetic fun darkColorScheme-KOU1aag (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static synthetic fun darkColorScheme-KOU1aag$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static final fun darkColorScheme-t94DPes (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static synthetic fun darkColorScheme-t94DPes$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static final synthetic fun lightColorScheme-KOU1aag (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static synthetic fun lightColorScheme-KOU1aag$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static final fun lightColorScheme-t94DPes (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static synthetic fun lightColorScheme-t94DPes$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 }

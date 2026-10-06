@@ -49,7 +49,39 @@ data class DialogButtonBarAction(
     val enabled: Boolean = true,
     val onClick: () -> Unit,
     val recommended: Boolean = false,
-)
+) {
+    /**
+     * The three-property form, kept so callers written before [recommended] existed still compile;
+     * the action is not the bar's recommended button.
+     */
+    constructor(
+        text: String,
+        enabled: Boolean = true,
+        onClick: () -> Unit,
+    ) : this(
+        text = text,
+        enabled = enabled,
+        onClick = onClick,
+        recommended = false,
+    )
+
+    /** The three-property [copy], kept for binary compatibility with callers built before 1.2.0. */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes recommended.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        text: String = this.text,
+        enabled: Boolean = this.enabled,
+        onClick: () -> Unit = this.onClick,
+    ): DialogButtonBarAction = copy(
+        text = text,
+        enabled = enabled,
+        onClick = onClick,
+        recommended = recommended,
+    )
+}
 
 /**
  * A COUI dialog button bar (`COUIButtonBarLayout`) that automatically flips between a horizontal
@@ -198,6 +230,36 @@ private fun labelsFitInRow(
             maxLines = 1,
         ).size.width <= availablePx
     }
+}
+
+@Composable
+fun DialogButtonBar(
+    negative: DialogButtonBarAction?,
+    positive: DialogButtonBarAction?,
+    modifier: Modifier = Modifier,
+    neutral: DialogButtonBarAction? = null,
+    dynamicLayout: Boolean = true,
+    showDivider: Boolean = true,
+    hasContentAbove: Boolean = true,
+    colors: TextButtonColors = ButtonDefaults.textButtonColorsBorderless(),
+    dividerColor: Color = COUITheme.colorScheme.dividerLine,
+    textStyle: TextStyle = COUITheme.textStyles.button,
+) {
+    DialogButtonBar(
+        negative = negative,
+        positive = positive,
+        modifier = modifier,
+        neutral = neutral,
+        dynamicLayout = dynamicLayout,
+        showDivider = showDivider,
+        hasContentAbove = hasContentAbove,
+        colors = colors,
+        // `recommendColors` exists only on the primary overload; passing it pins this forward to the
+        // primary instead of re-selecting this same overload (which would recurse forever).
+        recommendColors = ButtonDefaults.textButtonColorsPrimary(),
+        dividerColor = dividerColor,
+        textStyle = textStyle,
+    )
 }
 
 /**

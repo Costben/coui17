@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
@@ -92,5 +93,43 @@ fun OverlayCascadingListPopup(
         dropdownColors = dropdownColors,
         collapseOnSelection = collapseOnSelection,
         enableGlass = enableGlass,
+    )
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds an enableGlass parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun OverlayCascadingListPopup(
+    show: Boolean,
+    entries: List<DropdownEntry>,
+    onDismissRequest: () -> Unit,
+    popupModifier: Modifier = Modifier,
+    onDismissFinished: (() -> Unit)? = null,
+    popupPositionProvider: PopupPositionProvider = ListPopupDefaults.DropdownPositionProvider,
+    alignment: PopupPositionProvider.Align = PopupPositionProvider.Align.End,
+    enableWindowDim: Boolean = true,
+    maxHeight: Dp? = null,
+    minWidth: Dp = 200.dp,
+    renderInRootScaffold: Boolean = true,
+    dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
+    collapseOnSelection: Boolean = true,
+) {
+    OverlayCascadingListPopup(
+        show = show,
+        entries = entries,
+        onDismissRequest = onDismissRequest,
+        popupModifier = popupModifier,
+        onDismissFinished = onDismissFinished,
+        popupPositionProvider = popupPositionProvider,
+        alignment = alignment,
+        enableWindowDim = enableWindowDim,
+        maxHeight = maxHeight,
+        minWidth = minWidth,
+        renderInRootScaffold = renderInRootScaffold,
+        dropdownColors = dropdownColors,
+        collapseOnSelection = collapseOnSelection,
     )
 }

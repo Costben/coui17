@@ -51,10 +51,10 @@ fun RecommendedPreference(
     title: String,
     items: List<RecommendedItem>,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
     cornerRadius: Dp = RecommendedPreferenceDefaults.CornerRadius,
     colors: RecommendedPreferenceColors = RecommendedPreferenceDefaults.recommendedPreferenceColors(),
     insideMargin: PaddingValues = RecommendedPreferenceDefaults.InsideMargin,
+    enabled: Boolean = true,
 ) {
     if (items.isEmpty()) return
 
@@ -121,6 +121,30 @@ fun RecommendedPreference(
             }
         }
     }
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds an enabled parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun RecommendedPreference(
+    title: String,
+    items: List<RecommendedItem>,
+    modifier: Modifier = Modifier,
+    cornerRadius: Dp = RecommendedPreferenceDefaults.CornerRadius,
+    colors: RecommendedPreferenceColors = RecommendedPreferenceDefaults.recommendedPreferenceColors(),
+    insideMargin: PaddingValues = RecommendedPreferenceDefaults.InsideMargin,
+) {
+    RecommendedPreference(
+        title = title,
+        items = items,
+        modifier = modifier,
+        cornerRadius = cornerRadius,
+        colors = colors,
+        insideMargin = insideMargin,
+    )
 }
 
 /**
@@ -198,6 +222,26 @@ object RecommendedPreferenceDefaults {
             disabledItemColor = disabledItemColor,
         )
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the overload that adds disabledTitleColor and disabledItemColor parameters.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    @Composable
+    fun recommendedPreferenceColors(
+        containerColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+            Color(0x14FFFFFF)
+        } else {
+            Color(0x0A000000)
+        },
+        titleColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
+        itemColor: Color = COUITheme.colorScheme.onSurface,
+    ): RecommendedPreferenceColors = recommendedPreferenceColors(
+        containerColor = containerColor,
+        titleColor = titleColor,
+        itemColor = itemColor,
+    )
 }
 
 /**
@@ -232,6 +276,25 @@ data class RecommendedPreferenceColors(
         itemColor = itemColor,
         disabledTitleColor = titleColor,
         disabledItemColor = itemColor,
+    )
+
+    /** The three-color [copy], kept for binary compatibility with callers built before 1.2.0. */
+    @OptIn(ExperimentalCOUIApi::class)
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes disabledTitleColor and disabledItemColor.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        containerColor: Color = this.containerColor,
+        titleColor: Color = this.titleColor,
+        itemColor: Color = this.itemColor,
+    ): RecommendedPreferenceColors = copy(
+        containerColor = containerColor,
+        titleColor = titleColor,
+        itemColor = itemColor,
+        disabledTitleColor = disabledTitleColor,
+        disabledItemColor = disabledItemColor,
     )
 
     @OptIn(ExperimentalCOUIApi::class)

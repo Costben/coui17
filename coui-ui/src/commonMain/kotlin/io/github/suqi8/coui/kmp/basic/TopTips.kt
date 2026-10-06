@@ -48,16 +48,13 @@ import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * A tip banner shown at the top of a page, mirroring the ColorOS top-tips family:
- * `com.coui.appcompat.tips.COUICustomTopTips`, `...tips.def.COUIDefaultTopTips`,
- * `...tips.def.COUIDefaultTopTipsView` and `...tips.marquee.COUIMarqueeTopTips`.
+ * A tip banner shown at the top of a page, following the ColorOS top-tips family.
  *
- * `COUICustomTopTips` is an abstract `COUICardView`: `init` sets
- * `setRadius(couiRoundCornerMRadius)` / `setWeight(couiRoundCornerMWeight)` and fills the card with
- * `?attr/couiColorFillThin`, and `showWithAnim` / `dismissWithAnim` scale the view on Y from 0 to 1
+ * The family's card sets a medium corner radius and weight and fills the card with
+ * `?attr/couiColorFillThin`, and its show / dismiss animation scales the view on Y from 0 to 1
  * over 250ms. The port keeps that 250ms vertical scale for [visible].
  *
- * `COUIDefaultTopTips` overrides the background (`applySolidBackgroundColor`:
+ * The default variant overrides the background:
  * [TopTipsBackgroundStyle] `White` fills with `?attr/couiColorCard`, `Gray` — the default of
  * `mLastBackgroundStyle` — with `?attr/couiColorContainer4`), switches the corner radius with
  * `updateRadius(hasTitle, isSingleLineText)` and picks its layout mode from the style with
@@ -309,6 +306,41 @@ fun TopTips(
             }
         }
     }
+}
+
+@Composable
+fun TopTips(
+    text: String,
+    modifier: Modifier = Modifier,
+    visible: Boolean = true,
+    startIcon: (@Composable () -> Unit)? = null,
+    actionText: String? = null,
+    onAction: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    cornerRadius: Dp = TopTipsDefaults.CornerRadius,
+    colors: TopTipsColors = TopTipsDefaults.topTipsColors(),
+) {
+    TopTips(
+        text = text,
+        modifier = modifier,
+        visible = visible,
+        startIcon = startIcon,
+        actionText = actionText,
+        onAction = onAction,
+        onClose = onClose,
+        // These exist only on the primary overload; passing them pins this forward to the primary
+        // instead of re-selecting this same overload (which would recurse forever).
+        title = null,
+        ignoreText = null,
+        onIgnore = null,
+        marqueeEnabled = true,
+        style = TopTipsStyle.Standard,
+        backgroundStyle = TopTipsBackgroundStyle.Gray,
+        backgroundOverlay = null,
+        cornerRadius = cornerRadius,
+        colors = colors,
+        content = null,
+    )
 }
 
 /**
@@ -629,6 +661,12 @@ object TopTipsDefaults {
     val ContentPadding = 12.dp
 
     /**
+     * The top/bottom padding of the message (COUI `coui_toptips_view_title_top_margin`, 12dp).
+     * Retained for binary compatibility with callers built before 1.2.0.
+     */
+    val VerticalPadding = 12.dp
+
+    /**
      * The size of the leading icon without a title. COUI `coui_toptips_view_icon_btn_size`
      * (24dp).
      */
@@ -729,6 +767,26 @@ object TopTipsDefaults {
         )
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the overload that adds backgroundStyle and titleColor parameters.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    @Composable
+    fun topTipsColors(
+        containerColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) CONTAINER_COLOR_DARK else CONTAINER_COLOR_LIGHT,
+        contentColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
+        actionColor: Color = COUITheme.colorScheme.primary,
+        closeButtonColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) CLOSE_BUTTON_COLOR_DARK else CLOSE_BUTTON_COLOR_LIGHT,
+        closeIconColor: Color = Color.White,
+    ): TopTipsColors = topTipsColors(
+        containerColor = containerColor,
+        contentColor = contentColor,
+        actionColor = actionColor,
+        closeButtonColor = closeButtonColor,
+        closeIconColor = closeIconColor,
+    )
+
     /**
      * The solid fill `applySolidBackgroundColor` picks for a [TopTipsBackgroundStyle]:
      * `couiColorCard` (#FFFFFFFF light / #1AFFFFFF night) for [TopTipsBackgroundStyle.White] and
@@ -762,8 +820,48 @@ data class TopTipsColors(
     val actionColor: Color,
     val closeButtonColor: Color,
     val closeIconColor: Color,
-    val titleColor: Color,
-)
+    val titleColor: Color = contentColor,
+) {
+    /**
+     * The five-color form, kept so callers written before [titleColor] existed still compile; the
+     * title color falls back to [contentColor].
+     */
+    constructor(
+        containerColor: Color,
+        contentColor: Color,
+        actionColor: Color,
+        closeButtonColor: Color,
+        closeIconColor: Color,
+    ) : this(
+        containerColor = containerColor,
+        contentColor = contentColor,
+        actionColor = actionColor,
+        closeButtonColor = closeButtonColor,
+        closeIconColor = closeIconColor,
+        titleColor = contentColor,
+    )
+
+    /** The five-color [copy], kept for binary compatibility with callers built before 1.2.0. */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes titleColor.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        containerColor: Color = this.containerColor,
+        contentColor: Color = this.contentColor,
+        actionColor: Color = this.actionColor,
+        closeButtonColor: Color = this.closeButtonColor,
+        closeIconColor: Color = this.closeIconColor,
+    ): TopTipsColors = copy(
+        containerColor = containerColor,
+        contentColor = contentColor,
+        actionColor = actionColor,
+        closeButtonColor = closeButtonColor,
+        closeIconColor = closeIconColor,
+        titleColor = titleColor,
+    )
+}
 
 /** The single-line width of a label measured with [style], in pixels. */
 private fun TextMeasurer.labelWidthPx(text: String, style: TextStyle): Int = measure(

@@ -223,6 +223,28 @@ fun CircularProgressIndicator(
     }
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds a CircularProgressState parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun CircularProgressIndicator(
+    modifier: Modifier = Modifier,
+    progress: Float? = null,
+    colors: ProgressIndicatorColors = ProgressIndicatorDefaults.circularProgressIndicatorColors(),
+    strokeWidth: Dp = ProgressIndicatorDefaults.DefaultCircularProgressIndicatorStrokeWidth,
+    size: Dp = ProgressIndicatorDefaults.DefaultCircularProgressIndicatorSize,
+) {
+    CircularProgressIndicator(
+        modifier = modifier,
+        progress = progress,
+        colors = colors,
+        strokeWidth = strokeWidth,
+        size = size,
+    )
+}
+
 @Composable
 private fun CircularProgressIndicatorBody(
     progress: Float?,
@@ -705,6 +727,38 @@ object ProgressIndicatorDefaults {
             onErrorColor = onErrorColor,
         )
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the overload that adds errorColor and onErrorColor parameters.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    @Composable
+    fun progressIndicatorColors(
+        foregroundColor: Color = COUITheme.colorScheme.primary,
+        disabledForegroundColor: Color = COUITheme.colorScheme.disabledPrimarySlider,
+        backgroundColor: Color = COUITheme.colorScheme.dividerLine,
+    ): ProgressIndicatorColors = progressIndicatorColors(
+        foregroundColor = foregroundColor,
+        disabledForegroundColor = disabledForegroundColor,
+        backgroundColor = backgroundColor,
+    )
+
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the overload that adds errorColor and onErrorColor parameters.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    @Composable
+    fun circularProgressIndicatorColors(
+        foregroundColor: Color = COUITheme.colorScheme.onSurfaceContainerHigh,
+        disabledForegroundColor: Color = COUITheme.colorScheme.disabledPrimarySlider,
+        backgroundColor: Color = COUITheme.colorScheme.dividerLine,
+    ): ProgressIndicatorColors = circularProgressIndicatorColors(
+        foregroundColor = foregroundColor,
+        disabledForegroundColor = disabledForegroundColor,
+        backgroundColor = backgroundColor,
+    )
 }
 
 @Immutable
@@ -715,6 +769,42 @@ data class ProgressIndicatorColors(
     @property:ExperimentalCOUIApi private val errorColor: Color = backgroundColor,
     @property:ExperimentalCOUIApi private val onErrorColor: Color = foregroundColor,
 ) {
+    /**
+     * The three-color form, kept so callers written before [CircularProgressState.Error] existed
+     * still compile; the error colors fall back to [backgroundColor] / [foregroundColor].
+     */
+    @OptIn(ExperimentalCOUIApi::class)
+    constructor(
+        foregroundColor: Color,
+        disabledForegroundColor: Color,
+        backgroundColor: Color,
+    ) : this(
+        foregroundColor = foregroundColor,
+        disabledForegroundColor = disabledForegroundColor,
+        backgroundColor = backgroundColor,
+        errorColor = backgroundColor,
+        onErrorColor = foregroundColor,
+    )
+
+    /** The three-color [copy], kept for binary compatibility with callers built before 1.2.0. */
+    @OptIn(ExperimentalCOUIApi::class)
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes errorColor and onErrorColor.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        foregroundColor: Color = this.foregroundColor,
+        disabledForegroundColor: Color = this.disabledForegroundColor,
+        backgroundColor: Color = this.backgroundColor,
+    ): ProgressIndicatorColors = copy(
+        foregroundColor = foregroundColor,
+        disabledForegroundColor = disabledForegroundColor,
+        backgroundColor = backgroundColor,
+        errorColor = errorColor,
+        onErrorColor = onErrorColor,
+    )
+
     @Stable
     internal fun foregroundColor(enabled: Boolean): Color = if (enabled) foregroundColor else disabledForegroundColor
 

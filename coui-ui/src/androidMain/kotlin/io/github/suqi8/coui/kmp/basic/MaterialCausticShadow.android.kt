@@ -4,6 +4,7 @@ package io.github.suqi8.coui.kmp.basic
 
 import android.content.Context
 import android.graphics.Outline
+import android.os.Build
 import android.util.Log
 import android.view.View
 import android.view.ViewOutlineProvider
@@ -20,7 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlin.math.roundToInt
 
-/** The same public Oplus APIs used by COUICausticShadowEffect and ShadowUtils. */
+/** The vendor material caustic-shadow APIs, resolved once and invoked reflectively. */
 private class CausticApi {
     private val util = Class.forName("com.oplus.view.material.OplusMaterialUtil")
     private val oplusView = Class.forName("com.oplus.view.OplusView")
@@ -56,12 +57,17 @@ private class CausticApi {
 
     fun update(view: View, profile: CausticShadowProfile, density: Float, light: Color) {
         val upper = profile == CausticShadowProfile.Toolbar
-        // ShadowUtils.SHADOW_CAUSTIC_UPPER / DOWN. Geometry enables hwui's shadow draw path.
+        // Upper / down caustic shadow. Geometry enables hwui's shadow draw path.
         view.elevation = ((if (upper) 16f else 24f) * density + 0.5f).toInt().toFloat()
         val fade = (light.alpha / (if (upper) 51f / 255f else 66f / 255f)).coerceIn(0f, 1f)
         val shadow = android.graphics.Color.argb(((if (upper) 30 else 45) * fade).roundToInt(), 0, 0, 0)
-        view.outlineAmbientShadowColor = shadow
-        view.outlineSpotShadowColor = shadow
+        // outlineAmbientShadowColor / outlineSpotShadowColor were added in API 28. The native
+        // caustic API this renderer talks to is vendor-specific in practice, but the module declares
+        // minSdk 23, so the assignment has to be guarded rather than left to throw NoSuchMethodError.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            view.outlineAmbientShadowColor = shadow
+            view.outlineSpotShadowColor = shadow
+        }
         geometry.invoke(
             wrapper.newInstance(view),
             -1f,

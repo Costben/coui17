@@ -105,6 +105,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.jvm.JvmName
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -1292,8 +1293,9 @@ data class PopupLayoutPosition(
  * @property popupMargin The (extra) margins applied around the popup content.
  * @property effectiveTransformOrigin The transform origin in window coordinates used to scale the popup from its anchor corner.
  * @property localTransformOrigin The transform origin local to the popup content used by its [graphicsLayer] scaling.
- * @property calculatedOffset The popup content's resolved position in window coordinates.
  * @property popupLayoutPosition The resolved [PopupLayoutPosition] describing how the popup is placed relative to its anchor.
+ * @property calculatedOffset The popup content's resolved position in window coordinates. Declared last so
+ *   the destructuring `component1`..`component5` keep the meanings they had before the property existed.
  */
 @Immutable
 data class ListPopupLayoutInfo(
@@ -1301,9 +1303,51 @@ data class ListPopupLayoutInfo(
     val popupMargin: IntRect,
     val effectiveTransformOrigin: TransformOrigin,
     val localTransformOrigin: TransformOrigin,
-    val calculatedOffset: IntOffset,
     val popupLayoutPosition: PopupLayoutPosition,
-)
+    val calculatedOffset: IntOffset,
+) {
+    /**
+     * The five-argument constructor, kept so callers compiled before [calculatedOffset] existed still
+     * link; the offset defaults to [IntOffset.Zero]. [calculatedOffset] deliberately carries no default
+     * on the primary constructor: a defaulted sixth parameter would make a five-argument call ambiguous
+     * between this constructor and the primary one.
+     */
+    constructor(
+        windowBounds: IntRect,
+        popupMargin: IntRect,
+        effectiveTransformOrigin: TransformOrigin,
+        localTransformOrigin: TransformOrigin,
+        popupLayoutPosition: PopupLayoutPosition,
+    ) : this(
+        windowBounds = windowBounds,
+        popupMargin = popupMargin,
+        effectiveTransformOrigin = effectiveTransformOrigin,
+        localTransformOrigin = localTransformOrigin,
+        popupLayoutPosition = popupLayoutPosition,
+        calculatedOffset = IntOffset.Zero,
+    )
+
+    /** The five-property [copy], kept for binary compatibility with callers built before 1.2.0. */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes calculatedOffset.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        windowBounds: IntRect = this.windowBounds,
+        popupMargin: IntRect = this.popupMargin,
+        effectiveTransformOrigin: TransformOrigin = this.effectiveTransformOrigin,
+        localTransformOrigin: TransformOrigin = this.localTransformOrigin,
+        popupLayoutPosition: PopupLayoutPosition = this.popupLayoutPosition,
+    ): ListPopupLayoutInfo = copy(
+        windowBounds = windowBounds,
+        popupMargin = popupMargin,
+        effectiveTransformOrigin = effectiveTransformOrigin,
+        localTransformOrigin = localTransformOrigin,
+        popupLayoutPosition = popupLayoutPosition,
+        calculatedOffset = calculatedOffset,
+    )
+}
 
 /**
  * Computes and remembers the [ListPopupLayoutInfo] for a list popup from its anchor and content size.
@@ -1644,6 +1688,32 @@ fun ListPopupContent(
             content()
         }
     }
+}
+
+@Composable
+fun ListPopupContent(
+    popupContentSize: IntSize,
+    onPopupContentSizeChange: (IntSize) -> Unit,
+    fractionProgress: () -> Float,
+    alphaProgress: () -> Float,
+    popupLayoutPosition: PopupLayoutPosition,
+    localTransformOrigin: TransformOrigin,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    // The legacy overload had no gravity trajectory; a degenerate path keeps the content in place.
+    ListPopupContent(
+        popupContentSize = popupContentSize,
+        onPopupContentSizeChange = onPopupContentSizeChange,
+        fractionProgress = fractionProgress,
+        alphaProgress = alphaProgress,
+        pathProgress = { 0f },
+        gravityPath = BezierGravityPathGeometry(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
+        popupLayoutPosition = popupLayoutPosition,
+        localTransformOrigin = localTransformOrigin,
+        modifier = modifier,
+        content = content,
+    )
 }
 
 /**

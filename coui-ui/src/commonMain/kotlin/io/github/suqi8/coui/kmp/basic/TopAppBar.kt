@@ -78,14 +78,11 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * The ColorOS 17 app bar blur tokens, from `com.coui.appcompat.toolbar.AppBarBlurParams` /
- * `AppBarBlurHelper` (`coui-support-toolbar_release`).
+ * The ColorOS 17 app bar blur tokens.
  *
- * `AppBarBlurHelper` gives a `COUIAppBarLayout` the framework's top-bar material while the OS
- * supports it, and leaves the plain `couiColorSurface` fill in place otherwise. It knows two
- * shapes: a **uniform** blur, and a **gradient** blur whose radius ramps from `startBlurRadius` to
- * `endBlurRadius`. Both are reproduced here; the audit records the one piece of the gradient that
- * stays inferred.
+ * The design gives the app bar the framework's top-bar material while the OS supports it, and leaves
+ * the plain surface fill in place otherwise. It knows two shapes: a **uniform** blur, and a
+ * **gradient** blur whose radius ramps from a start to an end radius. Both are reproduced here.
  */
 object AppBarGlassDefaults {
 
@@ -306,6 +303,54 @@ fun TopAppBar(
     )
 }
 
+@Composable
+fun TopAppBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.surface,
+    titleColor: Color = COUITheme.colorScheme.onSurface,
+    largeTitle: String = title,
+    largeTitleColor: Color = COUITheme.colorScheme.onSurface,
+    subtitle: String = "",
+    subtitleColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
+    dividerColor: Color = COUITheme.colorScheme.dividerLine,
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: ScrollBehavior? = null,
+    defaultWindowInsetsPadding: Boolean = true,
+    showDivider: Boolean = true,
+    hideSubtitleOnCollapse: Boolean = true,
+    titlePadding: Dp = TopAppBarDefaults.TitlePadding,
+    navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
+    actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
+    bottomContent: @Composable () -> Unit = {},
+) {
+    TopAppBar(
+        title = title,
+        modifier = modifier,
+        color = color,
+        titleColor = titleColor,
+        largeTitle = largeTitle,
+        largeTitleColor = largeTitleColor,
+        subtitle = subtitle,
+        subtitleColor = subtitleColor,
+        dividerColor = dividerColor,
+        navigationIcon = navigationIcon,
+        actions = actions,
+        scrollBehavior = scrollBehavior,
+        defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+        showDivider = showDivider,
+        hideSubtitleOnCollapse = hideSubtitleOnCollapse,
+        // `gradientGlass` exists only on the primary overload; passing it pins this forward to the
+        // primary instead of re-selecting this same overload (which would recurse forever).
+        gradientGlass = false,
+        titlePadding = titlePadding,
+        navigationIconPadding = navigationIconPadding,
+        actionIconPadding = actionIconPadding,
+        bottomContent = bottomContent,
+    )
+}
+
 /**
  * A [SmallTopAppBar] with COUI style.
  *
@@ -409,6 +454,51 @@ fun SmallTopAppBar(
         modifier = modifier,
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
         showDivider = showDivider,
+        bottomContent = bottomContent,
+    )
+}
+
+@Composable
+fun SmallTopAppBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.surface,
+    titleColor: Color = COUITheme.colorScheme.onSurface,
+    subtitle: String = "",
+    subtitleColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
+    dividerColor: Color = COUITheme.colorScheme.dividerLine,
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: ScrollBehavior? = null,
+    defaultWindowInsetsPadding: Boolean = true,
+    showDivider: Boolean = true,
+    titlePadding: Dp = TopAppBarDefaults.TitlePadding,
+    navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
+    actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
+    bottomContent: @Composable () -> Unit = {},
+) {
+    SmallTopAppBar(
+        title = title,
+        modifier = modifier,
+        color = color,
+        titleColor = titleColor,
+        subtitle = subtitle,
+        subtitleColor = subtitleColor,
+        dividerColor = dividerColor,
+        navigationIcon = navigationIcon,
+        actions = actions,
+        scrollBehavior = scrollBehavior,
+        defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+        showDivider = showDivider,
+        // These four exist only on the primary overload; passing them pins this forward to the
+        // primary instead of re-selecting this same overload (which would recurse forever).
+        centerTitle = false,
+        centerTitleMargin = rememberCenterTitleMargin(),
+        segmentButton = null,
+        gradientGlass = false,
+        titlePadding = titlePadding,
+        navigationIconPadding = navigationIconPadding,
+        actionIconPadding = actionIconPadding,
         bottomContent = bottomContent,
     )
 }

@@ -863,6 +863,126 @@ fun RangeSlider(
     }
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds a secondaryProgress parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Slider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    @IntRange(from = 0) steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    reverseDirection: Boolean = false,
+    height: Dp = SliderDefaults.MinHeight,
+    colors: SliderColors = SliderDefaults.sliderColors(),
+    hapticEffect: SliderDefaults.SliderHapticEffect = SliderDefaults.DefaultHapticEffect,
+    showKeyPoints: Boolean = false,
+    keyPoints: List<Float>? = null,
+    magnetThreshold: Float = 0.02f,
+) {
+    Slider(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        valueRange = valueRange,
+        steps = steps,
+        onValueChangeFinished = onValueChangeFinished,
+        reverseDirection = reverseDirection,
+        height = height,
+        colors = colors,
+        hapticEffect = hapticEffect,
+        showKeyPoints = showKeyPoints,
+        keyPoints = keyPoints,
+        magnetThreshold = magnetThreshold,
+    )
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds a secondaryProgress parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun VerticalSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    @IntRange(from = 0) steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    reverseDirection: Boolean = false,
+    width: Dp = SliderDefaults.MinHeight,
+    colors: SliderColors = SliderDefaults.sliderColors(),
+    effect: Boolean = false,
+    hapticEffect: SliderDefaults.SliderHapticEffect = SliderDefaults.DefaultHapticEffect,
+    showKeyPoints: Boolean = false,
+    keyPoints: List<Float>? = null,
+    magnetThreshold: Float = 0.02f,
+) {
+    VerticalSlider(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        valueRange = valueRange,
+        steps = steps,
+        onValueChangeFinished = onValueChangeFinished,
+        reverseDirection = reverseDirection,
+        width = width,
+        colors = colors,
+        effect = effect,
+        hapticEffect = hapticEffect,
+        showKeyPoints = showKeyPoints,
+        keyPoints = keyPoints,
+        magnetThreshold = magnetThreshold,
+    )
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds a secondaryProgress parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun RangeSlider(
+    value: ClosedFloatingPointRange<Float>,
+    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    @IntRange(from = 0) steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    height: Dp = SliderDefaults.MinHeight,
+    colors: SliderColors = SliderDefaults.sliderColors(),
+    hapticEffect: SliderDefaults.SliderHapticEffect = SliderDefaults.DefaultHapticEffect,
+    showKeyPoints: Boolean = false,
+    keyPoints: List<Float>? = null,
+    magnetThreshold: Float = 0.02f,
+) {
+    RangeSlider(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        valueRange = valueRange,
+        steps = steps,
+        onValueChangeFinished = onValueChangeFinished,
+        height = height,
+        colors = colors,
+        hapticEffect = hapticEffect,
+        showKeyPoints = showKeyPoints,
+        keyPoints = keyPoints,
+        magnetThreshold = magnetThreshold,
+    )
+}
+
 /**
  * Internal slider track renderer, following the COUISeekBar.onDraw rendering model.
  */
@@ -1590,6 +1710,32 @@ object SliderDefaults {
             disabledSecondaryProgressColor = disabledSecondaryProgressColor,
         )
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the overload that adds secondary-progress colors.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    @Composable
+    fun sliderColors(
+        foregroundColor: Color = COUITheme.colorScheme.primary,
+        disabledForegroundColor: Color = COUITheme.colorScheme.disabledPrimarySlider,
+        backgroundColor: Color = COUITheme.colorScheme.sliderBackground,
+        disabledBackgroundColor: Color = COUITheme.colorScheme.disabledSecondary,
+        thumbColor: Color = COUITheme.colorScheme.onPrimary,
+        disabledThumbColor: Color = COUITheme.colorScheme.disabledOnPrimary,
+        keyPointColor: Color = COUITheme.colorScheme.sliderKeyPoint,
+        keyPointForegroundColor: Color = COUITheme.colorScheme.sliderKeyPointForeground,
+    ): SliderColors = sliderColors(
+        foregroundColor = foregroundColor,
+        disabledForegroundColor = disabledForegroundColor,
+        backgroundColor = backgroundColor,
+        disabledBackgroundColor = disabledBackgroundColor,
+        thumbColor = thumbColor,
+        disabledThumbColor = disabledThumbColor,
+        keyPointColor = keyPointColor,
+        keyPointForegroundColor = keyPointForegroundColor,
+    )
 }
 
 @Immutable
@@ -1602,9 +1748,65 @@ data class SliderColors(
     private val disabledThumbColor: Color,
     private val keyPointColor: Color,
     private val keyPointForegroundColor: Color,
-    @property:ExperimentalCOUIApi private val secondaryProgressColor: Color,
-    @property:ExperimentalCOUIApi private val disabledSecondaryProgressColor: Color,
+    @property:ExperimentalCOUIApi private val secondaryProgressColor: Color = foregroundColor,
+    @property:ExperimentalCOUIApi private val disabledSecondaryProgressColor: Color = disabledForegroundColor,
 ) {
+    /**
+     * The eight-color form, kept so callers written before `secondaryProgress` existed still
+     * compile; the secondary-progress colors fall back to [foregroundColor] / [disabledForegroundColor].
+     */
+    @OptIn(ExperimentalCOUIApi::class)
+    constructor(
+        foregroundColor: Color,
+        disabledForegroundColor: Color,
+        backgroundColor: Color,
+        disabledBackgroundColor: Color,
+        thumbColor: Color,
+        disabledThumbColor: Color,
+        keyPointColor: Color,
+        keyPointForegroundColor: Color,
+    ) : this(
+        foregroundColor = foregroundColor,
+        disabledForegroundColor = disabledForegroundColor,
+        backgroundColor = backgroundColor,
+        disabledBackgroundColor = disabledBackgroundColor,
+        thumbColor = thumbColor,
+        disabledThumbColor = disabledThumbColor,
+        keyPointColor = keyPointColor,
+        keyPointForegroundColor = keyPointForegroundColor,
+        secondaryProgressColor = foregroundColor,
+        disabledSecondaryProgressColor = disabledForegroundColor,
+    )
+
+    /** The eight-color [copy], kept for binary compatibility with callers built before 1.2.0. */
+    @OptIn(ExperimentalCOUIApi::class)
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes the secondary-progress colors.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        foregroundColor: Color = this.foregroundColor,
+        disabledForegroundColor: Color = this.disabledForegroundColor,
+        backgroundColor: Color = this.backgroundColor,
+        disabledBackgroundColor: Color = this.disabledBackgroundColor,
+        thumbColor: Color = this.thumbColor,
+        disabledThumbColor: Color = this.disabledThumbColor,
+        keyPointColor: Color = this.keyPointColor,
+        keyPointForegroundColor: Color = this.keyPointForegroundColor,
+    ): SliderColors = copy(
+        foregroundColor = foregroundColor,
+        disabledForegroundColor = disabledForegroundColor,
+        backgroundColor = backgroundColor,
+        disabledBackgroundColor = disabledBackgroundColor,
+        thumbColor = thumbColor,
+        disabledThumbColor = disabledThumbColor,
+        keyPointColor = keyPointColor,
+        keyPointForegroundColor = keyPointForegroundColor,
+        secondaryProgressColor = secondaryProgressColor,
+        disabledSecondaryProgressColor = disabledSecondaryProgressColor,
+    )
+
     @Stable
     internal fun foregroundColor(enabled: Boolean): Color = if (enabled) foregroundColor else disabledForegroundColor
 

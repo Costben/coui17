@@ -27,7 +27,12 @@ kotlin {
                     minorApiLevel = BuildConfig.COMPILE_SDK_MINOR
                 }
         }
-        minSdk = 33
+        // Every RenderEffect/RuntimeShader call in this module sits behind the runtime gate in
+        // `isRuntimeShaderSupported()`, so the module is safe to depend on from an API 23 app: the
+        // blur simply does not render. Declaring 33 here would force every consumer of coui-ui
+        // (which exposes this module through `api`) to accept a manifest-merge failure or paper over
+        // it with `tools:overrideLibrary`.
+        minSdk = BuildConfig.MIN_SDK
         namespace = "${BuildConfig.LIBRARY_ID}.blur"
     }
 

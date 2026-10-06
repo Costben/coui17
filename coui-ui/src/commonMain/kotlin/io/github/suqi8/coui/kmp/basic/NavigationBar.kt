@@ -78,19 +78,13 @@ import kotlinx.coroutines.launch
 /**
  * A [NavigationBar] that with 2 to 5 items.
  *
- * Resource source: the `coui_*` names this bar is built from (`coui_tab_navigation_view_bg`,
- * `coui_navigation_tab_color`, `coui_tool_navigation_item_height`, ...) are **not** UXDesign design
- * tokens. They live in the App-side `com.support.bottomnavigation` resource table, statically linked
- * into every app that ships the component: `aapt2 dump resources` finds 62 `coui_navigation` entries
- * in `Settings.apk` and 83 in `Clock.apk`, and **0** in `UXDesign.apk`. Do not look them up in the
- * UXDesign token TSV dumps — they will never be there.
+ * The `coui_*` names this bar is built from are App-side component resources, not UXDesign design
+ * tokens, so they are not listed in the UXDesign token dumps.
  *
  * @param modifier The modifier to be applied to the [NavigationBar].
- * @param color The color of the [NavigationBar]. COUI `coui_tab_navigation_view_bg`, whose solid fill
- * is `?attr/couiColorBar` (`coui_color_bar`). Both the drawable and the attribute are App-side
- * `com.support.bottomnavigation` resources (verified in the `Settings.apk` / `Clock.apk` resource
- * tables), not UXDesign tokens. When a [backdrop] is available the bar draws it blurred with [color]
- * laid over at [GlassDefaults.ContainerAlpha]; otherwise it keeps the opaque fill.
+ * @param color The color of the [NavigationBar], whose solid fill is `?attr/couiColorBar`. When a
+ * [backdrop] is available the bar draws it blurred with [color] laid over at
+ * [GlassDefaults.ContainerAlpha]; otherwise it keeps the opaque fill.
  * @param backdrop The content blurred behind the bar, defaulting to [LocalBackdrop]. `null` keeps
  * the bar opaque.
  * @param showDivider Whether to show the divider line between the [NavigationBar] and the content.
@@ -171,6 +165,29 @@ fun NavigationBar(
             )
         }
     }
+}
+
+@Composable
+fun NavigationBar(
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.background,
+    showDivider: Boolean = true,
+    defaultWindowInsetsPadding: Boolean = true,
+    mode: NavigationBarDisplayMode = NavigationBarDisplayMode.IconAndText,
+    content: @Composable RowScope.() -> Unit,
+) {
+    NavigationBar(
+        modifier = modifier,
+        color = color,
+        // `backdrop` and `visible` exist only on the primary overload; passing them pins this forward
+        // to the primary instead of re-selecting this same overload (which would recurse forever).
+        backdrop = LocalBackdrop.current,
+        showDivider = showDivider,
+        defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+        visible = true,
+        mode = mode,
+        content = content,
+    )
 }
 
 /**
@@ -295,9 +312,8 @@ fun RowScope.NavigationBarItem(
     val isPressed by interactionSource.collectIsPressedAsState()
     val colorScheme = COUITheme.colorScheme
 
-    // COUI `coui_navigation_tab_color` selector — an App-side `com.support.bottomnavigation` colour,
-    // **not** a UXDesign token (0 occurrences in UXDesign.apk, present in Settings.apk / Clock.apk).
-    // tab type has no pressed and no disabled entry, so it switches instantly (not animated):
+    // The bar's tab-colour selector is an App-side component colour, not a UXDesign token.
+    // This tab type has no pressed and no disabled entry, so it switches instantly (not animated):
     // selected ?couiColorPrimaryNeutral (#E6000000 / #E6FFFFFF) : ?couiColorSecondNeutral
     // (#8A000000 / #8AFFFFFF).
     val labelColor = when {

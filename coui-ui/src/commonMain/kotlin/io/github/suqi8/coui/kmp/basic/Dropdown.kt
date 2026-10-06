@@ -265,6 +265,40 @@ fun DropdownImpl(
     }
 }
 
+@Composable
+fun DropdownImpl(
+    item: DropdownItem,
+    optionSize: Int,
+    isSelected: Boolean,
+    index: Int,
+    dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
+    enabled: Boolean = item.enabled,
+    dialogMode: Boolean = false,
+    hasSubmenu: Boolean = false,
+    isFirst: Boolean = index == 0,
+    isLast: Boolean = index == optionSize - 1,
+    onSelectedIndexChange: (Int) -> Unit,
+) {
+    DropdownImpl(
+        item = item,
+        optionSize = optionSize,
+        isSelected = isSelected,
+        index = index,
+        // `modifier`, `groupKey` and `role` exist only on the primary overload; passing them pins this
+        // forward to the primary instead of re-selecting this same overload (which would recurse).
+        modifier = Modifier,
+        dropdownColors = dropdownColors,
+        enabled = enabled,
+        dialogMode = dialogMode,
+        hasSubmenu = hasSubmenu,
+        isFirst = isFirst,
+        isLast = isLast,
+        onSelectedIndexChange = onSelectedIndexChange,
+        groupKey = null,
+        role = if (hasSubmenu) Role.Button else Role.RadioButton,
+    )
+}
+
 /**
  * A non-clickable group-title row shown inside a dropdown popup
  * (COUI coui_popup_list_window_header_item.xml).

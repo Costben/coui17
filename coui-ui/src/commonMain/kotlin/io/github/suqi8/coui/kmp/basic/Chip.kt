@@ -99,10 +99,6 @@ fun Chip(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: (@Composable () -> Unit)? = null,
-    onDismiss: (() -> Unit)? = null,
-    dismissIcon: (@Composable () -> Unit)? = null,
-    dismissContentDescription: String = ChipDefaults.DISMISS_CONTENT_DESCRIPTION,
-    dismissButtonSize: Dp = ChipDefaults.DismissButtonSize,
     cornerRadius: Dp = ChipDefaults.CornerRadius,
     minWidth: Dp = ChipDefaults.MinWidth,
     minHeight: Dp = ChipDefaults.MinHeight,
@@ -111,6 +107,10 @@ fun Chip(
     insideMargin: PaddingValues = ChipDefaults.InsideMargin,
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
+    onDismiss: (() -> Unit)? = null,
+    dismissIcon: (@Composable () -> Unit)? = null,
+    dismissContentDescription: String = ChipDefaults.DISMISS_CONTENT_DESCRIPTION,
+    dismissButtonSize: Dp = ChipDefaults.DismissButtonSize,
 ) {
     @Suppress("NAME_SHADOWING")
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
@@ -241,6 +241,46 @@ fun Chip(
     }
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds dismiss and sizing parameters.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Chip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: (@Composable () -> Unit)? = null,
+    cornerRadius: Dp = ChipDefaults.CornerRadius,
+    minWidth: Dp = ChipDefaults.MinWidth,
+    minHeight: Dp = ChipDefaults.MinHeight,
+    maxWidth: Dp = ChipDefaults.MaxWidth,
+    colors: ChipColors = ChipDefaults.chipColors(),
+    insideMargin: PaddingValues = ChipDefaults.InsideMargin,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+) {
+    Chip(
+        selected = selected,
+        onClick = onClick,
+        label = label,
+        modifier = modifier,
+        enabled = enabled,
+        icon = icon,
+        cornerRadius = cornerRadius,
+        minWidth = minWidth,
+        minHeight = minHeight,
+        maxWidth = maxWidth,
+        colors = colors,
+        insideMargin = insideMargin,
+        interactionSource = interactionSource,
+        indication = indication,
+    )
+}
+
 /** Contains default values used by [Chip]. */
 object ChipDefaults {
     /** The minimum width of a chip (COUI coui_chip_default_min_width). */
@@ -262,7 +302,9 @@ object ChipDefaults {
     val CornerRadius = 16.dp
 
     /**
-     * The size of the built-in dismiss affordance icon.
+     * The size of the built-in dismiss affordance icon. Same 16dp as the leading icon ([IconSize],
+     * COUI coui_chip_selection_style_chip_icon_size), so the close affordance reuses the COUI chip
+     * icon token instead of introducing a new dimension.
      *
      * New in 1.2.0.
      */
