@@ -1,0 +1,78 @@
+name: Feature request
+description: Propose a component, an API change, or a design-language correction.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        COUI is calibrated against the ColorOS design language, so a request that cites the real
+        system behaviour is much easier to act on than one that cites personal preference.
+        This repository is a **downstream fork** of [`suqi8/coui`](https://github.com/suqi8/coui) — see `UPSTREAM.md`.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of change is this?
+      options:
+        - A new component
+        - A new parameter or API on an existing component
+        - A design-language correction (metrics, colours, motion)
+        - Documentation
+        - Build, release or tooling
+    validations:
+      required: true
+
+  - type: dropdown
+    id: repository
+    attributes:
+      label: Which repository should carry it?
+      options:
+        - This fork (coui17)
+        - Upstream COUI (suqi8/coui)
+        - Unsure
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+      description: Describe the situation you are in, not the API you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: The API shape, the component name, or the values you want changed. Include a sketch if you have one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Design evidence
+      description: |
+        For anything visual, cite the ColorOS reference: the system version, the app or screen, a
+        screenshot, or the measured values. Token values in this library are expected to be
+        traceable to the real system, not chosen by feel.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What you tried instead, or why the existing API does not cover it.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched the existing issues and the documentation for this.
+          required: true

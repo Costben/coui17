@@ -10,5 +10,12 @@ COUI is a fork of Miuix, rethemed to the ColorOS design language; substantial
 portions of the component implementations, build tooling and documentation
 structure originate from that project.
 
+This product also includes software developed as part of COUI
+(https://github.com/suqi8/coui), Copyright the COUI contributors, licensed
+under the Apache License, Version 2.0. This repository is a fork of COUI,
+branched at the COUI 1.1.0 release; the module set, the package namespace, the
+ColorOS 16 design tokens and the documentation site structure originate from
+that project.
+
 Third-party dependencies and their licenses are listed in
 THIRD-PARTY-LICENSES.md.

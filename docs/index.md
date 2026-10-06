@@ -43,3 +43,11 @@ nolebase:
   gitChangelog: false
   pageProperties: false
 ---
+
+::: info About this documentation
+The library, the Maven coordinates (`io.github.suqi8.coui.kmp`) and this documentation site belong
+to the upstream COUI project, [`suqi8/coui`](https://github.com/suqi8/coui), which is itself based
+on [Miuix](https://github.com/compose-miuix-ui/miuix). The repository this site is built from is a
+downstream fork of COUI; `UPSTREAM.md` in that repository records the fork relationship, what the
+fork changes, and how to sync with upstream.
+:::

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/suqi8/coui/security/advisories/new
+    about: Do not open a public issue for a security problem — see SECURITY.md for the reporting channel.
+  - name: Documentation site
+    url: https://suqi8.github.io/coui/
+    about: Guides, the component catalogue and the API reference, published by the upstream COUI project.
+  - name: Upstream COUI project
+    url: https://github.com/suqi8/coui/issues
+    about: This repository is a fork. If the problem is in code inherited from upstream, it may belong here instead.

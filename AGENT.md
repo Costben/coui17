@@ -18,7 +18,7 @@
 
 ## 2. 项目定位（已确认）
 
-- 本仓库 fork 自上游 Miuix（[`compose-miuix-ui/miuix`](https://github.com/compose-miuix-ui/miuix)），是改造基底；<br>改造完成后以 [`suqi8/coui`](https://github.com/suqi8/coui) 为唯一对外仓库，Maven 坐标为 `io.github.suqi8.coui.kmp`。
+- 本仓库 fork 自 [`suqi8/coui`](https://github.com/suqi8/coui)（分叉点 COUI 1.1.0），而 COUI 又 fork 自 [`compose-miuix-ui/miuix`](https://github.com/compose-miuix-ui/miuix)；对外仍以 [`suqi8/coui`](https://github.com/suqi8/coui) 为上游仓库，Maven 坐标为 `io.github.suqi8.coui.kmp`。血缘、继承范围、仍未独立化的身份标识与同步方式见仓库根目录 `UPSTREAM.md`。
 - **定位：就地改造成 coui 库。** Miuix 作为基底，不再单独对齐上游；最终可改包名 / Maven 坐标为 coui。
 - **改动深度：主题换肤优先（渐进）。** 先调 `theme/` 层默认值让现有组件整体呈现 COUI 观感，之后再按需逐个深挖组件。先不做大规模组件重构，除非某个组件的结构/交互和 ColorOS 差异大到换肤补不平。
 - 目标设计系统：**COUI 16 起步、对齐 ColorOS 17 的设计语言**（仓库目录名 `COUI16` 即源于早期目标）。

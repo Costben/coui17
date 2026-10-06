@@ -1,6 +1,6 @@
 # Third-party licenses
 
-COUI itself is licensed under Apache-2.0 (see `LICENSE`). This page records the third-party
+This library is licensed under Apache-2.0 (see `LICENSE`). This page records the third-party
 software that the published modules, the sample applications and the documentation site depend on,
 together with the attributions those licenses require.
 
@@ -18,7 +18,8 @@ these projects under the same or a compatible license.
 | JetBrains AndroidX Lifecycle (`org.jetbrains.androidx.lifecycle`) | Apache-2.0 | JetBrains s.r.o. / The Android Open Source Project |
 | `com.materialkolor:material-color-utilities` | Apache-2.0 | Material Design / Google LLC |
 | `com.mikepenz:aboutlibraries-core` | Apache-2.0 | Mike Penz |
-| Miuix — the upstream project COUI is forked from | Apache-2.0 | YuKongA and the compose-miuix-ui contributors |
+| COUI (`suqi8/coui`) — the upstream project this repository is forked from | Apache-2.0 | the COUI contributors |
+| Miuix — the project COUI is forked from, and the origin of this repository's history | Apache-2.0 | YuKongA and the compose-miuix-ui contributors |
 
 ## Build-time only
 

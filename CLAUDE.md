@@ -2,6 +2,11 @@
 
 Compose Multiplatform UI component library. Targets Android, iOS, Desktop (JVM), macOS, Web (Wasm/JS).
 
+> **This repository is a fork.** It is a downstream fork of [`suqi8/coui`](https://github.com/suqi8/coui)
+> (COUI), which is itself a fork of [Miuix](https://github.com/compose-miuix-ui/miuix). The COUI name,
+> the `io.github.suqi8.coui.kmp` coordinates and the published documentation site belong to upstream.
+> Read `UPSTREAM.md` before changing publication metadata, CI, or anything that names the project.
+>
 > **COUI 改造主线**：本仓库正基于 Miuix 就地演进成一套 COUI（ColorOS 设计语言）组件库。凡涉及「换成 ColorOS 风格 / COUI 换肤 / 调主题或控件视觉 / 校准 ColorOS 设计 token」的任务，先读 `AGENT.md`（项目定位、设计来源与溯源原则、token→代码落点映射），再按本文件的工程规范落地。本文件的代码风格、API 约定、性能约束在 COUI 改造中**继续生效**。
 
 ## Quick Start

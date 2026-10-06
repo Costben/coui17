@@ -6,8 +6,14 @@ complete contribution looks like.
 
 ## Before you start
 
+- Read [`UPSTREAM.md`](UPSTREAM.md) first. This repository is a downstream fork of
+  [`suqi8/coui`](https://github.com/suqi8/coui): it does not own the COUI name, the
+  `io.github.suqi8.coui.kmp` coordinates or the published documentation site, and changes that
+  belong upstream may have to be proposed there instead.
 - Read [`CLAUDE.md`](CLAUDE.md) for the code style, API conventions and performance constraints.
-- Read [`AGENT.md`](AGENT.md) if your change touches theming, colours or component metrics.
+  It is written for AI coding assistants, but it is the authoritative engineering convention for
+  human contributors too. [`AGENT.md`](AGENT.md) covers the design-sourcing rules that apply when a
+  change touches theming, colours or component metrics.
 - Read [`SECURITY.md`](SECURITY.md) before reporting anything that looks like a vulnerability.
 
 ## Requirements
@@ -96,7 +102,22 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `<t
   narration.
 - Do not add signature lines (`Co-Authored-By`, "Generated with …", bot attributions).
 
+## Issues
+
+Use the [issue forms](.github/ISSUE_TEMPLATE) — bug reports and feature requests each have one.
+Include the COUI version, the platform and a minimal reproduction; a report that cannot be
+reproduced cannot be acted on. Security problems do not go through the public tracker, see
+[`SECURITY.md`](SECURITY.md).
+
+Because this repository is a fork, say which repository you are reporting against: a bug in code
+that has not diverged from upstream may need to be reported to
+[`suqi8/coui`](https://github.com/suqi8/coui) instead.
+
 ## Pull requests
+
+Open the pull request against this repository's `main` branch and fill in the template. If the
+change also applies to upstream COUI, say so in the description — whether to propose it upstream is
+a maintainer decision, not a reason to open two pull requests.
 
 A pull request is expected to:
 

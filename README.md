@@ -1,15 +1,25 @@
 ## COUI
 
-A ColorOS-styled UI library for Compose Multiplatform, based on [Miuix](https://github.com/compose-miuix-ui/miuix).
+A ColorOS-styled UI library for Compose Multiplatform, forked from
+[COUI](https://github.com/suqi8/coui), which is itself based on
+[Miuix](https://github.com/compose-miuix-ui/miuix).
 
 > Components are calibrated against ColorOS 16 (COUI) design: colors, metrics, motion curves and press feedback are transcribed from the real system implementation.
 >
 > This library is experimental. APIs may change without notice.
 
+> [!IMPORTANT]
+> **This repository is a fork.** It is a downstream fork of
+> [suqi8/coui](https://github.com/suqi8/coui) (COUI), which is itself a fork of
+> [Miuix](https://github.com/compose-miuix-ui/miuix). The COUI name, the
+> `io.github.suqi8.coui.kmp` Maven coordinates and the published documentation site belong to the
+> upstream COUI project; this fork does not publish its own releases. [`UPSTREAM.md`](UPSTREAM.md)
+> records the full lineage, what this fork changes, and how to sync with upstream.
+
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4.10-7F52FF)](https://kotlinlang.org/)
 [![Compose Multiplatform](https://img.shields.io/badge/compose-1.11.1-4285F4)](https://kotlinlang.org/compose-multiplatform/)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.suqi8.coui.kmp/coui-ui)](https://central.sonatype.com/search?q=g:io.github.suqi8.coui.kmp)
-[![License](https://img.shields.io/github/license/suqi8/coui)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 ### Supported Platforms
 
@@ -30,6 +40,38 @@ A ColorOS-styled UI library for Compose Multiplatform, based on [Miuix](https://
 The API reference for every published module is served from
 <https://suqi8.github.io/coui/dokka/index.html>; the Dokka HTML is generated at release time and
 published together with the documentation site.
+
+These links point at the site and the demo published by the upstream COUI project. This fork does
+not host its own documentation or release artifacts — see [`UPSTREAM.md`](UPSTREAM.md).
+
+### Repository layout
+
+| Path | Contents |
+| :--- | :--- |
+| `coui-core/`, `coui-ui/`, `coui-preference/`, `coui-icons/`, `coui-blur/`, `coui-squircle/`, `coui-shader/`, `coui-nav/`, `coui-navigation3-ui/` | The nine published library modules |
+| `coui-*/api/` | Committed binary-compatibility dumps, checked by `apiCheck` |
+| `example/` | Sample applications: `shared`, `android`, `coui17`, `desktop`, `web`, `ios`, `macos` |
+| `docs/` | VitePress documentation site, English at the root and Chinese under `docs/zh_CN/` |
+| `build-plugins/` | Included Gradle build with the shared module conventions and the publication plugin |
+| `baselineprofile/` | Baseline-profile generator for the Android artifacts |
+| `verification/` | Standalone consumer projects that check compatibility and artifact completeness |
+| `smoke/` | Minimal consumer that resolves the published coordinates |
+| `CLAUDE.md`, `AGENT.md` | Conventions for AI coding assistants working in this repository |
+
+### Building from source
+
+The toolchain is pinned by Gradle: JDK 21, Android SDK `compileSdk` 37 / build-tools 37.0.0.
+
+```bash
+./gradlew spotlessCheck          # formatting (spotlessApply to fix)
+./gradlew apiCheck               # binary compatibility against the committed dumps
+./gradlew :coui-ui:desktopTest   # component tests
+./gradlew :coui-nav:desktopTest  # navigation runtime tests
+./gradlew check                  # everything the host platform can run
+```
+
+The documentation site and the sample applications have their own steps; both are covered in
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ### Modules
 
@@ -149,6 +191,16 @@ fun AppTheme(
 
 ### Credits
 
-COUI is a fork of [Miuix](https://github.com/compose-miuix-ui/miuix) by YuKongA and the
-compose-miuix-ui contributors, rethemed to the ColorOS 16 design language. Both projects are
-licensed under Apache-2.0.
+This library is the work of three projects in a row, all licensed under Apache-2.0:
+
+1. [**Miuix**](https://github.com/compose-miuix-ui/miuix) — the original Compose Multiplatform UI
+   library, by YuKongA and the compose-miuix-ui contributors. This fork's history begins there, and
+   most of the component implementations, build tooling and documentation structure originate from
+   it.
+2. [**COUI**](https://github.com/suqi8/coui) — by suqi8. Rethemed Miuix to the ColorOS 16 design
+   language, renamed the modules to `coui-*` and the package prefix to
+   `io.github.suqi8.coui.kmp`, and took over publication. This fork starts from COUI 1.1.0.
+3. **This fork** — continues COUI towards the ColorOS 17 design language and adds the `coui17`
+   sample application.
+
+[`UPSTREAM.md`](UPSTREAM.md) describes the relationship in full.

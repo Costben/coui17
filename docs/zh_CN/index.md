@@ -43,3 +43,10 @@ nolebase:
   gitChangelog: false
   pageProperties: false
 ---
+
+::: info 关于本文档
+本库、Maven 坐标（`io.github.suqi8.coui.kmp`）与本文档站均属于上游 COUI 项目
+[`suqi8/coui`](https://github.com/suqi8/coui)，而该项目又基于
+[Miuix](https://github.com/compose-miuix-ui/miuix)。构建本文档站的仓库是 COUI 的下游 fork；
+该仓库根目录的 `UPSTREAM.md` 记录了 fork 关系、本 fork 的改动，以及与上游同步的方式。
+:::
