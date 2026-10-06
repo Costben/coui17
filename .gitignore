@@ -64,3 +64,8 @@ artifacts/
 
 # Internal release-tracking notes
 RELEASE_BLOCKERS.md
+
+# JVM crash dumps and HotSpot replay logs
+hs_err_pid*.log
+replay_pid*.log
+*.hprof
