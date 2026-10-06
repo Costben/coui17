@@ -43,6 +43,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: spotlessCheck and apiCheck
         run: ./gradlew spotlessCheck apiCheck --no-daemon
+      - name: Prove the release-copy rules accept ordinary prose and reject signatures
+        run: bash .github/scripts/test-release-notes-rendering.sh
       - name: Upload reports
         if: failure()
         uses: actions/upload-artifact@v7
@@ -66,7 +68,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run the desktop test suites
-        run: ./gradlew :coui-nav:desktopTest :coui-ui:desktopTest --no-daemon
+        run: ./gradlew :coui-nav:desktopTest :coui-ui:desktopTest :coui-preference:desktopTest --no-daemon
+      - name: Re-run the known-unstable navigation test ten times
+        run: bash .github/scripts/run-nav-stability-loop.sh 10
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -200,7 +204,11 @@ jobs:
 
   publish-smoke:
     name: Local publication smoke
-    runs-on: ubuntu-latest
+    # macOS, not Linux: the shared local repository must carry all 72 coordinates (the nine
+    # modules times root + seven platforms). A Linux runner cannot build the Apple targets, so the
+    # full-coordinate verification would fail on a missing platform artifact — the same failure the
+    # release workflow's macOS publish job exists to avoid.
+    runs-on: macos-26
     needs: checks
     steps:
       - name: Checkout Sources
@@ -214,14 +222,25 @@ jobs:
           java-version: "21"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Prove the staging task graph cleans before every publish
+        run: bash .github/scripts/test-publish-task-graph.sh
       - name: Resolve the version under test
         run: echo "COUI_VERSION=$(./gradlew -q printReleaseVersion --no-daemon)" >> "$GITHUB_ENV"
       - name: Publish every module to the shared local repository
         run: ./gradlew publishAllToLocalRepository verifyLocalPublication --no-daemon --no-configuration-cache
+      - name: Prove the staged-repository checks reject a broken bundle
+        run: bash .github/scripts/test-staged-repository-verification.sh
+      - name: Check Android AAR / desktop API-dump parity
+        run: bash .github/scripts/check-api-platform-parity.sh
       - name: Consume every published module from the local repository
         run: |
           set -euo pipefail
           ./gradlew -p smoke compileKotlin \
             -PcouiVersion="$COUI_VERSION" \
             -PsmokeRepo="file://$PWD/build/repository/local" \
+            -PsmokeLocalOnly=true \
             --no-daemon
+      - name: Build an independent Android consumer at minSdk 23
+        run: bash verification/android-api23-consumer/verify.sh "$COUI_VERSION" "file://$PWD/build/repository/local"
+      - name: Check 1.1.0 compatibility of the candidate artifacts
+        run: bash verification/compat-consumer/verify.sh "$COUI_VERSION" "file://$PWD/build/repository/local"

@@ -18,14 +18,24 @@ on:
 permissions:
   contents: write
 
+# Keyed on the tag that is actually being released, not on the branch a manual run was
+# dispatched from: two runs for different tags must not serialise against each other, and two
+# runs for the same tag must.
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
-  preflight:
-    name: Preflight
+  resolve:
+    name: Resolve the release tag
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      sha: ${{ steps.resolve.outputs.sha }}
+      version: ${{ steps.resolve.outputs.version }}
+      release_version: ${{ steps.resolve.outputs.release_version }}
+      gradle_args: ${{ steps.resolve.outputs.gradle_args }}
+      prerelease: ${{ steps.resolve.outputs.prerelease }}
     env:
       TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
@@ -33,6 +43,28 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Resolve the tag to a commit and derive the release version
+        id: resolve
+        run: bash .github/scripts/resolve-release-tag.sh "$TAG"
+
+  verify:
+    name: Behaviour tests on the released commit
+    needs: resolve
+    runs-on: ubuntu-latest
+    env:
+      GRADLE_RELEASE_ARGS: ${{ needs.resolve.outputs.gradle_args }}
+    steps:
+      - name: Checkout the released commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          fetch-depth: 0
+      - name: Assert the checkout is the released commit
+        env:
+          EXPECTED_SHA: ${{ needs.resolve.outputs.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Prove the release is built from the tagged commit
+        run: bash .github/scripts/test-release-tag-resolution.sh
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
@@ -40,28 +72,41 @@ jobs:
           java-version: "21"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Assert the tag matches the library version
-        run: |
-          set -euo pipefail
-          version=$(sed -n 's/.*LIBRARY_VERSION = "\([^"]*\)".*/\1/p' build-plugins/src/main/kotlin/BuildConfig.kt)
-          test -n "$version"
-          test "v$version" = "$TAG" || { echo "tag $TAG does not match BuildConfig version v$version"; exit 1; }
-      - name: Check formatting
-        run: ./gradlew spotlessCheck --no-daemon
-      - name: Check binary compatibility
-        run: ./gradlew apiCheck --no-daemon
+      - name: Check formatting and binary compatibility
+        run: ./gradlew spotlessCheck apiCheck --no-daemon
+      - name: Run the behaviour test suites
+        run: ./gradlew :coui-nav:desktopTest :coui-ui:desktopTest :coui-preference:desktopTest --no-daemon
+      - name: Re-run the known-unstable navigation test ten times
+        run: bash .github/scripts/run-nav-stability-loop.sh 10
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-test-reports
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
+          if-no-files-found: ignore
 
   publish:
     name: Publish to Maven Central
-    needs: preflight
-    runs-on: ubuntu-latest
+    needs: [resolve, verify]
+    # Building every target is the point of this job: a Linux runner silently drops the Apple
+    # publications, which would ship a root module whose `available-at` references dangle.
+    runs-on: macos-26
     env:
-      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      GRADLE_RELEASE_ARGS: ${{ needs.resolve.outputs.gradle_args }}
+      TAG: ${{ needs.resolve.outputs.tag }}
     steps:
-      - name: Checkout Sources
+      - name: Checkout the released commit
         uses: actions/checkout@v7
         with:
+          ref: ${{ needs.resolve.outputs.sha }}
           fetch-depth: 0
+      - name: Assert the checkout is the released commit
+        env:
+          EXPECTED_SHA: ${{ needs.resolve.outputs.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
@@ -69,21 +114,46 @@ jobs:
           java-version: "21"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+      - name: Prove the staged-repository checks reject a missing platform artifact
+        run: bash .github/scripts/test-staged-repository-verification.sh
+      - name: Prove the staging task graph cleans before every publish
+        run: bash .github/scripts/test-publish-task-graph.sh
+      - name: Prove the release-copy rules accept ordinary prose and reject signatures
+        run: bash .github/scripts/test-release-notes-rendering.sh
+      - name: Render and validate the release copy before anything is uploaded
+        env:
+          RELEASE_VERSION: ${{ needs.resolve.outputs.release_version }}
+        run: bash .github/scripts/render-release-notes.sh "$RELEASE_VERSION" "$RUNNER_TEMP/notes"
       - name: Stage and verify the Maven Central repository
-        run: ./gradlew verifyStagedMavenCentral -Prelease --no-daemon --no-configuration-cache --stacktrace
+        run: ./gradlew verifyStagedMavenCentral $GRADLE_RELEASE_ARGS --no-daemon --no-configuration-cache --stacktrace
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      - name: Consume every module from the local repository before uploading
+      - name: Check Android AAR / desktop API-dump parity
+        run: bash .github/scripts/check-api-platform-parity.sh
+      - name: Consume the staged candidate before uploading it
         run: |
           set -euo pipefail
-          ./gradlew publishAllToLocalRepository verifyLocalPublication -Prelease --no-daemon --no-configuration-cache
+          version="${TAG#v}"
           ./gradlew -p smoke compileKotlin \
-            -PcouiVersion="${TAG#v}" \
-            -PsmokeRepo="file://$PWD/build/repository/local" \
+            -PcouiVersion="$version" \
+            -PsmokeRepo="file://$PWD/build/publishing/mavenCentral" \
+            -PsmokeLocalOnly=true \
             --no-daemon
-      - name: Upload the verified bundle to Maven Central
-        run: ./gradlew publishToMavenCentral -Prelease --no-daemon --no-configuration-cache --stacktrace
+      - name: Build an independent Android consumer at minSdk 23
+        run: |
+          set -euo pipefail
+          bash verification/android-api23-consumer/verify.sh "${TAG#v}" "file://$PWD/build/publishing/mavenCentral"
+      - name: Check 1.1.0 compatibility of the staged candidate
+        run: |
+          set -euo pipefail
+          bash verification/compat-consumer/verify.sh "${TAG#v}" "file://$PWD/build/publishing/mavenCentral"
+      - name: Consume the staged Apple and web artifacts as a downstream project
+        run: |
+          set -euo pipefail
+          bash verification/apple-web-consumer/verify.sh "${TAG#v}" "file://$PWD/build/publishing/mavenCentral"
+      - name: Upload the already-verified bundle to Maven Central
+        run: ./gradlew publishToMavenCentral $GRADLE_RELEASE_ARGS --no-daemon --no-configuration-cache --stacktrace
         env:
           CENTRAL_TOKEN_ID: ${{ secrets.CENTRAL_TOKEN_ID }}
           CENTRAL_TOKEN_SECRET: ${{ secrets.CENTRAL_TOKEN_SECRET }}
@@ -98,30 +168,49 @@ jobs:
 
   github-release:
     name: GitHub Release
-    needs: publish
+    needs: [resolve, publish]
     runs-on: ubuntu-latest
     env:
-      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      TAG: ${{ needs.resolve.outputs.tag }}
+      VERSION: ${{ needs.resolve.outputs.release_version }}
+      PRERELEASE: ${{ needs.resolve.outputs.prerelease }}
     steps:
-      - name: Checkout Sources
+      - name: Checkout the released commit
         uses: actions/checkout@v7
         with:
+          ref: ${{ needs.resolve.outputs.sha }}
           fetch-depth: 0
+      - name: Render and validate the release copy
+        run: bash .github/scripts/render-release-notes.sh "$VERSION" "$RUNNER_TEMP/notes"
       - name: Create the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$TAG" --title "COUI $TAG" --generate-notes --latest
+        run: |
+          set -euo pipefail
+          flags=()
+          if [ "$PRERELEASE" = "true" ]; then
+            flags+=(--prerelease)
+          else
+            flags+=(--latest)
+          fi
+          gh release create "$TAG" \
+            --title "$(cat "$RUNNER_TEMP/notes/title.txt")" \
+            --notes-file "$RUNNER_TEMP/notes/body.md" \
+            "${flags[@]}"
 
   central-smoke:
     name: Maven Central consumption smoke
-    needs: github-release
+    needs: [resolve, github-release]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      TAG: ${{ needs.resolve.outputs.tag }}
+      VERSION: ${{ needs.resolve.outputs.release_version }}
     steps:
-      - name: Checkout Sources
+      - name: Checkout the released commit
         uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
       - name: Setup JDK
         uses: actions/setup-java@v5
         with:
@@ -132,19 +221,18 @@ jobs:
       - name: Wait until Maven Central serves the release
         run: |
           set -euo pipefail
-          version="${TAG#v}"
           for poll in $(seq 1 90); do
             code=$(curl -s -o /dev/null -w '%{http_code}' \
-              "https://repo1.maven.org/maven2/io/github/suqi8/coui/kmp/coui-ui/$version/coui-ui-$version.pom")
+              "https://repo1.maven.org/maven2/io/github/suqi8/coui/kmp/coui-ui/$VERSION/coui-ui-$VERSION.pom")
             if [ "$code" = "200" ]; then
-              echo "coui-ui $version is available on Maven Central (poll $poll)"
+              echo "coui-ui $VERSION is available on Maven Central (poll $poll)"
               exit 0
             fi
             sleep 20
           done
-          echo "coui-ui $version did not appear on Maven Central within 30 minutes"
+          echo "coui-ui $VERSION did not appear on Maven Central within 30 minutes"
           exit 1
       - name: Consume every published module from Maven Central
         run: |
           set -euo pipefail
-          ./gradlew -p smoke compileKotlin -PcouiVersion="${TAG#v}" --no-daemon
+          ./gradlew -p smoke compileKotlin -PcouiVersion="$VERSION" --no-daemon

@@ -1,0 +1,20 @@
+# Public classes the desktop API dump declares that are legitimately absent from the Android AAR.
+#
+# The binary-compatibility-validator dump covers the desktop JVM compilation, which includes the
+# `skikoMain` / `desktopMain` source sets; the Android AAR compiles `androidMain` instead. These
+# classes either live only in a skiko/desktop source set (`*_skikoKt`, `*_desktopKt`) or are
+# typealiases that resolve to a platform type on Android (`RuntimeShader`).
+#
+# Anything NOT listed here and missing from the AAR is a real platform-parity regression.
+# One fully-qualified class name per line; `#` starts a comment.
+io/github/suqi8/coui/kmp/blur/sensor/DeviceTilt_skikoKt
+io/github/suqi8/coui/kmp/utils/Utils_desktopKt
+io/github/suqi8/coui/kmp/utils/Utils_skikoKt
+io/github/suqi8/coui/kmp/nav/core/NavSystemCornerRadius_skikoKt
+androidx/navigation3/ui/Utils_skikoKt
+io/github/suqi8/coui/kmp/shader/RenderEffect_skikoKt
+io/github/suqi8/coui/kmp/shader/RuntimeShader_skikoKt
+io/github/suqi8/coui/kmp/shader/RuntimeShader
+io/github/suqi8/coui/kmp/theme/DynamicColors_skikoKt
+io/github/suqi8/coui/kmp/utils/CouiHaptic_desktopKt
+io/github/suqi8/coui/kmp/utils/WindowNavigationEventScope_skikoKt

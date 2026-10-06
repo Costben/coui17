@@ -20,14 +20,26 @@ modules=(
 )
 
 out=./docs/public/dokka
+rm -rf "$out"
 mkdir -p "$out"
 
+missing=()
 for module in "${modules[@]}"; do
   if [ -d "./$module/build/dokka/html" ]; then
     mkdir -p "$out/$module"
     cp -R "./$module/build/dokka/html/." "$out/$module/"
+  else
+    missing+=("$module")
   fi
 done
+
+# A module that silently produces no HTML would ship a documentation site whose API reference has a
+# hole in it, so treat it as the failure it is.
+if [ "${#missing[@]}" -ne 0 ]; then
+  echo "::error::no Dokka HTML for: ${missing[*]}" >&2
+  echo "FAIL: no Dokka HTML for: ${missing[*]}" >&2
+  exit 1
+fi
 
 {
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
