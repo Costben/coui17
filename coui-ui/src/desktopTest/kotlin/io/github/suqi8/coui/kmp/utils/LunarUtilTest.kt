@@ -107,11 +107,11 @@ class LunarUtilTest {
                         lunar.day,
                         lunar.isLeapMonth,
                     )
-                    assertNotNull(back, "lunar ${lunar} of $year-$month-$day must convert back")
+                    assertNotNull(back, "lunar $lunar of $year-$month-$day must convert back")
                     assertEquals(
                         DateValue(year, month, day),
                         back,
-                        "round trip of ${year}-$month-$day produced $back via $lunar",
+                        "round trip of $year-$month-$day produced $back via $lunar",
                     )
                 }
             }
