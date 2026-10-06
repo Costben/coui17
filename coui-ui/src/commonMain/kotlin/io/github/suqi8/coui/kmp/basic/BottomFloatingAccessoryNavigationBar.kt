@@ -47,35 +47,28 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
 
 /**
- * A bottom floating navigation bar with an accessory view on each side
- * (`COUIBottomFloatingAccessoryNavigationBar`).
+ * A bottom floating navigation bar with an accessory view on each side.
  *
  * It is [BottomFloatingNavigationBar] with two extra round views that sit at the bar's start and end
  * edges. Both are 56dp circles
- * ([BottomFloatingAccessoryNavigationBarDefaults.AccessorySize],
- * `coui_bottom_floating_navigation_bar_height`) separated from the capsule by
- * [BottomFloatingAccessoryNavigationBarDefaults.SideSpacing] (12dp,
- * `mSideViewSpacing`), and the capsule is centred in the space they leave over —
- * `layoutPositionsSmallScreen` reserves `accessorySize + sideSpacing` on each configured side before
- * it centres the menu view.
+ * ([BottomFloatingAccessoryNavigationBarDefaults.AccessorySize]) separated from the capsule by
+ * [BottomFloatingAccessoryNavigationBarDefaults.SideSpacing] (12dp), and the capsule is centred in
+ * the space they leave over — the layout reserves `accessorySize + sideSpacing` on each configured
+ * side before it centres the menu view.
  *
  * A configured accessory always reserves its space, but only expands into view when its `*Visible`
- * flag is set. The expansion is the native `AccessorySideExpansionController`: the accessory scales up
- * from [BottomFloatingAccessoryNavigationBarDefaults.MinScale] and fades in on their own springs, and
- * slides out of the capsule from `mFakeBounds` to its laid-out position on a third.
+ * flag is set. The expansion scales the accessory up from
+ * [BottomFloatingAccessoryNavigationBarDefaults.MinScale] and fades it in on their own springs, and
+ * slides it out of the capsule to its laid-out position on a third.
  *
  * While either accessory is out, all three silhouettes — start accessory, capsule, end accessory —
- * are drawn through one [MetaBallSurface], the `{startAccessory, endAccessory, menuView}` chain
- * `COUIBottomFloatingAccessoryNavigationBar.setMeltBallParams` hands to
- * `COUIMaterialEffect.setMetaBallChain`. With no accessory configured the bar is a plain glass
+ * are drawn through one [MetaBallSurface], the `{startAccessory, endAccessory, menuView}` chain the
+ * bar hands to its material-effect chain. With no accessory configured the bar is a plain glass
  * capsule, exactly like [BottomFloatingNavigationBar].
  *
- * `COUIBottomFloatingAccessoryNavigationBar.changePadding` keeps its 16dp outside padding on a small
- * screen only, so the same rule applies here. Its `onLayout` picks between `layoutPositionsSmallScreen`
- * and `layoutPositionsMediumScreen` on that same tier, but the choice cannot be observed here. Only the
- * small-screen method survives decompilation, and it pins each accessory to its own outer edge and
- * centres the menu between them — which is what the bar below already does, because the capsule is
- * measured the way `BaseBottomFloatingMenuView.onMeasure` measures it: as wide as its items at
+ * The 16dp outside padding is kept on a small screen only, so the compact tier rules apply here. On
+ * that tier each accessory is pinned to its own outer edge and the menu is centred between them —
+ * which is what the bar below already does, because the capsule is measured as wide as its items at
  * [BottomFloatingNavigationBarDefaults.ItemMaxWidth] while they fit, and squeezed into the width the
  * accessories leave over when they do not.
  *

@@ -69,7 +69,7 @@ The dots keep a constant centre-to-centre pitch of `DotSize + 2 * DotSpacing` = 
 
 ## Not Ported / Deviations
 
-- The per-frame size/offset mask behind the sliding window. The native `setCurrentPositionInternal` could not be decompiled; its level ladder constants were recovered (`INDICATOR_DOT_LARGE/MEDIUM/SMALL/GONE_LEVEL_SIZE` = 3/5/7/9, `DEFAULT_MAXIMUM_LARGE_DOT_NUMBER` = 4, `DEFAULT_MAXIMUM_MEDIUM_DOT_NUMBER` = 2) but the exact offset maths was not. This port slides a clamped window and, as an approximation, shrinks to `DotSizeMedium` the two dots of the window that have hidden neighbours. `DotSizeSmall` is exposed but never applied.
+- The per-frame size/offset mask behind the sliding window. The native's exact offset maths is not available; its level ladder constants are known (large/medium/small/gone level sizes = 3/5/7/9, maximum large dots = 4, maximum medium dots = 2), so this port slides a clamped window and, as an approximation, shrinks to `DotSizeMedium` the two dots of the window that have hidden neighbours. `DotSizeSmall` is exposed but never applied.
 - The moving-trace colour blend of `drawTrace` (`getColorFactor`, `DEFAULT_COLOR_FACTOR_THRESHOLD` = 0.05) and the 1500-stiffness position spring (`dampingRatio` = 1.0, `minimumVisibleChange` = 0.005). The active dot simply carries `activeColor`.
 - The accessibility description built from `indicator_content_description` and `coui_page_indicator_description`.
 - The three deprecated no-op setters (`setDotCornerRadius`, `setDotSpacing`, `setDotStrokeWidth`), `snapToPosition` and `stopTraceAnimator`.

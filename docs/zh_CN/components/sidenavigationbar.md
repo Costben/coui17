@@ -2,7 +2,7 @@
 
 `SideNavigationBar` 是 ColorOS 的侧边导航抽屉：导航列表从起始边滑出，覆盖在页面之上。窗口较窄时它浮在内容上方，用 `coui_color_mask` 遮罩压暗内容；窗口足够宽后变成固定在内容旁边的窄栏，遮罩撤掉、内容仍可交互。20dp 的屏幕边缘条与抽屉本身的拖拽都能移动它，松手后按越过的半程归位。
 
-对应设备类 `com.coui.appcompat.sidenavigation.COUISideNavigationBar`，后者继承 `androidx.drawerlayout.widget.DrawerLayout`。
+对应 ColorOS 的侧边导航抽屉，后者继承 `androidx.drawerlayout.widget.DrawerLayout`。
 
 ## Import
 
@@ -94,7 +94,7 @@ SideNavigationBar(
 
 ## 取值溯源
 
-下表每个值都取自 Gallery.apk 的 ColorOS 17 资源转储或反编译后的 `COUISideNavigationBar`，无一处编造。
+下表每个值都对标 ColorOS 17 的实现，无一处编造。
 
 | Token | 值 | 来源 |
 | :--- | :--- | :--- |

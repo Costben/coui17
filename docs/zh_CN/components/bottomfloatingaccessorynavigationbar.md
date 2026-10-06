@@ -105,7 +105,7 @@ BottomFloatingAccessoryNavigationBar(
 
 胶囊本身按 `BaseBottomFloatingMenuView.onMeasure` 测量原生菜单视图的方式测量——能放下时等于各项在 `BottomFloatingNavigationBarDefaults.ItemMaxWidth`（70dp）下的总宽加上 12dp 内边距与 8dp 间距，放不下时被压缩进配件视图让出的宽度。纵向上它位于导航栏盒子下边缘之上 `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance`（8dp，`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`），亦即加上系统 16dp `navigationBars` inset 后距屏幕边缘 24dp。
 
-`onLayout` 在同一档位上会在 `layoutPositionsSmallScreen` 与 `layoutPositionsMediumScreen` 之间选择，但这个选择在这里观察不到。只有小屏方法在反编译后存活，它把每个配件视图贴到导航栏各自的外侧边缘，并把菜单居中于两者之间——本实现已经如此，因为原生组件把自身测量为「内容 + 内边距」，而本移植同样包裹内容。
+布局在同一档位上会在小屏与中屏摆放之间选择，但这个选择在这里观察不到。小屏摆放把每个配件视图贴到导航栏各自的外侧边缘，并把菜单居中于两者之间——本实现已经如此，因为原生组件把自身测量为「内容 + 内边距」，而本移植同样包裹内容。
 
 ## 与 BottomFloatingNavigationBar 的关系
 

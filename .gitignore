@@ -43,6 +43,7 @@ docs/.vitepress/dist
 docs/.vitepress/cache
 docs/public/dokka
 docs/public/compose
+docs/public/example
 docs/public/icons
 coui-*/src/*/generated/baselineProfiles/**
 example/ios/iosApp/Generated.xcconfig
@@ -59,3 +60,7 @@ example/ios/iosApp/Generated.xcconfig
 .ground-truth/
 artifacts/
 .codex-artifacts/
+.internal-docs/
+
+# Internal release-tracking notes
+RELEASE_BLOCKERS.md

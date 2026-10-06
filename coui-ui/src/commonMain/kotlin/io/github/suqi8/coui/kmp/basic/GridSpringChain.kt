@@ -40,13 +40,10 @@ import kotlin.math.pow
 import kotlin.math.sign
 
 /**
- * The ColorOS 17 grid spring-chain overscroll effect, mirroring
- * `com.coui.appcompat.springchain.COUIGridSpringChainScrollView` (a `COUIScrollView` subclass) and
- * the `com.coui.appcompat.springchain.COUIGridSpringChain` chain that drives it.
+ * The ColorOS 17 grid spring-chain overscroll effect.
  *
- * On the device the scroll view holds a single child implementing
- * `ICOUIGridSpringChainViewGroup`; when a touch passes an edge it forwards the overscroll to the
- * chain, which moves each grid *row* by its own translation, so the tiles trail off in a chain
+ * The design holds a single scrollable child; when a touch passes an edge it forwards the overscroll
+ * to a chain, which moves each grid *row* by its own translation, so the tiles trail off in a chain
  * rather than moving as one block. This port keeps that split: [Modifier.gridSpringChainOverscroll]
  * on the grid measures the drag that the grid could not consume and damps it into one control
  * distance, while [Modifier.gridSpringChainItem] on each tile turns that distance into a per-row
@@ -57,12 +54,10 @@ import kotlin.math.sign
  * (`utils/SpringUtils.kt`, the same spring `utils/Overscroll.kt` drives) for the settle — instead of
  * a second integrator. The node layout follows `Modifier.overScrollVertical`.
  *
- * Not ported, because these device classes are Android View infrastructure with no Compose-side
- * equivalent: `COUIGridSpringChainScrollView` (`java.lang.Object` -> `COUIScrollView` ->
- * `ScrollView`), `COUIChainDecorator` (a `RecyclerView.ItemDecoration`-style touch helper that wires
- * a `View.OnTouchListener`), `ICOUIGridSpringChainViewGroup`, `ICheckViewEdge`, `IChainItem`,
- * `COUIChainItem` (a `View` proxy that calls `setTranslationX/Y`) and `COUIGridSpringChainItem`
- * (a `FrameLayout`). All of them only move `View`s, which Compose expresses with
+ * Not ported, because these are Android View infrastructure with no Compose-side equivalent: the
+ * scroll view, the chain decorator that wires a `View.OnTouchListener`, the chain view-group
+ * interface, the edge-check and chain-item interfaces, and the `View` proxies that call
+ * `setTranslationX/Y`. All of them only move `View`s, which Compose expresses with
  * [Modifier.gridSpringChainItem].
  *
  * @see GridSpringChainDefaults

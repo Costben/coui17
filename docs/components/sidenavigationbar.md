@@ -2,7 +2,7 @@
 
 `SideNavigationBar` is the ColorOS side drawer: a navigation list that slides in from the start edge over the page. On compact windows it floats above the content and dims it with the `coui_color_mask` scrim; once the window is wide enough it becomes a fixed column pinned beside the content, the scrim clears and the content stays interactive. A 20dp edge strip and a drag on the drawer itself both move it, and a release settles it onto whichever side of its travel it passed.
 
-It ports `com.coui.appcompat.sidenavigation.COUISideNavigationBar`, which extends `androidx.drawerlayout.widget.DrawerLayout`.
+It mirrors ColorOS's side-navigation drawer, which extends `androidx.drawerlayout.widget.DrawerLayout`.
 
 ## Import
 
@@ -94,7 +94,7 @@ Note that `coui_side_navigation_bar_min_width` (300dp) is larger than `coui_side
 
 ## Recovered Tokens
 
-Every value below was recovered from the ColorOS 17 resource dump of `Gallery.apk` or from the decompiled `COUISideNavigationBar`; none of them is invented.
+Every value below is aligned with the ColorOS 17 implementation; none of them is invented.
 
 | Token | Value | Source |
 | :--- | :--- | :--- |

@@ -1,6 +1,6 @@
 # CardEntrancePreference
 
-`CardEntrancePreference` is a tappable card that opens another page, mirroring the ColorOS 17 `com.coui.appcompat.card.COUICardEntrancePreference` (itself a `COUIPressFeedbackJumpPreference`). It has two device layouts, switched by `cardType`:
+`CardEntrancePreference` is a tappable card that opens another page, aligned with the ColorOS 17 card-entrance design. It has two layouts, switched by `cardType`:
 
 - **Small** — a vertical block: round icon on top, the title 12dp below it, the summary 4dp below the title, on a 12dp-corner background.
 - **Large** — a row: round icon at the start, the title and summary 16dp to its end (summary 3dp below the title), on a 16dp-corner background.
@@ -59,7 +59,7 @@ CardEntrancePreference(
 | ByGlobalTheme | `TINT_ICON_BY_GLOBAL_THEME` (1) | Tint with the global COUI theme                |
 | Always        | `TINT_ICON_ANYWAY` (2)     | Tint regardless of the global theme flag            |
 
-The device routes both non-`None` modes through `COUIThemeOverlay.applyCOUITintIcon`; this port has a single theme tint, so `ByGlobalTheme` and `Always` resolve to the same colour.
+The native routes both non-`None` modes through one global-theme tint path; this port has a single theme tint, so `ByGlobalTheme` and `Always` resolve to the same colour.
 
 ### CardEntrancePreferenceDefaults Object
 
@@ -76,7 +76,7 @@ The device routes both non-`None` modes through `COUIThemeOverlay.applyCOUITintI
 | IconSize            | Dp            | 32.dp                                          | not a device dimen — see note below                        |
 | SummaryTextSize     | TextUnit      | 12.sp                                          | `couiTextAppearanceDescription`                            |
 
-`IconSize` is a port choice: the device leaves the icon `wrap_content` and sizes the `COUIRoundImageView` from its drawable, so there is no `coui_*` dimen for it.
+`IconSize` is a port choice: the native leaves the icon `wrap_content` and sizes it from its drawable, so there is no `coui_*` dimen for it.
 
 ### `cardEntranceColors()` factory
 

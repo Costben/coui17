@@ -1,6 +1,6 @@
 # SimpleLockView
 
-`SimpleLockView` 是 ColorOS 17 的锁屏 PIN 指示器，对应 `COUISimpleLock`（`com.coui.appcompat.lockview`，Settings APK）。一排圆角方块随着输入逐格点亮；密码被拒绝时整排抖动，已点亮的方块下坠消失。点亮数量由调用方决定。
+`SimpleLockView` 是 ColorOS 17 的锁屏 PIN 指示器。一排圆角方块随着输入逐格点亮；密码被拒绝时整排抖动，已点亮的方块下坠消失。点亮数量由调用方决定。
 
 原生从 `R.styleable.COUISimpleLock_couiCircleNum`（0 -> 四格，1 -> 六格）、`couiRectanglePadding`（10dp，格间距）以及两张 `<shape>` 图 `couiFilledRectangleIconDrawable` / `couiOutLinedRectangleIconDrawable` 读取几何量——两者都是 10dp x 10dp、圆角 2dp 的方块。因此一排宽度为 `dotCount * 10dp + (dotCount - 1) * 10dp`，四格 70dp，六格 110dp。
 

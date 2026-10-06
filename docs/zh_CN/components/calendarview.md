@@ -1,6 +1,6 @@
 # CalendarView
 
-ColorOS 17 的月历视图：星期表头之下是 7 列日期网格，上方是年月标题与上一月/下一月按钮。对应 `com.coui.appcompat.calendar.COUIDateMonthView`（`COUICalendarDayViewPager` 中的单月页面）以及 `layout/coui_calendar_picker_header_material` 的表头。
+ColorOS 17 的月历视图：星期表头之下是 7 列日期网格，上方是年月标题与上一月/下一月按钮，对标 ColorOS 17 设计规范。表头的尺寸取自 ColorOS 17 自带的日历表头。
 
 `DatePicker` 不是这个组件：ColorOS 两者都有，`DatePicker` 是三轮滚动选择器，本组件是网格。
 
@@ -148,6 +148,6 @@ CalendarView(
 - `COUIDateMonthView` 的 `ExploreByTouchHelper` 无障碍树:承载选中状态的每日虚拟节点,以及 `calendar_picker_prev_content` / `calendar_picker_next_content` 字符串。这里改为普通的可选节点。
 - `TextAppearance.Material.Widget.Calendar.Month` 的测量过程:原生把月份标签测量进 `mMonthWidth` 却从不绘制,可见标题来自表头 `TextView`。
 - `calendar_picker_month_height`(0dp)、`calendar_picker_month_padding_start`(26dp)、`calendar_picker_title_icon_size`(16dp),它们只对年视图箭头有意义。
-- `calendar_picker_min_width`(300dp)、`calendar_picker_max_width`(724dp)、`calendar_picker_textinput_margin_left`(32dp):dex 中没有任何日历类读取它们,它们属于日期选择器的文本输入模式。
+- `calendar_picker_min_width`(300dp)、`calendar_picker_max_width`(724dp)、`calendar_picker_textinput_margin_left`(32dp):没有任何日历类读取它们,它们属于日期选择器的文本输入模式。
 - 表头尾部按钮的 8dp `android:layout_marginStart`,`RelativeLayout` + `android:layout_alignParentEnd` 下它不产生位置变化。
 - 随区域变化的 `firstDayOfWeek` 与 `DateUtils` 星期名,见上文。

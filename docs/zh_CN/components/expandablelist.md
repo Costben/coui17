@@ -1,6 +1,6 @@
 # ExpandableList
 
-ColorOS 17 的可展开列表:一个可滚动的分组列表,每组展开后露出子项,收起后再合上。对应 `com.coui.appcompat.expandable.COUIExpandableRecyclerView` 及其真正干活的连接器 `ExpandableRecyclerConnector`,以及包在 `android.widget.ExpandableListView` 外层的 `COUIExpandableListView`。
+ColorOS 17 的可展开列表:一个可滚动的分组列表,每组展开后露出子项,收起后再合上,对标 ColorOS 17 设计规范。
 
 ## 引入
 

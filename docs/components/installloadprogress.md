@@ -1,8 +1,8 @@
 # InstallLoadProgress
 
-`InstallLoadProgress` is the app-install progress control used by the package installer: a button that morphs into a progress display and back. It is the `AppCompatButton` subclass the installer inflates — `res/layout/coui_preference_load_progress.xml` in both the Settings and Clock APKs declares a bare `COUIInstallLoadProgress` with `style=@style/Widget.COUI.COUILoadProgress.InstallDownloadSmall`.
+`InstallLoadProgress` is the app-install progress control used by the package installer: a button that morphs into a progress display and back. It is the button subclass the installer inflates, carrying the `InstallDownloadSmall` variant of the install-progress style.
 
-It ports `com.coui.appcompat.progressbar.COUIInstallLoadProgress`, present in `.ground-truth/coloros17/apks/dex/Settings/classes7.dex` and in `.ground-truth/coloros17/apks/dex/Clock/classes.dex` (the Clock copy is the R8-shrunk build of the same class and adds nothing but a `Build.VERSION.SDK_INT >= 30` guard on the smooth-corner path).
+It is aligned with the ColorOS 17 install-progress control, including a `Build.VERSION.SDK_INT >= 30` guard on the smooth-corner path.
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=installLoadProgress" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>

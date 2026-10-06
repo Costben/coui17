@@ -50,23 +50,17 @@ object AppBarBlurOverlayDefaults {
     /**
      * The dark-theme material base colour.
      *
-     * The device renders the dark page background as a flat `48 / 48 / 48` (`#303030`), measured on
-     * two native surfaces with `std = 0.0` across the whole page — `com.android.settings` home
-     * (`y = 0 / 150 / 260 / 600 / 1200 / 2300`) and `ColorOS` album view. `#303030` is
-     * also the platform's own dark background (`background_material_dark` → `material_grey_850` =
-     * `#ff303030` in `framework-res`), so this is a colour the platform declares, not one inferred
-     * from a screenshot mean. The material's top edge over a `#454545` card lands at 60, and the dark
-     * ramp's hard-coded top alpha `0.4 * B + 0.6 * 69 = 60` gives `B ≈ 46.5`, consistent with 48.
+     * The dark page background renders as a flat `48 / 48 / 48` (`#303030`), measured across whole
+     * pages on two native surfaces. `#303030` is also the platform's own dark background
+     * (`background_material_dark` → `material_grey_850` = `#ff303030`), so it is a colour the
+     * platform declares, not one inferred from a screenshot mean. The material's top edge over a
+     * `#454545` card lands at 60, and the dark ramp's hard-coded top alpha `0.4 * B + 0.6 * 69 = 60`
+     * gives `B ≈ 46.5`, consistent with 48.
      *
-     * The resource key that produces the value could not be read: the framework resolves the dark
-     * base from `?couiColorBackgroundWithCard`, which is `#ffffff` in the night configuration of the
-     * Settings APK, and an enabled RRO (`com.android.settings.overlay.common` /
-     * `SettingsResCommon_Sys.apk`) sits on top of it — that APK is not readable from the device and
-     * is not in the repository. `AppBarBlurHelper.setGradientBlurBgColor` also has no call site in
-     * the Settings APK's fourteen dex files, so its static never leaves `null`. The darkening layer
-     * is therefore the framework's own `com.oplus.view.*`, of which the repository only has the call
-     * site `COUIMaterialEffect.java:94-113`. The rendered value is used here instead, with the
-     * light-sensing glass's own alpha ramp doing the rest.
+     * The colour token that produces this value cannot be resolved: an enabled runtime overlay sits
+     * on top of the night configuration, and the darkening layer is applied by the vendor framework
+     * itself. The rendered value is used here instead, with the light-sensing glass's own alpha ramp
+     * doing the rest.
      */
     val DarkContainerColor = Color(0xFF303030)
 

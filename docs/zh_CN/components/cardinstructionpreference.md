@@ -1,11 +1,11 @@
 # CardInstructionPreference
 
-`CardInstructionPreference` 是 COUI 的卡片说明块:一张带插图、标题与描述的卡片,用于引导用户了解某项设置,对应 ColorOS 17 的 `com.coui.appcompat.card.COUICardInstructionPreference`(继承 `COUIPreference`,inflate `coui_component_card_instruction_preference.xml`)。设备按 `cardType` 切换 pager 适配器:
+`CardInstructionPreference` 是 COUI 的卡片说明块:一张带插图、标题与描述的卡片,用于引导用户了解某项设置,对标 ColorOS 17 设计规范。页面布局按 `cardType` 切换:
 
 - **Description** —— 由插图 / 标题 / 摘要页组成的 `ViewPager2`,下方 24dp 处是 `COUIPageIndicator`。
 - **Selector** —— 一行可选的插图 / 标题 / 单选选项,等分排列,之间以 24dp 分隔。
 
-动画视图(`com.oplus.anim.EffectiveAnimationView`)由调用方提供的 `illustration` 槽替代。
+动画视图(OPLUS 的 effective animation view)由调用方提供的 `illustration` 槽替代。
 
 ## 引入
 

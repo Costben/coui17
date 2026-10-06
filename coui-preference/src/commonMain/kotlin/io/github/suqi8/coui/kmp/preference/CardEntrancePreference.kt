@@ -27,21 +27,16 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * The COUI card entrance: a tappable card block that opens another page, mirroring
- * `com.coui.appcompat.card.COUICardEntrancePreference` — which itself extends
- * `COUIPressFeedbackJumpPreference` (`COUIJumpPreference` with a press-feedback touch listener).
+ * The ColorOS card entrance: a tappable card block that opens another page, with a press-feedback
+ * touch listener.
  *
- * The device switches between two layouts on `cardType`
- * (`COUICardEntrancePreference#getLayoutResByCardType`):
- * - [CardEntranceType.Small] → `res/layout/coui_component_card_entrance_preference_type_small.xml`,
- *   a vertical `LinearLayout` (16dp padding) with the round icon on top, the title 12dp below it and
- *   the summary 4dp below the title, on
- *   `res/drawable/coui_component_card_entrance_small_bg.xml` (corners 12dp,
- *   `?couiColorCardBackground`);
- * - [CardEntranceType.Large] → `res/layout/coui_component_card_entrance_preference_type_large.xml`,
- *   a `RelativeLayout` (start 16dp / end 12dp / vertical 20dp) with the round icon vertically
- *   centred at the start and the title + summary 16dp to its end (summary 3dp below the title), on
- *   `res/drawable/coui_component_card_entrance_large_bg.xml` (corners 16dp).
+ * The component switches between two layouts on `cardType`:
+ * - [CardEntranceType.Small] → a vertical `LinearLayout` (16dp padding) with the round icon on top,
+ *   the title 12dp below it and the summary 4dp below the title, on a card background with 12dp
+ *   corners (`?couiColorCardBackground`);
+ * - [CardEntranceType.Large] → a `RelativeLayout` (start 16dp / end 12dp / vertical 20dp) with the
+ *   round icon vertically centred at the start and the title + summary 16dp to its end (summary 3dp
+ *   below the title), on a card background with 16dp corners.
  *
  * Both layouts colour the title `?couiColorPrimaryNeutral` and the summary `?couiColorSecondNeutral`;
  * `setSummaryStatus(true)` repaints the summary with `?couiColorPrimaryText`. `showSummary = false`

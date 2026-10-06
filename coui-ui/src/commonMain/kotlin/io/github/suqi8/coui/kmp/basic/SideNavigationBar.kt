@@ -54,12 +54,10 @@ import kotlin.math.sin
 /**
  * The drawer mode of a [SideNavigationBar].
  *
- * Mirrors `COUISideNavigationBar.DRAWER_MODE_TEMPORARY` (0) and `DRAWER_MODE_FIXED` (1) of
- * `com.coui.appcompat.sidenavigation.COUISideNavigationBar`. `DRAWER_MODE_UNSPECIFIED` (-1) is the
- * sentinel that view starts from before it has measured itself; it is not observable once the
- * window size is known, so it has no counterpart here.
+ * Mirrors the design's temporary (0) and fixed (1) drawer modes. The unspecified (-1) sentinel is
+ * not observable once the window size is known, so it has no counterpart here.
  *
- * @property deviceValue The `DRAWER_MODE_*` constant of the device class.
+ * @property deviceValue The raw drawer-mode constant.
  */
 @Immutable
 enum class SideNavigationBarMode(val deviceValue: Int) {
@@ -214,9 +212,7 @@ fun rememberSideNavigationBarState(initiallyOpen: Boolean = false): SideNavigati
 }
 
 /**
- * The ColorOS side navigation drawer, mirroring
- * `com.coui.appcompat.sidenavigation.COUISideNavigationBar`
- * (`extends androidx.drawerlayout.widget.DrawerLayout`).
+ * The ColorOS side navigation drawer.
  *
  * `drawerContent` sits at the start edge and slides in and out above `content`. The drawer is
  * *temporary* on compact windows and on windows whose content structure is a parent/child

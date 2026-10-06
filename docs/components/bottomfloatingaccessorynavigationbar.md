@@ -1,6 +1,6 @@
 # BottomFloatingAccessoryNavigationBar
 
-`BottomFloatingAccessoryNavigationBar` is the ColorOS 17 bottom floating navigation bar with an accessory view on each side (`COUIBottomFloatingAccessoryNavigationBar`). It is `BottomFloatingNavigationBar` plus two round views that sit at the bar's start and end edges.
+`BottomFloatingAccessoryNavigationBar` is the ColorOS 17 bottom floating navigation bar with an accessory view on each side. It is `BottomFloatingNavigationBar` plus two round views that sit at the bar's start and end edges.
 
 Both accessory views are 56dp circles separated from the capsule by a 12dp gap. A configured accessory always reserves its space, but only expands into view when its `*Visible` flag is set: it scales up from `0.5` and fades in, and slides out of the capsule, on the native springs. While either accessory is out, all three silhouettes — start accessory, capsule, end accessory — are drawn through one `MetaBallSurface`, so the accessory melts out of the capsule. With neither slot configured the bar is a plain glass capsule, exactly like `BottomFloatingNavigationBar`.
 
@@ -101,9 +101,9 @@ BottomFloatingAccessoryNavigationBar(
 
 Like the plain floating bar, the 16dp outside padding is kept on a small screen only and collapses to zero on the medium and large tiers. The capsule is centred in the space the accessory views leave over.
 
-The capsule itself is measured the way `BaseBottomFloatingMenuView.onMeasure` measures the native menu view — as wide as its items at `BottomFloatingNavigationBarDefaults.ItemMaxWidth` (70dp) plus the 12dp inner padding and the 8dp gaps while they all fit, and squeezed into the width the accessories leave over when they do not. Vertically it sits `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` (8dp, `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`) above the bottom edge of the bar's box, i.e. 24dp above the screen edge once the system's 16dp `navigationBars` inset is added.
+The capsule itself is measured the way ColorOS measures the native menu view — as wide as its items at `BottomFloatingNavigationBarDefaults.ItemMaxWidth` (70dp) plus the 12dp inner padding and the 8dp gaps while they all fit, and squeezed into the width the accessories leave over when they do not. Vertically it sits `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` (8dp, `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`) above the bottom edge of the bar's box, i.e. 24dp above the screen edge once the system's 16dp `navigationBars` inset is added.
 
-`onLayout` picks between `layoutPositionsSmallScreen` and `layoutPositionsMediumScreen` on that same tier, but the choice cannot be observed here. Only the small-screen method survives decompilation, and it pins each accessory to its own outer edge of the bar and centres the menu between them — which is what this bar already does, because the native component measures itself to its content plus padding and this port likewise wraps its content.
+The layout picks between a small-screen and a medium-screen placement on that same tier, but the choice cannot be observed here. The small-screen placement pins each accessory to its own outer edge of the bar and centres the menu between them — which is what this bar already does, because the native component measures itself to its content plus padding and this port likewise wraps its content.
 
 ## Relationship to BottomFloatingNavigationBar
 

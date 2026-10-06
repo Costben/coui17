@@ -1,6 +1,6 @@
 # LockPatternView
 
-`LockPatternView` 是 ColorOS 17 的图案解锁九宫格，对应 `COUILockPatternView`（`com.coui.appcompat.lockview`，Settings APK）。九个圆点排布在 312dp x 280dp 视图内的 3x3 网格中；拖动时连接经过的圆点、补上被跨过的圆点，松手后以 `row * 3 + column` 下标的形式回调图案。
+`LockPatternView` 是 ColorOS 17 的图案解锁九宫格。九个圆点排布在 312dp x 280dp 视图内的 3x3 网格中；拖动时连接经过的圆点、补上被跨过的圆点，松手后以 `row * 3 + column` 下标的形式回调图案。
 
 ## 引入
 

@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
  *
  * Every number was read off the reference device — OnePlus PLK110, ColorOS V17.0.0, 1272x2772 px at
  * 620 dpi, so **1dp = 3.875px** — either from a `uiautomator` dump of the system Settings app or, for
- * the app-bar material, from the decompiled constants (see `docs/coui17-gallery-plan.md`).
+ * the app-bar material, from the ColorOS 17 design values.
  */
 object Coui17Dimens {
 
@@ -33,8 +33,8 @@ object Coui17Dimens {
     val HeaderCollapseRange = ExpandedHeaderHeight - CollapsedHeaderHeight
 
     /**
-     * `homepage_appbar_blur_extra_height` (`res/values/dimens.xml:2812`): how far the material overlay
-     * reaches past the bar's bottom edge. The device's `blur_overlay` measures 397px = 343px + 54px.
+     * The app-bar material's extra height: how far the material overlay reaches past the bar's bottom
+     * edge. The overlay measures 397px = 343px + 54px on the device.
      */
     val AppBarBlurExtra = 14.dp
 

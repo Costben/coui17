@@ -1,6 +1,6 @@
 # ListDetailView
 
-`ListDetailView` is a basic layout component in COUI: a responsive list-detail container that shows one pane at a time on a narrow window and splits into a two-pane list + detail layout once the window is wide enough. It mirrors ColorOS's `com.coui.appcompat.grid.COUIListDetailView extends android.widget.FrameLayout`.
+`ListDetailView` is a basic layout component in COUI: a responsive list-detail container that shows one pane at a time on a narrow window and splits into a two-pane list + detail layout once the window is wide enough. It is aligned with ColorOS's list-detail layout.
 
 The device class holds three `FragmentContainerView`s — main, sub and emptyPage — plus a hairline divider, and lays them out by width in `onMeasure` / `onLayout`. Because Fragments are an Android host concern, the Compose port takes composable slots instead: `mainContent`, `detailContent` and `emptyPageContent`. While the window is narrower than the COUI `WindowTotalSizeClass.Compact` boundary (600dp) only one of `mainContent` / `detailContent` is composed, chosen by `detailVisible`; from 600dp on the main pane takes a fraction of the width, a divider follows, and the detail (or `emptyPageContent` when nothing is selected) fills the rest.
 

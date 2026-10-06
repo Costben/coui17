@@ -2,7 +2,7 @@
 
 `ClickSelectMenu` places a ColorOS popup list at the point the user actually clicked. A plain dropdown opens centred on the anchor row; a click-select menu opens under the finger, and a *placement spec* decides which side and which edge of the menu are pinned to that point. It is what ColorOS settings rows use for their inline menus — the menu appears where you tapped, not where the row is.
 
-It ports `com.coui.appcompat.poplist.COUIClickSelectMenu`, `COUIIsolatedPopupListWindow`, `MainMenuPlacementSpec` and the placement rules of `RotatingPopupMenuLocateHelper`, and reuses the popup list surface this library already ports.
+It mirrors the placement rules ColorOS uses for its click-select popup list, and reuses the popup list surface this library already ports.
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=clickSelectMenu" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -139,7 +139,7 @@ Two details are easy to get wrong and are preserved:
 
 ## Recovered Tokens
 
-Every value below was recovered from the ColorOS 17 resource dump of `Settings.apk` and its dex, `classes7.dex`; none of them is invented.
+Every value below is aligned with the ColorOS 17 implementation; none of them is invented.
 
 | Token | Value | Source |
 | :--- | :--- | :--- |

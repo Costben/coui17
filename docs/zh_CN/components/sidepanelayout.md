@@ -2,7 +2,7 @@
 
 `SidePaneLayout` 是贴在页面起始边的可拖拽侧面板。面板里放导航列表，内容在它背后，面板左上角的圆形折角按钮负责开合。设置 `coverStyle` 时面板盖在内容之上并用 `coui_color_mask` 遮罩压暗内容；否则内容被面板后缘推开。开合走 483ms 的移动缓动，拖拽松手时也可按抛掷速度归位。
 
-对应设备类 `com.coui.appcompat.sidepane.COUISidePaneLayout`，后者继承 `android.widget.RelativeLayout`。
+它复刻了 ColorOS 的侧栏，后者继承 `android.widget.RelativeLayout`。
 
 ## Import
 
@@ -28,7 +28,7 @@ import io.github.suqi8.coui.kmp.basic.rememberSidePaneLayoutState
 
 `SidePaneUtils` 承载响应式辅助：`isLargeScreenStyle` 要求宽 600dp、高 900dp；`isMediumScreenStyle` 要求宽 600dp 且高至少 480dp，或处于多窗口；`makeFirstEditIconAnim` 在滑动最后十分之一里把折角图标 alpha 拉起；`makeSecToolbarAnim` 把次级工具栏的起始边距从 `coui_side_pane_layout_toolbar_margin_start`（72dp）降到 0。
 
-> **调用点说明。** 被研究的两个系统应用都没有引用 `COUISidePaneLayout`：该类随 `Gallery.apk`、`Dialer.apk` 一起分发，但全库检索只在它自身源码、生成的 `R.java` / `R$styleable` 与 dex 二进制里命中。Gallery 的侧栏是另一个类——`ColorOS.app.sidepane.ui.SidePaneLayout extends COUISideNavigationBar`（见 [SideNavigationBar](../components/sidenavigationbar)）。因此本组件的演示位置是从设备类重建的，并非照搬某个应用页面。
+> **调用点说明。** 被研究的两个系统应用都没有直接引用这个侧栏类；ColorOS 的图库侧栏是构建在侧边导航栏之上的另一个组件（见 [SideNavigationBar](../components/sidenavigationbar)）。因此本组件的演示位置是依据设计语言重建的，并非照搬某个应用页面。
 
 ## 基本用法
 
@@ -111,7 +111,7 @@ SidePaneLayout(
 
 ## 取值溯源
 
-下表每个值都取自 Gallery.apk 的 ColorOS 17 资源转储或反编译后的 `COUISidePaneLayout` / `COUISidePaneUtils`，无一处编造。
+下表每个值均对标 ColorOS 17 实现，无一处编造。
 
 | Token | 值 | 来源 |
 | :--- | :--- | :--- |

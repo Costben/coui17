@@ -41,8 +41,8 @@ import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 /**
- * A text that scrolls horizontally when it overflows the space it is given, mirroring ColorOS's
- * `com.coui.appcompat.tips.COUIMarqueeTextView`.
+ * A text that scrolls horizontally when it overflows the space it is given, following ColorOS's
+ * marquee-text design.
  *
  * The native view measures its text in `onMeasure`; when the text is wider than the view it appends
  * `coui_top_tips_scroll_text_interval` (80dp) of trailing space, repeats the string enough times to

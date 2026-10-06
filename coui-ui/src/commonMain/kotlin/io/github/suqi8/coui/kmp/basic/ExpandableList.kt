@@ -23,15 +23,11 @@ import androidx.compose.ui.semantics.Role
  * The ColorOS 17 expandable list: a scrollable list of groups, each of which grows open to reveal its
  * children and shrinks closed again.
  *
- * It mirrors `com.coui.appcompat.expandable.COUIExpandableRecyclerView` with the connector that does
- * the work, `ExpandableRecyclerConnector`, plus the `COUIExpandableListView` wrapper around
- * `android.widget.ExpandableListView`:
- * - the group header is supplied by the caller, exactly as `ExpandableListAdapter.getGroupView` does;
- *   clicking it toggles the group, which is what the internal `OnGroupClickListener` of
- *   `COUIExpandableListView.init()` runs (`playSoundEffect(0)`, then `expandGroup` / `collapseGroup`);
- * - the open/close animation runs for [ExpandableListDefaults.ANIMATION_DURATION] (400ms) on the
- *   `COUIMoveEaseInterpolator` cubic-bezier(0.3, 0, 0.1, 1) that `ExpandableRecyclerConnector`
- *   passes to every `ExpandAnimator`;
+ * A recycler-view connector does the work, wrapping a standard expandable list view:
+ * - the group header is supplied by the caller; clicking it toggles the group, which plays the
+ *   system click sound and then expands / collapses it;
+ * - the open/close animation runs for [ExpandableListDefaults.ANIMATION_DURATION] (400ms) on a
+ *   cubic-bezier(0.3, 0, 0.1, 1) move-ease passed to every `ExpandAnimator`;
  * - the connector animates the *height* of a dummy view that carries the group's children
  *   (`view.getLayoutParams().height = animatedValue`) and sets its alpha to
  *   `animatedValue / groupInfo.totalHeight`, so the children grow and fade in together — which is

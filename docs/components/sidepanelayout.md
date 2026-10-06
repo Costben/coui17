@@ -2,7 +2,7 @@
 
 `SidePaneLayout` is a draggable pane pinned to the start edge of a page. The pane holds a navigation list, the content sits behind it, and a round fold button at the pane's top start toggles it. When `coverStyle` is set the pane slides over the content and dims it with the `coui_color_mask` scrim; otherwise the content is pushed aside by the pane's trailing edge. Opening and closing run a 483ms move-ease tween, and a drag can also be settled with a fling.
 
-It ports `com.coui.appcompat.sidepane.COUISidePaneLayout`, which extends `android.widget.RelativeLayout`.
+It mirrors ColorOS's side pane, which extends `android.widget.RelativeLayout`.
 
 ## Import
 
@@ -28,7 +28,7 @@ The scrim is `coui_color_mask` (`#33000000`) painted at its own alpha multiplied
 
 `SidePaneUtils` carries the responsive helpers: `isLargeScreenStyle` is 600dp wide and 900dp tall, `isMediumScreenStyle` is 600dp wide and at least 480dp tall or in multi-window, `makeFirstEditIconAnim` ramps the fold icon's alpha across the last tenth of the slide, and `makeSecToolbarAnim` ramps a secondary toolbar's start margin from `coui_side_pane_layout_toolbar_margin_start` (72dp) down to 0.
 
-> **Call site note.** Neither of the two studied system apps references `COUISidePaneLayout`: the class is shipped inside `Gallery.apk` and `Dialer.apk`, but a repository-wide search finds it only in its own source, the generated `R.java` / `R$styleable` classes and the dex binaries. The Gallery's side pane is a different class — `ColorOS.app.sidepane.ui.SidePaneLayout extends COUISideNavigationBar` (see [SideNavigationBar](../components/sidenavigationbar)). The demo position of this component is therefore a reconstruction from the device class, not a copy of an app screen.
+> **Call site note.** Neither of the two studied system apps references this pane class directly; ColorOS's gallery side pane is a different component built on the side-navigation bar (see [SideNavigationBar](../components/sidenavigationbar)). The demo position of this component is therefore a reconstruction from the design language, not a copy of an app screen.
 
 ## Basic Usage
 
@@ -111,7 +111,7 @@ SidePaneLayout(
 
 ## Recovered Tokens
 
-Every value below was recovered from the ColorOS 17 resource dump of `Gallery.apk` or from the decompiled `COUISidePaneLayout` / `COUISidePaneUtils`; none of them is invented.
+Every value below is aligned with the ColorOS 17 implementation; none of them is invented.
 
 | Token | Value | Source |
 | :--- | :--- | :--- |

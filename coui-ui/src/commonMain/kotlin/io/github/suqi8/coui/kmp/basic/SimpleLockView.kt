@@ -36,12 +36,11 @@ import kotlin.math.abs
 import kotlin.math.cos
 
 /**
- * The ColorOS 17 "simple lock" PIN indicator, the port of `COUISimpleLock`
- * (`com.coui.appcompat.lockview`).
+ * The ColorOS 17 "simple lock" PIN indicator.
  *
- * It is the row of rounded squares that fills in as the user types a PIN: the constructor reads
- * `R.styleable.COUISimpleLock_couiCircleNum` (0 -> [SimpleLockType.Four], 1 -> [SimpleLockType.Six])
- * into `mRectangleType`, which decides how many squares the row holds. `couiRectanglePadding`
+ * It is the row of rounded squares that fills in as the user types a PIN: the style's circle-count
+ * attribute (0 -> [SimpleLockType.Four], 1 -> [SimpleLockType.Six]) decides how many squares the row
+ * holds. `couiRectanglePadding`
  * ([SimpleLockViewDefaults.RectanglePadding], 10dp) is the gap and
  * `couiFilledRectangleIconDrawable` / `couiOutLinedRectangleIconDrawable` are the two states, both a
  * `<shape>` of 10dp x 10dp with a 2dp `<corners>` radius — the intrinsic size the constructor reads

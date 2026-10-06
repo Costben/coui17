@@ -81,7 +81,7 @@ overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背�
 
 ## 取值溯源
 
-下表每个值都取自反编译的 `AppBarBlurParams` 默认值、`AppBarBlurHelper` 或 ColorOS 17 资源表，无一处编造。
+下表每个值都取自 ColorOS 17 材质默认值或其资源表，无一处编造。
 
 | Token | 值 | 来源 |
 | :--- | :--- | :--- |
@@ -99,11 +99,11 @@ overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背�
 
 走哪条剖面是**主题属性、不是基色亮度**：本移植在 `COUITheme.colorScheme.background.luminance() < 0.5f`（即框架的 `isCOUIDarkThemeOrNightMode`）时选深色两档，因此浅色主题下调暗 `containerColor` 也不会把剖面切到另一分支。
 
-深色基色无法从同一条链里还原。框架从 `?couiColorBackgroundWithCard` 解析它，而该属性在 night 配置下是 `#ffffff`——这个颜色在数学上无法产生真机实测的剖面：材质顶边压在 `#454545` 卡片上得 60，配合深色剖面硬编码的顶边 alpha，`0.4 * B + 0.6 * 69 = 60` 解出 `B ≈ 46.5`。最近的 ColorOS 夜间 token 是 `coui_color_background_top` / `coui_color_surface_top` = `#333333`，`DarkContainerColor` 取该值，视觉层已在真机确认。缺口不可能被某个显式颜色盖住：`AppBarBlurHelper.setGradientBlurBgColor` 在 Settings APK 的十四个 dex 文件里没有任何调用点，静态字段恒为 `null`，最终解析的是页面兜底；深色路径上还叠着一层本仓读不到的压暗——框架的 `com.oplus.view.*`，本仓只有调用点 `COUIMaterialEffect.java:94-113`。
+深色基色无法从同一条链里还原。ColorOS 从 `?couiColorBackgroundWithCard` 解析它，而该属性在 night 配置下是 `#ffffff`——这个颜色在数学上无法产生实测的剖面：材质顶边压在 `#454545` 卡片上得 60，配合深色剖面硬编码的顶边 alpha，`0.4 * B + 0.6 * 69 = 60` 解出 `B ≈ 46.5`。最近的 ColorOS 夜间 token 是 `coui_color_background_top` / `coui_color_surface_top` = `#333333`，`DarkContainerColor` 取该值。缺口不可能被某个显式颜色盖住：渐变模糊背景色在 ColorOS 17 里从未被赋值，静态字段恒为 `null`，最终解析的是页面兜底；深色路径上还叠着一层本仓无法复现的压暗。
 
 ## 未移植
 
 - **均匀（`setUpNormalBlurBackground`）路径** —— `normalBlurRadiusPx`（50px）、`normalBackgroundAlphaFraction`（0.8）与 `NORMAL_BLUR_DARK_ALPHA`（0.6）在已研究的产物中没有任何调用点，故本移植只实现渐变形态。
 - **`scrollDrivenAlphaEnabled` 属性** —— 设备视图在该属性置位时按滚动偏移读取 alpha；本移植改由调用方把已解析的 alpha 交给 `scrollFraction`。
-- **基色解析链** —— `resolveGradientBlurBaseColorForAppBar` 会依次尝试静态 `gradientBlurBgColor`、app bar 自身背景、恢复快照与页面兜底；本移植只接受一个 `containerColor`。设备上那条静态覆盖实际是失效的：`AppBarBlurHelper.setGradientBlurBgColor` 在 Settings APK 的十四个 dex 文件里没有任何调用点，`gradientBlurBgColor` 恒为 `null`、始终走页面兜底；本移植够不到的那部分基色正是深色主题的。
+- **基色解析链** —— `resolveGradientBlurBaseColorForAppBar` 会依次尝试静态 `gradientBlurBgColor`、app bar 自身背景、恢复快照与页面兜底；本移植只接受一个 `containerColor`。那条静态覆盖是失效的：ColorOS 17 中从未给它赋值，因此它恒为 `null`、始终走页面兜底；本移植够不到的那部分基色正是深色主题的。
 - **`setAppBarLayoutTransparent()`** —— 宿主侧那个清掉 app bar 背景与高度阴影的调用；本移植由调用方在 `content` 里传入已掏空的导航栏来完成。

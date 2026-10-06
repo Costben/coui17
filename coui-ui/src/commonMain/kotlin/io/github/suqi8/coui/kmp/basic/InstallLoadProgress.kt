@@ -47,16 +47,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * The package-installer progress control, mirroring
- * `com.coui.appcompat.progressbar.COUIInstallLoadProgress` (present in
- * `.ground-truth/coloros17/apks/dex/Settings/classes7.dex` and
- * `.ground-truth/coloros17/apks/dex/Clock/classes.dex`; the Clock copy is the R8-shrunk build of the
- * same class and adds nothing but a `Build.VERSION.SDK_INT >= 30` guard on the smooth-corner path).
+ * The package-installer progress control.
  *
  * A button that morphs into a progress display and back — install → downloading → installing → done.
- * It is the `AppCompatButton` subclass the installer actually inflates:
- * `res/layout/coui_preference_load_progress.xml` in both APKs declares a bare
- * `COUIInstallLoadProgress` with `style=@style/Widget.COUI.COUILoadProgress.InstallDownloadSmall`.
+ * It is the `AppCompatButton` subclass the installer actually inflates, an install-progress control
+ * carrying the install-download-small style. The smooth-corner path is guarded on API 30.
  *
  * ## Relationship to [LoadProgressButton]
  *

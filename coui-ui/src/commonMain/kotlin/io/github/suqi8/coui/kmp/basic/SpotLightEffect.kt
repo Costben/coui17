@@ -355,8 +355,7 @@ object SpotLightDefaults {
 }
 
 /**
- * Paints the ColorOS 17 spotlight over this node's bounds, the portable port of
- * `com.coui.appcompat.spotlight.COUISpotLightEffect` and its `SpotLightShader`.
+ * Paints the ColorOS 17 spotlight over this node's bounds.
  *
  * ColorOS treats the light as a real light source rather than a radial gradient: the shader builds
  * the direction vector from the fragment to the light, which sits [lightHeight] above the surface,
@@ -471,9 +470,8 @@ private fun rememberSpotLightShader(enabled: Boolean): RuntimeShader? {
 }
 
 /**
- * The ColorOS 17 `SpotLight` runtime shader (`com.coui.appcompat.spotlight.agsl.SpotLight`), ported
- * from the Java `AGSL_SOURCE` string with only the SkSL dialect rename applied: `vec2/vec3/vec4` →
- * `float2/float3/float4`. The uniform names and packing, the `luminance`, `max3`, `noise`,
+ * The ColorOS 17 `SpotLight` runtime shader, with only the SkSL dialect rename applied:
+ * `vec2/vec3/vec4` → `float2/float3/float4`. The uniform names and packing, the `luminance`, `max3`, `noise`,
  * `softLight` and `dither` helpers, the early-out `dist >= radius` branch, the
  * `smoothstep(1.0, 0.0, dist / radius)` attenuation, the `1.5` fixed light intensity and the
  * `step`-gated noise / dither post pass are unchanged, as are the numbers `9.259e-4` (`1 / 1080`),

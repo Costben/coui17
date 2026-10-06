@@ -1,6 +1,6 @@
 # TagView
 
-小型文字角标,对应 ColorOS 的 `com.coui.appcompat.tagview.COUITagView` / `COUITagBackgroundView` 及其 `res/layout/coui_tag_view_layout.xml`。角标是一行末尾省略的文字,可选 5dp x 10dp 前置图片与可选后置图片,底色支持统一圆角与外描边,用于「NEW」「BETA」这类标记。
+小型文字角标,对标 ColorOS 17 设计规范。角标是一行末尾省略的文字,可选 5dp x 10dp 前置图片与可选后置图片,底色支持统一圆角与外描边,用于「NEW」「BETA」这类标记。
 
 ## 引入
 
@@ -86,7 +86,7 @@ TagView(
 ## 未移植
 
 - `COUITagBackgroundView` 的四个独立圆角(`couiTagTLCornerRadius`、`couiTagTRCornerRadius`、`couiTagBLCornerRadius`、`couiTagBRCornerRadius`)合并为单个 `cornerRadius`;目前复现到的用例都使用统一的 `couiTagCornerRadius`。
-- 默认 `couiTagBackgroundColor` 背后的主题值 `couiColorBackgroundWithTag` 无法解析:该属性在 `attrs.xml` 中有声明,但 `Settings.apk`、`Clock.apk`、`UXDesign.apk` 中既没有它的 `Theme.COUI` 赋值,也没有 `coui_color_background_with_tag` 颜色。因此移植采用唯一复现到的消费方写法——拨号盘 `customize_popup_list_window_item.xml` 的 `app:couiTagBackgroundColor="?attr/couiColorContainer8"`、`app:couiTagCornerRadius="4dp"`、`app:couiTagViewTextColor="@color/coui_color_label_secondary"`。白色文字在浅色底上不可见,这是一次有意的替换,不是还原到的框架默认值。
+- 默认 `couiTagBackgroundColor` 背后的主题值 `couiColorBackgroundWithTag` 无法解析:该属性在 `attrs.xml` 中有声明,但 ColorOS 17 资源中既没有它的 `Theme.COUI` 赋值,也没有 `coui_color_background_with_tag` 颜色。因此移植采用唯一观察到的消费方写法——拨号盘的 `app:couiTagBackgroundColor="?attr/couiColorContainer8"`、`app:couiTagCornerRadius="4dp"`、`app:couiTagViewTextColor="@color/coui_color_label_secondary"`。白色文字在浅色底上不可见,这是一次有意的替换,不是还原到的框架默认值。
 - `couiTagViewTextSize` 在原生中通过 `setTextSize(0, px)` 传入 10dp 尺寸,而布局给文字的 `couiTextTag` 样式声明 10sp;移植采用 10sp。
 - `COUITagBackgroundView.onAttachedToWindow` 中把父容器 `clipChildren` 设为 `false`,以及 `dispatchDraw` 的 `Path` 裁剪,在 Compose 中不需要,因为父容器默认不裁剪子节点。
 - 命令式的 `setImageBitmap` / `setImageDrawable` / `setImageResoure`(以及对应的左侧图片方法)由 `leadingIcon` / `trailingIcon` 参数替代。

@@ -57,8 +57,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * The ColorOS 17 numeric PIN pad, the port of `COUINumericKeyboard`
- * (`com.coui.appcompat.lockview`).
+ * The ColorOS 17 numeric PIN pad.
  *
  * A 4x3 grid of [NumericKeyboardDefaults.CellSize] (68dp) cells inside
  * [NumericKeyboardDefaults.Width] x [NumericKeyboardDefaults.Height] (248dp x 326dp) holding

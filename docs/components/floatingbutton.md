@@ -1,6 +1,6 @@
 # FloatingButton
 
-The ColorOS 17 speed dial: one round main button that opens a stack of labelled child buttons. It mirrors `com.coui.appcompat.floatingactionbutton.COUIFloatingButton` with its `COUIFloatingButtonItem` rows (`COUIFloatingButtonLabel`, inflated from `layout/coui_floating_button_item_label`).
+The ColorOS 17 speed dial: one round main button that opens a stack of labelled child buttons, aligned with the ColorOS 17 design language. Each child row carries a label and a leading icon.
 
 `FloatingActionButton` is the single COUI floating button; this is the container built on top of it, so the main button and the children keep that component's press feedback, ripple and role.
 

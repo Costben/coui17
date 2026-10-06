@@ -1,11 +1,11 @@
 # CardInstructionPreference
 
-`CardInstructionPreference` is the COUI card instruction block: a card that walks through a settings feature with an illustration, a title and a description, mirroring the ColorOS 17 `com.coui.appcompat.card.COUICardInstructionPreference` (a `COUIPreference` inflating `coui_component_card_instruction_preference.xml`). The device switches its pager adapter on `cardType`:
+`CardInstructionPreference` is the COUI card instruction block: a card that walks through a settings feature with an illustration, a title and a description, aligned with the ColorOS 17 design language. The pager layout is switched on `cardType`:
 
 - **Description** — a `ViewPager2` of illustration / title / summary pages, with a `COUIPageIndicator` 24dp below.
 - **Selector** — a row of selectable illustration / title / radio choices, split evenly and separated by a 24dp divider.
 
-The animation views (`com.oplus.anim.EffectiveAnimationView`) are replaced by the caller-supplied `illustration` slot.
+The animation views (OPLUS effective-animation views) are replaced by the caller-supplied `illustration` slot.
 
 ## Import
 
@@ -38,7 +38,7 @@ CardInstructionPreference(
 | --------------------- | --------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- | -------- |
 | items                 | `List<CardInstructionItem>`         | The pages (Description) or selector choices (Selector)               | -                                                          | Yes      |
 | modifier              | Modifier                          | Modifier applied to the card                                         | Modifier                                                   | No       |
-| cardType              | CardInstructionType               | Which of the two device adapters to use; see [CardInstructionType](#cardinstructiontype) | CardInstructionType.Description       | No       |
+| cardType              | CardInstructionType               | Which of the two layouts to use; see [CardInstructionType](#cardinstructiontype) | CardInstructionType.Description       | No       |
 | selectedIndex         | Int                               | The active page or selected choice                                   | 0                                                          | No       |
 | onSelectedIndexChange | (Int) -> Unit                     | Callback when the active page changes                                | {}                                                         | No       |
 | colors                | CardInstructionColors             | The card colors                                                      | CardInstructionPreferenceDefaults.cardInstructionColors()  | No       |
@@ -109,7 +109,7 @@ CardInstructionPreference(
 
 ## Not ported
 
-Because the device class is Android View infrastructure, the `ViewPager2`, the `COUIPageIndicator` view (the repository's `basic/PageIndicator.kt` stands in), the `RecyclerView.Adapter` hierarchy (`BaseCardInstructionAdapter`, `CardInstructionDescriptionAdapter`, `CardInstructionSelectorAdapter`) and the `COUIMutableSizeScrollView` are not ported. The 40dp content fading edge is not ported either — the description block is simply capped at `ContentHeightComplete`.
+Because ColorOS's implementation is Android View infrastructure, the `ViewPager2`, the page-indicator view (the repository's `basic/PageIndicator.kt` stands in), the `RecyclerView.Adapter` hierarchy and the mutable-size scroll view are not ported. The 40dp content fading edge is not ported either — the description block is simply capped at `ContentHeightComplete`.
 
 ## Advanced Usage
 

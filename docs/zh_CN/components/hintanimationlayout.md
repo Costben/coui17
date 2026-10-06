@@ -2,7 +2,7 @@
 
 `HintAnimationLayout` 是搜索栏的轮播提示文案。它在搜索框上方绘制两条提示字符串，每隔几秒把当前一条滑出、下一条滑入，两者同时做交叉淡入淡出。`query` 为空时轮播，输入内容后停止并隐藏提示，行为与原生 `TextWatcher` 完全一致。
 
-本组件移植自 `com.coui.appcompat.searchview.COUIHintAnimationLayout`，以及 `res/layout/coui_search_view_animated_support_layout.xml` 中的提示视图。
+本组件对标 ColorOS 17 搜索栏的提示轮播。
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=hintAnimationLayout" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -89,7 +89,7 @@ HintAnimationLayout(
 
 ## 复原的令牌
 
-以下数值全部取自 ColorOS 17 的 `Settings.apk` 资源转储或反编译的 `COUIHintAnimationLayout`，没有一个是臆造的。
+以下数值均对标 ColorOS 17 实现，没有一个是臆造的。
 
 | 令牌 | 值 | 来源 |
 | :--- | :--- | :--- |

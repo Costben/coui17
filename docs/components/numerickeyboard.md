@@ -1,6 +1,6 @@
 # NumericKeyboard
 
-`NumericKeyboard` is the ColorOS 17 numeric PIN pad, the port of `COUINumericKeyboard` (`com.coui.appcompat.lockview`). A 4x3 grid of 68dp cells inside a 248dp x 326dp view holds `{ 1, 2, 3, 4, 5, 6, 7, 8, 9, -, 0, - }`: three rows of digits and a bottom row whose outer cells are caller-supplied side styles.
+`NumericKeyboard` is the ColorOS 17 numeric PIN pad. A 4x3 grid of 68dp cells inside a 248dp x 326dp view holds `{ 1, 2, 3, 4, 5, 6, 7, 8, 9, -, 0, - }`: three rows of digits and a bottom row whose outer cells are caller-supplied side styles.
 
 ## Import
 

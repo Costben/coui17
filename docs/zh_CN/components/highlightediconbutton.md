@@ -17,7 +17,7 @@ import io.github.suqi8.coui.kmp.basic.HighlightedIconButtonDefaults
 
 ## 设备实现
 
-该效果属于 COUI 工具栏库的 `coui_toolbar_back_view` / `toolbar_more_view`，而不是一个独立的组件类；**该视图的属性表在反编译中尚未定位**，因此下表的数值来自真机测量——UI dump 加真机像素采样——以及 `ShadowEdge` AGSL 着色器，标注为「实测所得」而非「反编译所得」。
+该效果属于 COUI 工具栏库的工具栏视图，而不是一个独立的组件类；**该视图的属性表尚未定位**，因此下表的数值来自实测——UI dump 加像素采样——以及 `ShadowEdge` AGSL 着色器，标注为「实测所得」。
 
 描边走 `Modifier.materialShadowEdge`，即该 `ShadowEdge` runtime shader 的移植；shader 的 `u_edgeArray[13]` 角度正是让描边透明度沿周长分布的原因：上下强、左右近乎不可见。颜色、光晕与填充不属于 shader（shader 只覆盖节点自身边界），因此由本组件在自己的绘制域里画，再把 shader 叠在最上层。
 
@@ -99,22 +99,22 @@ HighlightedIconButton(onClick = onClick) {
 
 | Token | 值 | 证据层 |
 | :--- | :--- | :--- |
-| 直径 | 155px（1dp = 3.875px），即 40dp；正圆，非 squircle | 真机实测 |
-| 描边 | ≈15% 白，按角度分布——上下强、左右近乎不可见 | 真机实测 |
-| 描边厚度 | 圆顶部 ≈0.8dp、底部 ≈1.2dp | 真机实测 |
+| 直径 | 155px（1dp = 3.875px），即 40dp；正圆，非 squircle | 设备实测 |
+| 描边 | ≈15% 白，按角度分布——上下强、左右近乎不可见 | 设备实测 |
+| 描边厚度 | 圆顶部 ≈0.8dp、底部 ≈1.2dp | 设备实测 |
 | 描边 shader | `GradientStrokeStyle.EDGE_STYLE_1` + `InnerShadowStyle.SHADOW_STYLE_1`（`160 × 160` 预设） | `ShadowEdge` AGSL 着色器 |
-| 描边内阴影 | 无——shader 的淡入沿用 `TYPE_FRAMEWORK_CAPSULE_13` 深色档的不可见值 | 真机实测 |
-| 填充 | 径向，中心暗边缘亮；透明度 ≈0.78（两点估算） | 真机实测 |
-| 填充·深色 | r = 0 处 `#1e1e1e` → r = 70px 处 `#242424` | 真机实测 |
-| 填充·浅色 | r = 0 处 249 → r = 68px 处 251 | 真机实测 |
+| 描边内阴影 | 无——shader 的淡入沿用 `TYPE_FRAMEWORK_CAPSULE_13` 深色档的不可见值 | 设备实测 |
+| 填充 | 径向，中心暗边缘亮；透明度 ≈0.78（两点估算） | 设备实测 |
+| 填充·深色 | r = 0 处 `#1e1e1e` → r = 70px 处 `#242424` | 设备实测 |
+| 填充·浅色 | r = 0 处 249 → r = 68px 处 251 | 设备实测 |
 | 外辉光·深色 | level-2: bottom=4.899994dp, sdf=9.22998dp; factors=0.6/0.6, speed=18; color=0x33ffffff | ToolbarMaterialEffectDelegate + COUICausticShadowEffect + libhwui |
-| 光晕·浅色 | 近对称的柔和暗投影，半径 ≈60px ≈ 15.5dp，最深 −13 luma 且底部加权（底 −13 / 左右 −11 / 上 −8） | 真机实测 |
-| 按压态 | 整块控件缩放到 ≈0.89（半径 77.5px → 69px）；描边与辉光淡出，填充与图标变亮 | 真机实测 |
+| 光晕·浅色 | 近对称的柔和暗投影，半径 ≈60px ≈ 15.5dp，最深 −13 luma 且底部加权（底 −13 / 左右 −11 / 上 −8） | 设备实测 |
+| 按压态 | 整块控件缩放到 ≈0.89（半径 77.5px → 69px）；描边与辉光淡出，填充与图标变亮 | 设备实测 |
 | 按压弹簧 | `folmeSpring(damping = 1f, response = 0.3f, visibilityThreshold = 0.001f)` | `COUISpringForce`，本库的按压反馈弹簧 |
 
 ## 未移植 / 偏差
 
-- **工具栏自身的属性表** —— 因为 `coui_toolbar_back_view` 的 `ShadowEdge` uniform（`u_edgeArray` / `u_commonArray` 各分量）尚未反编译，参数标注为实测所得；本移植只使用 `EDGE_STYLE_1` / `SHADOW_STYLE_1` 预设与上表的实测值。
+- **工具栏自身的属性表** —— 因为工具栏视图的 `ShadowEdge` uniform（`u_edgeArray` / `u_commonArray` 各分量）未知，参数标注为实测所得；本移植只使用 `EDGE_STYLE_1` / `SHADOW_STYLE_1` 预设与上表的实测值。
 - 外光晕独立调用系统焦散接口；`ShadowEdge` 负责内部边缘。非 ColorOS 平台的背景亮度衰减以主题背景为输入。
 - **工具栏自身的布局** —— 40dp 圆距工具栏起始边的距离与它的垂直居中属于工具栏的职责，不属于本按钮。
 

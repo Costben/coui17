@@ -7,9 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
 
-// OPLUS/ColorOS linear-motor feedback constants observed in the real COUI widgets
-// (com.coui.appcompat.*). View.performHapticFeedback accepts arbitrary ints; ColorOS framework
-// maps these to dedicated waveforms, while AOSP builds ignore unknown constants (return false).
+// ColorOS linear-motor feedback constants. View.performHapticFeedback accepts arbitrary ints; the
+// ColorOS framework maps these to dedicated waveforms, while AOSP builds ignore unknown constants
+// (return false).
 private const val OPLUS_HAPTIC_SWITCH = 302
 private const val OPLUS_HAPTIC_STRENGTH = 308
 

@@ -2,7 +2,7 @@
 
 `LoadProgressButton` 是 ColorOS 的安装/下载按钮。它是一个**按钮**而不是转圈指示器：点击它会在一个五值状态机上循环，切换所显示的图标——下载箭头、暂停双竖条、重试箭头——在胶囊档位上还会在文案背后填充进度。
 
-本组件移植自 `com.coui.appcompat.progressbar.COUILoadProgress`（继承自 `AppCompatButton`）及其子类 `COUIInstallLoadProgress` 的绘制部分，对应样式 `Widget.COUI.COUILoadProgress` 及其 `InstallDownload` / `InstallDownloadSmall` 变体。
+本组件对标 ColorOS 17 安装进度按钮，覆盖 `InstallDownload` / `InstallDownloadSmall` 两种样式变体。
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=loadProgressButton" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>

@@ -3,10 +3,10 @@
 `coui-blur` 是一个独立的 Compose Multiplatform 模糊效果库。它通过 Modifier 扩展提供背景模糊、颜色混合和纹理效果。支持 Android、Desktop (JVM)、iOS、macOS 和 Web (WasmJs/Js) 平台。
 
 ::: warning 注意
-Android 上 `coui-blur` 要求 `minSdk` 33（Android 13）或更高。模糊、混合、
-噪点、高光等所有效果均依赖 `RuntimeShader`，该 API 自 33 起才提供。若你的
-应用 `minSdk` 低于 33 但仍想引入该库，请用 [下方介绍的能力检查](#运行时能力检查)
-门控所有 blur 相关代码路径。
+Android 上 `coui-blur` 可安装到 `minSdk` 23，无需 `tools:overrideLibrary`。模糊、混合、
+噪点、高光等效果依赖 `RuntimeShader`，该 API 自 33 起才提供；低于该版本时所有效果
+静默跳过，内容照常绘制。只有在你自己的代码需要区分当前走哪条路径时，才用
+[下方介绍的能力检查](#运行时能力检查) 分支。
 :::
 
 ## 配置
@@ -33,27 +33,28 @@ dependencies {
 
 ## 平台支持
 
-| 平台          | 最低要求            |
-| ------------- | ------------------- |
-| Android       | API 33（Android 13）|
-| Desktop (JVM) | 支持                |
-| iOS / macOS   | 支持                |
-| WasmJs / Js   | 支持                |
+| 平台          | 最低要求                     |
+| ------------- | ---------------------------- |
+| Android       | API 23（效果需 API 33）      |
+| Desktop (JVM) | 支持                         |
+| iOS / macOS   | 支持                         |
+| WasmJs / Js   | 支持                         |
 
 模糊由一对可分离高斯 `RuntimeShader` 再 wrap 进 `RenderEffect` 实现。Android 上
-`RuntimeShader` 自 API 33 起才提供，所以这是整个库（含混合、噪点、高光）的硬下限。
+`RuntimeShader` 自 API 33 起才提供；低于该版本时库降级为空操作，而不是拦在安装阶段，
+因此应用原有的 `minSdk` 无需改动。
 
 ### 运行时能力检查
 
-如果你的应用 `minSdk` 低于 `coui-blur` 但仍想保持单 APK 发布，可以用下面的
-能力检查门控 blur 调用。Android 上它们对应 `Build.VERSION.SDK_INT` 判断；
+效果已在库内部完成门控，覆盖新老机型的单个 APK 不需要任何额外处理。只有你自己的
+代码需要分支时才使用下面的检查。Android 上它们对应 `Build.VERSION.SDK_INT` 判断；
 Skiko 系（Desktop / iOS / macOS / Web）始终返回 `true`。
 
 ```kotlin
 import io.github.suqi8.coui.kmp.shader.isRenderEffectSupported
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 
-// API 32+（以及所有非 Android 目标）为 true。仅需要背景记录支架时（例如
+// API 31+（以及所有非 Android 目标）为 true。仅需要背景记录支架时（例如
 // 通过 `colorFilter(...)` 链一个 ColorFilter）适用。
 val backdropScaffoldSupported = isRenderEffectSupported()
 

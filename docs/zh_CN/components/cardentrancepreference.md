@@ -1,6 +1,6 @@
 # CardEntrancePreference
 
-`CardEntrancePreference` 是一张可点击的卡片,用于跳转到其它页面,对应 ColorOS 17 的 `com.coui.appcompat.card.COUICardEntrancePreference`(本身是 `COUIPressFeedbackJumpPreference`)。它有两套设备布局,由 `cardType` 切换:
+`CardEntrancePreference` 是一张可点击的卡片,用于跳转到其它页面,对标 ColorOS 17 的卡片入口设计。它有两套设备布局,由 `cardType` 切换:
 
 - **Small** —— 竖向排布:圆角图标在上,标题在其下 12dp 处,摘要再下 4dp,底色圆角 12dp。
 - **Large** —— 横向排布:圆角图标在起始端,标题与摘要在其右侧 16dp(摘要位于标题下 3dp),底色圆角 16dp。

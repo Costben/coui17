@@ -33,7 +33,7 @@ COUI 由多个可独立使用的模块组成。所有模块统一发布在 `io.g
 | `coui-core` | 公共基础类型与平台工具（由 `coui-ui` / `coui-icons` 传递包含） | Android minSdk 23，其余平台全支持 |
 | `coui-preference` | Preference 组件（SwitchPreference、CheckboxPreference 等），依赖 `coui-ui` | Android minSdk 23，其余平台全支持 |
 | `coui-icons` | 扩展图标库，可独立使用，也可与 `coui-ui` 同时使用（自动包含 `coui-core`） | Android minSdk 23，其余平台全支持 |
-| `coui-blur` | 模糊效果库，可独立使用 | Android minSdk 33，其余平台全支持 |
+| `coui-blur` | 模糊效果库，可独立使用 | Android minSdk 23（效果需 API 33），其余平台全支持 |
 | `coui-squircle` | 平滑圆角形状，可独立使用（已由 `coui-ui` 传递包含） | Android minSdk 23，其余平台全支持 |
 | `coui-shader` | 底层运行时着色器 / 渲染效果抽象，已由 `coui-blur` / `coui-squircle` 传递包含 | Android minSdk 23，其余平台全支持 |
 | `coui-nav` | 自包含导航库，可独立使用 | Android minSdk 23，其余平台全支持 |
@@ -74,7 +74,7 @@ dependencies {
     implementation("io.github.suqi8.coui.kmp:coui-preference-android:<version>")
     // 可选：添加 coui-icons 以获取更多图标
     implementation("io.github.suqi8.coui.kmp:coui-icons-android:<version>")
-    // 可选：添加 coui-blur 以获取模糊效果（需要 minSdk 33）
+    // 可选：添加 coui-blur 以获取模糊效果（低于 Android API 33 时为空操作）
     implementation("io.github.suqi8.coui.kmp:coui-blur-android:<version>")
     // 可选：添加 coui-squircle 以获取平滑圆角形状
     implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")

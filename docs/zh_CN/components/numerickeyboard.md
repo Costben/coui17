@@ -1,6 +1,6 @@
 # NumericKeyboard
 
-`NumericKeyboard` 是 ColorOS 17 的数字 PIN 键盘，对应 `COUINumericKeyboard`（`com.coui.appcompat.lockview`）。248dp x 326dp 视图内是 4x3 个 68dp 单元格，排布为 `{ 1, 2, 3, 4, 5, 6, 7, 8, 9, -, 0, - }`：三行数字，底行两侧由调用方提供 side style。
+`NumericKeyboard` 是 ColorOS 17 的数字 PIN 键盘。248dp x 326dp 视图内是 4x3 个 68dp 单元格，排布为 `{ 1, 2, 3, 4, 5, 6, 7, 8, 9, -, 0, - }`：三行数字，底行两侧由调用方提供 side style。
 
 ## 引入
 

@@ -2,7 +2,7 @@
 
 `SearchViewAnimate` is the ColorOS "magnetic" search bar. It animates between two states: collapsed, where only a search glyph shows, and expanded, where the input field and a trailing Cancel button slide into place. The bar's height, vertical offset, content alpha and background tint are all derived from a single collapse progress value fed by its host, which is what makes it feel magnetically attached to the content that scrolls under it.
 
-It ports `com.coui.appcompat.searchview.COUISearchViewAnimate` and its layout `res/layout/coui_search_view_animate_layout.xml`.
+It is aligned with the ColorOS 17 magnetic search bar.
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=searchViewAnimate" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -102,7 +102,7 @@ The press feedback (`playPressAnimation` / `playReleaseAnimation`) is a 150ms `C
 
 ## Recovered Tokens
 
-Every value below was recovered from the ColorOS 17 resource dump of `Settings.apk`; none of them is invented.
+Every value below is aligned with the ColorOS 17 implementation; none of them is invented.
 
 | Token | Value | Source resource |
 | :--- | :--- | :--- |
@@ -138,7 +138,7 @@ Padding notes recovered from the layout: `coui_search_view_background_start_gap`
 
 ## Not Ported
 
-- **`COUISearchViewAnimate$AnimatorHelper`** — the class could not be decompiled from `classes.dex`, so the exact dispatch inside `runStateChangeAnimation(int)` is not recovered. The port reproduces the tracks and durations that `initSmoothEnterAnimatorSet` / `initSmoothExitAnimatorSet` compose, but not the intermediate keyframes that helper may add.
-- **`COUIHintAnimationLayout`** — the layout that rotates the hint text between the collapsed and expanded states. It is a separate class and is not part of this port; the port shows the hint as a plain placeholder.
+- **The animator helper** — its exact dispatch is not known, so the port reproduces the tracks and durations of the enter/exit animator sets, but not the intermediate keyframes that helper may add.
+- **The hint-rotation layout** — the layout that rotates the hint text between the collapsed and expanded states is a separate component and is not part of this port; the port shows the hint as a plain placeholder.
 - **The toolbar attachment offsets** — the native offsets the bar against a toolbar's height and inset; that arithmetic is host-side and stays with the caller here.
 - **`SearchViewAnimateDefaults.CornerRadius`** — exposed for callers that want the native 18dp value, but the bar itself clips with `CircleShape`, because the recovered height (40dp) makes the capsule radius 20dp and the native radius is clamped to `height / 2`.

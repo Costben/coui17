@@ -38,43 +38,30 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * The COUI card instruction block: a card that walks through a settings feature with an illustration,
- * a title and a description, mirroring `com.coui.appcompat.card.COUICardInstructionPreference`.
+ * The ColorOS card instruction block: a card that walks through a settings feature with an
+ * illustration, a title and a description.
  *
- * The device class extends `COUIPreference` and inflates
- * `res/layout/coui_component_card_instruction_preference.xml` — a 16dp-corner card
- * (`res/drawable/coui_component_card_instruction_bg.xml`, `?couiColorCardBackground`,
- * 16dp horizontal / 24dp vertical padding) holding a `ViewPager2` and, 24dp below it, a
- * `COUIPageIndicator`. It switches the pager adapter on `cardType`
- * (`COUICardInstructionPreference#getPageAdapter`):
- * - [CardInstructionType.Description] (`CARD_INSTRUCTION_TYPE_DESCRIPTION`, 1) →
- *   `CardInstructionDescriptionAdapter` over
- *   `res/layout/coui_component_card_instruction_description_page.xml`: an animation/image row, then a
- *   scrollable block capped at `coui_component_card_instruction_content_height_complete` (102dp) with
- *   the title (`?couiTextAppearanceHeadline6`, `?couiColorPrimaryNeutral`, centred, at most two
- *   lines) and the summary (`?couiTextAppearanceDescription`, `?couiColorSecondNeutral`) 12dp below
- *   it;
- * - [CardInstructionType.Selector] (`CARD_INSTRUCTION_TYPE_SELECTOR`, 2) →
- *   `CardInstructionSelectorAdapter` over
- *   `res/layout/coui_component_card_instruction_selector_page.xml`: a horizontal row of selectable
- *   items, each `res/layout/coui_component_card_instruction_selector.xml` — an animation, the title
- *   (`?couiTextAppearanceButton`, `?couiColorSecondNeutral`) 24dp below it and a 24dp `RadioButton`
- *   (4dp above, 24dp below) — separated by the 24dp
- *   `res/drawable/coui_component_card_instruction_divider.xml` and split evenly with
- *   `layout_weight = 1`.
+ * The card is a 16dp-corner surface (`?couiColorCardBackground`, 16dp horizontal / 24dp vertical
+ * padding) holding a pager and, 24dp below it, a page indicator. It switches the pager adapter on
+ * `cardType`:
+ * - [CardInstructionType.Description] (`CARD_INSTRUCTION_TYPE_DESCRIPTION`, 1) → an animation/image
+ *   row, then a scrollable block capped at 102dp with the title (`?couiTextAppearanceHeadline6`,
+ *   `?couiColorPrimaryNeutral`, centred, at most two lines) and the summary
+ *   (`?couiTextAppearanceDescription`, `?couiColorSecondNeutral`) 12dp below it;
+ * - [CardInstructionType.Selector] (`CARD_INSTRUCTION_TYPE_SELECTOR`, 2) → a horizontal row of
+ *   selectable items, each an animation, the title (`?couiTextAppearanceButton`,
+ *   `?couiColorSecondNeutral`) 24dp below it and a 24dp `RadioButton` (4dp above, 24dp below) —
+ *   separated by a 24dp divider and split evenly with `layout_weight = 1`.
  *
- * Not ported, because the device class is Android View infrastructure: the `ViewPager2`, the
- * `COUIPageIndicator` view (`basic/PageIndicator.kt` stands in), the `RecyclerView.Adapter`
- * hierarchy (`BaseCardInstructionAdapter`, `CardInstructionDescriptionAdapter`,
- * `CardInstructionSelectorAdapter`) and the `COUIMutableSizeScrollView`. The animation views
- * (`com.oplus.anim.EffectiveAnimationView`) are replaced by the caller-supplied [illustration] slot.
- * The 40dp content fading edge
- * (`coui_component_card_instruction_content_fading_edge_length`) is not ported either: the content
- * block is simply capped at [CardInstructionPreferenceDefaults.ContentHeightComplete].
+ * Not ported, because the design's card is Android View infrastructure: the `ViewPager2`, its page
+ * indicator (`basic/PageIndicator.kt` stands in) and the adapter hierarchy. The animation views are
+ * replaced by the caller-supplied [illustration] slot. The 40dp content fading edge is not ported
+ * either: the content block is simply capped at
+ * [CardInstructionPreferenceDefaults.ContentHeightComplete].
  *
  * @param items The pages (or selector choices) of the card.
  * @param modifier The modifier to be applied to the [CardInstructionPreference].
- * @param cardType Which of the two device adapters to use; see [CardInstructionType].
+ * @param cardType Which of the two adapters to use; see [CardInstructionType].
  * @param selectedIndex The active page (Description) or selected choice (Selector).
  * @param onSelectedIndexChange The callback when the active page changes. The device routes this
  *   through `ViewPager2.OnPageChangeCallback` (Description) or
@@ -269,9 +256,7 @@ private fun SelectorContent(
 }
 
 /**
- * One page of a [CardInstructionPreference], the Compose counterpart of
- * `com.coui.appcompat.card.BaseDisplayInfo` (title / summary) as bound by
- * `CardInstructionDescriptionAdapter`.
+ * One page of a [CardInstructionPreference]: a title and an optional summary.
  *
  * @param title The title of the page (`?couiTextAppearanceHeadline6`).
  * @param summary The summary of the page. Null leaves the line out.
@@ -299,8 +284,7 @@ object CardInstructionPreferenceDefaults {
     val CornerRadius = 16.dp
 
     /**
-     * `coui_component_card_instruction_preference.xml`'s root padding: `paddingHorizontal` 16dp
-     * (`coui_component_card_instruction_margin_horizontal`), `paddingVertical` 24dp.
+     * The card's root padding: 16dp horizontally, 24dp vertically.
      */
     val ContentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
 
@@ -321,9 +305,8 @@ object CardInstructionPreferenceDefaults {
     val ContentFadingEdgeLength = 40.dp
 
     /**
-     * `coui_component_card_instruction_divider_width` (24dp): the gap between selector items on
-     * `coui_component_card_instruction_selector_page.xml`, and the `setMarginStart` the description's
-     * animation row puts before its second animation.
+     * `coui_component_card_instruction_divider_width` (24dp): the gap between selector items, and
+     * the start margin the description's animation row puts before its second animation.
      */
     val DividerWidth = 24.dp
 

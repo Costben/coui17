@@ -69,8 +69,7 @@ data class BezierGravityPathGeometry(
 internal data class BezierPathControlT(val effectiveP1T: Float, val effectiveP2T: Float)
 
 /**
- * Geometry for the popup's Bezier gravity trajectory (COUI
- * `com.coui.appcompat.animation.bezier.BezierGravityPathMath`).
+ * Geometry for the popup's Bezier gravity trajectory.
  *
  * The trajectory starts at the popup path anchor, expressed as an offset from the menu centre, and
  * ends at the menu centre (the origin), so the popup flies in from the finger/anchor along an arc

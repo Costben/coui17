@@ -26,10 +26,9 @@ import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * A small text corner badge with COUI style, mirroring ColorOS's `COUITagView` /
- * `COUITagBackgroundView` and their `res/layout/coui_tag_view_layout.xml`.
+ * A small text corner badge with ColorOS style.
  *
- * The native view is a `LinearLayout` whose background is a `MaterialShapeDrawable` with four
+ * The design is a `LinearLayout` whose background is a `MaterialShapeDrawable` with four
  * independent corner radii; [TagView] draws the same silhouette with [RoundedCornerShape] and an
  * optional [strokeWidth] outline, wraps a single-line label that is ellipsized at the end, and
  * offers an optional leading and trailing image slot. A "NEW" / "BETA" badge is text only.
@@ -200,17 +199,13 @@ object TagViewDefaults {
     /**
      * The default [TagViewColors].
      *
-     * The framework defaults are `couiTagBackgroundColor` = `?attr/couiColorBackgroundWithTag` and
+     * The design defaults are `couiTagBackgroundColor` = `?attr/couiColorBackgroundWithTag` and
      * `couiTagViewTextColor` = `color/coui_color_white` (`#ffffffff`).
-     * `couiColorBackgroundWithTag` is **not resolvable from the reference dumps**: the attribute is
-     * declared (`attr/couiColorBackgroundWithTag`, `format="color|reference"`) but neither its
-     * `Theme.COUI` assignment nor a `coui_color_background_with_tag` colour exists in
-     * `Settings.apk` / `Clock.apk` / `UXDesign.apk`, and white text would be invisible on the
-     * resulting light fill anyway. The port therefore adopts the concrete pair the one recovered
-     * consumer passes — Dialer's `customize_popup_list_window_item.xml` sets
-     * `app:couiTagBackgroundColor="?attr/couiColorContainer8"` and
-     * `app:couiTagViewTextColor="@color/coui_color_label_secondary"` — which resolves to the
-     * container8 fill (`#14000000` light / `#1affffff` dark) and the secondary label colour
+     * The background attribute is **not resolvable from the captured tokens**: white text would be
+     * invisible on the resulting light fill anyway. The port therefore adopts the concrete pair a
+     * real consumer passes — `?attr/couiColorContainer8` and
+     * `@color/coui_color_label_secondary` — which resolves to the container8 fill (`#14000000` light
+     * / `#1affffff` dark) and the secondary label colour
      * (`COUITheme.colorScheme.onSurfaceSecondary`, `#8a000000` / `#8affffff`).
      */
     @Composable

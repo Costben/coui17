@@ -10,7 +10,7 @@ popupHost: None
 
 # MaterialShadowEdge
 
-`Modifier.materialShadowEdge` draws the ColorOS 17 "material" edge — a gradient stroke plus an inner shadow — over the node's full bounds. It is the portable port of `com.coui.appcompat.shadowedge.COUIShadowEdgeDrawable` and its `ShadowEdgeShader`, which wrap a single runtime shader (`ShadowStroke`) and feed it the surface's own geometry, so the edge is computed per pixel from a signed distance field rather than stroked by the canvas.
+`Modifier.materialShadowEdge` draws the ColorOS 17 "material" edge — a gradient stroke plus an inner shadow — over the node's full bounds. It is a portable implementation of that edge, wrapping a single runtime shader (`ShadowStroke`) and feeding it the surface's own geometry, so the edge is computed per pixel from a signed distance field rather than stroked by the canvas.
 
 Every material surface in ColorOS — the floating toolbars, the search bar, the bottom sheet panel, the popup frames — uses this one shader with a different `GradientStrokeStyle`, `InnerShadowStyle` and stroke width. `MaterialStrokeParams` holds the per-component stroke values; `GradientStrokeStyle` and `InnerShadowStyle` hold the shared rim and shadow shapes.
 
@@ -113,7 +113,7 @@ Presets: `FrameworkCapsule5Light` / `FrameworkCapsule5Dark` (`FRAMEWORK_CAPSULE_
 
 ## Shader Uniforms
 
-The shader is `com.coui.appcompat.shadowedge.agsl.ShadowEdge` (`NAME = "ShadowStroke"`), built for the `NEW_G2` corner geometry that every consumer selects with `setCornerType(2)`.
+The shader is an AGSL runtime shader (`NAME = "ShadowStroke"`), built for the `NEW_G2` corner geometry.
 
 | Uniform        | Layout                                                                                                              |
 | -------------- | ------------------------------------------------------------------------------------------------------------------- |

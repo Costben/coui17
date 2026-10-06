@@ -69,7 +69,7 @@ PageIndicator(count = 8, currentIndex = 6)
 
 ## 未移植 / 差异
 
-- 滑动窗口背后的逐帧尺寸 / 偏移掩码。原生 `setCurrentPositionInternal` 无法反编译；其分级常量已还原（`INDICATOR_DOT_LARGE/MEDIUM/SMALL/GONE_LEVEL_SIZE` 为 3/5/7/9，`DEFAULT_MAXIMUM_LARGE_DOT_NUMBER` 为 4，`DEFAULT_MAXIMUM_MEDIUM_DOT_NUMBER` 为 2），但确切的偏移算法没有。本移植改为滑动一个钳制窗口，并作为近似，把窗口中相邻页被隐藏的两个圆点缩小为 `DotSizeMedium`。`DotSizeSmall` 仅对外暴露，未实际使用。
+- 滑动窗口背后的逐帧尺寸 / 偏移掩码。原生确切的偏移算法未知；其分级常量为 3/5/7/9，最大大点数为 4，最大中点数为 2，因此本移植改为滑动一个钳制窗口，并作为近似，把窗口中相邻页被隐藏的两个圆点缩小为 `DotSizeMedium`。`DotSizeSmall` 仅对外暴露，未实际使用。
 - 未移植 `drawTrace` 的移动 trace 混色（`getColorFactor`、`DEFAULT_COLOR_FACTOR_THRESHOLD` 为 0.05）以及 stiffness 为 1500 的位置弹簧（`dampingRatio` 为 1.0、`minimumVisibleChange` 为 0.005）。当前圆点直接使用 `activeColor`。
 - 未移植由 `indicator_content_description` 与 `coui_page_indicator_description` 构建的无障碍描述。
 - 未移植三个已废弃的空实现 setter（`setDotCornerRadius`、`setDotSpacing`、`setDotStrokeWidth`）以及 `snapToPosition`、`stopTraceAnimator`。

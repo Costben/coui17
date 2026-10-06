@@ -3,11 +3,12 @@
 `coui-blur` is a standalone blur effect library for Compose Multiplatform. It provides backdrop blur, color blending, and texture effects via Modifier extensions. The library supports Android, Desktop (JVM), iOS, macOS, and Web (WasmJs/Js).
 
 ::: warning
-On Android, `coui-blur` requires `minSdk` 33 (Android 13) or higher. All
-effects (blur, blend, noise, highlight) rely on `RuntimeShader`, which is only
-available from API 33. Apps with a lower `minSdk` that still want to include
-this library should gate blur-related code paths with [the capability checks
-described below](#runtime-capability-checks).
+On Android, `coui-blur` installs down to `minSdk` 23 and needs no
+`tools:overrideLibrary`. Blur, blend, noise and highlight effects rely on
+`RuntimeShader`, which exists from API 33, so below that every effect is skipped
+silently and the content draws normally. Branch on
+[the capability checks below](#runtime-capability-checks) when your own code needs
+to know which path is active.
 :::
 
 ## Setup
@@ -34,30 +35,30 @@ dependencies {
 
 ## Platform Support
 
-| Platform      | Minimum Requirement |
-| ------------- | ------------------- |
-| Android       | API 33 (Android 13) |
-| Desktop (JVM) | Supported           |
-| iOS / macOS   | Supported           |
-| WasmJs / Js   | Supported           |
+| Platform      | Minimum Requirement          |
+| ------------- | ---------------------------- |
+| Android       | API 23 (effects need API 33) |
+| Desktop (JVM) | Supported                    |
+| iOS / macOS   | Supported                    |
+| WasmJs / Js   | Supported                    |
 
 Blur is implemented as a separable Gaussian `RuntimeShader` wrapped in a
-`RenderEffect`. On Android, `RuntimeShader` was introduced in API 33, so that
-is the hard floor for the entire library — including blend, noise, and
-highlight effects.
+`RenderEffect`. On Android, `RuntimeShader` was introduced in API 33; below that
+the library degrades to a no-op instead of blocking installation, so the app's
+`minSdk` can stay wherever it already is.
 
 ### Runtime capability checks
 
-If your app has a lower `minSdk` than `coui-blur` and you want to keep
-shipping a single APK, gate blur usage with the capability checks below.
-On Android they map to `Build.VERSION.SDK_INT` comparisons; on Skiko-based
-targets (Desktop, iOS, macOS, Web) they always return `true`.
+The effects are gated inside the library, so a single APK covering both old and new
+devices needs no work at all. Use the checks below when your own code has to branch.
+On Android they map to `Build.VERSION.SDK_INT` comparisons; on Skiko-based targets
+(Desktop, iOS, macOS, Web) they always return `true`.
 
 ```kotlin
 import io.github.suqi8.coui.kmp.shader.isRenderEffectSupported
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 
-// True on API 32+ (and all non-Android targets). Useful when you only need
+// True on API 31+ (and all non-Android targets). Useful when you only need
 // the backdrop scaffold (e.g. a chained ColorFilter via `colorFilter(...)`).
 val backdropScaffoldSupported = isRenderEffectSupported()
 

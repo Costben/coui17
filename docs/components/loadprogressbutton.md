@@ -2,7 +2,7 @@
 
 `LoadProgressButton` is the ColorOS install/download button. It is a *button*, not a spinner: tapping it walks a five-value state machine that swaps the glyph it shows — a download arrow, a pause pair, a retry arrow — and, on its pill tiers, fills a progress bar behind the label.
 
-It ports `com.coui.appcompat.progressbar.COUILoadProgress` (an `AppCompatButton`) together with the drawing half of its subclass `COUIInstallLoadProgress`, under the style `Widget.COUI.COUILoadProgress` and its `InstallDownload` / `InstallDownloadSmall` variants.
+It is aligned with the ColorOS 17 install-progress button, under the `InstallDownload` / `InstallDownloadSmall` style variants.
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=loadProgressButton" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>

@@ -1,6 +1,6 @@
 # Banner
 
-`Banner` 是 ColorOS 17 的自动轮播卡片横幅，对应 Clock APK 的 `res/layout/coui_banner_content_layout.xml`：一排横向滚动的圆角卡片，下方是圆点指示器。它由两个类构成，横向滚动部分对应 `COUIBannerRecyclerView`（`com.coui.appcompat.banner`），指示器对应同包的 `COUIPageIndicatorKit`。
+`Banner` 是 ColorOS 17 的自动轮播卡片横幅：一排横向滚动的圆角卡片，下方是圆点指示器。横向滚动与指示器是两块独立实现。
 
 ## 引入
 
@@ -36,7 +36,7 @@ Banner(
 
 ## 轮播间隔是必填参数
 
-原生中完全没有自动轮播。`COUIBannerRecyclerView` 与 `COUIPageIndicatorKit` 都不持有定时器，Clock dex 中也没有任何类引用它们——`coui_banner_content_layout` 是 APK 中一个未被引用的资源——因此轮播间隔取决于宿主应用自己怎么写。正因如此 `autoScrollIntervalMillis` 没有默认值：任何取值都只能是臆造。
+原生中完全没有自动轮播。`COUIBannerRecyclerView` 与 `COUIPageIndicatorKit` 都不持有定时器，布局资源也无人引用——因此轮播间隔取决于宿主应用自己怎么写。正因如此 `autoScrollIntervalMillis` 没有默认值：任何取值都只能是臆造。
 
 传入 `autoScrollEnabled = false`、`pageCount` 不大于 1，或间隔 `<= 0`，都会关闭自动轮播。拖拽过程中不会与手势争抢，而是跳过该次计时。
 

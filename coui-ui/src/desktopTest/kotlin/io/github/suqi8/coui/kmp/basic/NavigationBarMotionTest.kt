@@ -14,18 +14,15 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * Pins the bar-level motion values in [NavigationBarMotion] to the decompiled
- * `COUINavigationView.initAnimation()`.
+ * Pins the bar-level motion values in [NavigationBarMotion] to the ColorOS 17 navigation bar.
  *
- * The native code is the only place these numbers exist — the durations are the three constants
- * `DEFAULT_ENTER_TRANSLATE_ANIMATION_DURATION` (350), `DEFAULT_SHOW_TRANSLATE_ANIMATION_DURATION`
- * (250) and `DEFAULT_HIDE_TRANSLATE_ANIMATION_DURATION` (200) plus two hard-coded 100ms alpha
- * durations — so a drift here means the port stopped matching the component it models.
+ * These are the bar's canonical durations: three translate durations (350ms enter, 250ms show,
+ * 200ms hide) plus two hard-coded 100ms alpha durations — so a drift here means the port stopped
+ * matching the design it models.
  *
  * The easings are asserted through the `PathInterpolator` control points rather than by identity,
- * because that is the value the native interpolators carry: `COUIInEaseInterpolator` is
- * `pathInterpolator(0, 0, 0.1, 1)`, `COUIOutEaseInterpolator` is `pathInterpolator(0.3, 0, 1, 1)` and
- * the exit alpha runs on `COUILinearInterpolator`.
+ * because that is the value the design carries: the in-ease is `pathInterpolator(0, 0, 0.1, 1)`, the
+ * out-ease is `pathInterpolator(0.3, 0, 1, 1)` and the exit alpha runs linear.
  */
 class NavigationBarMotionTest {
 
@@ -84,7 +81,7 @@ class NavigationBarMotionTest {
     @Test
     fun theEasingsCarryTheDecompiledControlPoints() {
         // CubicBezierEasing keeps its control points private, so the curve is pinned by evaluating it
-        // against a reference solver carrying the decompiled PathInterpolator points.
+        // against a reference solver carrying the PathInterpolator control points.
         assertMatchesCubicBezier(COUIInEase, 0f, 0f, 0.1f, 1f, "COUIInEaseInterpolator")
         assertMatchesCubicBezier(COUIOutEase, 0.3f, 0f, 1f, 1f, "COUIOutEaseInterpolator")
     }

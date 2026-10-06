@@ -34,7 +34,7 @@ the group `io.github.suqi8.coui.kmp` and share one version number.
 | `coui-core`           | Shared primitives and platform utilities (transitively included by `coui-ui` / `coui-icons`)             | Android `minSdk` 23, all other platforms |
 | `coui-preference`     | Preference components library, depends on `coui-ui`                                                      | Android `minSdk` 23, all other platforms |
 | `coui-icons`          | Extended icon library, can be used independently                                                         | Android `minSdk` 23, all other platforms |
-| `coui-blur`           | Blur effect library, can be used independently                                                           | Android `minSdk` 33, all other platforms |
+| `coui-blur`           | Blur effect library, can be used independently                                                           | Android `minSdk` 23 (effects need API 33), all other platforms |
 | `coui-squircle`       | Squircle shapes library, can be used independently                                                       | Android `minSdk` 23, all other platforms |
 | `coui-shader`         | Low-level runtime shader / render effect abstraction                                                     | Android `minSdk` 23, all other platforms |
 | `coui-nav`            | Navigation runtime library, can be used independently                                                    | Android `minSdk` 23, all other platforms |
@@ -75,7 +75,7 @@ dependencies {
     implementation("io.github.suqi8.coui.kmp:coui-preference-android:<version>")
     // Optional: Add coui-icons for more icons
     implementation("io.github.suqi8.coui.kmp:coui-icons-android:<version>")
-    // Optional: Add coui-blur for blur effects (requires minSdk 33)
+    // Optional: Add coui-blur for blur effects (no-op below Android API 33)
     implementation("io.github.suqi8.coui.kmp:coui-blur-android:<version>")
     // Optional: Add coui-squircle for squircle (smooth rounded corner) shapes
     implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")

@@ -2,7 +2,7 @@
 
 `PopupMenuRotation` 是 ColorOS 17 应用于弹窗菜单的旋转几何。在旋转后的屏幕上——横屏设备、折叠屏半开姿态、被旋转的窗口——原生弹窗列表可以把内容旋转四分之一圈来布局，此时定位过程必须基于**旋转后**的占位而不是菜单自身的宽高来推算。
 
-它不是可见控件，而是控件背后的数学：四分之一圈角度判定、旋转后的轴对齐包围盒、适配矩形的夹取，以及把这两者变成已定位弹窗的两个修饰符。本组件移植自 `com.coui.appcompat.poplist.MenuRotationHelper` 与 `COUIRotatingPopupListWindow` 的几何部分。
+它不是可见控件，而是控件背后的数学：四分之一圈角度判定、旋转后的轴对齐包围盒、适配矩形的夹取，以及把这两者变成已定位弹窗的两个修饰符。它复刻了 ColorOS 17 应用于旋转弹窗列表的几何。
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=popupMenuRotation" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>

@@ -18,15 +18,13 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
 
 /**
- * A responsive list-detail container with COUI style, mirroring ColorOS's
- * `com.coui.appcompat.grid.COUIListDetailView extends android.widget.FrameLayout`.
+ * A responsive list-detail container with ColorOS style.
  *
- * The device class holds three `FragmentContainerView`s — main, sub and emptyPage — plus a hairline
- * divider, and lays them out by window width: while the window is narrower than the COUI
- * `WindowTotalSizeClass.Compact` boundary (600dp) it stacks the main and detail containers at full
- * width and hides the empty page, so the caller shows a single pane; from 600dp on it places the
- * main pane at a fraction of the width, a divider, and the detail/empty-page pane in the rest
- * (`onMeasure` / `onLayout`).
+ * It holds three panes — main, sub and emptyPage — plus a hairline divider, and lays them out by
+ * window width: while the window is narrower than the compact boundary (600dp) it stacks the main
+ * and detail containers at full width and hides the empty page, so the caller shows a single pane;
+ * from 600dp on it places the main pane at a fraction of the width, a divider, and the
+ * detail/empty-page pane in the rest.
  *
  * Fragments are an Android host concern, so the Compose port takes composable slots instead of
  * `FragmentContainerView`s. [mainContent] is the list pane, [detailContent] the detail pane, and

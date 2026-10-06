@@ -25,7 +25,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * The completion state [CompleteState] shows, mirroring the `completeType` values of ColorOS's
- * `com.coui.appcompat.completeview.COUICompleteStateView` (`coui_component_complete_state.xml`).
+ * completion-state design.
  */
 enum class CompleteStateStatus {
     /** `COMPLETE_TYPE_DEFAULT` (0): no playable is set, so the illustration box stays empty. */

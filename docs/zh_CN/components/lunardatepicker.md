@@ -1,12 +1,10 @@
 # LunarDatePicker
 
-`LunarDatePicker` 是 COUI 中的基础交互组件，通过三列垂直滚轮（年 / 月 / 日）选择农历日期，对应 ColorOS 的 `com.coui.appcompat.picker.COUILunarDatePicker extends android.widget.FrameLayout` 与其 `coui_lunar_date_picker.xml` 布局。
+`LunarDatePicker` 是 COUI 中的基础交互组件，通过三列垂直滚轮（年 / 月 / 日）选择农历日期。
 
-月列显示农历月名 —— `coui_lunar_month` = 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月 —— 选中该年闰月时前缀 `coui_lunar_leap_string`（闰）。年列与日列显示纯数字，因为设备只给月列的 spinner 设置了 `displayedValues`。日列范围随所选农历月自动联动（29 或 30 天，含闰月），切换到天数更少的月份时日值自动收敛。
+月列显示农历月名 —— 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月 —— 选中该年闰月时前缀 闰。年列与日列显示纯数字。日列范围随所选农历月自动联动（29 或 30 天，含闰月），切换到天数更少的月份时日值自动收敛。
 
-取值为 `LunarDateValue`（农历年 / 月 / 日 + 闰月标志）。换算位于 `LunarUtil`，是 `LunarUtil` 的直接移植 —— 同一张 1900..2100 的 `LUNAR_INFO` 表与 1970..2036 的 `SOLAR_TERM_DAYS` 表 —— 不依赖任何第三方农历库。用 `LunarUtil.lunarToSolar` 可把 `LunarDateValue` 转成公历 `DateValue`。
-
-设备的 `updateSpinners()` 与 `IncompleteDate.change()` 无法反编译，因此滚动时的滚轮重排行为无法逐行照抄；此处的滚轮范围、月名、闰月标记、列宽与天数均取自反编译构造函数与 `coui_*` 资源。
+取值为 `LunarDateValue`（农历年 / 月 / 日 + 闰月标志）。换算位于 `LunarUtil`，采用表驱动实现 —— 1900..2100 的 `LUNAR_INFO` 表与 1970..2036 的 `SOLAR_TERM_DAYS` 表 —— 不依赖任何第三方农历库。用 `LunarUtil.lunarToSolar` 可把 `LunarDateValue` 转成公历 `DateValue`。
 
 ## 引入
 
@@ -105,8 +103,8 @@ LunarDatePicker(
 
 ## 行为与 Token
 
-- **年份范围**：`COUILunarDatePicker.DEFAULT_START_YEAR`（1910）到 `DEFAULT_END_YEAR`（2099）；设备把滚轮钉在 `sMinDate` 与 `sMaxDate` 之间，二者为 `set(1910, 2, 10)` 与 `set(2099, 11, 31, 23, 59)`。
-- **列尺寸**：`coui_lunar_date_picker.xml` 中三列同为 `coui_number_picker_width_middle`（76dp）；项高取 `NumberPickerDefaults.ItemHeight`（45dp），即设备的 `coui_datepicker_height`（135dp）。
-- **滚轮内边距**：`coui_number_picker_view_padding_vertical`（12dp），即布局根节点的 `android:paddingVertical`。
-- **月名**：`coui_lunar_month` 解析为 `lunar_january` .. `lunar_december`：正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月。闰月标记为 `coui_lunar_leap_string` = 闰。
+- **年份范围**：1910 到 2099，对应 `LunarDatePickerDefaults.YearRange`。
+- **列尺寸**：三列同为 `LunarDatePickerDefaults.ColumnWidth`（76dp）；项高取 `NumberPickerDefaults.ItemHeight`（45dp）。
+- **滚轮内边距**：`LunarDatePickerDefaults.InsideMargin`（垂直 12dp）。
+- **月名**：`LunarDatePickerDefaults.MonthNames`：正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月。闰月标记为 `LunarDatePickerDefaults.LeapPrefix`（闰）。
 - **天数**：农历月为 29 或 30 天，取自 `daysOfALunarMonth` / `daysOfLeapMonthInLunarYear`；有闰月的年份月列有 13 项（`LEAPYEAR_MONTH_COUNT`），否则 12 项（`NORMAL_MONTH_COUNT`）。

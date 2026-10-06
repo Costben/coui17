@@ -173,8 +173,8 @@ private fun Coui17Root() {
     // previous page's collapsed title into the next one.
     val topBarState = rememberTopAppBarState()
     val topBarScrollBehavior = COUIScrollBehavior(state = topBarState)
-    // The device's hint reads `搜索设置项` (`Settings.apk` string table, length-prefixed 5), and the
-    // collapsed pill draws five glyphs at x 219..501px.
+    // The device's hint is five character slots long, and the collapsed pill draws five glyphs at
+    // x 219..501px.
     val searchLabel = str("Search settings")
     var searchStatus by remember { mutableStateOf(SearchStatus(label = searchLabel)) }
     // The pill's hint is part of the search state rather than of the bar, so a language change has to

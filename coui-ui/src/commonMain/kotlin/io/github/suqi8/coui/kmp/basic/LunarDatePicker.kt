@@ -22,28 +22,18 @@ import io.github.suqi8.coui.kmp.utils.LunarDateValue
 import io.github.suqi8.coui.kmp.utils.LunarUtil
 
 /**
- * A lunar date picker with COUI style, mirroring ColorOS's
- * `com.coui.appcompat.picker.COUILunarDatePicker extends android.widget.FrameLayout`.
+ * A lunar date picker with COUI style.
  *
- * Three scroll wheels select a Chinese lunar date, laid out like the device's
- * `coui_lunar_date_picker.xml` (a horizontal, center-gravity `LinearLayout` of three
- * `COUINumberPicker`s). The month wheel shows the lunar month names — `coui_lunar_month` =
- * 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月 — prefixed with the
- * leap marker `coui_lunar_leap_string` (闰) when the year's leap month is selected. The year and day
- * wheels show plain numbers, as the device sets no displayed values on those two spinners. The day
- * range follows the selected lunar month (29 or 30 days, leap month included), and the day is
- * clamped when a shorter month is selected, exactly as [LunarUtil.daysOfALunarMonth] /
- * [LunarUtil.daysOfLeapMonthInLunarYear] report it.
+ * Three scroll wheels select a Chinese lunar date in a horizontal, center-gravity row. The month
+ * wheel shows the lunar month names — 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 /
+ * 十月 / 冬月 / 腊月 — prefixed with the leap marker 闰 when the year's leap month is selected. The
+ * year and day wheels show plain numbers. The day range follows the selected lunar month (29 or 30
+ * days, leap month included), and the day is clamped when a shorter month is selected, exactly as
+ * [LunarUtil.daysOfALunarMonth] / [LunarUtil.daysOfLeapMonthInLunarYear] report it.
  *
  * The value is a [LunarDateValue] (lunar year/month/day plus a leap-month flag); use
- * [LunarUtil.lunarToSolar] to turn it into a Gregorian [DateValue]. The device's own
- * `calculateLunarByGregorian` conversion lives in [LunarUtil].
- *
- * The device's `updateSpinners()` and `IncompleteDate.change()` were not decompilable (jadx emitted
- * `UnsupportedOperationException` stubs for both), so the exact wheel-repositioning behaviour on a
- * scroll cannot be copied line for line. The spinner ranges, the lunar month names, the leap marker,
- * the column sizes and the day counts here are the ones the decompiled constructor, the
- * `coui_lunar_date_picker.xml` layout and the `coui_*` resources declare.
+ * [LunarUtil.lunarToSolar] to turn it into a Gregorian [DateValue]. The `calculateLunarByGregorian`
+ * conversion lives in [LunarUtil].
  *
  * @param value The currently selected lunar date. Out-of-range fields are coerced.
  * @param onValueChange The callback invoked when the selected lunar date changes.
@@ -212,10 +202,7 @@ private fun lunarMonthsOfYear(year: Int): List<Pair<Int, Boolean>> {
 /** Contains default values used by [LunarDatePicker]. */
 object LunarDatePickerDefaults {
 
-    /**
-     * Default selectable lunar year range. The device pins its spinners to
-     * `COUILunarDatePicker.DEFAULT_START_YEAR` (1910) and `DEFAULT_END_YEAR` (2099).
-     */
+    /** Default selectable lunar year range: 1910..2099. */
     val YearRange: IntRange = 1910..2099
 
     /**
@@ -261,9 +248,8 @@ object LunarDatePickerDefaults {
     }
 
     /**
-     * Default lunar day label: the plain day number. The device's `mDaySpinner` sets no displayed
-     * values, so it shows bare numbers; use [LunarUtil.chineseStringOfALunarDay] for the
-     * 初一 / 十五 / 三十 form the device uses in its accessibility string.
+     * Default lunar day label: the plain day number. Use [LunarUtil.chineseStringOfALunarDay] for the
+     * 初一 / 十五 / 三十 form.
      */
     val DayLabel: (Int) -> String = { it.toString() }
 }

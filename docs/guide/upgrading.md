@@ -16,9 +16,25 @@ kotlin {
 }
 ```
 
-**There are no breaking changes.** Every API added in 1.2.0 is additive, and the existing signatures
-are unchanged. Binary compatibility is verified for every published module, so a rebuild is not even
-strictly required — but update the version to pick up the new components.
+### Compatibility with 1.1.0
+
+The upgrade is source- and binary-compatible, and the claim is verified rather than assumed:
+
+- **Source compatible.** Every parameter added since 1.1.0 carries a default, so call sites written
+  against 1.1.0 compile unchanged.
+- **Binary compatible on the JVM (Android and desktop).** Every public member the 1.1.0 artifacts
+  exposed is declared again by the 1.2.0 artifacts, so an application compiled against 1.1.0 keeps
+  linking without a rebuild. `verification/compat-consumer` checks this: it compiles a 1.1.0-shaped
+  consumer against both releases and runs the 1.1.0-compiled bytecode against the new artifacts.
+- **Kotlin/Native (iOS, macOS) and web.** Those consumers recompile from source, so source
+  compatibility is the contract that applies.
+
+One exception, with no user-visible effect: two compiler-generated lambda accessors inside
+`ComposableSingletons$TopAppBarKt` could not be re-declared. They are referenced only from
+`TopAppBarKt` within the library itself, never from consumer bytecode, so no application can link
+against them.
+
+A rebuild is therefore not required — but update the version to pick up the new components.
 
 ### New component capabilities
 
@@ -32,8 +48,8 @@ strictly required — but update the version to pick up the new components.
 - `TopTips` gained a custom content slot alongside the existing marquee behaviour.
 - `RecommendedPreference` gained `enabled` with a matching disabled visual state.
 
-All of the above are opt-in parameters with defaults that preserve the previous behaviour, so no call
-site needs to change.
+All of the above are additions with defaults that preserve the previous behaviour, so no call site
+needs to change.
 
 ### Documentation and tooling
 
@@ -56,10 +72,10 @@ kotlin {
 }
 ```
 
-This release recalibrates most components against ColorOS 16 — partly from decompiled resources,
-partly from measuring the real thing on a device. Two of them corrected values we had inherited
-from Miuix and never checked. **Expect visible changes even where you changed nothing**, and give
-your screens a look after upgrading.
+This release recalibrates most components against ColorOS 16 — partly from the ColorOS 16 design
+language, partly from measuring the real thing on a device. Two of them corrected values we had
+inherited from Miuix and never checked. **Expect visible changes even where you changed nothing**,
+and give your screens a look after upgrading.
 
 ### One compile break
 

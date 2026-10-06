@@ -33,35 +33,33 @@ import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * How much of the free vertical space [EmptyState] leaves above its content, mirroring the
- * `emptyViewSizeType` values of ColorOS's `com.coui.appcompat.emptyview.COUIEmptyStateView`
- * (`coui_component_empty_state.xml`).
+ * How much of the free vertical space [EmptyState] leaves above its content, chosen by the
+ * `emptyViewSizeType` of ColorOS's empty-state design.
  */
 enum class EmptyStateSize {
-    /** Picks the bucket from the measured constraints, like `EMPTY_VIEW_SIZE_TYPE_AUTO` (0). */
+    /** Picks the bucket from the measured constraints, like the auto size type (0). */
     Auto,
 
-    /** `EMPTY_VIEW_SIZE_TYPE_SMALL` (1): a window shorter than 200dp; hides the illustration. */
+    /** The small size type (1): a window shorter than 200dp; hides the illustration. */
     Small,
 
-    /** `EMPTY_VIEW_SIZE_TYPE_MEDIUM` (2): narrower than 320dp or shorter than 480dp. */
+    /** The medium size type (2): narrower than 320dp or shorter than 480dp. */
     Medium,
 
-    /** `EMPTY_VIEW_SIZE_TYPE_LARGE` (3). */
+    /** The large size type (3). */
     Large,
 }
 
 /**
- * An empty state page with COUI style, mirroring ColorOS's COUIEmptyStateView
- * (`coui_component_empty_state.xml`): a centered illustration, a title and a subtitle in a
+ * An empty state page with ColorOS style: a centered illustration, a title and a subtitle in a
  * max-height scroll area, and an optional accent-colored action below them.
  *
- * The content group is not centered vertically — the device places it at a fraction of the free
+ * The content group is not centered vertically — the design places it at a fraction of the free
  * space ([EmptyStateDefaults.MarginTopHeightRatioSmall] / [EmptyStateDefaults.MarginTopHeightRatioNormal]),
  * so on a phone-sized page it sits a little above the middle. Reproduce that by giving the
  * [EmptyState] a fixed height (`fillMaxSize`, `height`, a `weight`, …); when its height is merely
- * bounded or unbounded it lays its content out at the top, exactly like the device's `onMeasure`
- * falls back to the group height whenever its height measure spec is not EXACTLY.
+ * bounded or unbounded it lays its content out at the top, exactly like a height measure spec that
+ * is not EXACTLY falls back to the group height.
  *
  * @param title The title of the [EmptyState], centered, at most two lines
  *   (COUI couiTextHeadlineXS: 16sp, medium, line spacing multiplier 1.05).

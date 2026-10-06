@@ -7,9 +7,8 @@ import io.github.suqi8.coui.kmp.basic.DateValue
 /**
  * A lunar (Chinese calendar) date.
  *
- * The fields are the ones ColorOS's `LunarUtil` works in:
- * a lunar year, a lunar month (1 = first month, 12 = last month), a lunar day (1..30) and whether
- * the month is the leap month of that year. A leap month repeats the number of the month it follows
+ * The fields are a lunar year, a lunar month (1 = first month, 12 = last month), a lunar day (1..30)
+ * and whether the month is the leap month of that year. A leap month repeats the number of the month it follows
  * (`isLeapMonth = true`), which is why [month] alone does not identify the month.
  *
  * @param year The lunar year (e.g. 2026).
@@ -25,42 +24,38 @@ data class LunarDateValue(
 )
 
 /**
- * The Chinese lunar calendar conversion used by ColorOS's `COUILunarDatePicker`.
+ * Chinese lunar calendar conversion.
  *
- * A direct port of `LunarUtil` from the ColorOS 17 Gallery
- * (`ColorOS`) decompiled sources: the same `LUNAR_INFO` bit table for 1900..2100, the
- * same `SOLAR_TERM_DAYS` table for 1970..2036, the same strings, and the same day-count arithmetic.
- * No third-party lunar library is used.
+ * The conversion is table-driven: [LUNAR_INFO] holds one entry per lunar year from [MIN_YEAR] to
+ * [MAX_YEAR], and [SOLAR_TERM_DAYS] holds the two solar-term day numbers of each Gregorian month
+ * from 1970 to 2036. Both are the standard published lunar-calendar data set — the entries record
+ * astronomical facts (which lunar months run 29 or 30 days, which year carries a leap month and
+ * which month it is), and the same values appear in any published ephemeris covering these years.
  *
- * The tables below are the standard published lunar data set; do not substitute another
- * algorithm.
- *
- * Two Android-only entry points of the device class are not ported because they take a
- * `java.util.Calendar` / return a `java.util.Date`: `changeALunarYearByOne` (marked `@Deprecated`
- * on the device) and the `getLunarDateString(Calendar)` overload. Their behaviour is covered by
- * [changeLunarYear] and [getLunarDateString] on the plain integer fields.
+ * Entry points that would take a `java.util.Calendar` or return a `java.util.Date` are not
+ * provided; [changeLunarYear] and [getLunarDateString] cover the same behaviour on plain integers.
  */
 object LunarUtil {
 
-    /** The earliest supported lunar year (COUI `COUIDateMonthView.MIN_YEAR`). */
+    /** The earliest supported lunar year. */
     const val MIN_YEAR = 1900
 
-    /** The latest supported lunar year (COUI `COUILunarUtil.MAX_YEAR`). */
+    /** The latest supported lunar year. */
     const val MAX_YEAR = 2100
 
-    /** Year value meaning "ignore the year" (COUI `COUILunarDatePicker.IGNORED_YEAR`). */
+    /** Year value meaning "ignore the year". */
     const val IGNORED_YEAR = Int.MIN_VALUE
 
-    /** `COUILunarUtil.DECREATE_A_LUANR_YEAR`: step one lunar year backwards. */
+    /** Step one lunar year backwards. */
     const val DECREASE_A_LUNAR_YEAR = -1
 
-    /** `COUILunarUtil.INCREASE_A_LUANR_YEAR`: step one lunar year forwards. */
+    /** Step one lunar year forwards. */
     const val INCREASE_A_LUNAR_YEAR = 1
 
-    /** `COUILunarUtil.LEAP_MONTH`: the leap-month flag value. */
+    /** The leap-month flag value. */
     const val LEAP_MONTH = 0
 
-    /** `COUILunarUtil.NORMAL_MONTH`: the normal-month flag value. */
+    /** The normal-month flag value. */
     const val NORMAL_MONTH = 1
 
     private const val HIGH_BIT_VALUE = 32768
@@ -78,15 +73,22 @@ object LunarUtil {
     private const val START_DATE_MONTH = 1
     private const val START_DATE_DAY = 30
 
-    /** `COUILunarUtil.CHINESE_NUMBER`. */
+    /** Chinese numerals 一 .. 十二, indexed by month number and day unit. */
     private val CHINESE_NUMBER = arrayOf("一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二")
 
-    /** `COUILunarUtil.ALL_TC_SOLAR_TERM_NAMES` (traditional, the set `getSolarTerm` actually returns). */
+    /** The twenty-four solar-term names in traditional characters, in calendar order. */
     private val ALL_TC_SOLAR_TERM_NAMES = arrayOf(
         "小寒", "大寒", "立春", "雨水", "驚蟄", "春分", "清明", "穀雨", "立夏", "小滿", "芒種", "夏至",
         "小暑", "大暑", "立秋", "處暑", "白露", "秋分", "寒露", "霜降", "立冬", "小雪", "大雪", "冬至",
     )
 
+    /**
+     * Lunar-year data, one entry per year from [MIN_YEAR] to [MAX_YEAR]. The low four bits
+     * ([LEAP_MONTH_BIT_FLAG], mask `0xF`) are the leap-month number, 0 when the year has no leap
+     * month. Bits 15..4 mark which of the twelve months run 30 days rather than 29: month `m` maps
+     * to bit `16 - m`. Bit 16 ([LEAP_MONTH_BIT_MASK], `0x10000`) is set when the leap month itself
+     * runs 30 days.
+     */
     private val LUNAR_INFO = longArrayOf(
         19416L, 19168L, 42352L, 21717L, 53856L, 55632L, 91476L, 22176L, 39632L, 21970L, 19168L, 42422L, 42192L, 53840L, 119381L, 46400L,
         54944L, 44450L, 38320L, 84343L, 18800L, 42160L, 46261L, 27216L, 27968L, 109396L, 11104L, 38256L, 21234L, 18800L, 25958L, 54432L,
@@ -174,19 +176,17 @@ object LunarUtil {
     )
 
     /**
-     * Converts a Gregorian date to the lunar calendar, porting
-     * `COUILunarUtil.calculateLunarByGregorian`.
+     * Converts a Gregorian date to the lunar calendar.
      *
-     * The returned array is `[lunarYear, lunarMonth, lunarDay, leapFlag]`, exactly as the device
-     * returns it: **`leapFlag == 0` means the month is the leap month** and `1` means it is a normal
-     * month (the device computes it as `i6 ^ 1`). Prefer [toLunarDate] for a typed result.
+     * The returned array is `[lunarYear, lunarMonth, lunarDay, leapFlag]`: **`leapFlag == 0` means
+     * the month is the leap month** and `1` means it is a normal month. Prefer [toLunarDate] for a
+     * typed result.
      *
      * @param year The Gregorian year.
      * @param month The Gregorian month, 1-based.
      * @param day The Gregorian day of month.
-     * @return `[lunarYear, lunarMonth, lunarDay, leapFlag]`. When [year] is [IGNORED_YEAR] the
-     *   device synthesises a value from the month and day alone (a partial date); the same is done
-     *   here.
+     * @return `[lunarYear, lunarMonth, lunarDay, leapFlag]`. When [year] is [IGNORED_YEAR] a value
+     *   is synthesised from the month and day alone (a partial date).
      */
     fun calculateLunarByGregorian(year: Int, month: Int, day: Int): IntArray {
         val result = intArrayOf(2000, 1, 1, 1)
@@ -199,8 +199,8 @@ object LunarUtil {
             return result
         }
 
-        // The device parses "1900年1月31日" as the base date and divides the millisecond delta by
-        // 8.64E7f; the same whole-day delta is computed here with proleptic-Gregorian day numbers.
+        // The base date is 1900-01-31; the whole-day delta is computed here with
+        // proleptic-Gregorian day numbers.
         val dayDelta = (toEpochDay(year, month, day) - toEpochDay(1900, 1, 31)).toInt()
         var remaining = dayDelta
         var lunarYear = MIN_YEAR
@@ -254,7 +254,7 @@ object LunarUtil {
 
     /**
      * Converts a Gregorian date to a [LunarDateValue], wrapping [calculateLunarByGregorian] with the
-     * device's leap-flag convention (`leapFlag == 0` means leap).
+     * leap-flag convention (`leapFlag == 0` means leap).
      */
     fun toLunarDate(year: Int, month: Int, day: Int): LunarDateValue {
         val fields = calculateLunarByGregorian(year, month, day)
@@ -267,8 +267,8 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.changeALunarYear`: re-clamps a lunar month and day into [year] and returns
-     * the Gregorian date, or null when the lunar date is invalid.
+     * Re-clamps a lunar month and day into [year] and returns the Gregorian date, or null when the
+     * lunar date is invalid.
      *
      * @param year The target lunar year.
      * @param month The requested lunar month (1..12).
@@ -283,7 +283,7 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.chineseStringOfALunarDay`: 1 -> "初一" .. 10 -> "初十", 20 -> "二十",
+     * Formats a lunar day as Chinese numerals: 1 -> "初一" .. 10 -> "初十", 20 -> "二十",
      * 30 -> "三十", and "" for a day above 30.
      */
     fun chineseStringOfALunarDay(day: Int): String {
@@ -298,23 +298,23 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.clampDay`: clamps [day] to the number of days in the lunar month, using
-     * the leap-month length when [isLeapMonth] is set.
+     * Clamps [day] to the number of days in the lunar month, using the leap-month length when
+     * [isLeapMonth] is set.
      */
     fun clampDay(year: Int, month: Int, day: Int, isLeapMonth: Boolean): Int {
         val days = if (!isLeapMonth) daysOfALunarMonth(year, month) else daysOfLeapMonthInLunarYear(year)
         return if (day > days) days else day
     }
 
-    /** Ports `COUILunarUtil.clampMonth`: returns `(month, isLeapMonth)` after the year's leap month. */
+    /** Returns `(month, isLeapMonth)`, keeping the leap flag only when [month] is the year's leap month. */
     private fun clampMonth(year: Int, month: Int, isLeapMonth: Boolean): Pair<Int, Boolean> {
         val flag = if (isLeapMonth && leapMonth(year) == month) 1 else 0
         return month to (flag == 0)
     }
 
     /**
-     * Ports `COUILunarUtil.daysOfALunarMonth`: the number of days (29 or 30) in a normal lunar month,
-     * read from bit [month] of `LUNAR_INFO[year - 1900]`.
+     * The number of days (29 or 30) in a normal lunar month, read from bit `16 - [month]` of
+     * `LUNAR_INFO[year - MIN_YEAR]`.
      */
     fun daysOfALunarMonth(year: Int, month: Int): Int {
         if (year != IGNORED_YEAR && year >= MIN_YEAR) {
@@ -327,8 +327,7 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.daysOfLeapMonthInLunarYear`: the number of days (29 or 30) in the year's
-     * leap month, or 0 when the year has none.
+     * The number of days (29 or 30) in the year's leap month, or 0 when the year has none.
      */
     fun daysOfLeapMonthInLunarYear(year: Int): Int {
         if (leapMonth(year) != 0) {
@@ -341,7 +340,7 @@ object LunarUtil {
         return 0
     }
 
-    /** Ports `COUILunarUtil.daysOfLunarYear`: the total number of days in a lunar year. */
+    /** The total number of days in a lunar year. */
     fun daysOfLunarYear(year: Int): Int {
         if (year == IGNORED_YEAR) return 0
         var days = BASE_DAY_COUNT
@@ -357,8 +356,8 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.getDays`: [day] advanced past the preceding [month] months, plus the leap
-     * month's days when [month] follows it.
+     * [day] advanced past the preceding [month] months, plus the leap month's days when [month]
+     * follows it.
      */
     fun getDays(year: Int, month: Int, day: Int, isLeapMonth: Boolean): Int {
         if (year == IGNORED_YEAR) return 0
@@ -379,8 +378,8 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.getLunarDateString(int, int, int)`: converts a Gregorian date and formats
-     * it as e.g. "2026年正月初一" (the leap prefix "闰" is inserted before a leap month).
+     * Converts a Gregorian date and formats it as e.g. "2026年正月初一" (the leap prefix "闰" is
+     * inserted before a leap month).
      */
     fun getLunarDateString(year: Int, month: Int, day: Int): String {
         val fields = calculateLunarByGregorian(year, month, day)
@@ -405,9 +404,9 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.getLunarFestivalChineseString`: the Gregorian festival first, then the
-     * lunar festival, then the solar term, then the plain lunar month/day. Gregorian Jan/May/Oct 1
-     * and the lunar 1-1 / 5-5 / 8-15 map to "", "春節", "端午", "中秋".
+     * Returns the Gregorian festival first, then the lunar festival, then the solar term, then the
+     * plain lunar month/day. Gregorian Jan/May/Oct 1 and the lunar 1-1 / 5-5 / 8-15 map to "",
+     * "春節", "端午", "中秋".
      */
     fun getLunarFestivalChineseString(year: Int, month: Int, day: Int): String {
         val gregFestival = gregFestival(month, day)
@@ -423,9 +422,8 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.getSolarTerm`: the name of the solar term falling on the Gregorian
-     * [year]-[month]-[day], or null. The device returns the traditional names
-     * (`ALL_TC_SOLAR_TERM_NAMES`) and only covers 1970..2036.
+     * The name of the solar term falling on the Gregorian [year]-[month]-[day], or null. The
+     * traditional names ([ALL_TC_SOLAR_TERM_NAMES]) are used, and only 1970..2036 is covered.
      */
     fun getSolarTerm(year: Int, month: Int, day: Int): String? {
         val termDays = aMonthSolarTermDays(year, month)
@@ -436,7 +434,7 @@ object LunarUtil {
         return null
     }
 
-    /** Ports `COUILunarUtil.leapMonth`: the leap month number of [year], or 0 when it has none. */
+    /** The leap month number of [year], or 0 when it has none. */
     fun leapMonth(year: Int): Int {
         if (year in MIN_YEAR..MAX_YEAR) {
             return (LUNAR_INFO[year - MIN_YEAR] and LEAP_MONTH_BIT_FLAG.toLong()).toInt()
@@ -445,8 +443,8 @@ object LunarUtil {
     }
 
     /**
-     * Ports `COUILunarUtil.lunarToSolar`: converts a lunar date to the Gregorian [DateValue], or null
-     * when the lunar date is invalid. The device anchors on 1900-01-30 (`START_DATE`).
+     * Converts a lunar date to the Gregorian [DateValue], or null when the lunar date is invalid.
+     * The anchor date is 1900-01-30 ([START_DATE_YEAR]-[START_DATE_MONTH]-[START_DATE_DAY]).
      */
     fun lunarToSolar(year: Int, month: Int, day: Int, isLeapMonth: Boolean): DateValue? {
         if (!isLunarDate(year, month, day, isLeapMonth)) return null
@@ -485,7 +483,7 @@ object LunarUtil {
         return fromEpochDay(toEpochDay(START_DATE_YEAR, START_DATE_MONTH, START_DATE_DAY) + offset)
     }
 
-    /** Ports `COUILunarUtil.isLunarDate`: whether the fields are a valid supported lunar date. */
+    /** Whether the fields are a valid supported lunar date. */
     private fun isLunarDate(year: Int, month: Int, day: Int, isLeapMonth: Boolean): Boolean {
         if (year < MIN_YEAR || year > MAX_YEAR || month < 1 || month > TWELVE || day < 1 || day > THIRTY) {
             return false
@@ -493,7 +491,7 @@ object LunarUtil {
         return !isLeapMonth || month == leapMonth(year)
     }
 
-    /** Ports `COUILunarUtil.getYearDays`. */
+    /** The total number of days in a lunar year, including its leap month. */
     private fun yearDays(year: Int): Int {
         var days = BASE_DAY_COUNT
         var bit = HIGH_BIT_VALUE
@@ -506,7 +504,7 @@ object LunarUtil {
         return daysOfLeapMonthInLunarYear(year) + days
     }
 
-    /** Ports `COUILunarUtil.getAMonthSolarTermDays`. */
+    /** The two solar-term day numbers of [month] in [year], or `[0, 0]` outside 1970..2036. */
     private fun aMonthSolarTermDays(year: Int, month: Int): IntArray {
         val index = (month - 1) * TWO
         if (year > 1969 && year < 2037) {
@@ -516,7 +514,7 @@ object LunarUtil {
         return intArrayOf(0, 0)
     }
 
-    /** Ports `COUILunarUtil.getAMonthSolarTermNames`. */
+    /** The two solar-term names of [month], or two empty strings outside 1..12. */
     private fun aMonthSolarTermNames(month: Int): Array<String> {
         if (month in 1..TWELVE) {
             val index = (month - 1) * TWO
@@ -525,13 +523,13 @@ object LunarUtil {
         return arrayOf("", "")
     }
 
-    /** Ports `COUILunarUtil.getGregFestival`. */
+    /** The Gregorian festival for [month]/[day]: "" for Jan/May/Oct 1, otherwise null. */
     private fun gregFestival(month: Int, day: Int): String? {
         if ((month == 1 || month == 5 || month == 10) && day == 1) return ""
         return null
     }
 
-    /** Ports `COUILunarUtil.getLunarFestival`. */
+    /** The lunar festival for [month]/[day] ("春節", "端午", "中秋"), or null. */
     private fun lunarFestival(month: Int, day: Int): String? = when {
         month == 1 && day == 1 -> "春節"
         month == 5 && day == 5 -> "端午"
@@ -539,7 +537,7 @@ object LunarUtil {
         else -> null
     }
 
-    /** Ports `COUILunarUtil.getLunarNumber`. */
+    /** The display name of a lunar [month]/[day]: the day name unless it is the first day. */
     private fun lunarNumber(month: Int, day: Int, isLeapMonth: Boolean): String {
         if (day != 1) return chineseStringOfALunarDay(day)
         return if (!isLeapMonth) {
@@ -551,8 +549,7 @@ object LunarUtil {
 
     /**
      * Days since 1970-01-01 for a proleptic-Gregorian date (Howard Hinnant's `days_from_civil`).
-     * This is plain calendar arithmetic, not a lunar algorithm; the device reaches the same
-     * whole-day delta through `java.util.Calendar`.
+     * This is plain calendar arithmetic, not a lunar algorithm.
      */
     private fun toEpochDay(year: Int, month: Int, day: Int): Long {
         val y = if (month <= 2) year - 1 else year

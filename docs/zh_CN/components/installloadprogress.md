@@ -1,8 +1,8 @@
 # InstallLoadProgress
 
-`InstallLoadProgress` 是应用安装进度控件，也就是安装器里那个会在按钮与进度之间来回变形的控件。这两个 APK 里的安装器内实际引用的就是它——Settings 与 Clock 的 `res/layout/coui_preference_load_progress.xml` 都直接声明了一个 `COUIInstallLoadProgress`，样式为 `style=@style/Widget.COUI.COUILoadProgress.InstallDownloadSmall`。
+`InstallLoadProgress` 是应用安装进度控件，也就是安装器里那个会在按钮与进度之间来回变形的控件。它是安装器实际 inflate 的按钮类，使用安装进度样式的 `InstallDownloadSmall` 变体。
 
-本组件移植自 `com.coui.appcompat.progressbar.COUIInstallLoadProgress`，位于 `.ground-truth/coloros17/apks/dex/Settings/classes7.dex` 与 `.ground-truth/coloros17/apks/dex/Clock/classes.dex`（Clock 中那份是同一个类的 R8 压缩版本，除了在平滑圆角分支上多一个 `Build.VERSION.SDK_INT >= 30` 判断外没有任何差别）。
+本组件对标 ColorOS 17 的安装进度控件实现，包括平滑圆角分支上的 `Build.VERSION.SDK_INT >= 30` 判断。
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=installLoadProgress" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>

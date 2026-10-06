@@ -53,9 +53,8 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  *
  * The omni-directional ambient half of the native shadow is dropped, as it is for `PopupShadow`:
  * this modifier draws one shadow. That is the known residual — the far field comes out ~2.6 luma
- * lighter than the device with a tail ~40px short (see `docs/coui17-gallery-plan.md` §九). A second
- * wide [Shadow] standing in for the ambient half was tried and made the near field worse, so it is
- * left out.
+ * lighter than the device with a tail ~40px short. A second wide [Shadow] standing in for the
+ * ambient half was tried and made the near field worse, so it is left out.
  *
  * @param fraction how much of the shadow to show. The collapsed home pill fades it in with the
  *   scroll (`min(1, scrollPx / 30dp)`); the expanded search field shows all of it.

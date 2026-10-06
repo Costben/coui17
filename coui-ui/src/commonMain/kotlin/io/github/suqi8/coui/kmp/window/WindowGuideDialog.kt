@@ -63,8 +63,7 @@ import kotlinx.coroutines.launch
 /**
  * One page of a [WindowGuideDialog].
  *
- * The data counterpart of `COUIGuidePageItem` (`com.coui.appcompat.dialog.COUIGuidePageItem`), the
- * holder the native `COUIGuidePageAdapter` binds into `coui_guide_page_item.xml`.
+ * The data counterpart of the guide page item the adapter binds into the page layout.
  *
  * @param title The page title, drawn with `?attr/couiTextHeadlineS` — 18sp in `sans-serif-medium`
  *   (weight 550) — in `?attr/couiColorLabelPrimary`. `guide_tips_title` of the native layout.

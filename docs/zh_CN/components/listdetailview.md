@@ -1,6 +1,6 @@
 # ListDetailView
 
-`ListDetailView` 是 COUI 中的基础布局组件：响应式列表-详情容器，窄窗口一次只显示一个面板，窗口足够宽后拆成「列表 + 详情」双面板布局。对应 ColorOS 的 `com.coui.appcompat.grid.COUIListDetailView extends android.widget.FrameLayout`。
+`ListDetailView` 是 COUI 中的基础布局组件：响应式列表-详情容器，窄窗口一次只显示一个面板，窗口足够宽后拆成「列表 + 详情」双面板布局。对标 ColorOS 的列表-详情布局。
 
 设备类持有三个 `FragmentContainerView`（main / sub / emptyPage）与一条细分隔线，在 `onMeasure` / `onLayout` 里按宽度排布。由于 Fragment 属于 Android 宿主层概念，Compose 移植改用 composable 槽位：`mainContent`、`detailContent` 与 `emptyPageContent`。窗口窄于 COUI `WindowTotalSizeClass.Compact` 分界（600dp）时只组合 `mainContent` / `detailContent` 之一，由 `detailVisible` 决定；达到 600dp 后主面板按比例占宽、后接分隔线，详情（未选中时为 `emptyPageContent`）占满剩余区域。
 

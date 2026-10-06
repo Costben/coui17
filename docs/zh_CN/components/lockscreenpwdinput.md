@@ -1,6 +1,6 @@
 # LockScreenPwdInput
 
-`LockScreenPwdInput` 是 ColorOS 17 的锁屏密码输入框，对应 `COUILockScreenPwdInputLayout` 及其承载的 `COUILockScreenPwdInputView`（`com.coui.appcompat.input`，Settings APK），以及两者的辅助类 `InnerShadowHelper` 与 `LightEffectHelper`。它是一个胶囊形密码框加 48dp 圆形下一步按钮：胶囊带描边、上下内阴影，按下下一步按钮时还有一道从按钮扫过整个输入框的光。
+`LockScreenPwdInput` 是 ColorOS 17 的锁屏密码输入框。它是一个胶囊形密码框加 48dp 圆形下一步按钮：胶囊带描边、上下内阴影，按下下一步按钮时还有一道从按钮扫过整个输入框的光。
 
 布局为 `layout/coui_input_lock_screen_pwd_layout.xml`，一个 `ConstraintLayout`，内含输入框（`0dp` 宽、参与链式约束）和 48dp 的 `ImageView` 下一步按钮；按钮的 `layout_marginStart` 为 `coui_input_lock_screen_pwd_icon_margin`（12dp），`src` 为 `coui_input_lock_screen_pwd_next_src`，一张 24dp 的右箭头。`COUILockScreenPwdInputView.addSmoothRoundRect` 以 `rectF.height() / 2` 作为两个圆角半径构建胶囊路径，因此圆角半径为 `LockScreenPwdInputDefaults.Height / 2`（24dp）。
 

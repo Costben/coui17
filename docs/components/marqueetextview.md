@@ -1,6 +1,6 @@
 # MarqueeText
 
-A text that scrolls horizontally when it overflows the space it is given, mirroring ColorOS's `com.coui.appcompat.tips.COUIMarqueeTextView`. Text that fits is drawn normally and never scrolls; a text wider than its box walks left at 25dp per second, starts 10dp inside the left edge, leaves an 80dp gap after each pass, waits 1000ms before starting and fades both clipped edges over 26dp.
+A text that scrolls horizontally when it overflows the space it is given, aligned with the ColorOS 17 design language. Text that fits is drawn normally and never scrolls; a text wider than its box walks left at 25dp per second, starts 10dp inside the left edge, leaves an 80dp gap after each pass, waits 1000ms before starting and fades both clipped edges over 26dp.
 
 ## Import
 

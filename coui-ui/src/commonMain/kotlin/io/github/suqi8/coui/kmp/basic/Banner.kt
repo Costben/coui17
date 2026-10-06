@@ -146,8 +146,7 @@ fun Banner(
 }
 
 /**
- * The ColorOS 17 page indicator of the banner, the port of `COUIPageIndicatorKit`
- * (`com.coui.appcompat.banner`, Clock APK).
+ * The ColorOS 17 page indicator of the banner.
  *
  * It is deliberately **not** a [PageIndicator] wrapper. The two share their geometry — both read
  * `coui_page_indicator_dot_size` (6dp) and `coui_page_indicator_dot_spacing` (3dp), so this port

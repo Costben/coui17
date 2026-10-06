@@ -2,7 +2,7 @@
 
 Compose Multiplatform UI component library. Targets Android, iOS, Desktop (JVM), macOS, Web (Wasm/JS).
 
-> **COUI 改造主线**：本仓库正基于 Miuix 就地演进成一套 COUI（ColorOS 设计语言）组件库。凡涉及「换成 ColorOS 风格 / COUI 换肤 / 调主题或控件视觉 / 逆向提取 ColorOS 设计 token」的任务，先读 `AGENT.md`（设备/工具环境、逆向校准工作流、token→代码落点映射），再按本文件的工程规范落地。本文件的代码风格、API 约定、性能约束在 COUI 改造中**继续生效**。
+> **COUI 改造主线**：本仓库正基于 Miuix 就地演进成一套 COUI（ColorOS 设计语言）组件库。凡涉及「换成 ColorOS 风格 / COUI 换肤 / 调主题或控件视觉 / 校准 ColorOS 设计 token」的任务，先读 `AGENT.md`（项目定位、设计来源与溯源原则、token→代码落点映射），再按本文件的工程规范落地。本文件的代码风格、API 约定、性能约束在 COUI 改造中**继续生效**。
 
 ## Quick Start
 
@@ -23,7 +23,9 @@ Compose Multiplatform UI component library. Targets Android, iOS, Desktop (JVM),
 | **Check public API**  | `./gradlew apiCheck` (update the dumps with `./gradlew apiDump`) |
 | Generate API docs     | `./gradlew dokkaGenerate`                                        |
 | Verify local release  | `./gradlew publishAllToLocalRepository verifyLocalPublication`   |
+| Verify staged release | `./gradlew verifyStagedMavenCentral -Prelease` (wipes and re-stages `build/publishing/mavenCentral`; `-Prelease` requires GPG signatures) |
 | Smoke-test published  | `./gradlew -p smoke compileKotlin -PcouiVersion=<version>`       |
+| Release-scenario drill | `bash .github/scripts/test-staged-repository-verification.sh` (staged-repository checks) and `bash .github/scripts/test-release-tag-resolution.sh` (is the release built from the tag?) |
 | Run Android demo      | `./gradlew :example:android:installDebug`                        |
 | Run Desktop demo      | `./gradlew :example:desktop:hotRunDesktop --auto`                |
 | Run WasmJs demo       | `./gradlew :example:web:wasmJsBrowserRun`                        |
@@ -41,13 +43,14 @@ Before committing, run `./gradlew spotlessCheck`; only run `./gradlew spotlessAp
 | `coui-core/`           | Utilities + COUIIcons base (depended on by `ui` and `icons`) |
 | `coui-ui/`             | Main UI library                                               |
 | `coui-preference/`     | Preference / menu / popup components                          |
-| `coui-blur/`           | Blur effects (Android minSdk=33)                              |
+| `coui-blur/`           | Blur effects (minSdk 23; effects need API 33)                 |
 | `coui-squircle/`       | Squircle (continuous corner) shape                            |
 | `coui-shader/`         | Runtime shader abstraction                                    |
 | `coui-nav/`            | Self-contained navigation runtime                             |
 | `coui-icons/`          | Extended icon resources                                       |
 | `coui-navigation3-ui/` | Navigation 3 UI (depends on `coui-squircle` for transition clip) |
 | `smoke/`               | Separate Gradle build that consumes the published artifacts   |
+| `verification/`        | Separate Gradle builds that consume the published artifacts the way a downstream project does: `compat-consumer` (1.1.0 source + bytecode), `android-api23-consumer` (minSdk 23, no `overrideLibrary`), `apple-web-consumer` (iosArm64/iosSimulatorArm64/macosArm64/js/wasmJs, links the frameworks) |
 | `example/`              | Demo app                                                      |
 | `baselineprofile/`      | Android baseline profile generation                           |
 | `docs/`                 | VitePress documentation site                                  |
@@ -234,12 +237,19 @@ When changing a component's API, defaults, or behavior, check and update all rel
 
 ## Git Commit Style
 
-Format: `<type>(<scope>): <subject>` ([Conventional Commits](https://www.conventionalcommits.org/))
+Format: `<type>(<scope>): <subject>` ([Conventional Commits](https://www.conventionalcommits.org/)).
 
-- Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `chore`, `chore(release)`, `revert`
-- Scopes: the library module or area (`coui-ui`, `coui-nav`, `docs`, `build`, `ci`, …); omit for cross-cutting chores
-- Keep subject line ≤ 72 characters, imperative mood, no trailing period
-- Reference PRs/issues as `(#1234)` at end
-- Write both subject and body with the reader's understanding in mind — no file lists, no step-by-step process, no signature lines
+- Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `chore`, `chore(release)`, `revert`. The `build`,
+  `ci` and `test` types that appear on older commits are legacy — fold that work under `chore` now.
+- Scopes: the library module or area (`coui-core`, `coui-ui`, `coui-preference`, `coui-shader`,
+  `coui-blur`, `coui-squircle`, `coui-icons`, `coui-nav`, `coui-navigation3-ui`, `coui17`, `docs`,
+  `build`); omit the scope for cross-cutting work.
+- The subject is written in Chinese, in the imperative mood, and states the user-visible result
+  rather than the process. Keep it within 40 characters with no trailing period — if it does not fit,
+  the change is two commits.
+- Write a body only when the reason for the change cannot be read off the subject and the code: the
+  motivation, the constraint, the trade-off. No file lists, no step-by-step process, no version-bump
+  narration.
+- Never add signature lines (`Co-Authored-By`, "Generated with …", bot attributions).
 - Check recent `git log --oneline` to stay consistent with current conventions
 - **Run `./gradlew spotlessCheck` before every commit; only run `./gradlew spotlessApply` if violations are reported**

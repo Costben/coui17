@@ -6,12 +6,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Width tiers COUI picks its responsive resource buckets from.
+ * Width tiers ColorOS picks its responsive resource buckets from.
  *
- * ColorOS 17 (`com.oplus.uxdesign` v17.0.15) ships the tier-specific values under
- * `res/values-w600dp/` and `res/values-w840dp-h480dp/`, so the cut-offs are the resource
- * qualifiers themselves: below 600dp is `compat`, 600–840dp is `medium`, 840dp and above is
- * `expanded`.
+ * ColorOS 17 ships the tier-specific values under 600dp and 840dp resource qualifiers, so the
+ * cut-offs are the qualifiers themselves: below 600dp is `compat`, 600–840dp is `medium`, 840dp and
+ * above is `expanded`.
  */
 enum class COUIWindowSizeClass {
     /** Below 600dp wide — the `_compat` token family. */
@@ -30,10 +29,10 @@ enum class COUIWindowSizeClass {
  */
 object COUIResponsiveUtils {
 
-    /** Lower bound of the `medium` bucket (`res/values-w600dp/`). */
+    /** Lower bound of the `medium` bucket (the 600dp qualifier). */
     val MediumMinWidth: Dp = 600.dp
 
-    /** Lower bound of the `expanded` bucket (`res/values-w840dp-h480dp/`). */
+    /** Lower bound of the `expanded` bucket (the 840dp qualifier). */
     val ExpandedMinWidth: Dp = 840.dp
 
     /** Buckets [width] into the COUI width tiers. */

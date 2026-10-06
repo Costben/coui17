@@ -29,7 +29,7 @@
 | `title4`     | 18sp  | Normal | 1.2381em  | couiTextAppearanceHeadline5 |
 
 ::: tip 提示
-COUI 没有 11sp / 17sp 这两档 text appearance，这几个样式保留从 Miuix 继承的字号，取字号最接近的那一档的行高倍数。`headline1` 是唯一靠真机实测定标的：ColorOS 16 在 560dpi 下的列表项标题节点高 21.71dp，对应 16sp，而不是从 Miuix 继承的 17sp。
+COUI 没有 11sp / 17sp 这两档 text appearance，这几个样式保留从 Miuix 继承的字号，取字号最接近的那一档的行高倍数。`headline1` 是唯一靠实测而非推断得出的：ColorOS 16 在 560dpi 下的偏好标题节点高 21.71dp，对应 16sp，而不是从 Miuix 继承的 17sp。
 
 所有样式都带 `LineHeightStyle(alignment = Top, trim = None)`，以对应 Android `lineSpacingMultiplier` 的行为：额外行距落在文字下方且不被裁剪。Compose 默认会把行距居中并在首尾行裁掉，那样单行文本上的行高设置会完全失效。
 :::

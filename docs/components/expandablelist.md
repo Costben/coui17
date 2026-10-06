@@ -1,6 +1,6 @@
 # ExpandableList
 
-The ColorOS 17 expandable list: a scrollable list of groups, each of which grows open to reveal its children and shrinks closed again. It mirrors `com.coui.appcompat.expandable.COUIExpandableRecyclerView` with the connector that does the work, `ExpandableRecyclerConnector`, plus the `COUIExpandableListView` wrapper around `android.widget.ExpandableListView`.
+The ColorOS 17 expandable list: a scrollable list of groups, each of which grows open to reveal its children and shrinks closed again, aligned with the ColorOS 17 design language.
 
 ## Import
 

@@ -128,7 +128,7 @@ Card {
 
 ### 仅显示聚焦线
 
-`Line` 模式下设置 `justShowFocusLine = true` 可隐藏静息下划线，只保留聚焦时展开的线条，对应 ColorOS 设置卡片内偏好输入（COUIInputPreference `couiJustShowFocusLine`，真机默认开启）。把输入框放进 `Card` 即为设置里的完整观感：
+`Line` 模式下设置 `justShowFocusLine = true` 可隐藏静息下划线，只保留聚焦时展开的线条，对应 ColorOS 设置卡片内偏好输入（COUIInputPreference `couiJustShowFocusLine`，设备上默认开启）。把输入框放进 `Card` 即为设置里的完整观感：
 
 ```kotlin
 var text by remember { mutableStateOf("") }

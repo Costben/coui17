@@ -32,19 +32,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * The rotation of search-bar hint strings, mirroring ColorOS's
- * `com.coui.appcompat.searchview.COUIHintAnimationLayout`.
+ * The rotation of search-bar hint strings.
  *
- * The native view is a `FrameLayout` that keeps two hint `TextView`s (`mHintTextViewFirst` /
- * `mHintTextViewThen`) and swaps between them: every `INTERVAL_TIME` it advances the hint index by
- * one modulo the hint list and `applyHintChangeAnimation` plays two `AnimatorSet`s of
+ * The design keeps two hint `TextView`s and swaps between them: every interval it advances the hint
+ * index by one modulo the hint list and plays two `AnimatorSet`s of
  * [HintAnimationDefaults.DurationMillis] (250ms). The outgoing text translates by `-distance` while
  * fading out, the incoming text enters from `+distance` while fading in, and the incoming pair
  * starts `IN_DELAY_TIME` (150ms) after the outgoing one. `distance` is
- * `(getMeasuredHeight() - currentHintTextView.getLineHeight()) / 2` plus
- * `mCouiSearchBarAnimationTranslateExtra`, which walks each text just past the clipped edge. The
- * two sets use different interpolators: `TRANSLATEINTERPOLATOR`, a
- * `PathInterpolatorCompat.create(0.3f, 0f, 0.2f, 1f)`, drives the translation, while
+ * `(getMeasuredHeight() - currentHintTextView.getLineHeight()) / 2` plus a translate extra, which
+ * walks each text just past the clipped edge. The two sets use different interpolators: a
+ * `PathInterpolatorCompat.create(0.3f, 0f, 0.2f, 1f)` drives the translation, while
  * `EASEINTERPOLATOR`, a `COUIEaseInterpolator` (`PathInterpolator(0.33f, 0f, 0.67f, 1f)`), drives
  * the alpha. When an `AnimatorSet` already exists the native only re-targets its animations, which
  * the port reproduces by reusing one pair of sliders per slot.

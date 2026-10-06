@@ -1,6 +1,6 @@
 # NotificationSnackBar
 
-A notification-style snackbar mirroring ColorOS's `com.coui.appcompat.snackbar.COUINotificationSnackBar` and its `res/layout/coui_notification_snack_bar_item.xml`. It shows a leading notification image whose box follows the native `ImageType`, a two-line title, an optional two-line subtitle, an optional action button and an optional close icon pinned to the top-end corner. A host ([NotificationSnackBarHost] with [NotificationSnackBarHostState]) shows one at a time and clamps the display time to 4–10 seconds, like the native `make()`.
+A notification-style snackbar aligned with the ColorOS 17 design language. It shows a leading notification image whose box follows the native `ImageType`, a two-line title, an optional two-line subtitle, an optional action button and an optional close icon pinned to the top-end corner. A host ([NotificationSnackBarHost] with [NotificationSnackBarHostState]) shows one at a time and clamps the display time to 4–10 seconds, like the native `make()`.
 
 ## Import
 

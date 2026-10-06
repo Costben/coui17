@@ -169,7 +169,7 @@ Night-mode resolvers: `capsuleParams1(isDark)`, `capsuleParams2(isDark)`, `circl
 
 ## Shader Uniforms
 
-The shader is `com.coui.appcompat.spotlight.agsl.SpotLight` (`AGSL_SOURCE`, `NAME = "SpotLight"`), created with `RuntimeShader`.
+The shader is an AGSL runtime shader (`NAME = "SpotLight"`), created with `RuntimeShader`.
 
 | Uniform                 | Packing                                                      | Written by                                          |
 | ----------------------- | ------------------------------------------------------------ | --------------------------------------------------- |

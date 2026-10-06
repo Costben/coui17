@@ -116,6 +116,6 @@ Rim parameters and blending come from ToolbarMaterialEffectDelegate, ToolbarMate
 
 ## Not Ported / Deviations
 
-- **The toolbar's own attribute set** — the parameters are marked device-derived because `coui_toolbar_back_view`'s `ShadowEdge` uniforms (`u_edgeArray` / `u_commonArray` components) have not been decompiled; only the `EDGE_STYLE_1` / `SHADOW_STYLE_1` presets and the measured values above are used.
+- **The toolbar's own attribute set** — the parameters are marked device-derived because the toolbar view's `ShadowEdge` uniforms (`u_edgeArray` / `u_commonArray` components) are not known; only the `EDGE_STYLE_1` / `SHADOW_STYLE_1` presets and the measured values above are used.
 - **The `ShadowEdge` shader's own halo** — the shader only covers the node's own bounds, so the fill and the halo are painted by this component instead; the rim is still the shader.
 - **The toolbar's layout** — the 40dp circle's distance from the toolbar's start edge and its vertical centring are the toolbar's business, not this button's.

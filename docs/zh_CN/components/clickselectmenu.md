@@ -2,7 +2,7 @@
 
 `ClickSelectMenu` 让 ColorOS 弹窗列表出现在用户真正点击的位置。普通下拉菜单会以锚点行居中弹出；点击选择菜单则在手指下方弹出，并由一份*放置规格*决定菜单的哪一侧、哪一条边贴向该点。ColorOS 设置项里的内联菜单用的就是这套机制——菜单出现在你点的位置，而不是行的位置。
 
-本组件移植自 `com.coui.appcompat.poplist.COUIClickSelectMenu`、`COUIIsolatedPopupListWindow`、`MainMenuPlacementSpec`，以及 `RotatingPopupMenuLocateHelper` 的放置规则，并复用本库已移植的弹窗列表外观。
+它复刻了 ColorOS 用于点击选择弹窗列表的放置规则，并复用本库已移植的弹窗列表外观。
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=clickSelectMenu" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -139,7 +139,7 @@ WindowListPopup(
 
 ## 复原的令牌
 
-以下数值全部取自 ColorOS 17 的 `Settings.apk` 资源转储及其 dex（`classes7.dex`），没有一个是臆造的。
+以下数值均对标 ColorOS 17 实现，没有一个是臆造的。
 
 | 令牌 | 值 | 来源 |
 | :--- | :--- | :--- |

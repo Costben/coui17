@@ -1,12 +1,10 @@
 # LunarDatePicker
 
-`LunarDatePicker` is a basic interactive component in COUI used for selecting a Chinese lunar date with three vertical scroll wheels (year / month / day), mirroring ColorOS's `com.coui.appcompat.picker.COUILunarDatePicker extends android.widget.FrameLayout` and its `coui_lunar_date_picker.xml` layout.
+`LunarDatePicker` is a basic interactive component in COUI used for selecting a Chinese lunar date with three vertical scroll wheels (year / month / day).
 
-The month wheel shows the lunar month names — `coui_lunar_month` = 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月 — prefixed with the leap marker `coui_lunar_leap_string` (闰) when the year's leap month is selected. The year and day wheels show plain numbers, as the device sets no displayed values on those two spinners. The day range follows the selected lunar month (29 or 30 days, leap month included) and the day is clamped when a shorter month is selected.
+The month wheel shows the lunar month names — 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月 — prefixed with the leap marker 闰 when the year's leap month is selected. The year and day wheels show plain numbers. The day range follows the selected lunar month (29 or 30 days, leap month included) and the day is clamped when a shorter month is selected.
 
-The value is a `LunarDateValue` (lunar year / month / day plus a leap-month flag). The conversion lives in `LunarUtil`, a direct port of `LunarUtil` — the same `LUNAR_INFO` table for 1900..2100 and `SOLAR_TERM_DAYS` table for 1970..2036 — so no third-party lunar library is required. Use `LunarUtil.lunarToSolar` to turn a `LunarDateValue` into a Gregorian `DateValue`.
-
-The device's `updateSpinners()` and `IncompleteDate.change()` were not decompilable, so the exact wheel-repositioning behaviour on a scroll cannot be copied line for line; the spinner ranges, month names, leap marker, column sizes and day counts here are the ones the decompiled constructor and the `coui_*` resources declare.
+The value is a `LunarDateValue` (lunar year / month / day plus a leap-month flag). The conversion lives in `LunarUtil`, a table-driven implementation using `LUNAR_INFO` for 1900..2100 and `SOLAR_TERM_DAYS` for 1970..2036, so no third-party lunar library is required. Use `LunarUtil.lunarToSolar` to turn a `LunarDateValue` into a Gregorian `DateValue`.
 
 ## Import
 
@@ -105,8 +103,8 @@ LunarDatePicker(
 
 ## Behaviour and Tokens
 
-- **Year range.** `COUILunarDatePicker.DEFAULT_START_YEAR` (1910) to `DEFAULT_END_YEAR` (2099); the device pins its spinners between `sMinDate` and `sMaxDate`, which are `set(1910, 2, 10)` and `set(2099, 11, 31, 23, 59)`.
-- **Column sizes.** Every column is `coui_number_picker_width_middle` (76dp) wide in `coui_lunar_date_picker.xml`; item height `NumberPickerDefaults.ItemHeight` (45dp) gives the device's `coui_datepicker_height` (135dp).
-- **Wheel padding.** `coui_number_picker_view_padding_vertical` (12dp), the layout root's `android:paddingVertical`.
-- **Month names.** `coui_lunar_month` resolves to `lunar_january` .. `lunar_december`: 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月. The leap marker is `coui_lunar_leap_string` = 闰.
+- **Year range.** 1910 to 2099, matching `LunarDatePickerDefaults.YearRange`.
+- **Column sizes.** Every column is `LunarDatePickerDefaults.ColumnWidth` (76dp) wide; item height is `NumberPickerDefaults.ItemHeight` (45dp).
+- **Wheel padding.** `LunarDatePickerDefaults.InsideMargin` (12dp vertical).
+- **Month names.** `LunarDatePickerDefaults.MonthNames`: 正月 / 二月 / 三月 / 四月 / 五月 / 六月 / 七月 / 八月 / 九月 / 十月 / 冬月 / 腊月. The leap marker is `LunarDatePickerDefaults.LeapPrefix` (闰).
 - **Day count.** A lunar month has 29 or 30 days, read from `daysOfALunarMonth` / `daysOfLeapMonthInLunarYear`; a year with a leap month offers 13 month entries (`LEAPYEAR_MONTH_COUNT`), otherwise 12 (`NORMAL_MONTH_COUNT`).

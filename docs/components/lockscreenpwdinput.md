@@ -1,6 +1,6 @@
 # LockScreenPwdInput
 
-`LockScreenPwdInput` is the ColorOS 17 lock screen password field, the port of `COUILockScreenPwdInputLayout` and the `COUILockScreenPwdInputView` it hosts (`com.coui.appcompat.input`, Settings APK), together with their `InnerShadowHelper` and `LightEffectHelper`. It is a pill-shaped password field with a 48dp circular next button: the pill carries a stroke, an inner shadow along its top and bottom edges, and, while the next button is pressed, a light that sweeps out of the button and across the field.
+`LockScreenPwdInput` is the ColorOS 17 lock screen password field. It is a pill-shaped password field with a 48dp circular next button: the pill carries a stroke, an inner shadow along its top and bottom edges, and, while the next button is pressed, a light that sweeps out of the button and across the field.
 
 The layout is `layout/coui_input_lock_screen_pwd_layout.xml`, a `ConstraintLayout` with the input view (`0dp` wide, chained) and a 48dp `ImageView` next button whose `layout_marginStart` is `coui_input_lock_screen_pwd_icon_margin` (12dp) and whose `src` is `coui_input_lock_screen_pwd_next_src`, a 24dp right arrow. `COUILockScreenPwdInputView.addSmoothRoundRect` builds the pill path with `rectF.height() / 2` as both corner radii, so the corner radius is `LockScreenPwdInputDefaults.Height / 2` (24dp).
 

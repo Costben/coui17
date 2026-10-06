@@ -276,8 +276,7 @@ object MaterialShadowEdgeDefaults {
 
 /**
  * Draws the ColorOS 17 "Material" edge — a gradient stroke plus an inner shadow — over this node's
- * full bounds, the portable port of `com.coui.appcompat.shadowedge.COUIShadowEdgeDrawable` and its
- * `ShadowEdgeShader`.
+ * full bounds.
  *
  * COUI gives every material surface the same runtime shader (`ShadowStroke`) and feeds it the
  * surface's own geometry, so the edge is computed per pixel from an SDF rather than stroked by the
@@ -370,7 +369,7 @@ private fun rememberMaterialShadowEdgeShader(enabled: Boolean): RuntimeShader? {
 }
 
 /**
- * The portable port of `com.coui.appcompat.shadowedge.GradientStrokeStyleMapper`.
+ * Maps a gradient-stroke style to the shader's uniforms.
  *
  * It flattens a [GradientStrokeStyle] plus the surface size and rim parameters into the shader's 16
  * floats, reproducing the native accumulation steps exactly: `[4] += [3]`, `[6] += [5]`,
@@ -482,7 +481,7 @@ internal object GradientStrokeStyleMapper {
 }
 
 /**
- * The portable port of `com.coui.appcompat.shadowedge.InnerShadowStyleMapper`.
+ * Maps an inner-shadow style to the shader's uniforms.
  *
  * It flattens an [InnerShadowStyle] into the shader's 16-float `u_shadowArray` with the native
  * density geometry factor `fMax = max(1, density) * 0.34f`: the fade reach and offsets scale with
@@ -529,8 +528,8 @@ internal object InnerShadowStyleMapper {
 private fun FloatArray.at(index: Int, default: Float): Float = if (index < 0 || index >= size) default else this[index]
 
 /**
- * The ColorOS 17 `ShadowStroke` runtime shader (`com.coui.appcompat.shadowedge.agsl.ShadowEdge`),
- * reduced to the `NEW_G2` corner branch that every consumer enables via `setCornerType(2)`.
+ * The ColorOS 17 `ShadowStroke` runtime shader, reduced to the `NEW_G2` corner branch that every
+ * consumer enables via `setCornerType(2)`.
  *
  * Ported verbatim from the Java string constants, with only the SkSL dialect rename applied:
  * `vec2/vec3/vec4` → `float2/float3/float4`, the entry point `vec4 main(vec2)` → `half4

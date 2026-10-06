@@ -2,7 +2,7 @@
 
 `PopupMenuRotation` is the rotation geometry ColorOS 17 applies to popup menus. On a rotated screen — a landscape device, a foldable's half-open posture, a rotated window — the native popup list can be laid out with its content turned a quarter turn, and the locate pass then has to reason about the *rotated* footprint rather than the menu's own width and height.
 
-This is not a visible widget. It is the maths behind one: the quarter-angle classifier, the rotated axis bounds, the fit-rect clamp, and the two modifiers that turn them into a placed popup. It ports `com.coui.appcompat.poplist.MenuRotationHelper` and the geometry half of `COUIRotatingPopupListWindow`.
+This is not a visible widget. It is the maths behind one: the quarter-angle classifier, the rotated axis bounds, the fit-rect clamp, and the two modifiers that turn them into a placed popup. It mirrors the geometry ColorOS 17 applies to a rotated popup list.
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=popupMenuRotation" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>

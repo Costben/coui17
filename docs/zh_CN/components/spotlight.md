@@ -169,7 +169,7 @@ Box(
 
 ## Shader Uniforms
 
-shader 为 `com.coui.appcompat.spotlight.agsl.SpotLight`（`AGSL_SOURCE`，`NAME = "SpotLight"`），由 `RuntimeShader` 创建。
+shader 为 AGSL 运行时 shader（`NAME = "SpotLight"`），由 `RuntimeShader` 创建。
 
 | Uniform                  | 打包方式                                                     | 写入方                                               |
 | ------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
@@ -187,4 +187,4 @@ shader 为 `com.coui.appcompat.spotlight.agsl.SpotLight`（`AGSL_SOURCE`，`NAME
 - `COUISpotLightEffectDrawable` 与 `SpotLightEffectRenderer`：本移植是 `Modifier`，因此 `Drawable` 包装、其按压状态处理以及 seekbar 渲染器均不在范围内。
 - 触摸手势驱动——`glow` / `extinguish` / `animateToPosition` 及其 `COUISpringAnimation` 接线。弹簧由 `SpotLightDefaults` 导出，由调用方驱动 `position`、`radius` 与 `intensity`；熄灭时的额外半径常量仅作记录，不会自动应用。
 - `LIGHT_ANIMATION_RANGE`（`10000.0f`）与 `normalizedProgressScope`，即 seekbar 的进度映射；本库没有消费者上报归一化进度。
-- 本移植忠于 AGSL 源串，但未在运行时验证：只确认了编译（Android 目标），shader 未在真机上跑过。平台门限为 `isRuntimeShaderSupported()`，即 `SDK_INT >= 33`；平台拒绝该源串时回退为不绘制光源，而不是抛异常。
+- 本移植忠于 AGSL 源串，但未在运行时验证：只确认了编译（Android 目标），shader 未在设备上跑过。平台门限为 `isRuntimeShaderSupported()`，即 `SDK_INT >= 33`；平台拒绝该源串时回退为不绘制光源，而不是抛异常。

@@ -1,6 +1,6 @@
 # TagView
 
-A small text corner badge mirroring ColorOS's `com.coui.appcompat.tagview.COUITagView` / `COUITagBackgroundView` and their `res/layout/coui_tag_view_layout.xml`. The badge is a single-line, end-ellipsized label with an optional 5dp x 10dp leading image and an optional trailing image, on a fill that can carry a uniform corner radius and an outline. It is the "NEW" / "BETA" style marker.
+A small text corner badge aligned with the ColorOS 17 design language. The badge is a single-line, end-ellipsized label with an optional 5dp x 10dp leading image and an optional trailing image, on a fill that can carry a uniform corner radius and an outline. It is the "NEW" / "BETA" style marker.
 
 ## Import
 
@@ -85,8 +85,8 @@ TagView(
 
 ## Not Ported / Deviations
 
-- The four per-corner radii of `COUITagBackgroundView` (`couiTagTLCornerRadius`, `couiTagTRCornerRadius`, `couiTagBLCornerRadius`, `couiTagBRCornerRadius`) are collapsed into the single `cornerRadius`; every recovered consumer uses the uniform `couiTagCornerRadius`.
-- `couiColorBackgroundWithTag`, the theme value behind the default `couiTagBackgroundColor`, could not be resolved: the attribute is declared in `attrs.xml` but neither its `Theme.COUI` assignment nor a `coui_color_background_with_tag` colour exists in `Settings.apk`, `Clock.apk` or `UXDesign.apk`. The port therefore adopts the concrete pair the one recovered consumer passes — Dialer's `customize_popup_list_window_item.xml` sets `app:couiTagBackgroundColor="?attr/couiColorContainer8"`, `app:couiTagCornerRadius="4dp"` and `app:couiTagViewTextColor="@color/coui_color_label_secondary"`. White text on the light fill would have been invisible, so this is a deliberate substitution, not a recovered framework default.
+- The four per-corner radii (`couiTagTLCornerRadius`, `couiTagTRCornerRadius`, `couiTagBLCornerRadius`, `couiTagBRCornerRadius`) are collapsed into the single `cornerRadius`; every observed consumer uses the uniform `couiTagCornerRadius`.
+- `couiColorBackgroundWithTag`, the theme value behind the default `couiTagBackgroundColor`, is not resolvable: the attribute is declared in `attrs.xml` but no `Theme.COUI` assignment and no `coui_color_background_with_tag` colour exists in the ColorOS 17 resources. The port therefore adopts the concrete pair the one observed consumer passes — `app:couiTagBackgroundColor="?attr/couiColorContainer8"`, `app:couiTagCornerRadius="4dp"` and `app:couiTagViewTextColor="@color/coui_color_label_secondary"`. White text on the light fill would have been invisible, so this is a deliberate substitution, not a framework default.
 - `couiTagViewTextSize` is applied by the native through `setTextSize(0, px)` with a 10dp dimension, while the `couiTextTag` style the layout gives the label declares 10sp; the port uses 10sp.
-- `COUITagBackgroundView.onAttachedToWindow` setting the parent's `clipChildren = false`, and the `Path` clip of its `dispatchDraw`, are not needed because a Compose parent does not clip its children by default.
+- The native call that sets the parent's `clipChildren = false` on attach, and the `Path` clip in its draw pass, are not needed because a Compose parent does not clip its children by default.
 - The imperative `setImageBitmap` / `setImageDrawable` / `setImageResoure` setters (and their left-image twins) are replaced by the `leadingIcon` / `trailingIcon` parameters.

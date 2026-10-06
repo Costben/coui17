@@ -10,7 +10,7 @@ popupHost: None
 
 # MaterialShadowEdge
 
-`Modifier.materialShadowEdge` 在节点完整范围内绘制 ColorOS 17 的「材质」边缘——渐变描边加内阴影。它是 `com.coui.appcompat.shadowedge.COUIShadowEdgeDrawable` 及其 `ShadowEdgeShader` 的可移植实现：两者共用同一个运行时 shader（`ShadowStroke`），并把表面自身的几何喂给它，因此边缘是由有符号距离场逐像素算出来的，而不是用画布描边画出来的。
+`Modifier.materialShadowEdge` 在节点完整范围内绘制 ColorOS 17 的「材质」边缘——渐变描边加内阴影。它是该边缘的可移植实现：包裹同一个运行时 shader（`ShadowStroke`），并把表面自身的几何喂给它，因此边缘是由有符号距离场逐像素算出来的，而不是用画布描边画出来的。
 
 ColorOS 中所有材质表面——悬浮工具栏、搜索栏、底部面板、弹窗边框——都用这一个 shader，只是 `GradientStrokeStyle`、`InnerShadowStyle` 与描边宽度不同。`MaterialStrokeParams` 承载按组件区分的描边数值；`GradientStrokeStyle` 与 `InnerShadowStyle` 承载共用的边缘与阴影形状。
 
@@ -113,7 +113,7 @@ Box(
 
 ## Shader Uniforms
 
-shader 为 `com.coui.appcompat.shadowedge.agsl.ShadowEdge`（`NAME = "ShadowStroke"`），按所有消费者通过 `setCornerType(2)` 选用的 `NEW_G2` 圆角几何构建。
+shader 为 AGSL 运行时 shader（`NAME = "ShadowStroke"`），按所有消费者选用的 `NEW_G2` 圆角几何构建。
 
 | Uniform         | 布局                                                                                                            |
 | --------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -132,4 +132,4 @@ shader 为 `com.coui.appcompat.shadowedge.agsl.ShadowEdge`（`NAME = "ShadowStro
 - `COUIShadowEdgeDrawable` 包装：其 `SRC_OVER` 画笔混合模式、`Paint(true)` 抗锯齿标志与 `Drawable` 状态处理。本移植是 `Modifier`，合成方式固定。
 - drawable 仅在 `Build.VERSION.SDK_INT > 33` 时构建 shader，而本移植使用本库的 `isRuntimeShaderSupported()` 门限（`SDK_INT >= 33`）。
 - 两个 mapper 为 `internal`；公开 API 只有样式、描边参数与默认值。
-- 本移植忠于 AGSL 片段，但未在运行时验证：只确认了编译（Android 目标），shader 未在真机上跑过。平台拒绝该源串时会回退到 `fallback` 修饰符，而不是抛异常。
+- 本移植忠于 AGSL 片段，但未在运行时验证：只确认了编译（Android 目标），shader 未在设备上跑过。平台拒绝该源串时会回退到 `fallback` 修饰符，而不是抛异常。

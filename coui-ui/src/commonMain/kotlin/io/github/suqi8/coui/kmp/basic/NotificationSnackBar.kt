@@ -53,9 +53,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * The notification-style snackbar of ColorOS, mirroring
- * `com.coui.appcompat.snackbar.COUINotificationSnackBar` and its
- * `res/layout/coui_notification_snack_bar_item.xml`.
+ * The notification-style snackbar of ColorOS.
  *
  * Unlike the plain [Snackbar] it carries a leading notification image whose box follows the
  * native `COUINotificationSnackBar.ImageType`: a 44dp square, a 36x48 vertical rectangle or a

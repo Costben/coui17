@@ -30,21 +30,13 @@ import io.github.suqi8.coui.kmp.window.WindowListPopup
 private val NavigationPopupMenuGroupKey = Any()
 
 /**
- * The COUI bottom-navigation overflow menu (`COUINavigationPopupMenu`).
+ * The ColorOS bottom-navigation overflow menu.
  *
- * `COUINavigationPopupMenu` shows the navigation items that do not fit in the bar. It is a
- * `ListPopupWindow` anchored to the menu view with
- * `setDropDownGravity(Gravity.TOP or Gravity.RIGHT or Gravity.ABSOLUTE)` (0x800035), so it opens
- * **above** the bar and aligns to the bar's end edge, and it is offset by
- * `-coui_navigation_popup_horizontal_margin` horizontally and
- * `coui_navigation_popup_vertical_margin` vertically. Its window background is
- * `drawable/coui_navigation_popup_bg`, which is the same popup surface this library already draws
- * in `ListPopupContent` (28dp smooth-corner glass); the rows carry
- * `coui_popup_list_top_selector` / `_center_selector` / `_bottom_selector` as their press state.
- *
- * The `coui_navigation_popup_*` resources are App-side `com.support.bottomnavigation` resources —
- * they exist in the `Settings.apk` / `Clock.apk` resource tables and have zero occurrences in
- * `UXDesign.apk`.
+ * It shows the navigation items that do not fit in the bar. It is a popup anchored to the menu view
+ * with a top/end drop-down gravity (0x800035), so it opens **above** the bar and aligns to the bar's
+ * end edge, and it is offset by the popup's horizontal and vertical margins. Its window background
+ * is the same popup surface this library already draws in `ListPopupContent` (28dp smooth-corner
+ * glass); the rows carry the popup list's top / center / bottom press-state selectors.
  *
  * Compose this inside the composable it should anchor to, exactly like [WindowListPopup]: the anchor
  * is the bounds of the popup's parent layout node.
@@ -70,8 +62,8 @@ fun NavigationPopupMenu(
         minWidth = NavigationPopupMenuDefaults.MinWidth,
         onDismissRequest = onDismissRequest,
     ) {
-        // `COUINavigationPopupMenu.tryShow()` calls `listView.setDivider(null)`. Sharing one group
-        // key keeps the native rounded press mask while suppressing divider bands.
+        // The native popup calls `listView.setDivider(null)`. Sharing one group
+        // key keeps the rounded press mask while suppressing divider bands.
         ListPopupColumn {
             content()
         }
@@ -81,17 +73,12 @@ fun NavigationPopupMenu(
 /**
  * A row of a [NavigationPopupMenu].
  *
- * `res/layout/coui_navigation_popup_item.xml` is a horizontal `LinearLayout` with a 12dp
- * `paddingTop` / `paddingBottom`, a `minWidth` of `coui_navigation_popup_item_min_width`, an
- * `ImageView` and a bold `TextView`. `MenuAdapter.getView` then insets the icon by
- * `coui_navigation_popup_horizontal_margin` from the row start, and the XML insets the label by the
- * same amount on both sides.
+ * A row is a horizontal `LinearLayout` with a 12dp `paddingTop` / `paddingBottom`, a minimum width,
+ * an icon and a bold label. The icon is inset from the row start by the popup's horizontal margin,
+ * and the label is inset by the same amount on both sides.
  *
- * Colours follow `COUINavigationPopupMenu.MenuAdapter`: the label takes the bar's
- * `coui_navigation_tab_color` selector (default `?couiColorSecondNeutral`, disabled
- * `?couiColorLabelTertiary`) and the icon is tinted with the bar's `couiNaviIconTint` list
- * (`coui_bottom_tool_navigation_item_selector`: default and pressed `?couiColorLabelPrimary`,
- * disabled `?couiColorLabelTertiary`).
+ * The label takes the bar's secondary-neutral colour (tertiary when disabled) and the icon is tinted
+ * with the bar's icon-tint list (primary when enabled, tertiary when disabled).
  *
  * @param label The row title.
  * @param icon The row icon.
@@ -147,36 +134,35 @@ fun NavigationPopupMenuItem(
 /** Contains default values used by [NavigationPopupMenu] and [NavigationPopupMenuItem]. */
 object NavigationPopupMenuDefaults {
 
-    /** The minimum row width. COUI `coui_navigation_popup_item_min_width`. */
+    /** The minimum row width. */
     val MinWidth = 208.dp
 
-    /** The maximum menu height. COUI `coui_navigation_popup_max_height`. */
+    /** The maximum menu height. */
     val MaxHeight = 324.dp
 
     /**
      * The horizontal margin between the menu and the bar's end edge, and the inset of a row's icon
-     * and label. COUI `coui_navigation_popup_horizontal_margin`.
+     * and label.
      */
     val HorizontalMargin = 16.dp
 
-    /** The vertical margin between the menu and the bar. COUI `coui_navigation_popup_vertical_margin`. */
+    /** The vertical margin between the menu and the bar. */
     val VerticalMargin = 8.dp
 
-    /** The row title size. COUI `coui_navigation_popup_text_size`. */
+    /** The row title size. */
     val TextSize = 16.sp
 
     /**
-     * The row's top and bottom padding, from `res/layout/coui_navigation_popup_item.xml`
-     * (`android:paddingTop` / `android:paddingBottom`). With the 24dp icon this makes a 48dp row.
+     * The row's top and bottom padding. With the 24dp icon this makes a 48dp row.
      */
     val ItemPaddingVertical = 12.dp
 
-    /** The row icon size. COUI `coui_navigation_icon_size`. */
+    /** The row icon size. */
     val IconSize = 24.dp
 
     /**
-     * The space the native menu reserves for a row's icon and margins when it measures its width:
-     * `mPopupWidth = max(mPopupWidth, titleWidth + coui_navigation_popup_item_used_space)`.
+     * The space the menu reserves for a row's icon and margins when it measures its width:
+     * `mPopupWidth = max(mPopupWidth, titleWidth + itemUsedSpace)`.
      */
     val ItemUsedSpace = 72.dp
 
@@ -184,7 +170,7 @@ object NavigationPopupMenuDefaults {
      * Places the menu above the anchor, aligned to the anchor's end edge, with [HorizontalMargin] /
      * [VerticalMargin] to spare.
      *
-     * This reproduces `COUINavigationPopupMenu.tryShow()`: `setDropDownGravity(0x800035)` puts the
+     * This reproduces the menu's own placement: `setDropDownGravity(0x800035)` puts the
      * menu above the bar, `setHorizontalOffset(-horizontalMargin + padding.right)` and
      * `setVerticalOffset(padding.bottom - verticalMargin)` account for the 9-patch padding, and
      * `setContentWidth(min(mPopupWidth, screenWidth - 2 * horizontalMargin))` keeps the menu clear of

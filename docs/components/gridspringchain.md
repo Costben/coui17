@@ -1,8 +1,8 @@
 # GridSpringChain
 
-The ColorOS 17 grid spring-chain overscroll effect, mirroring `com.coui.appcompat.springchain.COUIGridSpringChainScrollView` (a `COUIScrollView` subclass) and the `com.coui.appcompat.springchain.COUIGridSpringChain` chain that drives it.
+The ColorOS 17 grid spring-chain overscroll effect, aligned with the ColorOS 17 design language: a scrollable grid whose tiles trail off in a chain when the content is pulled past its edge.
 
-On the device the scroll view holds a single child implementing `ICOUIGridSpringChainViewGroup`; when a touch passes an edge it forwards the overscroll to the chain, which moves each grid **row** by its own translation, so the tiles trail off in a chain rather than moving as one block. This port keeps that split: `Modifier.gridSpringChainOverscroll` on the grid measures the drag that the grid could not consume and damps it into one control distance, while `Modifier.gridSpringChainItem` on each tile turns that distance into a per-row translation.
+In ColorOS the scroll view holds a single child; when a touch passes an edge it forwards the overscroll to a chain, which moves each grid **row** by its own translation, so the tiles trail off in a chain rather than moving as one block. This port keeps that split: `Modifier.gridSpringChainOverscroll` on the grid measures the drag that the grid could not consume and damps it into one control distance, while `Modifier.gridSpringChainItem` on each tile turns that distance into a per-row translation.
 
 The damping curve and the release animation reuse the repository's existing overscroll engine — `SpringMath.obtainDampingDistance` for the drag and `SpringEngine.runSettleAnimation` (the same spring `utils/Overscroll.kt` drives) for the settle.
 
@@ -70,42 +70,32 @@ The grid must be able to report an edge the drag cannot consume — a `LazyVerti
 
 ### GridSpringChainDefaults
 
-| Constant                  | Type | Value | Device source                                                |
-| ------------------------- | ---- | ----- | ------------------------------------------------------------ |
-| MaxDistanceFactor         | Float | 0.25f | `COUIGridSpringChainScrollView.MAX_DISTANCE_FACTOR`          |
-| MaxDistanceRatio          | Float | 0.5f  | `COUIGridSpringChainScrollView.MAX_DISTANCE_RATIO`           |
-| OverScrollFactor          | Float | 0.3f  | `COUIGridSpringChainScrollView.OVER_SCROLL_FACTOR`           |
-| DefaultTranslationFactor  | Float | 0.1f  | `COUIGridSpringChain.DefaultTransCalculator#getTrans`        |
-| ChainFactor               | Float | 0.3f  | `COUIChainDecorator.FACTOR`                                  |
-| ChainMarginVertical       | Float | 24f   | `COUIChainDecorator.DEFAULT_MARGIN_VERTICAL`                 |
-| MainTension               | Float | 40f   | `COUISpringChain.DEFAULT_MAIN_TENSION`                       |
-| MainFriction              | Float | 6f    | `COUISpringChain.DEFAULT_MAIN_FRICTION`                      |
-| AttachmentTension         | Float | 70f   | `COUISpringChain.DEFAULT_ATTACHMENT_TENSION`                 |
-| AttachmentFriction        | Float | 10f   | `COUISpringChain.DEFAULT_ATTACHMENT_FRICTION`                |
-| GridMainTension           | Float | 150f  | `COUIGridSpringChain.MAIN_TENSION` (overrides MainTension)   |
-| GridMainFriction          | Float | 10f   | `COUIGridSpringChain.MAIN_FRICTION` (overrides MainFriction) |
-| BackToTop / BackToBottom / BackToLeft / BackToRight | Int | 1 / 2 / 3 / 4 | `COUIGridSpringChain.BACK_TO_*`              |
-| AutoAccumulatingTranslation | GridSpringChainTranslation | `(row + 1) * 0.1f * distance` | `COUIGridSpringChain` with `enableAutoAcc = true` and `DefaultTransCalculator` |
-| ChainLadderTranslation      | GridSpringChainTranslation | `COUIChainDecorator`'s `backToTop` ladder | `COUIChainDecorator` (defined but overwritten on the device) |
+| Constant                  | Type | Value |
+| ------------------------- | ---- | ----- |
+| MaxDistanceFactor         | Float | 0.25f |
+| MaxDistanceRatio          | Float | 0.5f  |
+| OverScrollFactor          | Float | 0.3f  |
+| DefaultTranslationFactor  | Float | 0.1f  |
+| ChainFactor               | Float | 0.3f  |
+| ChainMarginVertical       | Float | 24f   |
+| MainTension               | Float | 40f   |
+| MainFriction              | Float | 6f    |
+| AttachmentTension         | Float | 70f   |
+| AttachmentFriction        | Float | 10f   |
+| GridMainTension           | Float | 150f  |
+| GridMainFriction          | Float | 10f   |
+| BackToTop / BackToBottom / BackToLeft / BackToRight | Int | 1 / 2 / 3 / 4 |
+| AutoAccumulatingTranslation | GridSpringChainTranslation | `(row + 1) * 0.1f * distance` |
+| ChainLadderTranslation      | GridSpringChainTranslation | The trailing-row ladder |
 
 ## Behavior
 
 - The grid's leftover drag is accumulated and damped with `SpringMath.obtainDampingDistance` over `MaxDistanceRatio * container height`, then stored as the control distance. A fling settles it back to zero with the repository's spring engine.
-- The default [GridSpringChainDefaults.AutoAccumulatingTranslation] reproduces the device's actual chain: `COUIGridSpringChain` runs with `enableAutoAcc = true` and both edge calculators left at `DefaultTransCalculator`, so `calculateTranslation` sums `getTrans(0..row, distance)` = `(row + 1) * 0.1f * distance`. Later rows carry a larger translation than earlier ones.
-- [GridSpringChainDefaults.ChainLadderTranslation] is the decorator's own trailing-row ladder, exposed for callers that want it. The device defines it but then calls `setTranCalculator(1)` / `setTranCalculator(2)`, which overwrite both installed calculators with `DefaultTransCalculator`, so it is **not** what the default grid uses.
+- The default [GridSpringChainDefaults.AutoAccumulatingTranslation] reproduces the reference chain: automatic accumulation is on and both edge calculators are left at their default, so the translation is summed from row 0, giving `(row + 1) * 0.1f * distance` for each row. Later rows carry a larger translation than earlier ones.
+- [GridSpringChainDefaults.ChainLadderTranslation] is the trailing-row ladder, exposed for callers that want it. ColorOS defines it but then overwrites both installed calculators, so it is **not** what the default grid uses.
 
 ## Not ported
 
-These device classes are Android View infrastructure with no Compose-side equivalent, so they have no counterpart here:
+ColorOS's spring-chain implementation is Android View infrastructure with no Compose-side equivalent, so none of it has a direct counterpart here: the scroll view that hosts the effect, the decorator that wires touches and edges, the child interface and its edge contract, the per-item view proxy, and the spring-update listener.
 
-| Device class | Superclass / role |
-| ------------ | ----------------- |
-| `COUIGridSpringChainScrollView` | `COUIScrollView` → `ScrollView`; the grid is the caller's scrollable |
-| `COUIChainDecorator` | Touch helper that wires a `View.OnTouchListener` and `RecyclerView.ItemDecoration`-style edges |
-| `ICOUIGridSpringChainViewGroup` | Interface implemented by the scroll view's single child |
-| `ICheckViewEdge` | `getHeight` / `isReachTopEdge` / `isReachBottomEdge` edge contract |
-| `IChainItem` / `COUIChainItem` | A `View` proxy that calls `setTranslationX/Y` |
-| `COUIGridSpringChainItem` | `FrameLayout` implementing `IChainItem` |
-| `ISpringUpdateListener` | Callback into the View layer |
-
-The spring constants above are recorded but not consumed directly: the repository's `SpringEngine` is a critically damped integrator parameterised by damping ratio and natural period, so the device's tension/friction pairs cannot be mapped onto it one-for-one. The release therefore follows the same spring as the repository's existing overscroll.
+The spring constants above are recorded but not consumed directly: the repository's `SpringEngine` is a critically damped integrator parameterised by damping ratio and natural period, so ColorOS's tension/friction pairs cannot be mapped onto it one-for-one. The release therefore follows the same spring as the repository's existing overscroll.

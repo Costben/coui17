@@ -195,15 +195,12 @@ fun rememberSidePaneLayoutState(initiallyOpen: Boolean = true): SidePaneLayoutSt
 }
 
 /**
- * The ColorOS draggable side pane, mirroring
- * `com.coui.appcompat.sidepane.COUISidePaneLayout`
- * (`extends android.widget.RelativeLayout`).
+ * The ColorOS draggable side pane.
  *
- * The device view lays out three children: index 0 is the slideable pane, index 1 the content and
- * index 2 the fold button inflated from `layout/coui_sliding_icon_layout`. Only indices 0 and 1
- * have Compose counterparts as slots; index 2 is the [foldIcon] control this composable places at
- * the pane's top start, at `coui_side_pane_layout_icon_margin_start` / `_margin_top` from the
- * layout's top-start corner.
+ * It lays out three children: index 0 is the slideable pane, index 1 the content and index 2 the
+ * fold button. Only indices 0 and 1 have Compose counterparts as slots; index 2 is the [foldIcon]
+ * control this composable places at the pane's top start, inset by the icon's start and top margins
+ * from the layout's top-start corner.
  *
  * Opening and closing is a `ValueAnimator` of `DURATION_OF_SLIDING_ANIMATOR` (483 ms) driven by
  * `COUIMoveEaseInterpolator` — `PathInterpolator(0.3f, 0.0f, 0.1f, 1.0f)`. The drag itself runs
@@ -400,9 +397,9 @@ private fun paneDragFraction(current: Float, delta: Float, paneWidthPx: Float): 
 private val MoveEaseEasing = CubicBezierEasing(0.3f, 0.0f, 0.1f, 1.0f)
 
 /**
- * Helpers of [SidePaneLayout], mirroring `com.coui.appcompat.sidepane.COUISidePaneUtils`.
+ * Helpers of [SidePaneLayout].
  *
- * The device methods take a `View` and a `Context`; here they are pure functions over the value the
+ * The original methods take a `View` and a `Context`; here they are pure functions over the value the
  * caller would have written into that view, so the layout constants stay on the Compose side.
  */
 object SidePaneUtils {

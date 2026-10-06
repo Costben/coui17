@@ -1,6 +1,6 @@
 # FloatingButton
 
-ColorOS 17 的快速拨号:一个圆形主按钮,展开后弹出一列带标签的子按钮。对应 `com.coui.appcompat.floatingactionbutton.COUIFloatingButton` 及其 `COUIFloatingButtonItem` 行(`COUIFloatingButtonLabel`,由 `layout/coui_floating_button_item_label` 填充)。
+ColorOS 17 的快速拨号:一个圆形主按钮,展开后弹出一列带标签的子按钮,对标 ColorOS 17 设计规范。每个子按钮带标签与前置图标。
 
 `FloatingActionButton` 是单个 COUI 浮动按钮,本组件是建立在它之上的容器,因此主按钮与子按钮都保留该组件的按压反馈、水波纹与语义角色。
 

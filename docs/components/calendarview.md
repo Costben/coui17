@@ -1,6 +1,6 @@
 # CalendarView
 
-The ColorOS 17 month calendar: a weekday header row over a 7-column grid of day cells, with the month/year title and the previous/next buttons above it. It mirrors `com.coui.appcompat.calendar.COUIDateMonthView` — one month page of the `COUICalendarDayViewPager` — together with the header of `layout/coui_calendar_picker_header_material`.
+The ColorOS 17 month calendar: a weekday header row over a 7-column grid of day cells, with the month/year title and the previous/next buttons above it, aligned with the ColorOS 17 design language. The header's measurements come from ColorOS 17's own calendar header.
 
 `DatePicker` is *not* this component: ColorOS ships both, and `DatePicker` is the three-wheel scroll picker while this is the grid.
 
@@ -25,7 +25,7 @@ CalendarView(
 )
 ```
 
-The displayed month is internal state, as in the native pager: it follows `value` when the selection moves to another month, and the two header buttons move it without touching the selection. Days of the neighbouring months are drawn dimmed and are clickable, which is what `COUIDateMonthView.onTouchEvent` does for a day index outside `1..daysInMonth`.
+The displayed month is internal state, as in the native pager: it follows `value` when the selection moves to another month, and the two header buttons move it without touching the selection. Days of the neighbouring months are drawn dimmed and are clickable, matching the native behaviour for a day index outside `1..daysInMonth`.
 
 ## Title, Weekday Labels and the First Column
 
@@ -78,35 +78,35 @@ CalendarView(
 
 ### CalendarViewDefaults
 
-| Constant              | Type       | Default Value | COUI Source                                          |
-| --------------------- | ---------- | ------------- | ---------------------------------------------------- |
-| HeaderHeight          | Dp         | 32.dp         | coui_calendar_picker_header_material layout_height   |
-| HeaderPadding         | Dp         | 24.dp         | coui_calendar_picker_header_material paddingStart/End |
-| NavigationIconSize    | Dp         | 24.dp         | header ImageButton minWidth/minHeight; both chevron vectors are 24x24dp |
-| NavigationIconPadding | Dp         | 4.dp          | coui_calendar_picker_header_material padding         |
-| NavigationButtonSize  | Dp         | 32.dp         | icon size + padding on both sides                    |
-| WeekdayHeight         | Dp         | 40.dp         | coui_calendar_picker_day_of_week_height              |
-| DayHeight             | Dp         | 40.dp         | coui_calendar_picker_day_height                      |
-| DayWidth              | Dp         | 40.dp         | coui_calendar_picker_day_width                       |
-| DayMinColumnPadding   | Dp         | 8.dp          | coui_calendar_picker_day_min_col_padding             |
-| HorizontalPadding     | Dp         | 16.dp         | coui_calendar_picker_padding_horizontal              |
-| VerticalPadding       | Dp         | 0.dp          | coui_calendar_picker_padding_top                     |
-| SelectedCircleRadius  | Dp         | 16.dp         | calendar_picker_current_day_radius / 2               |
-| TodayRingWidth        | Dp         | 1.8.dp        | coui_calendar_picker_current_day_stroke_radius       |
-| ROW_COUNT             | Int        | 6             | COUIDateMonthView.onMeasure                          |
-| YearRange             | IntRange   | 1900..2100    | COUICalendarDayPickerView minDate / maxDate fallback |
-| FIRST_DAY_OF_WEEK     | Int        | 1             | Calendar.getFirstDayOfWeek() fallback (ISO-8601)     |
+| Constant              | Type       | Default Value |
+| --------------------- | ---------- | ------------- |
+| HeaderHeight          | Dp         | 32.dp         |
+| HeaderPadding         | Dp         | 24.dp         |
+| NavigationIconSize    | Dp         | 24.dp         |
+| NavigationIconPadding | Dp         | 4.dp          |
+| NavigationButtonSize  | Dp         | 32.dp         |
+| WeekdayHeight         | Dp         | 40.dp         |
+| DayHeight             | Dp         | 40.dp         |
+| DayWidth              | Dp         | 40.dp         |
+| DayMinColumnPadding   | Dp         | 8.dp          |
+| HorizontalPadding     | Dp         | 16.dp         |
+| VerticalPadding       | Dp         | 0.dp          |
+| SelectedCircleRadius  | Dp         | 16.dp         |
+| TodayRingWidth        | Dp         | 1.8.dp        |
+| ROW_COUNT             | Int        | 6             |
+| YearRange             | IntRange   | 1900..2100    |
+| FIRST_DAY_OF_WEEK     | Int        | 1             |
 
 #### Methods
 
 | Method Name       | Type      | Description                                                                        |
 | ----------------- | --------- | ---------------------------------------------------------------------------------- |
-| titleTextStyle()  | TextStyle | Header title (COUITheme.textStyles.button, COUI header TextView 16sp sans-serif-medium) |
-| dayTextStyle()    | TextStyle | Day number (COUITheme.textStyles.button, COUI couiTextAppearanceHeadline6 16sp)    |
-| weekdayTextStyle()| TextStyle | Column header (COUITheme.textStyles.body2 + Medium, COUI couiTextAppearanceButton 14sp) |
+| titleTextStyle()  | TextStyle | Header title (COUITheme.textStyles.button, header 16sp sans-serif-medium)          |
+| dayTextStyle()    | TextStyle | Day number (COUITheme.textStyles.button, couiTextAppearanceHeadline6 16sp)         |
+| weekdayTextStyle()| TextStyle | Column header (COUITheme.textStyles.body2 + Medium, couiTextAppearanceButton 14sp) |
 | colors()          | CalendarViewColors | The theme slots listed below                                              |
 
-The header's two buttons draw `drawable/coui_ic_chevron_start` and `drawable/coui_ic_chevron_end`; this port uses `COUIIcons.Basic.ChevronStart` / `ChevronEnd`, taken 1:1 from those files into `coui-ui`'s own `icon/basic` package (24x24dp viewport, 1.4dp round-cap stroke, auto-mirrored, tinted `?attr/couiColorPrimaryNeutral`). The header `TextView` is `maxLines="2"`, and the header keeps its fixed 32dp `layout_height`, so a wrapped title overflows the row rather than growing it.
+The header's two buttons draw start and end chevron vectors; this port uses `COUIIcons.Basic.ChevronStart` / `ChevronEnd` (24x24dp viewport, 1.4dp round-cap stroke, auto-mirrored, tinted `?attr/couiColorPrimaryNeutral`). The header `TextView` is `maxLines="2"`, and the header keeps its fixed 32dp `layout_height`, so a wrapped title overflows the row rather than growing it.
 
 ### Colours
 
@@ -126,7 +126,7 @@ The header title and the default day colour come from the same attribute: the he
 
 | Item           | Value                                    | Source                                                     |
 | -------------- | ---------------------------------------- | ---------------------------------------------------------- |
-| Title          | 16sp, sans-serif-medium                  | coui_calendar_picker_header_material TextView              |
+| Title          | 16sp, sans-serif-medium                  | the calendar header layout                                 |
 | Day number     | couiTextAppearanceHeadline6, 16sp        | TextAppearance.Material.Widget.Calendar.Day                |
 | Weekday header | couiTextAppearanceButton, 14sp, medium   | TextAppearance.Material.Widget.Calendar.DayOfWeek          |
 | Month label    | couiTextAppearanceButton, 14sp           | TextAppearance.Material.Widget.Calendar.Month (never drawn) |
@@ -135,19 +135,19 @@ The theme has no 14sp medium tier, so `weekdayTextStyle()` is the 14sp `body2` w
 
 ## Behavior
 
-- The grid always reserves six day rows: `COUIDateMonthView.onMeasure` measures `dayHeight * 6 + dayOfWeekHeight + monthHeight`. A month whose leading days plus its own days exceed 35 cells fills all six rows at the 40dp pitch; one that fits in five rows is pitched at 40dp + 8dp (`calendar_picker_day_min_col_padding`) so that five rows still cover the same 240dp and the sixth row is left empty. That is the native's `fIsNeedSixRows` flag, `rowPitch = dayHeight + (fIsNeedSixRows ? 0 : dayMinColPadding)`.
+- The grid always reserves six day rows: the native measures `dayHeight * 6 + dayOfWeekHeight + monthHeight`. A month whose leading days plus its own days exceed 35 cells fills all six rows at the 40dp pitch; one that fits in five rows is pitched at 40dp + 8dp (`calendar_picker_day_min_col_padding`) so that five rows still cover the same 240dp and the sixth row is left empty. The six-row flag drives `rowPitch = dayHeight + (fIsNeedSixRows ? 0 : dayMinColPadding)`.
 - The selected day is a filled circle of `couiColorPrimary` drawn at half the 32dp `calendar_picker_current_day_radius` — `canvas.drawCircle(x, y, this.H / 2f, …)`, so the dimen is the diameter, not the radius.
 - Today is a ring of the same radius stroked at `calendar_picker_current_day_stroke_radius` (1.8dp) in `couiColorPrimary`, with its number in the same colour.
-- The native checks the selected day first, so the press highlight never shows on it, and pressing today draws the `coui_color_control_highlight` circle over its ring.
+- The selected day is checked first, so the press highlight never shows on it, and pressing today draws the `coui_color_control_highlight` circle over its ring.
 - Days outside `yearRange` are drawn at `?android:attr/disabledAlpha` (0.5) and do not react; days of the neighbouring months are clickable and follow `onValueChange`.
 
 ## Not Ported
 
-- `COUICalendarYearView` and the `COUICalendarViewAnimator` that cross-fades between it and the month grid on `anim/coui_calendar_picker_fade_in_material` (280ms, `android:interpolator/linear`) and `anim/coui_calendar_picker_fade_out_material` (150ms, `anim/coui_ease`). There is no year grid here, so the header's rotating `coui_calendar_arrow` inside a `COUIRotateView` goes with it.
-- `COUICalendarDayViewPager` and its custom scroller, i.e. the horizontal swipe between months. Only the two header buttons change the month.
-- The `ExploreByTouchHelper` accessibility tree of `COUIDateMonthView`: per-day virtual nodes carrying the checked state, plus the `calendar_picker_prev_content` / `calendar_picker_next_content` strings. The cells are ordinary selectable nodes instead.
+- The year grid and the animator that cross-fades between it and the month grid on `anim/coui_calendar_picker_fade_in_material` (280ms, `android:interpolator/linear`) and `anim/coui_calendar_picker_fade_out_material` (150ms, `anim/coui_ease`). There is no year grid here, so the header's rotating arrow goes with it.
+- The month view pager and its custom scroller, i.e. the horizontal swipe between months. Only the two header buttons change the month.
+- The accessibility tree of the month view: per-day virtual nodes carrying the checked state, plus the `calendar_picker_prev_content` / `calendar_picker_next_content` strings. The cells are ordinary selectable nodes instead.
 - The `TextAppearance.Material.Widget.Calendar.Month` measurement pass: the native measures the month label into `mMonthWidth` but never draws it, the visible title comes from the header `TextView`.
 - `calendar_picker_month_height` (0dp), `calendar_picker_month_padding_start` (26dp) and `calendar_picker_title_icon_size` (16dp), all of them only meaningful for the year-view arrow.
-- `calendar_picker_min_width` (300dp), `calendar_picker_max_width` (724dp) and `calendar_picker_textinput_margin_left` (32dp): no calendar class in the dex reads them, they belong to the date-picker text-input mode.
+- `calendar_picker_min_width` (300dp), `calendar_picker_max_width` (724dp) and `calendar_picker_textinput_margin_left` (32dp): no calendar class reads them, they belong to the date-picker text-input mode.
 - The 8dp `android:layout_marginStart` of the header's trailing button, which `RelativeLayout` + `android:layout_alignParentEnd` resolves to no positional change.
 - The locale-dependent `firstDayOfWeek` and the `DateUtils` weekday names; see above.

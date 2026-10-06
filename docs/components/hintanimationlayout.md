@@ -2,7 +2,7 @@
 
 `HintAnimationLayout` is the rotating hint of a search bar. It draws two hint strings over the search field and, every few seconds, slides the current one out while the next one slides in, both cross-fading along the way. An empty query shows the rotation; typing a query stops it and hides the hints, exactly as the native `TextWatcher` does.
 
-It ports `com.coui.appcompat.searchview.COUIHintAnimationLayout` and the hint views of `res/layout/coui_search_view_animated_support_layout.xml`.
+It is aligned with the ColorOS 17 search-bar hint rotation.
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=hintAnimationLayout" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -89,17 +89,17 @@ One transition advances the hint index modulo the list, then plays both tracks f
 
 ## Recovered Tokens
 
-Every value below was recovered from the ColorOS 17 resource dump of `Settings.apk` or from the decompiled `COUIHintAnimationLayout`; none of them is invented.
+Every value below is aligned with the ColorOS 17 implementation; none of them is invented.
 
 | Token | Value | Source |
 | :--- | :--- | :--- |
-| `DurationMillis` | 250ms | `COUIHintAnimationLayout.DURATION_TIME` |
-| `InDelayMillis` | 150ms | `COUIHintAnimationLayout.IN_DELAY_TIME` |
-| `IntervalMillis` | 3000ms | `COUIHintAnimationLayout.INTERVAL_TIME` |
-| `RepeatCount` | -1 | `COUIHintAnimationLayout.mRepeatCount` |
+| `DurationMillis` | 250ms | ColorOS 17 hint animation |
+| `InDelayMillis` | 150ms | ColorOS 17 hint animation |
+| `IntervalMillis` | 3000ms | ColorOS 17 hint animation |
+| `RepeatCount` | -1 | ColorOS 17 hint animation |
 | `TranslateExtra` | 5dp | `dimen/coui_search_bar_animation_translate_extra` |
-| `TranslateEasing` | `cubic-bezier(0.3, 0, 0.2, 1)` | `COUIHintAnimationLayout.TRANSLATEINTERPOLATOR` (`PathInterpolatorCompat.create(0.3f, 0f, 0.2f, 1f)`) |
-| `EaseEasing` | `cubic-bezier(0.33, 0, 0.67, 1)` | `COUIEaseInterpolator` |
+| `TranslateEasing` | `cubic-bezier(0.3, 0, 0.2, 1)` | ColorOS 17 translate interpolator |
+| `EaseEasing` | `cubic-bezier(0.33, 0, 0.67, 1)` | ColorOS 17 ease interpolator |
 | Hint text appearance | `couiTextAppearanceBodyL` (16sp) | `Widget_COUI_EditText_SearchViewStyle_HintText` |
 | Distance | `(measuredHeight - lineHeight) / 2 + TranslateExtra` | `applyHintChangeAnimation` |
 

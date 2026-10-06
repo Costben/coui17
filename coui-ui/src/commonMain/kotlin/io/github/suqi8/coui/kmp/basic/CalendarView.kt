@@ -42,57 +42,50 @@ import kotlin.time.Clock
  * The ColorOS 17 month calendar: a weekday header row over a 7-column grid of day cells, with the
  * month/year title and the previous/next month buttons above it.
  *
- * It mirrors `com.coui.appcompat.calendar.COUIDateMonthView` (one month page, the view the
- * `COUICalendarDayViewPager` pages through) plus the header of `coui_calendar_picker_header_material`
- * and the day-picker chrome of `COUICalendarDayPickerView`. `basic/DatePicker.kt` is a three-wheel
- * scroll picker and is *not* this component: ColorOS ships both, and this is the grid one.
+ * It mirrors the ColorOS 17 month page, its picker header and the day-picker chrome.
+ * `basic/DatePicker.kt` is a three-wheel scroll picker and is *not* this component: ColorOS ships
+ * both, and this is the grid one.
  *
- * Geometry, all of it from `Clock.apk`:
+ * Geometry, following the ColorOS 17 clock:
  * - the header is [CalendarViewDefaults.HeaderHeight] tall with [CalendarViewDefaults.HeaderPadding]
  *   on each side; the title is centred across the whole header and the two chevron buttons sit at the
  *   ends. The title is `TextView` with `maxLines="2"` and `sans-serif-medium` at 16sp, and the header
  *   keeps its fixed height, so a wrapped title overflows the row rather than growing it;
- * - the two buttons draw `COUIIcons.Basic.ChevronStart` / `ChevronEnd`, taken 1:1 from the
- *   `drawable/coui_ic_chevron_start` / `coui_ic_chevron_end` sources of the header's `ImageButton`s:
- *   24x24dp, auto-mirrored, a 1.4dp round-cap stroke, tinted `?attr/couiColorPrimaryNeutral` like
- *   the title;
+ * - the two buttons draw `COUIIcons.Basic.ChevronStart` / `ChevronEnd`, taken 1:1 from the header's
+ *   chevron art: 24x24dp, auto-mirrored, a 1.4dp round-cap stroke, tinted
+ *   `?attr/couiColorPrimaryNeutral` like the title;
  * - the weekday row is [CalendarViewDefaults.WeekdayHeight] tall and the day cells are
  *   [CalendarViewDefaults.DayWidth] by [CalendarViewDefaults.DayHeight];
  * - the grid always reserves [CalendarViewDefaults.ROW_COUNT] day rows
- *   (`COUIDateMonthView.onMeasure` = `dayHeight * 6 + dayOfWeekHeight + monthHeight`). A month whose
- *   leading days plus its own days exceed 35 cells fills all six rows at the 40dp pitch; one that
- *   fits in five rows is pitched at 40dp + 8dp (`calendar_picker_day_min_col_padding`) so that five
- *   rows still cover the same 240dp, and the sixth row is left empty. That is the native's
- *   `fIsNeedSixRows` flag: `rowPitch = dayHeight + (fIsNeedSixRows ? 0 : dayMinColPadding)`;
+ *   (`dayHeight * 6 + dayOfWeekHeight + monthHeight`). A month whose leading days plus its own days
+ *   exceed 35 cells fills all six rows at the 40dp pitch; one that fits in five rows is pitched at
+ *   40dp + 8dp (`calendar_picker_day_min_col_padding`) so that five rows still cover the same 240dp,
+ *   and the sixth row is left empty. That is the native's six-row flag:
+ *   `rowPitch = dayHeight + (sixRows ? 0 : dayMinColPadding)`;
  * - the selected day is a filled circle of [CalendarViewDefaults.SelectedCircleRadius] in
- *   `couiColorPrimary`, drawn at half the 32dp `calendar_picker_current_day_radius` dimen
- *   (`canvas.drawCircle(x, y, this.H / 2f, …)`);
+ *   `couiColorPrimary`, drawn at half the 32dp `calendar_picker_current_day_radius` dimen;
  * - today is a ring of the same radius stroked at `calendar_picker_current_day_stroke_radius`
  *   (1.8dp) in `couiColorPrimary`, with its number in the same colour.
  *
  * The displayed month is internal state, as in the native pager: it follows [value] when the
  * selection moves to another month, and the previous/next buttons move it without touching the
  * selection. The neighbouring months' days are drawn in the grid (dimmed) and are clickable, which is
- * what `COUIDateMonthView.onTouchEvent` does for a day index outside `1..daysInMonth`.
+ * what the native view does for a day index outside `1..daysInMonth`.
  *
  * Not ported:
- * - `COUICalendarYearView` and the `COUICalendarViewAnimator` that cross-fades between it and the
- *   month grid on `anim/coui_calendar_picker_fade_in_material` (280ms, `android:interpolator/linear`)
- *   and `anim/coui_calendar_picker_fade_out_material` (150ms, `anim/coui_ease`). There is no year
- *   grid here, so the header's rotating `coui_calendar_arrow` inside a `COUIRotateView` goes with it;
- * - `COUICalendarDayViewPager` and its custom scroller, i.e. the horizontal swipe between months.
- *   Only the two header buttons change the month;
- * - the `ExploreByTouchHelper` accessibility tree of `COUIDateMonthView` (per-day virtual nodes
- *   carrying the checked state, and the `calendar_picker_prev_content` /
- *   `calendar_picker_next_content` strings). The cells are ordinary selectable nodes instead;
+ * - the year view and the animator that cross-fades between it and the month grid (280ms in,
+ *   150ms out). There is no year grid here, so the header's rotating arrow goes with it;
+ * - the horizontal swipe between months and its custom scroller. Only the two header buttons change
+ *   the month;
+ * - the native per-day accessibility tree (per-day virtual nodes carrying the checked state, and the
+ *   previous/next content strings). The cells are ordinary selectable nodes instead;
  * - the `TextAppearance.Material.Widget.Calendar.Month` measurement pass: the native measures the
  *   month label into `mMonthWidth` but never draws it, the visible title comes from the header
  *   `TextView`;
  * - `calendar_picker_month_height` (0dp), `calendar_picker_month_padding_start` (26dp) and
  *   `calendar_picker_title_icon_size` (16dp), all of them only meaningful for the year-view arrow;
  * - `calendar_picker_min_width` (300dp), `calendar_picker_max_width` (724dp) and
- *   `calendar_picker_textinput_margin_left` (32dp): no calendar class in the dex reads them, they
- *   belong to the date-picker text-input mode;
+ *   `calendar_picker_textinput_margin_left` (32dp): they belong to the date-picker text-input mode;
  * - the 8dp `android:layout_marginStart` of the header's trailing button, which
  *   `RelativeLayout` + `android:layout_alignParentEnd` resolves to no positional change.
  *
@@ -100,9 +93,8 @@ import kotlin.time.Clock
  * @param onValueChange Called with the date the user picked.
  * @param modifier The modifier to be applied to the calendar.
  * @param enabled Whether the calendar reacts to clicks at all.
- * @param yearRange The selectable years. The native default is 1900..2100
- *   (`COUICalendarDayPickerView`'s fallback `minDate` / `maxDate`); a month at the ends of the range
- *   greys out the button that would leave it.
+ * @param yearRange The selectable years. The native default is 1900..2100; a month at the ends of the
+ *   range greys out the button that would leave it.
  * @param firstDayOfWeek The first column of the grid, ISO-8601: 1 = Monday .. 7 = Sunday.
  * @param today The date drawn as today. `null` reads the current date from `kotlin.time.Clock`.
  * @param colors The [CalendarViewColors] of the grid.

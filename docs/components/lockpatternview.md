@@ -1,6 +1,6 @@
 # LockPatternView
 
-`LockPatternView` is the ColorOS 17 pattern unlock grid, the port of `COUILockPatternView` (`com.coui.appcompat.lockview`, Settings APK). Nine dots sit in a 3x3 grid inside a 312dp x 280dp view; dragging across them connects the dots it passes, inserts the dot it jumps over, and reports the pattern as `row * 3 + column` indices on release.
+`LockPatternView` is the ColorOS 17 pattern unlock grid. Nine dots sit in a 3x3 grid inside a 312dp x 280dp view; dragging across them connects the dots it passes, inserts the dot it jumps over, and reports the pattern as `row * 3 + column` indices on release.
 
 ## Import
 

@@ -1,8 +1,8 @@
 # GridSpringChain
 
-ColorOS 17 的网格弹簧链越界效果,对应 `com.coui.appcompat.springchain.COUIGridSpringChainScrollView`(`COUIScrollView` 的子类)与驱动它的 `com.coui.appcompat.springchain.COUIGridSpringChain` 弹簧链。
+ColorOS 17 的网格弹簧链越界效果,对标 ColorOS 17 设计规范:内容被拖出边界时,网格磁贴逐行拖尾。
 
-设备上滚动视图只持有一个实现 `ICOUIGridSpringChainViewGroup` 的子 View;触摸越界时它把越界量交给弹簧链,链按**行**各自位移,于是磁贴逐行拖尾而不是整块移动。本移植保留这一拆分:`Modifier.gridSpringChainOverscroll` 加在网格上,度量网格无法消费的拖拽量并阻尼成一个控制距离;`Modifier.gridSpringChainItem` 加在每个磁贴上,把该距离换算为按行的位移。
+ColorOS 中滚动视图只持有一个子 View;触摸越界时它把越界量交给弹簧链,链按**行**各自位移,于是磁贴逐行拖尾而不是整块移动。本移植保留这一拆分:`Modifier.gridSpringChainOverscroll` 加在网格上,度量网格无法消费的拖拽量并阻尼成一个控制距离;`Modifier.gridSpringChainItem` 加在每个磁贴上,把该距离换算为按行的位移。
 
 阻尼曲线与释放动画复用仓库已有的越界引擎 —— 拖拽用 `SpringMath.obtainDampingDistance`,回弹用 `SpringEngine.runSettleAnimation`(与 `utils/Overscroll.kt` 同一套弹簧)。
 

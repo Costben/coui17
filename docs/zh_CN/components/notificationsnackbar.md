@@ -1,6 +1,6 @@
 # NotificationSnackBar
 
-通知样式的 Snackbar,对应 ColorOS 的 `com.coui.appcompat.snackbar.COUINotificationSnackBar` 及其 `res/layout/coui_notification_snack_bar_item.xml`。它带有前置通知图(图片框形态由原生 `ImageType` 决定)、最多两行的标题、可选的两行副文本、可选的操作按钮,以及固定在右上角的关闭图标。宿主([NotificationSnackBarHost] 与 [NotificationSnackBarHostState])同一时刻只显示一个,并把显示时长限制在 4–10 秒,与原生 `make()` 一致。
+通知样式的 Snackbar,对标 ColorOS 17 设计规范。它带有前置通知图(图片框形态由原生 `ImageType` 决定)、最多两行的标题、可选的两行副文本、可选的操作按钮,以及固定在右上角的关闭图标。宿主([NotificationSnackBarHost] 与 [NotificationSnackBarHostState])同一时刻只显示一个,并把显示时长限制在 4–10 秒,与原生 `make()` 一致。
 
 ## 引入
 

@@ -54,13 +54,11 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 
 /**
- * The ColorOS 17 lock screen password field, the port of `COUILockScreenPwdInputLayout`
- * (`com.coui.appcompat.input`) and the `COUILockScreenPwdInputView` it hosts.
+ * The ColorOS 17 lock screen password field.
  *
- * The layout is `layout/coui_input_lock_screen_pwd_layout.xml`: a `ConstraintLayout` holding the
- * input view (`0dp` wide, chained) and a 48dp `ImageView` next button whose `layout_marginStart` is
- * `coui_input_lock_screen_pwd_icon_margin` (12dp) and whose `src` is
- * `coui_input_lock_screen_pwd_next_src`, a 24dp right arrow. The view itself is a pill:
+ * The layout is a `ConstraintLayout` holding the input view (`0dp` wide, chained) and a 48dp
+ * `ImageView` next button whose start margin is 12dp and whose glyph is a 24dp right arrow. The view
+ * itself is a pill:
  * `COUILockScreenPwdInputView.addSmoothRoundRect` builds its path with `rectF.height() / 2` as both
  * corner radii, so the corner radius is [LockScreenPwdInputDefaults.Height] / 2 (24dp).
  *

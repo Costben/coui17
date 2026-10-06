@@ -1,6 +1,6 @@
 # SimpleLockView
 
-`SimpleLockView` is the ColorOS 17 lock screen PIN indicator, the port of `COUISimpleLock` (`com.coui.appcompat.lockview`, Settings APK). A row of rounded squares fills in one by one as the user types; when the PIN is rejected the whole row shakes and the filled squares drop away. The count is the caller's: pass how many squares should light up.
+`SimpleLockView` is the ColorOS 17 lock screen PIN indicator. A row of rounded squares fills in one by one as the user types; when the PIN is rejected the whole row shakes and the filled squares drop away. The count is the caller's: pass how many squares should light up.
 
 The native reads its geometry from `R.styleable.COUISimpleLock_couiCircleNum` (0 -> four squares, 1 -> six), `couiRectanglePadding` (10dp, the gap), and the two `<shape>` drawables `couiFilledRectangleIconDrawable` / `couiOutLinedRectangleIconDrawable` — both a 10dp x 10dp square with a 2dp corner radius. The row is therefore `dotCount * 10dp + (dotCount - 1) * 10dp` wide, 70dp for four and 110dp for six.
 

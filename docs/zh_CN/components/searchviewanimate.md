@@ -2,7 +2,7 @@
 
 `SearchViewAnimate` 是 ColorOS 的「磁吸式」搜索栏。它在两种状态之间切换：收起时只显示一个搜索图标，展开时输入框和尾部取消按钮滑入。搜索栏的高度、垂直位移、内容透明度和背景色全部由宿主传入的一个折叠进度值推导出来，这正是它看起来「吸附」在滚动内容上的原因。
 
-本组件移植自 `com.coui.appcompat.searchview.COUISearchViewAnimate` 及其布局 `res/layout/coui_search_view_animate_layout.xml`。
+本组件对标 ColorOS 17 磁吸搜索栏。
 
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=searchViewAnimate" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -102,7 +102,7 @@ Column {
 
 ## 复原的令牌
 
-以下数值全部取自 ColorOS 17 的 `Settings.apk` 资源转储，没有一个是臆造的。
+以下数值均对标 ColorOS 17 实现，没有一个是臆造的。
 
 | 令牌 | 值 | 来源资源 |
 | :--- | :--- | :--- |
@@ -138,7 +138,7 @@ Column {
 
 ## 未移植
 
-- **`COUISearchViewAnimate$AnimatorHelper`**——该类无法从 `classes.dex` 反编译，`runStateChangeAnimation(int)` 内部的精确调度未能复原。本移植重现了 `initSmoothEnterAnimatorSet` / `initSmoothExitAnimatorSet` 组合出的轨道与时长，但不包含该辅助类可能追加的中间关键帧。
+- **动画辅助类**——其精确调度未知，本移植重现了进入/退出动画组组合出的轨道与时长，但不包含该辅助类可能追加的中间关键帧。
 - **`COUIHintAnimationLayout`**——用于在收起与展开之间旋转提示文案的布局。它是独立的类，不属于本次移植范围；这里把提示文案当作普通占位文本处理。
 - **工具栏吸附偏移**——原生会依据工具栏高度与 insets 对搜索栏做偏移，这部分属于宿主侧计算，在本移植中交给调用方。
 - **`SearchViewAnimateDefaults.CornerRadius`**——暴露了原生的 18dp 值供调用方使用，但搜索栏自身用 `CircleShape` 裁剪，因为复原出的高度（40dp）对应的胶囊半径为 20dp，而原生半径会被约束到 `height / 2`。

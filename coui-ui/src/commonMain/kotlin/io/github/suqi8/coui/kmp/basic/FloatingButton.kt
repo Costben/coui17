@@ -57,10 +57,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * The ColorOS 17 speed-dial floating button: one round main button that opens a stack of labelled
  * child buttons.
  *
- * It mirrors `com.coui.appcompat.floatingactionbutton.COUIFloatingButton` with its
- * `COUIFloatingButtonItem` rows (`COUIFloatingButtonLabel`, inflated from
- * `res/layout/coui_floating_button_item_label.xml`) and the state machine of
- * `COUIFloatingButton$InstanceState`:
+ * It mirrors the ColorOS floating button with its labelled child rows and its instance-state
+ * machine:
  * - the main button is 56dp (`coui_floating_button_size`, also the `android:layout_width` of
  *   `style/FloatingButton.Icon.Medium`), carries the `attr/mainFloatingButtonSrc` glyph and rotates
  *   it [FloatingButtonDefaults.EXPAND_ICON_ROTATION] degrees while the menu is open, over

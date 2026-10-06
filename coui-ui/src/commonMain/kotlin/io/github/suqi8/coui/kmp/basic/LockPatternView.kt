@@ -51,8 +51,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
- * The ColorOS 17 pattern-unlock grid, the port of `COUILockPatternView` and `COUILockPatternUtils`
- * (`com.coui.appcompat.lockview`).
+ * The ColorOS 17 pattern-unlock grid.
  *
  * Nine dots sit in a 3x3 grid inside [LockPatternViewDefaults.Width] x
  * [LockPatternViewDefaults.Height] (312dp x 280dp) with
