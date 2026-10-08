@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import appstate.AppState
 import appstate.LocalAppState
+import appstate.LocalLegacyChromeSettingsEnabled
 import appstate.LocalUpdateAppState
 import component.SearchPager
 import i18n.LocalAppStrings
@@ -61,6 +63,7 @@ import pages.SettingsPage
 import pages.TextStylePage
 import ui.AppTheme
 import ui.keyColorFor
+import utils.FPSMonitor
 import utils.SearchStatus
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -113,6 +116,7 @@ fun Coui17App() {
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
+            LocalLegacyChromeSettingsEnabled provides false,
             LocalUpdateAppState provides updateAppState,
             LocalSquircleEnabled provides appState.enableSquircle,
             // One provider for the whole app: every screen resolves its copy through this, so
@@ -122,11 +126,16 @@ fun Coui17App() {
         ) {
             // The gallery root is the nav host's `Route.Main` entry, so the pages it pushes land in
             // the same window instead of on a stack nothing draws.
-            SecondaryPagesNavHost(
-                padding = PaddingValues(0.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                Coui17Root()
+            Box(Modifier.fillMaxSize()) {
+                SecondaryPagesNavHost(
+                    padding = PaddingValues(0.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Coui17Root()
+                }
+                if (appState.showFPSMonitor) {
+                    FPSMonitor(Modifier.fillMaxSize().statusBarsPadding())
+                }
             }
         }
     }
@@ -134,6 +143,7 @@ fun Coui17App() {
 
 @Composable
 private fun Coui17Root() {
+    val appState = LocalAppState.current
     val wallpaper = rememberWallpaper()
     val surfaceColor = COUITheme.colorScheme.surface
     // The page's own background, and the colour the app bar material is drawn in. The device resolves
@@ -198,7 +208,7 @@ private fun Coui17Root() {
         panelOpen = false
     }
 
-    CompositionLocalProvider(LocalBackdrop provides backdrop) {
+    CompositionLocalProvider(LocalBackdrop provides if (appState.enableBlur) backdrop else null) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = pageColor,
@@ -217,7 +227,7 @@ private fun Coui17Root() {
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
-                        userScrollEnabled = searchStatus.isCollapsed(),
+                        userScrollEnabled = appState.enablePageUserScroll && searchStatus.isCollapsed(),
                     ) { page ->
                         Coui17PageContent(
                             page = Coui17Page.entries[page],
@@ -238,7 +248,7 @@ private fun Coui17Root() {
                 // wallpaper layer, where the page has no content of its own the blur read straight
                 // through to the wallpaper the user cannot see behind the bar, so its capsules and
                 // accessory balls came out at the wallpaper's own brightness instead of the page's.
-                CompositionLocalProvider(LocalBackdrop provides barBackdrop) {
+                CompositionLocalProvider(LocalBackdrop provides if (appState.enableBlur) barBackdrop else null) {
                     Coui17TopAppBar(
                         title = str(currentPage.title),
                         searchLabel = searchLabel,

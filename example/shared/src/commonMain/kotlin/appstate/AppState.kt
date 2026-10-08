@@ -53,3 +53,6 @@ val LocalUpdateAppState = staticCompositionLocalOf<((AppState) -> AppState) -> U
 
 val LocalNavigator = staticCompositionLocalOf<Navigator> { error("No navigator found!") }
 val LocalIsWideScreen = staticCompositionLocalOf { false }
+
+/** Whether the host supports the configurable legacy bars and floating controls. */
+val LocalLegacyChromeSettingsEnabled = staticCompositionLocalOf { true }
