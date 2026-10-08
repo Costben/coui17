@@ -70,6 +70,7 @@ import component.MetaBallSurfaceDemo
 import component.NavigationBarEnterExitDemo
 import component.NavigationPopupMenuDemo
 import component.NotificationSnackBarDemo
+import component.NotificationSwipeDemo
 import component.NumberPickerDemo
 import component.OtherDemo
 import component.PageIndicatorDemo
@@ -213,6 +214,7 @@ fun Coui17HomePage(
         coui17Entry("ClickSelectMenu") { ClickSelectMenuDemoContent() }
         coui17Entry("InstallLoadProgress") { InstallLoadProgressDemo() }
         coui17Entry("TagView") { TagViewDemo() }
+        coui17Entry("NotificationSwipeBox") { NotificationSwipeDemo() }
         coui17Entry("NotificationSnackBar") { NotificationSnackBarDemo() }
         coui17Entry("MarqueeText") { MarqueeTextDemo() }
         coui17Entry("Loading Button") { LoadingButtonDemo() }

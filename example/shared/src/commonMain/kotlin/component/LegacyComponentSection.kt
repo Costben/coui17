@@ -42,6 +42,10 @@ fun LazyListScope.legacyComponentSection() {
         SmallTitle(text = "TagView")
         TagViewDemo()
     }
+    item(key = "notificationSwipe") {
+        SmallTitle(text = "NotificationSwipeBox")
+        NotificationSwipeDemo()
+    }
     item(key = "notificationSnackBar") {
         SmallTitle(text = "NotificationSnackBar")
         NotificationSnackBarDemo()

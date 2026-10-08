@@ -60,6 +60,7 @@ private val availableComponents = listOf(
     AvailableComponent("Slider", "slider") { SliderDemo() },
     AvailableComponent("NumberPicker", "numberPicker") { NumberPickerDemo() },
     AvailableComponent("ProgressIndicator", "progressIndicator") { ProgressIndicatorDemo() },
+    AvailableComponent("NotificationSwipeBox", "notificationSwipeBox") { NotificationSwipeBoxDemo() },
     AvailableComponent("Snackbar", "snackbar") { SnackbarDemo() },
     AvailableComponent("Icon", "icon") { IconDemo() },
     AvailableComponent("FloatingActionButton", "floatingActionButton") { FloatingActionButtonDemo() },

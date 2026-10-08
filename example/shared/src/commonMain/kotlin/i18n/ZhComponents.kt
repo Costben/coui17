@@ -10,6 +10,12 @@ package i18n
  * keep meeting English halfway down every card.
  */
 internal val zhComponents: Map<String, String> = mapOf(
+    "Swipe left to reveal notification actions" to "左滑通知，显示设置与删除按钮",
+    "Drag slowly to see the melt separate" to "缓慢拖动，观察融合连接逐渐分离",
+    "Notification deleted" to "通知已删除",
+    "Notification settings selected" to "已选择通知设置",
+    "Reveal actions" to "展开操作",
+    "Reset" to "重置",
     // Shared sample slots
     "Title" to "标题",
     "Summary" to "摘要",

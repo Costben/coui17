@@ -117,6 +117,7 @@ export default defineConfig({
                         { text: "TouchSearchView", link: "/zh_CN/components/touchsearchview" },
                         { text: "IntentSeekBar", link: "/zh_CN/components/intentseekbar" },
                         { text: "MarqueeText", link: "/zh_CN/components/marqueetextview" },
+                        { text: "NotificationSwipeBox", link: "/zh_CN/components/notificationswipebox" },
                         { text: "NotificationSnackBar", link: "/zh_CN/components/notificationsnackbar" },
                         { text: "TagView", link: "/zh_CN/components/tagview" },
                         { text: "MaterialShadowEdge", link: "/zh_CN/components/materialshadowedge" },

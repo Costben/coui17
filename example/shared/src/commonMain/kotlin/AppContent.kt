@@ -176,6 +176,7 @@ fun AppContent(
             polymorphic(NavKey::class) {
                 subclass(Route.Main::class)
                 subclass(Route.PullToRefresh::class)
+                subclass(Route.NotificationSwipe::class)
                 subclass(Route.About::class)
                 subclass(Route.License::class)
                 subclass(Route.Navigation::class)
@@ -226,6 +227,9 @@ fun AppContent(
                 }
                 entry<Route.PullToRefresh> {
                     PullToRefreshPage(padding = padding)
+                }
+                entry<Route.NotificationSwipe> {
+                    pages.NotificationSwipePage(padding = padding)
                 }
                 entry<Route.About> {
                     AboutPage(padding = padding)
