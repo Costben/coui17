@@ -227,3 +227,5 @@ ListPopupDefaults 对象提供弹窗的默认值与定位器。
 | DropdownPositionProvider                            | PopupPositionProvider | 将弹窗锚定在锚点下方（空间不足时上方），用于下拉菜单                 |
 | ContextMenuPositionProvider                         | PopupPositionProvider | 将弹窗锚定到锚点的某个角，用于上下文菜单                             |
 | dropdownPositionProvider(verticalMargin, horizontalMargin) | PopupPositionProvider | 创建带自定义边距的下拉定位器的工厂函数（默认：垂直 8.dp，水平 0.dp） |
+
+菜单与外部阴影同步淡入淡出，阴影在展开、收起和预测返回过程中保持柔和边缘。

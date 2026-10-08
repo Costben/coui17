@@ -42,8 +42,10 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -107,6 +109,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.jvm.JvmName
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.min
 
 private fun PopupPositionProvider.Align.resolve(layoutDirection: LayoutDirection): PopupPositionProvider.Align {
@@ -1265,6 +1268,31 @@ internal val PopupShadow: Shadow = Shadow(
     offset = DpOffset(0.dp, 3.67.dp),
 )
 
+/** Group opacity must include the exterior shadow, not just the menu's rectangular bounds. */
+private fun Modifier.popupOpacity(progress: () -> Float): Modifier = drawWithCache {
+    val paint = Paint()
+    // DropShadowPainter's bitmap extends by radius + spread, then moves by the shadow offset.
+    val xOutset = ceil((PopupShadow.radius.toPx() + PopupShadow.spread.toPx() + abs(PopupShadow.offset.x.toPx())).coerceAtLeast(0f))
+    val yOutset = ceil((PopupShadow.radius.toPx() + PopupShadow.spread.toPx() + abs(PopupShadow.offset.y.toPx())).coerceAtLeast(0f))
+    val bounds = Rect(-xOutset, -yOutset, size.width + xOutset, size.height + yOutset)
+    onDrawWithContent {
+        val opacity = progress().coerceIn(0f, 1f)
+        if (opacity == 1f) {
+            drawContent()
+        } else if (opacity > 0f) {
+            paint.alpha = opacity
+            // graphicsLayer(alpha < 1) implicitly clips to the node's width/height, even with
+            // clip=false. Keep the original coordinates and blend the whole expanded group once.
+            drawContext.canvas.saveLayer(bounds, paint)
+            try {
+                drawContent()
+            } finally {
+                drawContext.canvas.restore()
+            }
+        }
+    }
+}
+
 internal fun safeTransformOrigin(x: Float, y: Float): TransformOrigin {
     val safeX = if (x.isNaN() || x < 0f) 0f else x
     val safeY = if (y.isNaN() || y < 0f) 0f else y
@@ -1657,6 +1685,7 @@ fun ListPopupContent(
                 shape = glassShape,
                 lightParams = SpotLightDefaults.translucentLarge1(isDark),
                 surface = Modifier
+                    .popupOpacity(alphaProgress)
                     .dropShadow(shape = glassShape, shadow = PopupShadow)
                     .couiGlassSurface(
                         backdrop = backdrop,
@@ -1672,7 +1701,6 @@ fun ListPopupContent(
                 val scale = fractionProgress()
                 scaleX *= scale
                 scaleY *= scale
-                alpha = alphaProgress()
                 transformOrigin = localTransformOrigin
                 // COUI COUIPopupTouchMotionAnimator.collect() leaves the scale pivot where
                 // PopupMenuDomain.getMainMenuEnterPivotX/Y put it and folds the pivot compensation

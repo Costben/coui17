@@ -227,3 +227,5 @@ The ListPopupDefaults object provides default values and position providers for 
 | DropdownPositionProvider                            | PopupPositionProvider | Anchors the popup below (or above when there is no room) the anchor, for dropdown-style menus  |
 | ContextMenuPositionProvider                         | PopupPositionProvider | Anchors the popup to a corner of the anchor, for context menus                                 |
 | dropdownPositionProvider(verticalMargin, horizontalMargin) | PopupPositionProvider | Factory creating a dropdown provider with custom margins (defaults: vertical 8.dp, horizontal 0.dp) |
+
+The popup and its exterior shadow fade as a single group. The shadow retains its soft edges throughout opening, closing and predictive-back animations.
