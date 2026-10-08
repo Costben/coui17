@@ -4,6 +4,19 @@ All notable user-visible changes are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Notifications reveal settings and delete actions with a melting transition while swiping left.
+- The notification swipe demonstration is available directly from the example app's Settings page.
+
+### Fixed
+
+- Popup shadows retain soft edges throughout opening and closing animations.
+- The COUI17 settings show controls supported by the current layout, and the FPS, page-swipe and blur switches now affect the gallery.
+- Native light halos initialize with their rounded shadow bounds before shadow casting is enabled.
+
 ## [1.2.0] - 2026-10-06
 
 ### Added
