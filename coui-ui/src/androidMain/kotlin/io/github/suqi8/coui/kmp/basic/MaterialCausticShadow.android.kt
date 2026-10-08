@@ -58,7 +58,6 @@ private class CausticApi {
     fun update(view: View, profile: CausticShadowProfile, density: Float, light: Color) {
         val upper = profile == CausticShadowProfile.Toolbar
         // Upper / down caustic shadow. Geometry enables hwui's shadow draw path.
-        view.elevation = ((if (upper) 16f else 24f) * density + 0.5f).toInt().toFloat()
         val fade = (light.alpha / (if (upper) 51f / 255f else 66f / 255f)).coerceIn(0f, 1f)
         val shadow = android.graphics.Color.argb(((if (upper) 30 else 45) * fade).roundToInt(), 0, 0, 0)
         // outlineAmbientShadowColor / outlineSpotShadowColor were added in API 28. The native
@@ -82,6 +81,8 @@ private class CausticApi {
         layout.invoke(null, view, 0, 0, 0, bottom)
         params.invoke(null, view, width, 0.6f, 0.6f, 18f, 0.45f, 0.6f)
         check(readColor.invoke(null, view) == light.toArgb()) { "Native caustic color did not persist" }
+        // Enable shadow casting only after geometry and material parameters are ready.
+        view.elevation = ((if (upper) 16f else 24f) * density + 0.5f).toInt().toFloat()
     }
 
     fun clear(view: View) {
@@ -97,8 +98,12 @@ private class CausticOutlineView(context: Context) : View(context) {
         setBackgroundColor(android.graphics.Color.TRANSPARENT)
         outlineProvider = object : ViewOutlineProvider() {
             override fun getOutline(view: View, outline: Outline) {
-                outline.setRoundRect(0, 0, view.width, view.height, radius)
-                outline.alpha = 1f
+                if (view.width <= 0 || view.height <= 0) {
+                    outline.setEmpty()
+                } else {
+                    outline.setRoundRect(0, 0, view.width, view.height, radius.coerceIn(0f, minOf(view.width, view.height) / 2f))
+                    outline.alpha = 1f
+                }
             }
         }
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -155,6 +160,11 @@ private class AndroidCausticRenderer(val api: CausticApi) : CausticShadowRendere
                             view.layoutParams = FrameLayout.LayoutParams(width, height)
                         }
                         view.radius = with(density) { particle.cornerRadius.toPx() }
+                        // LayoutParams alone leaves new views at 0x0 until the next traversal.
+                        // Synchronize the native caster before enabling caustics, including resizes.
+                        if (view.width != width || view.height != height) {
+                            view.layout(0, 0, width, height)
+                        }
                         view.invalidateOutline()
                         view.pivotX = width / 2f
                         view.pivotY = height / 2f
