@@ -10,12 +10,20 @@ All notable user-visible changes are documented here. The format follows
 
 - Notifications reveal settings and delete actions with a melting transition while swiping left.
 - The notification swipe demonstration is available directly from the example app's Settings page.
+- `TabRowDefaults.tabRowColors` accepts an `indicatorShadowColor` for the drop shadow under the sliding indicator.
 
 ### Fixed
 
 - Popup shadows retain soft edges throughout opening and closing animations.
 - The COUI17 settings show controls supported by the current layout, and the FPS, page-swipe and blur switches now affect the gallery.
 - Native light halos initialize with their rounded shadow bounds before shadow casting is enabled.
+- The calendar's today ring follows the device's time zone and moves at local midnight instead of staying on the previous day.
+- Cascading dropdown popups no longer print a depth warning to standard output.
+- A notification swipe state created revealed, or restored after the screen is recreated, stays revealed instead of closing on first layout.
+
+### Changed
+
+- Swiping a notification no longer recomposes the notification box or rebuilds the card and menu shapes on every frame.
 
 ## [1.2.0] - 2026-10-06
 
