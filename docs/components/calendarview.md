@@ -43,7 +43,7 @@ CalendarView(
 
 `firstDayOfWeek` is ISO-8601 (1 = Monday .. 7 = Sunday) and defaults to Monday. The native reads `Calendar.getInstance().getFirstDayOfWeek()` when the `android:firstDayOfWeek` attribute is absent, i.e. from the device locale.
 
-`today` decides which day gets the ring; leaving it `null` reads the current date from `kotlin.time.Clock`. `yearRange` is the selectable window (1900..2100, the native fallback), and a month at the ends of it greys out the button that would leave it.
+`today` decides which day gets the ring; leaving it `null` reads the device's local date and re-reads it at the next local midnight. `yearRange` is the selectable window (1900..2100, the native fallback), and a month at the ends of it greys out the button that would leave it.
 
 ## Properties
 
@@ -57,7 +57,7 @@ CalendarView(
 | enabled         | Boolean                        | Whether the calendar reacts to clicks                                    | true                      | No       |
 | yearRange       | IntRange                       | The selectable years                                                     | 1900..2100                | No       |
 | firstDayOfWeek  | Int                            | First column of the grid, ISO-8601                                       | 1 (Monday)                | No       |
-| today           | DateValue?                     | The date drawn as today; `null` reads the clock                          | null                      | No       |
+| today           | DateValue?                     | The date drawn as today; `null` reads the local date and refreshes at midnight | null                      | No       |
 | colors          | CalendarViewColors             | The palette of the grid                                                  | CalendarViewDefaults.colors() | No   |
 | title           | (year: Int, month: Int) -> String | Converts a year and a month (1..12) to the header title               | "September 2026"          | No       |
 | weekdayLabel    | (dayOfWeek: Int) -> String     | Converts an ISO day of week to a column header                           | "Mon" .. "Sun"            | No       |

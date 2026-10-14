@@ -43,7 +43,7 @@ CalendarView(
 
 `firstDayOfWeek` 采用 ISO-8601(1 = 周一 .. 7 = 周日),默认周一。原生在缺少 `android:firstDayOfWeek` 属性时读取 `Calendar.getInstance().getFirstDayOfWeek()`,即取自设备区域。
 
-`today` 决定哪一天带圆环;传 `null` 时从 `kotlin.time.Clock` 读取当前日期。`yearRange` 是可选年份区间(1900..2100,原生的回退值),位于区间两端的月份会禁用那个会越界的按钮。
+`today` 决定哪一天带圆环;传 `null` 时读取设备的本地日期,并在下一个本地零点重新读取。`yearRange` 是可选年份区间(1900..2100,原生的回退值),位于区间两端的月份会禁用那个会越界的按钮。
 
 ## 属性
 
@@ -57,7 +57,7 @@ CalendarView(
 | enabled          | Boolean                          | 日历是否响应点击                        | true                          | 否   |
 | yearRange        | IntRange                         | 可选的年份区间                          | 1900..2100                    | 否   |
 | firstDayOfWeek   | Int                              | 网格首列,ISO-8601                       | 1(周一)                       | 否   |
-| today            | DateValue?                       | 视为今天的日期;`null` 时读取时钟        | null                          | 否   |
+| today            | DateValue?                       | 视为今天的日期;`null` 时读取本地日期并在零点刷新 | null                          | 否   |
 | colors           | CalendarViewColors               | 网格配色                                | CalendarViewDefaults.colors() | 否   |
 | title            | (year: Int, month: Int) -> String | 由年份与月份(1..12)生成表头标题         | "September 2026"              | 否   |
 | weekdayLabel     | (dayOfWeek: Int) -> String       | 由 ISO 星期序号生成列标题               | "Mon" .. "Sun"                | 否   |

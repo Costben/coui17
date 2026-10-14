@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +39,7 @@ import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.ChevronEnd
 import io.github.suqi8.coui.kmp.icon.basic.ChevronStart
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.delay
 import kotlin.time.Clock
 
 /**
@@ -96,7 +100,8 @@ import kotlin.time.Clock
  * @param yearRange The selectable years. The native default is 1900..2100; a month at the ends of the
  *   range greys out the button that would leave it.
  * @param firstDayOfWeek The first column of the grid, ISO-8601: 1 = Monday .. 7 = Sunday.
- * @param today The date drawn as today. `null` reads the current date from `kotlin.time.Clock`.
+ * @param today The date drawn as today. `null` reads the device's local date and re-reads it at
+ *   the next local midnight.
  * @param colors The [CalendarViewColors] of the grid.
  * @param title Converts a year and a month (1..12) to the header title.
  * @param weekdayLabel Converts an ISO day of week (1 = Monday .. 7 = Sunday) to a column header.
@@ -118,7 +123,7 @@ fun CalendarView(
     require(firstDayOfWeek in 1..7) { "firstDayOfWeek must be in 1..7 (ISO-8601)" }
 
     val selected = value.coercedTo(yearRange)
-    val todayDate = today ?: remember { currentDate() }
+    val todayDate = today ?: rememberCurrentDate()
 
     // The native pager follows setDate(); browsing with the header buttons only moves the page.
     var displayedMonthIndex by remember(selected.year, selected.month) {
@@ -586,10 +591,49 @@ private fun isoDayOfWeek(year: Int, month: Int, day: Int): Int = (((daysFromCivi
 private fun DateValue.plusDays(days: Int): DateValue = if (days == 0) this else civilFromDays(daysFromCivil(year, month, day) + days)
 
 /**
- * The current date, read from `kotlin.time.Clock` and converted with the civil-from-days algorithm
- * (`Instant.epochSeconds` counts days from 1970-01-01, which was a Thursday).
+ * The platform's current offset from UTC, in seconds, daylight saving included.
+ *
+ * `kotlin.time.Clock` reports UTC only, so the platform supplies the offset that turns an instant
+ * into a local calendar day.
  */
-private fun currentDate(): DateValue = civilFromDays(Clock.System.now().epochSeconds.floorDiv(86_400))
+internal expect fun currentUtcOffsetSeconds(): Int
+
+/**
+ * The calendar day of an instant at a given offset from UTC, converted with the civil-from-days
+ * algorithm (`Instant.epochSeconds` counts days from 1970-01-01, which was a Thursday).
+ */
+internal fun localDateAt(epochSeconds: Long, utcOffsetSeconds: Int): DateValue = civilFromDays((epochSeconds + utcOffsetSeconds).floorDiv(86_400))
+
+/** The current date in the device's own time zone. */
+private fun currentDate(): DateValue = localDateAt(Clock.System.now().epochSeconds, currentUtcOffsetSeconds())
+
+/**
+ * The longest wait between two reads of the local date. `delay` runs on a monotonic clock that
+ * stops while the device sleeps, and a time zone or clock change does not wake it, so a single
+ * wait for midnight could leave the ring on the previous day for hours.
+ */
+private const val TODAY_REFRESH_MILLIS = 60_000L
+
+/** The local date, kept current so a screen left open overnight moves the today ring. */
+@Composable
+internal fun rememberCurrentDate(readDate: () -> DateValue = ::currentDate): DateValue {
+    val currentReadDate by rememberUpdatedState(readDate)
+    var date by remember { mutableStateOf(readDate()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(millisUntilNextLocalDay().coerceAtMost(TODAY_REFRESH_MILLIS))
+            date = currentReadDate()
+        }
+    }
+    return date
+}
+
+/** Milliseconds until the next local midnight; never zero, so the refresh loop cannot spin. */
+private fun millisUntilNextLocalDay(): Long {
+    val localSeconds = Clock.System.now().epochSeconds + currentUtcOffsetSeconds()
+    val nextMidnight = (localSeconds.floorDiv(86_400) + 1) * 86_400
+    return (nextMidnight - localSeconds).coerceAtLeast(1L) * 1_000
+}
 
 /** Days since 1970-01-01 of a proleptic Gregorian date (Howard Hinnant's `days_from_civil`). */
 private fun daysFromCivil(year: Int, month: Int, day: Int): Long {
