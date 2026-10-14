@@ -3883,9 +3883,13 @@ public final class io/github/suqi8/coui/kmp/basic/SwitchKt {
 
 public final class io/github/suqi8/coui/kmp/basic/TabRowColors {
 	public static final field $stable I
+	public synthetic fun <init> (JJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun copy-jRlVdoo (JJJJ)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
+	public final synthetic fun copy-jRlVdoo (JJJJ)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
 	public static synthetic fun copy-jRlVdoo$default (Lio/github/suqi8/coui/kmp/basic/TabRowColors;JJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
+	public final fun copy-t635Npw (JJJJJ)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
+	public static synthetic fun copy-t635Npw$default (Lio/github/suqi8/coui/kmp/basic/TabRowColors;JJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -3906,7 +3910,8 @@ public final class io/github/suqi8/coui/kmp/basic/TabRowDefaults {
 	public final fun getTabRowWithContourTinyCornerRadius-D9Ej5fM ()F
 	public final fun getTabRowWithContourTinyHeight-D9Ej5fM ()F
 	public final fun getTabRowWithContourTinyPadding-D9Ej5fM ()F
-	public final fun tabRowColors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
+	public final synthetic fun tabRowColors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
+	public final fun tabRowColors-zjMxDiM (JJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TabRowKt {

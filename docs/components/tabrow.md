@@ -132,12 +132,13 @@ The TabRowDefaults object provides default configurations for the TabRow compone
 
 ### TabRowColors Class
 
-| Property Name           | Type  | Description                        |
-| ----------------------- | ----- | ---------------------------------- |
-| backgroundColor         | Color | Background color of the container  |
-| contentColor            | Color | Default content color of tabs      |
-| selectedBackgroundColor | Color | Color of the sliding indicator     |
-| selectedContentColor    | Color | Content color of the selected tab  |
+| Property Name           | Type  | Description                             |
+| ----------------------- | ----- | --------------------------------------- |
+| backgroundColor         | Color | Background color of the container       |
+| contentColor            | Color | Default content color of tabs           |
+| selectedBackgroundColor | Color | Color of the sliding indicator          |
+| selectedContentColor    | Color | Content color of the selected tab       |
+| indicatorShadowColor    | Color | Drop shadow under the sliding indicator |
 
 ## Advanced Usage
 

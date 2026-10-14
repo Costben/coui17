@@ -138,6 +138,7 @@ TabRowDefaults 对象提供了 TabRow 组件的默认配置。
 | contentColor            | Color | 标签的默认内容色   |
 | selectedBackgroundColor | Color | 滑动指示器的颜色   |
 | selectedContentColor    | Color | 选中标签的内容色   |
+| indicatorShadowColor    | Color | 滑动指示器的投影色 |
 
 ## 进阶用法
 

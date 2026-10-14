@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -215,7 +216,7 @@ private fun SegmentButtonRow(
 ) {
     val currentOnTabSelected by rememberUpdatedState(onTabSelected)
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
-    val shadowColor = if (isDarkTheme) IndicatorShadowDark else IndicatorShadowLight
+    val shadowColor = colors.indicatorShadowColor().takeOrElse { if (isDarkTheme) IndicatorShadowDark else IndicatorShadowLight }
     val shadowPenumbraColor = remember(shadowColor) { shadowColor.copy(alpha = shadowColor.alpha * 0.5f) }
     val containerColor = colors.backgroundColor(false)
     val indicatorColor = colors.backgroundColor(true)
@@ -636,6 +637,9 @@ object TabRowDefaults {
      * The default colors for the [TabRow] and [TabRowWithContour], following
      * COUISegmentButtonLayout: both label states default to `couiColorLabelPrimary` — the
      * selected state is distinguished by the indicator and the medium font weight.
+     *
+     * @param indicatorShadowColor The drop shadow under the sliding indicator.
+     *   `coui_segment_button_shadow_color`; the light and dark themes carry different alphas.
      */
     @Composable
     fun tabRowColors(
@@ -651,14 +655,38 @@ object TabRowDefaults {
             SegmentIndicatorLight
         },
         selectedContentColor: Color = COUITheme.colorScheme.onSurface,
-    ): TabRowColors = remember(backgroundColor, contentColor, selectedBackgroundColor, selectedContentColor) {
+        indicatorShadowColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+            IndicatorShadowDark
+        } else {
+            IndicatorShadowLight
+        },
+    ): TabRowColors = remember(backgroundColor, contentColor, selectedBackgroundColor, selectedContentColor, indicatorShadowColor) {
         TabRowColors(
             backgroundColor = backgroundColor,
             contentColor = contentColor,
             selectedBackgroundColor = selectedBackgroundColor,
             selectedContentColor = selectedContentColor,
+            indicatorShadowColor = indicatorShadowColor,
         )
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the overload that also takes indicatorShadowColor.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    @Composable
+    fun tabRowColors(
+        backgroundColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) SegmentContainerDark else SegmentContainerLight,
+        contentColor: Color = COUITheme.colorScheme.onSurface,
+        selectedBackgroundColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) SegmentIndicatorDark else SegmentIndicatorLight,
+        selectedContentColor: Color = COUITheme.colorScheme.onSurface,
+    ): TabRowColors = tabRowColors(
+        backgroundColor = backgroundColor,
+        contentColor = contentColor,
+        selectedBackgroundColor = selectedBackgroundColor,
+        selectedContentColor = selectedContentColor,
+    )
 }
 
 @Immutable
@@ -667,12 +695,53 @@ data class TabRowColors(
     private val contentColor: Color,
     private val selectedBackgroundColor: Color,
     private val selectedContentColor: Color,
+    private val indicatorShadowColor: Color = Color.Unspecified,
 ) {
+    /**
+     * The four-color form, kept so callers written before [indicatorShadowColor] existed still
+     * compile; the shadow then falls back to the theme's own segment shadow.
+     */
+    constructor(
+        backgroundColor: Color,
+        contentColor: Color,
+        selectedBackgroundColor: Color,
+        selectedContentColor: Color,
+    ) : this(
+        backgroundColor = backgroundColor,
+        contentColor = contentColor,
+        selectedBackgroundColor = selectedBackgroundColor,
+        selectedContentColor = selectedContentColor,
+        indicatorShadowColor = Color.Unspecified,
+    )
+
     @Stable
     internal fun backgroundColor(selected: Boolean): Color = if (selected) selectedBackgroundColor else backgroundColor
 
     @Stable
     internal fun contentColor(selected: Boolean): Color = if (selected) selectedContentColor else contentColor
+
+    /** [Color.Unspecified] when the caller built this instance without the factory. */
+    @Stable
+    internal fun indicatorShadowColor(): Color = indicatorShadowColor
+
+    /** The four-color [copy], kept for binary compatibility with callers built before 1.3.0. */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes indicatorShadowColor.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        backgroundColor: Color = this.backgroundColor,
+        contentColor: Color = this.contentColor,
+        selectedBackgroundColor: Color = this.selectedBackgroundColor,
+        selectedContentColor: Color = this.selectedContentColor,
+    ): TabRowColors = copy(
+        backgroundColor = backgroundColor,
+        contentColor = contentColor,
+        selectedBackgroundColor = selectedBackgroundColor,
+        selectedContentColor = selectedContentColor,
+        indicatorShadowColor = indicatorShadowColor,
+    )
 }
 
 /**
