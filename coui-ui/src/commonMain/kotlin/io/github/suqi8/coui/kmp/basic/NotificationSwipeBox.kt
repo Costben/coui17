@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -176,36 +177,10 @@ fun NotificationSwipeBox(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
     var measuredSize by remember { mutableStateOf(IntSize.Zero) }
     val revealWidthPx = with(density) { NotificationSwipeDefaults.RevealWidth.toPx() }
-    val distance = NotificationSwipeDefaults.RevealWidth * state.revealFraction
     val width = with(density) { measuredSize.width.toDp() }
     val height = with(density) { measuredSize.height.toDp() }
-    val deleteProgress = notificationActionProgress(distance, 0)
-    val settingsProgress = notificationActionProgress(distance, 1)
-    val deleteRecoil by animateFloatAsState(
-        targetValue = if (deleteProgress >= 1f) 1f else 0f,
-        animationSpec = NotificationSwipeDefaults.SettleSpring,
-    )
-    val settingsRecoil by animateFloatAsState(
-        targetValue = if (settingsProgress >= 1f) 1f else 0f,
-        animationSpec = NotificationSwipeDefaults.SettleSpring,
-    )
-    val particles = notificationSwipeParticles(width, height, distance, deleteRecoil, settingsRecoil)
-    val cardShape = remember(distance, density) {
-        GenericShape { size, _ ->
-            val visibleWidth = (size.width - with(density) { distance.toPx() }).coerceAtLeast(0f)
-            addRoundRect(
-                RoundRect(0f, 0f, visibleWidth, size.height, CornerRadius(with(density) { NotificationSwipeDefaults.CornerRadius.toPx() })),
-            )
-        }
-    }
-    val menuShape = remember(distance, density) {
-        GenericShape { size, _ ->
-            addRect(androidx.compose.ui.geometry.Rect((size.width - with(density) { distance.toPx() }).coerceAtLeast(0f), 0f, size.width, size.height))
-        }
-    }
 
     Box(
         modifier = modifier
@@ -213,11 +188,14 @@ fun NotificationSwipeBox(
             .clipToBounds()
             .onSizeChanged {
                 measuredSize = it
+                // Keep the target: the placeholder anchors put "revealed" at -1px, which would
+                // otherwise snap an initially revealed or restored state back to closed.
                 state.draggable.updateAnchors(
                     DraggableAnchors {
                         false at 0f
                         true at -revealWidthPx
                     },
+                    state.draggable.targetValue,
                 )
             }
             .anchoredDraggable(
@@ -250,54 +228,139 @@ fun NotificationSwipeBox(
             },
     ) {
         if (measuredSize != IntSize.Zero) {
-            MetaBallSurface(
-                particles = particles,
-                modifier = Modifier.matchParentSize(),
-                color = containerColor,
-                extension = NotificationSwipeDefaults.BlendRange,
-                extensionFactorX = 1.2f,
-                extensionFactorY = 2f,
+            NotificationSwipeMenu(
+                state = state,
+                width = width,
+                height = height,
+                containerColor = containerColor,
+                actionColor = actionColor,
+                settingsIcon = settingsIcon,
+                dismissIcon = dismissIcon,
+                settingsDescription = settingsDescription,
+                dismissDescription = dismissDescription,
+                enabled = enabled,
+                onSettings = onSettings,
+                onDismiss = onDismiss,
             )
-            Box(Modifier.matchParentSize().clip(menuShape), contentAlignment = AbsoluteAlignment.TopLeft) {
-                NotificationMenuAction(
-                    particle = particles[1],
-                    progress = deleteProgress,
-                    icon = dismissIcon,
-                    description = dismissDescription,
-                    color = actionColor,
-                    enabled = enabled,
-                    onClick = {
-                        scope.launch { state.close() }
-                        onDismiss()
-                    },
-                )
-                NotificationMenuAction(
-                    particle = particles[2],
-                    progress = settingsProgress,
-                    icon = settingsIcon,
-                    description = settingsDescription,
-                    color = actionColor,
-                    enabled = enabled,
-                    onClick = {
-                        scope.launch { state.close() }
-                        onSettings()
-                    },
-                )
-            }
         }
+        NotificationSwipeCard(state = state, minHeight = minHeight, content = content)
+    }
+}
+
+/**
+ * The merged card and menu material. It reads [NotificationSwipeState.revealFraction] while it
+ * composes, so it is the only part of [NotificationSwipeBox] that re-runs on every drag frame.
+ */
+@Composable
+private fun BoxScope.NotificationSwipeMenu(
+    state: NotificationSwipeState,
+    width: Dp,
+    height: Dp,
+    containerColor: Color,
+    actionColor: Color,
+    settingsIcon: ImageVector,
+    dismissIcon: ImageVector,
+    settingsDescription: String,
+    dismissDescription: String,
+    enabled: Boolean,
+    onSettings: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+    val distance = NotificationSwipeDefaults.RevealWidth * state.revealFraction
+    val deleteProgress = notificationActionProgress(distance, 0)
+    val settingsProgress = notificationActionProgress(distance, 1)
+    val deleteRecoil by animateFloatAsState(
+        targetValue = if (deleteProgress >= 1f) 1f else 0f,
+        animationSpec = NotificationSwipeDefaults.SettleSpring,
+    )
+    val settingsRecoil by animateFloatAsState(
+        targetValue = if (settingsProgress >= 1f) 1f else 0f,
+        animationSpec = NotificationSwipeDefaults.SettleSpring,
+    )
+    val particles = notificationSwipeParticles(width, height, distance, deleteRecoil, settingsRecoil)
+    // The menu sheet covers exactly the strip the card has vacated.
+    val menuShape = remember(density, state) {
+        GenericShape { size, _ ->
+            val distancePx = with(density) { (NotificationSwipeDefaults.RevealWidth * state.revealFraction).toPx() }
+            addRect(Rect((size.width - distancePx).coerceAtLeast(0f), 0f, size.width, size.height))
+        }
+    }
+
+    MetaBallSurface(
+        particles = particles,
+        modifier = Modifier.matchParentSize(),
+        color = containerColor,
+        extension = NotificationSwipeDefaults.BlendRange,
+        extensionFactorX = 1.2f,
+        extensionFactorY = 2f,
+    )
+    Box(Modifier.matchParentSize().clip(menuShape), contentAlignment = AbsoluteAlignment.TopLeft) {
+        NotificationMenuAction(
+            particle = particles[1],
+            progress = deleteProgress,
+            icon = dismissIcon,
+            description = dismissDescription,
+            color = actionColor,
+            enabled = enabled,
+            onClick = {
+                scope.launch { state.close() }
+                onDismiss()
+            },
+        )
+        NotificationMenuAction(
+            particle = particles[2],
+            progress = settingsProgress,
+            icon = settingsIcon,
+            description = settingsDescription,
+            color = actionColor,
+            enabled = enabled,
+            onClick = {
+                scope.launch { state.close() }
+                onSettings()
+            },
+        )
+    }
+}
+
+/**
+ * The notification card. [NotificationSwipeState.revealFraction] is read only inside the clip shape
+ * and the offset lambda, so a drag re-draws and re-places the card without recomposing it, and
+ * without recomposing [content].
+ */
+@Composable
+private fun BoxScope.NotificationSwipeCard(
+    state: NotificationSwipeState,
+    minHeight: Dp,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val cardShape = remember(density, state) {
+        GenericShape { size, _ ->
+            val visibleWidth = (size.width - with(density) { (NotificationSwipeDefaults.RevealWidth * state.revealFraction).toPx() }).coerceAtLeast(0f)
+            addRoundRect(
+                RoundRect(0f, 0f, visibleWidth, size.height, CornerRadius(with(density) { NotificationSwipeDefaults.CornerRadius.toPx() })),
+            )
+        }
+    }
+    val cardOffset = remember(density, state) {
+        Modifier.absoluteOffset {
+            IntOffset(-with(density) { (NotificationSwipeDefaults.RevealWidth * state.revealFraction).roundToPx() }, 0)
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = minHeight)
+            .clip(cardShape),
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = minHeight)
-                .clip(cardShape),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .absoluteOffset { IntOffset(-with(density) { distance.roundToPx() }, 0) },
-                content = content,
-            )
-        }
+                .then(cardOffset),
+            content = content,
+        )
     }
 }
 

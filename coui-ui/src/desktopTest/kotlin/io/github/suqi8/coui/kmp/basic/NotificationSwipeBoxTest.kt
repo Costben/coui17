@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -136,6 +138,76 @@ class NotificationSwipeBoxTest {
         assertTrue(state.isRevealed)
         onNodeWithContentDescription("Delete").assertIsDisplayed()
         assertTrue(onNodeWithContentDescription("Delete").fetchSemanticsNode().boundsInRoot.left > 290f)
+    }
+
+    /**
+     * A drag frame only moves the card, so it must not recompose the box itself. The `composed`
+     * modifier is materialised on every composition of the box and counts them.
+     */
+    @Test
+    fun draggingDoesNotRecomposeTheSwipeBox() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var compositions = 0
+        val counting = Modifier.composed {
+            compositions++
+            Modifier
+        }
+        setContent {
+            COUITheme {
+                NotificationSwipeBox({}, {}, COUIIcons.Basic.Close, COUIIcons.Basic.Close, modifier = counting, state = state) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        waitForIdle()
+        val settled = compositions
+        onRoot().performTouchInput {
+            down(Offset(330f, 42f))
+            repeat(10) { moveBy(Offset(-12f, 0f)) }
+        }
+        waitForIdle()
+        assertTrue(state.revealFraction > 0f, "The drag must have moved the card")
+        assertEquals(settled, compositions, "A drag frame must re-place the card, not recompose the box")
+        onRoot().performTouchInput { up() }
+    }
+
+    @Test
+    fun swappingTheStateMovesTheCardClipToo() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val revealed = NotificationSwipeState()
+        val closed = NotificationSwipeState()
+        var state by mutableStateOf(revealed)
+        setContent {
+            COUITheme {
+                NotificationSwipeBox({}, {}, COUIIcons.Basic.Close, COUIIcons.Basic.Close, state = state) {
+                    Box(Modifier.fillMaxWidth().height(84.dp).background(Color.Red))
+                }
+            }
+        }
+        onRoot().performTouchInput { swipe(Offset(330f, 42f), Offset(160f, 42f), 700) }
+        waitForIdle()
+        assertTrue(revealed.isRevealed)
+        assertTrue(onRoot().captureToImage().toPixelMap()[340, 42].green > 0.5f, "The revealed card must vacate the menu strip")
+        runOnIdle { state = closed }
+        waitForIdle()
+        val strip = onRoot().captureToImage().toPixelMap()[340, 42]
+        assertTrue(strip.red > 0.9f && strip.green < 0.1f, "The closed state's card must cover the strip again")
+    }
+
+    /** An initially revealed (or restored) state must stay open once the real anchors arrive. */
+    @Test
+    fun initiallyRevealedStateStaysOpenAfterMeasuring() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState(initiallyRevealed = true)
+        setContent {
+            COUITheme {
+                NotificationSwipeBox({}, {}, COUIIcons.Basic.Close, COUIIcons.Basic.Close, state = state) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        waitForIdle()
+        assertTrue(state.isRevealed)
+        assertEquals(1f, state.revealFraction)
+        onNodeWithContentDescription("Delete").assertIsDisplayed()
     }
 
     @Test
