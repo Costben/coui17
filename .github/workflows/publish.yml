@@ -31,7 +31,9 @@ concurrency:
 
 jobs:
   snapshot:
-    runs-on: ubuntu-latest
+    # Apple publications are skipped on Linux, so a SNAPSHOT built there ships without the
+    # iOS/macOS coordinates. Publish from macOS, like release.yml does.
+    runs-on: macos-26
     if: github.ref_type == 'branch'
     steps:
       - name: Checkout Sources
