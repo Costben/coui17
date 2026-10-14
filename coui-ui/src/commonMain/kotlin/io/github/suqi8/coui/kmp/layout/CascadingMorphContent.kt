@@ -55,8 +55,6 @@ import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 
-private var deeperChildrenWarned = false
-
 /** Primary side of a cascading popup. While a secondary is expanded, scales to
  *  [PRIMARY_SHRUNK_SCALE] and fades to [PRIMARY_SHRUNK_ALPHA]. */
 @Composable
@@ -139,21 +137,9 @@ internal fun CascadingPrimaryContent(
                                 dropdownColors = dropdownColors,
                                 groupKey = entryIndex,
                                 onClick = {
-                                    val children = item.children?.takeIf { it.isNotEmpty() }
-                                    if (children != null) {
-                                        if (!deeperChildrenWarned &&
-                                            children.any { !it.children.isNullOrEmpty() }
-                                        ) {
-                                            deeperChildrenWarned = true
-                                            println(
-                                                "[CascadingListPopup] Cascading depth is limited to 2;" +
-                                                    " deeper children are ignored.",
-                                            )
-                                        }
-                                        onExpand(item)
-                                    } else {
-                                        onLeafSelected(item)
-                                    }
+                                    // The cascading layer is two levels deep: a trigger expands its
+                                    // children, and those children are leaves whatever they carry.
+                                    if (item.children.isNullOrEmpty()) onLeafSelected(item) else onExpand(item)
                                 },
                                 onAnchorBounds = onAnchorBounds,
                             )

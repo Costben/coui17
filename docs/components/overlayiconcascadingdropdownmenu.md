@@ -161,7 +161,7 @@ Scaffold {
 ```
 
 ::: tip Cascading Depth
-Cascading depth is capped at 2. Items at the secondary level cannot have their own `children`; deeper trees are ignored, and a warning is logged once when such a submenu is expanded.
+Cascading depth is capped at 2. Items at the secondary level cannot have their own `children`; deeper trees are ignored.
 :::
 
 ## Properties

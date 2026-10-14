@@ -474,8 +474,9 @@ data class DropdownEntry(
  * @param icon Optional icon shown before [text].
  * @param summary Optional summary shown below [text].
  * @param children Optional submenu items. When non-null and non-empty, this item becomes a
- *   submenu trigger: cascading dropdown popups render a chevron and open a child popup on click,
- *   recursively. Stabilize this list (e.g. via `remember`) to avoid unnecessary recomposition.
+ *   submenu trigger: cascading dropdown popups render a chevron and open a child popup on click.
+ *   The cascading layer is two levels deep, so the `children` of a child item are ignored.
+ *   Stabilize this list (e.g. via `remember`) to avoid unnecessary recomposition.
  * @param hint Optional trailing hint slot rendered between the title block and the selection
  *   indicator (COUI popup_list_window_item_hint_layout). Suitable for a badge, a red dot, or a
  *   short count; it is width-capped at [DropdownDefaults.HintMaxWidth] and, matching COUI
