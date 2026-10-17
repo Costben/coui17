@@ -29,6 +29,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import i18n.str
@@ -168,7 +169,11 @@ fun SpotLightDemo() {
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = str("Static | CapsuleParams1 | OVERLAY"))
+                Text(
+                    text = str("Static | CapsuleParams1 | OVERLAY"),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    textAlign = TextAlign.Center,
+                )
             }
 
             Spacer(Modifier.height(16.dp))
@@ -211,7 +216,11 @@ fun SpotLightDemo() {
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = str("Animated | position.x 0.2..0.8 | intensity 0..1"))
+                Text(
+                    text = str("Animated | position.x 0.2..0.8 | intensity 0..1"),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }

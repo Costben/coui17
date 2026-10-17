@@ -120,7 +120,7 @@ fun MultiScaffoldTestPage(
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(
-                                title = "Dropdown",
+                                title = "Menu",
                                 items = dropdownOptions,
                                 selectedIndex = topLeftSelected.intValue,
                                 onSelectedIndexChange = { index -> topLeftSelected.intValue = index },
@@ -140,7 +140,7 @@ fun MultiScaffoldTestPage(
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(
-                                title = "Dropdown",
+                                title = "Menu",
                                 items = dropdownOptions,
                                 selectedIndex = topRightSelected.intValue,
                                 onSelectedIndexChange = { index -> topRightSelected.intValue = index },
@@ -165,7 +165,7 @@ fun MultiScaffoldTestPage(
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(
-                                title = "Dropdown",
+                                title = "Menu",
                                 items = dropdownOptions,
                                 selectedIndex = bottomLeftSelected.intValue,
                                 onSelectedIndexChange = { index -> bottomLeftSelected.intValue = index },
@@ -185,7 +185,7 @@ fun MultiScaffoldTestPage(
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(
-                                title = "Dropdown",
+                                title = "Menu",
                                 items = dropdownOptions,
                                 selectedIndex = bottomRightSelected.intValue,
                                 onSelectedIndexChange = { index -> bottomRightSelected.intValue = index },

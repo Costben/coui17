@@ -75,15 +75,21 @@ private fun InstallLoadStyleDemo() {
         // The same state across the three couiStyle tiers: only bigRoundButton is accent filled at
         // rest, and only the two pill tiers paint a fill while a transfer is running.
         InstallLoadStyle.entries.forEach { style ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            // The 220dp big pill leaves too little width for a caption beside it on a 360dp screen,
+            // so the caption sits underneath the button instead of forcing a one-word-per-line wrap.
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 InstallLoadProgress(
                     onClick = { state = state.toggled() },
                     state = state,
                     progress = progress,
-                    text = if (state == LoadProgressState.Loading) "$progress%" else str("Download"),
+                    text = when {
+                        state == LoadProgressState.Loading -> "$progress%"
+
+                        // The 52dp small pill fits a short verb only.
+                        style == InstallLoadStyle.Default -> str("Get")
+
+                        else -> str("Download")
+                    },
                     style = style,
                 )
                 Text(

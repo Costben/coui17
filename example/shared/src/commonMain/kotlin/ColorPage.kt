@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,6 +51,8 @@ import utils.AdaptiveTopAppBar
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
+import kotlin.math.max
+import kotlin.math.min
 
 private val CamelCaseRegex = Regex("([A-Z])")
 private val ColorBlockCornerRadius = 12.dp
@@ -238,7 +241,15 @@ fun ColorsPreview(colors: Colors) {
                     color to colorMap["on" + name.replaceFirstChar { it.uppercase() }]!!
                 }
 
-                else -> color to (if (color.luminance() > 0.5) Color.Black else Color.White)
+                else -> color to color.readableLabel(colors.surfaceContainer)
+            }.let { (fill, label) ->
+                // A pairing only reads when both roles are opaque: the translucent washes
+                // (secondaryVariant, errorContainer, ...) are fills, not label colours.
+                if (contrast(label, fill, colors.surfaceContainer) < MIN_LABEL_CONTRAST) {
+                    fill to fill.readableLabel(colors.surfaceContainer)
+                } else {
+                    fill to label
+                }
             }
             val displayName = name.replace(CamelCaseRegex, " $1").trim().replaceFirstChar { it.uppercase() }
             ColorBlockData(name, displayName, surfaceColor, textColor)
@@ -284,4 +295,18 @@ private fun ColorBlock(displayName: String, surfaceColor: Color, textColor: Colo
             modifier = Modifier.padding(12.dp),
         )
     }
+}
+
+private const val MIN_LABEL_CONTRAST = 3f
+
+/** Black or white, whichever reads on this colour once it is drawn over [base]. */
+private fun Color.readableLabel(base: Color): Color = if (compositeOver(base).luminance() > 0.5f) Color.Black else Color.White
+
+/** WCAG contrast of [label] drawn on [fill], with [fill] drawn over [base]. */
+private fun contrast(label: Color, fill: Color, base: Color): Float {
+    val back = fill.compositeOver(base)
+    val front = label.compositeOver(back)
+    val a = front.luminance() + 0.05f
+    val b = back.luminance() + 0.05f
+    return max(a, b) / min(a, b)
 }

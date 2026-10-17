@@ -4,6 +4,7 @@
 
 package component
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
@@ -22,12 +24,14 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.layout.DialogButtonBar
 import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
+import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.overlay.OverlayAlertDialog
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.overlay.OverlayLoadingDialog
 import io.github.suqi8.coui.kmp.overlay.OverlayProgressDialog
 import io.github.suqi8.coui.kmp.overlay.OverlaySecurityDialog
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
+import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowDialog
 import kotlinx.coroutines.delay
@@ -247,7 +251,16 @@ private fun AlertDialogDemo(
         cancelText = str("Cancel"),
         onDismissFinished = onDismissFinished,
         content = {
-            Text(text = str("This action cannot be undone."))
+            // The content slot spans the panel edge to edge; pad it like the built-in message.
+            Text(
+                text = str("This action cannot be undone."),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = DialogDefaults.insideMargin.width),
+                color = COUITheme.colorScheme.onSurfaceVariantSummary,
+                textAlign = TextAlign.Center,
+                style = COUITheme.textStyles.body2,
+            )
         },
     )
 }

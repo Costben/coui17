@@ -38,6 +38,7 @@ import appstate.LocalAppState
 import appstate.LocalIsWideScreen
 import appstate.LocalNavigator
 import component.BackNavigationIcon
+import i18n.str
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.PullToRefresh
@@ -91,7 +92,7 @@ fun PullToRefreshPage(
             // never inside it — LocalBackdrop is provided to the bar slot alone.
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 AdaptiveTopAppBar(
-                    title = "Popup",
+                    title = str("PullToRefresh Test"),
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,

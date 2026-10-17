@@ -41,6 +41,7 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Share" to "分享",
     "Edit" to "编辑",
     "Download" to "下载",
+    "Get" to "获取",
     "Install" to "安装",
     "Later" to "稍后",
     "Not Now" to "暂不",
@@ -268,8 +269,8 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Triggered by long pressing the card." to "长按卡片触发。",
     "Long Press Action" to "长按操作",
     "PressFeedbackType: Tint (default)" to "按压反馈：着色（默认）",
-    "PressFeedback\nType: Sink" to "按压反馈\n类型：下沉",
-    "PressFeedback\nType: Tilt" to "按压反馈\n类型：倾斜",
+    "Press feedback:\nSink" to "按压反馈：\n下沉",
+    "Press feedback:\nTilt" to "按压反馈：\n倾斜",
     // Text fields and input views
     "Device name" to "设备名称",
     "Enter your nickname" to "输入昵称",

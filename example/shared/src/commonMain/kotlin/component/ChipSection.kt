@@ -4,15 +4,13 @@
 
 package component
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -80,12 +78,13 @@ private fun MultiSelectChipsDemo() {
     var popular by remember { mutableStateOf(false) }
     var dismissibleVisible by remember { mutableStateOf(true) }
 
-    Row(
+    // A chip group wraps onto new lines rather than scrolling, so no chip is cut at the card edge.
+    FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Chip(
             selected = recommended,
@@ -125,12 +124,13 @@ private fun SingleSelectChipsDemo() {
     var selectedIndex by remember { mutableIntStateOf(0) }
     val labels = listOf(str("All"), str("Photos"), str("Videos"), str("Documents"))
 
-    Row(
+    // A chip group wraps onto new lines rather than scrolling, so no chip is cut at the card edge.
+    FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         labels.forEachIndexed { index, label ->
             Chip(
@@ -144,12 +144,13 @@ private fun SingleSelectChipsDemo() {
 
 @Composable
 private fun DisabledChipsDemo() {
-    Row(
+    // A chip group wraps onto new lines rather than scrolling, so no chip is cut at the card edge.
+    FlowRow(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Chip(
             selected = false,

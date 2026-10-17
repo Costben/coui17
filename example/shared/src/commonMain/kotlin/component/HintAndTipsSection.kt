@@ -6,21 +6,20 @@ package component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
@@ -227,19 +226,21 @@ private fun TopTipsCustomContentDemo() {
             onClose = { visible = false },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = str("The message body is a custom slot."),
-                    color = COUITheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
-                    style = COUITheme.textStyles.footnote1,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = str("Keep it short."),
-                    style = COUITheme.textStyles.footnote1,
-                )
-            }
+            val highlight = str("The message body is a custom slot.")
+            val rest = str("Keep it short.")
+            val accent = COUITheme.colorScheme.primary
+            // One paragraph, so the plain sentence wraps after the highlighted one instead of being
+            // squeezed into the width the first text leaves over.
+            Text(
+                text = remember(highlight, rest, accent) {
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(color = accent, fontWeight = FontWeight.Medium)) { append(highlight) }
+                        append(' ')
+                        append(rest)
+                    }
+                },
+                style = COUITheme.textStyles.footnote1,
+            )
         }
         if (!visible) {
             TextButton(

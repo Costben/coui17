@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import i18n.str
@@ -71,9 +70,6 @@ private fun ClickSelectMenuDemo() {
     val preciseClickState = rememberPreciseClickState()
     val rows = listOf(str("Cut"), str("Copy"), str("Paste"))
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val isolated = remember {
-        ClickSelectMenuDefaults.isolatedAnchor(pointX = 540, pointY = 1200, displaySize = IntSize(1080, 2400))
-    }
 
     Column(
         modifier = Modifier
@@ -141,10 +137,6 @@ private fun ClickSelectMenuDemo() {
         )
         Text(
             text = "point=${preciseClickState.touchPoint}",
-            style = COUITheme.textStyles.footnote1,
-        )
-        Text(
-            text = "dummy anchor=${isolated.anchorBounds} in ${isolated.rootBounds}",
             style = COUITheme.textStyles.footnote1,
         )
     }

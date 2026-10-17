@@ -85,7 +85,7 @@ fun CardDemo() {
                 )
                 Text(
                     color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                    text = str("PressFeedback\nType: Sink"),
+                    text = str("Press feedback:\nSink"),
                     style = COUITheme.textStyles.paragraph,
                 )
             },
@@ -104,7 +104,7 @@ fun CardDemo() {
                 )
                 Text(
                     color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                    text = str("PressFeedback\nType: Tilt"),
+                    text = str("Press feedback:\nTilt"),
                     style = COUITheme.textStyles.paragraph,
                 )
             },
