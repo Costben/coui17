@@ -136,6 +136,9 @@ fun BreadcrumbBar(
 
     Row(
         modifier = modifier
+            // The ColorOS file manager path bar lays a path_bar_gradient_width gradient over each end
+            // of its HorizontalScrollView, so segments fade out instead of being cut at the edge.
+            .scrollEdgeFade(resolvedScrollState, BreadcrumbBarDefaults.FadeWidth)
             .horizontalScroll(resolvedScrollState)
             .padding(insideMargin),
         verticalAlignment = Alignment.CenterVertically,
@@ -258,6 +261,12 @@ object BreadcrumbBarDefaults {
      * The default margin inside the [BreadcrumbBar].
      */
     val InsideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+
+    /**
+     * The width of the fade at an edge the bar can still scroll towards. The ColorOS file manager's
+     * `path_bar_gradient_width`.
+     */
+    val FadeWidth = 50.dp
 
     /**
      * The height of each capsule-shaped item.

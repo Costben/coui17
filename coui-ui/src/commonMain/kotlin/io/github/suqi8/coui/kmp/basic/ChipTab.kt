@@ -119,41 +119,9 @@ fun ChipTabGroup(
     }
 
     Box(
-        modifier = modifier
-            // DST_OUT can only erase what it is composited against, so the group gets an offscreen
-            // layer of its own, like the saveLayer of ChipMaskHorizontalScrollView.dispatchDraw.
-            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-            .drawWithContent {
-                drawContent()
-                if (scrollState.maxValue <= 0) return@drawWithContent
-                val fadePx = fadeWidthPx.coerceAtMost(size.width / 2f)
-                if (fadePx <= 0f) return@drawWithContent
-                // FadeRect of ChipMaskHorizontalScrollView: -1 (white) to 0 (transparent) at the
-                // left, mirrored at the right, over the full height of the view.
-                if (scrollState.value > 0) {
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(Color.White, Color.Transparent),
-                            startX = 0f,
-                            endX = fadePx,
-                        ),
-                        size = Size(fadePx, size.height),
-                        blendMode = BlendMode.DstOut,
-                    )
-                }
-                if (scrollState.value < scrollState.maxValue) {
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(Color.Transparent, Color.White),
-                            startX = size.width - fadePx,
-                            endX = size.width,
-                        ),
-                        topLeft = Offset(size.width - fadePx, 0f),
-                        size = Size(fadePx, size.height),
-                        blendMode = BlendMode.DstOut,
-                    )
-                }
-            },
+        // FadeRect of ChipMaskHorizontalScrollView: the saveLayer'd group, erased by a white-to-
+        // transparent gradient at each edge it can still scroll towards.
+        modifier = modifier.scrollEdgeFade(scrollState, ChipTabDefaults.FadeWidth),
     ) {
         Row(
             modifier = Modifier.horizontalScroll(scrollState),

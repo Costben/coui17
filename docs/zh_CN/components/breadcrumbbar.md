@@ -1,6 +1,6 @@
 # BreadcrumbBar
 
-`BreadcrumbBar` 是 COUI 中的水平导航组件，以箭头图标分隔显示路径段，每段呈现为胶囊形状。当内容超出可用宽度时，组件会水平滚动而非折叠，与移动设备上文件管理器的惯例一致。
+`BreadcrumbBar` 是 COUI 中的水平导航组件，以箭头图标分隔显示路径段，每段呈现为胶囊形状。当内容超出可用宽度时，组件会水平滚动而非折叠，与移动设备上文件管理器的惯例一致。与 ColorOS 文件管理的路径栏一样，在仍可滚动的一侧边缘，路径段会在 50dp 内渐隐。
 
 `highlightIndex` 与 `items` 列表解耦：调用方可以显示完整路径的同时高亮任意一段（例如当前目录，或用户回退到的某个父级目录）。组件会自动滚动以保持高亮项可见。
 
@@ -105,6 +105,7 @@ BreadcrumbBarDefaults 对象提供了面包屑栏组件的默认值和颜色配�
 | 常量名                | 类型          | 说明             | 默认值 |
 | --------------------- | ------------- | ---------------- | ------ |
 | InsideMargin          | PaddingValues | 面包屑栏内部边距 | PaddingValues(horizontal = 12.dp, vertical = 8.dp) |
+| FadeWidth             | Dp            | 仍可滚动一侧边缘的渐隐宽度 | 50.dp |
 | ItemHeight            | Dp            | 每个胶囊项的高度 | 32.dp  |
 | ItemHorizontalPadding | Dp            | 每个胶囊项的水平内边距（等于圆角半径，使左右端形成完整半圆） | 10.dp |
 | ItemMaxWidth          | Dp            | 每个胶囊项的最大宽度；超出此宽度的文本会被截断 | 160.dp |

@@ -1,6 +1,6 @@
 # BreadcrumbBar
 
-`BreadcrumbBar` is a horizontal navigation component in COUI that displays a trail of path segments as capsule-shaped items separated by arrow icons. When the content overflows the available width, it scrolls horizontally instead of collapsing, matching the file-manager convention on mobile devices.
+`BreadcrumbBar` is a horizontal navigation component in COUI that displays a trail of path segments as capsule-shaped items separated by arrow icons. When the content overflows the available width, it scrolls horizontally instead of collapsing, matching the file-manager convention on mobile devices. Like the ColorOS file manager path bar, segments fade out over 50dp at each edge the bar can still scroll towards.
 
 The `highlightIndex` is decoupled from the `items` list: the caller may show the full path while highlighting any segment (e.g. the current directory or a parent the user navigated back to). The bar automatically scrolls to keep the highlighted item visible.
 
@@ -105,6 +105,7 @@ The BreadcrumbBarDefaults object provides default values and color configuration
 | Constant Name         | Type          | Description                            | Default Value |
 | --------------------- | ------------- | -------------------------------------- | ------------- |
 | InsideMargin          | PaddingValues | Internal padding of the breadcrumb bar | PaddingValues(horizontal = 12.dp, vertical = 8.dp) |
+| FadeWidth             | Dp            | Width of the fade at an edge the bar can still scroll towards | 50.dp |
 | ItemHeight            | Dp            | Height of each capsule-shaped item     | 32.dp         |
 | ItemHorizontalPadding | Dp            | Horizontal padding of each item (equals the corner radius for full semicircle ends) | 10.dp |
 | ItemMaxWidth          | Dp            | Maximum width of each capsule-shaped item; text beyond this is truncated | 160.dp |
