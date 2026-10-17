@@ -129,6 +129,22 @@ OverlayListPopup(
 
 你也可以通过 `ListPopupDefaults.dropdownPositionProvider(verticalMargin, horizontalMargin)` 构建带自定义边距的下拉定位器。
 
+### 避让底部栏
+
+与 ColorOS 的弹出菜单一致，列表弹窗除了始终与系统导航栏保持 32dp 外，还会与 `BottomFloatingNavigationBar`、`BottomFloatingAccessoryNavigationBar`、`BottomFloatingToolbar` 和 `NavigationBar` 保持至少 8dp 的间距。自定义底部栏可以用 `Modifier.popupBottomBarrier()` 获得同样的避让：
+
+```kotlin
+Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .popupBottomBarrier() // 间距默认为 PopupBarrierDefaults.GapToNavigationView（8.dp）
+) {
+    // 自定义底部栏内容
+}
+```
+
+只有窗口高度超过 `PopupBarrierDefaults.MinWindowHeightToApply`（360dp）时才会避让；从对话框或底部面板中弹出的列表不会避让页面上的底部栏，因为对话框已经盖住了它们。
+
 ## 属性
 
 ### OverlayListPopup

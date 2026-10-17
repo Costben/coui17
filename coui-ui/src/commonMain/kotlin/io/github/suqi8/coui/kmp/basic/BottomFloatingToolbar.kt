@@ -263,6 +263,8 @@ fun BottomFloatingToolbarGroup(
     }
     val base = modifier
         .height(BottomFloatingToolbarDefaults.MenuViewHeight)
+        // getDisplayFrame: the union of the visible menu views is the toolbar's popup barrier.
+        .popupBottomBarrier()
         .then(surfaceModifier)
 
     Layout(

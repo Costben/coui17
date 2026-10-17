@@ -134,6 +134,8 @@ fun NavigationBar(
             .fillMaxWidth()
             .onSizeChanged { barHeightPx = it.height }
             .graphicsLayer { translationY = (1f - slide.value) * barHeightPx }
+            // COUINavigationView is a popup barrier; inside the slide so a hidden bar stops being one.
+            .popupBottomBarrier()
             .couiGlassSurface(
                 backdrop = backdrop,
                 shape = RectangleShape,

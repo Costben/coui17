@@ -2885,6 +2885,18 @@ public final class io/github/suqi8/coui/kmp/basic/PageIndicatorKt {
 	public static final fun PageIndicator-jA1GFJw (IILandroidx/compose/ui/Modifier;JJLandroidx/compose/runtime/Composer;II)V
 }
 
+public final class io/github/suqi8/coui/kmp/basic/PopupBarrierDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/PopupBarrierDefaults;
+	public final fun getGapToNavigationView-D9Ej5fM ()F
+	public final fun getMinWindowHeightToApply-D9Ej5fM ()F
+}
+
+public final class io/github/suqi8/coui/kmp/basic/PopupBarrierKt {
+	public static final fun popupBottomBarrier-3ABfNKs (Landroidx/compose/ui/Modifier;F)Landroidx/compose/ui/Modifier;
+	public static synthetic fun popupBottomBarrier-3ABfNKs$default (Landroidx/compose/ui/Modifier;FILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/PopupLayoutPosition {
 	public static final field $stable I
 	public fun <init> (ZZZ)V

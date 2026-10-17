@@ -1072,8 +1072,9 @@ object ListPopupDefaults {
                 // Show above
                 anchorBounds.top - popupContentSize.height - topGap
             } else {
-                // Middle
-                anchorBounds.top + anchorBounds.height / 2 - popupContentSize.height / 2
+                // Neither side fits: mMainMenuLocateYRule leaves y at mAvailableBounds.top rather
+                // than centring the menu over its anchor.
+                windowBounds.top + popupMargin.top
             }
             return IntOffset(
                 x = offsetX.coerceIn(
@@ -1413,6 +1414,7 @@ fun rememberListPopupLayoutInfo(
     }
 
     val containerSize = windowInfo.containerSize
+    val bottomBarrierTop = LocalPopupBarriers.current?.bottomBarrierTop
 
     val windowBounds = remember(
         layoutDirection,
@@ -1422,15 +1424,19 @@ fun rememberListPopupLayoutInfo(
         navigationBars,
         captionBar,
         containerSize,
+        bottomBarrierTop,
     ) {
         with(density) {
             // COUI reserves an extra barrier inside the raw insets before the menu may be placed.
+            val windowBottom = containerSize.height - navigationBars.getBottom(this) - captionBar.getBottom(this) -
+                ListPopupDefaults.BottomBarrier.roundToPx()
+            // A bottom navigation view raises the barrier further, but only in a window tall enough.
+            val tallEnough = containerSize.height > PopupBarrierDefaults.MinWindowHeightToApply.roundToPx()
             IntRect(
                 left = displayCutout.getLeft(this, layoutDirection),
                 top = statusBars.getTop(this) + ListPopupDefaults.TopBarrier.roundToPx(),
                 right = containerSize.width - displayCutout.getRight(this, layoutDirection),
-                bottom = containerSize.height - navigationBars.getBottom(this) - captionBar.getBottom(this) -
-                    ListPopupDefaults.BottomBarrier.roundToPx(),
+                bottom = if (bottomBarrierTop != null && tallEnough) min(windowBottom, bottomBarrierTop) else windowBottom,
             )
         }
     }

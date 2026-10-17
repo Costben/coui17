@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
+import io.github.suqi8.coui.kmp.basic.LocalPopupBarriers
+import io.github.suqi8.coui.kmp.basic.PopupBarriers
 import io.github.suqi8.coui.kmp.utils.COUIIndication
 import io.github.suqi8.coui.kmp.utils.COUIOverscrollFactory
 
@@ -36,6 +38,7 @@ fun COUITheme(
         LocalContentColor provides couiColors.onBackground,
         LocalColorSchemeMode provides controller.colorSchemeMode,
         LocalOverscrollFactory provides COUIOverscrollFactory,
+        LocalPopupBarriers provides rememberPopupBarriers(),
     ) {
         content()
     }
@@ -63,9 +66,17 @@ fun COUITheme(
         LocalTextStyles provides couiTextStyles,
         LocalIndication provides couiIndication,
         LocalOverscrollFactory provides COUIOverscrollFactory,
+        LocalPopupBarriers provides rememberPopupBarriers(),
     ) {
         content()
     }
+}
+
+/** The barrier registry of an enclosing COUI theme, so nested themes share one; a new one otherwise. */
+@Composable
+private fun rememberPopupBarriers(): PopupBarriers {
+    val outer = LocalPopupBarriers.current
+    return outer ?: remember { PopupBarriers() }
 }
 
 object COUITheme {

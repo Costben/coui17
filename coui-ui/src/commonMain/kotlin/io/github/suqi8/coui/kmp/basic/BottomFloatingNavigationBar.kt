@@ -248,7 +248,8 @@ internal fun FloatingCapsuleRow(
     val reservePx = with(density) { trailingReserve.roundToPx() }
 
     Layout(
-        modifier = modifier,
+        // getDisplayFrame: the menu view is the bar's popup barrier.
+        modifier = modifier.popupBottomBarrier(),
         content = {
             CompositionLocalProvider(LocalFloatingMenuTouchOwner provides true) { BottomFloatingCapsuleRowScope.content() }
         },

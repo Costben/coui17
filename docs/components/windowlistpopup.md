@@ -67,6 +67,22 @@ Box {
 }
 ```
 
+## Keeping Clear of Bottom Bars
+
+Like ColorOS popup menus, a list popup stays at least 8dp above `BottomFloatingNavigationBar`, `BottomFloatingAccessoryNavigationBar`, `BottomFloatingToolbar` and `NavigationBar`, on top of the 32dp it always keeps above the system navigation bar. Mark a custom bottom bar with `Modifier.popupBottomBarrier()` to get the same treatment:
+
+```kotlin
+Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .popupBottomBarrier() // gap defaults to PopupBarrierDefaults.GapToNavigationView (8.dp)
+) {
+    // Custom bottom bar content
+}
+```
+
+Barriers only apply in windows taller than `PopupBarrierDefaults.MinWindowHeightToApply` (360dp), and popups opened from a dialog or bottom sheet ignore the page's bars, which the dialog already covers.
+
 ## Properties
 
 ### WindowListPopup

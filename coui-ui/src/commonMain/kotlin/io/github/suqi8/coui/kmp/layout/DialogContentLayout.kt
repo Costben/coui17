@@ -59,6 +59,7 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
@@ -429,7 +430,7 @@ internal fun DialogContent(
                     onTextLayout = { summaryMultiline.value = it.lineCount > 1 },
                 )
             }
-            content()
+            PopupBarrierBoundary(content)
         }
     }
 }
