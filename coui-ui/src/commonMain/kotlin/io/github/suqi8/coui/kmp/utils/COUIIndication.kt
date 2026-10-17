@@ -83,7 +83,10 @@ class COUIIndication(
                 restingAnimation =
                     coroutineScope.launch {
                         if (coroutineContext.isActive) {
-                            pressedAnimation?.join()
+                            // Cut the fade-in short instead of waiting for it: a quick tap would
+                            // otherwise keep the layer at full strength long after the finger is
+                            // up, and a picture taken of the page would freeze it there.
+                            pressedAnimation?.cancel()
                             animatedAlpha.animateTo(
                                 targetValue = targetAlpha,
                                 animationSpec = StateLayerSpring,
