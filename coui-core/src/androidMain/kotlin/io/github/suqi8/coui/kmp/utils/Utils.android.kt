@@ -3,9 +3,14 @@
 package io.github.suqi8.coui.kmp.utils
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.os.Build
 import android.view.RoundedCorner
+import android.view.View
+import android.view.Window
+import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -62,14 +67,48 @@ actual fun platformDialogProperties(): DialogProperties = DialogProperties(
 @Composable
 actual fun RemovePlatformDialogDefaultEffects() {
     val parent = LocalView.current.parent
-    DisposableEffect(parent) {
+    val context = LocalContext.current
+    DisposableEffect(parent, context) {
         val provider = parent as? DialogWindowProvider
         val window = provider?.window
         window?.setWindowAnimations(0)
         window?.setDimAmount(0f)
         window?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        val hostWindow = context.findActivity()?.window
+        if (window != null && hostWindow != null) {
+            copySystemBarAppearance(from = hostWindow, to = window)
+        }
         onDispose {
             // No-op
         }
     }
+}
+
+/**
+ * The dialog window draws edge to edge and so takes over the system bars, but it starts from the
+ * platform default appearance (light icons). Copy the host activity's light status / navigation bar
+ * flags so the bar icons keep the colour the page under the dialog was given.
+ */
+@Suppress("DEPRECATION")
+private fun copySystemBarAppearance(from: Window, to: Window) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+        val appearance = from.insetsController?.systemBarsAppearance ?: return
+        to.insetsController?.setSystemBarsAppearance(appearance and mask, mask)
+    } else {
+        var mask = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mask = mask or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        }
+        val source = from.decorView.systemUiVisibility and mask
+        val target = to.decorView
+        target.systemUiVisibility = (target.systemUiVisibility and mask.inv()) or source
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

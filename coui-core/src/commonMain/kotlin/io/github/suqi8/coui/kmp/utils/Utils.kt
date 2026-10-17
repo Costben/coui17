@@ -39,7 +39,9 @@ expect fun platformDialogProperties(): DialogProperties
  * Removes platform default dialog effects such as window animations and dimming.
  *
  * Platform implementations should clear default window animations and dim amount to ensure
- * COUI custom dialog animations and dim layer behave consistently across devices.
+ * COUI custom dialog animations and dim layer behave consistently across devices. Where the
+ * dialog gets its own window that covers the system bars, it should also keep the host's system
+ * bar icon appearance.
  */
 @Composable
 expect fun RemovePlatformDialogDefaultEffects()
