@@ -13,6 +13,10 @@ All notable user-visible changes are documented here. The format follows
 - `TabRowDefaults.tabRowColors` accepts an `indicatorShadowColor` for the drop shadow under the sliding indicator.
 - `BottomFloatingNavigationBar` accepts a `shadow`, so a light colour can turn it into an outer glow on a dark theme.
 - `BottomFloatingNavigationBarDefaults` exposes the native bottom-bar material: `BlurColorsLight`, `BlurColorsDark`, `blurColors`, `blurRadius`, `NATIVE_BLUR_RADIUS_PX`, `RIM_ALPHA_LIGHT`, `RIM_ALPHA_DARK` and `CausticColor`.
+- `Modifier.popupBottomBarrier` marks a custom bottom bar that list popups keep clear of, with `PopupBarrierDefaults` holding the ColorOS gap and minimum window height.
+- `TooltipDefaults.HorizontalEdgeMargin`, the gap a tooltip keeps from the window's side edges.
+- `BreadcrumbBarDefaults.FadeWidth`, the width of the fade at an edge the breadcrumb bar can still scroll towards.
+- `ChipDefaults.DismissIconStartPadding` and `ChipDefaults.DismissIconEndPadding`, the spacing around the dismiss icon.
 
 ### Fixed
 
@@ -26,6 +30,18 @@ All notable user-visible changes are documented here. The format follows
 - The calendar's today ring follows the device's time zone and moves at local midnight instead of staying on the previous day.
 - Cascading dropdown popups no longer print a depth warning to standard output.
 - A notification swipe state created revealed, or restored after the screen is recreated, stays revealed instead of closing on first layout.
+- `PlainTooltip` text is readable again: it is white on the ColorOS tips blue instead of near-black on near-black.
+- On Android, window dialogs, sheets and popup menus keep the page's status and navigation bar icon colour instead of switching to white icons on a light page.
+- The big round `InstallLoadProgress` button shows its label in white at rest instead of drawing it in the same blue as its fill.
+- List popups stay 8dp above bottom floating navigation bars, bottom floating toolbars and navigation bars instead of opening over them.
+- Tooltips keep 16dp from the window's side edges instead of touching them.
+- `BreadcrumbBar` fades its segments out at an edge it can still scroll towards instead of cutting them off.
+- A list popup that fits neither below nor above its anchor starts at the top of the available area instead of opening over its anchor.
+- A dismissible `Chip` keeps the 32dp chip height: the close icon is 14dp with the ColorOS spacing, and its 28dp touch target no longer stretches the chip to 48dp.
+
+### Deprecated
+
+- `InstallLoadProgressDefaults.labelColor(state, colors)`; use the overload that also takes the `InstallLoadStyle`.
 
 ### Changed
 
