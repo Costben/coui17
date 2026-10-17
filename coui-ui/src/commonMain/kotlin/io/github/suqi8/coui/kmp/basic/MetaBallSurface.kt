@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.RuntimeShader
 import io.github.suqi8.coui.kmp.blur.asBrush
@@ -163,6 +165,52 @@ fun MetaBallSurface(
     bottomGlowBlur: Dp = 8.dp,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
+    MetaBallSurface(
+        particles = particles,
+        blurColors = null,
+        modifier = modifier,
+        color = color,
+        backdrop = backdrop,
+        blurRadius = blurRadius,
+        containerAlpha = containerAlpha,
+        extension = extension,
+        extensionFactorX = extensionFactorX,
+        extensionFactorY = extensionFactorY,
+        rimColor = rimColor,
+        rimBlur = rimBlur,
+        rimBottomScale = rimBottomScale,
+        bottomGlowColor = bottomGlowColor,
+        content = content,
+    )
+}
+
+/**
+ * [MetaBallSurface] whose glass is tinted by [blurColors] instead of one flat [color] layer.
+ *
+ * A COUI material such as `TYPE_FRAMEWORK_BOTTOM_BAR` tints its blur with blend-mode layers
+ * (`ColorDodge`, `Overlay`, `Luminosity`) that keep the backdrop's hue and saturation and only remap
+ * its lightness. A `SrcOver` layer of [color] at [containerAlpha] cannot express that: it replaces
+ * most of the backdrop with a flat grey. When [blurColors] is non-null it is applied to the blur
+ * and [color] / [containerAlpha] only colour the opaque fallback.
+ */
+@Composable
+internal fun MetaBallSurface(
+    particles: List<MetaBallParticle>,
+    blurColors: List<BlendColorEntry>?,
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.bar,
+    backdrop: Backdrop? = LocalBackdrop.current,
+    blurRadius: Float = GlassDefaults.BlurRadius,
+    containerAlpha: Float = GlassDefaults.ContainerAlpha,
+    extension: Dp = MetaBallDefaults.Extension,
+    extensionFactorX: Float = MetaBallDefaults.EXTENSION_FACTOR_X,
+    extensionFactorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
+    rimColor: Color? = Color.White.copy(alpha = 0.55f),
+    rimBlur: Dp = MetaBallDefaults.RimBlur,
+    rimBottomScale: Float = 0f,
+    bottomGlowColor: Color? = null,
+    content: @Composable BoxScope.() -> Unit = {},
+) {
     val runsShader = isRuntimeShaderSupported()
     val shader = rememberMetaBallShader(runsShader)
     val glass = backdrop != null && shader != null
@@ -191,7 +239,7 @@ fun MetaBallSurface(
                             particles = paintedParticles,
                             rim = rimColor ?: Color.Transparent,
                             bottomScale = rimBottomScale,
-                            tint = color.copy(alpha = containerAlpha),
+                            tint = if (blurColors == null) color.copy(alpha = containerAlpha) else Color.Transparent,
                             extension = extension,
                             factorX = extensionFactorX,
                             factorY = extensionFactorY,
@@ -200,6 +248,7 @@ fun MetaBallSurface(
                             backdrop = backdrop,
                             shape = RectangleShape,
                             blurRadius = blurRadius,
+                            colors = BlurDefaults.blurColors(blendColors = blurColors.orEmpty()),
                             // The blob is this node's content, so DstIn keeps exactly the blur that
                             // falls inside the merged outline.
                             contentBlendMode = BlendMode.DstIn,

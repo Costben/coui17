@@ -11,9 +11,15 @@ All notable user-visible changes are documented here. The format follows
 - Notifications reveal settings and delete actions with a melting transition while swiping left.
 - The notification swipe demonstration is available directly from the example app's Settings page.
 - `TabRowDefaults.tabRowColors` accepts an `indicatorShadowColor` for the drop shadow under the sliding indicator.
+- `BottomFloatingNavigationBar` accepts a `shadow`, so a light colour can turn it into an outer glow on a dark theme.
+- `BottomFloatingNavigationBarDefaults` exposes the native bottom-bar material: `BlurColorsLight`, `BlurColorsDark`, `blurColors`, `blurRadius`, `NATIVE_BLUR_RADIUS_PX`, `RIM_ALPHA_LIGHT`, `RIM_ALPHA_DARK` and `CausticColor`.
 
 ### Fixed
 
+- `BottomFloatingNavigationBar` casts the native spot shadow under its capsule and expansion view instead of none.
+- `BottomFloatingNavigationBar` wears the native bottom-bar glass: content scrolling underneath keeps its colour and stays recognisable instead of turning into a flat grey smear, the rim light matches the device in both themes, and the bar casts the native caustic light.
+- `BottomFloatingNavigationBar` no longer stacks its default shadow on the system caustic shadow, so the light under the bar is no longer dimmed.
+- `BottomFloatingNavigationBarItem` labels are 10dp, no longer grow with the system font and sit at the device's height below the icon; they were 14sp.
 - Popup shadows retain soft edges throughout opening and closing animations.
 - The COUI17 settings show controls supported by the current layout, and the FPS, page-swipe and blur switches now affect the gallery.
 - Native light halos initialize with their rounded shadow bounds before shadow casting is enabled.

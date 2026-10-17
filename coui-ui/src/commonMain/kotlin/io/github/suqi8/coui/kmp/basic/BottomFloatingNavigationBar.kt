@@ -40,6 +40,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -50,7 +51,9 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -64,6 +67,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
@@ -72,6 +76,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -88,9 +94,14 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  *
  * The default [containerColor] is the native background fallback `coui_tab_navigation_view_bg`,
  * whose shape fill is `?attr/couiColorBar` (`coui_color_bar`); that is the value carried by
- * `COUITheme.colorScheme.bar`. When a [backdrop] is available the capsule draws it blurred, lays
- * [containerColor] over it at [GlassDefaults.ContainerAlpha] and lights the rim with a glass stroke
- * — the ColorOS 17 light-sensing glass. Without a backdrop the capsule keeps its opaque fill.
+ * `COUITheme.colorScheme.bar`. When a [backdrop] is available the capsule wears the material
+ * `BaseBottomFloatingMenuView.updateBlurEffect` requests instead, `TYPE_FRAMEWORK_BOTTOM_BAR`: the
+ * backdrop blurred at the native radius ([BottomFloatingNavigationBarDefaults.blurRadius]) and
+ * tinted with [BottomFloatingNavigationBarDefaults.BlurColorsLight] /
+ * [BottomFloatingNavigationBarDefaults.BlurColorsDark], which keep the backdrop's colour and only
+ * remap its lightness; the rim is lit with the `TYPE_FRAMEWORK_CAPSULE_3` stroke and the bar casts
+ * the native caustic light. The native view also drops `couiColorBar` once the effect is on, so
+ * [containerColor] only fills the capsule when there is no backdrop.
  *
  * The capsule is measured the way `BaseBottomFloatingMenuView.onMeasure` measures its menu view: it
  * is as wide as its items at [BottomFloatingNavigationBarDefaults.ItemMaxWidth] plus the 12dp
@@ -127,12 +138,16 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * arrangements coincide in the resting state regardless.
  *
  * @param modifier The modifier to be applied to the bar.
- * @param containerColor The background color of the capsule.
+ * @param containerColor The opaque fill of the capsule when there is no [backdrop] to blur.
  * @param backdrop The content blurred behind the capsule, defaulting to [LocalBackdrop]. `null`
  *   keeps the capsule opaque.
  * @param expanded Whether the [expansion] view is shown. Ignored when [expansion] is `null`.
  * @param expansion The view that melts out of the capsule, typically a round action button. When
  *   `null` the bar is a plain capsule and [expanded] has no effect.
+ * @param shadow The shadow the capsule and the expansion view each cast, or `null` for none. A light
+ *   [Shadow.color] on a dark theme turns it into an outer glow. Where the system draws the caustic
+ *   light under a bar with an [expansion] view, that caustic already casts the native spot shadow, so
+ *   the default [BottomFloatingNavigationBarDefaults.BarShadow] is left out there.
  * @param content The content of the bar, usually [BottomFloatingNavigationBarItem]s.
  */
 @Suppress("ktlint:compose:modifier-not-used-at-root")
@@ -143,6 +158,7 @@ fun BottomFloatingNavigationBar(
     backdrop: Backdrop? = LocalBackdrop.current,
     expanded: Boolean = false,
     expansion: (@Composable BoxScope.() -> Unit)? = null,
+    shadow: Shadow? = BottomFloatingNavigationBarDefaults.BarShadow,
     content: @Composable RowScope.() -> Unit,
 ) {
     if (expansion == null) {
@@ -150,6 +166,7 @@ fun BottomFloatingNavigationBar(
             modifier = modifier,
             containerColor = containerColor,
             backdrop = backdrop,
+            shadow = shadow,
             content = content,
         )
     } else {
@@ -159,9 +176,35 @@ fun BottomFloatingNavigationBar(
             backdrop = backdrop,
             expanded = expanded,
             expansion = expansion,
+            shadow = shadow,
             content = content,
         )
     }
+}
+
+@Deprecated(
+    message = "Migrated to the overload that adds a shadow parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Suppress("ktlint:compose:modifier-not-used-at-root")
+@Composable
+fun BottomFloatingNavigationBar(
+    modifier: Modifier = Modifier,
+    containerColor: Color = COUITheme.colorScheme.bar,
+    backdrop: Backdrop? = LocalBackdrop.current,
+    expanded: Boolean = false,
+    expansion: (@Composable BoxScope.() -> Unit)? = null,
+    content: @Composable RowScope.() -> Unit,
+) {
+    BottomFloatingNavigationBar(
+        modifier = modifier,
+        containerColor = containerColor,
+        backdrop = backdrop,
+        expanded = expanded,
+        expansion = expansion,
+        shadow = BottomFloatingNavigationBarDefaults.BarShadow,
+        content = content,
+    )
 }
 
 /**
@@ -282,6 +325,7 @@ private object BottomFloatingCapsuleRowScope : RowScope {
 private fun BottomFloatingNavigationBarCapsule(
     containerColor: Color,
     backdrop: Backdrop?,
+    shadow: Shadow?,
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -323,6 +367,20 @@ private fun BottomFloatingNavigationBarCapsule(
                 modifier = Modifier
                     .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
             ) {
+                if (shadow != null) {
+                    // The shadow rides the press transform so it stays under the capsule it lifts.
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .graphicsLayer {
+                                translationX = touchState.translation.x
+                                translationY = touchState.translation.y
+                                scaleX = touchState.scaleX
+                                scaleY = touchState.scaleY
+                            }
+                            .dropShadow(shape = shape, shadow = shadow),
+                    )
+                }
                 FloatingCapsuleRow(
                     modifier = Modifier
                         .couiTouchMotion(
@@ -334,6 +392,8 @@ private fun BottomFloatingNavigationBarCapsule(
                                 shape = shape,
                                 containerColor = containerColor,
                                 fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                                blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
+                                blendColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
                                 highlight = highlight,
                             ),
                         )
@@ -360,6 +420,7 @@ private fun BottomFloatingNavigationBarMeltBall(
     backdrop: Backdrop?,
     expanded: Boolean,
     expansion: @Composable BoxScope.() -> Unit,
+    shadow: Shadow?,
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -370,6 +431,7 @@ private fun BottomFloatingNavigationBarMeltBall(
     val sideSpacing = BottomFloatingNavigationBarDefaults.SideSpacing
     val expansionTouchState = rememberCOUITouchMotionState()
     val menuTouchState = rememberCOUITouchMotionState()
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
     // COUI drives the expansion view with a spring at response 0.55 / bounce 0.35 once the melt ball
     // is supported; Compose's spring takes `stiffness` = omega0^2 = (2*pi / 0.55)^2 and
@@ -406,9 +468,46 @@ private fun BottomFloatingNavigationBarMeltBall(
             contentAlignment = Alignment.BottomCenter,
         ) {
             val capsuleWidth = with(density) { capsuleWidthPx.toDp() }
+            // `BaseBottomFloatingMenuView.updateOuterShadow` lifts the menu view with either the
+            // caustic shadow (`ShadowUtils` level 7, which casts its own spot shadow) or the level 2
+            // spot shadow, never both. Where the system draws the caustic below, the default shadow
+            // would darken the light it casts, so only a caller's own shadow is kept.
+            val systemCaustic = rememberPlatformCausticShadowRenderer() != null
+            val liftShadow = shadow.takeUnless { systemCaustic && it == BottomFloatingNavigationBarDefaults.BarShadow }
             Box(
                 modifier = Modifier.padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
             ) {
+                // The native menu view and expansion view each cast their own shadow, so the capsule
+                // and the ball get one apiece under the blob MetaBallSurface paints over them. Each
+                // rides its particle's press transform.
+                if (liftShadow != null && capsuleWidthPx > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(capsuleWidth, barHeight)
+                            .graphicsLayer {
+                                translationX = menuTouchState.translation.x
+                                translationY = menuTouchState.translation.y
+                                scaleX = menuTouchState.scaleX
+                                scaleY = menuTouchState.scaleY
+                            }
+                            .dropShadow(shape = RoundedCornerShape(cornerRadius), shadow = liftShadow),
+                    )
+                }
+                if (liftShadow != null && capsuleWidthPx > 0 && expansionFootprint > 0.dp) {
+                    Box(
+                        modifier = Modifier
+                            .offset(x = capsuleWidth + gap, y = (barHeight - expansionFootprint) / 2)
+                            .size(expansionFootprint)
+                            .graphicsLayer {
+                                alpha = progress.coerceIn(0f, 1f)
+                                translationX = expansionTouchState.translation.x
+                                translationY = expansionTouchState.translation.y
+                                scaleX = expansionTouchState.scaleX
+                                scaleY = expansionTouchState.scaleY
+                            }
+                            .dropShadow(shape = CircleShape, shadow = liftShadow),
+                    )
+                }
                 MetaBallSurface(
                     particles = buildList {
                         if (capsuleWidthPx > 0) {
@@ -442,12 +541,29 @@ private fun BottomFloatingNavigationBarMeltBall(
                             )
                         }
                     },
+                    // The capsule wears the native TYPE_FRAMEWORK_BOTTOM_BAR material rather than a
+                    // flat tint, so the backdrop's colour still shows through the glass.
+                    blurColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
                     modifier = Modifier.matchParentSize(),
                     color = containerColor,
                     backdrop = backdrop,
+                    blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
                     // The merged outline gets the glass rim; without a backdrop the blob is opaque and
-                    // the native component draws no stroke either.
-                    rimColor = if (backdrop != null) Color.White.copy(alpha = 0.55f) else null,
+                    // the native component draws no stroke either. TYPE_FRAMEWORK_CAPSULE_3's near and
+                    // far ramps draw a sharp upper line and a weaker lower one.
+                    rimColor = if (backdrop != null) {
+                        Color.White.copy(
+                            alpha = if (isDark) {
+                                BottomFloatingNavigationBarDefaults.RIM_ALPHA_DARK
+                            } else {
+                                BottomFloatingNavigationBarDefaults.RIM_ALPHA_LIGHT
+                            },
+                        )
+                    } else {
+                        null
+                    },
+                    rimBottomScale = 1f,
+                    bottomGlowColor = BottomFloatingNavigationBarDefaults.CausticColor,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FloatingCapsuleRow(
@@ -455,7 +571,7 @@ private fun BottomFloatingNavigationBarMeltBall(
                             .onSizeChanged { capsuleWidthPx = it.width }
                             .couiTouchMotion(
                                 shape = RoundedCornerShape(cornerRadius),
-                                lightParams = SpotLightDefaults.opaqueMedium2(COUITheme.colorScheme.background.luminance() < 0.5f),
+                                lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                                 motionState = menuTouchState,
                             ),
                         // COUI narrows the menu view by exactly the expansion view's footprint plus the
@@ -479,9 +595,7 @@ private fun BottomFloatingNavigationBarMeltBall(
                                 .couiTouchMotion(
                                     enabled = expanded,
                                     shape = CircleShape,
-                                    lightParams = SpotLightDefaults.opaqueMedium2(
-                                        COUITheme.colorScheme.background.luminance() < 0.5f,
-                                    ),
+                                    lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                                     motionState = expansionTouchState,
                                     extraTransform = {
                                         scaleX *= progress
@@ -628,7 +742,12 @@ fun RowScope.BottomFloatingNavigationBarItem(
             Text(
                 text = label,
                 color = tint,
-                fontSize = BottomFloatingNavigationBarDefaults.LabelFontSize,
+                // The native title is sized in pixels, so a larger system font leaves it as it is.
+                fontSize = with(LocalDensity.current) { BottomFloatingNavigationBarDefaults.LabelFontSize.value.dp.toSp() },
+                // A TextView pads its line out to the font's top and bottom metrics, which drops the
+                // glyph about 2.8dp below the title's top edge; an unpadded line sits it 1dp below.
+                lineHeight = with(LocalDensity.current) { LabelLineHeight.toSp() },
+                style = COUITheme.textStyles.main.copy(lineHeightStyle = LabelLineHeightStyle),
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -743,6 +862,82 @@ object BottomFloatingNavigationBarDefaults {
     /** The gap kept between the capsule and the expansion view. COUI `mSideViewSpacing`. */
     val SideSpacing = 12.dp
 
+    /**
+     * The spot shadow the capsule and the expansion view each cast, COUI `SHADOW_LV_B`.
+     *
+     * `BaseBottomFloatingMenuView` lifts the menu view with the same
+     * `ShadowUtils.setElevationToView(this, 2, ...)` call as the accessory bar, so this is the
+     * measured [BottomFloatingAccessoryNavigationBarDefaults.BarShadow].
+     */
+    val BarShadow: Shadow = BottomFloatingAccessoryNavigationBarDefaults.BarShadow
+
+    /**
+     * The blur radius `COUIMaterialBlurEffect` hands `TYPE_FRAMEWORK_BOTTOM_BAR`, in pixels.
+     *
+     * `BaseBottomFloatingMenuView.updateBlurEffect` sets that type on the capsule, and the material
+     * passes this raw 25 straight to `RenderEffect.createBlurEffect`, so it is a pixel radius, not a
+     * dp one; see [blurRadius] for the conversion.
+     */
+    const val NATIVE_BLUR_RADIUS_PX = 25f
+
+    /**
+     * The tint layers of `FRAMEWORK_BOTTOM_BAR_PARAMS_LIGHT`, in the order they are applied.
+     *
+     * The material wraps the blur in two `createColorFilterEffect` calls, layer 1 innermost, so
+     * `#B3666666` in `ColorDodge` brightens the blur first and `#99F5F5F5` in `Luminosity` then lifts
+     * its lightness while keeping the backdrop's hue and saturation.
+     */
+    val BlurColorsLight: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0xB3666666), mode = BlurBlendMode.ColorDodge),
+        BlendColorEntry(color = Color(0x99F5F5F5), mode = BlurBlendMode.Luminosity),
+    )
+
+    /**
+     * The tint layers of `FRAMEWORK_BOTTOM_BAR_PARAMS_DARK`: `#80666666` in `Overlay`, then
+     * `#B3262626` in `Luminosity`, which darkens the blur but leaves its colour in place.
+     */
+    val BlurColorsDark: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0x80666666), mode = BlurBlendMode.Overlay),
+        BlendColorEntry(color = Color(0xB3262626), mode = BlurBlendMode.Luminosity),
+    )
+
+    /**
+     * The alpha of the light traced along the capsule's rim on a light theme.
+     *
+     * `BaseBottomFloatingMenuView.updateStrokeEffect` requests `TYPE_FRAMEWORK_CAPSULE_3`, whose
+     * `FRAMEWORK_CAPSULE_PARAMS_3_LIGHT` edge alpha is 0.25 at a 2.5dp line width.
+     */
+    const val RIM_ALPHA_LIGHT = 0.25f
+
+    /** The rim alpha on a dark theme, `FRAMEWORK_CAPSULE_PARAMS_3_DARK`'s 0.8. */
+    const val RIM_ALPHA_DARK = 0.8f
+
+    /**
+     * The caustic light cast under the capsule, COUI `coui_caustic_color_2` (`#42FFFFFF`).
+     *
+     * `BaseBottomFloatingMenuView.setCausticShadowEffect` hands this colour to
+     * `setOutlineCausticShadowColor` with the level 4 layout, so it is the same in both themes: it
+     * only reads as light on a dark page.
+     */
+    val CausticColor = Color(0x42FFFFFF)
+
+    /** The tint layers of the bar's material for the current theme. */
+    fun blurColors(isDark: Boolean): List<BlendColorEntry> = if (isDark) BlurColorsDark else BlurColorsLight
+
+    /**
+     * [NATIVE_BLUR_RADIUS_PX] as the dp radius `textureBlur` needs for the same Gaussian.
+     *
+     * hwui turns a `createBlurEffect` radius into a sigma of `0.57735 * r + 0.5`, so the native
+     * 25px is a 14.93px sigma whatever the density. `textureBlur` takes dp and derives its sigma as
+     * `0.45 * px`. Reading 25 as dp, as [GlassDefaults.BlurRadius] does, blurs about three times as
+     * wide on a 3.875x screen and leaves a featureless smear where the device keeps the shapes
+     * behind the bar readable.
+     */
+    @Composable
+    fun blurRadius(): Float = with(LocalDensity.current) {
+        ((NATIVE_BLUR_SIGMA_SCALE * NATIVE_BLUR_RADIUS_PX + NATIVE_BLUR_SIGMA_OFFSET) / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+    }
+
     /** The item cell height. COUI `coui_bottom_floating_navigation_bar_item_height`. */
     val ItemHeight = 48.dp
 
@@ -815,8 +1010,17 @@ object BottomFloatingNavigationBarDefaults {
     /** The minimum spacing kept with a slide view. COUI `coui_bottom_floating_navigation_bar_Minimum_spacing_with_slide_view`. */
     val MinimumSpacingWithSlideView = 12.dp
 
-    /** Native `couiTextButtonM` is 14sp; the 48dp cell leaves exactly enough room for it. */
-    val LabelFontSize = 14.sp
+    /**
+     * The label size.
+     *
+     * The item's textAppearance is `couiTextButtonM` (14sp), but
+     * `COUIBottomFloatingToolbarItemView.applyNaviVerticalStyle` overrides it with
+     * `setTextSize(COMPLEX_UNIT_PX, dp2px(10f))`, so the label is 10 *pixels-per-dp*: it ignores the
+     * font scale. [BottomFloatingNavigationBarItem] therefore draws this value as dp. Measured on the
+     * device, Gallery's two-character label is 65px wide at its 3.53x density, about 18.4dp — two
+     * 10dp glyphs, where 14 would be 28dp.
+     */
+    val LabelFontSize = 10.sp
 
     /**
      * The capsule corner radius. The native code computes
@@ -959,6 +1163,27 @@ object BottomFloatingNavigationBarDefaults {
         return scale.coerceIn(PressScaleClampMin, PressScaleClampMax)
     }
 }
+
+/**
+ * The height of the native title line: a 10dp `TextView` with its default font padding, measured as
+ * 48px at Gallery's 3.53x density.
+ */
+private val LabelLineHeight = 13.6.dp
+
+/** Spreads the padded line over the glyph's ascent and descent the way the font padding does. */
+private val LabelLineHeightStyle = LineHeightStyle(
+    alignment = LineHeightStyle.Alignment.Proportional,
+    trim = LineHeightStyle.Trim.None,
+)
+
+/** hwui's `Blur::convertRadiusToSigma` slope. */
+private const val NATIVE_BLUR_SIGMA_SCALE = 0.57735f
+
+/** hwui's `Blur::convertRadiusToSigma` offset, in pixels. */
+private const val NATIVE_BLUR_SIGMA_OFFSET = 0.5f
+
+/** coui-blur's radius-to-sigma factor (`BLUR_RADIUS_TO_SIGMA`, internal to that module). */
+private const val TEXTURE_BLUR_SIGMA_SCALE = 0.45f
 
 /**
  * The centre alpha of the radial touch highlight.

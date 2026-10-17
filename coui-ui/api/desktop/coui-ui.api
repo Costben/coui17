@@ -304,7 +304,16 @@ public final class io/github/suqi8/coui/kmp/basic/BottomFloatingEditToolbarStyle
 public final class io/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarDefaults;
+	public static final field NATIVE_BLUR_RADIUS_PX F
+	public static final field RIM_ALPHA_DARK F
+	public static final field RIM_ALPHA_LIGHT F
+	public final fun blurColors (Z)Ljava/util/List;
+	public final fun blurRadius (Landroidx/compose/runtime/Composer;I)F
 	public final fun getBarHeight-D9Ej5fM ()F
+	public final fun getBarShadow ()Landroidx/compose/ui/graphics/shadow/Shadow;
+	public final fun getBlurColorsDark ()Ljava/util/List;
+	public final fun getBlurColorsLight ()Ljava/util/List;
+	public final fun getCausticColor-0d7_KjU ()J
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getExpansionSize-D9Ej5fM ()F
 	public final fun getIconSize-D9Ej5fM ()F
@@ -351,7 +360,8 @@ public final class io/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarDef
 }
 
 public final class io/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarKt {
-	public static final fun BottomFloatingNavigationBar-OadGlvw (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;ZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun BottomFloatingNavigationBar-OadGlvw (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;ZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun BottomFloatingNavigationBar-oC9nPe0 (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;ZLkotlin/jvm/functions/Function3;Landroidx/compose/ui/graphics/shadow/Shadow;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun BottomFloatingNavigationBarItem (Landroidx/compose/foundation/layout/RowScope;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZZLio/github/suqi8/coui/kmp/basic/BottomFloatingRedDot;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/graphics/vector/ImageVector;Lio/github/suqi8/coui/kmp/basic/COUITouchMotionSpec;Lio/github/suqi8/coui/kmp/basic/SpotLightParams;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -1145,6 +1155,7 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$ListDetai
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$MetaBallSurfaceKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$MetaBallSurfaceKt;
 	public fun <init> ()V
+	public final fun getLambda$1493635969$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$501321855$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 

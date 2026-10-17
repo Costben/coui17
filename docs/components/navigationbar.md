@@ -160,10 +160,11 @@ The bar samples the content behind it from `LocalBackdrop`; provide a backdrop t
 | Property Name  | Type                                | Description                                                             | Default Value             | Required |
 | -------------- | ----------------------------------- | ----------------------------------------------------------------------- | ------------------------- | -------- |
 | modifier       | Modifier                            | Modifier applied to the bar                                             | Modifier                  | No       |
-| containerColor | Color                               | Background color of the capsule                                         | COUITheme.colorScheme.bar | No       |
+| containerColor | Color                               | Opaque fill of the capsule when there is no backdrop to blur            | COUITheme.colorScheme.bar | No       |
 | backdrop       | Backdrop?                           | The content blurred behind the capsule; `null` keeps it opaque          | LocalBackdrop.current     | No       |
 | expanded       | Boolean                             | Whether the expansion view is shown; ignored when `expansion` is `null` | false                     | No       |
 | expansion      | (@Composable BoxScope.() -> Unit)?  | The view that melts out of the capsule                                  | null                      | No       |
+| shadow         | Shadow?                             | The shadow the capsule and the expansion view each cast; `null` for none. The default is left out where the system caustic already casts the native shadow | BottomFloatingNavigationBarDefaults.BarShadow | No |
 | content        | @Composable RowScope.() -> Unit     | The content of the bar, usually `BottomFloatingNavigationBarItem`s      | -                         | Yes      |
 
 ### BottomFloatingNavigationBarItem Properties
@@ -203,6 +204,13 @@ The `BottomFloatingNavigationBarDefaults` object provides the metrics shared by 
 | MenuToScreenNaviDistance        | Dp       | The gap between the capsule and the bottom edge of the bar's box | 8.dp        |
 | ExpansionSize                   | Dp       | The footprint of the expansion view                            | 56.dp         |
 | SideSpacing                     | Dp       | The gap between the capsule and the expansion view             | 12.dp         |
+| BarShadow                       | Shadow   | The spot shadow the capsule and the expansion view cast (COUI `SHADOW_LV_B`) | 6.dp radius, black 12%, 2.dp down |
+| NATIVE_BLUR_RADIUS_PX           | Float    | The pixel blur radius of COUI's `TYPE_FRAMEWORK_BOTTOM_BAR` material | 25f |
+| BlurColorsLight                 | List&lt;BlendColorEntry&gt; | The material's tint layers in the light theme, in the order applied | `#B3666666` ColorDodge, `#99F5F5F5` Luminosity |
+| BlurColorsDark                  | List&lt;BlendColorEntry&gt; | The same layers in the dark theme                    | `#80666666` Overlay, `#B3262626` Luminosity |
+| RIM_ALPHA_LIGHT                 | Float    | The rim light's alpha in the light theme (`TYPE_FRAMEWORK_CAPSULE_3`) | 0.25f |
+| RIM_ALPHA_DARK                  | Float    | The rim light's alpha in the dark theme                        | 0.8f          |
+| CausticColor                    | Color    | The caustic light cast under the capsule (`coui_caustic_color_2`) | `#42FFFFFF` |
 | ItemHeight                      | Dp       | The item cell height                                           | 48.dp         |
 | ItemMaxWidth                    | Dp       | The maximum width of an item cell                              | 70.dp         |
 | ItemSpacing                     | Dp       | The spacing between items                                      | 8.dp          |
@@ -221,8 +229,15 @@ The `BottomFloatingNavigationBarDefaults` object provides the metrics shared by 
 | RedDotTopOverflow               | Dp       | The red dot's top overflow for a number                        | 4.dp          |
 | TouchEffectRadius               | Dp       | The radius of the radial touch highlight                       | 40.dp         |
 | MinimumSpacingWithSlideView     | Dp       | The minimum spacing kept with a slide view                     | 12.dp         |
-| LabelFontSize                   | TextUnit | The label font size                                            | 10.sp         |
+| LabelFontSize                   | TextUnit | The label size, drawn as dp so it ignores the font scale (native `dp2px(10f)`) | 10.sp |
 | CornerRadius                    | Dp       | The capsule corner radius                                      | 28.dp         |
+
+#### Functions
+
+| Function Name     | Return Type                 | Description                                                                                     |
+| ----------------- | --------------------------- | ----------------------------------------------------------------------------------------------- |
+| blurColors(isDark) | List&lt;BlendColorEntry&gt; | `BlurColorsDark` or `BlurColorsLight`                                                          |
+| blurRadius()      | Float                       | `NATIVE_BLUR_RADIUS_PX` as the dp radius `textureBlur` needs for the same Gaussian at the current density |
 
 ### NavigationBarDefaults Object
 
@@ -364,7 +379,7 @@ FloatingNavigationBar(
 
 #### Glass Surface
 
-`BottomFloatingNavigationBar` draws its capsule with the ColorOS 17 light-sensing glass. `backdrop` is the content it samples; it defaults to `LocalBackdrop.current`, so a bar placed where a backdrop is provided picks it up automatically. When `backdrop` is `null` the capsule falls back to an opaque fill of `containerColor`.
+`BottomFloatingNavigationBar` draws its capsule with the ColorOS 17 light-sensing glass. `backdrop` is the content it samples; it defaults to `LocalBackdrop.current`, so a bar placed where a backdrop is provided picks it up automatically. The glass is the material the native capsule requests, `TYPE_FRAMEWORK_BOTTOM_BAR`: the backdrop is blurred at the native 25px radius and tinted with blend-mode layers (`BlurColorsLight` / `BlurColorsDark`) that keep its hue and saturation and only remap its lightness, so the colour of what scrolls underneath still shows through. The rim carries the `TYPE_FRAMEWORK_CAPSULE_3` light and the capsule casts the native caustic light below it. When `backdrop` is `null` the capsule falls back to an opaque fill of `containerColor`; with a backdrop `containerColor` is not drawn, as on the device.
 
 ```kotlin
 CompositionLocalProvider(LocalBackdrop provides backdrop) {

@@ -160,10 +160,11 @@ BottomFloatingNavigationBar {
 | 属性名         | 类型                                | 说明                                                     | 默认值                    | 是否必须 |
 | -------------- | ----------------------------------- | -------------------------------------------------------- | ------------------------- | -------- |
 | modifier       | Modifier                            | 应用于导航栏的修饰符                                     | Modifier                  | 否       |
-| containerColor | Color                               | 胶囊的背景颜色                                           | COUITheme.colorScheme.bar | 否       |
+| containerColor | Color                               | 没有可模糊的背景层时胶囊的不透明填充                     | COUITheme.colorScheme.bar | 否       |
 | backdrop       | Backdrop?                           | 胶囊后方被模糊的内容；`null` 时保持不透明                | LocalBackdrop.current     | 否       |
 | expanded       | Boolean                             | 是否显示展开视图；`expansion` 为 `null` 时忽略           | false                     | 否       |
 | expansion      | (@Composable BoxScope.() -> Unit)?  | 从胶囊中「融出」的展开视图                               | null                      | 否       |
+| shadow         | Shadow?                             | 胶囊与展开视图各自投下的阴影；`null` 时不绘制。系统焦散光已投下原生阴影时不再绘制默认值 | BottomFloatingNavigationBarDefaults.BarShadow | 否 |
 | content        | @Composable RowScope.() -> Unit     | 导航栏内容，通常是 `BottomFloatingNavigationBarItem`     | -                         | 是       |
 
 ### BottomFloatingNavigationBarItem 属性
@@ -203,6 +204,13 @@ BottomFloatingNavigationBar {
 | MenuToScreenNaviDistance        | Dp       | 胶囊与导航栏盒子下边缘之间的间距                 | 8.dp   |
 | ExpansionSize                   | Dp       | 展开视图的占位尺寸                               | 56.dp  |
 | SideSpacing                     | Dp       | 胶囊与展开视图之间的间距                         | 12.dp  |
+| BarShadow                       | Shadow   | 胶囊与展开视图投下的阴影（COUI `SHADOW_LV_B`）   | 半径 6.dp、黑色 12%、下移 2.dp |
+| NATIVE_BLUR_RADIUS_PX           | Float    | COUI `TYPE_FRAMEWORK_BOTTOM_BAR` 材质的模糊半径（像素） | 25f |
+| BlurColorsLight                 | List&lt;BlendColorEntry&gt; | 浅色主题下材质的着色层，按施加顺序排列 | `#B3666666` ColorDodge、`#99F5F5F5` Luminosity |
+| BlurColorsDark                  | List&lt;BlendColorEntry&gt; | 深色主题下的同一组着色层               | `#80666666` Overlay、`#B3262626` Luminosity |
+| RIM_ALPHA_LIGHT                 | Float    | 浅色主题下边缘光的不透明度（`TYPE_FRAMEWORK_CAPSULE_3`） | 0.25f |
+| RIM_ALPHA_DARK                  | Float    | 深色主题下边缘光的不透明度                       | 0.8f   |
+| CausticColor                    | Color    | 胶囊下方投出的焦散光（`coui_caustic_color_2`）   | `#42FFFFFF` |
 | ItemHeight                      | Dp       | 导航项单元高度                                   | 48.dp  |
 | ItemMaxWidth                    | Dp       | 导航项单元的最大宽度                             | 70.dp  |
 | ItemSpacing                     | Dp       | 导航项之间的间距                                 | 8.dp   |
@@ -221,8 +229,15 @@ BottomFloatingNavigationBar {
 | RedDotTopOverflow               | Dp       | 数字红点向上溢出的距离                           | 4.dp   |
 | TouchEffectRadius               | Dp       | 径向触摸高亮的半径                               | 40.dp  |
 | MinimumSpacingWithSlideView     | Dp       | 与滑动视图之间保留的最小间距                     | 12.dp  |
-| LabelFontSize                   | TextUnit | 标签字号                                         | 10.sp  |
+| LabelFontSize                   | TextUnit | 标签字号，按 dp 绘制、不随字体缩放（原生 `dp2px(10f)`） | 10.sp |
 | CornerRadius                    | Dp       | 胶囊圆角半径                                     | 28.dp  |
+
+#### 函数
+
+| 函数名             | 返回类型                    | 说明                                                                    |
+| ------------------ | --------------------------- | ----------------------------------------------------------------------- |
+| blurColors(isDark) | List&lt;BlendColorEntry&gt; | 返回 `BlurColorsDark` 或 `BlurColorsLight`                              |
+| blurRadius()       | Float                       | 把 `NATIVE_BLUR_RADIUS_PX` 换算成 `textureBlur` 在当前密度下得到同一高斯所需的 dp 半径 |
 
 ### NavigationBarDefaults 对象
 
@@ -364,7 +379,7 @@ FloatingNavigationBar(
 
 #### 玻璃表面
 
-`BottomFloatingNavigationBar` 使用 ColorOS 17 的光感玻璃绘制胶囊。`backdrop` 是它采样的内容，默认为 `LocalBackdrop.current`，因此在提供了背景层的位置，导航栏会自动取用。`backdrop` 为 `null` 时，胶囊回退为 `containerColor` 的不透明填充。
+`BottomFloatingNavigationBar` 使用 ColorOS 17 的光感玻璃绘制胶囊。`backdrop` 是它采样的内容，默认为 `LocalBackdrop.current`，因此在提供了背景层的位置，导航栏会自动取用。玻璃采用原生胶囊请求的 `TYPE_FRAMEWORK_BOTTOM_BAR` 材质：背景以原生的 25px 半径模糊，再用保留色相与饱和度、只重映射明度的混合模式着色层（`BlurColorsLight` / `BlurColorsDark`）着色，因此下方滚动内容的颜色仍会透出。边缘带 `TYPE_FRAMEWORK_CAPSULE_3` 边缘光，胶囊下方投出原生焦散光。`backdrop` 为 `null` 时，胶囊回退为 `containerColor` 的不透明填充。有背景层时不绘制 `containerColor`，与设备一致。
 
 ```kotlin
 CompositionLocalProvider(LocalBackdrop provides backdrop) {
