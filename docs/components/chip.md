@@ -126,8 +126,10 @@ Chip(
 | CornerRadius | Dp            | 16.dp                            | chipCornerRadius -1 → capsule (height / 2)     |
 | IconSize     | Dp            | 16.dp                            | coui_chip_selection_style_chip_icon_size       |
 | IconSpacing  | Dp            | 4.dp                             | coui_chip_selection_style_chip_icon_end_padding |
-| DismissIconSize | Dp         | 16.dp                            | Size of the built-in dismiss icon              |
-| DismissButtonSize | Dp       | 48.dp                            | Touch target of the dismiss affordance         |
+| DismissIconSize | Dp         | 14.dp                            | Size of the built-in dismiss icon              |
+| DismissIconStartPadding | Dp | 8.dp                             | Gap between the label and the dismiss icon     |
+| DismissIconEndPadding | Dp   | 9.dp                             | Gap between the dismiss icon and the chip edge; replaces the end inside margin |
+| DismissButtonSize | Dp       | 28.dp                            | Touch target of the dismiss affordance, centred on the icon without resizing the chip |
 | DISMISS_CONTENT_DESCRIPTION | String | "Dismiss"              | Content description of the dismiss affordance  |
 | InsideMargin | PaddingValues | PaddingValues(horizontal = 12.dp) | coui_chip_selection_style_chip_horizontal_padding |
 

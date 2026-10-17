@@ -126,8 +126,10 @@ Chip(
 | CornerRadius | Dp            | 16.dp                             | chipCornerRadius -1 → 胶囊(高度 / 2)          |
 | IconSize     | Dp            | 16.dp                             | coui_chip_selection_style_chip_icon_size         |
 | IconSpacing  | Dp            | 4.dp                              | coui_chip_selection_style_chip_icon_end_padding  |
-| DismissIconSize | Dp         | 16.dp                             | 内置关闭图标的大小                               |
-| DismissButtonSize | Dp       | 48.dp                             | 关闭按钮的点击目标尺寸                           |
+| DismissIconSize | Dp         | 14.dp                             | 内置关闭图标的大小                               |
+| DismissIconStartPadding | Dp | 8.dp                              | 文字与关闭图标之间的间距                         |
+| DismissIconEndPadding | Dp   | 9.dp                              | 关闭图标与 chip 边缘的间距，取代末端内边距       |
+| DismissButtonSize | Dp       | 28.dp                             | 关闭按钮的点击目标尺寸，以图标为中心，不改变 chip 尺寸 |
 | DISMISS_CONTENT_DESCRIPTION | String | "Dismiss"                | 关闭按钮的无障碍描述                             |
 | InsideMargin | PaddingValues | PaddingValues(horizontal = 12.dp) | coui_chip_selection_style_chip_horizontal_padding |
 

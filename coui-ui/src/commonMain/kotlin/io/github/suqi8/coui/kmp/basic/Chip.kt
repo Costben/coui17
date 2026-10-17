@@ -14,9 +14,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
@@ -33,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -188,11 +194,18 @@ fun Chip(
                 ),
             propagateMinConstraints = true,
         ) {
+            val layoutDirection = LocalLayoutDirection.current
             Row(
                 modifier = Modifier
                     .defaultMinSize(minWidth = minWidth, minHeight = minHeight)
-                    .padding(insideMargin),
-                horizontalArrangement = Arrangement.spacedBy(ChipDefaults.IconSpacing, Alignment.CenterHorizontally),
+                    .padding(
+                        start = insideMargin.calculateStartPadding(layoutDirection),
+                        top = insideMargin.calculateTopPadding(),
+                        // COUIChipDrawable: a close icon takes the place of chipEndPadding.
+                        end = if (onDismiss != null) 0.dp else insideMargin.calculateEndPadding(layoutDirection),
+                        bottom = insideMargin.calculateBottomPadding(),
+                    ),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (icon != null) {
@@ -202,6 +215,7 @@ fun Chip(
                     ) {
                         icon()
                     }
+                    Spacer(Modifier.width(ChipDefaults.IconSpacing))
                 }
                 Text(
                     text = label,
@@ -212,27 +226,41 @@ fun Chip(
                     modifier = Modifier.widthIn(max = ChipDefaults.TextMaxWidth),
                 )
                 if (onDismiss != null) {
+                    // COUIChipDrawable.calculateCloseIconWidth: closeIconStartPadding + closeIconSize +
+                    // closeIconEndPadding, with the icon closeIconEndPadding from the chip's end edge.
                     Box(
                         modifier = Modifier
-                            .size(dismissButtonSize)
-                            .clickable(
-                                interactionSource = dismissInteractionSource,
-                                indication = null,
-                                enabled = enabled,
-                                role = Role.Button,
-                                onClick = onDismiss,
+                            .padding(
+                                start = ChipDefaults.DismissIconStartPadding,
+                                end = ChipDefaults.DismissIconEndPadding,
                             )
-                            .semantics { contentDescription = dismissContentDescription },
+                            .size(ChipDefaults.DismissIconSize),
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (dismissIcon != null) {
-                            dismissIcon()
-                        } else {
-                            Icon(
-                                imageVector = COUIIcons.Basic.Close,
-                                contentDescription = null,
-                                modifier = Modifier.size(ChipDefaults.DismissIconSize),
-                            )
+                        // calculateCloseIconTouchBounds: a closeIconTouchBoundsSize square centred on
+                        // the icon. requiredSize centres it without growing the chip.
+                        Box(
+                            modifier = Modifier
+                                .requiredSize(dismissButtonSize)
+                                .clickable(
+                                    interactionSource = dismissInteractionSource,
+                                    indication = null,
+                                    enabled = enabled,
+                                    role = Role.Button,
+                                    onClick = onDismiss,
+                                )
+                                .semantics { contentDescription = dismissContentDescription },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (dismissIcon != null) {
+                                dismissIcon()
+                            } else {
+                                Icon(
+                                    imageVector = COUIIcons.Basic.Close,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(ChipDefaults.DismissIconSize),
+                                )
+                            }
                         }
                     }
                 }
@@ -302,23 +330,35 @@ object ChipDefaults {
     val CornerRadius = 16.dp
 
     /**
-     * The size of the built-in dismiss affordance icon. Same 16dp as the leading icon ([IconSize],
-     * COUI coui_chip_selection_style_chip_icon_size), so the close affordance reuses the COUI chip
-     * icon token instead of introducing a new dimension.
+     * The size of the built-in dismiss affordance icon. COUI `coui_chip_input_style_close_icon_size`.
      *
      * New in 1.2.0.
      */
     @ExperimentalCOUIApi
-    val DismissIconSize = 16.dp
+    val DismissIconSize = 14.dp
 
     /**
-     * The touch target of the dismiss affordance. At least 48dp so the close button meets the 48dp
-     * minimum touch target size.
+     * The gap between the label and the dismiss icon. COUI
+     * `coui_chip_input_style_close_icon_start_padding`.
+     */
+    @ExperimentalCOUIApi
+    val DismissIconStartPadding = 8.dp
+
+    /**
+     * The gap between the dismiss icon and the chip's end edge; it replaces the end inside margin.
+     * COUI `coui_chip_input_style_close_icon_end_padding`.
+     */
+    @ExperimentalCOUIApi
+    val DismissIconEndPadding = 9.dp
+
+    /**
+     * The touch target of the dismiss affordance, a square centred on the icon that does not change
+     * the chip's size. COUI `coui_chip_input_style_close_icon_touch_bounds_size`.
      *
      * New in 1.2.0.
      */
     @ExperimentalCOUIApi
-    val DismissButtonSize = 48.dp
+    val DismissButtonSize = 28.dp
 
     /**
      * The content description of the built-in dismiss affordance, so the close button is reachable

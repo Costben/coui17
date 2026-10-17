@@ -807,7 +807,9 @@ public final class io/github/suqi8/coui/kmp/basic/ChipDefaults {
 	public final fun chipColors-oq7We08 (JJJJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ChipColors;
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getDismissButtonSize-D9Ej5fM ()F
+	public final fun getDismissIconEndPadding-D9Ej5fM ()F
 	public final fun getDismissIconSize-D9Ej5fM ()F
+	public final fun getDismissIconStartPadding-D9Ej5fM ()F
 	public final fun getIconSize-D9Ej5fM ()F
 	public final fun getIconSpacing-D9Ej5fM ()F
 	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
