@@ -1,6 +1,6 @@
 # Tooltip
 
-`Tooltip` is a component in COUI that briefly describes an anchor element. Following Material 3, a single `TooltipBox` anchors a tooltip to its content; you fill its `tooltip` slot with a `PlainTooltip` (a short inverse-surface label) or a `RichTooltip` (a surface-container card with an optional title and action). Tooltips are shown on hover (mouse) or long press (touch), or programmatically via `TooltipState`.
+`Tooltip` is a component in COUI that briefly describes an anchor element. Following Material 3, a single `TooltipBox` anchors a tooltip to its content; you fill its `tooltip` slot with a `PlainTooltip` (a short label on the COUI tips blue) or a `RichTooltip` (a surface-container card with an optional title and action). Tooltips are shown on hover (mouse) or long press (touch), or programmatically via `TooltipState`.
 
 <div style="position: relative; height: 360px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=tooltip" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -75,7 +75,7 @@ TooltipBox(
 
 ## PlainTooltip
 
-`PlainTooltip` is a short, non-interactive label rendered on the COUI inverse surface. It is a `TooltipScope` extension, so it is used inside the `TooltipBox` `tooltip` slot.
+`PlainTooltip` is a short, non-interactive label rendered on the COUI tips blue. It is a `TooltipScope` extension, so it is used inside the `TooltipBox` `tooltip` slot.
 
 ```kotlin
 @Composable
@@ -91,7 +91,7 @@ fun TooltipScope.PlainTooltip(
 )
 ```
 
-By default the plain tooltip uses an inverse surface tone (a dark bubble in light theme, a light bubble in dark theme). Pass `caretShape = TooltipDefaults.caretShape()` to draw a caret pointing at the anchor; the default is caret-less.
+By default the plain tooltip is a blue bubble with white text, matching ColorOS `COUIToolTips` (`couiColorTips` over `coui_color_white`). Pass `caretShape = TooltipDefaults.caretShape()` to draw a caret pointing at the anchor; the default is caret-less.
 
 ## RichTooltip
 
@@ -189,9 +189,9 @@ fun TooltipDefaults.rememberTooltipPositionProvider(
 ### Colors
 
 ```kotlin
-// Plain tooltip (inverse surface)
-val plainContainer = TooltipDefaults.plainTooltipContainerColor   // onSecondaryVariant
-val plainContent = TooltipDefaults.plainTooltipContentColor       // secondaryVariant
+// Plain tooltip (COUI tips blue)
+val plainContainer = TooltipDefaults.plainTooltipContainerColor   // primary
+val plainContent = TooltipDefaults.plainTooltipContentColor       // onPrimary
 
 // Rich tooltip (surface container)
 val richColors = TooltipDefaults.richTooltipColors(
@@ -218,6 +218,7 @@ Pass `caretShape = TooltipDefaults.caretShape()` to `PlainTooltip` / `RichToolti
 | Constant Name              | Type          | Description                              | Default Value                                      |
 | -------------------------- | ------------- | ---------------------------------------- | -------------------------------------------------- |
 | SpacingBetweenTooltipAndAnchor | Dp        | Spacing between a tooltip and its anchor | 8.dp                                               |
+| HorizontalEdgeMargin           | Dp            | Minimum gap to the left and right window edges | 16.dp                                              |
 | PlainTooltipMaxWidth       | Dp            | Maximum width of a plain tooltip         | 200.dp                                             |
 | PlainTooltipCornerRadius   | Dp            | Corner radius of a plain tooltip         | 12.dp                                              |
 | PlainTooltipInsideMargin   | PaddingValues | Inner padding of a plain tooltip         | PaddingValues(horizontal = 12.dp, vertical = 8.dp) |

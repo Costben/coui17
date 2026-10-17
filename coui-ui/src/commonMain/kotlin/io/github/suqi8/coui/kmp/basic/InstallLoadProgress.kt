@@ -184,7 +184,7 @@ fun InstallLoadProgress(
             1f - pressFraction * (1f - InstallLoadProgressDefaults.NARROW_FINAL_VALUE)
             ),
     )
-    val labelColor = InstallLoadProgressDefaults.labelColor(state, colors)
+    val labelColor = InstallLoadProgressDefaults.labelColor(state, style, colors)
 
     Box(
         modifier = modifier
@@ -527,13 +527,28 @@ object InstallLoadProgressDefaults {
     /**
      * The colour the label is drawn in outside the filled part.
      *
-     * `onDraw` sets `mColorWhite` for `Fail`, `mColorPrimary` for `Default` on the
-     * `defaultSmallRoundButton` style, and `mColorPrimary` again for `Loading` / `Wait` — the label
-     * only turns `mSurpassProgressColor` where it overlaps the fill. The `bigRoundButton` style at
-     * `Default` matches no branch and keeps whatever `mTextPaint` held; this port resolves it to the
-     * accent colour rather than a recovered constant, which is a guess.
+     * `onDraw` sets `mColorWhite` for `Fail` and for `Default` on the `bigRoundButton` style, whose
+     * shape it paints in `mColorPrimary`; `mColorPrimary` for `Default` on the
+     * `defaultSmallRoundButton` style; and `mColorPrimary` again for `Loading` / `Wait` — the label
+     * only turns `mSurpassProgressColor` where it overlaps the fill (ColorOS 17
+     * `COUIInstallLoadProgress.onDraw`).
      */
-    fun labelColor(state: LoadProgressState, colors: InstallLoadProgressColors): Color = if (state == LoadProgressState.Fail) colors.textColor else colors.primaryColor
+    fun labelColor(
+        state: LoadProgressState,
+        style: InstallLoadStyle,
+        colors: InstallLoadProgressColors,
+    ): Color = when {
+        state == LoadProgressState.Fail -> colors.textColor
+        state == LoadProgressState.Default && style == InstallLoadStyle.BigRound -> colors.textColor
+        else -> colors.primaryColor
+    }
+
+    /** The label colour for the `defaultSmallRoundButton` style. */
+    @Deprecated(
+        message = "The label colour depends on the style: the big round button draws a white label on its filled shape.",
+        replaceWith = ReplaceWith("labelColor(state, InstallLoadStyle.Default, colors)"),
+    )
+    fun labelColor(state: LoadProgressState, colors: InstallLoadProgressColors): Color = labelColor(state, InstallLoadStyle.Default, colors)
 
     /**
      * Creates the default [InstallLoadProgressColors].

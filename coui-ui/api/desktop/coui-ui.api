@@ -1900,6 +1900,7 @@ public final class io/github/suqi8/coui/kmp/basic/InstallLoadProgressDefaults {
 	public final fun glyphTint-WaAFU9c (Lio/github/suqi8/coui/kmp/basic/LoadProgressState;Lio/github/suqi8/coui/kmp/basic/InstallLoadProgressColors;)J
 	public final fun isFilled (Lio/github/suqi8/coui/kmp/basic/LoadProgressState;Lio/github/suqi8/coui/kmp/basic/InstallLoadStyle;)Z
 	public final fun labelColor-WaAFU9c (Lio/github/suqi8/coui/kmp/basic/LoadProgressState;Lio/github/suqi8/coui/kmp/basic/InstallLoadProgressColors;)J
+	public final fun labelColor-XeAY9LY (Lio/github/suqi8/coui/kmp/basic/LoadProgressState;Lio/github/suqi8/coui/kmp/basic/InstallLoadStyle;Lio/github/suqi8/coui/kmp/basic/InstallLoadProgressColors;)J
 }
 
 public final class io/github/suqi8/coui/kmp/basic/InstallLoadProgressKt {
@@ -4128,6 +4129,7 @@ public final class io/github/suqi8/coui/kmp/basic/TooltipDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/TooltipDefaults;
 	public final fun caretShape ()Landroidx/compose/ui/graphics/Shape;
 	public final fun getCaretSize-MYxV2XQ ()J
+	public final fun getHorizontalEdgeMargin-D9Ej5fM ()F
 	public final fun getPlainTooltipContainerColor (Landroidx/compose/runtime/Composer;I)J
 	public final fun getPlainTooltipContentColor (Landroidx/compose/runtime/Composer;I)J
 	public final fun getPlainTooltipCornerRadius-D9Ej5fM ()F

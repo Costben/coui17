@@ -76,7 +76,8 @@ The label is drawn twice on the pill tiers. `onDrawText` paints it once in the r
 
 | State | Outside the fill | Inside the fill |
 | :--- | :--- | :--- |
-| `Default` (0) | `mColorPrimary` | — |
+| `Default` (0), `defaultSmallRoundButton` | `mColorPrimary` | — |
+| `Default` (0), `bigRoundButton` | `mColorWhite` (`#ffffffff`) on the accent-filled pill | — |
 | `Loading` / `Wait` | `mColorPrimary` | `mSurpassProgressColor` (`#ffffffff`) |
 | `Fail` (3) | `mColorWhite` (`#ffffffff`), drawn once | — |
 

@@ -1,6 +1,6 @@
 # Tooltip
 
-`Tooltip` 是 COUI 中用于简短描述锚点元素的组件。参照 Material 3，统一由 `TooltipBox` 将 tooltip 锚定到内容上；你在它的 `tooltip` 槽里填入 `PlainTooltip`（反色表面短标签）或 `RichTooltip`（带可选标题与操作的 surfaceContainer 卡片）。tooltip 在悬停（光标）或长按（触摸）时显示，也可通过 `TooltipState` 以编程方式显示。
+`Tooltip` 是 COUI 中用于简短描述锚点元素的组件。参照 Material 3，统一由 `TooltipBox` 将 tooltip 锚定到内容上；你在它的 `tooltip` 槽里填入 `PlainTooltip`（COUI 提示蓝短标签）或 `RichTooltip`（带可选标题与操作的 surfaceContainer 卡片）。tooltip 在悬停（光标）或长按（触摸）时显示，也可通过 `TooltipState` 以编程方式显示。
 
 <div style="position: relative; height: 360px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=tooltip" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -75,7 +75,7 @@ TooltipBox(
 
 ## PlainTooltip
 
-`PlainTooltip` 是渲染在 COUI 反色表面上的短标签、不可交互。它是 `TooltipScope` 扩展，用于 `TooltipBox` 的 `tooltip` 槽内。
+`PlainTooltip` 是渲染在 COUI 提示蓝底上的短标签、不可交互。它是 `TooltipScope` 扩展，用于 `TooltipBox` 的 `tooltip` 槽内。
 
 ```kotlin
 @Composable
@@ -91,7 +91,7 @@ fun TooltipScope.PlainTooltip(
 )
 ```
 
-默认情况下 plain tooltip 采用反色表面（浅色主题为深色气泡，深色主题为浅色气泡）。传入 `caretShape = TooltipDefaults.caretShape()` 可绘制指向锚点的箭头；默认无箭头。
+默认情况下 plain tooltip 为蓝底白字气泡，与 ColorOS `COUIToolTips` 一致（`couiColorTips` 底、`coui_color_white` 字）。传入 `caretShape = TooltipDefaults.caretShape()` 可绘制指向锚点的箭头；默认无箭头。
 
 ## RichTooltip
 
@@ -189,9 +189,9 @@ fun TooltipDefaults.rememberTooltipPositionProvider(
 ### 颜色
 
 ```kotlin
-// plain tooltip（反色表面）
-val plainContainer = TooltipDefaults.plainTooltipContainerColor   // onSecondaryVariant
-val plainContent = TooltipDefaults.plainTooltipContentColor       // secondaryVariant
+// plain tooltip（COUI 提示蓝）
+val plainContainer = TooltipDefaults.plainTooltipContainerColor   // primary
+val plainContent = TooltipDefaults.plainTooltipContentColor       // onPrimary
 
 // rich tooltip（surface container）
 val richColors = TooltipDefaults.richTooltipColors(
@@ -218,6 +218,7 @@ val TooltipDefaults.caretSize: DpSize // 16 x 8 dp
 | 常量名                         | 类型          | 说明                     | 默认值                                             |
 | ------------------------------ | ------------- | ------------------------ | -------------------------------------------------- |
 | SpacingBetweenTooltipAndAnchor | Dp            | tooltip 与锚点之间的间距 | 8.dp                                               |
+| HorizontalEdgeMargin           | Dp            | 与窗口左右边缘的最小间距 | 16.dp                                              |
 | PlainTooltipMaxWidth           | Dp            | plain tooltip 的最大宽度 | 200.dp                                             |
 | PlainTooltipCornerRadius       | Dp            | plain tooltip 的圆角半径 | 12.dp                                              |
 | PlainTooltipInsideMargin       | PaddingValues | plain tooltip 的内边距   | PaddingValues(horizontal = 12.dp, vertical = 8.dp) |

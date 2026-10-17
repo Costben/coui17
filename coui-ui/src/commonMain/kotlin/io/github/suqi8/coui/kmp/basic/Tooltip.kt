@@ -84,6 +84,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlin.jvm.JvmInline
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -755,6 +756,7 @@ data class RichTooltipColors(
 private class TooltipPopupPositionProvider(
     val positioning: TooltipAnchorPosition,
     private val spacing: Int,
+    private val edgeMargin: Int,
 ) : PopupPositionProvider {
     override fun calculatePosition(
         anchorBounds: IntRect,
@@ -798,7 +800,9 @@ private class TooltipPopupPositionProvider(
             }
         }
 
-        x = x.coerceIn(0, max(0, windowSize.width - popupContentSize.width))
+        // COUIToolTips keeps the bubble mBubbleHorizontalPadding away from both side edges.
+        val minX = min(edgeMargin, max(0, windowSize.width - popupContentSize.width) / 2)
+        x = x.coerceIn(minX, max(minX, windowSize.width - popupContentSize.width - minX))
         y = y.coerceIn(0, max(0, windowSize.height - popupContentSize.height))
         return IntOffset(x, y)
     }
@@ -821,6 +825,12 @@ object TooltipDefaults {
     /** The default spacing between a tooltip and its anchor. */
     val SpacingBetweenTooltipAndAnchor = 8.dp
 
+    /**
+     * The minimum gap between a tooltip and the left and right window edges. COUI
+     * `coui_tooltips_bubble_horizontal_padding` (`COUIToolTips.mBubbleHorizontalPadding`).
+     */
+    val HorizontalEdgeMargin = 16.dp
+
     /** The default size of the caret. */
     val caretSize = DpSize(16.dp, 8.dp)
 
@@ -833,13 +843,17 @@ object TooltipDefaults {
     /** The default margin inside a plain tooltip. */
     val PlainTooltipInsideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
 
-    /** The default container color of a plain tooltip (inverse surface). */
+    /**
+     * The default container color of a plain tooltip. `style/COUIToolTips` fills the bubble with
+     * `?attr/couiColorTips`, which resolves to `color/coui_color_tips` (`#0080FF`, night `#1A8CFF`),
+     * the same blue as the default [primary][io.github.suqi8.coui.kmp.theme.Colors.primary].
+     */
     val plainTooltipContainerColor: Color
-        @Composable get() = COUITheme.colorScheme.onSecondaryVariant
+        @Composable get() = COUITheme.colorScheme.primary
 
-    /** The default content color of a plain tooltip. */
+    /** The default content color of a plain tooltip. `style/COUIToolTips` uses `coui_color_white`. */
     val plainTooltipContentColor: Color
-        @Composable get() = COUITheme.colorScheme.secondaryVariant
+        @Composable get() = COUITheme.colorScheme.onPrimary
 
     /** The default maximum width of a rich tooltip. */
     val RichTooltipMaxWidth = 320.dp
@@ -886,9 +900,11 @@ object TooltipDefaults {
         positioning: TooltipAnchorPosition = TooltipAnchorPosition.Below,
         spacingBetweenTooltipAndAnchor: Dp = SpacingBetweenTooltipAndAnchor,
     ): PopupPositionProvider {
-        val spacingPx = with(LocalDensity.current) { spacingBetweenTooltipAndAnchor.roundToPx() }
-        return remember(positioning, spacingPx) {
-            TooltipPopupPositionProvider(positioning, spacingPx)
+        val density = LocalDensity.current
+        val spacingPx = with(density) { spacingBetweenTooltipAndAnchor.roundToPx() }
+        val edgeMarginPx = with(density) { HorizontalEdgeMargin.roundToPx() }
+        return remember(positioning, spacingPx, edgeMarginPx) {
+            TooltipPopupPositionProvider(positioning, spacingPx, edgeMarginPx)
         }
     }
 }

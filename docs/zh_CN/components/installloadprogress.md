@@ -76,7 +76,8 @@ InstallLoadProgress(
 
 | 状态 | 填充区之外 | 填充区之内 |
 | :--- | :--- | :--- |
-| `Default`（0） | `mColorPrimary` | — |
+| `Default`（0），`defaultSmallRoundButton` | `mColorPrimary` | — |
+| `Default`（0），`bigRoundButton` | `mColorWhite`（`#ffffffff`），画在主题色实心胶囊上 | — |
 | `Loading` / `Wait` | `mColorPrimary` | `mSurpassProgressColor`（`#ffffffff`） |
 | `Fail`（3） | `mColorWhite`（`#ffffffff`），只画一趟 | — |
 
