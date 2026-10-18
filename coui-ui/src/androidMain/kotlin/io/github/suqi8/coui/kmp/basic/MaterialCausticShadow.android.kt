@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.widget.FrameLayout
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -135,57 +136,59 @@ private class AndroidCausticRenderer(val api: CausticApi) : CausticShadowRendere
             return
         }
         val density = LocalDensity.current
-        AndroidView(
-            modifier = modifier,
-            factory = { CausticHost(it) },
-            onRelease = { host ->
-                for (i in 0 until host.childCount) runCatching { api.clear(host.getChildAt(i)) }
-            },
-            update = { host ->
-                runCatching {
-                    while (host.childCount > particles.size) {
-                        val view = host.getChildAt(host.childCount - 1)
-                        api.clear(view)
-                        host.removeView(view)
-                    }
-                    particles.forEachIndexed { i, (particle, profile) ->
-                        val view = if (i < host.childCount) {
-                            host.getChildAt(i) as CausticOutlineView
-                        } else {
-                            CausticOutlineView(host.context).also { host.addView(it) }
-                        }
-                        val width = with(density) { particle.width.roundToPx() }.coerceAtLeast(1)
-                        val height = with(density) { particle.height.roundToPx() }.coerceAtLeast(1)
-                        if (view.layoutParams.width != width || view.layoutParams.height != height) {
-                            view.layoutParams = FrameLayout.LayoutParams(width, height)
-                        }
-                        view.radius = with(density) { particle.cornerRadius.toPx() }
-                        // LayoutParams alone leaves new views at 0x0 until the next traversal.
-                        // Synchronize the native caster before enabling caustics, including resizes.
-                        if (view.width != width || view.height != height) {
-                            view.layout(0, 0, width, height)
-                        }
-                        view.invalidateOutline()
-                        view.pivotX = width / 2f
-                        view.pivotY = height / 2f
-                        view.translationX = with(density) { particle.centerX.toPx() } - width / 2f
-                        view.translationY = with(density) { particle.centerY.toPx() } - height / 2f
-                        view.scaleX = particle.scaleX
-                        view.scaleY = particle.scaleY
-                        // Fade the native light color rather than View.alpha: the system reads this
-                        // color in its destination-dependent shader, avoiding an offscreen group clip.
-                        api.update(view, profile, density.density, color.copy(alpha = color.alpha * particle.alpha))
-                    }
-                    if (!host.reported && particles.isNotEmpty()) {
-                        Log.d("COUICausticShadow", "native color readback verified; particles=${particles.size}; factors=0.6,0.6,18,0.45,0.6")
-                        host.reported = true
-                    }
-                }.onFailure {
+        TouchTransparentInterop(modifier) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { CausticHost(it) },
+                onRelease = { host ->
                     for (i in 0 until host.childCount) runCatching { api.clear(host.getChildAt(i)) }
-                    Log.w("COUICausticShadow", "Native caustic initialization failed", it)
-                    failed = true
-                }
-            },
-        )
+                },
+                update = { host ->
+                    runCatching {
+                        while (host.childCount > particles.size) {
+                            val view = host.getChildAt(host.childCount - 1)
+                            api.clear(view)
+                            host.removeView(view)
+                        }
+                        particles.forEachIndexed { i, (particle, profile) ->
+                            val view = if (i < host.childCount) {
+                                host.getChildAt(i) as CausticOutlineView
+                            } else {
+                                CausticOutlineView(host.context).also { host.addView(it) }
+                            }
+                            val width = with(density) { particle.width.roundToPx() }.coerceAtLeast(1)
+                            val height = with(density) { particle.height.roundToPx() }.coerceAtLeast(1)
+                            if (view.layoutParams.width != width || view.layoutParams.height != height) {
+                                view.layoutParams = FrameLayout.LayoutParams(width, height)
+                            }
+                            view.radius = with(density) { particle.cornerRadius.toPx() }
+                            // LayoutParams alone leaves new views at 0x0 until the next traversal.
+                            // Synchronize the native caster before enabling caustics, including resizes.
+                            if (view.width != width || view.height != height) {
+                                view.layout(0, 0, width, height)
+                            }
+                            view.invalidateOutline()
+                            view.pivotX = width / 2f
+                            view.pivotY = height / 2f
+                            view.translationX = with(density) { particle.centerX.toPx() } - width / 2f
+                            view.translationY = with(density) { particle.centerY.toPx() } - height / 2f
+                            view.scaleX = particle.scaleX
+                            view.scaleY = particle.scaleY
+                            // Fade the native light color rather than View.alpha: the system reads this
+                            // color in its destination-dependent shader, avoiding an offscreen group clip.
+                            api.update(view, profile, density.density, color.copy(alpha = color.alpha * particle.alpha))
+                        }
+                        if (!host.reported && particles.isNotEmpty()) {
+                            Log.d("COUICausticShadow", "native color readback verified; particles=${particles.size}; factors=0.6,0.6,18,0.45,0.6")
+                            host.reported = true
+                        }
+                    }.onFailure {
+                        for (i in 0 until host.childCount) runCatching { api.clear(host.getChildAt(i)) }
+                        Log.w("COUICausticShadow", "Native caustic initialization failed", it)
+                        failed = true
+                    }
+                },
+            )
+        }
     }
 }

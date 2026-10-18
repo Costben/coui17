@@ -970,6 +970,14 @@ object ListPopupDefaults {
         tween<Float>(durationMillis = 200, easing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f))
 
     /**
+     * Content alpha below which a closing popup stops holding touches. The exit spring takes
+     * ~340ms to settle and the window fade another 200ms; holding the page underneath for all of
+     * it reads as the page being stuck. At this alpha (~140ms into the close) the panel is all but
+     * gone, so a scroll or tap started from here goes to the page.
+     */
+    const val ExitTouchPassThroughAlpha = 0.1f
+
+    /**
      * Extra clearance reserved below the status bar before the popup may be placed
      * (COUI coui_popup_list_window_top_status_bar_margin).
      */

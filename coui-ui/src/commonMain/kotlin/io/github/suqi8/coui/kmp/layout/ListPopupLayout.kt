@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +56,8 @@ import kotlinx.coroutines.launch
  *   until the exit animation finishes) and the inner content composable. Hosts that
  *   conditionally render their container (e.g., a `Dialog`) should respect this flag and
  *   should NOT animate enter/exit themselves — entry/exit transitions are driven internally.
+ *   `passTouches` turns true once a closing popup should let touches through to the page beneath;
+ *   a host that blocks touches outside the panel has to stop doing so from then on.
  * @param popupModifier The modifier to be applied to the popup content area.
  * @param popupPositionProvider The [PopupPositionProvider] for positioning.
  * @param alignment The alignment of the popup.
@@ -75,7 +78,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun ListPopupLayout(
     show: Boolean,
-    popupHost: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit,
+    popupHost: @Composable (visible: Boolean, passTouches: () -> Boolean, content: @Composable () -> Unit) -> Unit,
     popupModifier: Modifier = Modifier,
     popupPositionProvider: PopupPositionProvider = ListPopupDefaults.DropdownPositionProvider,
     alignment: PopupPositionProvider.Align = PopupPositionProvider.Align.Start,
@@ -95,6 +98,13 @@ internal fun ListPopupLayout(
     val backProgress = remember { Animatable(0f) }
     val windowAlpha = remember { Animatable(1f) }
     var windowExiting by remember { mutableStateOf(false) }
+    val currentShow by rememberUpdatedState(show)
+    // Derived so the per-frame exit alpha only recomposes the host once, when it crosses over.
+    val passTouches by remember {
+        derivedStateOf {
+            windowExiting || (!currentShow && alphaProgress.value < ListPopupDefaults.ExitTouchPassThroughAlpha)
+        }
+    }
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
     val currentOnDismissFinished by rememberUpdatedState(onDismissFinished)
     val coroutineScope = rememberCoroutineScope()
@@ -193,7 +203,7 @@ internal fun ListPopupLayout(
         { currentOnDismiss?.invoke() }
     }
 
-    popupHost(internalVisible.value) {
+    popupHost(internalVisible.value, { passTouches }) {
         val navigationEventState = rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
         NavigationBackHandler(
             state = navigationEventState,
@@ -244,9 +254,10 @@ internal fun ListPopupLayout(
                     }
                     // COUI's PopupWindow is non-focusable with `setOutsideTouchable(true)`, so the
                     // window keeps passing outside taps through even while it plays its exit
-                    // animation; once it is fading, this container must stop swallowing them.
+                    // animation; once the panel has all but faded, this container must stop
+                    // swallowing them rather than wait out the rest of the close.
                     .then(
-                        if (windowExiting) {
+                        if (passTouches) {
                             Modifier
                         } else {
                             Modifier.pointerInput(Unit) {

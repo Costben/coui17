@@ -57,7 +57,8 @@ fun WindowListPopup(
 
     ListPopupLayout(
         show = show,
-        popupHost = { visible, hostContent ->
+        // A dialog window cannot hand touches to the window beneath, so it closes as before.
+        popupHost = { visible, _, hostContent ->
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value?.invoke() },

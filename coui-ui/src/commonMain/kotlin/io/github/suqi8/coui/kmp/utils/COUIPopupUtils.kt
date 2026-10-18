@@ -24,6 +24,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -67,6 +68,7 @@ class COUIPopupUtils {
         var enableBackHandler by mutableStateOf(true)
         var dimEnterTransition by mutableStateOf<EnterTransition?>(null)
         var dimExitTransition by mutableStateOf<ExitTransition?>(null)
+        var passTouches by mutableStateOf<() -> Boolean>({ false })
         var content by mutableStateOf<@Composable () -> Unit>({})
     }
 
@@ -242,6 +244,9 @@ class COUIPopupUtils {
          * @param renderInRootScaffold Whether to render the popup in the root (outermost) [Scaffold].
          *   When true (default), the popup covers the full screen. When false, it renders within the
          *   current [Scaffold]'s bounds.
+         * @param passTouches Read while the popup is mounted; once it returns true, the undimmed
+         *   popup stops holding touches back from the page beneath, e.g. while it plays out the
+         *   last of its close.
          * @param content The [Composable] content of the popup.
          */
         @Composable
@@ -254,6 +259,7 @@ class COUIPopupUtils {
             dimEnterTransition: EnterTransition? = null,
             dimExitTransition: ExitTransition? = null,
             renderInRootScaffold: Boolean = true,
+            passTouches: () -> Boolean = { false },
             content: (@Composable () -> Unit)? = null,
         ) {
             if (content == null) {
@@ -278,6 +284,7 @@ class COUIPopupUtils {
             val latestDimEnter by rememberUpdatedState(dimEnterTransition)
             val latestDimExit by rememberUpdatedState(dimExitTransition)
             val latestContent by rememberUpdatedState(content)
+            val latestPassTouches by rememberUpdatedState(passTouches)
 
             SideEffect {
                 state.enterTransition = latestEnter
@@ -286,6 +293,7 @@ class COUIPopupUtils {
                 state.enableBackHandler = latestEnableBackHandler
                 state.dimEnterTransition = latestDimEnter
                 state.dimExitTransition = latestDimExit
+                state.passTouches = latestPassTouches
                 state.content = latestContent
             }
 
@@ -487,22 +495,31 @@ class COUIPopupUtils {
                         visibleState = visibleState,
                         modifier = Modifier.zIndex(popupState.zIndex - 0.002f),
                     ) {
+                        // Without a pointer input the layer is no hit target at all, so touches
+                        // reach the page beneath; consuming them alone would not let them through.
+                        val passTouches by remember { derivedStateOf { popupState.passTouches() } }
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .pointerInput(Unit) {
-                                    awaitPointerEventScope {
-                                        while (true) {
-                                            val event = awaitPointerEvent()
-                                            var i = 0
-                                            val n = event.changes.size
-                                            while (i < n) {
-                                                event.changes[i].consume()
-                                                i++
+                                .then(
+                                    if (passTouches) {
+                                        Modifier
+                                    } else {
+                                        Modifier.pointerInput(Unit) {
+                                            awaitPointerEventScope {
+                                                while (true) {
+                                                    val event = awaitPointerEvent()
+                                                    var i = 0
+                                                    val n = event.changes.size
+                                                    while (i < n) {
+                                                        event.changes[i].consume()
+                                                        i++
+                                                    }
+                                                }
                                             }
                                         }
-                                    }
-                                },
+                                    },
+                                ),
                         )
                     }
                 }

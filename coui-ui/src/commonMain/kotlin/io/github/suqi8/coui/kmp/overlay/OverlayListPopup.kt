@@ -61,7 +61,7 @@ fun OverlayListPopup(
     val backdrop = LocalBackdrop.current
     ListPopupLayout(
         show = show,
-        popupHost = { visible, hostContent ->
+        popupHost = { visible, passTouches, hostContent ->
             val visibleState = remember { mutableStateOf(false) }
             visibleState.value = visible
             PopupLayout(
@@ -71,6 +71,7 @@ fun OverlayListPopup(
                 enterTransition = EnterTransition.None,
                 exitTransition = ExitTransition.None,
                 renderInRootScaffold = renderInRootScaffold,
+                passTouches = passTouches,
             ) {
                 CompositionLocalProvider(LocalBackdrop provides backdrop) {
                     hostContent()

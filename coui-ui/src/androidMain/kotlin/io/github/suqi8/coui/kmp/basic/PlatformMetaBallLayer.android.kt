@@ -7,6 +7,7 @@ import android.graphics.Rect
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -119,47 +120,49 @@ private class AndroidMetaBallRenderer(private val api: MaterialApi) : MetaBallRe
             return
         }
         val density = LocalDensity.current
-        AndroidView(
-            modifier = modifier,
-            factory = { MaterialChainView(it, api) },
-            onRelease = { runCatching { it.release() } },
-            update = { chain ->
-                runCatching {
-                    val active = linkedSetOf<View>()
-                    var activeMask = 0
-                    chain.particles.forEachIndexed { i, view ->
-                        val particle = particles.getOrNull(i)
-                        if (particle == null || particle.width.value <= 0f || particle.height.value <= 0f || particle.alpha <= 0f) {
-                            view.visibility = View.GONE
-                            api.clear(view)
-                        } else {
-                            view.visibility = View.VISIBLE
-                            val width = with(density) { particle.width.roundToPx() }.coerceAtLeast(1)
-                            val height = with(density) { particle.height.roundToPx() }.coerceAtLeast(1)
-                            if (view.layoutParams.width != width || view.layoutParams.height != height) {
-                                view.layoutParams = FrameLayout.LayoutParams(width, height, Gravity.TOP or Gravity.LEFT)
+        TouchTransparentInterop(modifier) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { MaterialChainView(it, api) },
+                onRelease = { runCatching { it.release() } },
+                update = { chain ->
+                    runCatching {
+                        val active = linkedSetOf<View>()
+                        var activeMask = 0
+                        chain.particles.forEachIndexed { i, view ->
+                            val particle = particles.getOrNull(i)
+                            if (particle == null || particle.width.value <= 0f || particle.height.value <= 0f || particle.alpha <= 0f) {
+                                view.visibility = View.GONE
+                                api.clear(view)
+                            } else {
+                                view.visibility = View.VISIBLE
+                                val width = with(density) { particle.width.roundToPx() }.coerceAtLeast(1)
+                                val height = with(density) { particle.height.roundToPx() }.coerceAtLeast(1)
+                                if (view.layoutParams.width != width || view.layoutParams.height != height) {
+                                    view.layoutParams = FrameLayout.LayoutParams(width, height, Gravity.TOP or Gravity.LEFT)
+                                }
+                                view.pivotX = width / 2f
+                                view.pivotY = height / 2f
+                                view.translationX = with(density) { particle.centerX.toPx() } - width / 2f
+                                view.translationY = with(density) { particle.centerY.toPx() } - height / 2f
+                                view.scaleX = particle.scaleX
+                                view.scaleY = particle.scaleY
+                                view.alpha = particle.alpha.coerceIn(0f, 1f)
+                                api.update(
+                                    view, width, height, with(density) { particle.cornerRadius.toPx() },
+                                    if (i == 0) 1 else 2, body, rim,
+                                    with(density) { extension.toPx() }.roundToInt(), factorX, factorY,
+                                    with(density) { MetaBallDefaults.RimWidth.toPx() },
+                                )
+                                active.add(view)
+                                activeMask = activeMask or (1 shl i)
                             }
-                            view.pivotX = width / 2f
-                            view.pivotY = height / 2f
-                            view.translationX = with(density) { particle.centerX.toPx() } - width / 2f
-                            view.translationY = with(density) { particle.centerY.toPx() } - height / 2f
-                            view.scaleX = particle.scaleX
-                            view.scaleY = particle.scaleY
-                            view.alpha = particle.alpha.coerceIn(0f, 1f)
-                            api.update(
-                                view, width, height, with(density) { particle.cornerRadius.toPx() },
-                                if (i == 0) 1 else 2, body, rim,
-                                with(density) { extension.toPx() }.roundToInt(), factorX, factorY,
-                                with(density) { MetaBallDefaults.RimWidth.toPx() },
-                            )
-                            active.add(view)
-                            activeMask = activeMask or (1 shl i)
                         }
-                    }
-                    chain.link(active, activeMask)
-                    chain.invalidate()
-                }.onFailure { failed = true }
-            },
-        )
+                        chain.link(active, activeMask)
+                        chain.invalidate()
+                    }.onFailure { failed = true }
+                },
+            )
+        }
     }
 }
