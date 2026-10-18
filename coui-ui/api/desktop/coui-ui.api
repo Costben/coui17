@@ -123,6 +123,7 @@ public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayKt {
 	public static final fun AppBarBlurOverlay-71WW8_c (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FFLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun AppBarBlurOverlay-71WW8_c (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarGlassDefaults {
@@ -1141,6 +1142,7 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlu
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlurOverlayKt;
 	public fun <init> ()V
 	public final fun getLambda$-1759200601$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$615577891$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$HintAnimationLayoutKt {
@@ -2008,6 +2010,7 @@ public final class io/github/suqi8/coui/kmp/basic/ListDetailViewKt {
 
 public final class io/github/suqi8/coui/kmp/basic/ListPopupDefaults {
 	public static final field $stable I
+	public static final field ExitTouchPassThroughAlpha F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ListPopupDefaults;
 	public final fun dropdownPositionProvider-YgX7TsA (FF)Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;
 	public static synthetic fun dropdownPositionProvider-YgX7TsA$default (Lio/github/suqi8/coui/kmp/basic/ListPopupDefaults;FFILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;
@@ -3943,7 +3946,7 @@ public final class io/github/suqi8/coui/kmp/basic/TabRowDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/TabRowKt {
 	public static final fun TabRow-aPxkGAE (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Landroidx/compose/runtime/Composer;III)V
-	public static final fun TabRowWithContour-iYUf_c0 (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Landroidx/compose/runtime/Composer;III)V
+	public static final fun TabRowWithContour-3gl_c-w (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TagViewColors {
@@ -4947,7 +4950,7 @@ public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils {
 public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$Companion {
 	public final fun COUIPopupHost (Landroidx/compose/runtime/Composer;I)V
 	public final fun DialogLayout (Landroidx/compose/runtime/MutableState;Landroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZZLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;Landroidx/compose/runtime/MutableState;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
-	public final fun PopupLayout (Landroidx/compose/runtime/MutableState;Landroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZZLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public final fun PopupLayout (Landroidx/compose/runtime/MutableState;Landroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZZLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$DialogState {
@@ -4985,6 +4988,7 @@ public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$PopupState {
 	public final fun getEnableWindowDim ()Z
 	public final fun getEnterTransition ()Landroidx/compose/animation/EnterTransition;
 	public final fun getExitTransition ()Landroidx/compose/animation/ExitTransition;
+	public final fun getPassTouches ()Lkotlin/jvm/functions/Function0;
 	public final fun getShowState ()Landroidx/compose/runtime/MutableState;
 	public final fun getZIndex ()F
 	public final fun setContent (Lkotlin/jvm/functions/Function2;)V
@@ -4994,6 +4998,7 @@ public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$PopupState {
 	public final fun setEnableWindowDim (Z)V
 	public final fun setEnterTransition (Landroidx/compose/animation/EnterTransition;)V
 	public final fun setExitTransition (Landroidx/compose/animation/ExitTransition;)V
+	public final fun setPassTouches (Lkotlin/jvm/functions/Function0;)V
 }
 
 public final class io/github/suqi8/coui/kmp/utils/COUIResponsiveUtils {
@@ -5018,7 +5023,6 @@ public final class io/github/suqi8/coui/kmp/utils/COUIWindowSizeClass : java/lan
 public final class io/github/suqi8/coui/kmp/utils/ComposableSingletons$COUIPopupUtilsKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/utils/ComposableSingletons$COUIPopupUtilsKt;
 	public fun <init> ()V
-	public final fun getLambda$-2043291783$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-491202791$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-577549966$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$2021925702$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;

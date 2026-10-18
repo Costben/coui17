@@ -17,6 +17,8 @@ All notable user-visible changes are documented here. The format follows
 - `TooltipDefaults.HorizontalEdgeMargin`, the gap a tooltip keeps from the window's side edges.
 - `BreadcrumbBarDefaults.FadeWidth`, the width of the fade at an edge the breadcrumb bar can still scroll towards.
 - `ChipDefaults.DismissIconStartPadding` and `ChipDefaults.DismissIconEndPadding`, the spacing around the dismiss icon.
+- `TabRowWithContour` accepts an `indicatorMaterial`, which adds the search-capsule rim and inner shadow to the sliding indicator. `null` keeps the plain indicator.
+- `AppBarBlurOverlay` accepts a `rampHeight`, which holds full alpha above the bar's bottom edge and fades out only within that band. `null` keeps the native ramp.
 
 ### Fixed
 
@@ -46,6 +48,7 @@ All notable user-visible changes are documented here. The format follows
 ### Changed
 
 - Swiping a notification no longer recomposes the notification box or rebuilds the card and menu shapes on every frame.
+- `HighlightedIconButtonDefaults` light-theme halo lowered (`LightHaloColor` alpha 0.05 to 0.03, `LightHaloRadius` 15.5dp to 12dp). Provisional values until a live circular-button reference can be measured.
 
 ## [1.2.0] - 2026-10-06
 

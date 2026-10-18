@@ -298,11 +298,20 @@ object HighlightedIconButtonDefaults {
     /**
      * The light theme's halo colour. Measurement: a soft dark drop shadow, deepest -13 luma over the
      * background the button was measured against.
+     *
+     * Provisional: alpha lowered from 0.05 to 0.03 because the user reports the ColorOS 17 halo reads
+     * heavier than on the device. No circular-button reference could be measured on the test
+     * devices, so this is a fallback value, to be calibrated against a live reference.
      */
-    val LightHaloColor = Color.Black.copy(alpha = 0.05f)
+    val LightHaloColor = Color.Black.copy(alpha = 0.03f)
 
-    /** How far the light theme's halo reaches past the edge. Measurement: ≈60px ≈ 15.5dp. */
-    val LightHaloRadius = 15.5.dp
+    /**
+     * How far the light theme's halo reaches past the edge. Measurement: ≈60px ≈ 15.5dp.
+     *
+     * Provisional: lowered from 15.5dp to 12dp together with [LightHaloColor], pending a live
+     * reference measurement.
+     */
+    val LightHaloRadius = 12.dp
 
     /**
      * The light theme's halo vertical offset. Measurement: the halo is near symmetric but

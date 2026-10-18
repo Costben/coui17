@@ -41,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.TransformOrigin
@@ -67,8 +66,6 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
-import io.github.suqi8.coui.kmp.blur.ProgressiveBlur
-import io.github.suqi8.coui.kmp.blur.progressiveTextureBlur
 import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -126,41 +123,22 @@ object AppBarGlassDefaults {
 }
 
 /**
- * The gradient shape's full-strength radius. `RenderEffect.createGradientBlurEffect` blurs at
- * `max(startBlurRadius, endBlurRadius)` and lets the blend curve do the ramping, so with the default
- * parameters the whole shape rides one 30px radius.
- */
-private val AppBarGradientBlurRadiusPx =
-    maxOf(AppBarGlassDefaults.GradientBlurRadiusPx, AppBarGlassDefaults.GradientEndBlurRadiusPx)
-
-/**
- * Paints the app bar surface: the blurred backdrop with [color] laid over at the ColorOS background
- * alpha when a backdrop is available, and the plain [color] fill otherwise.
+ * Paints the plain app bar surface: the blurred backdrop with [color] laid over at the ColorOS
+ * background alpha when a backdrop is available, and the plain [color] fill otherwise.
  *
  * [AppBarGlassDefaults.BlurRadiusPx] is converted through the current density so the physical radius
  * stays put across densities, the way the framework's px radius does.
  *
- * With [gradient] the surface follows the framework's *gradient* shape instead: a progressive blur
- * at full strength along the top edge, and a vertical [color] ramp that reaches full transparency at
- * the bottom edge. The ramp is painted even without a backdrop or a runtime shader — the framework's
- * gradient lives in the app bar's own background drawable, not in the RenderEffect.
+ * The gradient shape is not painted here. `gradientGlass` hands it to the material layer that
+ * [AppBarMaterialScaffold] measures past the bar, so the remaining alpha and blur fade out below the
+ * bar instead of ending on its edge; painting a second ramp on the bar itself would put a hard edge
+ * under the soft one.
  */
 @Composable
-private fun Modifier.appBarSurface(color: Color, gradient: Boolean = false): Modifier {
-    val backdrop: Backdrop? = LocalBackdrop.current
+private fun Modifier.appBarSurface(color: Color): Modifier {
     // A fully transparent surface means the caller already paints the material behind the bar.
     if (color.alpha == 0f) return background(color)
-    if (gradient) {
-        val brush = appBarGradientBrush(color)
-        if (backdrop == null || !isRuntimeShaderSupported()) return background(brush)
-        return progressiveTextureBlur(
-            backdrop = backdrop,
-            shape = RectangleShape,
-            blurRadius = with(LocalDensity.current) { AppBarGradientBlurRadiusPx.toDp().value },
-            gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
-            colors = BlurDefaults.blurColors(),
-        ).background(brush)
-    }
+    val backdrop: Backdrop? = LocalBackdrop.current
     if (backdrop == null || !isRuntimeShaderSupported()) return background(color)
     val alpha = if (color.luminance() < 0.5f) {
         AppBarGlassDefaults.BackgroundAlphaDark
@@ -178,31 +156,71 @@ private fun Modifier.appBarSurface(color: Color, gradient: Boolean = false): Mod
 }
 
 /**
- * The gradient shape's colour ramp, from `GradientBackgroundDrawable`.
+ * Wraps the bar in the ColorOS material: a material node measured to `bar + extraHeight`, drawn
+ * behind the bar content, while the layout itself still reports only the bar's height.
  *
- * The framework builds `LinearGradient(0f, height, 0f, 0f, colors, positions, CLAMP)` — bottom edge
- * up to the top — with `colors[i] = alpha_i << 24 | (baseColor & 0xFFFFFF)`. Compose's
- * [Brush.verticalGradient] runs the other way, so each stop is mirrored to `1 - position`; the
- * positions and alphas themselves come from [AppBarGlassDefaults].
+ * The material child is outside the bar's `clipToBounds`, so it can paint over the list in the
+ * extra band; the bar content keeps its own size, insets and clipping. Without `gradientGlass` the
+ * wrapper is a plain [Box], and [appBarSurface] paints the bar the old way.
+ *
+ * `showDivider` is suppressed whenever the material is on, the way
+ * `AppBarBlurHelper.syncAppBarDividerWithMaterialBlur` suppresses `COUIDividerAppBarLayout`'s
+ * divider: a hairline would cut across the material's fade.
  */
 @Composable
-private fun appBarGradientBrush(color: Color): Brush {
-    val dark = color.luminance() < 0.5f
-    return remember(color, dark) {
-        val top = 1f - AppBarGlassDefaults.GradientPos2
-        val middle = 1f - AppBarGlassDefaults.GradientPos1
-        val bottom = 1f - AppBarGlassDefaults.GradientPos0
-        if (dark) {
-            Brush.verticalGradient(
-                top to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
-                bottom to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+private fun AppBarMaterialScaffold(
+    gradientGlass: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    scrollBehavior: ScrollBehavior? = null,
+    content: @Composable () -> Unit,
+) {
+    if (!gradientGlass) {
+        Box(modifier = modifier) { content() }
+        return
+    }
+    val density = LocalDensity.current
+    val extraHeightPx = with(density) { AppBarBlurOverlayDefaults.ExtraHeight.roundToPx() }
+    // `AppBarBlurOverlayBehavior`'s scroll-driven alpha: invisible at rest, fully visible after
+    // 30dp of content has scrolled under the bar. A bar without a scroll behavior keeps the
+    // material always on, the way `scrollDrivenAlphaEnabled=false` does natively.
+    val scrollFraction = remember(scrollBehavior, density) {
+        {
+            val behavior = scrollBehavior
+            if (behavior == null) {
+                1f
+            } else {
+                AppBarBlurOverlayDefaults.scrollAlpha(abs(behavior.state.contentOffset), density)
+            }
+        }
+    }
+    Layout(
+        content = {
+            AppBarMaterial(
+                modifier = Modifier.layoutId("material"),
+                containerColor = color,
+                scrollFraction = scrollFraction,
             )
-        } else {
-            Brush.verticalGradient(
-                top to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
-                middle to color.copy(alpha = AppBarGlassDefaults.GradientAlpha1),
-                bottom to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
-            )
+            Box(Modifier.layoutId("content")) { content() }
+        },
+        modifier = modifier,
+    ) { measurables, constraints ->
+        val contentPlaceable =
+            measurables
+                .fastFirst { it.layoutId == "content" }
+                .measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val materialPlaceable =
+            measurables
+                .fastFirst { it.layoutId == "material" }
+                .measure(
+                    Constraints.fixed(
+                        width = contentPlaceable.width,
+                        height = contentPlaceable.height + extraHeightPx,
+                    ),
+                )
+        layout(contentPlaceable.width, contentPlaceable.height) {
+            materialPlaceable.placeRelative(0, 0)
+            contentPlaceable.placeRelative(0, 0)
         }
     }
 }
@@ -236,7 +254,10 @@ private fun appBarGradientBrush(color: Color): Brush {
  * @param navigationIconPadding The start padding of the navigation icon.
  * @param actionIconPadding The end padding of the action icons.
  * @param gradientGlass Whether to paint the ColorOS gradient-blur app bar material
- *   (`AppBarBlurHelper`'s gradient shape) instead of the uniform one.
+ *   (`AppBarBlurHelper`'s gradient shape) instead of the uniform one. The material is measured to
+ *   the bar plus [AppBarBlurOverlayDefaults.ExtraHeight] and drawn behind the bar, so the bar's
+ *   bottom edge keeps some blur and surface alpha that fade out over that band; the layout still
+ *   reports only the bar's height. The divider is suppressed while the material is on.
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -275,32 +296,41 @@ fun TopAppBar(
             )
         }
 
-    // Compose a Surface with a TopAppBarLayout content.
-    // The surface's background color is animated as specified above.
-    // The height of the app bar is determined by subtracting the bar's height offset from the
-    // app bar's defined constant height value (i.e. the ContainerHeight token).
-    TopAppBarLayout(
-        title = title,
-        color = color,
-        titleColor = titleColor,
-        largeTitle = largeTitle,
-        largeTitleColor = largeTitleColor,
-        subtitle = subtitle,
-        subtitleColor = subtitleColor,
-        dividerColor = dividerColor,
-        navigationIcon = navigationIcon,
-        actions = actionsRow,
-        titlePadding = titlePadding,
-        navigationIconPadding = navigationIconPadding,
-        actionIconPadding = actionIconPadding,
-        scrollBehavior = scrollBehavior,
-        modifier = modifier,
-        defaultWindowInsetsPadding = defaultWindowInsetsPadding,
-        showDivider = showDivider,
-        hideSubtitleOnCollapse = hideSubtitleOnCollapse,
+    // The material layer is a sibling of the bar, measured to the bar plus the extra band while
+    // the wrapper still reports the bar's height. Without the material the wrapper is a plain Box.
+    AppBarMaterialScaffold(
         gradientGlass = gradientGlass,
-        bottomContent = bottomContent,
-    )
+        color = color,
+        modifier = modifier,
+        scrollBehavior = scrollBehavior,
+    ) {
+        // Compose a Surface with a TopAppBarLayout content.
+        // The surface's background color is animated as specified above.
+        // The height of the app bar is determined by subtracting the bar's height offset from the
+        // app bar's defined constant height value (i.e. the ContainerHeight token).
+        TopAppBarLayout(
+            title = title,
+            color = color,
+            titleColor = titleColor,
+            largeTitle = largeTitle,
+            largeTitleColor = largeTitleColor,
+            subtitle = subtitle,
+            subtitleColor = subtitleColor,
+            dividerColor = dividerColor,
+            navigationIcon = navigationIcon,
+            actions = actionsRow,
+            titlePadding = titlePadding,
+            navigationIconPadding = navigationIconPadding,
+            actionIconPadding = actionIconPadding,
+            scrollBehavior = scrollBehavior,
+            modifier = Modifier,
+            defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+            showDivider = showDivider,
+            hideSubtitleOnCollapse = hideSubtitleOnCollapse,
+            gradientGlass = gradientGlass,
+            bottomContent = bottomContent,
+        )
+    }
 }
 
 @Composable
@@ -429,33 +459,42 @@ fun SmallTopAppBar(
             )
         }
 
-    // Compose a Surface with a SmallTopAppBarLayout content.
-    // The surface's background color is animated as specified above.
-    // The height of the app bar is determined by subtracting the bar's height offset from the
-    // app bar's defined constant height value (i.e. the ContainerHeight token).
-    SmallTopAppBarLayout(
-        title = title,
-        color = color,
-        titleColor = titleColor,
-        subtitle = subtitle,
-        subtitleColor = subtitleColor,
-        dividerColor = dividerColor,
-        navigationIcon = navigationIcon,
-        actions = actionsRow,
-        // The centred form swaps the toolbar's own padding for the responsive centre margin, the
-        // way COUIToolbar.changeToolbarPadding does for mIsTitleCenterStyle.
-        titlePadding = if (centerTitle) centerTitleMargin else titlePadding,
-        navigationIconPadding = if (centerTitle) centerTitleMargin else navigationIconPadding,
-        actionIconPadding = if (centerTitle) centerTitleMargin else actionIconPadding,
-        centerTitle = centerTitle,
-        segmentButton = segmentButton,
+    // The material layer is a sibling of the bar, measured to the bar plus the extra band while
+    // the wrapper still reports the bar's height. Without the material the wrapper is a plain Box.
+    AppBarMaterialScaffold(
         gradientGlass = gradientGlass,
-        scrollBehavior = scrollBehavior,
+        color = color,
         modifier = modifier,
-        defaultWindowInsetsPadding = defaultWindowInsetsPadding,
-        showDivider = showDivider,
-        bottomContent = bottomContent,
-    )
+        scrollBehavior = scrollBehavior,
+    ) {
+        // Compose a Surface with a SmallTopAppBarLayout content.
+        // The surface's background color is animated as specified above.
+        // The height of the app bar is determined by subtracting the bar's height offset from the
+        // app bar's defined constant height value (i.e. the ContainerHeight token).
+        SmallTopAppBarLayout(
+            title = title,
+            color = color,
+            titleColor = titleColor,
+            subtitle = subtitle,
+            subtitleColor = subtitleColor,
+            dividerColor = dividerColor,
+            navigationIcon = navigationIcon,
+            actions = actionsRow,
+            // The centred form swaps the toolbar's own padding for the responsive centre margin, the
+            // way COUIToolbar.changeToolbarPadding does for mIsTitleCenterStyle.
+            titlePadding = if (centerTitle) centerTitleMargin else titlePadding,
+            navigationIconPadding = if (centerTitle) centerTitleMargin else navigationIconPadding,
+            actionIconPadding = if (centerTitle) centerTitleMargin else actionIconPadding,
+            centerTitle = centerTitle,
+            segmentButton = segmentButton,
+            gradientGlass = gradientGlass,
+            scrollBehavior = scrollBehavior,
+            modifier = Modifier,
+            defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+            showDivider = showDivider,
+            bottomContent = bottomContent,
+        )
+    }
 }
 
 @Composable
@@ -1028,7 +1067,8 @@ private suspend fun settleAppBar(
  * @param defaultWindowInsetsPadding whether to apply default window insets padding to the [TopAppBar].
  * @param showDivider whether to draw the bottom hairline divider while collapsing.
  * @param hideSubtitleOnCollapse whether the subtitle fades out while the bar collapses.
- * @param gradientGlass whether to paint the ColorOS gradient-blur app bar material.
+ * @param gradientGlass whether to let the ColorOS material layer behind this layout paint the bar;
+ *   the layout itself then stays transparent and suppresses its divider.
  * @param bottomContent the composable content displayed below the title bar area.
  */
 @Composable
@@ -1163,7 +1203,9 @@ private fun TopAppBarLayout(
             }
         },
         modifier = modifier
-            .appBarSurface(color, gradient = gradientGlass)
+            // The material layer behind this layout paints the gradient shape when gradientGlass
+            // is on; a second ramp here would end on the bar's edge under the soft one.
+            .then(if (gradientGlass) Modifier else Modifier.appBarSurface(color))
             // The clip has to wrap the *padded* node, not sit inside it. A toolbar icon's halo
             // reaches ~8dp above its 40dp button, past the top of the content box once the status
             // bar inset has pushed that box down, and clipping after the inset cut the halo off flat
@@ -1181,7 +1223,9 @@ private fun TopAppBarLayout(
             )
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .then(
-                if (showDivider) {
+                // AppBarBlurHelper.syncAppBarDividerWithMaterialBlur: the divider is suppressed
+                // whenever the blur material is on, so it cannot cut across the fade.
+                if (showDivider && !gradientGlass) {
                     Modifier.drawWithContent {
                         drawContent()
                         // COUIDividerAppBarLayout: hairline at the app bar's bottom edge,
@@ -1381,6 +1425,8 @@ private fun TopAppBarLayout(
  * @param modifier the [Modifier] to be applied to this layout.
  * @param defaultWindowInsetsPadding whether to apply default window insets padding to the [SmallTopAppBar].
  * @param showDivider whether to draw the bottom hairline divider on scroll.
+ * @param gradientGlass whether to let the ColorOS material layer behind this layout paint the bar;
+ *   the layout itself then stays transparent and suppresses its divider.
  * @param bottomContent the composable content displayed below the title bar area.
  */
 @Composable
@@ -1475,7 +1521,9 @@ private fun SmallTopAppBarLayout(
             }
         },
         modifier = modifier
-            .appBarSurface(color, gradient = gradientGlass)
+            // The material layer behind this layout paints the gradient shape when gradientGlass
+            // is on; a second ramp here would end on the bar's edge under the soft one.
+            .then(if (gradientGlass) Modifier else Modifier.appBarSurface(color))
             // The clip has to wrap the *padded* node, not sit inside it. A toolbar icon's halo
             // reaches ~8dp above its 40dp button, past the top of the content box once the status
             // bar inset has pushed that box down, and clipping after the inset cut the halo off flat
@@ -1493,7 +1541,9 @@ private fun SmallTopAppBarLayout(
             )
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
             .then(
-                if (showDivider) {
+                // AppBarBlurHelper.syncAppBarDividerWithMaterialBlur: the divider is suppressed
+                // whenever the blur material is on, so it cannot cut across the fade.
+                if (showDivider && !gradientGlass) {
                     Modifier.drawWithContent {
                         drawContent()
                         // COUI second-page toolbar divider: fades in over the first 10dp of

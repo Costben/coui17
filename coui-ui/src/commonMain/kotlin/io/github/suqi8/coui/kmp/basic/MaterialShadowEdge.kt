@@ -324,46 +324,76 @@ fun Modifier.materialShadowEdge(
         val height = size.height
         if (width <= 0f || height <= 0f) return@drawWithCache onDrawBehind {}
         val radius = cornerRadius?.toPx() ?: (height / 2f)
-
-        // u_commonArray = [resolution.x, resolution.y, position.x, position.y, size.w, size.h,
-        //                  cornerRadius.(lb, rb, rt, lt), weight, antiAliasing]
-        shader.setFloatUniform(
-            "u_commonArray",
-            floatArrayOf(width, height, 0f, 0f, width, height, radius, radius, radius, radius, cornerWeight, antiAliasing),
-        )
-        shader.setFloatUniform("u_shadow", 1f)
-        shader.setFloatUniform(
-            "u_shadowArray",
-            InnerShadowStyleMapper.toShadowArray16(
-                style = shadowStyle,
-                width = width,
-                height = height,
-                fadeWidthScale = stroke.shadowFadeScale,
-                fadeAlphaInScale = stroke.shadowFadeIn,
-                fadeAlphaOutScale = stroke.shadowFadeOut,
-                density = density,
-            ),
-        )
-        shader.setFloatUniform("u_edge", 1f)
-        shader.setFloatUniform(
-            "u_edgeArray",
-            GradientStrokeStyleMapper.toEdgeArray16(
-                style = edgeStyle,
-                width = width,
-                height = height,
-                lineWidth = stroke.edgeWidth.toPx(),
-                lineAlpha = stroke.edgeAlpha,
-                lineAngle = stroke.edgeAngle,
-                density = density,
-            ),
+        setMaterialShadowEdgeUniforms(
+            shader = shader,
+            width = width,
+            height = height,
+            radius = radius,
+            stroke = stroke,
+            cornerWeight = cornerWeight,
+            antiAliasing = antiAliasing,
+            edgeStyle = edgeStyle,
+            shadowStyle = shadowStyle,
+            density = density,
         )
         onDrawBehind { drawRect(brush = shader.asBrush(), size = size) }
     }
 }
 
+/**
+ * Writes the material edge uniforms for a surface of [width] x [height] px whose four corners all
+ * have [radius] px. Shared by [materialShadowEdge] and by callers that paint the edge on a sub-rect
+ * of a larger node, such as a segment indicator.
+ */
+internal fun setMaterialShadowEdgeUniforms(
+    shader: RuntimeShader,
+    width: Float,
+    height: Float,
+    radius: Float,
+    stroke: MaterialStrokeParams,
+    cornerWeight: Float,
+    antiAliasing: Float,
+    edgeStyle: GradientStrokeStyle,
+    shadowStyle: InnerShadowStyle,
+    density: Float,
+) {
+    // u_commonArray = [resolution.x, resolution.y, position.x, position.y, size.w, size.h,
+    //                  cornerRadius.(lb, rb, rt, lt), weight, antiAliasing]
+    shader.setFloatUniform(
+        "u_commonArray",
+        floatArrayOf(width, height, 0f, 0f, width, height, radius, radius, radius, radius, cornerWeight, antiAliasing),
+    )
+    shader.setFloatUniform("u_shadow", 1f)
+    shader.setFloatUniform(
+        "u_shadowArray",
+        InnerShadowStyleMapper.toShadowArray16(
+            style = shadowStyle,
+            width = width,
+            height = height,
+            fadeWidthScale = stroke.shadowFadeScale,
+            fadeAlphaInScale = stroke.shadowFadeIn,
+            fadeAlphaOutScale = stroke.shadowFadeOut,
+            density = density,
+        ),
+    )
+    shader.setFloatUniform("u_edge", 1f)
+    shader.setFloatUniform(
+        "u_edgeArray",
+        GradientStrokeStyleMapper.toEdgeArray16(
+            style = edgeStyle,
+            width = width,
+            height = height,
+            lineWidth = stroke.edgeWidth.value * density,
+            lineAlpha = stroke.edgeAlpha,
+            lineAngle = stroke.edgeAngle,
+            density = density,
+        ),
+    )
+}
+
 /** Compiles (and remembers) the material edge shader; `null` when runtime shaders are unavailable. */
 @Composable
-private fun rememberMaterialShadowEdgeShader(enabled: Boolean): RuntimeShader? {
+internal fun rememberMaterialShadowEdgeShader(enabled: Boolean): RuntimeShader? {
     if (!enabled) return null
     return remember { runCatching { RuntimeShader(MATERIAL_SHADOW_EDGE_SHADER) }.getOrNull() }
 }

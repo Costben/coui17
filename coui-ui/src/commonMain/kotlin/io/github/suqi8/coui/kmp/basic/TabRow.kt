@@ -66,6 +66,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
+import io.github.suqi8.coui.kmp.shader.asBrush
+import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -123,11 +125,13 @@ fun TabRow(
         height = height,
         cornerRadius = cornerRadius,
         contourPadding = 0.dp,
+        segmentPadding = SegmentPaddingHorizontal,
         itemSpacing = itemSpacing,
         contentAlignment = contentAlignment,
         listState = listState,
         interactionSource = interactionSource,
         indication = indication,
+        indicatorMaterial = null,
     )
 }
 
@@ -149,11 +153,16 @@ fun TabRow(
  * @param height The height of the [TabRow].
  * @param cornerRadius The corner radius of the sliding indicator in [TabRow].
  * @param contourPadding The inset between the container capsule and the sliding indicator.
+ * @param segmentPadding The horizontal padding inside each segment, around its label. Lowering it
+ *   lets more labels fit the capsule without narrowing the container.
  * @param itemSpacing The spacing between tabs in [TabRow].
  * @param contentAlignment The content alignment of the tab in [TabRow].
  * @param listState The [LazyListState] to be used for the [TabRow].
  * @param interactionSource The [MutableInteractionSource] to be used for the [TabRow].
  * @param indication The [Indication] to be used for the [TabRow].
+ * @param indicatorMaterial When non-null, the sliding indicator also gets the material rim and inner
+ *   shadow described by these params, the same edge the search capsule uses. `null` keeps the plain
+ *   indicator fill.
  */
 @Composable
 @NonRestartableComposable
@@ -168,11 +177,13 @@ fun TabRowWithContour(
     height: Dp = TabRowDefaults.TabRowWithContourHeight,
     cornerRadius: Dp = TabRowDefaults.TabRowWithContourCornerRadius,
     contourPadding: Dp = TabRowDefaults.TabRowWithContourPadding,
+    segmentPadding: Dp = SegmentPaddingHorizontal,
     itemSpacing: Dp = 0.dp,
     contentAlignment: Alignment = Alignment.Center,
     listState: LazyListState? = null,
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
+    indicatorMaterial: MaterialStrokeParams? = null,
 ) {
     SegmentButtonRow(
         tabs = tabs,
@@ -185,11 +196,13 @@ fun TabRowWithContour(
         height = height,
         cornerRadius = cornerRadius,
         contourPadding = contourPadding,
+        segmentPadding = segmentPadding,
         itemSpacing = itemSpacing,
         contentAlignment = contentAlignment,
         listState = listState,
         interactionSource = interactionSource,
         indication = indication,
+        indicatorMaterial = indicatorMaterial,
     )
 }
 
@@ -207,11 +220,13 @@ private fun SegmentButtonRow(
     height: Dp,
     cornerRadius: Dp,
     contourPadding: Dp,
+    segmentPadding: Dp,
     itemSpacing: Dp,
     contentAlignment: Alignment,
     listState: LazyListState?,
     interactionSource: MutableInteractionSource?,
     indication: Indication?,
+    indicatorMaterial: MaterialStrokeParams?,
     modifier: Modifier = Modifier,
 ) {
     val currentOnTabSelected by rememberUpdatedState(onTabSelected)
@@ -226,6 +241,9 @@ private fun SegmentButtonRow(
     // COUI measures segments with the selected appearance (couiTextButtonM: 14sp, medium).
     val measureStyle = remember(labelFontSize) { TextStyle(fontSize = labelFontSize, fontWeight = FontWeight.Medium) }
     val resolvedListState = listState ?: rememberLazyListState()
+    val indicatorShader = rememberMaterialShadowEdgeShader(
+        enabled = indicatorMaterial != null && isRuntimeShaderSupported(),
+    )
 
     BoxWithConstraints(
         modifier = Modifier
@@ -237,7 +255,7 @@ private fun SegmentButtonRow(
         val minWidthPx = with(density) { minWidth.roundToPx() }
         val maxWidthPx = if (maxWidth == Dp.Infinity) Int.MAX_VALUE else with(density) { maxWidth.roundToPx() }
         val spacingPx = with(density) { itemSpacing.roundToPx() }
-        val segmentPaddingPx = with(density) { SegmentPaddingHorizontal.roundToPx() }
+        val segmentPaddingPx = with(density) { segmentPadding.roundToPx() }
 
         // COUISegmentButtonLayout.calculateChildrenWidths: natural label widths distributed to fill the row.
         val segmentWidthsPx = remember(
@@ -406,6 +424,24 @@ private fun SegmentButtonRow(
                             size = rect.size,
                             cornerRadius = CornerRadius(radius),
                         )
+                        // 4. Optional indicator material: rim and inner shadow on the indicator's own bounds.
+                        val material = indicatorMaterial
+                        val shader = indicatorShader
+                        if (material != null && shader != null) {
+                            setMaterialShadowEdgeUniforms(
+                                shader = shader,
+                                width = indicatorW,
+                                height = indicatorH,
+                                radius = radius,
+                                stroke = material,
+                                cornerWeight = MaterialShadowEdgeDefaults.CornerWeight,
+                                antiAliasing = MaterialShadowEdgeDefaults.AntiAliasing,
+                                edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+                                shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
+                                density = density.density,
+                            )
+                            drawRect(brush = shader.asBrush(), topLeft = rect.topLeft, size = rect.size)
+                        }
                     }
                 },
         ) {
@@ -427,6 +463,7 @@ private fun SegmentButtonRow(
                         width = with(density) { segmentWidthsPx[index].toDp() },
                         color = colors.contentColor(selectedTabIndex == index),
                         fontSize = labelFontSize,
+                        segmentPadding = segmentPadding,
                         contentAlignment = contentAlignment,
                         interactionSource = interactionSource,
                         indication = indication,
@@ -446,6 +483,7 @@ private fun SegmentTab(
     width: Dp,
     color: Color,
     fontSize: TextUnit,
+    segmentPadding: Dp,
     contentAlignment: Alignment,
     interactionSource: MutableInteractionSource?,
     indication: Indication?,
@@ -488,7 +526,7 @@ private fun SegmentTab(
                 role = Role.Tab
                 selected = isSelected
             }
-            .padding(horizontal = SegmentPaddingHorizontal),
+            .padding(horizontal = segmentPadding),
         contentAlignment = contentAlignment,
     ) {
         Text(

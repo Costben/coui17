@@ -5,9 +5,10 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -15,11 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFirst
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
@@ -32,13 +36,16 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 object AppBarBlurOverlayDefaults {
 
     /**
-     * How far the overlay reaches past the app bar's bottom edge.
+     * How far the material reaches past the app bar's bottom edge.
      *
-     * COUI `homepage_appbar_blur_extra_height` (14dp). `AppBarBlurOverlayBehavior` measures the
-     * overlay to `appBar.top .. appBar.bottom + extraHeightPx`, so the material keeps ramping past
-     * the bar instead of stopping at its edge.
+     * `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_SCROLL_DRIVEN` (24dp). `AppBarBlurOverlayBehavior`
+     * measures the overlay to `appBar.top .. appBar.bottom + extraHeightPx`, so the bar's bottom
+     * edge keeps some blur and surface alpha, and both fade out over this band instead of stopping
+     * on the bar's own edge. (The settings homepage inflates its non-scroll-driven overlay with
+     * `homepage_appbar_blur_extra_height` = 14dp — measured 54px at 620dpi — but its scroll-driven
+     * form uses 24dp; the taller band is the one that leaves a visible fade under a collapsed bar.)
      */
-    val ExtraHeight = 14.dp
+    val ExtraHeight = 24.dp
 
     /**
      * `AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`: the scroll distance over which the overlay's
@@ -95,39 +102,42 @@ object AppBarBlurOverlayDefaults {
  * it.
  *
  * The native overlay is inflated at `layout_height=0dp` and resized by `AppBarBlurOverlayBehavior`
- * to the app bar's bounds plus [AppBarBlurOverlayDefaults.ExtraHeight], so **the caller sizes this
- * node**: pass `Modifier.height(appBarHeight + extraHeight)` (or equivalent). The overlay itself
- * paints nothing; the helper gives it a gradient alpha ramp plus a `RenderEffect` progressive blur,
- * and the behavior drives the whole view's alpha from the scroll offset.
+ * to the app bar's bounds plus [AppBarBlurOverlayDefaults.ExtraHeight], so the material is taller
+ * than the bar. This composable measures its [content] to find the bar, draws the material over
+ * `bar + extraHeight`, and reports the **bar's** height, so the extra band never reaches a
+ * `Scaffold`'s content padding.
  *
- * The ramp is anchored to the **bar**, not to the node: it is fully transparent over the
- * [extraHeight] band the caller added below the bar, and climbs from alpha 0 on the bar's bottom
- * edge to full strength at the node's top edge. The extra band is folded into the brush's stop
- * positions, so the material reads as the bar's own surface rather than as a taller gradient.
+ * The material keeps the framework's gradient shape, anchored to the node's bottom edge rather
+ * than to the bar's: `GradientBackgroundDrawable` builds `LinearGradient(0, height, 0, 0, colors,
+ * positions)`, which is alpha 0 on the bottom edge, 0.7 at 40% up, and 1 at the top (light theme),
+ * or 0 up to 0.4 (dark theme). Because the node is `bar + extraHeight` tall, the bar's own bottom
+ * edge still carries some surface colour and the colour fades to nothing over the extra band.
  *
- * The blur is a progressive one at the framework's 30px gradient radius, so it is full strength
- * along the top edge and has faded to nothing by the bar's bottom edge; the native blend curve
- * (`pow(1 - t, gradientBlurSpeed)`) is applied by [ProgressiveBlur].
+ * The blur is a progressive one at the framework's 30px gradient radius, strongest at the node's
+ * top edge and fading to sharp on its bottom edge. Stretching it over the extra band is what keeps
+ * the bar's bottom edge visibly blurred — the same edge is almost sharp when the ramp is squeezed
+ * into the bar alone — while the node's bottom edge is pixel-sharp, so the material meets the list
+ * without a seam. The native blend curve (`pow(1 - t, gradientBlurSpeed)`) is applied by
+ * [ProgressiveBlur].
  *
  * When [backdrop] is `null` — or the platform cannot run runtime shaders, which is everything below
  * Android 13 — the blur is skipped and the plain ramp is painted, the way the framework's gradient
  * lives in the app bar's own background drawable rather than in the RenderEffect.
  *
- * @param modifier The modifier to be applied to the overlay. The caller is expected to size the
- *   node to the app bar's height plus [extraHeight].
+ * @param modifier The modifier to be applied to the overlay. Do not size it: the bar height comes
+ *   from [content], and the material adds [extraHeight] on top of it for drawing only.
  * @param containerColor The base colour the alpha ramp is drawn in. Defaults to
  *   [AppBarBlurOverlayDefaults.containerColor], which is the theme's `surface` in the light theme —
  *   `coui_color_background_with_card`, the value the device's fully opaque top edge holds — and
  *   [AppBarBlurOverlayDefaults.DarkContainerColor] in the dark theme.
  * @param backdrop The content to sample, normally [LocalBackdrop]'s value.
- * @param extraHeight How far the overlay reaches past the bar's bottom edge. Defaults to
+ * @param extraHeight How far the material reaches past the bar's bottom edge. Defaults to
  *   [AppBarBlurOverlayDefaults.ExtraHeight].
  * @param scrollFraction The scroll-driven alpha, `min(1, scrollPx / 30dp)` — see
  *   [AppBarBlurOverlayDefaults.scrollAlpha]. At `0` the overlay is invisible and draws nothing; the
  *   value is coerced into `0f..1f`.
- * @param content The app bar content the caller hollows out, drawn on top of the material. It is
- *   not part of the material: the title and the actions stay readable at rest, when the material is
- *   still invisible.
+ * @param content The app bar content. It is measured to find the bar's height, drawn on top of the
+ *   material, and defines the layout height this composable reports.
  */
 @Composable
 fun AppBarBlurOverlay(
@@ -138,77 +148,147 @@ fun AppBarBlurOverlay(
     scrollFraction: Float = 1f,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
+    AppBarBlurOverlay(
+        modifier = modifier,
+        containerColor = containerColor,
+        backdrop = backdrop,
+        extraHeight = extraHeight,
+        scrollFraction = { scrollFraction },
+        content = content,
+    )
+}
+
+/**
+ * [AppBarBlurOverlay] whose alpha is read from a producer instead of a composed value.
+ *
+ * The producer is read in the draw phase, so a scroll-driven
+ * [scrollFraction] does not recompose the bar on every frame. At rest it must return `0` (the
+ * native overlay's `INVISIBLE` state); the material then draws nothing, leaving the content under
+ * the bar sharp. A caller with no scroll state to observe should return `1f`.
+ *
+ * The `scrollFraction` overload with a [Float] forwards to this one.
+ */
+@Composable
+fun AppBarBlurOverlay(
+    modifier: Modifier = Modifier,
+    containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
+    backdrop: Backdrop? = LocalBackdrop.current,
+    extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    scrollFraction: () -> Float,
+    content: @Composable BoxScope.() -> Unit = {},
+) {
+    val extraHeightPx = with(LocalDensity.current) { extraHeight.roundToPx() }
+    Layout(
+        content = {
+            AppBarMaterial(
+                modifier = Modifier.layoutId("material"),
+                containerColor = containerColor,
+                backdrop = backdrop,
+                scrollFraction = scrollFraction,
+            )
+            Box(Modifier.layoutId("content")) { content() }
+        },
+        modifier = modifier,
+    ) { measurables, constraints ->
+        val contentPlaceable =
+            measurables
+                .fastFirst { it.layoutId == "content" }
+                .measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val materialPlaceable =
+            measurables
+                .fastFirst { it.layoutId == "material" }
+                .measure(
+                    Constraints.fixed(
+                        width = contentPlaceable.width,
+                        height = contentPlaceable.height + extraHeightPx,
+                    ),
+                )
+        layout(contentPlaceable.width, contentPlaceable.height) {
+            materialPlaceable.placeRelative(0, 0)
+            contentPlaceable.placeRelative(0, 0)
+        }
+    }
+}
+
+/**
+ * The app bar material alone, for callers that place it behind their own bar content.
+ *
+ * It paints the gradient surface and the progressive blur over whatever size the caller measures
+ * it to. [io.github.suqi8.coui.kmp.basic.TopAppBar] measures it to the bar plus
+ * [AppBarBlurOverlayDefaults.ExtraHeight] while reporting only the bar height.
+ *
+ * @param modifier The size and position of the material node.
+ * @param containerColor The base colour of the alpha ramp.
+ * @param backdrop The content to sample; `null` skips the blur and paints the ramp alone.
+ * @param scrollFraction The material's overall alpha, read in the draw phase. At `0` the material
+ *   draws nothing, so the content under the bar stays sharp — the native overlay's resting state.
+ */
+@Composable
+internal fun AppBarMaterial(
+    modifier: Modifier = Modifier,
+    containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
+    backdrop: Backdrop? = LocalBackdrop.current,
+    scrollFraction: () -> Float = { 1f },
+) {
     val density = LocalDensity.current
-    val extraHeightPx = with(density) { extraHeight.toPx() }
-    val materialAlpha = scrollFraction.coerceIn(0f, 1f)
+    // Compose the effect only while the scroll fraction is non-zero. The boolean changes once when
+    // scrolling starts and once when it returns to rest; the alpha itself is a draw-phase read, so
+    // the bar does not recompose on every scroll frame.
+    val active by remember(scrollFraction) {
+        derivedStateOf { scrollFraction() > 0f }
+    }
+    if (!active) {
+        Box(modifier = modifier.fillMaxSize())
+        return
+    }
     // `isCOUIDarkThemeOrNightMode`, which picks the two-stop dark ramp over the three-stop light one.
     // It is a property of the theme, not of the base colour, so a caller-supplied colour cannot move
     // the ramp to the other branch.
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
-
-    BoxWithConstraints(modifier = modifier) {
-        val material = if (materialAlpha > 0f) {
-            // The ramp is anchored to the bar's bottom edge, which sits `extraHeight` above the
-            // node's. A node with no usable height has no extra band to fold in, so the stops fall
-            // back to the bar-height case.
-            val nodeHeightPx = constraints.maxHeight
-            val barBottomFraction = if (nodeHeightPx > 0 && nodeHeightPx != Constraints.Infinity) {
-                (1f - extraHeightPx / nodeHeightPx).coerceIn(0f, 1f)
-            } else {
-                1f
-            }
-            val brush = appBarBlurOverlayBrush(containerColor, barBottomFraction, isDarkTheme)
-            if (backdrop == null || !isRuntimeShaderSupported()) {
-                Modifier.background(brush)
-            } else {
-                Modifier.progressiveTextureBlur(
-                    backdrop = backdrop,
-                    shape = RectangleShape,
-                    blurRadius = with(density) { AppBarGlassDefaults.GradientBlurRadiusPx.toDp().value },
-                    gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
-                    colors = BlurDefaults.blurColors(),
-                ).background(brush)
-            }
+    val brush = appBarBlurOverlayBrush(containerColor, isDarkTheme)
+    val effect =
+        if (backdrop == null || !isRuntimeShaderSupported()) {
+            Modifier.background(brush)
         } else {
-            Modifier
+            Modifier.progressiveTextureBlur(
+                backdrop = backdrop,
+                shape = RectangleShape,
+                blurRadius = with(density) { AppBarGlassDefaults.GradientBlurRadiusPx.toDp().value },
+                gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
+                colors = BlurDefaults.blurColors(),
+            ).background(brush)
         }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = materialAlpha }
-                .then(material),
-        )
-        content()
-    }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .graphicsLayer { alpha = scrollFraction().coerceIn(0f, 1f) }
+            .then(effect),
+    )
 }
 
 /**
  * The overlay's alpha ramp, stretched over the node's full height.
  *
- * `GradientBackgroundDrawable` builds `LinearGradient(0, barHeight, 0, 0, colors, positions)` — the
- * ramp is measured from the **bar's** bottom edge up, while the node also carries the extra band
- * below the bar. With `p` measured from the bar bottom and [barBottomFraction] the fraction of the
- * node the bar occupies, a node stop at fraction `f` sits at `p = 1 - f / barBottomFraction`; the
- * stops below put the ramp's `p = 0` stop exactly on the bar's bottom edge and leave everything
- * under it transparent.
+ * `GradientBackgroundDrawable` builds `LinearGradient(0, height, 0, 0, colors, positions)` — the
+ * ramp is measured from the **node's** bottom edge up. The node carries the bar plus the extra
+ * band, so the bar's own bottom edge still has some alpha and the surface fades out below it.
  *
  * Compose's [Brush.verticalGradient] runs top→bottom while the native gradient runs bottom→top, so
  * the stops are mirrored — the same way the app bar's own gradient brush mirrors them. The
  * positions and alphas come from [AppBarGlassDefaults].
  */
 @Composable
-private fun appBarBlurOverlayBrush(color: Color, barBottomFraction: Float, dark: Boolean): Brush = remember(color, dark, barBottomFraction) {
+private fun appBarBlurOverlayBrush(color: Color, dark: Boolean): Brush = remember(color, dark) {
     if (dark) {
         Brush.verticalGradient(
             0f to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
-            barBottomFraction to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
         )
     } else {
         Brush.verticalGradient(
             0f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
-            barBottomFraction * (1f - AppBarGlassDefaults.GradientPos1) to
-                color.copy(alpha = AppBarGlassDefaults.GradientAlpha1),
-            barBottomFraction to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            1f - AppBarGlassDefaults.GradientPos1 to color.copy(alpha = AppBarGlassDefaults.GradientAlpha1),
+            1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
         )
     }
 }
