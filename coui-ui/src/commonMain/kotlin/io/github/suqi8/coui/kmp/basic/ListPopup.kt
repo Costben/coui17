@@ -95,6 +95,7 @@ import io.github.suqi8.coui.kmp.anim.SinOutEasing
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
@@ -1210,17 +1211,27 @@ private val PopupBlendBlurLight = Color(0xFFBFEEEEEE)
 private val PopupBlendBlurDark = Color(0xFF99262626)
 
 /**
- * The tint pair COUI feeds its popup blur builder: `RoundFrameLayout.applyBlurColorParams()` sets a
- * mix color and a blend color per theme, then `setMode(4)` selects the pair for popups (mode 3 is
- * the light pair other COUI surfaces use, mode 2 the dark one). Both are drawn over the blurred
- * backdrop, in this order. The HDR pair (`_hdr`, picked when the display is in an HDR state) is not
- * modelled.
+ * The tint pair COUI feeds its popup blur builder: `RoundFrameLayout.onAttachedToWindow()` sets a
+ * mix color and a blend color per theme, then `setMode(4)` selects
+ * `OplusBlurParam.BLUR_BLEND_MODE_GLOW_OVERLAY` (2 = OVERLAY, 3 = COLORDODGE, 4 = GLOW_OVERLAY).
+ * libhwui resolves the pair as colour adjustments, not as opaque layers: the mix color is applied
+ * with a luminosity blend and the blend color with an overlay blend, each weighted by the color's
+ * alpha (`libhwui.so`: `inColor.rgb = mix(inColor.rgb, luminosity(uMixColor.rgb, inColor.rgb),
+ * uMixColor.w * ratio)` followed by the same for `overlay(uBlendColor.rgb, inColor.rgb)`). That is
+ * why the native panel stays see-through. The HDR pair (`_hdr`, picked when the display is in an
+ * HDR state) is not modelled.
  */
 @Composable
 internal fun popupGlassBlendColors(): List<BlendColorEntry> = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
-    listOf(BlendColorEntry(color = PopupMixBlurDark), BlendColorEntry(color = PopupBlendBlurDark))
+    listOf(
+        BlendColorEntry(color = PopupMixBlurDark, mode = BlurBlendMode.Luminosity),
+        BlendColorEntry(color = PopupBlendBlurDark, mode = BlurBlendMode.Overlay),
+    )
 } else {
-    listOf(BlendColorEntry(color = PopupMixBlurLight), BlendColorEntry(color = PopupBlendBlurLight))
+    listOf(
+        BlendColorEntry(color = PopupMixBlurLight, mode = BlurBlendMode.Luminosity),
+        BlendColorEntry(color = PopupBlendBlurLight, mode = BlurBlendMode.Overlay),
+    )
 }
 
 /**
