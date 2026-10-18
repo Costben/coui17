@@ -11,6 +11,7 @@ Two anchors matter, and they are not the same one. **The caller sizes the node**
 ```kotlin
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
+import io.github.suqi8.coui.kmp.basic.couiGlassHeader
 ```
 
 ## Native Origin
@@ -48,6 +49,64 @@ Box(Modifier.fillMaxSize()) {
 
 The overlay needs the content it samples through `LocalBackdrop`; place it where a backdrop is provided, or pass `backdrop = null` for the plain ramp alone. When the platform cannot run runtime shaders (everything below Android 13) the blur is skipped as well, and only the ramp is painted.
 
+### Resting Alpha Floor
+
+ColorOS 17's home page never removes the material completely: with the header fully expanded it still keeps a layer of surface colour. The downstream project measured that floor as `0.55` on a PLK110 running ColorOS 17, and the `minAlpha` overload expresses it directly in the `scrollFraction` producer:
+
+```kotlin
+val scrollPx = remember { mutableFloatStateOf(0f) }
+val scrollFraction = remember(density) {
+    {
+        AppBarBlurOverlayDefaults.scrollAlpha(
+            scrollPx = scrollPx.floatValue,
+            density = density,
+            minAlpha = 0.55f,
+        )
+    }
+}
+```
+
+`minAlpha` is coerced into `0f..1f`. The result stays at the floor at rest, then ramps from `minAlpha` to `1` over the same 30dp threshold as the two-argument overload.
+
+### Follow Content Displacement, Not the Collapsed Fraction
+
+Drive `scrollFraction` from the content's actual displacement (`scrollPx`), not from the app bar's collapsed fraction. The two only agree while the list is at its top.
+
+The downstream project originally bound the material alpha to the collapse ratio and saw the material visibly thin out whenever the list was dragged down from the middle: a 240px downward drag brought the avatar row back, and the alpha fell from `1.0` to `0.55` while the bar was expanding. After driving the alpha from displacement, the same 240px drag kept the status-bar band luminance at 222–225 (0–255), matching the 223–235 baseline of the collapsed state, and the dip was gone: the value now moves with the content, in the same direction as the list.
+
+The collapsible bar can follow the same displacement with `COUIScrollBehavior(expandOnContentScroll = true)`, which expands the bar on a downward drag anywhere in the list rather than only at its top (see [TopAppBar](./topappbar)).
+
+## Glass Header
+
+For a long page header — the ColorOS 17 "Me" page is the reference — use `Modifier.couiGlassHeader`. It paints a top-weighted progressive blur and holds the container colour down to a fade band at the bottom edge, so the header dissolves into the content instead of ending on a hard line. The downstream project measured that fade band as roughly 60–80px (about 18dp on a 560dpi device) and reported a smooth edge with no visible seam.
+
+```kotlin
+val backdrop = rememberLayerBackdrop {
+    drawRect(Color.Black)
+    drawContent()
+}
+
+Box(Modifier.fillMaxSize()) {
+    // The backdrop is a sibling of the header, never its ancestor.
+    Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+        Content()
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(96.dp)
+            .couiGlassHeader(
+                backdrop = backdrop,
+                containerColor = COUITheme.colorScheme.surface,
+            ),
+    ) {
+        // Header content.
+    }
+}
+```
+
+`fadeHeight` defaults to `GlassDefaults.HeaderFadeHeight` (28dp); pass `fadeHeight = 18.dp` to match the downstream page. When `backdrop` is `null` — or the platform cannot run runtime shaders — the modifier falls back to an opaque `containerColor` fill.
+
 ## Parameters
 
 ### AppBarBlurOverlay Properties
@@ -74,6 +133,7 @@ The overlay needs the content it samples through `LocalBackdrop`; place it where
 | DarkContainerColor    | Color | The dark-theme material base colour, taken from the nearest ColorOS night token rather than from the framework attribute | `#333333` (`coui_color_background_top` / `coui_color_surface_top`) |
 | containerColor()      | Color | The base colour for the current theme: the light theme's `surface`, the dark theme's `DarkContainerColor` | `#f0f1f2` / `#333333` |
 | scrollAlpha(scrollPx, density) | Float | `min(1, scrollPx / ScrollAlphaThresholdDp)`, coerced into `0f..1f` | — |
+| scrollAlpha(scrollPx, density, minAlpha) | Float | The same ramp remapped into `minAlpha..1`, with `minAlpha` coerced into `0f..1f` | — |
 
 Feed the `scrollAlpha` result to the overlay's `scrollFraction`: at rest the overlay is invisible, and it reaches full strength once the content has scrolled `ScrollAlphaThresholdDp` (30dp) beneath the bar.
 

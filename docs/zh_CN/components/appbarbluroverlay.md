@@ -11,6 +11,7 @@
 ```kotlin
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
+import io.github.suqi8.coui.kmp.basic.couiGlassHeader
 ```
 
 ## 设备实现
@@ -48,6 +49,64 @@ Box(Modifier.fillMaxSize()) {
 
 overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背景层的位置，或传 `backdrop = null` 只保留剖面。平台无法运行 runtime shader 时（Android 13 以下）模糊同样会被跳过，只绘制剖面。
 
+### 静止下限
+
+ColorOS 17 首页不会把材质完全撤掉：顶栏完全展开时仍保留一层表面色。下游项目在 PLK110 / ColorOS 17 上实测该下限为 `0.55`，`minAlpha` 重载让调用方可以直接在 `scrollFraction` 的 producer 里表达这个下限：
+
+```kotlin
+val scrollPx = remember { mutableFloatStateOf(0f) }
+val scrollFraction = remember(density) {
+    {
+        AppBarBlurOverlayDefaults.scrollAlpha(
+            scrollPx = scrollPx.floatValue,
+            density = density,
+            minAlpha = 0.55f,
+        )
+    }
+}
+```
+
+`minAlpha` 会被钳制到 `0f..1f`。静止时结果停在下限，随后在与两参数重载相同的 30dp 阈值内从 `minAlpha` 升到 `1`。
+
+### 跟随内容位移，不要绑定顶栏收起比例
+
+请用内容实际位移（`scrollPx`）驱动 `scrollFraction`，不要绑定顶栏的收起比例。两者只在列表位于顶部时才一致。
+
+下游项目最初把材质 alpha 绑在收起比例上，结果列表在中间稍微下拉时材质肉眼可见地变淡：下拉 240px、头像行重新露出的过程中，alpha 从 `1.0` 掉到 `0.55`，而顶栏当时正在展开。改用位移驱动后，同样下拉 240px 的过程中实测状态栏带亮度恒定在 222–225（0–255），与收起态基准 223–235 一致，下陷消失——数值与内容同向、同步移动。
+
+可折叠顶栏可以用 `COUIScrollBehavior(expandOnContentScroll = true)` 跟随同一段位移：列表在任意位置向下拖动时顶栏都会展开，而不只在列表顶部（见 [TopAppBar](./topappbar)）。
+
+## 玻璃顶栏
+
+长页面顶栏——参照 ColorOS 17 的「我的」页——使用 `Modifier.couiGlassHeader`。它绘制顶部加权的 progressive blur，并让底色一直保持到底部的渐隐带，使顶栏融入内容而不是以一条硬边结束。下游项目实测该渐隐带约 60–80px（560dpi 下约 18dp），边缘平滑、无可见接缝。
+
+```kotlin
+val backdrop = rememberLayerBackdrop {
+    drawRect(Color.Black)
+    drawContent()
+}
+
+Box(Modifier.fillMaxSize()) {
+    // backdrop 是顶栏的兄弟节点，绝不能是它的祖先。
+    Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+        Content()
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(96.dp)
+            .couiGlassHeader(
+                backdrop = backdrop,
+                containerColor = COUITheme.colorScheme.surface,
+            ),
+    ) {
+        // 顶栏内容。
+    }
+}
+```
+
+`fadeHeight` 默认取 `GlassDefaults.HeaderFadeHeight`（28dp）；要与下游页面一致可传 `fadeHeight = 18.dp`。`backdrop` 为 `null` 或平台无法运行 runtime shader 时，该修饰符回退为不透明白底 `containerColor`。
+
 ## 参数
 
 ### AppBarBlurOverlay 属性
@@ -76,6 +135,7 @@ overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背�
 | DarkContainerColor    | Color | 深色主题的材质基色，取最近的 ColorOS 夜间 token 而非框架属性 | `#333333`（`coui_color_background_top` / `coui_color_surface_top`） |
 | containerColor()      | Color | 当前主题的基色：浅色取 `surface`、深色取 `DarkContainerColor` | `#f0f1f2` / `#333333` |
 | scrollAlpha(scrollPx, density) | Float | `min(1, scrollPx / ScrollAlphaThresholdDp)`，钳制到 `0f..1f` | — |
+| scrollAlpha(scrollPx, density, minAlpha) | Float | 同一剖面重映射到 `minAlpha..1`，`minAlpha` 钳制到 `0f..1f` | — |
 
 把 `scrollAlpha` 的结果交给 overlay 的 `scrollFraction`：静止时 overlay 不可见，内容滚过 `ScrollAlphaThresholdDp`（30dp）后达到满强度。
 

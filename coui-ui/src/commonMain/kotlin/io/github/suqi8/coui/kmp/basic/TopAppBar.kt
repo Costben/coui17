@@ -559,6 +559,13 @@ fun SmallTopAppBar(
  *   an intermediate position.
  * @param flingAnimationSpec an optional [DecayAnimationSpec] that defined how to fling the top
  *   app bar when the user flings the app bar itself, or the content below it
+ * @param expandOnContentScroll whether the bar expands when the content itself is dragged down
+ *   anywhere in the list, not only once the list has reached its top. ColorOS 17's home page
+ *   brings its collapsed header row back as soon as the list is dragged down, even from the middle
+ *   of the list; setting this to `true` mirrors that. The expansion follows the content's actual
+ *   displacement, so it moves in the same direction and by the same amount as the list, which keeps
+ *   the material alpha — driven by that displacement — from dipping while the bar grows. Defaults
+ *   to `false`, which keeps the upstream behavior of expanding only at the top of the list.
  */
 @Suppress("ComposableNaming")
 @Composable
@@ -567,12 +574,14 @@ fun COUIScrollBehavior(
     canScroll: () -> Boolean = { true },
     snapAnimationSpec: AnimationSpec<Float>? = tween(durationMillis = SnapAnimationDuration, easing = SnapAnimationEasing),
     flingAnimationSpec: DecayAnimationSpec<Float>? = rememberSplineBasedDecay(),
-): ScrollBehavior = remember(state, canScroll, snapAnimationSpec, flingAnimationSpec) {
+    expandOnContentScroll: Boolean = false,
+): ScrollBehavior = remember(state, canScroll, snapAnimationSpec, flingAnimationSpec, expandOnContentScroll) {
     ExitUntilCollapsedScrollBehavior(
         state = state,
         snapAnimationSpec = snapAnimationSpec,
         flingAnimationSpec = flingAnimationSpec,
         canScroll = canScroll,
+        expandOnContentScroll = expandOnContentScroll,
     )
 }
 
@@ -914,12 +923,15 @@ interface ScrollBehavior {
  *   bar when the user flings the app bar itself, or the content below it
  * @param canScroll a callback used to determine whether scroll events are to be handled by this
  *   [ExitUntilCollapsedScrollBehavior]
+ * @param expandOnContentScroll whether the bar follows the content's downward drag anywhere in the
+ *   list. See [COUIScrollBehavior]'s parameter of the same name.
  */
 private class ExitUntilCollapsedScrollBehavior(
     override val state: TopAppBarState,
     override val snapAnimationSpec: AnimationSpec<Float>?,
     override val flingAnimationSpec: DecayAnimationSpec<Float>?,
     val canScroll: () -> Boolean = { true },
+    private val expandOnContentScroll: Boolean = false,
 ) : ScrollBehavior {
     override val isPinned: Boolean = false
     override var nestedScrollConnection =
@@ -945,6 +957,15 @@ private class ExitUntilCollapsedScrollBehavior(
             ): Offset {
                 if (!canScroll()) return Offset.Zero
                 state.contentOffset += consumed.y
+
+                if (expandOnContentScroll && consumed.y > 0f) {
+                    // ColorOS 17 expands the header row as soon as the list is dragged down, even
+                    // from the middle of the list, and follows the content's actual displacement.
+                    // The list has already consumed this delta, so the bar only follows it here:
+                    // the return value below still reports what this connection consumed.
+                    state.heightOffset = (state.heightOffset + consumed.y)
+                        .coerceIn(state.heightOffsetLimit, 0f)
+                }
 
                 if (available.y < 0f || consumed.y < 0f) {
                     // When scrolling up, just update the state's height offset.

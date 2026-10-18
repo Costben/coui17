@@ -302,6 +302,15 @@ val scrollBehavior = COUIScrollBehavior(
 | canScroll          | () -> Boolean               | { true }                   | 控制是否允许滚动的回调     |
 | snapAnimationSpec  | AnimationSpec\<Float>?      | 180ms 减速 tween           | 定义滚动停在中间态时吸附到全展开/全折叠的动画 |
 | flingAnimationSpec | DecayAnimationSpec\<Float>? | rememberSplineBasedDecay() | 定义顶部栏滑动的衰减动画   |
+| expandOnContentScroll | Boolean                  | false                      | 列表在任意位置向下拖动时都展开顶栏，而不只在列表顶部展开 |
+
+默认情况下，只有列表回到顶部后顶栏才会展开。ColorOS 17 首页在列表向下拖动的瞬间就会把折叠的头部行带回来，即使列表停在中间；需要这种行为时设置 `expandOnContentScroll = true`：
+
+```kotlin
+val scrollBehavior = COUIScrollBehavior(expandOnContentScroll = true)
+```
+
+顶栏跟随内容的实际向下位移，与列表同步移动，而不是按收起比例一次性弹开。这样，由同一段位移驱动 alpha 的材质——例如 [`AppBarBlurOverlay`](./appbarbluroverlay)——就不会在顶栏展开时变淡。该参数不会额外消费滚动：列表已经消费的位移仍归列表。
 
 ## 进阶用法
 
