@@ -41,6 +41,7 @@ All notable user-visible changes are documented here. The format follows
 - A list popup that fits neither below nor above its anchor starts at the top of the available area instead of opening over its anchor.
 - A dismissible `Chip` keeps the 32dp chip height: the close icon is 14dp with the ColorOS spacing, and its 28dp touch target no longer stretches the chip to 48dp.
 - List popups tint the blurred page with the native luminosity and overlay blends instead of stacking two opaque grey layers, so content behind a menu stays visible through it.
+- `BottomFloatingNavigationBar` blurs with the native 25px sigma instead of a 14.9px one, so what shows through the bar keeps its shapes as it does on the device.
 
 ### Deprecated
 

@@ -928,15 +928,15 @@ object BottomFloatingNavigationBarDefaults {
     /**
      * [NATIVE_BLUR_RADIUS_PX] as the dp radius `textureBlur` needs for the same Gaussian.
      *
-     * hwui turns a `createBlurEffect` radius into a sigma of `0.57735 * r + 0.5`, so the native
-     * 25px is a 14.93px sigma whatever the density. `textureBlur` takes dp and derives its sigma as
-     * `0.45 * px`. Reading 25 as dp, as [GlassDefaults.BlurRadius] does, blurs about three times as
-     * wide on a 3.875x screen and leaves a featureless smear where the device keeps the shapes
-     * behind the bar readable.
+     * `COUIMaterialBlurEffect.setViewBlurEffect` hands the 25 straight to
+     * `RenderEffect.createBlurEffect(25, 25, MIRROR)`, whose radius is a Skia blur **sigma in
+     * pixels** — no radius-to-sigma conversion, and no density scaling. `textureBlur` takes a dp
+     * radius and derives its sigma as `0.45 * px`, so the matching dp radius is `25 / 0.45` px
+     * converted to dp, i.e. a 25px sigma at any density.
      */
     @Composable
     fun blurRadius(): Float = with(LocalDensity.current) {
-        ((NATIVE_BLUR_SIGMA_SCALE * NATIVE_BLUR_RADIUS_PX + NATIVE_BLUR_SIGMA_OFFSET) / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+        (NATIVE_BLUR_RADIUS_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
     }
 
     /** The item cell height. COUI `coui_bottom_floating_navigation_bar_item_height`. */
@@ -1176,12 +1176,6 @@ private val LabelLineHeightStyle = LineHeightStyle(
     alignment = LineHeightStyle.Alignment.Proportional,
     trim = LineHeightStyle.Trim.None,
 )
-
-/** hwui's `Blur::convertRadiusToSigma` slope. */
-private const val NATIVE_BLUR_SIGMA_SCALE = 0.57735f
-
-/** hwui's `Blur::convertRadiusToSigma` offset, in pixels. */
-private const val NATIVE_BLUR_SIGMA_OFFSET = 0.5f
 
 /** coui-blur's radius-to-sigma factor (`BLUR_RADIUS_TO_SIGMA`, internal to that module). */
 private const val TEXTURE_BLUR_SIGMA_SCALE = 0.45f

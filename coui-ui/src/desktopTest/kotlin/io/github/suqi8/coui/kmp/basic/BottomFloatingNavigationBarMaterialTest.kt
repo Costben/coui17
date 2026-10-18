@@ -31,8 +31,9 @@ class BottomFloatingNavigationBarMaterialTest {
                 setContent { radius = BottomFloatingNavigationBarDefaults.blurRadius() }
                 waitForIdle()
             }
-            // hwui: sigma = 0.57735 * r + 0.5 for the native pixel radius; textureBlur: sigma = 0.45 * px.
-            val nativeSigma = 0.57735f * BottomFloatingNavigationBarDefaults.NATIVE_BLUR_RADIUS_PX + 0.5f
+            // RenderEffect's blur radius is a Skia sigma in pixels, so the native 25 is a 25px
+            // sigma; textureBlur derives its sigma as 0.45 * px.
+            val nativeSigma = BottomFloatingNavigationBarDefaults.NATIVE_BLUR_RADIUS_PX
             assertEquals(nativeSigma, 0.45f * radius * density, 0.01f, "sigma at density $density")
         }
     }
