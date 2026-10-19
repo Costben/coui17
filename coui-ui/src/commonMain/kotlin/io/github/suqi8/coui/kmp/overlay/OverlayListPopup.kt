@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
@@ -16,6 +17,7 @@ import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.layout.ListPopupLayout
+import io.github.suqi8.coui.kmp.layout.popupPhysicalDensity
 import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.PopupLayout
 
 /**
@@ -59,6 +61,10 @@ fun OverlayListPopup(
     // site sees has to be published again inside it: a surface reads whatever is current where it
     // composes, and at the root that is nothing, which silently drops the glass to its opaque fill.
     val backdrop = LocalBackdrop.current
+    // Same reason for the density: ColorOS menus render at the panel's density, not the display-size
+    // override a third-party app follows, so the popup must re-provide it where it actually composes.
+    val density = LocalDensity.current
+    val popupDensity = remember(density) { popupPhysicalDensity(density) }
     ListPopupLayout(
         show = show,
         popupHost = { visible, passTouches, hostContent ->
@@ -73,7 +79,10 @@ fun OverlayListPopup(
                 renderInRootScaffold = renderInRootScaffold,
                 passTouches = passTouches,
             ) {
-                CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                CompositionLocalProvider(
+                    LocalBackdrop provides backdrop,
+                    LocalDensity provides popupDensity,
+                ) {
                     hostContent()
                 }
             }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -132,16 +134,17 @@ fun HorizontalPopupMenuItem(
         else -> HorizontalPopupMenuDefaults.MaskRadiusIconOnly
     }
     val interactionSource = remember { MutableInteractionSource() }
-    val handle = remember { PopupListItemHandle() }
-    handle.enabled = enabled
+    val pressProgress = remember { Animatable(0f) }
 
     // The row press mask and its spring are shared with the vertical rows, so a horizontal button
     // flashes and holds exactly like a list row (COUI drives both through COUIMaskEffectDrawable).
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
-                is PressInteraction.Press -> handle.enterPress(this)
-                is PressInteraction.Release, is PressInteraction.Cancel -> handle.exitPress(this)
+                is PressInteraction.Press -> launch { pressProgress.animateTo(1f, PopupItemPressSpring) }
+
+                is PressInteraction.Release, is PressInteraction.Cancel ->
+                    launch { pressProgress.animateTo(0f, PopupItemPressSpring) }
             }
         }
     }
@@ -156,7 +159,7 @@ fun HorizontalPopupMenuItem(
                 val maskHeight = if (hasText) size.height else min(size.height, iconOnlyHeight)
                 val path = Path()
                 onDrawBehind {
-                    val progress = handle.pressProgress.value
+                    val progress = pressProgress.value
                     if (progress <= 0f) return@onDrawBehind
                     path.rewind()
                     path.addSquircleRect(

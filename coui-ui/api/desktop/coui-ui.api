@@ -4505,6 +4505,10 @@ public final class io/github/suqi8/coui/kmp/icon/basic/CloseKt {
 	public static final fun getClose (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Basic;)Landroidx/compose/ui/graphics/vector/ImageVector;
 }
 
+public final class io/github/suqi8/coui/kmp/icon/basic/ExpandableIndicatorKt {
+	public static final fun getExpandableIndicator (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Basic;)Landroidx/compose/ui/graphics/vector/ImageVector;
+}
+
 public final class io/github/suqi8/coui/kmp/icon/basic/FoldPaneKt {
 	public static final fun getFoldPane (Lio/github/suqi8/coui/kmp/icon/COUIIcons$Basic;)Landroidx/compose/ui/graphics/vector/ImageVector;
 }
