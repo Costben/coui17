@@ -48,7 +48,7 @@ jobs:
         run: |
           # Every published module generates its own Dokka HTML; the script collects
           # them into one tree so the site exposes all nine modules behind the stable
-          # /coui/dokka/index.html entry point.
+          # /coui17/dokka/index.html entry point.
           ./gradlew dokkaGenerate -Prelease
           bash .github/scripts/build-dokka-site.sh
       - name: Build Web Demos

@@ -207,7 +207,7 @@ val annotated = buildAnnotatedString {
     append("COUI Docs")
     addLink(
         LinkAnnotation.Url(
-            url = "https://suqi8.github.io/coui/",
+            url = "https://costben.github.io/coui17/",
             styles = TextLinkStyles(
                 SpanStyle(color = COUITheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             )

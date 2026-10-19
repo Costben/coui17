@@ -18,7 +18,7 @@ hero:
       link: /zh_CN/components/index
     - theme: alt
       text: GitHub
-      link: https://github.com/suqi8/coui
+      link: https://github.com/Costben/coui17
 
 features:
   - icon: 🚀

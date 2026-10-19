@@ -12,20 +12,27 @@
 
 ### Gradle (Kotlin DSL)
 
-1. 在根目录的 settings.gradle.kts 添加（正常情况应已包含）：
+1. 当前版本的 COUI 没有发布到 Maven Central，本 fork 也不发版。请克隆
+   [仓库](https://github.com/Costben/coui17)，构建到本地 Maven 仓库：
+
+```bash
+./gradlew publishAllToLocalRepository -Prelease   # 产物写入 build/repository/local
+```
+
+   不加 `-Prelease` 时版本号会带 `-<git hash>-SNAPSHOT` 后缀。
+
+2. 在根目录的 settings.gradle.kts 中指向该目录：
 
 ```kotlin
 repositories {
+    maven("file:///path/to/coui17/build/repository/local")
     mavenCentral()
 }
 ```
 
-2. 检查 Maven Central 当前最新版本：
-   [![Maven Central](https://img.shields.io/maven-central/v/io.github.suqi8.coui.kmp/coui-ui)](https://search.maven.org/search?q=g:io.github.suqi8.coui.kmp)
-
 3. 在项目的 build.gradle.kts 中添加依赖：
 
-COUI 由多个可独立使用的模块组成。所有模块统一发布在 `io.github.suqi8.coui.kmp` 组下，并共用同一个版本号。
+COUI 由多个可独立使用的模块组成。所有模块使用 `io.github.suqi8.coui.kmp` 组，并共用同一个版本号。
 
 | 模块 | 说明 | 平台限制 |
 |---|---|---|
@@ -179,5 +186,5 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 
 ## API 文档
 
-- 查看 [API 文档](/coui/dokka/index.html){target="_blank"}，此文档使用 Dokka 生成，包含了所有 API
+- 查看 [API 文档](/coui17/dokka/index.html){target="_blank"}，此文档使用 Dokka 生成，包含了所有 API
   的详细信息。

@@ -1,7 +1,5 @@
 import mediumZoom from "medium-zoom";
 
-import giscusTalk from "vitepress-plugin-comment-with-giscus";
-
 import {
   NolebaseEnhancedReadabilitiesMenu,
   NolebaseEnhancedReadabilitiesScreenMenu,
@@ -18,7 +16,7 @@ import "@nolebase/vitepress-plugin-git-changelog/client/style.css";
 import type { App } from "vue";
 import { onMounted, watch, nextTick, h } from "vue";
 
-import { useData, useRoute } from "vitepress";
+import { useRoute } from "vitepress";
 import DefaultTheme from "vitepress/theme";
 
 import "./style/index.css";
@@ -125,30 +123,7 @@ export default {
   },
 
   setup() {
-    const { frontmatter } = useData();
     const route = useRoute();
-
-    /* giscus */
-    giscusTalk(
-      {
-        // NOTE: giscus requires GitHub Discussions to be enabled on this repo.
-        // Regenerate categoryId at https://giscus.app once a category exists.
-        repo: "suqi8/coui",
-        repoId: "R_kgDOQRH87w",
-        category: "General",
-        categoryId: "DIC_kwDOQo99Es4Cz0CR",
-        inputPosition: "bottom",
-        locales: {
-          zh_CN: "zh-CN",
-          en_US: "en",
-        },
-        homePageShowComment: false,
-      },
-      {
-        frontmatter,
-        route,
-      }
-    );
 
     /* Medium Zoom */
     const initZoom = () => {

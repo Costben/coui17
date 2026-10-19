@@ -12,21 +12,28 @@ To use COUI in your project, follow these steps to add dependencies:
 
 ### Gradle (Kotlin DSL)
 
-1. Add the following to the root `settings.gradle.kts` file (usually already included):
+1. COUI is not on Maven Central for this version, and this fork does not publish. Clone
+   [the repository](https://github.com/Costben/coui17) and build it into a local Maven repository:
+
+```bash
+./gradlew publishAllToLocalRepository -Prelease   # writes the version to build/repository/local
+```
+
+   Without `-Prelease` the version carries a `-<git hash>-SNAPSHOT` suffix.
+
+2. Point the root `settings.gradle.kts` at that directory:
 
 ```kotlin
 repositories {
+    maven("file:///path/to/coui17/build/repository/local")
     mavenCentral()
 }
 ```
 
-2. Check the latest version on Maven Central:
-   [![Maven Central](https://img.shields.io/maven-central/v/io.github.suqi8.coui.kmp/coui-ui)](https://search.maven.org/search?q=g:io.github.suqi8.coui.kmp)
-
 3. Add dependencies to your project's `build.gradle.kts`:
 
-COUI is composed of several modules that can be used independently. All modules are published under
-the group `io.github.suqi8.coui.kmp` and share one version number.
+COUI is composed of several modules that can be used independently. All modules use the group
+`io.github.suqi8.coui.kmp` and share one version number.
 
 | Module                | Description                                                                                              | Platform notes |
 | --------------------- | -------------------------------------------------------------------------------------------------------- | -------------- |
@@ -181,5 +188,5 @@ all implemented based on this and therefore need to be wrapped by this component
 
 ## API Documentation
 
-- View the [API Documentation](/coui/dokka/index.html){target="\_blank"},
+- View the [API Documentation](/coui17/dokka/index.html){target="\_blank"},
   generated using Dokka, which contains detailed information about all APIs.

@@ -6,7 +6,7 @@ import {
 } from "@nolebase/vitepress-plugin-git-changelog/vite";
 
 export default defineConfig({
-  base: "/coui/",
+  base: "/coui17/",
   title: "COUI",
   locales: locales.locales,
   head: [
@@ -20,7 +20,7 @@ export default defineConfig({
         var lang = (navigator.language || '').toLowerCase();
         var isSimplifiedZh = lang === 'zh-cn' || lang === 'zh-sg' || lang.indexOf('zh-hans') === 0;
         if (!isSimplifiedZh) return;
-        var base = '/coui/';
+        var base = '/coui17/';
         var path = window.location.pathname;
         if (path.indexOf(base) !== 0) return;
         if (path.indexOf(base + 'zh_CN') === 0) return;
@@ -29,7 +29,7 @@ export default defineConfig({
       } catch (e) {}
     })();`],
     ['meta', { name: 'color-scheme', content: 'light dark' }],
-    ['link', { rel: 'icon', href: '/coui/Icon.webp' }],
+    ['link', { rel: 'icon', href: '/coui17/Icon.webp' }],
     ['link', { rel: 'preconnect', href: 'https://cdn-font.hyperos.mi.com/font/css?family=MiSans_VF:VF:Chinese_Simplify,Latin&display=swap' }],
   ],
   markdown: {
@@ -44,7 +44,7 @@ export default defineConfig({
   themeConfig: {
     logo: "/Icon.webp",
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/suqi8/coui' }
+      { icon: 'github', link: 'https://github.com/Costben/coui17' }
     ],
     search: {
       provider: "local",
@@ -91,7 +91,7 @@ export default defineConfig({
     },
     plugins: [
       GitChangelog({
-        repoURL: () => "https://github.com/suqi8/coui",
+        repoURL: () => "https://github.com/Costben/coui17",
       }),
       GitChangelogMarkdownSection({
         sections: {

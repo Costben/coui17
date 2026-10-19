@@ -4,7 +4,7 @@
 #
 # Collects the Dokka HTML output of every published module into docs/public/dokka
 # so the documentation site exposes the API of all nine modules behind the stable
-# /coui/dokka/index.html entry point.
+# /coui17/dokka/index.html entry point.
 set -euo pipefail
 
 modules=(
