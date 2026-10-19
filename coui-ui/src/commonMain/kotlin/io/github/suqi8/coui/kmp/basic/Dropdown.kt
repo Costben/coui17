@@ -39,9 +39,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.icon.COUIIcons
-import io.github.suqi8.coui.kmp.icon.basic.ArrowRight
 import io.github.suqi8.coui.kmp.icon.basic.ArrowUpDown
 import io.github.suqi8.coui.kmp.icon.basic.Check
+import io.github.suqi8.coui.kmp.icon.basic.ExpandableIndicator
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 @Composable
@@ -247,7 +247,7 @@ fun DropdownImpl(
             }
             Image(
                 modifier = if (hint != null) HintedChevronIconModifier else ChevronIconBaseModifier,
-                imageVector = COUIIcons.Basic.ArrowRight,
+                imageVector = COUIIcons.Basic.ExpandableIndicator,
                 colorFilter = chevronColorFilter,
                 contentDescription = null,
             )
@@ -543,10 +543,10 @@ object DropdownDefaults {
     val ArrowSize: DpSize = DpSize(width = 14.dp, height = 24.dp)
 
     /**
-     * Size of the trailing chevron shown on rows that own a submenu
-     * (native box of COUI coui_btn_next_normal.xml, a 12x24dp vector).
+     * Size of the trailing expandable indicator shown on rows that own a submenu
+     * (native box of COUI coui_list_expandable_indicator.xml, a 24dp CheckBox).
      */
-    val ChevronSize: DpSize = DpSize(width = 12.dp, height = 24.dp)
+    val ChevronSize: DpSize = DpSize(width = 24.dp, height = 24.dp)
 
     /**
      * Minimum size of the leading icon cell (COUI coui_popup_list_window_item.xml icon, a 20dp

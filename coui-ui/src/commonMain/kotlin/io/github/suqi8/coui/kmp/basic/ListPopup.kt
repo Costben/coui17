@@ -201,41 +201,10 @@ internal class PopupListItemHandle {
     var enabled: Boolean = true
     var onClick: () -> Unit = {}
 
-    /** Press mask progress (0 → 1), driven exclusively by the owning [PopupListGestureHost]. */
-    val pressProgress: Animatable<Float, AnimationVector1D> = Animatable(0f)
-
-    private var pressJob: Job? = null
-
     fun contains(y: Float): Boolean = y >= top && y < bottom
-
-    /** Runs the press-in mask animation. */
-    fun enterPress(scope: CoroutineScope) {
-        pressJob?.cancel()
-        pressJob = scope.launch { pressProgress.animateTo(1f, PopupItemPressSpring) }
-    }
-
-    /**
-     * Releases the press mask, first holding the press-in animation until it passes
-     * [PopupItemPressMinVisibleProgress] so a fast tap still flashes.
-     */
-    fun exitPress(scope: CoroutineScope) {
-        pressJob?.cancel()
-        pressJob = scope.launch {
-            if (pressProgress.value > 0f && pressProgress.value < PopupItemPressMinVisibleProgress) {
-                try {
-                    pressProgress.animateTo(1f, PopupItemPressSpring) {
-                        if (value >= PopupItemPressMinVisibleProgress) throw PressMaskThresholdReached()
-                    }
-                } catch (_: PressMaskThresholdReached) {
-                    // Minimum visible progress reached; fall through to the fade-out.
-                }
-            }
-            pressProgress.animateTo(0f, PopupItemPressSpring)
-        }
-    }
 }
 
-/** Thrown to stop a deferred press-in mask once [PopupItemPressMinVisibleProgress] is reached. */
+/** Thrown to stop a deferred highlight fade once [PopupItemPressMinVisibleProgress] is reached. */
 private class PressMaskThresholdReached : CancellationException("Press mask reached the minimum visible progress")
 
 /**
@@ -264,6 +233,16 @@ internal class PopupListGestureHost {
 
     /** The row currently holding the highlight, or `null` while no row is pressed. */
     private var activeItem: PopupListItemHandle? = null
+
+    /**
+     * The press mask is one shape for the whole list, not one per row: dragging to another row
+     * slides [highlightTop]/[highlightBottom] there instead of fading one row's mask out while
+     * another fades in, which read as a flicker (COUI's TouchListView moves a single mask).
+     */
+    private val highlightTop = Animatable(0f)
+    private val highlightBottom = Animatable(0f)
+    private val highlightAlpha = Animatable(0f)
+    private var highlightJob: Job? = null
 
     /** Divider alpha tracks, indexed by the boundary between [ordered] `i` and `i + 1`. */
     private val dividerAlphas = mutableMapOf<Int, Animatable<Float, AnimationVector1D>>()
@@ -302,6 +281,60 @@ internal class PopupListGestureHost {
 
     fun dividerAlpha(boundary: Int): Float = dividerAlphas[boundary]?.value ?: 1f
 
+    /** Current press mask top, in the list's content coordinates. */
+    fun pressTop(): Float = highlightTop.value
+
+    /** Current press mask bottom, in the list's content coordinates. */
+    fun pressBottom(): Float = highlightBottom.value
+
+    /** Current press mask opacity. */
+    fun pressAlpha(): Float = highlightAlpha.value
+
+    /** Snaps the mask onto [item] and fades it in (a fresh press). */
+    private fun placeHighlight(item: PopupListItemHandle, scope: CoroutineScope) {
+        highlightJob?.cancel()
+        highlightJob = scope.launch {
+            highlightTop.snapTo(item.top)
+            highlightBottom.snapTo(item.bottom)
+            highlightAlpha.animateTo(1f, PopupItemPressSpring)
+        }
+    }
+
+    /** Slides the mask to [item], keeping it visible while the bounds move. */
+    private fun moveHighlight(item: PopupListItemHandle, scope: CoroutineScope) {
+        highlightJob?.cancel()
+        highlightJob = scope.launch {
+            if (highlightAlpha.value <= 0f) {
+                highlightTop.snapTo(item.top)
+                highlightBottom.snapTo(item.bottom)
+            } else {
+                launch { highlightTop.animateTo(item.top, PopupItemPressSpring) }
+                launch { highlightBottom.animateTo(item.bottom, PopupItemPressSpring) }
+            }
+            highlightAlpha.animateTo(1f, PopupItemPressSpring)
+        }
+    }
+
+    /**
+     * Fades the mask out, first holding a fast tap's fade-in until it passes
+     * [PopupItemPressMinVisibleProgress] so the press still flashes.
+     */
+    private fun fadeHighlight(scope: CoroutineScope) {
+        highlightJob?.cancel()
+        highlightJob = scope.launch {
+            if (highlightAlpha.value > 0f && highlightAlpha.value < PopupItemPressMinVisibleProgress) {
+                try {
+                    highlightAlpha.animateTo(1f, PopupItemPressSpring) {
+                        if (value >= PopupItemPressMinVisibleProgress) throw PressMaskThresholdReached()
+                    }
+                } catch (_: PressMaskThresholdReached) {
+                    // Minimum visible progress reached; fall through to the fade-out.
+                }
+            }
+            highlightAlpha.animateTo(0f, PopupItemPressSpring)
+        }
+    }
+
     private fun animateDivider(boundary: Int, target: Float, scope: CoroutineScope) {
         if (isScrolling) return
         val track = dividerAlphas.getOrPut(boundary) { Animatable(1f) }
@@ -338,8 +371,10 @@ internal class PopupListGestureHost {
         val target = sortedItems().firstOrNull { it.contains(y) }
         activeItem = target
         if (target != null && target.enabled) {
-            target.enterPress(scope)
+            placeHighlight(target, scope)
             animateAdjacentDividers(target, visible = false, moveFlag = MOVE_FLAG_OUT, scope = scope)
+        } else {
+            fadeHighlight(scope)
         }
         return target
     }
@@ -370,13 +405,14 @@ internal class PopupListGestureHost {
             ordered.indexOf(target) > ordered.indexOf(previous) -> MOVE_FLAG_DOWN
             else -> MOVE_FLAG_UP
         }
-        previous?.exitPress(scope)
         animateAdjacentDividers(previous, visible = true, moveFlag = moveFlag, scope = scope)
 
         activeItem = target
         if (target.enabled) {
-            target.enterPress(scope)
+            moveHighlight(target, scope)
             animateAdjacentDividers(target, visible = false, moveFlag = MOVE_FLAG_OUT, scope = scope)
+        } else {
+            fadeHighlight(scope)
         }
     }
 
@@ -384,7 +420,7 @@ internal class PopupListGestureHost {
     fun cancel(scope: CoroutineScope) {
         val previous = activeItem ?: return
         activeItem = null
-        previous.exitPress(scope)
+        fadeHighlight(scope)
         animateAdjacentDividers(previous, visible = true, moveFlag = MOVE_FLAG_OUT, scope = scope)
     }
 
@@ -488,10 +524,9 @@ private val IntrinsicMeasurable.popupListItemGroupKey: Any?
     get() = (parentData as? PopupListItemParentData)?.groupKey
 
 /**
- * Registers a popup row with the enclosing [PopupListGestureHost] so the list can own its press
- * highlight, and draws the row's press mask: a `couiColorPress` path inset [PopupItemPressMaskMargin]
- * on each side and rounded by [PopupItemPressMaskRadius] or [PopupItemPressMaskRadiusTall]
- * (COUI MixedPopupListAdapter.configureMaskPath).
+ * Registers a popup row with the enclosing [PopupListGestureHost]. The list draws the press mask for
+ * the whole column (see `drawPopupItemHighlight`) so dragging moves one shape between rows instead of
+ * cross-fading a mask per row.
  *
  * The row keeps its own click semantics: the accessibility action below is registered independently
  * of the pointer tracking, matching COUI's TalkBack path, which bypasses the drag gesture entirely
@@ -533,34 +568,9 @@ internal fun Modifier.popupListItem(
     }
 
     val parentData = remember(handle, groupKey) { PopupListItemParentData(handle, groupKey) }
-    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val maskColor = if (isDark) PopupItemPressDark else PopupItemPressLight
-    val squircleEnabled = isSquircleEnabled()
 
     return this
         .then(parentData)
-        .drawWithCache {
-            val inset = PopupItemPressMaskMargin.toPx()
-            val singleLine = size.height == PopupItemPressMaskRadius.toPx() * 2f
-            val radius = if (singleLine) PopupItemPressMaskRadius else PopupItemPressMaskRadiusTall
-            val path = Path()
-            onDrawBehind {
-                val progress = handle.pressProgress.value
-                if (progress <= 0f) return@onDrawBehind
-                path.rewind()
-                path.addSquircleRect(
-                    width = (size.width - inset * 2f).coerceAtLeast(0f),
-                    height = size.height,
-                    cornerRadius = radius.toPx(),
-                    // COUI asks for weight 1.0 on a stadium row, which is a plain arc; the taller rows
-                    // take weight 3.0 and follow the squircle silhouette.
-                    squircleEnabled = squircleEnabled && !singleLine,
-                )
-                translate(left = inset) {
-                    drawPath(path, color = maskColor, alpha = progress.coerceIn(0f, 1f))
-                }
-            }
-        }
         .semantics(mergeDescendants = true) {
             this.role = role
             this.selected = selected
@@ -602,6 +612,12 @@ fun ListPopupColumn(
     val performHaptic = rememberCouiHaptic()
     val touchSlop = LocalViewConfiguration.current.touchSlop
     val dividerColor = COUITheme.colorScheme.dividerLine
+    val pressColor = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+        PopupItemPressDark
+    } else {
+        PopupItemPressLight
+    }
+    val squircleEnabled = isSquircleEnabled()
     val interactionEnabled = LocalPopupInteractionEnabled.current
 
     host.isDynamicSelection = !scrollState.canScrollForward && !scrollState.canScrollBackward
@@ -739,6 +755,7 @@ fun ListPopupColumn(
             .verticalScroll(state = scrollState)
             .popupListGestures(host, coroutineScope, touchSlop, performHaptic, interactionEnabled)
             .drawWithContent {
+                drawPopupItemHighlight(host, pressColor, squircleEnabled)
                 drawContent()
                 drawPopupItemDividers(host, dividerColor)
             },
@@ -815,6 +832,42 @@ private fun Modifier.popupListGestures(
         } finally {
             host.cancel(scope)
         }
+    }
+}
+
+/**
+ * Draws the list-wide press mask: a `couiColorPress` path inset [PopupItemPressMaskMargin] on each
+ * side and rounded by [PopupItemPressMaskRadius] or [PopupItemPressMaskRadiusTall]
+ * (COUI MixedPopupListAdapter.configureMaskPath). The host owns the bounds, so dragging between rows
+ * slides this one shape instead of fading two row-local shapes in opposite directions.
+ */
+private fun DrawScope.drawPopupItemHighlight(
+    host: PopupListGestureHost,
+    color: Color,
+    squircleEnabled: Boolean,
+) {
+    val alpha = host.pressAlpha()
+    if (alpha <= 0f) return
+    val top = host.pressTop()
+    val height = host.pressBottom() - top
+    if (height <= 0f) return
+    val inset = PopupItemPressMaskMargin.toPx()
+    val width = (size.width - inset * 2f).coerceAtLeast(0f)
+    if (width <= 0f) return
+
+    val singleLine = height == PopupItemPressMaskRadius.toPx() * 2f
+    val radius = if (singleLine) PopupItemPressMaskRadius else PopupItemPressMaskRadiusTall
+    val path = Path()
+    path.addSquircleRect(
+        width = width,
+        height = height,
+        cornerRadius = radius.toPx(),
+        // COUI asks for weight 1.0 on a stadium row, which is a plain arc; the taller rows
+        // take weight 3.0 and follow the squircle silhouette.
+        squircleEnabled = squircleEnabled && !singleLine,
+    )
+    translate(left = inset, top = top) {
+        drawPath(path, color = color, alpha = alpha.coerceIn(0f, 1f))
     }
 }
 

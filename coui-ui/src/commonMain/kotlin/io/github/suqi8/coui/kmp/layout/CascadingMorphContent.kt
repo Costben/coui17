@@ -5,6 +5,8 @@ package io.github.suqi8.coui.kmp.layout
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,14 +29,13 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
@@ -55,8 +56,8 @@ import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 
-/** Primary side of a cascading popup. While a secondary is expanded, scales to
- *  [PRIMARY_SHRUNK_SCALE] and fades to [PRIMARY_SHRUNK_ALPHA]. */
+/** Primary side of a cascading popup. While a secondary is expanded, scales towards its top-right
+ *  pivot to [PRIMARY_SHRUNK_SCALE] and its content fades to [PRIMARY_SHRUNK_ALPHA]. */
 @Composable
 internal fun CascadingPrimaryContent(
     entries: List<DropdownEntry>,
@@ -68,10 +69,12 @@ internal fun CascadingPrimaryContent(
     enterAlpha: () -> Float,
     popupLayoutPosition: PopupLayoutPosition,
     transformOrigin: TransformOrigin,
+    shrinkTransformOrigin: TransformOrigin,
     surfaceColor: Color,
     dropdownColors: DropdownColors,
     primaryScale: () -> Float,
     primaryAlpha: () -> Float,
+    primaryTranslationY: () -> Float,
     onCollapseSecondary: () -> Unit,
     enableGlass: Boolean,
 ) {
@@ -94,14 +97,15 @@ internal fun CascadingPrimaryContent(
                 val s = ENTER_SCALE_FROM + ENTER_SCALE_RANGE * enterFraction()
                 scaleX = s
                 scaleY = s
-                alpha = enterAlpha() * primaryAlpha()
+                alpha = enterAlpha()
                 this.transformOrigin = transformOrigin
             }
             .graphicsLayer {
                 val s = primaryScale()
                 scaleX = s
                 scaleY = s
-                this.transformOrigin = transformOrigin
+                translationY = primaryTranslationY()
+                this.transformOrigin = shrinkTransformOrigin
             }
             // Draw the shadow outside popupClipReveal's hard clip so it is not erased.
             .dropShadow(shape = shape, shadow = PopupShadow)
@@ -118,7 +122,12 @@ internal fun CascadingPrimaryContent(
                 highlight = highlight,
             ),
     ) {
-        Box(propagateMinConstraints = true) {
+        Box(
+            propagateMinConstraints = true,
+            // COUI dims the main menu *content* (the list child) to mMainMenuAlphaPercent while the
+            // card material stays opaque, so the panel's blur surface is not faded away.
+            modifier = Modifier.graphicsLayer { alpha = primaryAlpha() },
+        ) {
             ListPopupColumn {
                 val lastEntryIdx = entries.lastIndex
                 entries.forEachIndexed { entryIndex, entry ->
@@ -216,65 +225,74 @@ private fun CascadingPrimaryRow(
     )
 }
 
-/** Secondary side of a cascading popup. Laid out at union size (primary ∪ secondary) with a
- *  single dynamic clip path that interpolates from the anchor row to the secondary rect. */
+/**
+ * Secondary side of a cascading popup, laid out as its own card at the native small-screen
+ * position. COUI `SmallScreenAnimationController.onSubMenuProgressUpdate` grows the card from a
+ * band covering the tapped row (`RoundFrameLayout.setOverrideOutline`) while translating the list
+ * from that row up to its final place; the primary menu shrinks and dims behind it.
+ */
 @Composable
 internal fun CascadingSecondaryContent(
     triggerItem: DropdownItem,
-    unionSize: IntSize,
-    secondaryLocalInUnion: IntRect,
-    anchorLocalInUnion: IntRect,
-    anchorPaddingTopPx: Int,
-    isAnchorPopupLast: Boolean,
-    secondaryContentMaxHeight: Int,
-    enterFraction: () -> Float,
-    enterAlpha: () -> Float,
-    popupLayoutPosition: PopupLayoutPosition,
-    transformOrigin: TransformOrigin,
-    expandFraction: () -> Float,
-    arrowRotation: () -> Float,
+    size: IntSize,
+    anchorTopInWindow: Int,
+    anchorHeightPx: Int,
+    primaryBottomInWindow: Int,
+    secondaryTopInWindow: Int,
+    progress: () -> Float,
     onCollapseSecondary: () -> Unit,
     onLeafSelected: (DropdownItem) -> Unit,
     dropdownColors: DropdownColors,
     surfaceColor: Color,
     enableGlass: Boolean,
 ) {
-    val cornerPx = with(LocalDensity.current) { CascadingPopupCornerRadius.toPx() }
-    val anchorTopLeft = anchorLocalInUnion.topLeft
-    val secondaryTopLeft = secondaryLocalInUnion.topLeft
-    val secondaryWidth = secondaryLocalInUnion.width
+    val density = LocalDensity.current
+    val innerPaddingPx = with(density) { SubMenuInnerPadding.toPx() }
+    val cornerPx = with(density) { CascadingPopupCornerRadius.toPx() }
+    // COUI: clippedTopStart = list inner padding; clippedBottomStart = min(anchor height,
+    // main menu bottom - anchor top).
+    val clipBottomStartPx = minOf(anchorHeightPx, primaryBottomInWindow - anchorTopInWindow)
+        .coerceAtLeast(0)
+    val translateStartPx = (anchorTopInWindow - secondaryTopInWindow) - innerPaddingPx
+    val squircleEnabled = isSquircleEnabled()
     val backdrop = if (enableGlass) LocalBackdrop.current else null
     val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
-    val squircleEnabled = isSquircleEnabled()
-    // Read at outline/draw time, never at composition time: the morph runs on its own animation and
-    // must not recompose this subtree every frame.
-    val currentMorph = {
-        MorphClipShape(
-            fraction = expandFraction(),
-            anchor = anchorLocalInUnion,
-            secondary = secondaryLocalInUnion,
+    // Equality is by value, which is what the glass surface's outline cache reads — re-emitting an
+    // unchanged fraction keeps the cached outline, a moved one invalidates it.
+    val bandShape = {
+        SecondaryBandShape(
+            progress = progress(),
+            innerPaddingPx = innerPaddingPx,
+            clipBottomStartPx = clipBottomStartPx.toFloat(),
             cornerPx = cornerPx,
-            anchorIsLast = isAnchorPopupLast,
+            widthPx = size.width,
+            heightPx = size.height,
             squircleEnabled = squircleEnabled,
         )
     }
 
     Box(
+        // Same reason as the primary panel: without the floor the column clamps to
+        // ListPopupDefaults.MinWidth (168dp) while the card keeps the caller's 196dp, leaving a
+        // 28dp empty band on the trailing edge and shifting every row's trailing icon left.
+        propagateMinConstraints = true,
         modifier = Modifier
+            .then(
+                with(density) {
+                    Modifier
+                        .requiredWidth(size.width.toDp())
+                        .requiredHeight(size.height.toDp())
+                },
+            )
             .graphicsLayer {
-                val s = ENTER_SCALE_FROM + ENTER_SCALE_RANGE * enterFraction()
-                scaleX = s
-                scaleY = s
-                alpha = enterAlpha()
-                this.transformOrigin = transformOrigin
+                translationY = (1f - progress()) * translateStartPx
             }
-            .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, squircleEnabled)
-            // Silhouette clip for the pass: the glass surface's own shape only clips its content
-            // layer, so the blurred backdrop — and the fallback fill when glass is off — are cut
-            // here, in draw phase, where the morph fraction is current.
+            // Silhouette clip: the glass surface's own shape only clips its content layer, so the
+            // blurred backdrop — and the fallback fill when glass is off — are cut here, in draw
+            // phase, where the band fraction is current.
             .drawWithCache {
                 onDrawWithContent {
-                    clipPath(currentMorph().path) {
+                    clipPath(bandShape().path) {
                         this@onDrawWithContent.drawContent()
                     }
                 }
@@ -282,97 +300,42 @@ internal fun CascadingSecondaryContent(
             .couiGlassSurface(
                 backdrop = backdrop,
                 // Re-emitted per outline request: the blur's outline cache compares by value, so a
-                // moved fraction invalidates it and the silhouette tracks the morph instead of
+                // moved fraction invalidates it and the silhouette tracks the band instead of
                 // freezing at the anchor rect.
-                shape = currentMorph,
+                shape = bandShape,
                 containerColor = surfaceColor,
                 fallback = Modifier.drawBehind { drawRect(surfaceColor) },
                 blendColors = popupGlassBlendColors(),
                 highlight = highlight,
-            )
-            // Occupy full union size so the inner content can slide between anchor and
-            // secondary even when the anchor sits outside the secondary bounds.
-            .layout { measurable, _ ->
-                val placeable = measurable.measure(
-                    Constraints.fixed(unionSize.width, unionSize.height),
-                )
-                layout(unionSize.width, unionSize.height) { placeable.place(0, 0) }
-            },
+            ),
     ) {
-        // propagateMinConstraints stretches ListPopupColumn to secondaryWidth; without it the
-        // column collapses to its intrinsic min and leaves an unclickable strip.
-        Box(
-            modifier = Modifier
-                .graphicsLayer {
-                    val frac = expandFraction()
-                    translationX = lerp(
-                        anchorTopLeft.x.toFloat(),
-                        secondaryTopLeft.x.toFloat(),
-                        frac,
-                    )
-                    translationY = lerp(
-                        anchorTopLeft.y.toFloat(),
-                        secondaryTopLeft.y.toFloat(),
-                        frac,
-                    )
-                }
-                .layout { measurable, _ ->
-                    val placeable = measurable.measure(
-                        Constraints(
-                            minWidth = secondaryWidth,
-                            maxWidth = secondaryWidth,
-                            minHeight = 0,
-                            maxHeight = secondaryContentMaxHeight,
-                        ),
-                    )
-                    // Place within union so the surface's drawWithCache sees a full-area drawContent.
-                    layout(unionSize.width, unionSize.height) {
-                        placeable.place(0, 0)
-                    }
-                },
-            propagateMinConstraints = true,
-        ) {
-            CascadingSecondaryColumn(
-                triggerItem = triggerItem,
-                dropdownColors = dropdownColors,
-                expandFraction = expandFraction,
-                arrowRotation = arrowRotation,
-                anchorHeightPx = anchorLocalInUnion.height,
-                anchorPaddingTopPx = anchorPaddingTopPx,
-                onHeaderClick = onCollapseSecondary,
-                onLeafSelected = onLeafSelected,
-            )
-        }
+        CascadingSecondaryColumn(
+            triggerItem = triggerItem,
+            dropdownColors = dropdownColors,
+            onHeaderClick = onCollapseSecondary,
+            onLeafSelected = onLeafSelected,
+        )
     }
 }
 
-/** Shared header + divider + children body for the secondary popup. Used by both the real
- *  animated layout and the measurement probe so their sizes can't diverge. */
+/** Shared header + children body for the secondary popup. Used by both the real animated layout
+ *  and the measurement probe so their sizes can't diverge. */
 @Composable
 internal fun CascadingSecondaryColumn(
     triggerItem: DropdownItem,
     dropdownColors: DropdownColors,
-    expandFraction: () -> Float,
-    arrowRotation: () -> Float,
-    anchorHeightPx: Int,
-    anchorPaddingTopPx: Int,
     onHeaderClick: () -> Unit,
     onLeafSelected: (DropdownItem) -> Unit,
 ) {
     val children = triggerItem.children.orEmpty()
     ListPopupColumn {
+        // COUI's compact path prepends the trigger item itself to the sub menu list
+        // (`showSub`: `arrayList.add(popupListItem)`), rendered as an expanded group header.
         MorphHeaderRow(
             triggerItem = triggerItem,
-            arrowRotation = arrowRotation,
-            expandFraction = expandFraction,
-            anchorHeightPx = anchorHeightPx,
-            anchorPaddingTopPx = anchorPaddingTopPx,
             dropdownColors = dropdownColors,
             onClick = onHeaderClick,
         )
-        // COUI separates the cloned submenu header from its children with the same divider band it
-        // stacks between two adjacent rows.
-        PopupListDivider()
         val lastChildIdx = children.lastIndex
         children.forEachIndexed { index, child ->
             key(child) {
@@ -391,7 +354,7 @@ internal fun CascadingSecondaryColumn(
                     isLast = index == lastChildIdx,
                     onSelectedIndexChange = { onLeafSelected(child) },
                     // Every leaf of one submenu belongs to the same COUI group, so the column keeps
-                    // them contiguous and only the explicit header band above separates them.
+                    // them contiguous; the header joins the same group in the native list.
                     groupKey = Unit,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -401,59 +364,50 @@ internal fun CascadingSecondaryColumn(
 }
 
 /**
- * Silhouette of the secondary popup part-way through its slide: the anchor row's rect interpolated
- * towards the submenu's own rect, with the corners opening up as it goes.
+ * Silhouette of the secondary popup part-way through its expansion: a rounded band whose top edge
+ * moves from the list's inner padding to 0 and whose bottom edge grows from the anchor row's
+ * height to the card's full height (COUI `RoundFrameLayout.setOverrideOutline`).
  *
  * Equality is by value, which is what the glass surface's outline cache reads — re-emitting an
- * unchanged fraction keeps the cached outline, a moved one invalidates it. Emitting the same
- * instance instead would pin whichever outline it produced first.
- *
- * It is a [CornerBasedShape] rather than a bare [Shape] for the same reason [SquircleShape] is: the
- * rim highlight reads the radii off the shape and falls back to `min(width, height) / 2` otherwise,
- * which during a morph would draw a stadium that does not follow the silhouette. The four corner
- * sizes mirror [rect] exactly.
- *
- * The outline itself is the same corner family the static surface uses — [addSquircleRoundRect], the
- * Lp superellipse — not a [RoundRect]. A circular corner parts from that superellipse along the
- * diagonal by `0.0718 * radius` (7.8px at 28dp), so a morph traced with arcs would slide the rim
- * highlight off its own silhouette for the whole animation, the very defect the static surface had.
+ * unchanged fraction keeps the cached outline, a moved one invalidates it.
  */
-private class MorphClipShape(
-    private val fraction: Float,
-    private val anchor: IntRect,
-    private val secondary: IntRect,
+private class SecondaryBandShape(
+    private val progress: Float,
+    private val innerPaddingPx: Float,
+    private val clipBottomStartPx: Float,
     private val cornerPx: Float,
-    private val anchorIsLast: Boolean,
+    private val widthPx: Int,
+    private val heightPx: Int,
     private val squircleEnabled: Boolean,
 ) : CornerBasedShape(
-    topStart = CornerSize(cornerPx * fraction),
-    topEnd = CornerSize(cornerPx * fraction),
-    bottomEnd = CornerSize(if (anchorIsLast) cornerPx else cornerPx * fraction),
-    bottomStart = CornerSize(if (anchorIsLast) cornerPx else cornerPx * fraction),
+    topStart = CornerSize(cornerPx),
+    topEnd = CornerSize(cornerPx),
+    bottomEnd = CornerSize(cornerPx),
+    bottomStart = CornerSize(cornerPx),
 ) {
 
     val rect: Rect
         get() = Rect(
-            left = lerp(anchor.left.toFloat(), secondary.left.toFloat(), fraction),
-            top = lerp(anchor.top.toFloat(), secondary.top.toFloat(), fraction),
-            right = lerp(anchor.right.toFloat(), secondary.right.toFloat(), fraction),
-            bottom = lerp(anchor.bottom.toFloat(), secondary.bottom.toFloat(), fraction),
+            left = 0f,
+            top = lerp(innerPaddingPx, 0f, progress),
+            right = widthPx.toFloat(),
+            bottom = lerp(clipBottomStartPx, heightPx.toFloat(), progress),
         )
+
+    private val radiusPx: Float
+        get() = minOf(cornerPx, rect.width / 2f, rect.height / 2f)
 
     /** Rebuilt per frame: the mask below is wiped between hits and the geometry is moving. */
     val path: Path
         get() {
-            val rTop = cornerPx * fraction
-            // Last-row anchors share primary's rounded bottom — keep both bottom corners full.
-            // Mid-list anchors must shrink uniformly into a flat internal row.
-            val rBottom = if (anchorIsLast) cornerPx else rTop
+            val r = radiusPx
             return Path().apply {
                 addSquircleRoundRect(
                     rect = rect,
-                    topLeft = rTop,
-                    topRight = rTop,
-                    bottomRight = rBottom,
-                    bottomLeft = rBottom,
+                    topLeft = r,
+                    topRight = r,
+                    bottomRight = r,
+                    bottomLeft = r,
                     squircleEnabled = squircleEnabled,
                 )
             }
@@ -461,20 +415,18 @@ private class MorphClipShape(
 
     val roundRect: RoundRect
         get() {
-            val rTop = cornerPx * fraction
-            val rBottom = if (anchorIsLast) cornerPx else rTop
-            val topRadius = CornerRadius(rTop, rTop)
-            val bottomRadius = CornerRadius(rBottom, rBottom)
-            val r = rect
+            val r = radiusPx
+            val radius = CornerRadius(r, r)
+            val box = rect
             return RoundRect(
-                left = r.left,
-                top = r.top,
-                right = r.right,
-                bottom = r.bottom,
-                topLeftCornerRadius = topRadius,
-                topRightCornerRadius = topRadius,
-                bottomRightCornerRadius = bottomRadius,
-                bottomLeftCornerRadius = bottomRadius,
+                left = box.left,
+                top = box.top,
+                right = box.right,
+                bottom = box.bottom,
+                topLeftCornerRadius = radius,
+                topRightCornerRadius = radius,
+                bottomRightCornerRadius = radius,
+                bottomLeftCornerRadius = radius,
             )
         }
 
@@ -501,28 +453,28 @@ private class MorphClipShape(
     ) {
         this
     } else {
-        // The silhouette is a lerped rect, not a rect at the shape's origin, so a per-corner request
-        // is not representable as one; hand back the plain rounded rectangle instead.
         RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is MorphClipShape) return false
-        return fraction == other.fraction &&
-            anchor == other.anchor &&
-            secondary == other.secondary &&
+        if (other !is SecondaryBandShape) return false
+        return progress == other.progress &&
+            innerPaddingPx == other.innerPaddingPx &&
+            clipBottomStartPx == other.clipBottomStartPx &&
             cornerPx == other.cornerPx &&
-            anchorIsLast == other.anchorIsLast &&
+            widthPx == other.widthPx &&
+            heightPx == other.heightPx &&
             squircleEnabled == other.squircleEnabled
     }
 
     override fun hashCode(): Int {
-        var result = fraction.hashCode()
-        result = 31 * result + anchor.hashCode()
-        result = 31 * result + secondary.hashCode()
+        var result = progress.hashCode()
+        result = 31 * result + innerPaddingPx.hashCode()
+        result = 31 * result + clipBottomStartPx.hashCode()
         result = 31 * result + cornerPx.hashCode()
-        result = 31 * result + anchorIsLast.hashCode()
+        result = 31 * result + widthPx
+        result = 31 * result + heightPx
         result = 31 * result + squircleEnabled.hashCode()
         return result
     }

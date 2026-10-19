@@ -21,35 +21,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlendModeColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.icon.COUIIcons
-import io.github.suqi8.coui.kmp.icon.basic.ArrowRight
+import io.github.suqi8.coui.kmp.icon.basic.ExpandableIndicator
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * Header row at the top of a cascading secondary popup. Visually mirrors its primary trigger
- * (chevron at the trailing edge); during expansion its outer height and top/bottom padding
- * interpolate from anchor measurements to intrinsic values. Tapping collapses the secondary.
+ * First row of a cascading secondary popup: the trigger item re-rendered as COUI's expanded group
+ * header (`PopupListItem` group state 2 — medium typeface, expandable indicator at the trailing
+ * edge). It is a normal popup row; the secondary panel's band clip is what makes it appear to grow
+ * out of the tapped row. Tapping it collapses the secondary.
  */
 @Composable
 internal fun MorphHeaderRow(
     triggerItem: DropdownItem,
-    arrowRotation: () -> Float,
-    expandFraction: () -> Float,
-    anchorHeightPx: Int,
-    anchorPaddingTopPx: Int,
     dropdownColors: DropdownColors,
     onClick: () -> Unit,
 ) {
-    // COUI: title/summary keep the regular palette; only the chevron is theme-tinted while expanded.
+    // COUI: title/summary keep the regular palette; only the indicator is theme-tinted while expanded.
     val backgroundColor = dropdownColors.containerColor
     val backgroundColorState = rememberUpdatedState(backgroundColor)
     val titleColor = dropdownColors.contentColor
@@ -107,16 +102,15 @@ internal fun MorphHeaderRow(
                         .size(
                             width = DropdownDefaults.ChevronSize.width,
                             height = DropdownDefaults.ChevronSize.height,
-                        )
-                        .graphicsLayer { rotationZ = arrowRotation() },
-                    imageVector = COUIIcons.Basic.ArrowRight,
+                        ),
+                    imageVector = COUIIcons.Basic.ExpandableIndicator,
                     colorFilter = chevronColorFilter,
                     contentDescription = null,
                 )
             }
         },
-        // selectable + background on the outer Layout so the click target spans the full
-        // interpolated row height (paddings included), not just the inner Row's content.
+        // selectable + background on the outer Layout so the click target spans the full row
+        // height (paddings included), not just the inner Row's content.
         modifier = Modifier
             .fillMaxWidth()
             .drawBehind { drawRect(backgroundColorState.value) }
@@ -127,29 +121,18 @@ internal fun MorphHeaderRow(
                 onClick = { currentOnClick() },
             ),
     ) { measurables, constraints ->
-        val intrinsicTop = DropdownDefaults.FirstLastVerticalPadding.roundToPx()
-        val intrinsicBottom = DropdownDefaults.MiddleVerticalPadding.roundToPx()
-        val frac = expandFraction()
-        val padTop = lerp(anchorPaddingTopPx.toFloat(), intrinsicTop.toFloat(), frac).toInt()
+        val padTop = DropdownDefaults.FirstLastVerticalPadding.roundToPx()
+        val padBottom = DropdownDefaults.MiddleVerticalPadding.roundToPx()
 
-        // COUI popup-row min content height, so the clone's height and centering
-        // match the primary row it mirrors.
+        // COUI popup-row min content height, so the header matches a regular row.
         val minContentHeight = (
             DropdownDefaults.PopupItemMinHeight.roundToPx() -
                 2 * DropdownDefaults.MiddleVerticalPadding.roundToPx()
             ).coerceIn(0, constraints.maxHeight)
         val placeable = measurables.first().measure(constraints.copy(minHeight = minContentHeight))
-        val intrinsicTotal = placeable.height + intrinsicTop + intrinsicBottom
-        val target = if (anchorHeightPx <= 0) {
-            intrinsicTotal
-        } else {
-            lerp(anchorHeightPx.toFloat(), intrinsicTotal.toFloat(), frac)
-                .toInt()
-                .coerceAtLeast(0)
-        }
         val width = placeable.width.coerceAtMost(constraints.maxWidth)
 
-        layout(width, target) {
+        layout(width, placeable.height + padTop + padBottom) {
             placeable.place(0, padTop)
         }
     }

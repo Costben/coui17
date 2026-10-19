@@ -26,6 +26,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -67,6 +68,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.time.TimeSource
 
@@ -85,12 +87,24 @@ internal val MainSubMenuVerticalOverlap = 14.dp
  */
 internal val SubMenuMinGapToTop = 12.dp
 
-private const val MAIN_SPRING_DAMPING = 0.95f
-private const val EXPAND_SPRING_DAMPING = 0.99f
-private const val EXPAND_SPRING_RESPONSE = 0.45f
-private const val COLLAPSE_SPRING_RESPONSE = 0.2f
-private const val ARROW_EXPAND_SPRING_RESPONSE = 0.2f
-private const val ARROW_COLLAPSE_SPRING_RESPONSE = 0.3f
+/**
+ * Vertical padding the popup list keeps above its first and below its last row
+ * (COUI `coui_popup_list_padding_vertical`). The secondary menu's band clip starts inside it.
+ */
+internal val SubMenuInnerPadding = 8.dp
+
+/**
+ * Minimum width of a menu that owns submenus (COUI `coui_popup_list_window_width_with_icon`).
+ * A plain menu floors at `ListPopupDefaults.MinWidth` (168dp) instead.
+ */
+private val PopupSubMenuMinWidth = 196.dp
+
+/**
+ * COUI `SpringProgressUnit`: `startAnimation(bounce, response, …)` with bounce 0 / response 0.35
+ * for both submenu enter and exit (SmallScreenAnimationController).
+ */
+private const val SUBMENU_SPRING_DAMPING = 1f
+private const val SUBMENU_SPRING_RESPONSE = 0.35f
 
 /**
  * Rubber-band travel of the panel (`TouchMotionTierParams.iolMaxStretchDistance`, 28dp) — the
@@ -179,11 +193,11 @@ private fun panelHandUpSpring(areaBounce: Float, initialVelocity: Float): Spring
  */
 internal fun panelHandUpBounce(initialVelocity: Float, areaBounce: Float): Float = maxOf(abs(initialVelocity) / PANEL_DRAG_MAX_VELOCITY, areaBounce).coerceAtMost(1f)
 
-/** COUI DefaultScreenAnimationController.mMainMenuScalePercent. */
+/** COUI SmallScreenAnimationController.mMainMenuScalePercent. */
 private const val PRIMARY_SHRUNK_SCALE = 0.9f
 
-/** COUI DefaultScreenAnimationController.mMainMenuAlphaPercent. */
-private const val PRIMARY_SHRUNK_ALPHA = 0.7f
+/** COUI SmallScreenAnimationController.DEFAULT_MAIN_MENU_ALPHA_PERCENT (small screen: 0.3). */
+private const val PRIMARY_SHRUNK_ALPHA = 0.3f
 internal const val ENTER_SCALE_FROM = 0.15f
 internal const val ENTER_SCALE_RANGE = 1f - ENTER_SCALE_FROM
 
@@ -198,9 +212,80 @@ private class PopupContentBounds {
     var rect: IntRect = IntRect.Zero
 }
 
-/** Internal shared layout for cascading list popups. Cascading depth is limited to 2. */
+/**
+ * Upward shift the primary menu takes when the secondary would otherwise leave less than
+ * [SubMenuMinGapToTop] above itself (COUI `SmallScreenAnimationController.startSubMenuEnter`).
+ * Written from the measure pass, read by the primary's `graphicsLayer`, hence not a state.
+ */
+private class PopupShift {
+    var y: Float = 0f
+}
+
+/**
+ * Internal shared layout for cascading list popups. Cascading depth is limited to 2.
+ *
+ * ColorOS system apps — the Gallery among them — lay their popups out with the panel's *physical*
+ * density, so a display-size override only changes third-party apps. Rendering this popup at the
+ * app density would make every row, font and padding about 10% larger than the popup it mimics on a
+ * phone whose density was raised above the panel's. [popupPhysicalDensity] restores the native
+ * geometry; on a device without an override it is the identity.
+ */
 @Composable
 internal fun CascadingListPopupLayout(
+    show: Boolean,
+    popupHost: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit,
+    entries: List<DropdownEntry>,
+    onDismissRequest: () -> Unit,
+    dropdownColors: DropdownColors,
+    popupModifier: Modifier = Modifier,
+    onDismissFinished: (() -> Unit)? = null,
+    popupPositionProvider: PopupPositionProvider = ListPopupDefaults.DropdownPositionProvider,
+    alignment: PopupPositionProvider.Align = PopupPositionProvider.Align.End,
+    enableWindowDim: Boolean = false,
+    maxHeight: Dp? = null,
+    minWidth: Dp = ListPopupDefaults.MinWidth,
+    collapseOnSelection: Boolean = true,
+    enableGlass: Boolean = false,
+) {
+    val density = LocalDensity.current
+    val popupDensity = remember(density) { popupPhysicalDensity(density) }
+    CompositionLocalProvider(LocalDensity provides popupDensity) {
+        CascadingListPopupLayoutImpl(
+            show = show,
+            popupHost = popupHost,
+            entries = entries,
+            onDismissRequest = onDismissRequest,
+            dropdownColors = dropdownColors,
+            popupModifier = popupModifier,
+            onDismissFinished = onDismissFinished,
+            popupPositionProvider = popupPositionProvider,
+            alignment = alignment,
+            enableWindowDim = enableWindowDim,
+            maxHeight = maxHeight,
+            minWidth = minWidth,
+            collapseOnSelection = collapseOnSelection,
+            enableGlass = enableGlass,
+        )
+    }
+}
+
+/**
+ * `ro.sf.lcd_density` — the panel's density, which ColorOS system apps use for their popups while
+ * third-party apps follow the display-size override. Falls back to [base] when the property is
+ * missing or implausible.
+ */
+internal fun popupPhysicalDensity(base: Density): Density {
+    val physicalDpi = platformPhysicalDensityDpi() ?: return base
+    val currentDpi = (base.density * 160f).roundToInt()
+    if (physicalDpi <= 0 || currentDpi <= 0 || physicalDpi == currentDpi) return base
+    val ratio = physicalDpi.toFloat() / currentDpi
+    // A broken property must not make the menu unusable.
+    if (ratio < 0.75f || ratio > 1.25f) return base
+    return Density(base.density * ratio, base.fontScale)
+}
+
+@Composable
+private fun CascadingListPopupLayoutImpl(
     show: Boolean,
     popupHost: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit,
     entries: List<DropdownEntry>,
@@ -231,12 +316,8 @@ internal fun CascadingListPopupLayout(
     val expandFraction = remember { Animatable(0f) }
     val primaryScale = remember { Animatable(1f) }
     val primaryAlpha = remember { Animatable(1f) }
-    val arrowRotation = remember { Animatable(0f) }
 
     val layoutDirection = LocalLayoutDirection.current
-    val arrowEndDeg = remember(layoutDirection) {
-        if (layoutDirection == LayoutDirection.Ltr) -90f else 90f
-    }
 
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
     val currentOnDismissFinished by rememberUpdatedState(onDismissFinished)
@@ -278,15 +359,10 @@ internal fun CascadingListPopupLayout(
             backExpandProgress.snapTo(0f)
         }
         val target = if (item != null) 1f else 0f
-        val mainSpec = if (target == 1f) {
-            folmeSpring(EXPAND_SPRING_DAMPING, EXPAND_SPRING_RESPONSE)
-        } else {
-            folmeSpring<Float>(MAIN_SPRING_DAMPING, COLLAPSE_SPRING_RESPONSE)
-        }
+        // COUI SmallScreenAnimationController drives both menus with bounce 0 / response 0.35.
+        val mainSpec = folmeSpring<Float>(SUBMENU_SPRING_DAMPING, SUBMENU_SPRING_RESPONSE)
         launch {
             expandFraction.animateTo(target, mainSpec)
-            // Settle on the main spring — the slower arrowRotation would otherwise hold the
-            // secondary subcomposed past visibility.
             if (target == 0f) {
                 displayedItem = null
                 // Only after the collapse settles — clearing earlier jumps the effective values.
@@ -299,23 +375,12 @@ internal fun CascadingListPopupLayout(
                 mainSpec,
             )
         }
-        // COUI DefaultScreenAnimationController.startSubMenuEnter animates the main menu to
-        // mMainMenuAlphaPercent; the sub-menu no longer paints its own scrim over the primary.
+        // COUI SmallScreenAnimationController.startSubMenuEnter animates the main menu content to
+        // mMainMenuAlphaPercent; the card material itself stays opaque.
         launch {
             primaryAlpha.animateTo(
                 if (target == 1f) PRIMARY_SHRUNK_ALPHA else 1f,
                 mainSpec,
-            )
-        }
-        launch {
-            val arrowResponse = if (target == 1f) {
-                ARROW_EXPAND_SPRING_RESPONSE
-            } else {
-                ARROW_COLLAPSE_SPRING_RESPONSE
-            }
-            arrowRotation.animateTo(
-                target * arrowEndDeg,
-                folmeSpring(MAIN_SPRING_DAMPING, arrowResponse),
             )
         }
     }
@@ -399,6 +464,8 @@ internal fun CascadingListPopupLayout(
         popupContentSize = primarySize,
     )
 
+    val primaryShift = remember { PopupShift() }
+
     val anchorBoundsByItem = remember { mutableStateMapOf<DropdownItem, IntRect>() }
 
     // Native: the popup list is a COUIRecyclerView whose over-scroll moves the whole menu content —
@@ -432,6 +499,11 @@ internal fun CascadingListPopupLayout(
         }
     }
 
+    // COUI `getMainMenuMinWidth`: a menu whose rows own submenus floors at
+    // `coui_popup_list_window_width_with_icon` (196dp) instead of the plain 168dp.
+    val hasSubMenuRows = entries.any { entry -> entry.items.any { !it.children.isNullOrEmpty() } }
+    val resolvedMinWidth = if (hasSubMenuRows) maxOf(minWidth, PopupSubMenuMinWidth) else minWidth
+
     popupHost(internalVisible.value) {
         val backState = rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
         NavigationBackHandler(
@@ -443,7 +515,7 @@ internal fun CascadingListPopupLayout(
                     if (expandedItem != null) {
                         backExpandProgress.animateTo(
                             0f,
-                            folmeSpring(EXPAND_SPRING_DAMPING, EXPAND_SPRING_RESPONSE),
+                            folmeSpring(SUBMENU_SPRING_DAMPING, SUBMENU_SPRING_RESPONSE),
                         )
                     } else {
                         backEnterProgress.animateTo(0f, ListPopupDefaults.ResetAnimationSpec)
@@ -540,50 +612,56 @@ internal fun CascadingListPopupLayout(
                             }
                         },
                 ) {
-                    CascadingMorphSubLayout(
-                        modifier = Modifier.graphicsLayer { translationY = panelDragOffset.value },
-                        entries = entries,
-                        expandedItem = expandedItem,
-                        displayedItem = displayedItem,
-                        onExpand = { expandedItem = it },
-                        onCollapseSecondary = { expandedItem = null },
-                        onLeafSelected = { item ->
-                            item.onClick?.invoke()
-                            if (collapseOnSelection) {
-                                expandedItem = null
-                                currentOnDismiss()
-                            }
-                        },
-                        getAnchorBounds = { anchorBoundsByItem[it] },
-                        setAnchorBounds = { item, bounds ->
-                            // Freeze the anchor once secondary is shown so primary's scale
-                            // animation can't drift it via onGloballyPositioned.
-                            if (displayedItem == null) {
-                                anchorBoundsByItem[item] = bounds
-                            }
-                        },
-                        onPrimarySizeChange = { primarySize = it },
-                        onContentBoundsChange = { popupContentBounds.rect = it },
-                        windowBounds = layoutInfo.windowBounds,
-                        popupMargin = layoutInfo.popupMargin,
-                        parentBounds = parentBounds,
-                        popupPositionProvider = popupPositionProvider,
-                        alignment = alignment,
-                        hostOriginInWindow = { hostPositionInWindow },
-                        maxHeight = maxHeight,
-                        minWidth = minWidth,
-                        dropdownColors = dropdownColors,
-                        enterFraction = { enterFraction.value * (1f - backEnterProgress.value) },
-                        enterAlpha = { enterAlpha.value * (1f - backEnterProgress.value) },
-                        primaryScale = { 1f + (primaryScale.value - 1f) * (1f - backExpandProgress.value) },
-                        primaryAlpha = { 1f + (primaryAlpha.value - 1f) * (1f - backExpandProgress.value) },
-                        expandFraction = { expandFraction.value * (1f - backExpandProgress.value) },
-                        arrowRotation = { arrowRotation.value * (1f - backExpandProgress.value) },
-                        layoutInfo = layoutInfo,
-                        layoutDirection = layoutDirection,
-                        surfaceColor = surfaceColor,
-                        enableGlass = enableGlass,
-                    )
+                    // The host invokes this content in its own composition (COUIPopupUtils
+                    // `popupState.content()`), so the density provided around this function never
+                    // reaches it. Re-provide it here, inside the lambda, to render the menu at the
+                    // panel density.
+                    CompositionLocalProvider(LocalDensity provides panelDensity) {
+                        CascadingMorphSubLayout(
+                            modifier = Modifier.graphicsLayer { translationY = panelDragOffset.value },
+                            entries = entries,
+                            expandedItem = expandedItem,
+                            displayedItem = displayedItem,
+                            onExpand = { expandedItem = it },
+                            onCollapseSecondary = { expandedItem = null },
+                            onLeafSelected = { item ->
+                                item.onClick?.invoke()
+                                if (collapseOnSelection) {
+                                    expandedItem = null
+                                    currentOnDismiss()
+                                }
+                            },
+                            getAnchorBounds = { anchorBoundsByItem[it] },
+                            setAnchorBounds = { item, bounds ->
+                                // Freeze the anchor once secondary is shown so primary's scale
+                                // animation can't drift it via onGloballyPositioned.
+                                if (displayedItem == null) {
+                                    anchorBoundsByItem[item] = bounds
+                                }
+                            },
+                            onPrimarySizeChange = { primarySize = it },
+                            onContentBoundsChange = { popupContentBounds.rect = it },
+                            windowBounds = layoutInfo.windowBounds,
+                            popupMargin = layoutInfo.popupMargin,
+                            parentBounds = parentBounds,
+                            popupPositionProvider = popupPositionProvider,
+                            alignment = alignment,
+                            hostOriginInWindow = { hostPositionInWindow },
+                            maxHeight = maxHeight,
+                            minWidth = resolvedMinWidth,
+                            dropdownColors = dropdownColors,
+                            enterFraction = { enterFraction.value * (1f - backEnterProgress.value) },
+                            enterAlpha = { enterAlpha.value * (1f - backEnterProgress.value) },
+                            primaryScale = { 1f + (primaryScale.value - 1f) * (1f - backExpandProgress.value) },
+                            primaryAlpha = { 1f + (primaryAlpha.value - 1f) * (1f - backExpandProgress.value) },
+                            expandFraction = { expandFraction.value * (1f - backExpandProgress.value) },
+                            primaryShift = primaryShift,
+                            layoutInfo = layoutInfo,
+                            layoutDirection = layoutDirection,
+                            surfaceColor = surfaceColor,
+                            enableGlass = enableGlass,
+                        )
+                    }
                 }
             }
         }
@@ -595,8 +673,6 @@ private const val SLOT_SECONDARY = "secondary"
 private const val SLOT_SECONDARY_PROBE = "secondary_probe"
 
 // Hoisted so each measure pass reuses the same instances.
-private val ProbeArrowRotation: () -> Float = { 0f }
-private val ProbeExpandFraction: () -> Float = { 1f }
 private val ProbeOnHeaderClick: () -> Unit = {}
 private val ProbeOnLeafSelected: (DropdownItem) -> Unit = {}
 
@@ -627,7 +703,7 @@ private fun CascadingMorphSubLayout(
     primaryScale: () -> Float,
     primaryAlpha: () -> Float,
     expandFraction: () -> Float,
-    arrowRotation: () -> Float,
+    primaryShift: PopupShift,
     layoutInfo: ListPopupLayoutInfo,
     layoutDirection: LayoutDirection,
     surfaceColor: Color,
@@ -646,20 +722,28 @@ private fun CascadingMorphSubLayout(
             maxHeight = resolvedMaxHeightPx.coerceAtMost(constraints.maxHeight),
         )
 
-        // Secondary subcomposition tracks [displayedItem] so the morphing surface survives the
-        // collapse spring; primary's mask/chevron use [expandedItem] for instant input feedback.
+        // Secondary subcomposition tracks [displayedItem] so the clip animation survives the
+        // collapse spring; primary's mask/indicator use [expandedItem] for instant input feedback.
         val activeExpanded = displayedItem
         val anchorRect = activeExpanded?.let { getAnchorBounds(it) }
-        val (anchorPaddingTopPx, _) = if (activeExpanded != null) {
-            computeAnchorPaddingPx(activeExpanded, entries)
-        } else {
-            0 to 0
+
+        // COUI's small-screen shrink pivots on the menu's trailing edge and its top edge; with the
+        // primary right-aligned that is exactly the right edge of the card. `Align.End` is logical,
+        // so in RTL the trailing edge is the card's left one.
+        val alignedToTrailingEdge = when (alignment) {
+            PopupPositionProvider.Align.End,
+            PopupPositionProvider.Align.TopEnd,
+            PopupPositionProvider.Align.BottomEnd,
+            -> true
+
+            else -> false
         }
-        // Last-row anchors share primary's rounded bottom — keep the morph's bottom corners
-        // full. Mid-list anchors must shrink uniformly or a rounded tongue would protrude from
-        // a flat internal row. === because DropdownItem is a data class.
-        val isAnchorPopupLast = activeExpanded != null &&
-            entries.lastOrNull { it.items.isNotEmpty() }?.items?.last() === activeExpanded
+        val pivotAtRightEdge = if (layoutDirection == LayoutDirection.Ltr) {
+            alignedToTrailingEdge
+        } else {
+            !alignedToTrailingEdge
+        }
+        val primaryPivotX = if (pivotAtRightEdge) 1f else 0f
 
         val primaryPlaceables = subcompose(SLOT_PRIMARY) {
             CascadingPrimaryContent(
@@ -672,10 +756,12 @@ private fun CascadingMorphSubLayout(
                 enterAlpha = enterAlpha,
                 popupLayoutPosition = layoutInfo.popupLayoutPosition,
                 transformOrigin = layoutInfo.localTransformOrigin,
+                shrinkTransformOrigin = TransformOrigin(primaryPivotX, 0f),
                 surfaceColor = surfaceColor,
                 dropdownColors = dropdownColors,
                 primaryScale = primaryScale,
                 primaryAlpha = primaryAlpha,
+                primaryTranslationY = { primaryShift.y * expandFraction() },
                 onCollapseSecondary = onCollapseSecondary,
                 enableGlass = enableGlass,
             )
@@ -703,16 +789,15 @@ private fun CascadingMorphSubLayout(
         val secondaryMaxHeightPx = (resolvedMaxHeightPx - SubMenuMinGapToTop.roundToPx())
             .coerceAtLeast(0)
 
-        // Probe secondary's natural size first so the union rect (primary ∪ secondary) is
-        // known before the real secondary is measured at union size for its anchor-to-final slide.
+        // Probe the secondary's natural size first. COUI measures the sub menu from its own list
+        // (the trigger row is part of that list), not from the main menu's width.
         val probeConstraints = primaryConstraints.copy(
-            minWidth = primaryWidth.coerceAtMost(primaryConstraints.maxWidth),
             maxHeight = secondaryMaxHeightPx.coerceAtMost(constraints.maxHeight),
         )
 
         data class SecondaryLayout(
             val placeables: List<Placeable>,
-            val unionRect: IntRect,
+            val rect: IntRect,
         )
 
         val secondaryLayout: SecondaryLayout? =
@@ -722,10 +807,6 @@ private fun CascadingMorphSubLayout(
                         CascadingSecondaryColumn(
                             triggerItem = activeExpanded,
                             dropdownColors = dropdownColors,
-                            expandFraction = ProbeExpandFraction,
-                            arrowRotation = ProbeArrowRotation,
-                            anchorHeightPx = 0,
-                            anchorPaddingTopPx = 0,
                             onHeaderClick = ProbeOnHeaderClick,
                             onLeafSelected = ProbeOnLeafSelected,
                         )
@@ -737,56 +818,52 @@ private fun CascadingMorphSubLayout(
                     IntSize.Zero
                 }
                 if (secondarySize.width > 0 && secondarySize.height > 0 && primaryMeasuredSize != IntSize.Zero) {
-                    val secondaryRect = computeSecondaryRect(
-                        anchor = anchorRect,
-                        secondarySize = secondarySize,
-                        windowBounds = windowBounds,
-                        layoutDirection = layoutDirection,
-                        verticalOverlapPx = MainSubMenuVerticalOverlap.roundToPx(),
-                    )
                     val primaryRect = IntRect(
                         left = primaryOffsetWindow.x,
                         top = primaryOffsetWindow.y,
                         right = primaryOffsetWindow.x + primaryMeasuredSize.width,
                         bottom = primaryOffsetWindow.y + primaryMeasuredSize.height,
                     )
-                    val unionRect = unionOf(primaryRect, secondaryRect)
-                    val secondaryLocalInUnion = IntRect(
-                        left = secondaryRect.left - unionRect.left,
-                        top = secondaryRect.top - unionRect.top,
-                        right = secondaryRect.right - unionRect.left,
-                        bottom = secondaryRect.bottom - unionRect.top,
+                    val secondaryRect = computeSecondaryRect(
+                        primary = primaryRect,
+                        anchor = anchorRect,
+                        secondarySize = secondarySize,
+                        available = IntRect(
+                            left = windowBounds.left + popupMargin.left,
+                            top = windowBounds.top + popupMargin.top,
+                            right = windowBounds.right - popupMargin.right,
+                            bottom = windowBounds.bottom - popupMargin.bottom,
+                        ),
+                        layoutDirection = layoutDirection,
+                        verticalOverlapPx = MainSubMenuVerticalOverlap.roundToPx(),
                     )
-                    val anchorLocalInUnion = IntRect(
-                        left = anchorRect.left - unionRect.left,
-                        top = anchorRect.top - unionRect.top,
-                        right = anchorRect.right - unionRect.left,
-                        bottom = anchorRect.bottom - unionRect.top,
-                    )
-                    val unionConstraints = Constraints.fixed(unionRect.width, unionRect.height)
+                    // COUI keeps at least SubMenuMinGapToTop between the window top and the sub menu;
+                    // when the sub menu crosses that line the primary menu steps up by the difference
+                    // so the two cards stay visually attached.
+                    val gapTop = primaryRect.top + SubMenuMinGapToTop.roundToPx()
+                    primaryShift.y = if (secondaryRect.top < gapTop) {
+                        (secondaryRect.top - gapTop).toFloat()
+                    } else {
+                        0f
+                    }
+                    val secondaryConstraints = Constraints.fixed(secondaryRect.width, secondaryRect.height)
                     val placeables = subcompose(SLOT_SECONDARY) {
                         CascadingSecondaryContent(
                             triggerItem = activeExpanded,
-                            unionSize = IntSize(unionRect.width, unionRect.height),
-                            secondaryLocalInUnion = secondaryLocalInUnion,
-                            anchorLocalInUnion = anchorLocalInUnion,
-                            anchorPaddingTopPx = anchorPaddingTopPx,
-                            isAnchorPopupLast = isAnchorPopupLast,
-                            secondaryContentMaxHeight = secondaryMaxHeightPx,
-                            enterFraction = enterFraction,
-                            enterAlpha = enterAlpha,
-                            popupLayoutPosition = layoutInfo.popupLayoutPosition,
-                            transformOrigin = layoutInfo.localTransformOrigin,
-                            expandFraction = expandFraction,
-                            arrowRotation = arrowRotation,
+                            size = secondarySize,
+                            anchorTopInWindow = anchorRect.top,
+                            anchorHeightPx = anchorRect.height,
+                            primaryBottomInWindow = primaryRect.bottom,
+                            secondaryTopInWindow = secondaryRect.top,
+                            progress = expandFraction,
                             onCollapseSecondary = onCollapseSecondary,
                             onLeafSelected = onLeafSelected,
                             dropdownColors = dropdownColors,
                             surfaceColor = surfaceColor,
                             enableGlass = enableGlass,
                         )
-                    }.map { it.measure(unionConstraints) }
-                    SecondaryLayout(placeables, unionRect)
+                    }.map { it.measure(secondaryConstraints) }
+                    SecondaryLayout(placeables, secondaryRect)
                 } else {
                     null
                 }
@@ -811,13 +888,13 @@ private fun CascadingMorphSubLayout(
                 right = primaryDxLocal + primaryWidth,
                 bottom = primaryDyLocal + primaryHeight,
             )
-            secondaryLayout?.let { (placeables, unionRect) ->
-                val ux = unionRect.left - host.x
-                val uy = unionRect.top - host.y
-                placeables.forEach { it.place(ux, uy) }
+            secondaryLayout?.let { (placeables, rect) ->
+                val sx = rect.left - host.x
+                val sy = rect.top - host.y
+                placeables.forEach { it.place(sx, sy) }
                 bounds = unionOf(
                     bounds,
-                    IntRect(ux, uy, ux + unionRect.width, uy + unionRect.height),
+                    IntRect(sx, sy, sx + rect.width, sy + rect.height),
                 )
             }
             onContentBoundsChange(bounds)
@@ -915,77 +992,45 @@ private fun unionOf(a: IntRect, b: IntRect): IntRect = IntRect(
     bottom = maxOf(a.bottom, b.bottom),
 )
 
+/**
+ * COUI `PopupMenuLocateHelper` sub-menu placement for a compact window:
+ * - `getOffsetX` returns the *main menu's* leading edge, so the sub menu keeps that edge while the
+ *   main menu scales towards its trailing pivot and visually retreats to that side. The sub menu is
+ *   clamped into [available] horizontally, so a sub menu wider than the main menu never leaves the
+ *   window when the main menu sits flush against the trailing edge.
+ * - `getOffsetY` maps the tapped row through the main menu's shrink ratio
+ *   (`relocated.height / mainMenu.height`, i.e. [PRIMARY_SHRUNK_SCALE]) and then subtracts the
+ *   14dp vertical overlap, pinning the bottom on overflow.
+ */
 internal fun computeSecondaryRect(
+    primary: IntRect,
     anchor: IntRect,
     secondarySize: IntSize,
-    windowBounds: IntRect,
+    available: IntRect,
     layoutDirection: LayoutDirection,
     verticalOverlapPx: Int,
 ): IntRect {
-    val ltr = layoutDirection == LayoutDirection.Ltr
-    // Leading-edge align; fall back to the opposite edge if the trailing side overflows.
-    val left = if (ltr) {
-        val leftAligned = anchor.left
-        when {
-            leftAligned + secondarySize.width <= windowBounds.right -> leftAligned
-
-            anchor.right - secondarySize.width >= windowBounds.left ->
-                windowBounds.right - secondarySize.width
-
-            else -> windowBounds.left
-        }
+    // The sub menu shares the main menu's leading edge: left in LTR, right in RTL.
+    val preferredLeft = if (layoutDirection == LayoutDirection.Ltr) {
+        primary.left
     } else {
-        val rightAligned = anchor.right - secondarySize.width
-        when {
-            rightAligned >= windowBounds.left -> rightAligned
-            anchor.left + secondarySize.width <= windowBounds.right -> anchor.left
-            else -> (windowBounds.right - secondarySize.width).coerceAtLeast(windowBounds.left)
-        }
+        primary.right - secondarySize.width
     }
-    // COUI small-screen rule: overlap the anchor row top by [verticalOverlapPx];
-    // pin to the window bottom on overflow.
-    val preferredTop = anchor.top - verticalOverlapPx
-    val top = if (preferredTop + secondarySize.height <= windowBounds.bottom) {
+    val maxLeft = (available.right - secondarySize.width).coerceAtLeast(available.left)
+    val left = preferredLeft.coerceIn(available.left, maxLeft)
+    val scaledAnchorTop = primary.top + PRIMARY_SHRUNK_SCALE * (anchor.top - primary.top)
+    val preferredTop = scaledAnchorTop.toInt() - verticalOverlapPx
+    val top = if (preferredTop + secondarySize.height <= available.bottom) {
         preferredTop
     } else {
-        windowBounds.bottom - secondarySize.height
-    }.coerceAtLeast(windowBounds.top)
+        available.bottom - secondarySize.height
+    }.coerceAtLeast(available.top)
     return IntRect(
         left = left,
         top = top,
         right = left + secondarySize.width,
         bottom = top + secondarySize.height,
     )
-}
-
-/** First/last/middle padding for [MorphHeaderRow]'s expansion-time padding interpolation.
- *  Must match the primary row's popup-global first/last logic or the morph's start frame jumps. */
-private fun Density.computeAnchorPaddingPx(
-    item: DropdownItem,
-    entries: List<DropdownEntry>,
-): Pair<Int, Int> {
-    // Skip leading/trailing empty entries so the visually-first/last row keeps FirstLast padding.
-    val firstNonEmptyIdx = entries.indexOfFirst { it.items.isNotEmpty() }
-    val lastNonEmptyIdx = entries.indexOfLast { it.items.isNotEmpty() }
-    entries.forEachIndexed { entryIdx, entry ->
-        val idx = entry.items.indexOf(item)
-        if (idx != -1) {
-            val isPopupFirst = entryIdx == firstNonEmptyIdx && idx == 0
-            val isPopupLast = entryIdx == lastNonEmptyIdx && idx == entry.items.lastIndex
-            val top = if (isPopupFirst) {
-                DropdownDefaults.FirstLastVerticalPadding.roundToPx()
-            } else {
-                DropdownDefaults.MiddleVerticalPadding.roundToPx()
-            }
-            val bottom = if (isPopupLast) {
-                DropdownDefaults.FirstLastVerticalPadding.roundToPx()
-            } else {
-                DropdownDefaults.MiddleVerticalPadding.roundToPx()
-            }
-            return top to bottom
-        }
-    }
-    return 0 to 0
 }
 
 private inline fun <T> List<T>.maxOfOrZero(selector: (T) -> Int): Int = if (isEmpty()) 0 else maxOf(selector)

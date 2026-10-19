@@ -23,6 +23,7 @@ All notable user-visible changes are documented here. The format follows
 - `COUIScrollBehavior` accepts `expandOnContentScroll`, so a collapsible bar expands on a downward drag anywhere in the list instead of only once the list reaches its top.
 - `AppBarBlurOverlayDefaults.scrollAlpha` has an overload taking a `minAlpha` floor, for a bar whose material never fades out completely.
 - `Modifier.couiGlassHeader` paints a top-weighted glass header whose colour holds down to a fade band at the bottom edge, with `GlassDefaults.HeaderFadeHeight` as the default band height.
+- `COUIIcons.Basic.ExpandableIndicator`, the native `coui_list_expandable_indicator` glyph used by popup rows that open a submenu.
 
 ### Fixed
 
@@ -48,6 +49,12 @@ All notable user-visible changes are documented here. The format follows
 - A dismissible `Chip` keeps the 32dp chip height: the close icon is 14dp with the ColorOS spacing, and its 28dp touch target no longer stretches the chip to 48dp.
 - List popups tint the blurred page with the native luminosity and overlay blends instead of stacking two opaque grey layers, so content behind a menu stays visible through it.
 - `BottomFloatingNavigationBar` blurs with the native 25px sigma instead of a 14.9px one, so what shows through the bar keeps its shapes as it does on the device.
+- Cascading popups no longer dim the page: the native `COUIPopupListWindow` clears its background drawable, so a submenu leaves the content behind it at full brightness.
+- A cascading submenu is as wide as the card that hosts it, so its rows stop shifting 28dp towards the start edge when the submenu opens — the trailing expandable indicator used to jump left at the moment of expansion.
+- Popup menus follow the panel density (`ro.sf.lcd_density`) instead of the display-size override: on a phone whose density was raised, a menu keeps the native 40dp row and 15sp title instead of growing with the rest of the app.
+- A menu whose rows own submenus floors at the native 196dp (`coui_popup_list_window_width_with_icon`) instead of the plain 168dp.
+- The list popup press highlight is a single mask that slides between rows while a finger drags, instead of one row's mask fading out under the next one fading in.
+- A cascading submenu header keeps its final row height and trailing icon position while expanding instead of morphing from the anchor row's measurements.
 
 ### Deprecated
 
@@ -57,6 +64,8 @@ All notable user-visible changes are documented here. The format follows
 
 - Swiping a notification no longer recomposes the notification box or rebuilds the card and menu shapes on every frame.
 - `HighlightedIconButtonDefaults` light-theme halo lowered (`LightHaloColor` alpha 0.05 to 0.03, `LightHaloRadius` 15.5dp to 12dp). Provisional values until a live circular-button reference can be measured.
+- `DropdownDefaults.ChevronSize` is 24x24dp (the native expandable-indicator box) instead of 12x24dp, and submenu rows draw `ExpandableIndicator` instead of an `ArrowRight`.
+- `OverlayCascadingListPopup` defaults `enableWindowDim` to `false`, matching the native popup window.
 
 ## [1.2.0] - 2026-10-06
 
