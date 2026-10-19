@@ -52,7 +52,6 @@ include(":baselineprofile")
 
 include(":example:shared")
 include(":example:android")
-include(":example:coui17")
 include(":example:desktop")
 include(":example:web")
 include(":example:macos")

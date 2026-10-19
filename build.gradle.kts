@@ -11,7 +11,7 @@ plugins {
 // public surface and would otherwise drown the dump in demo noise.
 apiValidation {
     ignoredProjects.addAll(
-        listOf("baselineprofile", "shared", "android", "coui17", "desktop", "web", "macos", "demo", "iconGen"),
+        listOf("baselineprofile", "shared", "android", "desktop", "web", "macos", "demo", "iconGen"),
     )
 }
 

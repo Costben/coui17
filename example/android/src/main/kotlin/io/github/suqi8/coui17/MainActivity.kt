@@ -1,8 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
-package io.github.suqi8.coui.uitest
+package io.github.suqi8.coui17
 
-import App
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -16,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import coui17.Coui17App
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
 
-            App(onColorModeChange = { colorMode = it })
+            Coui17App(onColorModeChange = { colorMode = it })
         }
     }
 }

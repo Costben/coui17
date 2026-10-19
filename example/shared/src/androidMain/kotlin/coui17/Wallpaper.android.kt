@@ -1,11 +1,10 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
-package io.github.suqi8.coui17
+package coui17
 
 import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -18,35 +17,17 @@ import androidx.compose.ui.platform.LocalContext
 /** Keeps the decoded wallpaper within a sane memory budget while still filling a phone screen. */
 private const val MAX_WALLPAPER_EDGE = 1800
 
-/** Which picture ended up behind the glass. */
-internal enum class WallpaperSource {
-    /** The system (home screen) wallpaper. */
-    System,
-
-    /** The lock screen wallpaper, used when the system one has no static image. */
-    Lock,
-
-    /** The still bundled with the app. */
-    Bundled,
-}
-
-internal data class Wallpaper(
-    val image: ImageBitmap,
-    val source: WallpaperSource,
-)
-
 /**
- * The picture the ColorOS 17 glass samples.
+ * Reads the home or lock wallpaper through [WallpaperManager].
  *
  * Reading a wallpaper needs no permission on API < 34; from API 34 the lookup is gated behind
  * `READ_WALLPAPER_INTERNAL`, which only system apps hold, so the calls are suppressed and left
  * best-effort. A live wallpaper has no static image at all either: the system state then reports an
- * engine and an empty wallpaper file, and both [WallpaperManager] lookups answer `null`. The bundled
- * still is the last resort so the light-sensing material always has something to refract.
+ * engine and an empty wallpaper file, and both [WallpaperManager] lookups answer `null`.
  */
 @SuppressLint("MissingPermission")
 @Composable
-internal fun rememberWallpaper(): Wallpaper {
+internal actual fun rememberSystemWallpaper(): Wallpaper? {
     val context = LocalContext.current
     return remember(context) {
         val manager = WallpaperManager.getInstance(context)
@@ -58,10 +39,7 @@ internal fun rememberWallpaper(): Wallpaper {
                 return@remember Wallpaper(it, WallpaperSource.Lock)
             }
         }
-        val bundled = runCatching {
-            BitmapFactory.decodeResource(context.resources, R.drawable.coui17_wallpaper)?.asImageBitmap()
-        }.getOrNull()
-        Wallpaper(bundled ?: ImageBitmap(1, 1), WallpaperSource.Bundled)
+        null
     }
 }
 

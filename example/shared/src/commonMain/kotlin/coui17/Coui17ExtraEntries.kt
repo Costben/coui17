@@ -3,7 +3,7 @@
 @file:Suppress("ktlint:compose:multiple-emitters-check")
 @file:OptIn(ExperimentalCOUIApi::class)
 
-package io.github.suqi8.coui17
+package coui17
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

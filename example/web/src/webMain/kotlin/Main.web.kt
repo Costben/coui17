@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -11,10 +14,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.ComposeViewport
+import coui17.Coui17App
 import kotlinx.browser.document
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -73,7 +78,9 @@ fun main() {
             platformHideLoading()
         }
 
-        App(padding = safePadding)
+        Box(Modifier.fillMaxSize().padding(safePadding)) {
+            Coui17App()
+        }
     }
 }
 

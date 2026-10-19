@@ -1,6 +1,6 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
-package io.github.suqi8.coui17
+package coui17
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,7 +20,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -55,6 +57,7 @@ import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import pages.ColorPage
 import pages.IconsPage
@@ -98,12 +101,23 @@ private enum class Coui17PanelAnchor { TopBar, BottomBar }
  * per page carrying the gradient-blur material, and an accessory bar along the bottom.
  */
 @Composable
-fun Coui17App() {
+fun Coui17App(
+    onColorModeChange: ((Int) -> Unit)? = null,
+) {
     var appState by remember { mutableStateOf(AppState(showTopAppBar = false)) }
     // The pages are the coui16 ones and would each draw their own app bar, so the flag is pinned
     // off: ColorOS 17 gives every page the bar built here instead.
     val updateAppState: ((AppState) -> AppState) -> Unit = remember {
         { transform -> appState = transform(appState).copy(showTopAppBar = false) }
+    }
+
+    // Reported to the host so it can follow the colour mode (e.g. the Android system bar style).
+    // The first value is the initial mode, not a change, hence drop(1).
+    val currentOnColorModeChange by rememberUpdatedState(onColorModeChange)
+    LaunchedEffect(Unit) {
+        snapshotFlow { appState.colorMode }
+            .drop(1)
+            .collect { currentOnColorModeChange?.invoke(it) }
     }
     // The "Other" entry's arrows push routes. The stack, the `LocalNavigator` and the pages that
     // answer those routes all live in `SecondaryPagesNavHost`, which wraps this root; the root

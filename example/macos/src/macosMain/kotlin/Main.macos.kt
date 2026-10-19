@@ -3,6 +3,7 @@
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import coui17.Coui17App
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AppKit.NSApplication
 import platform.AppKit.NSApplicationActivationPolicy
@@ -23,7 +24,7 @@ fun main() {
         size = DpSize(420.dp, 840.dp),
     ) {
         window.minSize = CGSizeMake(300.0, 600.0)
-        App()
+        Coui17App()
     }
     nsApplication.run()
 }

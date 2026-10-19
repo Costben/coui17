@@ -7,6 +7,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import coui17.Coui17App
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.icon
 import org.jetbrains.compose.resources.painterResource
@@ -26,6 +27,6 @@ fun main() = application {
         icon = painterResource(Res.drawable.icon),
     ) {
         window.minimumSize = Dimension(300, 600)
-        App()
+        Coui17App()
     }
 }

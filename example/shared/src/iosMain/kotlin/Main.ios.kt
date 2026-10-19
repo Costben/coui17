@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeUIViewController
+import coui17.Coui17App
 import platform.UIKit.UIViewController
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -11,5 +12,5 @@ fun main(): UIViewController = ComposeUIViewController(
         parallelRendering = true
     },
 ) {
-    App()
+    Coui17App()
 }
