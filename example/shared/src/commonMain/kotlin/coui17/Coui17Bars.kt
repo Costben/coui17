@@ -354,10 +354,15 @@ fun Coui17AccessoryBar(
     val systemDensity = LocalDensity.current
     val windowSize = LocalWindowInfo.current.containerSize
     val galleryDensity = remember(systemDensity, windowSize) {
-        Density(
-            density = Coui17Dimens.galleryDensity(minOf(windowSize.width, windowSize.height)),
-            fontScale = systemDensity.fontScale,
+        // The gallery's 360dp short edge only describes a phone. Deriving a density from a larger
+        // window keeps growing the bar with it — a desktop window yields 5.16x against a 2x screen —
+        // so cap it at the platform density: tablets and desktop get the same 56dp bar as every
+        // other app, while a phone keeps the gallery's slightly denser rendering.
+        val density = minOf(
+            Coui17Dimens.galleryDensity(minOf(windowSize.width, windowSize.height)),
+            systemDensity.density,
         )
+        Density(density = density, fontScale = systemDensity.fontScale)
     }
     // Gallery retracts both accessories once the third capsule tab is selected: `TabFragment`'s page
     // listener calls `hideStartAccessoryView(true)` / `hideEndAccessoryView(true)` for the 创作 tab and
