@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:param-order-check")
+
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.foundation.background

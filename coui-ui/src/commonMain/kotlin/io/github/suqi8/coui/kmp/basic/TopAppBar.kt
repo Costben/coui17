@@ -167,6 +167,7 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
  * `AppBarBlurHelper.syncAppBarDividerWithMaterialBlur` suppresses `COUIDividerAppBarLayout`'s
  * divider: a hairline would cut across the material's fade.
  */
+@Suppress("ktlint:compose:content-slot-reused")
 @Composable
 private fun AppBarMaterialScaffold(
     gradientGlass: Boolean,
