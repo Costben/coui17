@@ -19,6 +19,9 @@ All notable user-visible changes are documented here. The format follows
 - `ChipDefaults.DismissIconStartPadding` and `ChipDefaults.DismissIconEndPadding`, the spacing around the dismiss icon.
 - `TabRowWithContour` accepts an `indicatorMaterial`, which adds the search-capsule rim and inner shadow to the sliding indicator. `null` keeps the plain indicator.
 - `AppBarBlurOverlay` accepts a `rampHeight`, which holds full alpha above the bar's bottom edge and fades out only within that band. `null` keeps the native ramp.
+- `COUIScrollBehavior` accepts `expandOnContentScroll`, so a collapsible bar expands on a downward drag anywhere in the list instead of only once the list reaches its top.
+- `AppBarBlurOverlayDefaults.scrollAlpha` has an overload taking a `minAlpha` floor, for a bar whose material never fades out completely.
+- `Modifier.couiGlassHeader` paints a top-weighted glass header whose colour holds down to a fade band at the bottom edge, with `GlassDefaults.HeaderFadeHeight` as the default band height.
 
 ### Fixed
 

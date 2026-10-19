@@ -306,6 +306,20 @@ val scrollBehavior = COUIScrollBehavior(
 | canScroll          | () -> Boolean               | { true }                   | Callback to control whether scrolling is allowed |
 | snapAnimationSpec  | AnimationSpec\<Float>?      | 180ms decelerate tween     | Defines the snap to fully expanded/collapsed when scrolling stops midway |
 | flingAnimationSpec | DecayAnimationSpec\<Float>? | rememberSplineBasedDecay() | Defines decay animation for fling                |
+| expandOnContentScroll | Boolean                  | false                      | Expand the bar when the content is dragged down anywhere in the list, not only once the list has reached its top |
+
+By default the bar only expands once the list has reached its top. ColorOS 17's home page brings
+its collapsed header row back as soon as the list is dragged down, even from the middle of the
+list; set `expandOnContentScroll = true` for that behavior:
+
+```kotlin
+val scrollBehavior = COUIScrollBehavior(expandOnContentScroll = true)
+```
+
+The bar follows the content's actual downward displacement, so it moves with the list instead of
+snapping open on a collapse ratio. That also keeps a material whose alpha is driven by the same
+displacement — such as [`AppBarBlurOverlay`](./appbarbluroverlay) — from thinning out while the bar
+expands. The flag does not consume extra scroll: the list keeps the delta it already consumed.
 
 ## Advanced Usage
 

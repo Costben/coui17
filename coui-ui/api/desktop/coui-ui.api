@@ -119,6 +119,7 @@ public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayDefaults {
 	public final fun getExtraHeight-D9Ej5fM ()F
 	public final fun getScrollAlphaThresholdDp ()F
 	public final fun scrollAlpha (FLandroidx/compose/ui/unit/Density;)F
+	public final fun scrollAlpha (FLandroidx/compose/ui/unit/Density;F)F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayKt {
@@ -1620,9 +1621,11 @@ public final class io/github/suqi8/coui/kmp/basic/GlassDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/GlassDefaults;
 	public final fun getBlurRadius ()F
 	public final fun getContainerAlpha ()F
+	public final fun getHeaderFadeHeight-D9Ej5fM ()F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/GlassSurfaceKt {
+	public static final fun couiGlassHeader-MBs18nI (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;JFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 	public static final fun couiGlassSurface-gF0flNs (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;JLandroidx/compose/ui/Modifier;FFLjava/util/List;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 	public static final fun couiGlassSurface-gF0flNs (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;JLandroidx/compose/ui/Modifier;FFLjava/util/List;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 	public static final fun rememberGlassHighlight (Lio/github/suqi8/coui/kmp/basic/GlassContainer;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
@@ -4221,7 +4224,7 @@ public final class io/github/suqi8/coui/kmp/basic/TopAppBarDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TopAppBarKt {
-	public static final fun COUIScrollBehavior (Lio/github/suqi8/coui/kmp/basic/TopAppBarState;Lkotlin/jvm/functions/Function0;Landroidx/compose/animation/core/AnimationSpec;Landroidx/compose/animation/core/DecayAnimationSpec;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;
+	public static final fun COUIScrollBehavior (Lio/github/suqi8/coui/kmp/basic/TopAppBarState;Lkotlin/jvm/functions/Function0;Landroidx/compose/animation/core/AnimationSpec;Landroidx/compose/animation/core/DecayAnimationSpec;ZLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;
 	public static final fun SmallTopAppBar-EJXvh-c (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun SmallTopAppBar-IzxjNzY (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZFLkotlin/jvm/functions/Function2;ZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TopAppBar-IrE0efM (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V

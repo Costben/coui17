@@ -2,17 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.ProgressiveBlur
 import io.github.suqi8.coui.kmp.blur.highlight.Highlight
+import io.github.suqi8.coui.kmp.blur.progressiveTextureBlur
 import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -63,6 +71,16 @@ object GlassDefaults {
      * unavailable; over a blur they are drawn translucent so the backdrop stays readable.
      */
     val ContainerAlpha = 0.8f
+
+    /**
+     * The default height of the fade band at the bottom of a glass header.
+     *
+     * A long page header — the ColorOS 17 "Me" page is the reference — holds its container colour
+     * down to this far from its bottom edge and then fades it out, so the header meets the content
+     * with a soft edge instead of a hard cut. The downstream project uses 18dp on that page; 28dp
+     * is the default here so the fade stays visible on shorter headers as well.
+     */
+    val HeaderFadeHeight = 28.dp
 }
 
 /**
@@ -173,4 +191,49 @@ fun Modifier.couiGlassSurface(
         ),
         highlight = highlight,
     )
+}
+
+/**
+ * The ColorOS 17 glass header: a progressive blur that is strongest at the top edge, with
+ * [containerColor] held solid until [fadeHeight] from the bottom and then faded out.
+ *
+ * ColorOS 17's long headers — the "Me" page is the reference — do not end on a hard colour edge.
+ * The material is a top-weighted progressive blur, and the surface colour keeps its full strength
+ * down to the last [fadeHeight] before dissolving into the content. The downstream project measured
+ * that band as roughly 60–80px (about 18dp on a 560dpi device) and reported a smooth edge with no
+ * visible seam; [GlassDefaults.HeaderFadeHeight] is the default here.
+ *
+ * When [backdrop] is `null` — or the platform cannot run runtime shaders, which is everything below
+ * Android 13 — the blur is skipped and the node is filled with the opaque [containerColor], so a
+ * host without a backdrop keeps its existing solid header.
+ *
+ * @param backdrop The content to blur, normally [LocalBackdrop]'s value.
+ * @param containerColor The colour held above the fade band and faded out across it.
+ * @param fadeHeight The height of the fade band at the bottom edge. Larger values start the fade
+ *   earlier; a value at or above the node's height fades across the whole node.
+ */
+@Composable
+fun Modifier.couiGlassHeader(
+    backdrop: Backdrop?,
+    containerColor: Color,
+    fadeHeight: Dp = GlassDefaults.HeaderFadeHeight,
+): Modifier {
+    if (backdrop == null || !isRuntimeShaderSupported()) return background(containerColor)
+    return progressiveTextureBlur(
+        backdrop = backdrop,
+        shape = RectangleShape,
+        blurRadius = GlassDefaults.BlurRadius,
+        gradient = ProgressiveBlur.Top.copy(curve = 3f),
+        colors = BlurDefaults.blurColors(),
+    ).drawBehind {
+        if (size.height <= 0f) return@drawBehind
+        val fadeStart = (1f - fadeHeight.toPx() / size.height).coerceIn(0f, 1f)
+        drawRect(
+            brush = Brush.verticalGradient(
+                0f to containerColor,
+                fadeStart to containerColor,
+                1f to containerColor.copy(alpha = 0f),
+            ),
+        )
+    }
 }

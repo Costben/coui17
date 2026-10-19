@@ -28,6 +28,7 @@ import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.TabRowWithContour
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.couiGlassHeader
 import io.github.suqi8.coui.kmp.basic.couiTopAppBarActionItem
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
@@ -36,6 +37,7 @@ import io.github.suqi8.coui.kmp.icon.extended.Back
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
+import io.github.suqi8.coui.kmp.theme.COUITheme
 import org.jetbrains.compose.resources.painterResource
 import utils.WallpaperState
 import utils.rememberBlurBackdrop
@@ -187,6 +189,22 @@ fun TopAppBarColorOS17FormsDemo() {
                     defaultWindowInsetsPadding = false,
                     gradientGlass = true,
                 )
+                // G14: a long glass header — the colour holds down to the fade band, then
+                // dissolves into the content instead of ending on a hard edge.
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .couiGlassHeader(
+                            backdrop = backdrop,
+                            containerColor = COUITheme.colorScheme.surface,
+                        ),
+                ) {
+                    Text(
+                        text = str("Glass header"),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                    )
+                }
             }
         }
     }

@@ -95,6 +95,29 @@ object AppBarBlurOverlayDefaults {
         if (threshold <= 0f) return 1f
         return (scrollPx / threshold).coerceIn(0f, 1f)
     }
+
+    /**
+     * [scrollAlpha] with a resting floor, for a bar whose material never fades out completely.
+     *
+     * ColorOS 17's home page keeps a layer of material while the bar is fully expanded. The
+     * downstream project measured `0.55` as that floor on a PLK110 running ColorOS 17, and feeds
+     * this overload's result straight to [AppBarBlurOverlay]'s `scrollFraction`.
+     *
+     * Pass the content's actual displacement, **not** the bar's collapsed fraction. Binding the
+     * alpha to the collapsed fraction makes it dip whenever the bar expands from an intermediate
+     * position: the downstream project saw alpha fall from `1.0` to `0.55` when the list was
+     * dragged down 240px from the middle and the avatar row came back, even though the material
+     * had been fully opaque. Measured status-bar band luminance stayed at 222–225 (0–255) during
+     * that drag against a 223–235 baseline, which is why the alpha has to follow displacement.
+     *
+     * @param scrollPx The distance the content has scrolled beneath the bar, in pixels.
+     * @param density The density the threshold is converted with.
+     * @param minAlpha The floor the result never drops below, coerced into `0f..1f`.
+     */
+    fun scrollAlpha(scrollPx: Float, density: Density, minAlpha: Float): Float {
+        val floor = minAlpha.coerceIn(0f, 1f)
+        return (floor + (1f - floor) * scrollAlpha(scrollPx, density)).coerceIn(0f, 1f)
+    }
 }
 
 /**
