@@ -728,15 +728,22 @@ private fun CascadingMorphSubLayout(
         val anchorRect = activeExpanded?.let { getAnchorBounds(it) }
 
         // COUI's small-screen shrink pivots on the menu's trailing edge and its top edge; with the
-        // primary right-aligned that is exactly the right edge of the card.
-        val primaryPivotX = when (alignment) {
+        // primary right-aligned that is exactly the right edge of the card. `Align.End` is logical,
+        // so in RTL the trailing edge is the card's left one.
+        val alignedToTrailingEdge = when (alignment) {
             PopupPositionProvider.Align.End,
             PopupPositionProvider.Align.TopEnd,
             PopupPositionProvider.Align.BottomEnd,
-            -> 1f
+            -> true
 
-            else -> 0f
+            else -> false
         }
+        val pivotAtRightEdge = if (layoutDirection == LayoutDirection.Ltr) {
+            alignedToTrailingEdge
+        } else {
+            !alignedToTrailingEdge
+        }
+        val primaryPivotX = if (pivotAtRightEdge) 1f else 0f
 
         val primaryPlaceables = subcompose(SLOT_PRIMARY) {
             CascadingPrimaryContent(
@@ -827,6 +834,7 @@ private fun CascadingMorphSubLayout(
                             right = windowBounds.right - popupMargin.right,
                             bottom = windowBounds.bottom - popupMargin.bottom,
                         ),
+                        layoutDirection = layoutDirection,
                         verticalOverlapPx = MainSubMenuVerticalOverlap.roundToPx(),
                     )
                     // COUI keeps at least SubMenuMinGapToTop between the window top and the sub menu;
@@ -986,8 +994,10 @@ private fun unionOf(a: IntRect, b: IntRect): IntRect = IntRect(
 
 /**
  * COUI `PopupMenuLocateHelper` sub-menu placement for a compact window:
- * - `getOffsetX` returns the *main menu's* left edge, so the sub menu keeps that edge while the
- *   main menu scales towards its top-right pivot and visually retreats to the right.
+ * - `getOffsetX` returns the *main menu's* leading edge, so the sub menu keeps that edge while the
+ *   main menu scales towards its trailing pivot and visually retreats to that side. The sub menu is
+ *   clamped into [available] horizontally, so a sub menu wider than the main menu never leaves the
+ *   window when the main menu sits flush against the trailing edge.
  * - `getOffsetY` maps the tapped row through the main menu's shrink ratio
  *   (`relocated.height / mainMenu.height`, i.e. [PRIMARY_SHRUNK_SCALE]) and then subtracts the
  *   14dp vertical overlap, pinning the bottom on overflow.
@@ -997,9 +1007,17 @@ internal fun computeSecondaryRect(
     anchor: IntRect,
     secondarySize: IntSize,
     available: IntRect,
+    layoutDirection: LayoutDirection,
     verticalOverlapPx: Int,
 ): IntRect {
-    val left = primary.left
+    // The sub menu shares the main menu's leading edge: left in LTR, right in RTL.
+    val preferredLeft = if (layoutDirection == LayoutDirection.Ltr) {
+        primary.left
+    } else {
+        primary.right - secondarySize.width
+    }
+    val maxLeft = (available.right - secondarySize.width).coerceAtLeast(available.left)
+    val left = preferredLeft.coerceIn(available.left, maxLeft)
     val scaledAnchorTop = primary.top + PRIMARY_SHRUNK_SCALE * (anchor.top - primary.top)
     val preferredTop = scaledAnchorTop.toInt() - verticalOverlapPx
     val top = if (preferredTop + secondarySize.height <= available.bottom) {
