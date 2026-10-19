@@ -52,6 +52,10 @@ internal fun DropdownEntriesPopupContent(
                     enabled = entry.enabled && option.enabled,
                     isFirst = isFirstEntry && header == null && itemIdx == 0,
                     isLast = isLastEntry && itemIdx == lastItemIdx,
+                    // Options of one entry are a single COUI group: adjacent rows share the key,
+                    // so the column reserves no divider band between them (COUI only inserts a
+                    // divider where getGroupId() changes).
+                    groupKey = entryIdx,
                     onSelectedIndexChange = { idx -> onItemClick(entryIdx, idx) },
                 )
             }

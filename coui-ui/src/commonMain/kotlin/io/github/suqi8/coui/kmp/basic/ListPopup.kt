@@ -3,7 +3,6 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -145,13 +144,21 @@ private val PopupItemDividerBandHeight = 12.dp
 private val PopupListVerticalPadding = 8.dp
 
 /**
- * Alpha spring of the hairlines adjacent to the pressed row
- * (COUI COUITouchListView.DividerAnimationController: COUISpringForce response 0.25 / bounce 0).
+ * Press mask spring of a popup row (COUI COUISpringForce response 0.3 / bounce 0). Used for the
+ * colour fade only: a fresh press places the mask on the row instantly (COUITouchRecyclerView
+ * attachSharedMaskToView syncs the rect when the mask is empty) and springs the colour in.
  */
-private val PopupItemDividerAlphaSpring = spring<Float>(dampingRatio = 1f, stiffness = 631.65f, visibilityThreshold = 0.002f)
-
-/** Press mask spring of a popup row (COUI COUISpringForce response 0.3 / bounce 0). */
 internal val PopupItemPressSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
+
+/**
+ * Geometry spring of a drag crossing into another row (COUI COUISpringForce response 0.15 /
+ * bounce 0 for a vertical list, 0.2 when a horizontal row is involved; this column is vertical).
+ *
+ * COUITouchRecyclerView does not track the finger: it animates one shared mask from the old row's
+ * rect to the new row's rect over a distance-normalised spring. Normalising by distance makes the
+ * same spring resolve to a plain per-edge interpolation, so each edge animates with this stiffness.
+ */
+private val PopupItemMoveSpring = spring<Float>(dampingRatio = 1f, stiffness = 1754.6f)
 
 /**
  * Minimum press progress a row mask reaches before a release may fade it out, so quick taps still
@@ -159,11 +166,15 @@ internal val PopupItemPressSpring = spring<Float>(dampingRatio = 1f, stiffness =
  */
 internal val PopupItemPressMinVisibleProgress = 0.7f
 
-/** couiColorPress in light themes (COUI coui_color_press #1F000000). */
-internal val PopupItemPressLight = Color(0x1F000000)
+/**
+ * Highlight colour in light themes. COUITouchRecyclerView.initSharedMaskDrawable replaces the
+ * pressed colour with `coui_color_hover` (#14000000), not `coui_color_press` (#1F000000): the mask
+ * is a hover tint, and using the press colour made it read darker than the gallery's.
+ */
+internal val PopupItemPressLight = Color(0x14000000)
 
-/** couiColorPress in dark themes (COUI coui_color_press_dark #33FFFFFF). */
-internal val PopupItemPressDark = Color(0x33FFFFFF)
+/** `coui_color_hover_dark` (#26FFFFFF), the dark-theme highlight. */
+internal val PopupItemPressDark = Color(0x26FFFFFF)
 
 /** Horizontal inset of the press mask, per side (COUI coui_popup_list_window_mask_margin_horizontal). */
 private val PopupItemPressMaskMargin = 8.dp
@@ -181,11 +192,6 @@ private val PopupItemPressMaskRadius = 20.dp
  * smoothed silhouette rather than a plain arc.
  */
 private val PopupItemPressMaskRadiusTall = 28.dp
-
-/** Travel direction of a drag crossing into a new row (COUI DividerAnimationController MOVE_FLAG_*). */
-private const val MOVE_FLAG_OUT = 0
-private const val MOVE_FLAG_UP = -1
-private const val MOVE_FLAG_DOWN = 1
 
 /**
  * A single popup row registered with a [PopupListGestureHost].
@@ -208,10 +214,10 @@ internal class PopupListItemHandle {
 private class PressMaskThresholdReached : CancellationException("Press mask reached the minimum visible progress")
 
 /**
- * Owns the drag-to-move-highlight gesture and the hairline dividers of one popup list, mirroring
- * COUI COUITouchListView. Rows register through [Modifier.popupListItem] and never track their own
- * press state: the host resolves the row under the pointer from the registered bounds, so dragging
- * moves the highlight and a release selects whichever row the finger currently rests on.
+ * Owns the drag-to-move-highlight gesture of one popup list, mirroring COUI COUITouchRecyclerView.
+ * Rows register through [Modifier.popupListItem] and never track their own press state: the host
+ * resolves the row under the pointer from the registered bounds, so dragging moves the highlight and
+ * a release selects whichever row the finger currently rests on.
  */
 @Stable
 internal class PopupListGestureHost {
@@ -235,23 +241,17 @@ internal class PopupListGestureHost {
     private var activeItem: PopupListItemHandle? = null
 
     /**
-     * The press mask is one shape for the whole list, not one per row: dragging to another row
+     * The highlight is one shape for the whole list, not one per row: dragging to another row
      * slides [highlightTop]/[highlightBottom] there instead of fading one row's mask out while
-     * another fades in, which read as a flicker (COUI's TouchListView moves a single mask).
+     * another fades in, which read as a flicker (COUI COUITouchRecyclerView keeps one shared mask).
      */
     private val highlightTop = Animatable(0f)
     private val highlightBottom = Animatable(0f)
     private val highlightAlpha = Animatable(0f)
     private var highlightJob: Job? = null
 
-    /** Divider alpha tracks, indexed by the boundary between [ordered] `i` and `i + 1`. */
-    private val dividerAlphas = mutableMapOf<Int, Animatable<Float, AnimationVector1D>>()
-
     /** True while the list has no scroll range, i.e. COUI's mIsDynamicSelection. */
     var isDynamicSelection: Boolean = true
-
-    /** Suppresses divider fades while the list is settling a scroll (COUI onScrollStateChanged). */
-    var isScrolling: Boolean = false
 
     /**
      * Publishes the placement produced by one measure pass: the rows in order and the exact Y of
@@ -278,8 +278,6 @@ internal class PopupListGestureHost {
 
     /** The hairlines to paint, as `boundary index` to `Y offset` pairs. */
     fun hairlines(): Map<Int, Float> = dividerOffsets
-
-    fun dividerAlpha(boundary: Int): Float = dividerAlphas[boundary]?.value ?: 1f
 
     /** Current press mask top, in the list's content coordinates. */
     fun pressTop(): Float = highlightTop.value
@@ -308,8 +306,8 @@ internal class PopupListGestureHost {
                 highlightTop.snapTo(item.top)
                 highlightBottom.snapTo(item.bottom)
             } else {
-                launch { highlightTop.animateTo(item.top, PopupItemPressSpring) }
-                launch { highlightBottom.animateTo(item.bottom, PopupItemPressSpring) }
+                launch { highlightTop.animateTo(item.top, PopupItemMoveSpring) }
+                launch { highlightBottom.animateTo(item.bottom, PopupItemMoveSpring) }
             }
             highlightAlpha.animateTo(1f, PopupItemPressSpring)
         }
@@ -335,44 +333,12 @@ internal class PopupListGestureHost {
         }
     }
 
-    private fun animateDivider(boundary: Int, target: Float, scope: CoroutineScope) {
-        if (isScrolling) return
-        val track = dividerAlphas.getOrPut(boundary) { Animatable(1f) }
-        if (track.value == target && !track.isRunning) return
-        scope.launch { track.animateTo(target, PopupItemDividerAlphaSpring) }
-    }
-
-    /**
-     * Fades the two hairlines around [item] out ([visible] `false`) or back in, suppressing the
-     * boundary the finger just crossed so the highlight does not flicker over it
-     * (COUI DividerAnimationController.dividerAnim MOVE_FLAG_UP/DOWN).
-     */
-    private fun animateAdjacentDividers(
-        item: PopupListItemHandle?,
-        visible: Boolean,
-        moveFlag: Int,
-        scope: CoroutineScope,
-    ) {
-        if (item == null || !item.enabled) return
-        val ordered = sortedItems()
-        val index = ordered.indexOf(item)
-        if (index < 0) return
-        val target = if (visible) 1f else 0f
-        if (index > 0 && !(visible && moveFlag == MOVE_FLAG_UP)) {
-            animateDivider(index - 1, target, scope)
-        }
-        if (index < ordered.lastIndex && !(visible && moveFlag == MOVE_FLAG_DOWN)) {
-            animateDivider(index, target, scope)
-        }
-    }
-
     /** Enters the row under [y], if any. Returns the row that took the highlight. */
     fun onDown(y: Float, scope: CoroutineScope): PopupListItemHandle? {
         val target = sortedItems().firstOrNull { it.contains(y) }
         activeItem = target
         if (target != null && target.enabled) {
             placeHighlight(target, scope)
-            animateAdjacentDividers(target, visible = false, moveFlag = MOVE_FLAG_OUT, scope = scope)
         } else {
             fadeHighlight(scope)
         }
@@ -391,26 +357,16 @@ internal class PopupListGestureHost {
      */
     fun onMoveTo(y: Float, scope: CoroutineScope) {
         val previous = activeItem
-        val ordered = sortedItems()
-        val target = ordered.firstOrNull { it.contains(y) }
+        val target = sortedItems().firstOrNull { it.contains(y) }
         if (target == null) {
             cancel(scope)
             return
         }
         if (target === previous) return
 
-        val moveFlag = when {
-            previous == null -> MOVE_FLAG_OUT
-            !target.enabled -> MOVE_FLAG_OUT
-            ordered.indexOf(target) > ordered.indexOf(previous) -> MOVE_FLAG_DOWN
-            else -> MOVE_FLAG_UP
-        }
-        animateAdjacentDividers(previous, visible = true, moveFlag = moveFlag, scope = scope)
-
         activeItem = target
         if (target.enabled) {
             moveHighlight(target, scope)
-            animateAdjacentDividers(target, visible = false, moveFlag = MOVE_FLAG_OUT, scope = scope)
         } else {
             fadeHighlight(scope)
         }
@@ -418,10 +374,9 @@ internal class PopupListGestureHost {
 
     /** Releases the highlight without selecting, e.g. when the finger leaves every row. */
     fun cancel(scope: CoroutineScope) {
-        val previous = activeItem ?: return
+        if (activeItem == null) return
         activeItem = null
         fadeHighlight(scope)
-        animateAdjacentDividers(previous, visible = true, moveFlag = MOVE_FLAG_OUT, scope = scope)
     }
 
     /** Selects the row the finger currently rests on (COUI resolves the target at UP, not at DOWN). */
@@ -621,7 +576,6 @@ fun ListPopupColumn(
     val interactionEnabled = LocalPopupInteractionEnabled.current
 
     host.isDynamicSelection = !scrollState.canScrollForward && !scrollState.canScrollBackward
-    host.isScrolling = scrollState.isScrollInProgress
 
     val measurePolicy = remember(host) {
         object : MeasurePolicy {
@@ -764,7 +718,7 @@ fun ListPopupColumn(
 }
 
 /**
- * The COUI popup drag-to-select gesture (COUI COUITouchListView.dispatchTouchEvent). A single
+ * The COUI popup drag-to-select gesture (COUI COUITouchRecyclerView.dispatchTouchEvent). A single
  * handler on the list owns DOWN/MOVE/UP: in dynamic selection mode (a list with no scroll range)
  * dragging moves the highlight across rows with a haptic per crossing; in the scrollable case the
  * highlight is released once the drag passes the touch slop so scrolling wins.
@@ -890,12 +844,9 @@ private fun DrawScope.drawPopupItemDividers(
     val width = (size.width - margin * 2).coerceAtLeast(0f)
     if (width <= 0f) return
 
-    for ((boundary, y) in dividers) {
-        val alpha = host.dividerAlpha(boundary)
-        if (alpha <= 0f) continue
+    for ((_, y) in dividers) {
         drawRect(
             color = color,
-            alpha = alpha.coerceIn(0f, 1f),
             topLeft = Offset(margin.toFloat(), y + (bandHeight - thickness) / 2f),
             size = Size(width = width, height = thickness),
         )
