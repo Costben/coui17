@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.takeOrElse
@@ -440,7 +441,13 @@ private fun SegmentButtonRow(
                                 shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
                                 density = density.density,
                             )
-                            drawRect(brush = shader.asBrush(), topLeft = rect.topLeft, size = rect.size)
+                            // The edge shader measures fragCoord in canvas space, not in the
+                            // drawRect's local space, so a rect drawn off-origin would keep its
+                            // rim anchored at the canvas origin. Translate the canvas so the
+                            // shader's own (0,0) is the indicator's top-left.
+                            translate(left = rect.left, top = rect.top) {
+                                drawRect(brush = shader.asBrush(), size = rect.size)
+                            }
                         }
                     }
                 },
