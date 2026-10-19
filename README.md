@@ -18,7 +18,6 @@ A ColorOS-styled UI library for Compose Multiplatform, forked from
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4.10-7F52FF)](https://kotlinlang.org/)
 [![Compose Multiplatform](https://img.shields.io/badge/compose-1.11.1-4285F4)](https://kotlinlang.org/compose-multiplatform/)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.suqi8.coui.kmp/coui-ui)](https://central.sonatype.com/search?q=g:io.github.suqi8.coui.kmp)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 ### Supported Platforms
@@ -32,17 +31,14 @@ A ColorOS-styled UI library for Compose Multiplatform, forked from
 
 ### Documentation & Demo
 
-[![Docs](https://img.shields.io/badge/Docs-VitePress-3EAF7C?logo=vitepress&logoColor=white)](https://suqi8.github.io/coui/)
-[![API Reference](https://img.shields.io/badge/API-Dokka-7F52FF?logo=kotlin&logoColor=white)](https://suqi8.github.io/coui/dokka/index.html)
-[![WasmJs Demo](https://img.shields.io/badge/Demo-WasmJs-654FF0?logo=webassembly&logoColor=white)](https://suqi8.github.io/coui/example/)
-[![Other](https://img.shields.io/badge/Demo-Other-white?logo=githubactions&logoColor=white)](https://github.com/suqi8/coui/actions/workflows/example.yml)
+[![Docs](https://img.shields.io/badge/Docs-VitePress-3EAF7C?logo=vitepress&logoColor=white)](https://costben.github.io/coui17/)
+[![API Reference](https://img.shields.io/badge/API-Dokka-7F52FF?logo=kotlin&logoColor=white)](https://costben.github.io/coui17/dokka/index.html)
+[![WasmJs Demo](https://img.shields.io/badge/Demo-WasmJs-654FF0?logo=webassembly&logoColor=white)](https://costben.github.io/coui17/example/)
+[![Other](https://img.shields.io/badge/Demo-Other-white?logo=githubactions&logoColor=white)](https://github.com/Costben/coui17/actions/workflows/example.yml)
 
-The API reference for every published module is served from
-<https://suqi8.github.io/coui/dokka/index.html>; the Dokka HTML is generated at release time and
-published together with the documentation site.
-
-These links point at the site and the demo published by the upstream COUI project. This fork does
-not host its own documentation or release artifacts — see [`UPSTREAM.md`](UPSTREAM.md).
+The documentation site, the API reference and the WasmJs demo are built from this fork's `main`
+branch by [`docs.yml`](.github/workflows/docs.yml); the Android, desktop and macOS demo builds are
+attached to the runs of [`example.yml`](.github/workflows/example.yml).
 
 ### Repository layout
 
@@ -75,26 +71,27 @@ The documentation site and the sample applications have their own steps; both ar
 
 ### Modules
 
-All modules are published to Maven Central under the group `io.github.suqi8.coui.kmp` and share the
-same version number. Every module exposes the full target set: Android, iOS (`iosArm64`,
-`iosSimulatorArm64`), macOS (`macosArm64`), Desktop JVM, JsCanvas and WasmJs.
+All modules use the group `io.github.suqi8.coui.kmp` and share the same version number. Every
+module exposes the full target set: Android, iOS (`iosArm64`, `iosSimulatorArm64`), macOS
+(`macosArm64`), Desktop JVM, JsCanvas and WasmJs.
 
 | Module                | Maven coordinate                                | Description                                                                                              | Depends on              |
 | --------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `coui-ui`             | `io.github.suqi8.coui.kmp:coui-ui`              | Core UI component library (ColorOS 16 design language)                                                   | `coui-core`             |
+| `coui-ui`             | `io.github.suqi8.coui.kmp:coui-ui`              | Core UI component library (ColorOS 16 design language)                                                   | `coui-core`, `coui-blur`, `coui-squircle` |
 | `coui-core`           | `io.github.suqi8.coui.kmp:coui-core`            | Shared primitives and platform utilities used by the other modules                                       | —                       |
 | `coui-preference`     | `io.github.suqi8.coui.kmp:coui-preference`      | Preference components (`SwitchPreference`, `CheckboxPreference`, …)                                      | `coui-ui`               |
 | `coui-icons`          | `io.github.suqi8.coui.kmp:coui-icons`           | Extended Material icon set, usable standalone or with `coui-ui`                                          | `coui-core`             |
-| `coui-blur`           | `io.github.suqi8.coui.kmp:coui-blur`            | Backdrop blur / blur effect modifiers, usable standalone                                                | —                       |
-| `coui-squircle`       | `io.github.suqi8.coui.kmp:coui-squircle`        | Squircle (continuous corner) shape, usable standalone                                                    | —                       |
+| `coui-blur`           | `io.github.suqi8.coui.kmp:coui-blur`            | Backdrop blur / blur effect modifiers, usable standalone                                                | `coui-shader`           |
+| `coui-squircle`       | `io.github.suqi8.coui.kmp:coui-squircle`        | Squircle (continuous corner) shape, usable standalone                                                    | `coui-shader`           |
 | `coui-shader`         | `io.github.suqi8.coui.kmp:coui-shader`          | Runtime shader abstraction (`RuntimeShader`) with a no-op fallback on unsupported platforms             | —                       |
-| `coui-nav`            | `io.github.suqi8.coui.kmp:coui-nav`             | Self-contained navigation runtime (stack, driver, back handling)                                         | —                       |
-| `coui-navigation3-ui` | `io.github.suqi8.coui.kmp:coui-navigation3-ui`  | Navigation3 UI integration, usable standalone                                                            | —                       |
+| `coui-nav`            | `io.github.suqi8.coui.kmp:coui-nav`             | Self-contained navigation runtime (stack, driver, back handling)                                         | `coui-squircle`         |
+| `coui-navigation3-ui` | `io.github.suqi8.coui.kmp:coui-navigation3-ui`  | Navigation3 UI integration, usable standalone                                                            | `coui-squircle`         |
 
 #### Android `minSdk`
 
-Every published module declares `minSdk` 23, so a plain consumer of `coui-ui` or `coui-preference`
-needs no `tools:overrideLibrary`:
+Every module in this source tree (1.2.0) declares `minSdk` 23, so a plain consumer of `coui-ui` or
+`coui-preference` needs no `tools:overrideLibrary`. The upstream 1.1.0 artifacts on Maven Central
+still ship `coui-blur` with `minSdk` 33.
 
 | Module      | Android `minSdk` |
 | ----------- | ---------------- |
@@ -104,6 +101,23 @@ needs no `tools:overrideLibrary`:
 are skipped and the content draws normally, so no module has to be left out of the dependency set.
 
 ### Getting Started
+
+Version 1.2.0 is not on Maven Central — the latest published upstream release is 1.1.0, and this
+fork does not publish. Build it into a local Maven repository first:
+
+```bash
+./gradlew publishAllToLocalRepository -Prelease   # writes 1.2.0 to build/repository/local
+```
+
+Without `-Prelease` the version is `1.2.0-<git hash>-SNAPSHOT`. Then point the consuming project at
+that directory:
+
+```kotlin
+repositories {
+    maven("file:///path/to/coui17/build/repository/local")
+    mavenCentral()
+}
+```
 
 ```kotlin
 kotlin {
