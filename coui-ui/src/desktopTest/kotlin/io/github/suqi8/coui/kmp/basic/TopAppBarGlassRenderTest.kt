@@ -137,9 +137,13 @@ class TopAppBarGlassRenderTest {
 
     /**
      * Control for [gradientAppBarFadesTowardItsBottomEdge]: the uniform shape keeps the same
-     * background alpha the whole way down and stops at the bar's bottom edge, so the fade measured
-     * above can only come from the gradient and not from the sampled column, the blur, or the
-     * surface itself.
+     * background alpha down the bar, so the fade measured above can only come from the gradient and
+     * not from the sampled column, the blur, or the surface itself.
+     *
+     * The top and middle samples are read at the gradient test's own rows, which extend past the
+     * bar by the material band. The middle row sits about 38px below the bar's top, inside the 52dp
+     * bar, so both samples fall on the uniform surface and must not fade. The bottom sample stays
+     * inside the bar, at its bottom edge, where the surface must still be painted.
      */
     @Test
     fun uniformAppBarStaysOpaqueAtItsBottomEdge() = runSkikoComposeUiTest(
@@ -149,8 +153,13 @@ class TopAppBarGlassRenderTest {
         setContent { GlassScene(withBackdrop = true, gradient = false) }
         waitForIdle()
 
-        val (top, _, bottom) = captureVerticalAppBarSamples(materialPaintsExtraHeight = false)
+        val (top, middle, _) = captureVerticalAppBarSamples()
+        val (_, _, bottom) = captureVerticalAppBarSamples(materialPaintsExtraHeight = false)
 
+        assertTrue(
+            abs(redChannel(top) - redChannel(middle)) <= 20,
+            "the uniform surface must not fade inside the bar, got top=$top middle=$middle",
+        )
         assertTrue(redChannel(bottom) >= 150, "the uniform surface stays painted, got $bottom")
         assertTrue(
             maxChannelDelta(top, bottom) <= 2,

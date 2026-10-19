@@ -124,7 +124,7 @@ public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayKt {
 	public static final fun AppBarBlurOverlay-71WW8_c (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FFLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
-	public static final fun AppBarBlurOverlay-71WW8_c (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun AppBarBlurOverlay-yE4rkUQ (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarGlassDefaults {
@@ -1143,7 +1143,7 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlu
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlurOverlayKt;
 	public fun <init> ()V
 	public final fun getLambda$-1759200601$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda$615577891$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$1203101323$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$HintAnimationLayoutKt {
@@ -2013,7 +2013,6 @@ public final class io/github/suqi8/coui/kmp/basic/ListDetailViewKt {
 
 public final class io/github/suqi8/coui/kmp/basic/ListPopupDefaults {
 	public static final field $stable I
-	public static final field ExitTouchPassThroughAlpha F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ListPopupDefaults;
 	public final fun dropdownPositionProvider-YgX7TsA (FF)Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;
 	public static synthetic fun dropdownPositionProvider-YgX7TsA$default (Lio/github/suqi8/coui/kmp/basic/ListPopupDefaults;FFILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;
@@ -2024,6 +2023,7 @@ public final class io/github/suqi8/coui/kmp/basic/ListPopupDefaults {
 	public final fun getDimEnterAnimationSpec ()Landroidx/compose/animation/core/TweenSpec;
 	public final fun getDimExitAnimationSpec ()Landroidx/compose/animation/core/TweenSpec;
 	public final fun getDropdownPositionProvider ()Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;
+	public final fun getExitTouchPassThroughAlpha ()F
 	public final fun getFractionAnimationSpec ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getFractionExitAnimationSpec ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getGravityMotion ()Lio/github/suqi8/coui/kmp/anim/PopupGravityMotion;

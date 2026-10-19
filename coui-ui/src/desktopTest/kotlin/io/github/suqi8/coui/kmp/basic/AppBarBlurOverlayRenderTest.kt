@@ -38,7 +38,11 @@ private const val OVERLAY_TAG = "app-bar-blur-overlay"
 private const val SURFACE_WIDTH_DP = 240f
 private const val SURFACE_HEIGHT_DP = 200f
 
-/** The bar the overlay is anchored to: the material's ramp reaches alpha 0 on its bottom edge. */
+/**
+ * The bar's height, which is the height the overlay reports. The material paints
+ * [ExtraHeightPx] past the bar's bottom edge, and its ramp reaches alpha 0 there, at
+ * `bar bottom + ExtraHeightPx`.
+ */
 private const val BAR_HEIGHT_DP = 80f
 
 /** The flat layer the overlay samples, and therefore the colour its clear band must fall back to. */
@@ -65,7 +69,7 @@ private val ExtraHeightPx = with(TestDensity) { AppBarBlurOverlayDefaults.ExtraH
 class AppBarBlurOverlayRenderTest {
 
     @Test
-    fun overlayRampsDownToItsBottomBandAndLeavesItClear() = runSkikoComposeUiTest(
+    fun overlayRampFadesOutOverTheBandBelowTheBar() = runSkikoComposeUiTest(
         size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
         density = TestDensity,
     ) {
@@ -76,12 +80,20 @@ class AppBarBlurOverlayRenderTest {
         val pixels = onRoot().captureToImage().toPixelMap()
         val x = pixels.width / 4
         val materialBottom = (overlay.bottom + ExtraHeightPx).roundToInt()
+        val nodeHeightPx = materialBottom - overlay.top
 
         val top = pixels[x, overlay.top.roundToInt() + 2]
         assertTrue(redChannel(top) >= 200, "the material's top edge is the painted surface, got $top")
 
+        val barEdge = pixels[x, overlay.bottom.roundToInt() - 1]
+        assertTrue(
+            redChannel(barEdge) >= 60,
+            "the bar's own bottom edge must still carry surface colour: got $barEdge",
+        )
+
         val lastRed = assertRampDoesNotClimb(pixels, x, overlay.top.roundToInt() + 1, materialBottom)
-        assertTrue(lastRed <= 8, "the ramp must run out by the material's bottom edge, got $lastRed")
+        assertTrue(lastRed <= 6, "the ramp must run out by the material's bottom edge, got $lastRed")
+        assertBandFollowsRamp(pixels, x, overlay.bottom.roundToInt(), materialBottom, nodeHeightPx)
 
         val clear = pixels[x, materialBottom - 1]
         assertTrue(
@@ -91,7 +103,7 @@ class AppBarBlurOverlayRenderTest {
     }
 
     /**
-     * Control for [overlayRampsDownToItsBottomBandAndLeavesItClear]: with no [LocalBackdrop] the
+     * Control for [overlayRampFadesOutOverTheBandBelowTheBar]: with no [LocalBackdrop] the
      * overlay paints the ramp alone. The ramp is a property of the surface drawable rather than of
      * the blur, so it has to survive the fallback path unchanged.
      */
@@ -107,12 +119,20 @@ class AppBarBlurOverlayRenderTest {
         val pixels = onRoot().captureToImage().toPixelMap()
         val x = pixels.width / 4
         val materialBottom = (overlay.bottom + ExtraHeightPx).roundToInt()
+        val nodeHeightPx = materialBottom - overlay.top
 
         val top = pixels[x, overlay.top.roundToInt() + 2]
         assertTrue(redChannel(top) >= 200, "the material's top edge is the painted surface, got $top")
 
+        val barEdge = pixels[x, overlay.bottom.roundToInt() - 1]
+        assertTrue(
+            redChannel(barEdge) >= 60,
+            "the bar's own bottom edge must still carry surface colour: got $barEdge",
+        )
+
         val lastRed = assertRampDoesNotClimb(pixels, x, overlay.top.roundToInt() + 1, materialBottom)
-        assertTrue(lastRed <= 8, "the ramp must run out by the material's bottom edge, got $lastRed")
+        assertTrue(lastRed <= 6, "the ramp must run out by the material's bottom edge, got $lastRed")
+        assertBandFollowsRamp(pixels, x, overlay.bottom.roundToInt(), materialBottom, nodeHeightPx)
 
         val clear = pixels[x, materialBottom - 1]
         assertTrue(
@@ -227,9 +247,7 @@ private fun OverlayScene(scrollFraction: Float, withBackdrop: Boolean) {
                     modifier = overlay,
                     containerColor = Color.White,
                     scrollFraction = scrollFraction,
-                ) {
-                    Box(Modifier.fillMaxSize())
-                }
+                )
             }
         } else {
             AppBarBlurOverlay(
@@ -237,9 +255,7 @@ private fun OverlayScene(scrollFraction: Float, withBackdrop: Boolean) {
                 containerColor = Color.White,
                 backdrop = null,
                 scrollFraction = scrollFraction,
-            ) {
-                Box(Modifier.fillMaxSize())
-            }
+            )
         }
     }
 }
@@ -268,6 +284,29 @@ private fun assertRampDoesNotClimb(pixels: PixelMap, x: Int, firstY: Int, bottom
         previousRed = red
     }
     return previousRed
+}
+
+/**
+ * Checks every row strictly below the bar's bottom edge, down to [materialBottom], against the
+ * ramp. Those rows all sit below the 40% stop, so the light ramp is linear there: alpha is
+ * `0.7 * (distance to the material bottom / node height) / 0.4`, and over the flat blue backdrop
+ * the red channel is `255 * alpha`.
+ */
+private fun assertBandFollowsRamp(
+    pixels: PixelMap,
+    x: Int,
+    barBottom: Int,
+    materialBottom: Int,
+    nodeHeightPx: Float,
+) {
+    for (y in barBottom + 1 until materialBottom) {
+        val red = redChannel(pixels[x, y])
+        val expected = 255f * 0.7f * ((materialBottom - y) / nodeHeightPx) / 0.4f
+        assertTrue(
+            abs(red - expected) <= 6f,
+            "the band must follow the ramp: y=$y measured red=$red expected=${"%.1f".format(expected)}",
+        )
+    }
 }
 
 private fun redChannel(color: Color): Int = color.toArgb() shr 16 and 0xFF

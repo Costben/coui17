@@ -1,7 +1,5 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
-@file:Suppress("ktlint:compose:param-order-check")
-
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.foundation.background
@@ -26,6 +24,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
+import androidx.compose.ui.util.fastFirstOrNull
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
@@ -149,8 +148,9 @@ object AppBarBlurOverlayDefaults {
  * Android 13 — the blur is skipped and the plain ramp is painted, the way the framework's gradient
  * lives in the app bar's own background drawable rather than in the RenderEffect.
  *
- * @param modifier The modifier to be applied to the overlay. Do not size it: the bar height comes
- *   from [content], and the material adds [extraHeight] on top of it for drawing only.
+ * @param modifier The modifier to be applied to the overlay. The reported size is the size of
+ *   [content], coerced up to the incoming minimum constraints; the material is drawn [extraHeight]
+ *   past the reported bottom edge.
  * @param containerColor The base colour the alpha ramp is drawn in. Defaults to
  *   [AppBarBlurOverlayDefaults.containerColor], which is the theme's `surface` in the light theme —
  *   `coui_color_background_with_card`, the value the device's fully opaque top edge holds — and
@@ -195,22 +195,57 @@ fun AppBarBlurOverlay(
  */
 @Composable
 fun AppBarBlurOverlay(
+    scrollFraction: () -> Float,
     modifier: Modifier = Modifier,
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
     extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
-    scrollFraction: () -> Float,
     content: @Composable BoxScope.() -> Unit = {},
+) {
+    AppBarMaterialLayout(
+        materialEnabled = true,
+        containerColor = containerColor,
+        backdrop = backdrop,
+        extraHeight = extraHeight,
+        scrollFraction = scrollFraction,
+        modifier = modifier,
+        content = content,
+    )
+}
+
+/**
+ * The single measure policy behind [AppBarBlurOverlay] and the app bar scaffold in [TopAppBar].
+ *
+ * [content] is measured with its minimum constraints dropped, and the layout reports its size
+ * coerced up to the incoming minimum constraints. When [materialEnabled] is set, the material is
+ * measured to that size plus [extraHeight] and placed behind [content] at the top-left corner, so it
+ * reaches [extraHeight] past the reported bottom edge. When it is not set, the material child is
+ * omitted and the layout is a plain box around [content].
+ *
+ * [content] is invoked from exactly one place, and toggling [materialEnabled] only adds or removes
+ * the material child, so the content subtree is not recreated.
+ */
+@Composable
+internal fun AppBarMaterialLayout(
+    materialEnabled: Boolean,
+    containerColor: Color,
+    backdrop: Backdrop?,
+    extraHeight: Dp,
+    scrollFraction: () -> Float,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     val extraHeightPx = with(LocalDensity.current) { extraHeight.roundToPx() }
     Layout(
         content = {
-            AppBarMaterial(
-                modifier = Modifier.layoutId("material"),
-                containerColor = containerColor,
-                backdrop = backdrop,
-                scrollFraction = scrollFraction,
-            )
+            if (materialEnabled) {
+                AppBarMaterial(
+                    modifier = Modifier.layoutId("material"),
+                    containerColor = containerColor,
+                    backdrop = backdrop,
+                    scrollFraction = scrollFraction,
+                )
+            }
             Box(Modifier.layoutId("content")) { content() }
         },
         modifier = modifier,
@@ -219,17 +254,19 @@ fun AppBarBlurOverlay(
             measurables
                 .fastFirst { it.layoutId == "content" }
                 .measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val width = maxOf(contentPlaceable.width, constraints.minWidth)
+        val height = maxOf(contentPlaceable.height, constraints.minHeight)
         val materialPlaceable =
             measurables
-                .fastFirst { it.layoutId == "material" }
-                .measure(
+                .fastFirstOrNull { it.layoutId == "material" }
+                ?.measure(
                     Constraints.fixed(
-                        width = contentPlaceable.width,
-                        height = contentPlaceable.height + extraHeightPx,
+                        width = width,
+                        height = height + extraHeightPx,
                     ),
                 )
-        layout(contentPlaceable.width, contentPlaceable.height) {
-            materialPlaceable.placeRelative(0, 0)
+        layout(width, height) {
+            materialPlaceable?.placeRelative(0, 0)
             contentPlaceable.placeRelative(0, 0)
         }
     }
