@@ -180,9 +180,16 @@ SmallTopAppBar(
 
 ### 渐变玻璃
 
-`gradientGlass = true` 会把顶栏材质从均匀模糊换成 COUI 的渐变形态：背景在顶边模糊最强、
-向下逐渐变清晰，同时表面颜色从顶部的不透明渐变到底部的完全透明。它和均匀材质一样需要
-`LocalBackdrop`；没有 backdrop 或不支持 runtime shader 时，只保留渐变颜色填充。
+`gradientGlass = true` 会把顶栏材质从均匀模糊换成 COUI 的渐变形态。材质并不画在顶栏本身上：
+它是一层材质，测量为顶栏加上 `AppBarBlurOverlayDefaults.ExtraHeight`（24dp），画在顶栏内容之后；
+布局只报告顶栏自身的高度，因此材质会越过顶栏的下边缘，却不改变顶栏占用的空间。背景在顶边模糊最强，
+顶栏的下边缘仍保留一些模糊与表面 alpha，它们在额外的那段带子上淡出。材质开启时会隐藏分割线，
+避免分割线切过淡出区域。
+
+配合 `scrollBehavior` 使用时，材质在静止时不可见，内容滚过顶栏 30dp 后达到满强度；不配
+`scrollBehavior` 时材质始终开启。
+
+它和均匀材质一样需要 `LocalBackdrop`；没有 backdrop 或不支持 runtime shader 时，只保留渐变颜色填充。
 
 ```kotlin
 CompositionLocalProvider(LocalBackdrop provides backdrop) {
@@ -192,10 +199,11 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 
 ### 渐变玻璃叠加层
 
-`gradientGlass` 把材质画在顶栏本身上。若页面把材质画在独立的叠加层节点上——ColorOS 17
+`gradientGlass` 把材质布局在顶栏本身的后面。若页面把材质放在自己布局的独立节点上——ColorOS 17
 主页把 `AppBarBlurOverlayView` inflate 成 app bar 的同级视图，并把导航栏掏空——请改用
-[`AppBarBlurOverlay`](../components/appbarbluroverlay)。它与这里共用 `AppBarGlassDefaults` 的模糊半径与
-混合曲线，另外还负责导航栏下方那条带子与随滚动驱动的整体 alpha。
+[`AppBarBlurOverlay`](../components/appbarbluroverlay)。两者共用相同的测量行为，以及 `AppBarGlassDefaults`
+的模糊半径与混合曲线；区别在于由谁布局节点，以及 alpha 从哪里来：`AppBarBlurOverlay` 由 `scrollFraction`
+提供，而 `gradientGlass` 从顶栏的 `scrollBehavior` 推导。
 
 ## 属性
 
@@ -221,7 +229,7 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 | titlePadding          | Dp                              | 水平内容边距                   | TopAppBarDefaults.TitlePadding | 否       |
 | navigationIconPadding      | Dp                              | 导航图标的起始边距             | TopAppBarDefaults.NavigationIconPadding | 否       |
 | actionIconPadding          | Dp                              | 操作图标的末尾边距             | TopAppBarDefaults.ActionIconPadding | 否       |
-| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质（顶边最强、向下渐清）而非均匀模糊 | false | 否 |
+| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质而非均匀模糊；材质越过顶栏下边缘 `AppBarBlurOverlayDefaults.ExtraHeight`（24dp），顶栏高度不变，并隐藏分割线；配合 `scrollBehavior` 时在滚动 30dp 后出现（见「渐变玻璃」） | false | 否 |
 | bottomContent              | @Composable () -> Unit          | 显示在标题栏下方的可组合内容 | {}                                | 否       |
 
 ### SmallTopAppBar 属性
@@ -243,7 +251,7 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 | centerTitle                | Boolean                         | 是否让标题在两个图标槽之间居中（对应 COUI `setIsTitleCenterStyle`）；该形态下下方三个边距会被 `centerTitleMargin` 取代 | false | 否 |
 | centerTitleMargin          | Dp                              | 居中标题两端保留的水平留白     | 按当前窗口宽度取档位值 | 否 |
 | segmentButton              | (@Composable () -> Unit)?       | 嵌入在导航图标与标题之间的分段控件槽位；`centerTitle` 为 true 时不参与布局 | null | 否 |
-| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质（顶边最强、向下渐清）而非均匀模糊 | false | 否 |
+| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质而非均匀模糊；材质越过顶栏下边缘 `AppBarBlurOverlayDefaults.ExtraHeight`（24dp），顶栏高度不变，并隐藏分割线；配合 `scrollBehavior` 时在滚动 30dp 后出现（见「渐变玻璃」） | false | 否 |
 | titlePadding          | Dp                              | 水平内容边距             | TopAppBarDefaults.TitlePadding | 否       |
 | navigationIconPadding      | Dp                              | 导航图标的起始边距       | TopAppBarDefaults.NavigationIconPadding | 否       |
 | actionIconPadding          | Dp                              | 操作图标的末尾边距       | TopAppBarDefaults.ActionIconPadding | 否       |

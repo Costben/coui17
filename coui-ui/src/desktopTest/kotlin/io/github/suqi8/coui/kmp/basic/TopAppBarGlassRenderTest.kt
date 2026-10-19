@@ -42,6 +42,9 @@ private const val APP_BAR_TITLE = "G"
 private const val SURFACE_WIDTH_DP = 240f
 private const val SURFACE_HEIGHT_DP = 120f
 
+/** How far the material paints past the bar's bottom edge. */
+private val ExtraHeightPx = with(Density(1f)) { AppBarBlurOverlayDefaults.ExtraHeight.toPx() }
+
 /** The recorded backdrop is split down the middle: blue on the left half, red on the right half. */
 private val BackdropLeftColor = Color(0xFF0000FF)
 private val BackdropRightColor = Color(0xFFFF0000)
@@ -104,10 +107,10 @@ class TopAppBarGlassRenderTest {
 
     /**
      * The gradient shape (`AppBarBlurHelper`'s `GradientBackgroundDrawable`) ramps the surface's
-     * alpha to zero at the bottom edge, so a column of the bar must fade from the painted surface
-     * at the top into the raw backdrop at the bottom. The backdrop is flat blue under the sampled
-     * column, so the white surface's red channel is the ramp: 255 at the top, 0 once the ramp has
-     * run out.
+     * alpha to zero at the material's bottom edge, which sits [ExtraHeightPx] below the bar. A
+     * column through the material must fade from the painted surface at the top into the raw
+     * backdrop at the material bottom. The backdrop is flat blue under the sampled column, so the
+     * white surface's red channel is the ramp: 255 at the top, 0 once the ramp has run out.
      */
     @Test
     fun gradientAppBarFadesTowardItsBottomEdge() = runSkikoComposeUiTest(
@@ -119,7 +122,7 @@ class TopAppBarGlassRenderTest {
 
         val (top, middle, bottom) = captureVerticalAppBarSamples()
 
-        assertTrue(redChannel(top) >= 200, "the top of the bar is the painted surface, got $top")
+        assertTrue(redChannel(top) >= 200, "the top of the material is the painted surface, got $top")
         assertTrue(
             redChannel(top) > redChannel(middle) + 40,
             "the ramp must have faded by mid-height, got top=$top middle=$middle",
@@ -128,14 +131,19 @@ class TopAppBarGlassRenderTest {
             redChannel(middle) > redChannel(bottom) + 40,
             "the ramp must keep fading below mid-height, got middle=$middle bottom=$bottom",
         )
-        assertTrue(redChannel(bottom) <= 60, "the bottom edge is the bare backdrop, got $bottom")
-        assertTrue(blueChannel(bottom) >= 180, "the bottom edge keeps the blue backdrop, got $bottom")
+        assertTrue(redChannel(bottom) <= 60, "the material bottom is the bare backdrop, got $bottom")
+        assertTrue(blueChannel(bottom) >= 180, "the material bottom keeps the blue backdrop, got $bottom")
     }
 
     /**
      * Control for [gradientAppBarFadesTowardItsBottomEdge]: the uniform shape keeps the same
-     * background alpha the whole way down, so the fade measured above can only come from the
-     * gradient and not from the sampled column, the blur, or the surface itself.
+     * background alpha down the bar, so the fade measured above can only come from the gradient and
+     * not from the sampled column, the blur, or the surface itself.
+     *
+     * The top and middle samples are read at the gradient test's own rows, which extend past the
+     * bar by the material band. The middle row sits about 38px below the bar's top, inside the 52dp
+     * bar, so both samples fall on the uniform surface and must not fade. The bottom sample stays
+     * inside the bar, at its bottom edge, where the surface must still be painted.
      */
     @Test
     fun uniformAppBarStaysOpaqueAtItsBottomEdge() = runSkikoComposeUiTest(
@@ -145,8 +153,13 @@ class TopAppBarGlassRenderTest {
         setContent { GlassScene(withBackdrop = true, gradient = false) }
         waitForIdle()
 
-        val (top, _, bottom) = captureVerticalAppBarSamples()
+        val (top, middle, _) = captureVerticalAppBarSamples()
+        val (_, _, bottom) = captureVerticalAppBarSamples(materialPaintsExtraHeight = false)
 
+        assertTrue(
+            abs(redChannel(top) - redChannel(middle)) <= 20,
+            "the uniform surface must not fade inside the bar, got top=$top middle=$middle",
+        )
         assertTrue(redChannel(bottom) >= 150, "the uniform surface stays painted, got $bottom")
         assertTrue(
             maxChannelDelta(top, bottom) <= 2,
@@ -328,29 +341,35 @@ private fun SkikoComposeUiTest.captureAppBarSamples(): Pair<Color, Color> {
 private fun Color.argbHex(): String = "#%08X".format(toArgb())
 
 /**
- * Reads three pixels down the bar's left quarter: just below the top edge, mid-height, and just
- * above the bottom edge. The backdrop is flat blue under that column, so a vertical ramp in the bar
- * shows up in the red channel — the painted surface carries red 255, the blue backdrop carries 0.
+ * Reads three pixels down the material's left quarter: just below the top edge, mid-height, and
+ * just above the material's bottom edge. The gradient shape paints [ExtraHeightPx] past the bar, so
+ * [materialPaintsExtraHeight] extends the sampled material to the bar bottom plus that band; the
+ * uniform shape stops at the bar. The backdrop is flat blue under that column, so a vertical ramp
+ * in the material shows up in the red channel — the painted surface carries red 255, the blue
+ * backdrop carries 0.
  */
 @OptIn(ExperimentalTestApi::class)
-private fun SkikoComposeUiTest.captureVerticalAppBarSamples(): Triple<Color, Color, Color> {
+private fun SkikoComposeUiTest.captureVerticalAppBarSamples(
+    materialPaintsExtraHeight: Boolean = true,
+): Triple<Color, Color, Color> {
     val bar = onNodeWithTag(APP_BAR_TAG, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
     val image = onRoot().captureToImage()
     val pixels = image.toPixelMap()
     val x = image.width / 4
+    val materialBottom = bar.bottom + if (materialPaintsExtraHeight) ExtraHeightPx else 0f
     val topY = bar.top.roundToInt() + 2
-    val middleY = ((bar.top + bar.bottom) / 2f).roundToInt()
-    val bottomY = bar.bottom.roundToInt() - 3
+    val middleY = ((bar.top + materialBottom) / 2f).roundToInt()
+    val bottomY = materialBottom.roundToInt() - 3
     val top = pixels[x, topY]
     val middle = pixels[x, middleY]
     val bottom = pixels[x, bottomY]
     println(
-        "[glass] bar=$bar x=$x top[$topY]=${top.argbHex()} " +
+        "[glass] bar=$bar materialBottom=$materialBottom x=$x top[$topY]=${top.argbHex()} " +
             "middle[$middleY]=${middle.argbHex()} bottom[$bottomY]=${bottom.argbHex()}",
     )
     assertTrue(
-        bar.top <= topY && middleY < bottomY && bottomY < bar.bottom && x <= bar.right,
-        "the sample points must sit inside the bar, bar=$bar x=$x y=$topY/$middleY/$bottomY",
+        bar.top <= topY && middleY < bottomY && bottomY < materialBottom.roundToInt() && x <= bar.right,
+        "the sample points must sit inside the material, bar=$bar x=$x y=$topY/$middleY/$bottomY",
     )
     return Triple(top, middle, bottom)
 }

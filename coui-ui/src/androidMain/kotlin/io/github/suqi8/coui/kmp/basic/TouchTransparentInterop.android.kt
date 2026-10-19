@@ -48,6 +48,5 @@ internal fun TouchTransparentInterop(
 
 /** A clip that leaves nothing inside it, which also takes the node out of hit testing. */
 private val OutOfReach = object : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline =
-        Outline.Rectangle(Rect.Zero)
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline = Outline.Rectangle(Rect.Zero)
 }

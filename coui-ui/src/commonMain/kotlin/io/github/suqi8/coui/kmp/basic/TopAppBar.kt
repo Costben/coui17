@@ -161,7 +161,7 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
  *
  * The material child is outside the bar's `clipToBounds`, so it can paint over the list in the
  * extra band; the bar content keeps its own size, insets and clipping. Without `gradientGlass` the
- * wrapper is a plain [Box], and [appBarSurface] paints the bar the old way.
+ * material child is simply omitted, and [appBarSurface] paints the bar the old way.
  *
  * `showDivider` is suppressed whenever the material is on, the way
  * `AppBarBlurHelper.syncAppBarDividerWithMaterialBlur` suppresses `COUIDividerAppBarLayout`'s
@@ -175,12 +175,7 @@ private fun AppBarMaterialScaffold(
     scrollBehavior: ScrollBehavior? = null,
     content: @Composable () -> Unit,
 ) {
-    if (!gradientGlass) {
-        Box(modifier = modifier) { content() }
-        return
-    }
     val density = LocalDensity.current
-    val extraHeightPx = with(density) { AppBarBlurOverlayDefaults.ExtraHeight.roundToPx() }
     // `AppBarBlurOverlayBehavior`'s scroll-driven alpha: invisible at rest, fully visible after
     // 30dp of content has scrolled under the bar. A bar without a scroll behavior keeps the
     // material always on, the way `scrollDrivenAlphaEnabled=false` does natively.
@@ -194,35 +189,15 @@ private fun AppBarMaterialScaffold(
             }
         }
     }
-    Layout(
-        content = {
-            AppBarMaterial(
-                modifier = Modifier.layoutId("material"),
-                containerColor = color,
-                scrollFraction = scrollFraction,
-            )
-            Box(Modifier.layoutId("content")) { content() }
-        },
+    AppBarMaterialLayout(
+        materialEnabled = gradientGlass,
+        containerColor = color,
+        backdrop = LocalBackdrop.current,
+        extraHeight = AppBarBlurOverlayDefaults.ExtraHeight,
+        scrollFraction = scrollFraction,
         modifier = modifier,
-    ) { measurables, constraints ->
-        val contentPlaceable =
-            measurables
-                .fastFirst { it.layoutId == "content" }
-                .measure(constraints.copy(minWidth = 0, minHeight = 0))
-        val materialPlaceable =
-            measurables
-                .fastFirst { it.layoutId == "material" }
-                .measure(
-                    Constraints.fixed(
-                        width = contentPlaceable.width,
-                        height = contentPlaceable.height + extraHeightPx,
-                    ),
-                )
-        layout(contentPlaceable.width, contentPlaceable.height) {
-            materialPlaceable.placeRelative(0, 0)
-            contentPlaceable.placeRelative(0, 0)
-        }
-    }
+        content = { content() },
+    )
 }
 
 /**

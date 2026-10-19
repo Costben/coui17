@@ -976,7 +976,7 @@ object ListPopupDefaults {
      * it reads as the page being stuck. At this alpha (~140ms into the close) the panel is all but
      * gone, so a scroll or tap started from here goes to the page.
      */
-    const val ExitTouchPassThroughAlpha = 0.1f
+    val ExitTouchPassThroughAlpha = 0.1f
 
     /**
      * Extra clearance reserved below the status bar before the popup may be placed

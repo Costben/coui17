@@ -4,7 +4,7 @@
 
 In ColorOS the overlay is the view the layout behavior sizes, and the app bar itself is hollowed out — the material lands on the overlay while the bar is left with no background and no elevation. The overlay paints nothing of its own: a helper gives it a gradient alpha ramp plus a progressive blur, and the behavior drives the view's whole alpha from the scroll offset.
 
-Two anchors matter, and they are not the same one. **The caller sizes the node**: the overlay view is inflated at `layout_height=0dp` and resized by the behavior to `appBar.top .. appBar.bottom + extraHeightPx`, so pass `Modifier.height(appBarHeight + extraHeight)`. The alpha ramp is anchored to the **bar's bottom edge** inside that node, while the progressive blur is full strength along the node's top edge.
+The composable measures its `content` to find the bar, reports the **bar's** height, and draws the material over `bar + extraHeight`, past the reported bottom edge. The caller does not add `extraHeight` to the node: pass `Modifier.height(barHeight)`, or no height at all. The alpha ramp is anchored to the **material node's bottom edge** (bar + `extraHeight`), not to the bar's, so the bar's own bottom edge still carries some surface colour and blur, and both fade out over the extra band. The progressive blur is strongest along the node's top edge.
 
 ## Import
 
@@ -16,11 +16,11 @@ import io.github.suqi8.coui.kmp.basic.couiGlassHeader
 
 ## Native Origin
 
-The overlay view is inflated at `layout_height=0dp` under a layout behavior that measures it to `appBar.top .. appBar.bottom + extraHeightPx` — the app bar's own bounds plus `homepage_appbar_blur_extra_height` (14dp), which is `AppBarBlurOverlayDefaults.ExtraHeight`. The view carries no `onDraw` and no `onSizeChanged`: it is a canvas that a helper dresses.
+The overlay view is inflated at `layout_height=0dp` under a layout behavior that measures it to `appBar.top .. appBar.bottom + extraHeightPx` — the app bar's own bounds plus the scroll-driven overlay's extra height, 24dp, which is `AppBarBlurOverlayDefaults.ExtraHeight`. (The settings homepage inflates its non-scroll-driven overlay with `homepage_appbar_blur_extra_height` = 14dp instead; the scroll-driven form uses the taller band, which is the one that leaves a visible fade under a collapsed bar.) The view carries no `onDraw` and no `onSizeChanged`: it is a canvas that a helper dresses.
 
 The material's background resolves into a gradient drawable and its blur into a `RenderEffect`; the sibling overlay is preferred over the app bar itself, which is why the host hollows the bar out. The material's gradient lives in the overlay's background drawable rather than in the `RenderEffect`, so the ramp is painted even where no blur can run.
 
-The gradient is built bottom-to-top, i.e. the ramp's positions are measured **from the bar's bottom edge upward**, with `p = 1` at the bar's top edge. The extra band below the bar is therefore transparent, and the material reads as the bar's own surface rather than as a taller gradient.
+The gradient is built bottom-to-top, i.e. the ramp's positions are measured **from the node's bottom edge upward** (the gradient drawable builds `LinearGradient(0, height, 0, 0, …)`). Because the node is `bar + extraHeight` tall, the ramp is alpha 0 on the node's bottom edge, 0.7 at 40% up, and 1 at the top in the light theme (0 up to 0.4 in the dark theme). The bar's own bottom edge therefore still carries some surface colour, and the colour fades to nothing over the extra band.
 
 The framework's uniform path — a normal blur background with `normalBlurRadiusPx` and `normalBackgroundAlphaFraction` — is dead code: it has no caller in ColorOS 17, so it is deliberately not implemented.
 
@@ -35,10 +35,10 @@ Box(Modifier.fillMaxSize()) {
     ScrollingContent(onScroll = { scrollPx = it })
 
     AppBarBlurOverlay(
-        // The node carries the bar plus the 14dp band below it.
+        // The node reports the bar height; the material reaches ExtraHeight past it.
         modifier = Modifier
             .fillMaxWidth()
-            .height(barHeight + AppBarBlurOverlayDefaults.ExtraHeight),
+            .height(barHeight),
         scrollFraction = AppBarBlurOverlayDefaults.scrollAlpha(scrollPx, density),
     ) {
         // The bar's own content, hollowed out: the material fades in beneath it.
@@ -48,6 +48,10 @@ Box(Modifier.fillMaxSize()) {
 ```
 
 The overlay needs the content it samples through `LocalBackdrop`; place it where a backdrop is provided, or pass `backdrop = null` for the plain ramp alone. When the platform cannot run runtime shaders (everything below Android 13) the blur is skipped as well, and only the ramp is painted.
+
+### Scroll Producer Overload
+
+`AppBarBlurOverlay` also has an overload whose first parameter is `scrollFraction: () -> Float` instead of a `Float`. The producer is read in the draw phase, so a scroll-driven alpha does not recompose the bar on every frame. At rest it must return `0`, which leaves the material drawing nothing and the content under the bar sharp; a caller with no scroll state to observe should return `1f`. The `Float` overload forwards to this one.
 
 ### Resting Alpha Floor
 
@@ -63,6 +67,15 @@ val scrollFraction = remember(density) {
             minAlpha = 0.55f,
         )
     }
+}
+
+AppBarBlurOverlay(
+    scrollFraction = scrollFraction,
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(TopAppBarDefaults.CollapsedHeight),
+) {
+    SmallTopAppBar(title = "Title")
 }
 ```
 
@@ -113,8 +126,8 @@ Box(Modifier.fillMaxSize()) {
 
 | Property Name  | Type                       | Description                                                                                | Default Value                        | Required |
 | -------------- | -------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------ | -------- |
-| modifier       | Modifier                   | Applied to the overlay; the caller sizes the node to the app bar plus `extraHeight`        | Modifier                             | No       |
-| containerColor | Color                      | The base colour the alpha ramp is drawn in; light `#f0f1f2`, dark `#333333` (see Recovered Tokens) | AppBarBlurOverlayDefaults.containerColor() | No       |
+| modifier       | Modifier                   | Applied to the overlay; the node reports the bar's height, so pass `Modifier.height(barHeight)` or no height | Modifier                             | No       |
+| containerColor | Color                      | The base colour the alpha ramp is drawn in; light `#f0f1f2`, dark `#303030` (see Recovered Tokens) | AppBarBlurOverlayDefaults.containerColor() | No       |
 | backdrop       | Backdrop?                  | The content to sample; `null` skips the blur and paints the ramp only                       | LocalBackdrop.current                | No       |
 | extraHeight    | Dp                         | How far the overlay reaches past the app bar's bottom edge                                  | AppBarBlurOverlayDefaults.ExtraHeight | No       |
 | scrollFraction | Float                      | The scroll-driven alpha, `min(1, scrollPx / 30dp)`; at `0` the overlay draws nothing         | 1f                                   | No       |
@@ -122,16 +135,18 @@ Box(Modifier.fillMaxSize()) {
 
 `content` is drawn on top of the material and is not affected by `scrollFraction`: the title and the actions stay readable at rest, and only the material fades in with the scroll.
 
+The producer overload takes the same parameters, with `scrollFraction: () -> Float` as its first, required parameter in place of the `Float` (see Scroll Producer Overload).
+
 `containerColor` is only the colour the ramp is drawn in; which ramp the theme picks — the three-stop light one or the two-stop dark one — is decided by the theme, not by this colour (see Recovered Tokens).
 
 ### AppBarBlurOverlayDefaults Object
 
 | Constant / Function   | Type  | Description                                                            | Value / Source |
 | --------------------- | ----- | ---------------------------------------------------------------------- | -------------- |
-| ExtraHeight           | Dp    | How far the overlay reaches past the bar's bottom edge                 | 14.dp (`homepage_appbar_blur_extra_height`) |
+| ExtraHeight           | Dp    | How far the overlay reaches past the bar's bottom edge                 | 24.dp (the scroll-driven overlay's extra height) |
 | ScrollAlphaThresholdDp | Float | The scroll distance over which the overlay's alpha ramps from 0 to 1   | 30f |
-| DarkContainerColor    | Color | The dark-theme material base colour, taken from the nearest ColorOS night token rather than from the framework attribute | `#333333` (`coui_color_background_top` / `coui_color_surface_top`) |
-| containerColor()      | Color | The base colour for the current theme: the light theme's `surface`, the dark theme's `DarkContainerColor` | `#f0f1f2` / `#333333` |
+| DarkContainerColor    | Color | The dark-theme material base colour: the platform's own dark background, and the colour the dark page renders as | `#303030` (`background_material_dark` → `material_grey_850`) |
+| containerColor()      | Color | The base colour for the current theme: the light theme's `surface`, the dark theme's `DarkContainerColor` | `#f0f1f2` / `#303030` |
 | scrollAlpha(scrollPx, density) | Float | `min(1, scrollPx / ScrollAlphaThresholdDp)`, coerced into `0f..1f` | — |
 | scrollAlpha(scrollPx, density, minAlpha) | Float | The same ramp remapped into `minAlpha..1`, with `minAlpha` coerced into `0f..1f` | — |
 
@@ -143,7 +158,7 @@ Every value below is taken from the ColorOS 17 material's defaults or its resour
 
 | Token | Value | Source |
 | :--- | :--- | :--- |
-| `ExtraHeight` | 14dp | `homepage_appbar_blur_extra_height` |
+| `ExtraHeight` | 24dp | The scroll-driven overlay's extra height |
 | `ScrollAlphaThresholdDp` | 30 | ColorOS 17 scroll threshold |
 | `startBlurRadius` | 30px | ColorOS 17 start blur radius |
 | `endBlurRadius` | 0px | ColorOS 17 end blur radius |
@@ -157,11 +172,11 @@ The dark theme has only two stops: the `0.4` top-edge alpha is a hard-coded valu
 
 Which of the two ramps is drawn is a property of the theme, not of the base colour: the port selects the dark ramp when `COUITheme.colorScheme.background.luminance() < 0.5f`, so passing a dark `containerColor` on a light theme cannot move the ramp to the other branch.
 
-The dark base colour itself cannot be read off the same chain. ColorOS resolves it from `?couiColorBackgroundWithCard`, which is `#ffffff` in the night configuration — a colour that cannot produce the profile the material shows, where the material's top edge lands at 60 over a `#454545` card and, with the dark ramp's hard-coded top alpha, `0.4 * B + 0.6 * 69 = 60` gives `B ≈ 46.5`. The nearest ColorOS night token is `coui_color_background_top` / `coui_color_surface_top` = `#333333`, which is what `DarkContainerColor` takes. No explicit colour can be hiding the gap: the gradient-blur background colour is never assigned in ColorOS 17, so its static never leaves `null` and the page fallback is what resolves; the dark path carries a further darkening layer this port cannot reproduce.
+The dark base colour itself cannot be read off the same chain. ColorOS resolves it from `?couiColorBackgroundWithCard`, which is `#ffffff` in the night configuration — a colour that cannot produce the profile the material shows. The dark page background renders as a flat 48 / 48 / 48 (`#303030`), measured across whole pages on two native surfaces, and `#303030` is also the platform's own dark background (`background_material_dark` → `material_grey_850`), so it is a colour the platform declares rather than one inferred from a screenshot mean. The material's top edge over a `#454545` card lands at 60, and the dark ramp's hard-coded top alpha gives `0.4 * B + 0.6 * 69 = 60`, so `B ≈ 46.5`, consistent with 48. The colour token that would produce this cannot be resolved: an enabled runtime overlay sits on top of the night configuration, and the darkening layer is applied by the vendor framework itself. `DarkContainerColor` therefore takes the rendered value, `#303030`, instead. No explicit colour is hiding the gap: the gradient-blur background colour is never assigned in ColorOS 17, so its static never leaves `null` and the page fallback is what resolves.
 
 ## Not Ported
 
 - **The uniform (normal blur background) path** — `normalBlurRadiusPx` (50px), `normalBackgroundAlphaFraction` (0.8) and the dark alpha (0.6) have no caller in ColorOS 17, so this port only implements the gradient shape.
 - **The `scrollDrivenAlphaEnabled` attribute** — the native view reads its alpha from the scroll offset when the attribute is set; the port takes the resolved alpha through `scrollFraction` instead.
-- **The base-colour resolution chain** — the native resolves the base colour from a static gradient-blur background colour, the app bar's own background, a restore snapshot and a page fallback; the port takes one `containerColor`. The static override is inert: it is never assigned in ColorOS 17, so it never leaves `null` and the page fallback always resolves; the base colour the port cannot reach is the dark theme's.
+- **The base-colour resolution chain** — the native resolves the base colour from a static gradient-blur background colour, the app bar's own background, a restore snapshot and a page fallback; the port takes one `containerColor`. The static override is inert: it is never assigned in ColorOS 17, so it never leaves `null` and the page fallback always resolves. The port does not replay the chain for the dark theme; it uses `DarkContainerColor`, the rendered `#303030`, instead (see Recovered Tokens).
 - **`setAppBarLayoutTransparent()`** — the host-side call that clears the app bar's background and elevation; the caller hollows out the bar it passes in `content`.

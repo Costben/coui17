@@ -190,7 +190,7 @@ fun Coui17HomeTopBar(
     AppBarBlurOverlay(
         modifier = modifier
             .fillMaxWidth()
-            .height(Coui17Dimens.HomeAppBarBottom + Coui17Dimens.AppBarBlurExtra),
+            .height(Coui17Dimens.HomeAppBarBottom),
         extraHeight = Coui17Dimens.AppBarBlurExtra,
         scrollFraction = scrollFraction,
     ) {
