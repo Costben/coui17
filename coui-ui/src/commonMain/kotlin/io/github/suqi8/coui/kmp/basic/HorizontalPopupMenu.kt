@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,8 @@ import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
@@ -135,16 +138,40 @@ fun HorizontalPopupMenuItem(
     }
     val interactionSource = remember { MutableInteractionSource() }
     val pressProgress = remember { Animatable(0f) }
+    // The press-in and the fade-out share one slot so a release always supersedes a press that has
+    // not started animating yet; otherwise that queued press would run after the release and leave
+    // the mask lit.
+    val pressJob = remember { mutableStateOf<Job?>(null) }
 
     // The row press mask and its spring are shared with the vertical rows, so a horizontal button
     // flashes and holds exactly like a list row (COUI drives both through COUIMaskEffectDrawable).
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
-                is PressInteraction.Press -> launch { pressProgress.animateTo(1f, PopupItemPressSpring) }
+                is PressInteraction.Press -> {
+                    pressJob.value?.cancel()
+                    pressJob.value = launch { pressProgress.animateTo(1f, PopupItemPressSpring) }
+                }
 
-                is PressInteraction.Release, is PressInteraction.Cancel ->
-                    launch { pressProgress.animateTo(0f, PopupItemPressSpring) }
+                is PressInteraction.Release, is PressInteraction.Cancel -> {
+                    pressJob.value?.cancel()
+                    pressJob.value = launch {
+                        // COUI's `COUIMaskEffectDrawable` keeps the mask visible until it has reached
+                        // DEFAULT_MIN_PROGRESS_FOR_TOUCH_ENTER_ANIMATION, so a quick tap still flashes
+                        // instead of cancelling the press-in animation and fading from nearly zero.
+                        if (pressProgress.value > 0f && pressProgress.value < PopupItemPressMinVisibleProgress) {
+                            try {
+                                pressProgress.animateTo(1f, PopupItemPressSpring) {
+                                    if (value >= PopupItemPressMinVisibleProgress) {
+                                        throw HorizontalPressMaskThresholdReached()
+                                    }
+                                }
+                            } catch (_: HorizontalPressMaskThresholdReached) {
+                            }
+                        }
+                        pressProgress.animateTo(0f, PopupItemPressSpring)
+                    }
+                }
             }
         }
     }
@@ -502,3 +529,6 @@ private object HorizontalPopupMenuMeasurePolicy : MeasurePolicy {
         return rows * rowHeight
     }
 }
+
+/** Thrown to stop a deferred press fade once [PopupItemPressMinVisibleProgress] is reached. */
+private class HorizontalPressMaskThresholdReached : CancellationException("Press mask reached the minimum visible progress")
