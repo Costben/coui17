@@ -1,8 +1,9 @@
 HSPLio/github/suqi8/coui/kmp/squircle/SquircleBackgroundKt**->**(**)**
-HSPLio/github/suqi8/coui/kmp/squircle/SquircleShaderBrush;->**(**)**
+PLio/github/suqi8/coui/kmp/squircle/SquircleBorderKt**->**(**)**
+PLio/github/suqi8/coui/kmp/squircle/SquirclePathKt**->**(**)**
+PLio/github/suqi8/coui/kmp/squircle/SquircleShape;->**(**)**
 SPLio/github/suqi8/coui/kmp/squircle/LocalSquircleEnabledKt**->**(**)**
-SPLio/github/suqi8/coui/kmp/squircle/SquircleBorderKt**->**(**)**
 SPLio/github/suqi8/coui/kmp/squircle/SquircleDefaults;->**(**)**
-SPLio/github/suqi8/coui/kmp/squircle/SquirclePathKt**->**(**)**
+SPLio/github/suqi8/coui/kmp/squircle/SquircleShaderBrush;->**(**)**
 SPLio/github/suqi8/coui/kmp/squircle/internal/AlphaImageBitmap_androidKt**->**(**)**
 SPLio/github/suqi8/coui/kmp/squircle/internal/BakedSquircleSdf;->**(**)**
