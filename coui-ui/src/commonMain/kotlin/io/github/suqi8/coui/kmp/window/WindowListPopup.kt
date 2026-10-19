@@ -4,8 +4,10 @@ package io.github.suqi8.coui.kmp.window
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
@@ -13,6 +15,7 @@ import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
 import io.github.suqi8.coui.kmp.layout.ListPopupLayout
+import io.github.suqi8.coui.kmp.layout.popupPhysicalDensity
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
@@ -54,6 +57,11 @@ fun WindowListPopup(
     content: @Composable () -> Unit,
 ) {
     val currentOnDismissRequest = rememberUpdatedState(onDismissRequest)
+    // A dialog window is a separate composition, so the panel density the popup has to render at
+    // must be re-provided here as well; otherwise a display-size override leaves this popup at the
+    // scaled-up density while the overlay and cascading popups render at the panel's.
+    val density = LocalDensity.current
+    val popupDensity = remember(density) { popupPhysicalDensity(density) }
 
     ListPopupLayout(
         show = show,
@@ -85,6 +93,7 @@ fun WindowListPopup(
                 LocalDismissState provides {
                     currentOnDismissRequest.value?.invoke()
                 },
+                LocalDensity provides popupDensity,
             ) {
                 content()
             }
