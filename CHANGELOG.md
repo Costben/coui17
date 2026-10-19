@@ -26,6 +26,8 @@ All notable user-visible changes are documented here. The format follows
 
 ### Fixed
 
+- List popup rows consume the release, so selecting a row no longer also counts as an outside tap and closes a submenu it just opened.
+- Toolbar icon buttons keep the whole light-theme halo: `SmallTopAppBar` and `TopAppBar` no longer clip their content at the bar's bounds.
 - `BottomFloatingNavigationBar` casts the native spot shadow under its capsule and expansion view instead of none.
 - `BottomFloatingNavigationBar` wears the native bottom-bar glass: content scrolling underneath keeps its colour and stays recognisable instead of turning into a flat grey smear, the rim light matches the device in both themes, and the bar casts the native caustic light.
 - `BottomFloatingNavigationBar` no longer stacks its default shadow on the system caustic shadow, so the light under the bar is no longer dimmed.

@@ -38,7 +38,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -159,9 +158,10 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
  * Wraps the bar in the ColorOS material: a material node measured to `bar + extraHeight`, drawn
  * behind the bar content, while the layout itself still reports only the bar's height.
  *
- * The material child is outside the bar's `clipToBounds`, so it can paint over the list in the
- * extra band; the bar content keeps its own size, insets and clipping. Without `gradientGlass` the
- * material child is simply omitted, and [appBarSurface] paints the bar the old way.
+ * The material child is outside the bar content's bounds, so it can paint over the list in the
+ * extra band; the bar content keeps its own size and insets, and is not clipped so icon halos are
+ * not cut off at the bar's edge. Without `gradientGlass` the material child is simply omitted, and
+ * [appBarSurface] paints the bar the old way.
  *
  * `showDivider` is suppressed whenever the material is on, the way
  * `AppBarBlurHelper.syncAppBarDividerWithMaterialBlur` suppresses `COUIDividerAppBarLayout`'s
@@ -1202,12 +1202,9 @@ private fun TopAppBarLayout(
             // The material layer behind this layout paints the gradient shape when gradientGlass
             // is on; a second ramp here would end on the bar's edge under the soft one.
             .then(if (gradientGlass) Modifier else Modifier.appBarSurface(color))
-            // The clip has to wrap the *padded* node, not sit inside it. A toolbar icon's halo
-            // reaches ~8dp above its 40dp button, past the top of the content box once the status
-            // bar inset has pushed that box down, and clipping after the inset cut the halo off flat
-            // along the status-bar line. Out here the clip still bounds the bar while the inset
-            // padding stays inside it.
-            .clipToBounds()
+            // No clip: a toolbar icon's halo reaches past the bar's bottom edge too, and clipping
+            // at the layout bounds cut it off in a straight line there. The bar's own surface stays
+            // inside its bounds, so only the halo paints outside.
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier
@@ -1520,12 +1517,9 @@ private fun SmallTopAppBarLayout(
             // The material layer behind this layout paints the gradient shape when gradientGlass
             // is on; a second ramp here would end on the bar's edge under the soft one.
             .then(if (gradientGlass) Modifier else Modifier.appBarSurface(color))
-            // The clip has to wrap the *padded* node, not sit inside it. A toolbar icon's halo
-            // reaches ~8dp above its 40dp button, past the top of the content box once the status
-            // bar inset has pushed that box down, and clipping after the inset cut the halo off flat
-            // along the status-bar line. Out here the clip still bounds the bar while the inset
-            // padding stays inside it.
-            .clipToBounds()
+            // No clip: a toolbar icon's halo reaches past the bar's bottom edge too, and clipping
+            // at the layout bounds cut it off in a straight line there. The bar's own surface stays
+            // inside its bounds, so only the halo paints outside.
             .then(
                 if (defaultWindowInsetsPadding) {
                     Modifier

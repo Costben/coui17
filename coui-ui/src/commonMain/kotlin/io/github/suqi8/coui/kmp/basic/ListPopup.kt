@@ -792,7 +792,16 @@ private fun Modifier.popupListGestures(
                 if (change.changedToUpIgnoreConsumed()) {
                     // Compose represents ACTION_CANCEL as an already-consumed synthetic UP.
                     // It must release the mask without activating the item under the pointer.
-                    if (change.isConsumed) host.cancel(scope) else host.onUp(scope)
+                    if (change.isConsumed) {
+                        host.cancel(scope)
+                    } else {
+                        // Consume the release before selecting: the popup host wraps the whole
+                        // window in an outside-tap detector, and leaving the UP unconsumed made it
+                        // treat a row tap as a dismissal. An action that swaps the popup's content
+                        // (a submenu) was then undone in the same frame.
+                        change.consume()
+                        host.onUp(scope)
+                    }
                     released = true
                     break
                 }
