@@ -158,6 +158,11 @@ body {
     font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* The author rule above sets display: flex, which would override the hidden attribute. */
+#wallpaper-toolbar[hidden] {
+    display: none;
+}
+
 #wallpaper-toolbar input[type="file"] {
     width: 116px;
     max-width: 34vw;

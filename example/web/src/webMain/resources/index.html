@@ -24,7 +24,8 @@
 </head>
 <body>
 <div id="loading">Loading</div>
-<div id="wallpaper-toolbar" role="toolbar" aria-label="Wallpaper preview controls">
+<!-- Dev-only wallpaper/insets toolbar. Starts hidden; the script at the end of <body> reveals it. -->
+<div id="wallpaper-toolbar" role="toolbar" aria-label="Wallpaper preview controls" hidden>
     <label for="wallpaperInput">Wallpaper</label>
     <input id="wallpaperInput" type="file" accept="image/*" aria-label="Choose wallpaper">
     <button id="clearWallpaper" type="button">Clear</button>
@@ -34,16 +35,23 @@
 <div id="composeApp"></div>
 </body>
 <script>
+    // The toolbar is a dev tool, so it is only shown when asked for: ?tools, or any inset params.
     // The insets are read once during the first composition, so switching them reloads the page.
     (function () {
-        var button = document.getElementById("toggleInsets");
-        if (!button) return;
         var params = new URLSearchParams(window.location.search);
         var enabled = params.has("insetTop") || params.has("insetBottom");
+        var toolbar = document.getElementById("wallpaper-toolbar");
+        if (toolbar && (enabled || params.has("tools"))) toolbar.hidden = false;
+
+        var button = document.getElementById("toggleInsets");
+        if (!button) return;
         button.textContent = enabled ? "Insets: on" : "Insets: off";
         button.setAttribute("aria-pressed", enabled ? "true" : "false");
         button.addEventListener("click", function () {
             var next = new URLSearchParams(window.location.search);
+            // Keep the toolbar reachable after the reload, even when it was only shown because of
+            // the insets: otherwise turning insets off would hide the button that turns them on.
+            next.set("tools", "");
             if (enabled) {
                 next.delete("insetTop");
                 next.delete("insetBottom");

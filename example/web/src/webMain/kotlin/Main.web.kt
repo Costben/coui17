@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -67,6 +70,8 @@ fun main() {
         // into the overlay's font bar. Runs in an outer scope, so it survives the overlay's timeout.
         val fontFamilyResolver = LocalFontFamilyResolver.current
         val scope = rememberCoroutineScope()
+        var fontsReady by remember { mutableStateOf(false) }
+        var fontGeneration by remember { mutableIntStateOf(0) }
         LaunchedEffect(cssUrl, fontFamilyResolver) {
             withFrameNanos {} // let the first frame paint behind the overlay
             val preload = scope.launch {
@@ -74,12 +79,26 @@ fun main() {
                     platformSetFontProgress(done, total)
                 }
             }
-            withTimeoutOrNull(LOADING_FONT_TIMEOUT_MS) { preload.join() }
+            // Hold the app back until the CJK fallback is registered: text laid out before that is
+            // never re-laid out, so the first screen would stay as tofu.
+            val fontsLoaded = withTimeoutOrNull(LOADING_FONT_TIMEOUT_MS) { preload.join() } != null
+            fontsReady = true
             platformHideLoading()
+            if (!fontsLoaded) {
+                // The app is already on screen with fallback fonts. Once the late subsets land,
+                // rebuild the tree once so text composed from now on uses them. Trade-off: the app
+                // state resets once, and only on slow networks where the timeout fires.
+                preload.join()
+                fontGeneration++
+            }
         }
 
-        Box(Modifier.fillMaxSize().padding(safePadding)) {
-            Coui17App()
+        if (fontsReady) {
+            key(fontGeneration) {
+                Box(Modifier.fillMaxSize().padding(safePadding)) {
+                    Coui17App()
+                }
+            }
         }
     }
 }
