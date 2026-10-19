@@ -59,8 +59,8 @@ object GlassDefaults {
      *
      * ColorOS does not publish a bar-radius token; the only radius values it ships are the px radii
      * of the popup and dialog backgrounds (`coui_popup_*`/`coui_dialog_*`, 160–400px), which use the
-     * framework's own blur unit rather than `RenderEffect`'s. 25dp matches the value the library's
-     * own `BlurredBar` uses for a top bar.
+     * framework's own blur unit rather than `RenderEffect`'s. 25dp matches the radius the example
+     * app's blurred top bar has always used.
      */
     val BlurRadius = 25f
 

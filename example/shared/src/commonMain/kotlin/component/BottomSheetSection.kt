@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -43,13 +42,6 @@ import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import io.github.suqi8.coui.kmp.window.WindowBottomSheet
-
-fun LazyListScope.bottomSheetSection() {
-    item(key = "bottomSheet") {
-        SmallTitle(text = "BottomSheet")
-        BottomSheetDemo()
-    }
-}
 
 /** Renders the "BottomSheet" gallery section content: the two sheet entry rows and their sheets. */
 @Composable

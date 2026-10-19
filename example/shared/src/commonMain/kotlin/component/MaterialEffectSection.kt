@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,23 +37,11 @@ import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
 import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
 import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SpotLightDefaults
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.materialShadowEdge
 import io.github.suqi8.coui.kmp.basic.spotLight
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.materialEffectSection() {
-    item(key = "materialShadowEdge") {
-        SmallTitle(text = "MaterialShadowEdge")
-        MaterialShadowEdgeDemo()
-    }
-    item(key = "spotLight") {
-        SmallTitle(text = "SpotLight")
-        SpotLightDemo()
-    }
-}
 
 /** Renders the "MaterialShadowEdge" gallery section content (capsule, circle and rounded plates showing the material shadow edge). */
 @Composable

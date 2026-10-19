@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -22,18 +21,10 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.ButtonSize
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Stepper
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
-
-fun LazyListScope.buttonSection() {
-    item(key = "button") {
-        SmallTitle(text = "Button")
-        ButtonDemo()
-    }
-}
 
 /** Renders the "Button" gallery section content: text buttons, disabled and borderless variants, and a stepper row. */
 @Composable

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +26,6 @@ import io.github.suqi8.coui.kmp.basic.HintAnimationLayout
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TopTips
@@ -37,17 +35,6 @@ import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.hintAndTipsSection() {
-    item(key = "hintAnimationLayout") {
-        SmallTitle(text = "HintAnimationLayout")
-        HintAnimationLayoutDemo()
-    }
-    item(key = "topTipsStyles") {
-        SmallTitle(text = "TopTips Styles")
-        TopTipsStylesDemo()
-    }
-}
 
 /** Renders the "HintAnimationLayout" gallery section content (a card wrapping the hint animation demo). */
 @Composable

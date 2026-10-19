@@ -4,7 +4,6 @@ package component
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
@@ -16,7 +15,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.cardListPositionOf
 import io.github.suqi8.coui.kmp.preference.ButtonPreference
 import io.github.suqi8.coui.kmp.preference.MarkPreference
@@ -24,27 +22,6 @@ import io.github.suqi8.coui.kmp.preference.RecommendedItem
 import io.github.suqi8.coui.kmp.preference.RecommendedPreference
 import io.github.suqi8.coui.kmp.preference.SwitchLoadingPreference
 import kotlinx.coroutines.delay
-
-fun LazyListScope.preferenceExtrasSection() {
-    item(key = "preferenceExtras") {
-        SmallTitle(text = "SwitchLoadingPreference")
-        SwitchLoadingPreferenceDemo()
-
-        SmallTitle(text = "MarkPreference")
-        MarkPreferenceDemo()
-
-        // A standalone row is CardListPosition.Full: both rounded edges get the padding, so this
-        // card is 4dp taller than a middle row of the group above.
-        SmallTitle(text = "MarkPreference (standalone, Full)")
-        MarkPreferenceStandaloneFullDemo()
-
-        SmallTitle(text = "ButtonPreference")
-        ButtonPreferenceDemo()
-
-        SmallTitle(text = "RecommendedPreference")
-        RecommendedPreferenceDemo()
-    }
-}
 
 /** Renders the "SwitchLoadingPreference" gallery section content: an async toggle and an always loading one. */
 @Composable
@@ -119,7 +96,13 @@ fun MarkPreferenceDemo() {
     }
 }
 
-/** Renders the "MarkPreference (standalone, Full)" gallery section content: a card with a single mark row. */
+/**
+ * Renders the "MarkPreference (standalone, Full)" gallery section content: a card with a single mark
+ * row.
+ *
+ * A standalone row is CardListPosition.Full: both rounded edges get the padding, so this card is 4dp
+ * taller than a middle row of a group.
+ */
 @Composable
 fun MarkPreferenceStandaloneFullDemo() {
     Card(

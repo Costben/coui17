@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,18 +19,10 @@ import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.NavigationPopupMenu
 import io.github.suqi8.coui.kmp.basic.NavigationPopupMenuItem
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Search
 import io.github.suqi8.coui.kmp.icon.extended.Settings
-
-fun LazyListScope.navigationPopupMenuSection() {
-    item(key = "navigationPopupMenu") {
-        SmallTitle(text = "NavigationPopupMenu")
-        NavigationPopupMenuDemo()
-    }
-}
 
 /** Renders the "NavigationPopupMenu" gallery section content: a button that opens a navigation popup menu. */
 @Composable

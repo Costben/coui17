@@ -3,7 +3,6 @@
 package component
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -20,7 +19,6 @@ import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Edit
 import io.github.suqi8.coui.kmp.icon.extended.Sort
@@ -29,15 +27,6 @@ import io.github.suqi8.coui.kmp.menu.WindowDropdownMenu
 import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
 import io.github.suqi8.coui.kmp.preference.WindowDropdownPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.dropdownSection() {
-    item(key = "dropdown") {
-        SmallTitle(text = "Dropdown")
-        DropdownDemo()
-        SmallTitle(text = "Dropdown Item Variants")
-        DropdownItemVariants()
-    }
-}
 
 /** Renders the "Dropdown" gallery section content: the overlay and window dropdown preferences in a card. */
 @Composable

@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import appstate.LocalAppState
 import appstate.LocalIsWideScreen
-import appstate.LocalLegacyChromeSettingsEnabled
 import appstate.LocalNavigator
 import appstate.LocalUpdateAppState
 import i18n.AppLanguage
@@ -53,14 +52,6 @@ import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
 
-private val NavigationBarDisplayModeOptions = listOf("IconAndText", "IconOnly", "TextOnly", "IconWithSelectedLabel")
-private val NavigationRailDisplayModeOptions = listOf("IconAndText", "IconOnly", "TextOnly", "IconWithSelectedLabel")
-private val FloatingNavigationBarStyleOptions = listOf("Default", "iOS-like")
-private val FloatingNavigationBarPositionOptions = listOf("Center", "Start", "End")
-private val FloatingToolbarPositionOptions =
-    listOf("TopStart", "CenterStart", "BottomStart", "TopEnd", "CenterEnd", "BottomEnd", "TopCenter", "BottomCenter")
-private val FloatingToolbarOrientationOptions = listOf("Horizontal", "Vertical")
-private val FabPositionOptions = listOf("Start", "Center", "End", "EndOverlay")
 private val ColorModeOptions = listOf("System", "Light", "Dark", "MonetSystem", "MonetLight", "MonetDark")
 private val PaletteStyleOptions = ThemePaletteStyle.entries.map { it.name }
 private val ColorSpecOptions = ThemeColorSpec.entries.map { it.name }
@@ -112,7 +103,6 @@ private fun SettingsContent(
     val updateAppState = LocalUpdateAppState.current
     val navigator = LocalNavigator.current
     val lazyListState = rememberLazyListState()
-    val legacyChromeSettingsEnabled = LocalLegacyChromeSettingsEnabled.current
 
     // The host reserves its own bar's band and the scaffold reserves this page's: both are handed to
     // the padding helper so the content starts clear of whichever bar is actually in the way. Keeping
@@ -189,115 +179,6 @@ private fun SettingsContent(
                                 checked = appState.enableBlur,
                                 onCheckedChange = { updateAppState { state -> state.copy(enableBlur = it) } },
                             )
-                        }
-                    }
-                    if (legacyChromeSettingsEnabled) {
-                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                        SwitchPreference(
-                            title = str("Show TopAppBar"),
-                            checked = appState.showTopAppBar,
-                            onCheckedChange = { updateAppState { state -> state.copy(showTopAppBar = it) } },
-                        )
-                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                        SwitchPreference(
-                            title = if (isWideScreen) str("Show NavigationRail") else str("Show NavigationBar"),
-                            checked = appState.showNavigationBar,
-                            onCheckedChange = { updateAppState { state -> state.copy(showNavigationBar = it) } },
-                        )
-                        AnimatedVisibility(visible = appState.showNavigationBar && !isWideScreen && !appState.useFloatingNavigationBar) {
-                            Column {
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                OverlayDropdownPreference(
-                                    title = str("NavigationBar Mode"),
-                                    items = NavigationBarDisplayModeOptions.map { str(it) },
-                                    selectedIndex = appState.navigationBarMode,
-                                    onSelectedIndexChange = { updateAppState { state -> state.copy(navigationBarMode = it) } },
-                                )
-                            }
-                        }
-                        AnimatedVisibility(visible = appState.showNavigationBar && isWideScreen) {
-                            Column {
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                OverlayDropdownPreference(
-                                    title = str("NavigationRail Mode"),
-                                    items = NavigationRailDisplayModeOptions.map { str(it) },
-                                    selectedIndex = appState.navigationRailMode,
-                                    onSelectedIndexChange = { updateAppState { state -> state.copy(navigationRailMode = it) } },
-                                )
-                            }
-                        }
-                        AnimatedVisibility(visible = appState.showNavigationBar && !isWideScreen) {
-                            Column {
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                SwitchPreference(
-                                    title = str("Use FloatingNavigationBar"),
-                                    checked = appState.useFloatingNavigationBar,
-                                    onCheckedChange = { updateAppState { state -> state.copy(useFloatingNavigationBar = it) } },
-                                )
-                                AnimatedVisibility(visible = appState.useFloatingNavigationBar) {
-                                    Column {
-                                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                        OverlayDropdownPreference(
-                                            title = str("FloatingNavigationBar Style"),
-                                            items = FloatingNavigationBarStyleOptions.map { str(it) },
-                                            selectedIndex = appState.floatingNavigationBarStyle,
-                                            onSelectedIndexChange = { updateAppState { state -> state.copy(floatingNavigationBarStyle = it) } },
-                                        )
-                                        AnimatedVisibility(visible = appState.floatingNavigationBarStyle == 0) {
-                                            Column {
-                                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                                OverlayDropdownPreference(
-                                                    title = str("FloatingNavigationBar Position"),
-                                                    items = FloatingNavigationBarPositionOptions.map { str(it) },
-                                                    selectedIndex = appState.floatingNavigationBarPosition,
-                                                    onSelectedIndexChange = { updateAppState { state -> state.copy(floatingNavigationBarPosition = it) } },
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                        SwitchPreference(
-                            title = str("Show FloatingToolbar"),
-                            checked = appState.showFloatingToolbar,
-                            onCheckedChange = { updateAppState { state -> state.copy(showFloatingToolbar = it) } },
-                        )
-                        AnimatedVisibility(visible = appState.showFloatingToolbar) {
-                            Column {
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                OverlayDropdownPreference(
-                                    title = str("FloatingToolbar Position"),
-                                    items = FloatingToolbarPositionOptions.map { str(it) },
-                                    selectedIndex = appState.floatingToolbarPosition,
-                                    onSelectedIndexChange = { updateAppState { state -> state.copy(floatingToolbarPosition = it) } },
-                                )
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                OverlayDropdownPreference(
-                                    title = str("FloatingToolbar Orientation"),
-                                    items = FloatingToolbarOrientationOptions.map { str(it) },
-                                    selectedIndex = appState.floatingToolbarOrientation,
-                                    onSelectedIndexChange = { updateAppState { state -> state.copy(floatingToolbarOrientation = it) } },
-                                )
-                            }
-                        }
-                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                        SwitchPreference(
-                            title = str("Show FloatingActionButton"),
-                            checked = appState.showFloatingActionButton,
-                            onCheckedChange = { updateAppState { state -> state.copy(showFloatingActionButton = it) } },
-                        )
-                        AnimatedVisibility(visible = appState.showFloatingActionButton) {
-                            Column {
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                                OverlayDropdownPreference(
-                                    title = str("FloatingActionButton Position"),
-                                    items = FabPositionOptions.map { str(it) },
-                                    selectedIndex = appState.floatingActionButtonPosition,
-                                    onSelectedIndexChange = { updateAppState { state -> state.copy(floatingActionButtonPosition = it) } },
-                                )
-                            }
                         }
                     }
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))

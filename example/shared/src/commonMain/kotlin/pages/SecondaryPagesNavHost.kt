@@ -26,14 +26,12 @@ import navigation3.Route
 /**
  * Hosts the secondary pages behind a caller-supplied home screen.
  *
- * The stock coui16 gallery owns its whole window: [appstate.LocalNavigator] is created once in
- * `AppContent` and the five pages below are listed in its `entryProvider`. A host that only wants
- * the pages — the ColorOS 17 gallery, which draws its own chrome and keeps its own home — cannot
- * reuse `AppContent`, because that would also drag in the coui16 home. This composable is the
- * navigation half alone: it builds the back stack, publishes the [Navigator] into
- * [appstate.LocalNavigator], and renders [mainContent] as the `Route.Main` entry so every
- * `navigator.push` inside it actually lands somewhere. Before this existed the pushes fell on a
- * stack nothing drew, and the arrows in the "Other" section were inert.
+ * The ColorOS 17 gallery draws its own chrome and its own home, so it needs the pages without any
+ * home of their own. This composable is the navigation half alone: it builds the back stack,
+ * publishes the [Navigator] into [appstate.LocalNavigator], and renders [mainContent] as the
+ * `Route.Main` entry so every `navigator.push` inside it lands somewhere. The pages it hosts are
+ * listed in its `entryProvider`. Without a navigator and a `Route.Main` entry the pushes would fall
+ * on a stack nothing draws, and the arrows in the "Other" section would be inert.
  *
  * @param padding The outer padding the host already applies to its own content. Each page adds it
  *   to the insets of the scaffold it draws, so this is normally zero for a full-window host.

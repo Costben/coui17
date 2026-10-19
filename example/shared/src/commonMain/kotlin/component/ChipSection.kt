@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -24,24 +23,12 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Chip
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TopTips
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Check
 import io.github.suqi8.coui.kmp.icon.basic.Search
-
-fun LazyListScope.chipSection() {
-    item(key = "chip") {
-        SmallTitle(text = "Chip")
-        ChipDemo()
-    }
-    item(key = "topTips") {
-        SmallTitle(text = "TopTips")
-        TopTipsDemoContent()
-    }
-}
 
 /** Renders the "Chip" gallery section content: a card of multi-select, single-select and disabled chip rows. */
 @Composable

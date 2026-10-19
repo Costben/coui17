@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -21,17 +20,9 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BreadcrumbBar
 import io.github.suqi8.coui.kmp.basic.BreadcrumbItem
 import io.github.suqi8.coui.kmp.basic.Card
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.joinToPath
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.breadcrumbBarSection() {
-    item(key = "breadcrumbBar") {
-        SmallTitle(text = "BreadcrumbBar")
-        BreadcrumbBarDemo()
-    }
-}
 
 /** Renders the "BreadcrumbBar" gallery section content (a breadcrumb bar plus a card of variants). */
 @Composable

@@ -65,7 +65,6 @@ val LocalAppStrings = compositionLocalOf { AppStrings.English }
 /**
  * Whether the host draws a language entry in the settings page.
  *
- * The ColorOS 17 gallery opts in. The coui16 demo leaves it off, so its own screens keep the copy
- * they have always had.
+ * The ColorOS 17 gallery opts in. Hosts that leave it off keep the source copy on every screen.
  */
 val LocalLanguageSwitchEnabled = staticCompositionLocalOf { false }

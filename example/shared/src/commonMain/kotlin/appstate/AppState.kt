@@ -20,17 +20,6 @@ data class AppState(
     // UI
     val showFPSMonitor: Boolean = false,
     val showTopAppBar: Boolean = true,
-    val showNavigationBar: Boolean = true,
-    val navigationBarMode: Int = 0,
-    val navigationRailMode: Int = 0,
-    val useFloatingNavigationBar: Boolean = false,
-    val floatingNavigationBarPosition: Int = 0,
-    val floatingNavigationBarStyle: Int = 0,
-    val showFloatingToolbar: Boolean = false,
-    val floatingToolbarPosition: Int = 1,
-    val floatingToolbarOrientation: Int = 1,
-    val showFloatingActionButton: Boolean = false,
-    val floatingActionButtonPosition: Int = 2,
     val enablePageUserScroll: Boolean = true,
     val enableScrollEndHaptic: Boolean = true,
     val enableCornerClip: Boolean = true,
@@ -53,6 +42,3 @@ val LocalUpdateAppState = staticCompositionLocalOf<((AppState) -> AppState) -> U
 
 val LocalNavigator = staticCompositionLocalOf<Navigator> { error("No navigator found!") }
 val LocalIsWideScreen = staticCompositionLocalOf { false }
-
-/** Whether the host supports the configurable legacy bars and floating controls. */
-val LocalLegacyChromeSettingsEnabled = staticCompositionLocalOf { true }

@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import appstate.AppState
 import appstate.LocalAppState
-import appstate.LocalLegacyChromeSettingsEnabled
 import appstate.LocalUpdateAppState
 import component.SearchPager
 import i18n.LocalAppStrings
@@ -130,7 +129,6 @@ fun Coui17App(
     ) {
         CompositionLocalProvider(
             LocalAppState provides appState,
-            LocalLegacyChromeSettingsEnabled provides false,
             LocalUpdateAppState provides updateAppState,
             LocalSquircleEnabled provides appState.enableSquircle,
             // One provider for the whole app: every screen resolves its copy through this, so

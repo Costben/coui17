@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,7 +30,6 @@ import io.github.suqi8.coui.kmp.basic.IntentSeekBarDefaults
 import io.github.suqi8.coui.kmp.basic.IntentSeekBarSize
 import io.github.suqi8.coui.kmp.basic.SearchHistoryView
 import io.github.suqi8.coui.kmp.basic.Slider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TouchSearchView
@@ -53,21 +51,6 @@ private val DemoHistory = listOf(
     "trackball mouse",
     "thermal paste",
 )
-
-fun LazyListScope.searchAndSliderSection() {
-    item(key = "intentSeekBar") {
-        SmallTitle(text = "IntentSeekBar")
-        IntentSeekBarDemoContent()
-    }
-    item(key = "touchSearchView") {
-        SmallTitle(text = "TouchSearchView")
-        TouchSearchViewDemoContent()
-    }
-    item(key = "searchHistoryView") {
-        SmallTitle(text = "SearchHistoryView")
-        SearchHistoryViewDemoContent()
-    }
-}
 
 /** Renders the "IntentSeekBar" gallery section content: a card of intent seek bar variants and a plain slider. */
 @Composable

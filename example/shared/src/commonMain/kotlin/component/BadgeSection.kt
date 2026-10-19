@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,21 +27,10 @@ import io.github.suqi8.coui.kmp.basic.BadgeDefaults
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.LoadingButton
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Stepper
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Settings
 import kotlinx.coroutines.delay
-
-fun LazyListScope.badgeSection() {
-    item(key = "badge") {
-        SmallTitle(text = "Loading Button")
-        LoadingButtonDemo()
-
-        SmallTitle(text = "Badge")
-        BadgeDemo()
-    }
-}
 
 /** Renders the primary and secondary loading buttons together with their timed loading state. */
 @Composable

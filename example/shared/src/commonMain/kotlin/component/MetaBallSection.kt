@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -27,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.MetaBallParticle
 import io.github.suqi8.coui.kmp.basic.MetaBallSurface
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Switch
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
@@ -37,13 +35,6 @@ import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
 import org.jetbrains.compose.resources.painterResource
 import utils.WallpaperState
 import utils.rememberBlurBackdrop
-
-fun LazyListScope.metaBallSection() {
-    item(key = "metaBall") {
-        SmallTitle(text = "MetaBallSurface")
-        MetaBallSurfaceDemo()
-    }
-}
 
 /** Renders the "MetaBallSurface" gallery section content: the melt ball over its wallpaper backdrop. */
 @Composable

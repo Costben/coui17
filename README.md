@@ -46,7 +46,7 @@ attached to the runs of [`example.yml`](.github/workflows/example.yml).
 | :--- | :--- |
 | `coui-core/`, `coui-ui/`, `coui-preference/`, `coui-icons/`, `coui-blur/`, `coui-squircle/`, `coui-shader/`, `coui-nav/`, `coui-navigation3-ui/` | The nine published library modules |
 | `coui-*/api/` | Committed binary-compatibility dumps, checked by `apiCheck` |
-| `example/` | Sample applications: `shared`, `android`, `coui17`, `desktop`, `web`, `ios`, `macos` |
+| `example/` | The demo app, one ColorOS 17 gallery shared by all platforms: `shared` holds the gallery (its shell is `coui17/`), and `android`, `desktop`, `web`, `ios` and `macos` are the per-platform entry points |
 | `docs/` | VitePress documentation site, English at the root and Chinese under `docs/zh_CN/` |
 | `build-plugins/` | Included Gradle build with the shared module conventions and the publication plugin |
 | `baselineprofile/` | Baseline-profile generator for the Android artifacts |
@@ -214,7 +214,7 @@ This library is the work of three projects in a row, all licensed under Apache-2
 2. [**COUI**](https://github.com/suqi8/coui) — by suqi8. Rethemed Miuix to the ColorOS 16 design
    language, renamed the modules to `coui-*` and the package prefix to
    `io.github.suqi8.coui.kmp`, and took over publication. This fork starts from COUI 1.1.0.
-3. **This fork** — continues COUI towards the ColorOS 17 design language and adds the `coui17`
-   sample application.
+3. **This fork** — continues COUI towards the ColorOS 17 design language and adds the ColorOS 17
+   demo app under `example/`.
 
 [`UPSTREAM.md`](UPSTREAM.md) describes the relationship in full.

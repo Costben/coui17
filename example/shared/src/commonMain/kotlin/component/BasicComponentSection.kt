@@ -5,7 +5,6 @@ package component
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -13,16 +12,8 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.basicComponentSection() {
-    item(key = "basicComponent") {
-        SmallTitle(text = "Basic Component")
-        BasicComponentDemo()
-    }
-}
 
 /** Renders the enabled and disabled BasicComponent samples inside one card. */
 @Composable

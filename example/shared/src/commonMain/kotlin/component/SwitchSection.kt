@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,18 +20,10 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Switch
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.preference.SwitchPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.switchSection() {
-    item(key = "switch") {
-        SmallTitle(text = "Switch")
-        SwitchDemo()
-    }
-}
 
 /** Renders the "Switch" gallery section content: switches in several states plus expandable and disabled switch preferences. */
 @Composable

@@ -7,7 +7,6 @@ package component
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -20,19 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TabRow
 import io.github.suqi8.coui.kmp.basic.TabRowDefaults
 import io.github.suqi8.coui.kmp.basic.TabRowWithContour
 import io.github.suqi8.coui.kmp.basic.Text
 import kotlinx.coroutines.launch
-
-fun LazyListScope.tabRowSection() {
-    item(key = "tabRow") {
-        SmallTitle(text = "TabRow")
-        TabRowDemo()
-    }
-}
 
 /** Renders the "TabRow" gallery section content: a frameless tab row plus contour tab rows over a pager. */
 @Composable

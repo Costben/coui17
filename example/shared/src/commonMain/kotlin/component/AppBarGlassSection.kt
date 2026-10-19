@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -24,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.TabRowWithContour
 import io.github.suqi8.coui.kmp.basic.Text
@@ -41,18 +39,6 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import org.jetbrains.compose.resources.painterResource
 import utils.WallpaperState
 import utils.rememberBlurBackdrop
-
-fun LazyListScope.appBarGlassSection() {
-    item(key = "appBarGlass") {
-        SmallTitle(text = "TopAppBar (glass)")
-        TopAppBarGlassDemo()
-    }
-
-    item(key = "appBarForms") {
-        SmallTitle(text = "TopAppBar (ColorOS 17 forms)")
-        TopAppBarColorOS17FormsDemo()
-    }
-}
 
 /** Renders the "TopAppBar (glass)" gallery section content: a small top app bar over a blurred wallpaper. */
 @Composable

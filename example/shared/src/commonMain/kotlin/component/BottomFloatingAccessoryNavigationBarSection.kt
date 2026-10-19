@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -28,7 +27,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Switch
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
@@ -43,13 +41,6 @@ import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
 import org.jetbrains.compose.resources.painterResource
 import utils.WallpaperState
 import utils.rememberBlurBackdrop
-
-fun LazyListScope.bottomFloatingAccessoryNavigationBarSection() {
-    item(key = "bottomFloatingAccessoryNavigationBar") {
-        SmallTitle(text = "BottomFloatingAccessoryNavigationBar")
-        BottomFloatingAccessoryNavigationBarDemo()
-    }
-}
 
 /** Renders the "BottomFloatingAccessoryNavigationBar" gallery section content: the bar over a wallpaper with its accessory switches. */
 @Composable

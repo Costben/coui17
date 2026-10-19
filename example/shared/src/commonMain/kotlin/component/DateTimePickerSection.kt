@@ -3,7 +3,6 @@
 package component
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,24 +14,8 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.DatePicker
 import io.github.suqi8.coui.kmp.basic.DateValue
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TimePicker
 import io.github.suqi8.coui.kmp.basic.TimeValue
-
-fun LazyListScope.dateTimePickerSection() {
-    item(key = "datePicker") {
-        SmallTitle(text = "DatePicker")
-        DatePickerDemo()
-    }
-    item(key = "timePicker24h") {
-        SmallTitle(text = "TimePicker (24-hour)")
-        TimePicker24HourDemo()
-    }
-    item(key = "timePicker12h") {
-        SmallTitle(text = "TimePicker (12-hour)")
-        TimePicker12HourDemo()
-    }
-}
 
 /** Renders the "DatePicker" gallery section content: a card holding a date picker. */
 @Composable

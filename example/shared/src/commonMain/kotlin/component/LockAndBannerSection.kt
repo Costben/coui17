@@ -9,13 +9,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,20 +36,12 @@ import io.github.suqi8.coui.kmp.basic.NumericKeyboard
 import io.github.suqi8.coui.kmp.basic.NumericKeyboardDefaults
 import io.github.suqi8.coui.kmp.basic.SimpleLockType
 import io.github.suqi8.coui.kmp.basic.SimpleLockView
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Delete
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
-
-fun LazyListScope.lockAndBannerSection() {
-    item(key = "lockAndBanner") {
-        SmallTitle(text = "LockPatternView / NumericKeyboard / SimpleLockView / LockScreenPwdInput / Banner")
-        LockAndBannerDemo()
-    }
-}
 
 /** Renders the lock pattern, numeric keyboard, simple lock, password input and banner demos inside one card. */
 @Composable

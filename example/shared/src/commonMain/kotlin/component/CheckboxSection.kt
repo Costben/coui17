@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,18 +18,10 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Checkbox
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.preference.CheckboxLocation
 import io.github.suqi8.coui.kmp.preference.CheckboxPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.checkboxSection() {
-    item(key = "checkbox") {
-        SmallTitle(text = "Checkbox")
-        CheckboxDemo()
-    }
-}
 
 /** Renders the "Checkbox" gallery section content (a card of checkbox rows and preference variants). */
 @Composable

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,20 +24,12 @@ import androidx.compose.ui.unit.sp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.PressFeedbackType
-
-fun LazyListScope.cardSection() {
-    item(key = "card") {
-        SmallTitle(text = "Card")
-        CardDemo()
-    }
-}
 
 /** Renders the "Card" gallery section content (press-feedback cards plus the long-press dialog card). */
 @Composable

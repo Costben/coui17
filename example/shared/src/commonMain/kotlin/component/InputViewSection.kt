@@ -6,7 +6,6 @@ package component
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -16,38 +15,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.CodeTextField
 import io.github.suqi8.coui.kmp.basic.InputView
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 
-fun LazyListScope.inputViewSection() {
-    item(key = "inputView") {
-        val focusManager = LocalFocusManager.current
-
-        // ColorOS card inputs: COUICardSingleInputView (single line, title inside the card,
-        // counter / clear button at the end, error caption below the card) and
-        // COUICardMultiInputView (multi line, counter at the bottom-end corner).
-        SmallTitle(text = "InputView (card single input)")
-        InputViewCardSingleInputDemo(focusManager)
-        SmallTitle(text = "InputView (card multi input)")
-        InputViewCardMultiInputDemo(focusManager)
-    }
-    item(key = "codeTextField") {
-        val focusManager = LocalFocusManager.current
-
-        SmallTitle(text = "CodeTextField")
-        CodeTextFieldDemo(focusManager)
-        SmallTitle(text = "CodeTextField (security)")
-        CodeTextFieldSecurityDemo(focusManager)
-    }
-}
-
-/** Renders the "InputView (card single input)" gallery section content. */
+/**
+ * Renders the "InputView (card single input)" gallery section content.
+ *
+ * ColorOS card inputs: COUICardSingleInputView (single line, title inside the card, counter / clear
+ * button at the end, error caption below the card) and COUICardMultiInputView (multi line, counter at
+ * the bottom-end corner, see [InputViewCardMultiInputDemo]).
+ */
 @Composable
 fun InputViewCardSingleInputDemo(focusManager: FocusManager) {
     var nickname by remember { mutableStateOf("") }

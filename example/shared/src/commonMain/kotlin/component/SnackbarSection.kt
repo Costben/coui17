@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,20 +20,12 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SnackbarDuration
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.SnackbarResult
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import kotlinx.coroutines.launch
-
-fun LazyListScope.snackbarSection(snackbarHostState: SnackbarHostState) {
-    item(key = "snackbar") {
-        SmallTitle(text = "Snackbar")
-        SnackbarDemo(snackbarHostState)
-    }
-}
 
 /** Renders the "Snackbar" gallery section content (buttons that dismiss and show snackbars of every duration). */
 @Composable

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,7 +26,6 @@ import io.github.suqi8.coui.kmp.basic.NotificationSnackBar
 import io.github.suqi8.coui.kmp.basic.NotificationSnackBarHost
 import io.github.suqi8.coui.kmp.basic.NotificationSnackBarHostState
 import io.github.suqi8.coui.kmp.basic.NotificationSnackBarImageType
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TagView
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
@@ -36,25 +34,6 @@ import io.github.suqi8.coui.kmp.icon.extended.Email
 import io.github.suqi8.coui.kmp.icon.extended.Photos
 import io.github.suqi8.coui.kmp.icon.extended.WorldClock
 import kotlinx.coroutines.launch
-
-fun LazyListScope.legacyComponentSection() {
-    item(key = "tagView") {
-        SmallTitle(text = "TagView")
-        TagViewDemo()
-    }
-    item(key = "notificationSwipe") {
-        SmallTitle(text = "NotificationSwipeBox")
-        NotificationSwipeDemo()
-    }
-    item(key = "notificationSnackBar") {
-        SmallTitle(text = "NotificationSnackBar")
-        NotificationSnackBarDemo()
-    }
-    item(key = "marqueeTextView") {
-        SmallTitle(text = "MarqueeText")
-        MarqueeTextDemo()
-    }
-}
 
 /** Renders the "TagView" gallery section content: three tag chips in a row. */
 @Composable

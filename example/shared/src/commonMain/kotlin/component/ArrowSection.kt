@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -26,7 +25,6 @@ import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TextField
@@ -37,13 +35,6 @@ import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.preference.SliderPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.arrowSection() {
-    item(key = "arrow") {
-        SmallTitle(text = "Arrow")
-        ArrowDemo()
-    }
-}
 
 /** Renders the Arrow gallery section: a card of arrow and slider preferences plus its volume dialog. */
 @Composable

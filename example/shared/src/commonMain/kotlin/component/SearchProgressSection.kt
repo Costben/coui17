@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,7 +36,6 @@ import io.github.suqi8.coui.kmp.basic.PopupMenuRotation
 import io.github.suqi8.coui.kmp.basic.SearchViewAnimate
 import io.github.suqi8.coui.kmp.basic.SearchViewAnimateType
 import io.github.suqi8.coui.kmp.basic.Slider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.popupMenuRotation
@@ -47,21 +45,6 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
 import kotlinx.coroutines.delay
-
-fun LazyListScope.searchProgressSection() {
-    item(key = "searchViewAnimate") {
-        SmallTitle(text = "SearchViewAnimate")
-        SearchViewAnimateDemo()
-    }
-    item(key = "loadProgressButton") {
-        SmallTitle(text = "LoadProgressButton")
-        LoadProgressButtonDemo()
-    }
-    item(key = "popupMenuRotation") {
-        SmallTitle(text = "PopupMenuRotation")
-        PopupMenuRotationDemo()
-    }
-}
 
 /** Renders the "SearchViewAnimate" gallery section content (a search bar with a collapse slider and query readout). */
 @Composable

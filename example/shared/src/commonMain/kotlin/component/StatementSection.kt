@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,16 +17,8 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.FullPageStatement
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.fullPageStatementSection() {
-    item(key = "fullPageStatement") {
-        SmallTitle(text = "FullPageStatement")
-        FullPageStatementDemoContent()
-    }
-}
 
 /** Renders the "FullPageStatement" gallery section content (the statement page hosted in a card). */
 @Composable

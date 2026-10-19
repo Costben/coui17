@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,43 +24,10 @@ import io.github.suqi8.coui.kmp.basic.ColorPalette
 import io.github.suqi8.coui.kmp.basic.ColorPicker
 import io.github.suqi8.coui.kmp.basic.ColorSpace
 import io.github.suqi8.coui.kmp.basic.ColorSwatchPicker
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextField
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.round
-
-fun LazyListScope.colorPickerSection() {
-    item(key = "colorSwatchPicker") {
-        SmallTitle(text = "ColorSwatchPicker")
-        ColorSwatchPickerCard()
-    }
-
-    item(key = "colorPicker-HSV") {
-        SmallTitle(text = "ColorPicker (HSV)")
-        ColorPickerHSVDemo()
-    }
-
-    item(key = "colorPicker-OKHSV") {
-        SmallTitle(text = "ColorPicker (OKHSV)")
-        ColorPickerOKHSVDemo()
-    }
-
-    item(key = "colorPicker-OKLAB") {
-        SmallTitle(text = "ColorPicker (OKLAB)")
-        ColorPickerOKLABDemo()
-    }
-
-    item(key = "colorPicker-OKLCH") {
-        SmallTitle(text = "ColorPicker (OKLCH)")
-        ColorPickerOKLCHDemo()
-    }
-
-    item(key = "colorPalette") {
-        SmallTitle(text = "ColorPalette")
-        ColorPaletteDemo()
-    }
-}
 
 /** Renders the "ColorSwatchPicker" gallery section content. */
 @Composable

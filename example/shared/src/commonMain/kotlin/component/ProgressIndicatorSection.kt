@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -26,15 +25,7 @@ import io.github.suqi8.coui.kmp.basic.InfiniteProgressIndicator
 import io.github.suqi8.coui.kmp.basic.LinearProgressIndicator
 import io.github.suqi8.coui.kmp.basic.ProgressIndicatorDefaults
 import io.github.suqi8.coui.kmp.basic.RotatingProgressIndicator
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
-
-fun LazyListScope.progressIndicatorSection() {
-    item(key = "progressIndicator") {
-        SmallTitle(text = "ProgressIndicator")
-        ProgressIndicatorDemo()
-    }
-}
 
 /** Renders the "ProgressIndicator" gallery section content: the linear, circular, infinite and rotating indicators. */
 @Composable

@@ -7,7 +7,6 @@ package component
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -18,37 +17,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TextField
 import io.github.suqi8.coui.kmp.basic.TextFieldMode
 
-fun LazyListScope.textFieldSection() {
-    item(key = "textField") {
-        val focusManager = LocalFocusManager.current
-
-        // ColorOS Settings dialog form: Line mode with a plain placeholder and a
-        // clear button (?couiEditTextLineHintDisableStyle + quickDelete).
-        SmallTitle(text = "TextField (Line, Settings dialog form)")
-        TextFieldLineSettingsDialogFormDemo(focusManager)
-
-        // ColorOS Settings card-preference form: bare text on a white card
-        // (COUIInputPreference, couiJustShowFocusLine=true — the focused blue line
-        // expands under the text; None mode never shows any line).
-        SmallTitle(text = "TextField (in card, Settings preference form)")
-        TextFieldInCardSettingsPreferenceFormDemo(focusManager)
-
-        SmallTitle(text = "TextField (Rectangle & floating label)")
-        TextFieldRectangleFloatingLabelDemo(focusManager)
-    }
-}
-
-/** Renders the "TextField (Line, Settings dialog form)" gallery section content: line-mode fields with clear, state, password, count and error variants. */
+/**
+ * Renders the "TextField (Line, Settings dialog form)" gallery section content: line-mode fields with
+ * clear, state, password, count and error variants.
+ *
+ * ColorOS Settings dialog form: Line mode with a plain placeholder and a clear button
+ * (?couiEditTextLineHintDisableStyle + quickDelete).
+ */
 @Composable
 fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
     var dialogText by remember { mutableStateOf("") }
@@ -116,7 +99,14 @@ fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
     )
 }
 
-/** Renders the "TextField (in card, Settings preference form)" gallery section content: a focus-line field and an undecorated field on a card. */
+/**
+ * Renders the "TextField (in card, Settings preference form)" gallery section content: a focus-line
+ * field and an undecorated field on a card.
+ *
+ * ColorOS Settings card-preference form: bare text on a white card (COUIInputPreference,
+ * couiJustShowFocusLine=true — the focused blue line expands under the text; None mode never shows
+ * any line).
+ */
 @Composable
 fun TextFieldInCardSettingsPreferenceFormDemo(focusManager: FocusManager) {
     var cardText by remember { mutableStateOf("") }

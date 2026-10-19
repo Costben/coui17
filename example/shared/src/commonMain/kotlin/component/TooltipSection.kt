@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -16,19 +15,11 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
 import io.github.suqi8.coui.kmp.basic.RichTooltipBox
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TooltipBox
 import io.github.suqi8.coui.kmp.basic.rememberTooltipState
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Edit
 import io.github.suqi8.coui.kmp.icon.extended.Info
-
-fun LazyListScope.tooltipSection() {
-    item(key = "tooltip") {
-        SmallTitle(text = "Tooltip")
-        TooltipDemo()
-    }
-}
 
 /** Renders the "Tooltip" gallery section content (a card pairing a plain tooltip with a rich tooltip). */
 @Composable

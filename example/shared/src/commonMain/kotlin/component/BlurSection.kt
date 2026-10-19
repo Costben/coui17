@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,12 +35,10 @@ import i18n.LocalAppStrings
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
-import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.blur.textureBlur
@@ -54,18 +51,6 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import org.jetbrains.compose.resources.painterResource
 import ui.isInDarkTheme
 import androidx.compose.ui.graphics.BlendMode as ComposeBlendMode
-
-fun LazyListScope.blurSection() {
-    if (!isRuntimeShaderSupported()) return
-    item(key = "blur") {
-        SmallTitle(text = "Texture Blur")
-        BlurDemo()
-    }
-    item(key = "foreground_blur") {
-        SmallTitle(text = "Foreground Blur")
-        ForegroundBlurDemo()
-    }
-}
 
 /** Renders the "Texture Blur" gallery section content: a texture-blur preview with blend, highlight and blur-parameter controls. */
 @Composable

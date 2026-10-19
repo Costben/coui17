@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +27,6 @@ import io.github.suqi8.coui.kmp.basic.FloatingButton
 import io.github.suqi8.coui.kmp.basic.FloatingButtonItem
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Add
@@ -38,21 +36,6 @@ import io.github.suqi8.coui.kmp.icon.extended.ExpandMore
 import io.github.suqi8.coui.kmp.icon.extended.Favorites
 import io.github.suqi8.coui.kmp.icon.extended.Tune
 import io.github.suqi8.coui.kmp.theme.COUITheme
-
-fun LazyListScope.calendarAndFabSection() {
-    item(key = "calendarView") {
-        SmallTitle(text = "CalendarView")
-        CalendarViewDemoContent()
-    }
-    item(key = "floatingButton") {
-        SmallTitle(text = "FloatingButton")
-        FloatingButtonDemoContent()
-    }
-    item(key = "expandableList") {
-        SmallTitle(text = "ExpandableList")
-        ExpandableListDemoContent()
-    }
-}
 
 /** Renders the "CalendarView" gallery section content: a card wrapping the calendar demo. */
 @Composable

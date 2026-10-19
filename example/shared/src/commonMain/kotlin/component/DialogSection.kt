@@ -6,7 +6,6 @@ package component
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.layout.DialogButtonBar
@@ -35,13 +33,6 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowDialog
 import kotlinx.coroutines.delay
-
-fun LazyListScope.dialogSection() {
-    item(key = "dialog") {
-        SmallTitle(text = "Dialog")
-        DialogDemo()
-    }
-}
 
 /** Renders the "Dialog" gallery section content (the dialog trigger card and every dialog demo). */
 @Composable

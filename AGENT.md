@@ -327,3 +327,13 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
   删除复刻页后 `SideNavigationBar` / `SidePaneLayout` / `CardEntrancePreference` / `CardInstructionPreference` /
   `ListDetailView` / `LunarDatePicker` 不再有任何展廊条目。
 - 深色展开态搜索浮层整屏渲染为黑（既有缺陷，根因未证）；浅色下不可见。属范围外。
+
+## 19. 演示统一为 COUI17（2026-10-19）
+
+§17 / §18 记录的是本次统一之前的状态，保留作历史，不代表现状。
+
+- `example/coui17` 模块已删除。演示外壳位于 `example/shared/src/commonMain/kotlin/coui17/`，根组件为 `Coui17App`。
+- 所有平台入口都调用 `Coui17App`：Android（`example/android`，applicationId `io.github.suqi8.coui17`）、桌面、Web、macOS、iOS。
+- 壁纸取值顺序：Android 系统壁纸 → Android 锁屏壁纸（仅 API 34 及以上，且系统壁纸没有静态图时）→ Web 预览的壁纸选择器（`utils.WallpaperState`）→ 内置的 `coui17_wallpaper.jpg`（compose resource）。
+- 旧外壳 `App.kt` / `AppContent.kt` / `MainPage.kt` 及其专用的 `Home` / `HomeLayoutScope` / `MainPagerState` 已删除；`component/` 下只为 `MainPage` 服务的 48 个 `LazyListScope.*Section()` 包装已删除，公开的 `*Demo` 内容 composable 保留。
+- 设置页删除了依赖旧外壳的 `LocalLegacyChromeSettingsEnabled` 分支（顶栏、导航栏、悬浮工具栏、悬浮按钮等 12 行），同时删除了已无读取方的 11 个 `AppState` 字段。

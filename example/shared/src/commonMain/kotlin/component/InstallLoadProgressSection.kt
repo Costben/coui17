@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,17 +24,9 @@ import io.github.suqi8.coui.kmp.basic.InstallLoadProgress
 import io.github.suqi8.coui.kmp.basic.InstallLoadStyle
 import io.github.suqi8.coui.kmp.basic.LoadProgressState
 import io.github.suqi8.coui.kmp.basic.Slider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.delay
-
-fun LazyListScope.installLoadProgressSection() {
-    item(key = "installLoadProgress") {
-        SmallTitle(text = "InstallLoadProgress")
-        InstallLoadProgressDemo()
-    }
-}
 
 /** Renders the "InstallLoadProgress" gallery section content (a card listing every load style plus the special states). */
 @Composable

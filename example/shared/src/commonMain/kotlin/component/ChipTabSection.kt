@@ -5,7 +5,6 @@ package component
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,19 +17,11 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.ChipTabData
 import io.github.suqi8.coui.kmp.basic.ChipTabGroup
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.All
 import io.github.suqi8.coui.kmp.icon.extended.File
 import io.github.suqi8.coui.kmp.icon.extended.Music
 import io.github.suqi8.coui.kmp.icon.extended.Photos
-
-fun LazyListScope.chipTabSection() {
-    item(key = "chipTab") {
-        SmallTitle(text = "ChipTab")
-        ChipTabDemo()
-    }
-}
 
 /** Renders the "ChipTab" gallery section content (single-select, icon, and red-dot/count chip tab groups). */
 @Composable

@@ -31,7 +31,7 @@ everything after it is this fork's. The full upstream history is preserved, so `
 | Documentation site scaffolding and the 134 component pages in both languages | Inherited |
 | Build tooling, publication plugin, release workflows, verification projects | Inherited |
 | ColorOS 17 metrics, component additions and reworked bars | This fork |
-| The `example/coui17` demo application | This fork |
+| The demo shell `example/shared/src/commonMain/kotlin/coui17/` (Android app id `io.github.suqi8.coui17`) | This fork |
 | `UPSTREAM.md`, the fork statements in `README.md` / `NOTICE` / the docs home pages | This fork |
 
 Roughly 158 commits sit on top of the fork point, adding new components (side pane, list-detail,

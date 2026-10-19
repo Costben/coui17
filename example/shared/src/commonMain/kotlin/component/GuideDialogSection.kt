@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,25 +19,12 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.PageIndicator
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
 import io.github.suqi8.coui.kmp.window.GuidePage
 import io.github.suqi8.coui.kmp.window.WindowGuideDialog
 import org.jetbrains.compose.resources.painterResource
-
-fun LazyListScope.guideDialogSection() {
-    item(key = "guideDialog") {
-        SmallTitle(text = "GuideDialog")
-        GuideDialogDemo()
-    }
-
-    item(key = "pageIndicator") {
-        SmallTitle(text = "PageIndicator")
-        PageIndicatorDemo()
-    }
-}
 
 /** Renders the "GuideDialog" gallery section content: the guide entry card and its two dialogs. */
 @Composable

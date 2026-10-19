@@ -4,7 +4,6 @@ package component
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -15,15 +14,7 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.preference.RadioButtonPreference
-
-fun LazyListScope.radioButtonSection() {
-    item(key = "radioButton") {
-        SmallTitle(text = "RadioButton")
-        RadioButtonDemo()
-    }
-}
 
 /** Renders the "RadioButton" gallery section content (a group of radio preferences followed by a disabled one). */
 @Composable

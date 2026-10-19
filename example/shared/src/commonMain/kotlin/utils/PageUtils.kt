@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package utils
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
@@ -26,12 +24,9 @@ import appstate.LocalAppState
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.TopAppBar
-import io.github.suqi8.coui.kmp.blur.BlendColorEntry
-import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LayerBackdrop
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
-import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
@@ -60,7 +55,7 @@ fun pageContentPadding(
     // toolbar band it draws as a sibling through [outerPadding], while the page's own scaffold only
     // knows the system bars. Taking the larger of the two keeps the content clear of whichever bar
     // is actually in the way instead of letting it start underneath the toolbar. Where a host passes
-    // the same inset it applies itself — the coui16 home does — the two are equal and nothing moves.
+    // the same inset it applies itself, the two are equal and nothing moves.
     val topPadding = maxOf(innerPadding.calculateTopPadding(), outerPadding.calculateTopPadding()) + extraTop
     val bottomPadding = outerPadding.calculateBottomPadding() + extraBottom + if (isWideScreen) {
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + WindowInsets.captionBar.asPaddingValues()
@@ -155,31 +150,5 @@ fun ContentDrawScope.drawWallpaperBackdrop(
             dstSize = targetSize,
             alpha = 0.92f,
         )
-    }
-}
-
-@Composable
-fun BlurredBar(
-    backdrop: LayerBackdrop?,
-    blurEnabled: Boolean,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = if (blurEnabled && backdrop != null) {
-            Modifier.textureBlur(
-                backdrop = backdrop,
-                shape = RectangleShape,
-                blurRadius = 25f,
-                colors = BlurDefaults.blurColors(
-                    blendColors = listOf(
-                        BlendColorEntry(color = COUITheme.colorScheme.surface.copy(0.8f)),
-                    ),
-                ),
-            )
-        } else {
-            Modifier
-        },
-    ) {
-        content()
     }
 }

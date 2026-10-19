@@ -50,7 +50,7 @@ class BaselineProfileGenerator {
         ) {
             pressHome()
             startActivityAndWait()
-            device.wait(Until.hasObject(By.text("Home")), 2_000)
+            device.wait(Until.hasObject(By.text("COUI")), 2_000)
         }
     }
 
@@ -62,16 +62,12 @@ class BaselineProfileGenerator {
         ) {
             pressHome()
             startActivityAndWait()
-            device.wait(Until.hasObject(By.text("Home")), 2_000)
+            device.wait(Until.hasObject(By.text("COUI")), 2_000)
 
-            // Scroll the Home tab
+            // Scroll the home page
             repeat(3) {
                 device.findObject(By.scrollable(true))?.fling(Direction.DOWN)
             }
-            device.waitForIdle()
-
-            // Navigate to the Settings tab
-            device.findObject(By.text("Settings"))?.click()
             device.waitForIdle()
         }
     }

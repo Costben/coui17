@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -31,7 +30,6 @@ import io.github.suqi8.coui.kmp.basic.ClickSelectMenuPlacement
 import io.github.suqi8.coui.kmp.basic.ClickSelectMenuSide
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.clickSelectMenuPositionProvider
 import io.github.suqi8.coui.kmp.basic.preciseClickAnchor
@@ -39,13 +37,6 @@ import io.github.suqi8.coui.kmp.basic.rememberPreciseClickState
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
-
-fun LazyListScope.clickSelectMenuSection() {
-    item(key = "clickSelectMenu") {
-        SmallTitle(text = "ClickSelectMenu")
-        ClickSelectMenuDemoContent()
-    }
-}
 
 /** Renders the "ClickSelectMenu" gallery section content: a card hosting the click-select menu demo. */
 @Composable

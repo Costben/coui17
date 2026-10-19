@@ -7,7 +7,6 @@ package component
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,7 +22,6 @@ import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.HorizontalPopupMenu
 import io.github.suqi8.coui.kmp.basic.HorizontalPopupMenuItem
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
@@ -33,13 +31,6 @@ import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Share
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
-
-fun LazyListScope.horizontalPopupMenuSection() {
-    item(key = "horizontalPopupMenu") {
-        SmallTitle(text = "HorizontalPopupMenu")
-        HorizontalPopupMenuDemo()
-    }
-}
 
 /** Renders the "HorizontalPopupMenu" gallery section content (a button opening a popup with labelled and icon-only menus). */
 @Composable

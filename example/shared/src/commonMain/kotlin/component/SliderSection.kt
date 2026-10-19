@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -24,26 +23,10 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Slider
 import io.github.suqi8.coui.kmp.basic.SliderDefaults
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.VerticalSlider
 import io.github.suqi8.coui.kmp.preference.RangeSliderPreference
 import io.github.suqi8.coui.kmp.preference.SliderPreference
-
-fun LazyListScope.sliderSection() {
-    item(key = "slider") {
-        SmallTitle(text = "Slider")
-        SliderDemo()
-
-        // RangeSlider
-        SmallTitle(text = "RangeSlider")
-        RangeSliderDemo()
-
-        // VerticalSlider
-        SmallTitle(text = "VerticalSlider")
-        VerticalSliderDemo()
-    }
-}
 
 /** Renders the "Slider" gallery section content: a card of slider preferences. */
 @Composable

@@ -106,6 +106,7 @@ import component.WindowIconMenuVariantsDemo
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -226,8 +227,11 @@ fun Coui17HomePage(
         coui17Entry("RecommendedPreference") { RecommendedPreferenceDemo() }
         coui17Entry("ListPreference") { ListPreferenceDemoContent() }
         coui17Entry("FullPageStatement") { FullPageStatementDemoContent() }
-        coui17Entry("Texture Blur") { BlurDemo() }
-        coui17Entry("Foreground Blur") { ForegroundBlurDemo() }
+        // Both blur demos draw through a runtime shader, which Android only offers from API 33.
+        if (isRuntimeShaderSupported()) {
+            coui17Entry("Texture Blur") { BlurDemo() }
+            coui17Entry("Foreground Blur") { ForegroundBlurDemo() }
+        }
         coui17Entry("EmptyState") { EmptyStateDemo() }
         coui17Entry("CompleteState") { CompleteStateDemo() }
         coui17Entry("FlowLayout") { FlowLayoutDemo() }
