@@ -171,6 +171,7 @@ fun AppBarBlurOverlay(
     backdrop: Backdrop? = LocalBackdrop.current,
     extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
     scrollFraction: Float = 1f,
+    blurStartFraction: Float = 0f,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     AppBarBlurOverlay(
@@ -179,6 +180,7 @@ fun AppBarBlurOverlay(
         backdrop = backdrop,
         extraHeight = extraHeight,
         scrollFraction = { scrollFraction },
+        blurStartFraction = blurStartFraction,
         content = content,
     )
 }
@@ -200,6 +202,7 @@ fun AppBarBlurOverlay(
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
     extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    blurStartFraction: Float = 0f,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     AppBarMaterialLayout(
@@ -209,6 +212,7 @@ fun AppBarBlurOverlay(
         extraHeight = extraHeight,
         scrollFraction = scrollFraction,
         modifier = modifier,
+        blurStartFraction = blurStartFraction,
         content = content,
     )
 }
@@ -233,6 +237,7 @@ internal fun AppBarMaterialLayout(
     extraHeight: Dp,
     scrollFraction: () -> Float,
     modifier: Modifier = Modifier,
+    blurStartFraction: Float = 0f,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val extraHeightPx = with(LocalDensity.current) { extraHeight.roundToPx() }
@@ -244,6 +249,7 @@ internal fun AppBarMaterialLayout(
                     containerColor = containerColor,
                     backdrop = backdrop,
                     scrollFraction = scrollFraction,
+                    blurStartFraction = blurStartFraction,
                 )
             }
             Box(Modifier.layoutId("content")) { content() }
@@ -291,6 +297,7 @@ internal fun AppBarMaterial(
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
     scrollFraction: () -> Float = { 1f },
+    blurStartFraction: Float = 0f,
 ) {
     val density = LocalDensity.current
     // Compose the effect only while the scroll fraction is non-zero. The boolean changes once when
@@ -316,7 +323,10 @@ internal fun AppBarMaterial(
                 backdrop = backdrop,
                 shape = RectangleShape,
                 blurRadius = with(density) { AppBarGlassDefaults.GradientBlurRadiusPx.toDp().value },
-                gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
+                gradient = ProgressiveBlur.Top.copy(
+                    startFraction = blurStartFraction.coerceIn(0f, 0.99f),
+                    curve = AppBarGlassDefaults.GradientBlurSpeed,
+                ),
                 colors = BlurDefaults.blurColors(),
             ).background(brush)
         }
