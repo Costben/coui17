@@ -45,6 +45,22 @@ TabRowWithContour(
 )
 ```
 
+### Opaque Segment Capsule
+
+The ColorOS 17 Settings page draws its segment capsule on an opaque surface instead of the translucent default, so cards behind the row never tint it. `TabRowDefaults.opaqueTabRowColors()` carries the sampled pair: `#E6E6E6` with a white selected capsule in light, `#373737` with `#595959` in dark.
+
+```kotlin
+val tabs = listOf("All", "Allowed", "Denied")
+var selectedTabIndex by remember { mutableStateOf(0) }
+
+TabRowWithContour(
+    tabs = tabs,
+    selectedTabIndex = selectedTabIndex,
+    onTabSelected = { selectedTabIndex = it },
+    colors = TabRowDefaults.opaqueTabRowColors()
+)
+```
+
 ### Preserve Scroll Position
 
 When the tabs cannot fit at their minimum width, the row becomes scrollable.
@@ -129,6 +145,7 @@ The TabRowDefaults object provides default configurations for the TabRow compone
 | Method Name    | Type         | Description                        |
 | -------------- | ------------ | ---------------------------------- |
 | tabRowColors() | TabRowColors | Create default color configuration |
+| opaqueTabRowColors() | TabRowColors | Create the opaque segment capsule color configuration |
 
 ### TabRowColors Class
 

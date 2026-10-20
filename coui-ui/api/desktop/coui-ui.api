@@ -3943,6 +3943,7 @@ public final class io/github/suqi8/coui/kmp/basic/TabRowDefaults {
 	public final fun getTabRowWithContourTinyCornerRadius-D9Ej5fM ()F
 	public final fun getTabRowWithContourTinyHeight-D9Ej5fM ()F
 	public final fun getTabRowWithContourTinyPadding-D9Ej5fM ()F
+	public final fun opaqueTabRowColors-RGew2ao (JJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
 	public final synthetic fun tabRowColors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
 	public final fun tabRowColors-zjMxDiM (JJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
 }

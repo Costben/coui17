@@ -715,6 +715,39 @@ object TabRowDefaults {
         )
     }
 
+    /**
+     * The opaque segment capsule ColorOS Settings draws on its page surface: light `#E6E6E6` with
+     * a white selected capsule, dark `#373737` with `#595959`. Unlike [tabRowColors], the container
+     * is not a translucent overlay, so cards behind the row stay hidden instead of tinting it.
+     *
+     * Sampled from the ColorOS 17 Settings "Privacy & security" page. The label, indicator shadow
+     * and other theme-driven roles stay the same as the default pair.
+     */
+    @Composable
+    fun opaqueTabRowColors(
+        contentColor: Color = COUITheme.colorScheme.onSurface,
+        selectedContentColor: Color = COUITheme.colorScheme.onSurface,
+        indicatorShadowColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+            IndicatorShadowDark
+        } else {
+            IndicatorShadowLight
+        },
+    ): TabRowColors = tabRowColors(
+        backgroundColor = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+            OpaqueContainerDark
+        } else {
+            OpaqueContainerLight
+        },
+        contentColor = contentColor,
+        selectedBackgroundColor = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+            OpaqueIndicatorDark
+        } else {
+            OpaqueIndicatorLight
+        },
+        selectedContentColor = selectedContentColor,
+        indicatorShadowColor = indicatorShadowColor,
+    )
+
     @Suppress("DEPRECATION")
     @Deprecated(
         message = "Migrated to the overload that also takes indicatorShadowColor.",
@@ -830,6 +863,18 @@ private val SegmentIndicatorLight = Color(0xB2FFFFFF)
 
 /** COUI `coui_color_segment_button_indicator` in dark themes (#33FFFFFF). */
 private val SegmentIndicatorDark = Color(0x33FFFFFF)
+
+/** ColorOS 17 Settings capsule container in light themes (#E6E6E6). */
+private val OpaqueContainerLight = Color(0xFFE6E6E6)
+
+/** ColorOS 17 Settings capsule container in dark themes (#373737). */
+private val OpaqueContainerDark = Color(0xFF373737)
+
+/** ColorOS 17 Settings capsule indicator in light themes (white). */
+private val OpaqueIndicatorLight = Color.White
+
+/** ColorOS 17 Settings capsule indicator in dark themes (#595959). */
+private val OpaqueIndicatorDark = Color(0xFF595959)
 
 /** COUI `COUIInEaseInterpolator`; shares [COUIInEase]. Maps the segment area to the pressed end scale. */
 private val PressedScaleEasing = COUIInEase

@@ -45,6 +45,22 @@ TabRowWithContour(
 )
 ```
 
+### 不透明分段胶囊
+
+ColorOS 17 设置页的分段胶囊画在不透明底色上，而不是默认的半透明叠加色，因此身后的卡片不会透上来。`TabRowDefaults.opaqueTabRowColors()` 提供这组取样值：浅色为 `#E6E6E6` 容器配白色指示器，深色为 `#373737` 容器配 `#595959` 指示器。
+
+```kotlin
+val tabs = listOf("全部", "已允许", "已拒绝")
+var selectedTabIndex by remember { mutableStateOf(0) }
+
+TabRowWithContour(
+    tabs = tabs,
+    selectedTabIndex = selectedTabIndex,
+    onTabSelected = { selectedTabIndex = it },
+    colors = TabRowDefaults.opaqueTabRowColors()
+)
+```
+
 ### 记住滚动位置
 
 当标签在最小宽度下也放不下时，标签行会变为可滚动。
@@ -129,6 +145,7 @@ TabRowDefaults 对象提供了 TabRow 组件的默认配置。
 | 方法名         | 类型         | 说明                     |
 | -------------- | ------------ | ------------------------ |
 | tabRowColors() | TabRowColors | 创建标签行的默认颜色配置 |
+| opaqueTabRowColors() | TabRowColors | 创建不透明分段胶囊的颜色配置 |
 
 ### TabRowColors 类
 

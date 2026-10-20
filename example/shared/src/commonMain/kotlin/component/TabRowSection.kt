@@ -45,7 +45,8 @@ fun TabRowDemo() {
             .padding(bottom = 16.dp),
         insideMargin = PaddingValues(16.dp),
     ) {
-        // COUI segment button, as used by the special access page in ColorOS Settings.
+        // COUI segment button, as used by the special access page in ColorOS Settings: the page
+        // draws it on an opaque capsule rather than the translucent default.
         val segmentTabs = listOf(str("All"), str("Allowed"), str("Denied"))
         val scope = rememberCoroutineScope()
         val pagerState = rememberPagerState(pageCount = { segmentTabs.size })
@@ -57,6 +58,7 @@ fun TabRowDemo() {
                     pagerState.animateScrollToPage(it)
                 }
             },
+            colors = TabRowDefaults.opaqueTabRowColors(),
         )
         HorizontalPager(
             state = pagerState,
