@@ -115,3 +115,42 @@ COUISlidingTabStrip 为文字+下划线指示条),仅共享配色与动效参数
 - COUIIndication 按压 10% 亮暗同值 vs couiColorPress 12%/20%: 全局 token 级偏差。
 - Slider fling/端点形变/glitter、NumberPicker spline fling+pick 音效、Snackbar 纵排 action/触摸暂停计时: 结构性行为,留专项。
 - 折叠标题 18sp、popup summary 12sp、Button/Main 16sp 等字体项: 用户决策"字体暂不动",留字体专项。
+
+## ColorOS 17 相册(17.10.7)补充核查:三点菜单与分段控件
+
+反编译 `com.coloros.gallery3d` 17.10.7(`/product/priv-app/OppoGallery2/OppoGallery2.apk`);
+165 上实际运行的是 `data/app` 侧更新后的 17.10.37,像素实测以运行版本为准。
+165 的 `wm size` 为 1272×2772;相册弹窗按自身 360dp 短边推导密度(565dpi,1dp = 3.53125px),
+系统的 620dpi override 只作用于应用外壳,不影响弹窗行高。
+
+### 三点菜单高亮与拖动
+
+| 项 | 相册实现 | 落点 |
+| :-- | :-- | :-- |
+| 高亮形态 | `COUITouchRecyclerView` 维护**一个**共享 mask(`COUIMaskEffectDrawable`),不是每行各画一层阴影 | `ListPopup.PopupListGestureHost` 的 `highlightTop/Bottom` |
+| 高亮颜色 | `initSharedMaskDrawable` 使用 `coui_color_hover`:亮 `#14000000`、暗 `#26FFFFFF` | `PopupItemPressLight/Dark` |
+| 按下 | mask 为空时 `attachSharedMaskToView` 直接把矩形同步到行,几何不插值;颜色 spring response 0.3 / bounce 0 | `placeHighlight` 首帧 snap |
+| 跨行拖动 | 不跟手指;按旧行→新行距离归一化的 spring,response 0.15(竖排;含横排 0.2),四边与圆角逐帧插值 | `PopupItemMoveSpring`(1754.6) |
+| 抬手 | `animateToProgressUntil(0, 0.7*10000)`:先到 70% 再淡出 | `fadeHighlight` |
+| 分隔线 | `COUITouchRecyclerView` 不做分隔线淡入淡出;分组带只在 `getGroupId()` 变化处出现 | 删除 `PopupItemDividerAlphaSpring` 等;`DropdownEntriesContent` 以 `entryIdx` 作 `groupKey` |
+| 触觉 | 302(`GRANULAR_SHORT_VIBRATE`) | `CouiHapticEffect.Switch` |
+
+实测:按压行与未按压行相差约 7.5%,与 `#14000000` 的 7.8% 相符(采样点不同,绝对亮度会浮动);
+跨行高亮约 4 帧完成(42fps 录屏下约 95ms);行高 141px(= 40dp × 3.53125px)。
+
+### 分段控件高光偏移
+
+`MaterialShadowEdge` 的着色器用 `fragCoord` 计算矩形几何
+(`rectData.pos = (fragCoord.x, u_commonArray[1] - fragCoord.y) - ...`),而 `fragCoord` 是
+**画布坐标**。`TabRow` 把着色器直接 `drawRect(topLeft = rect.topLeft)` 画到滑块矩形上时,
+着色器原点仍在整条容器的左上角:
+
+- 第一个 segment 离原点只有 4dp,高光整体向左上偏;
+- 后续 segment 的滑块左缘离容器原点更远,高光整圈落到绘制矩形之外,只剩纯色胶囊(看起来像高光消失)。
+
+修正:绘制前 `translate(rect.left, rect.top)`,让着色器的 (0,0) 对准滑块左上角。
+
+实测(165,demo 的 `TabRowWithContour`,620dpi override):三个选中态的胶囊都完整落在容器内,
+最左/最右滑块与容器端头各留 11px;左右两侧高光暗带的位置与宽度对称(误差 ≤1px),没有偏移或裁切。
+165 的 ColorOS 17 设置没有暴露 `COUISegmentButtonLayout`(账号卡、应用管理、特殊应用权限等
+页面均无),该控件的真机对照留待后续。

@@ -54,7 +54,9 @@ All notable user-visible changes are documented here. The format follows
 - Popup menus follow the panel density (`ro.sf.lcd_density`) instead of the display-size override: on a phone whose density was raised, a menu keeps the native 40dp row and 15sp title instead of growing with the rest of the app.
 - A menu whose rows own submenus floors at the native 196dp (`coui_popup_list_window_width_with_icon`) instead of the plain 168dp.
 - The list popup press highlight is a single mask that slides between rows while a finger drags, instead of one row's mask fading out under the next one fading in.
+- The list popup highlight uses the native hover tint (`coui_color_hover`, #14000000 light / #26FFFFFF dark) instead of the darker press colour, and the hairlines around the finger stay put during a drag instead of fading in and out.
 - A cascading submenu header keeps its final row height and trailing icon position while expanding instead of morphing from the anchor row's measurements.
+- A `TabRowWithContour` indicator keeps its material rim on the capsule at every position; the rim used to stay anchored to the row's top-left corner, so every segment after the first lost it.
 
 ### Deprecated
 
