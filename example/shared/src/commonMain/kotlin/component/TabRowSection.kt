@@ -45,8 +45,7 @@ fun TabRowDemo() {
             .padding(bottom = 16.dp),
         insideMargin = PaddingValues(16.dp),
     ) {
-        // COUI segment button, as used by the special access page in ColorOS Settings: the page
-        // draws it on an opaque capsule rather than the translucent default.
+        // COUI segment button, as used by the special access page in ColorOS Settings.
         val segmentTabs = listOf(str("All"), str("Allowed"), str("Denied"))
         val scope = rememberCoroutineScope()
         val pagerState = rememberPagerState(pageCount = { segmentTabs.size })
@@ -58,7 +57,6 @@ fun TabRowDemo() {
                     pagerState.animateScrollToPage(it)
                 }
             },
-            colors = TabRowDefaults.opaqueTabRowColors(),
         )
         HorizontalPager(
             state = pagerState,
@@ -75,6 +73,16 @@ fun TabRowDemo() {
                         .fillMaxWidth(),
                 )
             },
+        )
+        // The Privacy & security dashboard's opaque capsule (Privacy / Security tabs).
+        val privacyTabs = listOf(str("Privacy"), str("Security"))
+        var privacySelected by remember { mutableIntStateOf(0) }
+        TabRowWithContour(
+            tabs = privacyTabs,
+            selectedTabIndex = privacySelected,
+            onTabSelected = { privacySelected = it },
+            colors = TabRowDefaults.opaqueTabRowColors(),
+            modifier = Modifier.padding(bottom = 16.dp),
         )
         // SegmentButton.Tiny variant (32dp height, 2dp contour inset).
         val tinyTabs = listOf(str("Photo"), str("Video"), str("Portrait"), str("Pano"))

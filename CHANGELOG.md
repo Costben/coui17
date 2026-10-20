@@ -24,7 +24,7 @@ All notable user-visible changes are documented here. The format follows
 - `AppBarBlurOverlayDefaults.scrollAlpha` has an overload taking a `minAlpha` floor, for a bar whose material never fades out completely.
 - `Modifier.couiGlassHeader` paints a top-weighted glass header whose colour holds down to a fade band at the bottom edge, with `GlassDefaults.HeaderFadeHeight` as the default band height.
 - `COUIIcons.Basic.ExpandableIndicator`, the native `coui_list_expandable_indicator` glyph used by popup rows that open a submenu.
-- `TabRowDefaults.opaqueTabRowColors` paints the opaque segment capsule ColorOS 17 Settings uses, sampled at `#E6E6E6` with a white indicator and `#373737` with `#595959`.
+- `TabRowDefaults.opaqueTabRowColors` paints the opaque segment capsule ColorOS 17 Settings' Privacy & security page uses: container `#E2E3E4` light / `#353535` dark, with the standard translucent indicator (rendering as `#F6F7F7` / `#5D5D5D`). It takes the same colour parameters as `tabRowColors`.
 
 ### Fixed
 

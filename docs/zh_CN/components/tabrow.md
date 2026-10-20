@@ -47,10 +47,10 @@ TabRowWithContour(
 
 ### 不透明分段胶囊
 
-ColorOS 17 设置页的分段胶囊画在不透明底色上，而不是默认的半透明叠加色，因此身后的卡片不会透上来。`TabRowDefaults.opaqueTabRowColors()` 提供这组取样值：浅色为 `#E6E6E6` 容器配白色指示器，深色为 `#373737` 容器配 `#595959` 指示器。
+ColorOS 17 设置「隐私与安全」页的分段胶囊使用不透明容器，而不是默认的半透明叠加色，因此身后的内容不会透上来。`TabRowDefaults.opaqueTabRowColors()` 使用该页自己的容器色（浅色 `#E2E3E4`、深色 `#353535`）配 COUI 标准半透明指示器，在容器上实际渲染为 `#F6F7F7` / `#5D5D5D`。它接受与 `tabRowColors()` 相同的五个颜色参数，可以在不复制取样值的前提下替换容器色与指示器色。
 
 ```kotlin
-val tabs = listOf("全部", "已允许", "已拒绝")
+val tabs = listOf("隐私", "安全")
 var selectedTabIndex by remember { mutableStateOf(0) }
 
 TabRowWithContour(
@@ -142,10 +142,10 @@ TabRowDefaults 对象提供了 TabRow 组件的默认配置。
 
 #### 方法
 
-| 方法名         | 类型         | 说明                     |
-| -------------- | ------------ | ------------------------ |
-| tabRowColors() | TabRowColors | 创建标签行的默认颜色配置 |
-| opaqueTabRowColors() | TabRowColors | 创建不透明分段胶囊的颜色配置 |
+| 方法名               | 类型         | 说明                                 |
+| -------------------- | ------------ | ------------------------------------ |
+| tabRowColors()       | TabRowColors | 创建标签行的默认颜色配置             |
+| opaqueTabRowColors() | TabRowColors | 创建不透明分段胶囊配置，使用取样颜色 |
 
 ### TabRowColors 类
 
