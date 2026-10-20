@@ -49,6 +49,7 @@ import io.github.suqi8.coui.kmp.basic.PopupShadow
 import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.popupClipReveal
 import io.github.suqi8.coui.kmp.basic.popupGlassBlendColors
+import io.github.suqi8.coui.kmp.basic.popupOpacity
 import io.github.suqi8.coui.kmp.basic.rememberGlassHighlight
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
@@ -97,9 +98,12 @@ internal fun CascadingPrimaryContent(
                 val s = ENTER_SCALE_FROM + ENTER_SCALE_RANGE * enterFraction()
                 scaleX = s
                 scaleY = s
-                alpha = enterAlpha()
                 this.transformOrigin = transformOrigin
             }
+            // A graphicsLayer alpha would clip the exterior shadow to the panel's rectangle, which
+            // shows up as a hard square behind the card while the enter fade runs; this blends the
+            // group with the shadow's outset included.
+            .popupOpacity(enterAlpha)
             .graphicsLayer {
                 val s = primaryScale()
                 scaleX = s

@@ -1302,7 +1302,7 @@ internal val PopupShadow: Shadow = Shadow(
 )
 
 /** Group opacity must include the exterior shadow, not just the menu's rectangular bounds. */
-private fun Modifier.popupOpacity(progress: () -> Float): Modifier = drawWithCache {
+internal fun Modifier.popupOpacity(progress: () -> Float): Modifier = drawWithCache {
     val paint = Paint()
     // DropShadowPainter's bitmap extends by radius + spread, then moves by the shadow offset.
     val xOutset = ceil((PopupShadow.radius.toPx() + PopupShadow.spread.toPx() + abs(PopupShadow.offset.x.toPx())).coerceAtLeast(0f))
