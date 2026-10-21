@@ -54,6 +54,7 @@ import io.github.suqi8.coui.kmp.preference.WindowDropdownPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.delay
 import utils.AdaptiveTopAppBar
+import utils.pageContainerColor
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
@@ -87,6 +88,7 @@ fun PullToRefreshPage(
     }
 
     Scaffold(
+        containerColor = pageContainerColor(),
         topBar = {
             // The bar reads the content layer behind it, so it must be a sibling of that layer,
             // never inside it — LocalBackdrop is provided to the bar slot alone.
@@ -96,7 +98,7 @@ fun PullToRefreshPage(
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = COUITheme.colorScheme.surface,
+                    color = pageContainerColor(),
                     navigationIcon = {
                         BackNavigationIcon(
                             onClick = { navigator.pop() },

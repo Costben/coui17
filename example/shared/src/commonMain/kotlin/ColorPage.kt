@@ -48,6 +48,7 @@ import io.github.suqi8.coui.kmp.theme.darkColorScheme
 import io.github.suqi8.coui.kmp.theme.lightColorScheme
 import io.github.suqi8.coui.kmp.theme.platformDynamicColors
 import utils.AdaptiveTopAppBar
+import utils.pageContainerColor
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
@@ -81,6 +82,7 @@ fun ColorPage(
     val dynDark = platformDynamicColors(dark = true)
 
     Scaffold(
+        containerColor = pageContainerColor(),
         topBar = {
             // The bar reads the content layer behind it, so it must be a sibling of that layer,
             // never inside it — LocalBackdrop is provided to the bar slot alone.
@@ -90,7 +92,7 @@ fun ColorPage(
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = COUITheme.colorScheme.surface,
+                    color = pageContainerColor(),
                 )
             }
         },

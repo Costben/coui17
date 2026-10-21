@@ -69,6 +69,7 @@ import kotlinx.coroutines.launch
 import utils.AdaptiveTopAppBar
 import utils.All
 import utils.SearchStatus
+import utils.pageContainerColor
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
@@ -139,17 +140,18 @@ fun IconsPage(
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
+        containerColor = pageContainerColor(),
         topBar = {
             // The bar reads the content layer behind it, so it must be a sibling of that layer,
             // never inside it — LocalBackdrop is provided to the bar slot alone.
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
-                searchStatus.TopAppBarAnim(backgroundColor = COUITheme.colorScheme.surface) {
+                searchStatus.TopAppBarAnim(backgroundColor = pageContainerColor()) {
                     AdaptiveTopAppBar(
                         title = str("Icon"),
                         showTopAppBar = appState.showTopAppBar,
                         isWideScreen = isWideScreen,
                         scrollBehavior = topAppBarScrollBehavior,
-                        color = COUITheme.colorScheme.surface,
+                        color = pageContainerColor(),
                     ) {
                         Box(
                             modifier = Modifier
@@ -180,7 +182,7 @@ fun IconsPage(
         popupHost = {
             searchStatus.SearchPager(
                 onSearchStatusChange = updateSearchStatus,
-                offsetY = searchOffsetY,
+                barTop = searchOffsetY,
                 defaultResult = {},
             ) {
                 items(

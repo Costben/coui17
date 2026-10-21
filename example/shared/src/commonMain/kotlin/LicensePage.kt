@@ -41,12 +41,12 @@ import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.interfaces.ExperimentalScrollBarApi
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
-import io.github.suqi8.coui.kmp.theme.COUITheme
 import utils.AdaptiveTopAppBar
 import utils.Library
 import utils.SimpleJsonParser
 import utils.WallpaperState
 import utils.drawWallpaperBackdrop
+import utils.pageContainerColor
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 
@@ -57,7 +57,7 @@ fun LicensePage(
     val appState = LocalAppState.current
     val isWideScreen = LocalIsWideScreen.current
     val blurSupported = isRuntimeShaderSupported()
-    val surfaceColor = COUITheme.colorScheme.surface
+    val surfaceColor = pageContainerColor()
     val backdrop = if (blurSupported && appState.enableBlur) {
         rememberLayerBackdrop {
             drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
@@ -80,6 +80,7 @@ fun LicensePage(
     }
 
     Scaffold(
+        containerColor = pageContainerColor(),
         topBar = {
             // The bar reads the content layer behind it, so it must be a sibling of that layer,
             // never inside it — LocalBackdrop is provided to the bar slot alone.
@@ -89,7 +90,7 @@ fun LicensePage(
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = COUITheme.colorScheme.surface,
+                    color = pageContainerColor(),
                     navigationIcon = {
                         BackNavigationIcon(
                             onClick = { navigator.pop() },

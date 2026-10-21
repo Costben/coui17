@@ -21,13 +21,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import appstate.LocalAppState
+import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.TopAppBar
 import io.github.suqi8.coui.kmp.blur.LayerBackdrop
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
-import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 
@@ -74,6 +74,14 @@ fun pageContentPadding(
     }
 }
 
+/**
+ * The background every gallery page shares, the same one the home page paints: ColorOS 17's page
+ * colour (#303030 at night, the surface in the light theme). Cards resolve `surfaceContainer` over
+ * it, so they land on the 69 the home page shows instead of the 26 they read over black.
+ */
+@Composable
+fun pageContainerColor(): Color = AppBarBlurOverlayDefaults.containerColor()
+
 @Composable
 fun AdaptiveTopAppBar(
     title: String,
@@ -81,7 +89,7 @@ fun AdaptiveTopAppBar(
     isWideScreen: Boolean,
     scrollBehavior: ScrollBehavior,
     subtitle: String = "",
-    color: Color = COUITheme.colorScheme.surface,
+    color: Color = pageContainerColor(),
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     bottomContent: @Composable () -> Unit = {},
@@ -116,7 +124,7 @@ fun AdaptiveTopAppBar(
 fun rememberBlurBackdrop(): LayerBackdrop? {
     val appState = LocalAppState.current
     if (!appState.enableBlur || !isRuntimeShaderSupported()) return null
-    val surfaceColor = COUITheme.colorScheme.surface
+    val surfaceColor = AppBarBlurOverlayDefaults.containerColor()
     return rememberLayerBackdrop {
         drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
         drawContent()

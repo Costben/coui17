@@ -42,12 +42,12 @@ import io.github.suqi8.coui.kmp.interfaces.ExperimentalScrollBarApi
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
 import io.github.suqi8.coui.kmp.preference.SwitchPreference
-import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.ThemeColorSpec
 import io.github.suqi8.coui.kmp.theme.ThemePaletteStyle
 import misc.VersionInfo
 import navigation3.Route
 import utils.AdaptiveTopAppBar
+import utils.pageContainerColor
 import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
@@ -67,6 +67,7 @@ fun SettingsPage(
     val topAppBarScrollBehavior = COUIScrollBehavior()
 
     Scaffold(
+        containerColor = pageContainerColor(),
         topBar = {
             // The bar reads the content layer behind it, so it must be a sibling of that layer,
             // never inside it — LocalBackdrop is provided to the bar slot alone.
@@ -76,7 +77,7 @@ fun SettingsPage(
                     showTopAppBar = appState.showTopAppBar,
                     isWideScreen = isWideScreen,
                     scrollBehavior = topAppBarScrollBehavior,
-                    color = COUITheme.colorScheme.surface,
+                    color = pageContainerColor(),
                     subtitle = "v${VersionInfo.VERSION_NAME} (${VersionInfo.VERSION_CODE})",
                 )
             }
