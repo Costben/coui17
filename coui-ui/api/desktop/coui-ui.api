@@ -3063,6 +3063,7 @@ public final class io/github/suqi8/coui/kmp/basic/PullToRefreshState {
 	public final fun getRefreshState ()Lio/github/suqi8/coui/kmp/basic/RefreshState;
 	public final fun setCachedNestedScrollConnection (Landroidx/compose/ui/input/nestedscroll/NestedScrollConnection;)V
 	public final fun setDragOffset (F)V
+	public final fun startRefresh (Lkotlin/jvm/functions/Function0;)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/RadioButtonColors {

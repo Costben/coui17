@@ -326,12 +326,24 @@ class PullToRefreshState(
     }
 
     /**
+     * Starts the pull-to-refresh animation without a gesture: the indicator springs down to the
+     * threshold and then runs [onRefresh]. Lets shortcuts such as "back to top" show the same
+     * ball the user would get by pulling.
+     */
+    fun startRefresh(onRefresh: () -> Unit) {
+        coroutineScope.launch { startRefreshing(onRefresh) }
+    }
+
+    /**
      * Enter the refresh queue
      */
     internal suspend fun startRefreshing(onRefresh: () -> Unit) {
         if (!isRefreshing) {
             isRefreshing = true
             try {
+                // Enter the pull state first: the header height is derived from the state, so
+                // leaving it Idle would keep the ball invisible while the offset springs down.
+                if (!isTouching) internalRefreshState = RefreshState.Pulling
                 // Use spring to move to threshold
                 animateToSpring(refreshThresholdOffset)
             } finally {
