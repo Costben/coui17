@@ -29,12 +29,12 @@ class SearchBarStrokeTest {
     }
 
     @Test
-    fun lightThemeUsesTheCapsule1LightEdge() {
-        assertEquals(MaterialStrokeParams.FrameworkCapsule1Light, strokeFor(dark = false))
+    fun lightThemeUsesTheCapsule8LightEdge() {
+        assertEquals(MaterialStrokeParams.FrameworkCapsule8Light, strokeFor(dark = false))
     }
 
     @Test
-    fun darkThemeUsesTheCapsule1DarkEdge() {
-        assertEquals(MaterialStrokeParams.FrameworkCapsule1Dark, strokeFor(dark = true))
+    fun darkThemeUsesTheCapsule8DarkEdge() {
+        assertEquals(MaterialStrokeParams.FrameworkCapsule8Dark, strokeFor(dark = true))
     }
 }

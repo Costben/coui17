@@ -210,6 +210,15 @@ private fun Coui17Root() {
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val expandedTopBarHeight = statusBar + TopAppBarDefaults.ExpandedHeight
     val expandedHomeTopBarHeight = expandedTopBarHeight + Coui17Dimens.HomeSearchBandHeight
+    // Opening the search slides the bar from the pill up to the collapsed toolbar row: on the device
+    // the capsule travels 615px → 164px over ~300ms. The pill's y depends on the app bar's collapse
+    // state, so it is measured rather than assumed; the seed is the fully expanded app bar, which is
+    // where a tap can actually land.
+    var searchPillTop by remember { mutableStateOf(expandedTopBarHeight) }
+    // The row the search bar docks into: the collapsed app bar's height, with the 40dp capsule
+    // centred in it. Measured on the device at 42.3dp / 164px, which is exactly this formula.
+    val dockedSearchTop = statusBar +
+        (TopAppBarDefaults.CollapsedHeight - Coui17Dimens.SearchPillHeight) / 2
     val onSearch = {
         searchStatus = searchStatus.copy(current = SearchStatus.Status.EXPANDING)
     }
@@ -284,6 +293,8 @@ private fun Coui17Root() {
                         onPanelDismiss = { panelOpen = false },
                         scrollBehavior = topBarScrollBehavior,
                         modifier = Modifier.align(Alignment.TopCenter),
+                        onSearchPillPositioned = { searchPillTop = it },
+                        searchPillVisible = searchStatus.isCollapsed(),
                     )
                     Coui17AccessoryBar(
                         currentPage = pagerState.currentPage,
@@ -307,7 +318,8 @@ private fun Coui17Root() {
                 }
                 searchStatus.SearchPager(
                     onSearchStatusChange = { searchStatus = it },
-                    offsetY = expandedHomeTopBarHeight,
+                    barTop = searchPillTop,
+                    dockedBarTop = dockedSearchTop,
                     surfaceColor = pageColor,
                     defaultResult = {},
                     result = {},

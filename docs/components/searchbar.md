@@ -70,6 +70,7 @@ SearchBar(
 | textStyle         | TextStyle?                | Style of text in search box          | null                 | No       |
 | colors            | SearchBarColors           | Colors of the input field            | SearchBarDefaults.searchBarColors() | No       |
 | stroke            | MaterialStrokeParams?     | Material rim and inner shadow over the capsule | SearchBarDefaults.searchBarStroke() | No       |
+| glowColor         | Color?                    | Caustic light below the capsule, clipped to its outside; the device only lights it while editing | SearchBarDefaults.causticGlowColor() | No       |
 | leadingIcon       | @Composable (() -> Unit)? | Leading icon                         | default search icon  | No       |
 | trailingIcon      | @Composable (() -> Unit)? | Trailing icon                        | default clear button | No       |
 | interactionSource | MutableInteractionSource? | Interaction source                   | null                 | No       |
@@ -98,12 +99,35 @@ The SearchBarDefaults object provides default values for SearchBar and InputFiel
 | ----------------- | --------------- | --------------------------------------- |
 | searchBarColors() | SearchBarColors | Creates the default input field colors  |
 | searchBarStroke() | MaterialStrokeParams | Resolves the capsule rim and inner shadow |
+| causticGlowColor() | Color | Resolves the light under the capsule: `#2EFFFFFF` light, `#33FFFFFF` night |
+
+### SearchBarActionButton
+
+`COUISearchBar`'s functional button — the 40dp capsule beside the expanded field that carries the
+"取消"/"Cancel" label.
+
+| Property Name   | Type                        | Description                                     | Default Value                        | Required |
+|-----------------|-----------------------------|-------------------------------------------------|--------------------------------------|----------|
+| text            | String                      | Button label                                    | -                                    | Yes      |
+| onClick         | () -> Unit                  | Callback invoked on click                       | -                                    | Yes      |
+| modifier        | Modifier                    | Modifier applied to the button                  | Modifier                             | No       |
+| enabled         | Boolean                     | Whether the button responds to input            | true                                 | No       |
+| interactionSource | MutableInteractionSource? | Optional hoisted interaction source             | null                                 | No       |
+| containerColor  | Color                       | Capsule fill                                    | the search field's own material      | No       |
+| contentColor    | Color                       | Label colour                                    | onSurface at 90%                     | No       |
+| glowColor       | Color?                      | Caustic light below the capsule; clipped to its outside | SearchBarDefaults.causticGlowColor() | No       |
+
+`SearchBarActionButtonDefaults` holds the native geometry: `Height` (40dp,
+`coui_search_bar_normal_background_height`), `HorizontalPadding` (16dp,
+`coui_search_bar_functional_button_text_padding_horizontal`) and `StartGap` (12dp,
+`coui_search_bar_functional_button_start_gap`). The label is 14sp Medium
+(`couiTextAppearanceButton`).
 
 ### SearchBarColors Class
 
 | Property Name   | Type  | Description                                                                       |
 | --------------- | ----- | --------------------------------------------------------------------------------- |
-| backgroundColor | Color | Capsule background (translucent; secondaryContainer, 8% black / 15% white)        |
+| backgroundColor | Color | Capsule fill (toolbar material layer: 80% #262626 at night, 40% white in light)    |
 | labelColor      | Color | Label (hint) text color (onSurfaceSecondary, 54% black / 54% white)               |
 | iconColor       | Color | Tint of the default leading search icon (onSurfaceSecondary)                      |
 | clearIconColor  | Color | Fill of the default clear button circle (onSurfaceContainerHigh)                  |

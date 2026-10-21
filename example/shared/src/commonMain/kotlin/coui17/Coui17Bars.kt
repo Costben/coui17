@@ -34,11 +34,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import component.searchBarShadow
 import i18n.str
@@ -83,6 +87,12 @@ private val Coui17Tabs = listOf(
  * The shared ColorOS 17 page chrome. The library's [TopAppBar] owns the native large-title
  * transition, so every page follows the same 32dp expanded title -> 24dp toolbar title motion.
  * Search and overflow actions stay in the 40dp toolbar slots throughout the transition.
+ *
+ * @param onSearchPillPositioned the collapsed pill's top edge in window coordinates, reported on
+ *   every layout. The expanded search bar is pinned there so the bar never moves when the page
+ *   opens; the pill's y depends on the app bar's collapse state, so it has to be measured.
+ * @param searchPillVisible whether the collapsed pill is still the visible search entry point. It
+ *   fades out while the expanded search bar occupies the same spot, or the two would stack.
  */
 @Composable
 fun Coui17TopAppBar(
@@ -98,6 +108,8 @@ fun Coui17TopAppBar(
     onPanelDismiss: () -> Unit,
     scrollBehavior: ScrollBehavior,
     modifier: Modifier = Modifier,
+    onSearchPillPositioned: (Dp) -> Unit = {},
+    searchPillVisible: Boolean = true,
 ) {
     TopAppBar(
         title = title,
@@ -156,6 +168,8 @@ fun Coui17TopAppBar(
                             label = searchLabel,
                             onClick = onSearch,
                             scrollFraction = scrollBehavior.state.collapsedFraction,
+                            visible = searchPillVisible,
+                            onPositioned = onSearchPillPositioned,
                         )
                     }
                     // The device's `blur_overlay` runs `homepage_appbar_blur_extra_height` past
@@ -223,15 +237,30 @@ fun Coui17HomeTopBar(
  * The shadow sits on its own sibling layer with the capsule punched out: the pill's fill is
  * translucent, so a shadow drawn behind it would show through and darken the field, which the
  * device's shadow does not.
+ *
+ * @param visible fades the pill out while the expanded search bar covers the same band. The pill
+ *   stays laid out, so its measured position remains available for the bar to pin to.
+ * @param onPositioned reports the pill's top edge in window coordinates on every layout.
  */
 @Composable
-private fun Coui17SearchPill(label: String, onClick: () -> Unit, scrollFraction: Float) {
+private fun Coui17SearchPill(
+    label: String,
+    onClick: () -> Unit,
+    scrollFraction: Float,
+    visible: Boolean = true,
+    onPositioned: ((Dp) -> Unit)? = null,
+) {
     val interactionSource = remember { MutableInteractionSource() }
+    val density = LocalDensity.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Coui17Dimens.BarHorizontalPadding)
             .height(Coui17Dimens.SearchPillHeight)
+            .graphicsLayer { alpha = if (visible) 1f else 0f }
+            .onGloballyPositioned { coordinates ->
+                onPositioned?.invoke(with(density) { coordinates.positionInWindow().y.toDp() })
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -259,6 +288,9 @@ private fun Coui17SearchPill(label: String, onClick: () -> Unit, scrollFraction:
             modifier = Modifier.fillMaxSize(),
             label = label,
             enabled = false,
+            // The device's collapsed pill casts a drop shadow but no caustic light; the light only
+            // appears once the bar is being edited.
+            glowColor = null,
             leadingIcon = {
                 Icon(
                     imageVector = COUIIcons.Basic.Search,

@@ -179,8 +179,10 @@ class InnerShadowStyle(
  * [FrameworkCapsule1Light] / [FrameworkCapsule1Dark] (the search capsule,
  * `TYPE_FRAMEWORK_CAPSULE_1`), [FrameworkCapsule5Light] / [FrameworkCapsule5Dark] (the floating
  * toolbar, `TYPE_FRAMEWORK_CAPSULE_5`), [FrameworkCapsule7] (the in-window search capsule,
- * `TYPE_FRAMEWORK_CAPSULE_7`) and [FrameworkCapsule13Light] / [FrameworkCapsule13Dark] (the
- * runtime-shader `COUIShadowEdgeDrawable` path, `TYPE_FRAMEWORK_CAPSULE_13`).
+ * `TYPE_FRAMEWORK_CAPSULE_7`), [FrameworkCapsule8Light] / [FrameworkCapsule8Dark] (the capsule a
+ * toolbar resolves in-window, `TYPE_FRAMEWORK_CAPSULE_8`) and [FrameworkCapsule13Light] /
+ * [FrameworkCapsule13Dark] (the runtime-shader `COUIShadowEdgeDrawable` path,
+ * `TYPE_FRAMEWORK_CAPSULE_13`).
  *
  * The presets are split by night mode; `getStrokeParamsByType` resolves the pair by
  * `isNightMode`, and `getEdgeWidth(context)` converts [edgeWidth] from dp to px before it reaches
@@ -220,6 +222,29 @@ data class MaterialStrokeParams(
             edgeAngle = 0f,
             shadowFadeIn = 0.03f,
             shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
+        /**
+         * `FRAMEWORK_CAPSULE_PARAMS_8_LIGHT` — `TYPE_FRAMEWORK_CAPSULE_8`, the capsule a toolbar
+         * resolves through `getCapsuleStrokeEffectTypeInWindow`, light theme.
+         */
+        val FrameworkCapsule8Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.8f,
+            edgeWidth = 1.8.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.1f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** `FRAMEWORK_CAPSULE_PARAMS_8_DARK` — `TYPE_FRAMEWORK_CAPSULE_8`, dark theme. */
+        val FrameworkCapsule8Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.15f,
+            edgeWidth = 1.8.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.01f,
+            shadowFadeOut = 0f,
             shadowFadeScale = 1f,
         )
 
@@ -284,6 +309,9 @@ data class MaterialStrokeParams(
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_5` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule5(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule5Dark else FrameworkCapsule5Light
+
+        /** Resolves `TYPE_FRAMEWORK_CAPSULE_8` by night mode, as `getStrokeParamsByType` does. */
+        fun frameworkCapsule8(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule8Dark else FrameworkCapsule8Light
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_13` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule13(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule13Dark else FrameworkCapsule13Light

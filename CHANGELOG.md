@@ -25,10 +25,14 @@ All notable user-visible changes are documented here. The format follows
 - `Modifier.couiGlassHeader` paints a top-weighted glass header whose colour holds down to a fade band at the bottom edge, with `GlassDefaults.HeaderFadeHeight` as the default band height.
 - `COUIIcons.Basic.ExpandableIndicator`, the native `coui_list_expandable_indicator` glyph used by popup rows that open a submenu.
 - `TabRowDefaults.opaqueTabRowColors` paints the opaque segment capsule ColorOS 17 Settings' Privacy & security page uses: container `#E2E3E4` light / `#353535` dark, with the standard translucent indicator (rendering as `#F6F7F7` / `#5D5D5D`). It takes the same colour parameters as `tabRowColors`.
-- `InputField` accepts a `stroke`, defaulting to `SearchBarDefaults.searchBarStroke()`, so the search capsule wears the ColorOS rim and inner shadow (`TYPE_FRAMEWORK_CAPSULE_1`). Pass `null` when the caller paints the edge on a wider capsule.
+- `InputField` accepts a `stroke`, defaulting to `SearchBarDefaults.searchBarStroke()`, so the search capsule wears the ColorOS rim and inner shadow (`TYPE_FRAMEWORK_CAPSULE_8`). Pass `null` when the caller paints the edge on a wider capsule.
+- `InputField` accepts a `glowColor`, defaulting to `SearchBarDefaults.causticGlowColor()`, so the capsule casts the native caustic light below it (`coui_caustic_color_1`). The light is punched out of the capsule, so the translucent fill is never brightened; measured on the device it reads +18 grey levels and fades out within 4.4dp. Pass `null` to opt out.
+- `SearchBarActionButton` reproduces `COUISearchBar`'s functional button: the 40dp capsule carrying the "取消"/"Cancel" label, with `SearchBarActionButtonDefaults` holding the native 16dp label inset and 12dp start gap. It casts the same caustic light as the field.
 
 ### Fixed
 
+- The search capsule uses the toolbar material instead of the blur-off fallback: its fill reads 40 at night (was 61) and its rim 78 (was 177), so it is no longer brighter than the toolbar icons beside it. The light theme keeps the value it already matched.
+- The search field's hint stays visible in the expanded search bar until the first character is typed, as the device's `EditText` hint does, instead of disappearing on focus.
 - List popup rows consume the release, so selecting a row no longer also counts as an outside tap and closes a submenu it just opened.
 - Toolbar icon buttons keep the whole light-theme halo: `SmallTopAppBar` and `TopAppBar` no longer clip their content at the bar's bounds.
 - `BottomFloatingNavigationBar` casts the native spot shadow under its capsule and expansion view instead of none.
