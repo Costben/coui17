@@ -48,6 +48,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -399,7 +400,7 @@ private fun SegmentButtonRow(
                     containerPath.addRoundRect(
                         RoundRect(Rect(Offset.Zero, size), CornerRadius(containerRadius)),
                     )
-                    clipPath(containerPath) {
+                    val drawSegment: DrawScope.() -> Unit = {
                         // 2. Indicator shadow, clipped outside the indicator (Region.Op.DIFFERENCE);
                         // the 1dp blur is approximated with a half-alpha penumbra pass.
                         clipPath(indicatorPath, clipOp = ClipOp.Difference) {
@@ -449,6 +450,14 @@ private fun SegmentButtonRow(
                                 drawRect(brush = shader.asBrush(), size = rect.size)
                             }
                         }
+                    }
+                    // COUISegmentButtonLayout keeps the shadow inside its container, where the 4dp
+                    // padding absorbs the 2dp offset. A frameless TabRow has no such inset, so
+                    // clipping to the container bounds would shear the shadow off at the bottom edge.
+                    if (containerColor.alpha > 0f) {
+                        clipPath(containerPath) { drawSegment() }
+                    } else {
+                        drawSegment()
                     }
                 },
         ) {
