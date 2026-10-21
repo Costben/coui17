@@ -688,23 +688,11 @@ object TabRowDefaults {
      */
     @Composable
     fun tabRowColors(
-        backgroundColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
-            SegmentContainerDark
-        } else {
-            SegmentContainerLight
-        },
+        backgroundColor: Color = if (isDarkTheme()) SegmentContainerDark else SegmentContainerLight,
         contentColor: Color = COUITheme.colorScheme.onSurface,
-        selectedBackgroundColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
-            SegmentIndicatorDark
-        } else {
-            SegmentIndicatorLight
-        },
+        selectedBackgroundColor: Color = if (isDarkTheme()) SegmentIndicatorDark else SegmentIndicatorLight,
         selectedContentColor: Color = COUITheme.colorScheme.onSurface,
-        indicatorShadowColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
-            IndicatorShadowDark
-        } else {
-            IndicatorShadowLight
-        },
+        indicatorShadowColor: Color = if (isDarkTheme()) IndicatorShadowDark else IndicatorShadowLight,
     ): TabRowColors = remember(backgroundColor, contentColor, selectedBackgroundColor, selectedContentColor, indicatorShadowColor) {
         TabRowColors(
             backgroundColor = backgroundColor,
@@ -714,6 +702,35 @@ object TabRowDefaults {
             indicatorShadowColor = indicatorShadowColor,
         )
     }
+
+    @Composable
+    private fun isDarkTheme(): Boolean = COUITheme.colorScheme.background.luminance() < 0.5f
+
+    /**
+     * The opaque segment capsule ColorOS Settings draws on its Privacy & security page: the
+     * container is the app's opaque `color_segment_button_background` (`#E2E3E4` light,
+     * `#353535` dark), while the indicator keeps COUI's translucent
+     * `coui_color_segment_button_indicator`, so it renders as `#F6F7F7` / `#5D5D5D` over the
+     * container. Unlike [tabRowColors], content behind the row does not tint the container.
+     *
+     * Sampled from the ColorOS 17 Privacy & security dashboard (the Privacy / Security capsule
+     * above the pager). The label, indicator shadow and other theme-driven roles stay the same
+     * as the default pair.
+     */
+    @Composable
+    fun opaqueTabRowColors(
+        backgroundColor: Color = if (isDarkTheme()) OpaqueContainerDark else OpaqueContainerLight,
+        contentColor: Color = COUITheme.colorScheme.onSurface,
+        selectedBackgroundColor: Color = if (isDarkTheme()) SegmentIndicatorDark else SegmentIndicatorLight,
+        selectedContentColor: Color = COUITheme.colorScheme.onSurface,
+        indicatorShadowColor: Color = if (isDarkTheme()) IndicatorShadowDark else IndicatorShadowLight,
+    ): TabRowColors = tabRowColors(
+        backgroundColor = backgroundColor,
+        contentColor = contentColor,
+        selectedBackgroundColor = selectedBackgroundColor,
+        selectedContentColor = selectedContentColor,
+        indicatorShadowColor = indicatorShadowColor,
+    )
 
     @Suppress("DEPRECATION")
     @Deprecated(
@@ -830,6 +847,12 @@ private val SegmentIndicatorLight = Color(0xB2FFFFFF)
 
 /** COUI `coui_color_segment_button_indicator` in dark themes (#33FFFFFF). */
 private val SegmentIndicatorDark = Color(0x33FFFFFF)
+
+/** Privacy & security dashboard `color_segment_button_background` in light themes (#E2E3E4). */
+private val OpaqueContainerLight = Color(0xFFE2E3E4)
+
+/** Privacy & security dashboard `color_segment_button_background` in dark themes (#353535). */
+private val OpaqueContainerDark = Color(0xFF353535)
 
 /** COUI `COUIInEaseInterpolator`; shares [COUIInEase]. Maps the segment area to the pressed end scale. */
 private val PressedScaleEasing = COUIInEase

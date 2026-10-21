@@ -45,6 +45,22 @@ TabRowWithContour(
 )
 ```
 
+### Opaque Segment Capsule
+
+The ColorOS 17 Settings Privacy & security dashboard draws its segment capsule on an opaque container instead of the translucent default, so content behind the row never tints it. `TabRowDefaults.opaqueTabRowColors()` uses the app's own container colour (`#E2E3E4` light, `#353535` dark) with COUI's standard translucent indicator, which renders as `#F6F7F7` / `#5D5D5D` over that container. It takes the same five colours as `tabRowColors()`, so the container and indicator can be overridden without copying the sampled values.
+
+```kotlin
+val tabs = listOf("Privacy", "Security")
+var selectedTabIndex by remember { mutableStateOf(0) }
+
+TabRowWithContour(
+    tabs = tabs,
+    selectedTabIndex = selectedTabIndex,
+    onTabSelected = { selectedTabIndex = it },
+    colors = TabRowDefaults.opaqueTabRowColors()
+)
+```
+
 ### Preserve Scroll Position
 
 When the tabs cannot fit at their minimum width, the row becomes scrollable.
@@ -126,9 +142,10 @@ The TabRowDefaults object provides default configurations for the TabRow compone
 
 #### Methods
 
-| Method Name    | Type         | Description                        |
-| -------------- | ------------ | ---------------------------------- |
-| tabRowColors() | TabRowColors | Create default color configuration |
+| Method Name          | Type         | Description                                                              |
+| -------------------- | ------------ | ------------------------------------------------------------------------ |
+| tabRowColors()       | TabRowColors | Create default color configuration                                       |
+| opaqueTabRowColors() | TabRowColors | Create the opaque segment capsule configuration, with the sampled colors |
 
 ### TabRowColors Class
 

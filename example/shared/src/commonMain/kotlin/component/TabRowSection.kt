@@ -74,6 +74,16 @@ fun TabRowDemo() {
                 )
             },
         )
+        // The Privacy & security dashboard's opaque capsule (Privacy / Security tabs).
+        val privacyTabs = listOf(str("Privacy"), str("Security"))
+        var privacySelected by remember { mutableIntStateOf(0) }
+        TabRowWithContour(
+            tabs = privacyTabs,
+            selectedTabIndex = privacySelected,
+            onTabSelected = { privacySelected = it },
+            colors = TabRowDefaults.opaqueTabRowColors(),
+            modifier = Modifier.padding(bottom = 16.dp),
+        )
         // SegmentButton.Tiny variant (32dp height, 2dp contour inset).
         val tinyTabs = listOf(str("Photo"), str("Video"), str("Portrait"), str("Pano"))
         var tinySelected by remember { mutableIntStateOf(0) }
