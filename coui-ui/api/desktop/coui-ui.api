@@ -2413,12 +2413,16 @@ public final class io/github/suqi8/coui/kmp/basic/MaterialStrokeParams {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/MaterialStrokeParams$Companion {
+	public final fun frameworkCapsule1 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule13 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule5 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule13Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule13Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule1Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule1Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule5Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule5Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule7 ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/MenuRotationLayout {
@@ -3233,10 +3237,11 @@ public final class io/github/suqi8/coui/kmp/basic/SearchBarDefaults {
 	public final fun getTrailingIconTouchTargetSize-D9Ej5fM ()F
 	public final fun getTrailingIconVisualSize-D9Ej5fM ()F
 	public final fun searchBarColors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/SearchBarColors;
+	public final fun searchBarStroke (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SearchBarKt {
-	public static final fun InputField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLandroidx/compose/ui/text/TextStyle;Lio/github/suqi8/coui/kmp/basic/SearchBarColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final fun InputField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLandroidx/compose/ui/text/TextStyle;Lio/github/suqi8/coui/kmp/basic/SearchBarColors;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 	public static final fun SearchBar-B9LtWk4 (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;JZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 

@@ -67,6 +67,7 @@ SearchBar(
 | enabled           | Boolean                   | 是否启用搜索框       | true     | 否    |
 | textStyle         | TextStyle?                | 搜索框中文本的样式     | null     | 否    |
 | colors            | SearchBarColors           | 输入框的颜色配置      | SearchBarDefaults.searchBarColors() | 否    |
+| stroke            | MaterialStrokeParams?     | 胶囊上的材质描边与内阴影  | SearchBarDefaults.searchBarStroke() | 否    |
 | leadingIcon       | @Composable (() -> Unit)? | 前置图标          | 默认放大镜    | 否    |
 | trailingIcon      | @Composable (() -> Unit)? | 后置图标          | 默认清除按钮   | 否    |
 | interactionSource | MutableInteractionSource? | 交互源           | null     | 否    |
@@ -94,6 +95,7 @@ SearchBarDefaults 对象提供了 SearchBar 和 InputField 组件的默认值。
 | 方法名            | 类型            | 说明                     |
 | ----------------- | --------------- | ------------------------ |
 | searchBarColors() | SearchBarColors | 创建输入框的默认颜色配置 |
+| searchBarStroke() | MaterialStrokeParams | 解析胶囊描边与内阴影参数 |
 
 ### SearchBarColors 类
 

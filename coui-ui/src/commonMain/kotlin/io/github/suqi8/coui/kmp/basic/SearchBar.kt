@@ -177,6 +177,9 @@ fun SearchBar(
  * @param textStyle Style configuration that applies at character level such as color, font etc.
  * @param colors [SearchBarColors] that will be used to resolve the colors used for this input
  *   field in different states. See [SearchBarDefaults.searchBarColors].
+ * @param stroke the material rim and inner shadow drawn over the capsule, or `null` for a flat
+ *   fill. Defaults to [SearchBarDefaults.searchBarStroke]. Pass `null` when the caller paints the
+ *   edge on a wider capsule that this field only occupies part of.
  * @param leadingIcon the leading icon to be displayed at the start of the input field.
  * @param trailingIcon the trailing icon to be displayed at the end of the input field.
  * @param interactionSource an optional hoisted [MutableInteractionSource] for observing and
@@ -196,6 +199,7 @@ fun InputField(
     enabled: Boolean = true,
     textStyle: TextStyle? = null,
     colors: SearchBarColors = SearchBarDefaults.searchBarColors(),
+    stroke: MaterialStrokeParams? = SearchBarDefaults.searchBarStroke(),
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
@@ -306,13 +310,20 @@ fun InputField(
         interactionSource = internalInteractionSource,
         decorationBox = { innerTextField ->
             // COUISearchBar capsule: coui_search_bar_no_blur_solid with blur off (40% white over
-            // the page background), coui_search_view_selector_color_normal when blur is on.
+            // the page background), coui_search_view_selector_color_normal when blur is on. The
+            // material edge is COUISearchBar's COUIShadowEdgeDrawable pass, painted over the fill.
+            val edgeModifier = if (stroke != null) {
+                Modifier.materialShadowEdge(stroke = stroke)
+            } else {
+                Modifier
+            }
             Box(
                 modifier = Modifier
                     .background(
                         color = colors.backgroundColor,
                         shape = capsuleShape,
-                    ),
+                    )
+                    .then(edgeModifier),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Row(
@@ -451,6 +462,13 @@ object SearchBarDefaults {
             clearIconColor = clearIconColor,
         )
     }
+
+    /**
+     * The edge ColorOS draws on the search capsule: `TYPE_FRAMEWORK_CAPSULE_1`, the gradient rim and
+     * inner shadow `COUISearchBar` renders through `COUIShadowEdgeDrawable`.
+     */
+    @Composable
+    fun searchBarStroke(): MaterialStrokeParams = MaterialStrokeParams.frameworkCapsule1(COUITheme.colorScheme.background.luminance() < 0.5f)
 }
 
 /**

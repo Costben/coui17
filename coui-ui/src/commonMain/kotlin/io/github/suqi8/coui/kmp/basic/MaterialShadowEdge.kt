@@ -175,9 +175,11 @@ class InnerShadowStyle(
  * `COUIMaterialStrokeEffect.StrokeEffectParams`.
  *
  * `COUIMaterialStrokeEffect` is a table of `(strokeType, edgeAlpha, edgeWidthDp, edgeAngle,
- * shadowFadeIn, shadowFadeOut, shadowFadeScale)` tuples; the two entries needed by the floating
- * toolbar are [FrameworkCapsule5Light] / [FrameworkCapsule5Dark] (the framework edge-effect path,
- * `TYPE_FRAMEWORK_CAPSULE_5`) and [FrameworkCapsule13Light] / [FrameworkCapsule13Dark] (the
+ * shadowFadeIn, shadowFadeOut, shadowFadeScale)` tuples; the entries needed here are
+ * [FrameworkCapsule1Light] / [FrameworkCapsule1Dark] (the search capsule,
+ * `TYPE_FRAMEWORK_CAPSULE_1`), [FrameworkCapsule5Light] / [FrameworkCapsule5Dark] (the floating
+ * toolbar, `TYPE_FRAMEWORK_CAPSULE_5`), [FrameworkCapsule7] (the in-window search capsule,
+ * `TYPE_FRAMEWORK_CAPSULE_7`) and [FrameworkCapsule13Light] / [FrameworkCapsule13Dark] (the
  * runtime-shader `COUIShadowEdgeDrawable` path, `TYPE_FRAMEWORK_CAPSULE_13`).
  *
  * The presets are split by night mode; `getStrokeParamsByType` resolves the pair by
@@ -240,6 +242,45 @@ data class MaterialStrokeParams(
             shadowFadeOut = 0f,
             shadowFadeScale = 1f,
         )
+
+        /**
+         * `FRAMEWORK_CAPSULE_PARAMS_1_LIGHT` — `TYPE_FRAMEWORK_CAPSULE_1`, light theme. The search
+         * capsule's rim in ColorOS Settings.
+         */
+        val FrameworkCapsule1Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.2f,
+            edgeWidth = 2.2.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.1f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1.15f,
+        )
+
+        /** `FRAMEWORK_CAPSULE_PARAMS_1_DARK` — `TYPE_FRAMEWORK_CAPSULE_1`, dark theme. */
+        val FrameworkCapsule1Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.6f,
+            edgeWidth = 2.2.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.01f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
+        /**
+         * `FRAMEWORK_CAPSULE_PARAMS_7` — `TYPE_FRAMEWORK_CAPSULE_7`. ColorOS ships a single value
+         * for both themes.
+         */
+        val FrameworkCapsule7: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.5f,
+            edgeWidth = 2.5.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.05f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
+        /** Resolves `TYPE_FRAMEWORK_CAPSULE_1` by night mode, as `getStrokeParamsByType` does. */
+        fun frameworkCapsule1(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule1Dark else FrameworkCapsule1Light
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_5` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule5(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule5Dark else FrameworkCapsule5Light

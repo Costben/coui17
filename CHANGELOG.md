@@ -25,6 +25,7 @@ All notable user-visible changes are documented here. The format follows
 - `Modifier.couiGlassHeader` paints a top-weighted glass header whose colour holds down to a fade band at the bottom edge, with `GlassDefaults.HeaderFadeHeight` as the default band height.
 - `COUIIcons.Basic.ExpandableIndicator`, the native `coui_list_expandable_indicator` glyph used by popup rows that open a submenu.
 - `TabRowDefaults.opaqueTabRowColors` paints the opaque segment capsule ColorOS 17 Settings' Privacy & security page uses: container `#E2E3E4` light / `#353535` dark, with the standard translucent indicator (rendering as `#F6F7F7` / `#5D5D5D`). It takes the same colour parameters as `tabRowColors`.
+- `InputField` accepts a `stroke`, defaulting to `SearchBarDefaults.searchBarStroke()`, so the search capsule wears the ColorOS rim and inner shadow (`TYPE_FRAMEWORK_CAPSULE_1`). Pass `null` when the caller paints the edge on a wider capsule.
 
 ### Fixed
 

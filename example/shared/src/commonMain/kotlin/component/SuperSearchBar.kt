@@ -70,6 +70,7 @@ import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
 import io.github.suqi8.coui.kmp.basic.SearchBarDefaults
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.materialShadowEdge
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.icon.basic.SearchCleanup
@@ -283,7 +284,8 @@ fun SearchBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(color = colors.backgroundColor, shape = CircleShape),
+                .background(color = colors.backgroundColor, shape = CircleShape)
+                .materialShadowEdge(stroke = SearchBarDefaults.searchBarStroke()),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // The device's leading slot is 40dp, 36dp of it the icon view; the glyph reads 17.5dp.
@@ -323,6 +325,9 @@ fun SearchBar(
                     }
                 },
                 colors = colors.copy(backgroundColor = Color.Transparent),
+                // The row paints the capsule and its material edge; a field-level edge would trace
+                // only the input slot instead of the whole capsule.
+                stroke = null,
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(focusRequester),

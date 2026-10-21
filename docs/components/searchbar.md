@@ -69,6 +69,7 @@ SearchBar(
 | enabled           | Boolean                   | Whether search field is enabled      | true                 | No       |
 | textStyle         | TextStyle?                | Style of text in search box          | null                 | No       |
 | colors            | SearchBarColors           | Colors of the input field            | SearchBarDefaults.searchBarColors() | No       |
+| stroke            | MaterialStrokeParams?     | Material rim and inner shadow over the capsule | SearchBarDefaults.searchBarStroke() | No       |
 | leadingIcon       | @Composable (() -> Unit)? | Leading icon                         | default search icon  | No       |
 | trailingIcon      | @Composable (() -> Unit)? | Trailing icon                        | default clear button | No       |
 | interactionSource | MutableInteractionSource? | Interaction source                   | null                 | No       |
@@ -96,6 +97,7 @@ The SearchBarDefaults object provides default values for SearchBar and InputFiel
 | Method Name       | Type            | Description                             |
 | ----------------- | --------------- | --------------------------------------- |
 | searchBarColors() | SearchBarColors | Creates the default input field colors  |
+| searchBarStroke() | MaterialStrokeParams | Resolves the capsule rim and inner shadow |
 
 ### SearchBarColors Class
 
