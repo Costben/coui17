@@ -31,6 +31,14 @@ fun OtherDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
+            title = str("Full Page PullToRefresh Test"),
+            summary = str("Navigate to a Full Page PullToRefresh Page"),
+            onClick = {
+                navigator.push(Route.FullPagePullToRefresh)
+            },
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
             title = str("Navigation test"),
             summary = str("Navigate to a Navigation Page"),
             onClick = { navigator.push(Route.Navigation(Random.nextLong().toString())) },

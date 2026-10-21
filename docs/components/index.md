@@ -86,6 +86,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [FloatingToolbar](../components/floatingtoolbar)           | Floating toolbar                           | Quick actions, information display    |
 | [Divider](../components/divider)                           | Content separator                          | Block separation, hierarchy division  |
 | [PullToRefresh](../components/pulltorefresh)               | Pull-down refresh operation                | Data update, page refresh             |
+| [FullPagePullToRefresh](../components/fullpagepulltorefresh) | Full-page refresh with a revealed backdrop | App Market style, featured feeds    |
 | [SearchBar](../components/searchbar)                       | Search input field                         | Content search, quick find            |
 | [FullPageStatement](../components/fullpagestatement)       | Full-page user agreement statement         | First-launch agreement, privacy statement |
 | [EmptyState](../components/emptystate)                     | Empty page placeholder                     | No search results, empty lists        |

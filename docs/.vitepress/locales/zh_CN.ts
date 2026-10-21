@@ -133,6 +133,7 @@ export default defineConfig({
                         { text: "FloatingToolbar", link: "/zh_CN/components/floatingtoolbar", },
                         { text: "Divider", link: "/zh_CN/components/divider" },
                         { text: "PullToRefresh", link: "/zh_CN/components/pulltorefresh" },
+                        { text: "FullPagePullToRefresh", link: "/zh_CN/components/fullpagepulltorefresh" },
                         { text: "SearchBar", link: "/zh_CN/components/searchbar" },
                         { text: "FullPageStatement", link: "/zh_CN/components/fullpagestatement" },
                         { text: "EmptyState", link: "/zh_CN/components/emptystate" },

@@ -67,6 +67,7 @@ private val availableComponents = listOf(
     AvailableComponent("FloatingToolbar", "floatingToolbar") { FloatingToolbarDemo() },
     AvailableComponent("Divider", "divider") { DividerDemo() },
     AvailableComponent("PullToRefresh", "pullToRefresh") { PullToRefreshDemo() },
+    AvailableComponent("FullPagePullToRefresh", "fullPagePullToRefresh") { FullPagePullToRefreshDemo() },
     AvailableComponent("SearchBar", "searchBar") { SearchBarDemo() },
     AvailableComponent("ColorPicker", "colorPicker") { ColorPickerDemo() },
     AvailableComponent("ColorPalette", "colorPalette") { ColorPaletteDemo() },

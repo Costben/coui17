@@ -124,6 +124,7 @@ export default defineConfig({
                         { text: "FloatingToolbar", link: "/components/floatingtoolbar" },
                         { text: "Divider", link: "/components/divider" },
                         { text: "PullToRefresh", link: "/components/pulltorefresh" },
+                        { text: "FullPagePullToRefresh", link: "/components/fullpagepulltorefresh" },
                         { text: "SearchBar", link: "/components/searchbar" },
                         { text: "FullPageStatement", link: "/components/fullpagestatement" },
                         { text: "EmptyState", link: "/components/emptystate" },

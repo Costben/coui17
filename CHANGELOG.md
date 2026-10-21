@@ -8,6 +8,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Added
 
+- `FullPagePullToRefresh` reproduces the App Market's featured page: the whole page follows the finger, a full-screen layer and a clipped hint are revealed underneath, with the native 93.187dp threshold, 0.5 damping and 800ms success hold.
 - Notifications reveal settings and delete actions with a melting transition while swiping left.
 - The notification swipe demonstration is available directly from the example app's Settings page.
 - `TabRowDefaults.tabRowColors` accepts an `indicatorShadowColor` for the drop shadow under the sliding indicator.

@@ -86,6 +86,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [FloatingToolbar](../components/floatingtoolbar)           | 悬浮工具栏             | 快捷操作、信息展示   |
 | [Divider](../components/divider)                           | 内容分隔线             | 区块分隔、层次划分   |
 | [PullToRefresh](../components/pulltorefresh)               | 下拉触发刷新操作       | 数据更新、页面刷新   |
+| [FullPagePullToRefresh](../components/fullpagepulltorefresh) | 整页下拉并露出背后刷新层 | 应用商店精选、推荐流 |
 | [SearchBar](../components/searchbar)                       | 执行搜索的输入框       | 内容搜索、快速查找   |
 | [FullPageStatement](../components/fullpagestatement)       | 全屏用户协议声明页     | 首次启动协议、隐私声明 |
 | [EmptyState](../components/emptystate)                     | 空状态占位页           | 搜索无结果、列表为空   |
