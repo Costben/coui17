@@ -10,7 +10,8 @@ All notable user-visible changes are documented here. The format follows
 
 - `FullPagePullToRefresh` reproduces the App Market's featured page: the whole page follows the finger, a full-screen layer and a clipped hint are revealed underneath, with the native 93.187dp threshold, 0.5 damping and 800ms success hold.
 - Notifications reveal settings and delete actions with a melting transition while swiping left.
-- The notification swipe demonstration is available directly from the example app's Settings page.
+- `NotificationSwipeBox` accepts a `rimColor`, the light traced along the merged outline. The default half-transparent white suits a card on a bright wallpaper; a shade card passes opaque white.
+- The notification swipe demonstration sits in the example app's home list, beside the other notification components.
 - `TabRowDefaults.tabRowColors` accepts an `indicatorShadowColor` for the drop shadow under the sliding indicator.
 - `BottomFloatingNavigationBar` accepts a `shadow`, so a light colour can turn it into an outer glow on a dark theme.
 - `BottomFloatingNavigationBarDefaults` exposes the native bottom-bar material: `BlurColorsLight`, `BlurColorsDark`, `blurColors`, `blurRadius`, `NATIVE_BLUR_RADIUS_PX`, `RIM_ALPHA_LIGHT`, `RIM_ALPHA_DARK` and `CausticColor`.
@@ -32,6 +33,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Fixed
 
+- Notification cards match the shade: the corner follows the device outline (20dp, the fitted circular equivalent of ColorOS's 16dp continuous corner), the top and bottom edges carry the native `#4E4E4E` rim, and the example app's cards use the measured `#2D2D2D` fill, 8dp gaps, 32dp app icons and a 12sp timestamp.
 - The search capsule uses the toolbar material instead of the blur-off fallback: its fill reads 40 at night (was 61) and its rim 78 (was 177), so it is no longer brighter than the toolbar icons beside it. The light theme keeps the value it already matched.
 - The search field's hint stays visible in the expanded search bar until the first character is typed, as the device's `EditText` hint does, instead of disappearing on focus.
 - List popup rows consume the release, so selecting a row no longer also counts as an outside tap and closes a submenu it just opened.

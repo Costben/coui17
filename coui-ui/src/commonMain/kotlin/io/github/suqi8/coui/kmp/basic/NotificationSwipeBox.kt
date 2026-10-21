@@ -116,6 +116,17 @@ object NotificationSwipeDefaults {
     /** RadiusParams.CARD_MENU_CONER, shared by the card and menu while melting. */
     val CornerRadius = 16.dp
 
+    /**
+     * The card's own corner.
+     *
+     * `notification_corner_radius` is 16dp, but ColorOS 17 draws that corner with continuous
+     * curvature: the outline leaves the card's edge 79px (20.4dp) below the top at 620dpi, where a
+     * circular 16dp corner would leave 49px. Compose only draws circular corners, so 20dp follows
+     * the device outline more closely than the 16dp token. The menu cells keep the circular 16dp
+     * of `notif_menu_icon_background`.
+     */
+    val CardCornerRadius = 20.dp
+
     /** AnimateParamFour.BlendRange. */
     val BlendRange = 3.5.dp
 
@@ -155,6 +166,8 @@ object NotificationSwipeDefaults {
  * @param minHeight Minimum card height; set to zero for compact, content-sized notifications.
  * @param containerColor The material shared by the card and both buttons.
  * @param actionColor The menu icon tint.
+ * @param rimColor The light traced along the merged outline. A notification's top and bottom edges
+ *   measure `#4E4E4E` over a `#2D2D2D` body, which needs opaque white.
  * @param settingsDescription Localized settings accessibility label.
  * @param dismissDescription Localized delete accessibility label.
  * @param content The notification's foreground, measured at full width throughout the gesture.
@@ -172,6 +185,7 @@ fun NotificationSwipeBox(
     minHeight: Dp = NotificationSwipeDefaults.MinHeight,
     containerColor: Color = COUITheme.colorScheme.bar,
     actionColor: Color = COUITheme.colorScheme.onSurface,
+    rimColor: Color = Color.White.copy(alpha = 0.55f),
     settingsDescription: String = "Settings",
     dismissDescription: String = "Delete",
     content: @Composable BoxScope.() -> Unit,
@@ -234,6 +248,7 @@ fun NotificationSwipeBox(
                 height = height,
                 containerColor = containerColor,
                 actionColor = actionColor,
+                rimColor = rimColor,
                 settingsIcon = settingsIcon,
                 dismissIcon = dismissIcon,
                 settingsDescription = settingsDescription,
@@ -258,6 +273,7 @@ private fun BoxScope.NotificationSwipeMenu(
     height: Dp,
     containerColor: Color,
     actionColor: Color,
+    rimColor: Color,
     settingsIcon: ImageVector,
     dismissIcon: ImageVector,
     settingsDescription: String,
@@ -295,6 +311,9 @@ private fun BoxScope.NotificationSwipeMenu(
         extension = NotificationSwipeDefaults.BlendRange,
         extensionFactorX = 1.2f,
         extensionFactorY = 2f,
+        rimColor = rimColor,
+        // The shade lights the lower edge of a card as brightly as the upper one.
+        rimBottomScale = 2f,
     )
     Box(Modifier.matchParentSize().clip(menuShape), contentAlignment = AbsoluteAlignment.TopLeft) {
         NotificationMenuAction(
@@ -340,7 +359,7 @@ private fun BoxScope.NotificationSwipeCard(
         GenericShape { size, _ ->
             val visibleWidth = (size.width - with(density) { (NotificationSwipeDefaults.RevealWidth * state.revealFraction).toPx() }).coerceAtLeast(0f)
             addRoundRect(
-                RoundRect(0f, 0f, visibleWidth, size.height, CornerRadius(with(density) { NotificationSwipeDefaults.CornerRadius.toPx() })),
+                RoundRect(0f, 0f, visibleWidth, size.height, CornerRadius(with(density) { NotificationSwipeDefaults.CardCornerRadius.toPx() })),
             )
         }
     }
@@ -415,7 +434,7 @@ internal fun notificationSwipeParticles(
     val cardWidth = (width - distance).coerceAtLeast(0.dp)
     val buttonHeight = minOf(NotificationSwipeDefaults.ActionHeight, (height - NotificationSwipeDefaults.ActionTop * 2).coerceAtLeast(0.dp))
     return listOf(
-        MetaBallParticle(cardWidth / 2, height / 2, cardWidth, height, NotificationSwipeDefaults.CornerRadius),
+        MetaBallParticle(cardWidth / 2, height / 2, cardWidth, height, NotificationSwipeDefaults.CardCornerRadius),
     ) + List(2) { index ->
         val recoil = if (index == 0) deleteRecoil else settingsRecoil
         val follow = NotificationSwipeDefaults.FollowDistance * notificationActionProgress(distance, index) * (1f - recoil)

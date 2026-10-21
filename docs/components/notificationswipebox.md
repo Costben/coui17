@@ -51,13 +51,16 @@ ColorOS 17 notification menu resources and animation parameters:
 | Action top inset | 8dp | `notification_menu_icon_with_background_standard_height_diff` |
 | Default minimum notification height | 84dp | `notification_menu_icon_with_background_parent_standard_height` |
 | Gap / end inset | 10dp / 4dp | `notification_menu_icon_margin` / `notification_menu_icon_margin_extra` |
-| Card and button radius | 16dp | `RadiusParams.CARD_MENU_CONER` |
+| Card radius | 20dp | `notification_corner_radius` 16dp continuous corner, fitted as circular |
+| Button radius | 16dp | `RadiusParams.CARD_MENU_CONER` / `notif_menu_icon_background` |
 | Blend range / factors | 3.5dp / 1.2 / 2.0 | notification melt-ball controllers |
 | Follow distance | 8dp | stage-one settings and delete distances |
 | Icon fade interval | 0.6–1.0 of cell exposure | `AnimateParamOne.FADE_START/END` |
 | Recoil spring | response 0.55s, bounce 0.4 | `AnimateParamOne.oneAnimate` |
 
 The container needs a bounded width greater than 144dp for dragging. Tall notifications keep the actions 8dp below the top, matching the system menu.
+
+`rimColor` is the light traced along the merged outline. A shade card's top and bottom edges measure `#4E4E4E` over a `#2D2D2D` body, which needs opaque white; the default half-transparent white suits a card floating on a bright wallpaper instead.
 
 Set `minHeight = 0.dp` to size compact notifications from their content; action height then follows the card height minus 16dp, up to 68dp.
 

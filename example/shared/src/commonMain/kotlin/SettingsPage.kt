@@ -142,15 +142,6 @@ private fun SettingsContent(
                     }
                 }
             }
-            item(key = "settingsNotificationSwipe") {
-                Card(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
-                    ArrowPreference(
-                        title = str("NotificationSwipeBox"),
-                        summary = str("Swipe left to reveal notification actions"),
-                        onClick = { navigator.push(Route.NotificationSwipe) },
-                    )
-                }
-            }
             item(key = "settingsUi") {
                 Card(
                     modifier = Modifier

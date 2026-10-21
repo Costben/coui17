@@ -146,6 +146,7 @@ fun Coui17HomePage(
         coui17Entry("Spinner") { SpinnerDemo() }
         coui17Entry("Button") { ButtonDemo() }
         coui17Entry("Snackbar") { SnackbarDemo(snackbarHostState) }
+        coui17Entry("NotificationSwipeBox") { NotificationSwipeDemo() }
         coui17Entry("ProgressIndicator") { ProgressIndicatorDemo() }
         coui17Entry("TextField (Line, Settings dialog form)") {
             TextFieldLineSettingsDialogFormDemo(focusManager)
@@ -215,7 +216,6 @@ fun Coui17HomePage(
         coui17Entry("ClickSelectMenu") { ClickSelectMenuDemoContent() }
         coui17Entry("InstallLoadProgress") { InstallLoadProgressDemo() }
         coui17Entry("TagView") { TagViewDemo() }
-        coui17Entry("NotificationSwipeBox") { NotificationSwipeDemo() }
         coui17Entry("NotificationSnackBar") { NotificationSnackBarDemo() }
         coui17Entry("MarqueeText") { MarqueeTextDemo() }
         coui17Entry("Loading Button") { LoadingButtonDemo() }

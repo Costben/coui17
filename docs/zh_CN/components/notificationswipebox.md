@@ -50,13 +50,16 @@ fun Notification() {
 | 按钮上边距 | 8dp | `notification_menu_icon_with_background_standard_height_diff` |
 | 通知默认最小高度 | 84dp | `notification_menu_icon_with_background_parent_standard_height` |
 | 按钮间距 / 外侧留白 | 10dp / 4dp | `notification_menu_icon_margin` / `margin_extra` |
-| 卡片与按钮圆角 | 16dp | `RadiusParams.CARD_MENU_CONER` |
+| 卡片圆角 | 20dp | `notification_corner_radius` 16dp 连续曲率，按圆形拟合 |
+| 按钮圆角 | 16dp | `RadiusParams.CARD_MENU_CONER` / `notif_menu_icon_background` |
 | 融合范围 / 横纵系数 | 3.5dp / 1.2 / 2.0 | 通知融合控制器 |
 | 跟随位移 | 8dp | 一段动效设置、删除按钮位移 |
 | 图标渐显区间 | 单格露出进度 0.6–1.0 | `AnimateParamOne.FADE_START/END` |
 | 回弹 | response 0.55s / bounce 0.4 | `AnimateParamOne.oneAnimate` |
 
 拖动要求容器具有大于 144dp 的有限宽度。高通知的按钮仍与顶部保持 8dp 间距，与系统一致。
+
+`rimColor` 是沿融合轮廓描出的高光。通知栏卡片的上下边缘在 `#2D2D2D` 卡身上测得 `#4E4E4E`，需要不透明白色；默认的半透明白更适合浮在亮色壁纸上的卡片。
 
 紧凑通知可设置 `minHeight = 0.dp` 以内容确定高度；按钮高度随卡片高度减去 16dp，最大为 68dp。
 

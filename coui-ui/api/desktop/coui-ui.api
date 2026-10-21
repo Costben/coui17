@@ -2814,7 +2814,7 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarVisuals {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeBoxKt {
-	public static final fun NotificationSwipeBox-B7SrW30 (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;ZFJJLjava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun NotificationSwipeBox-kvMUd9U (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;ZFJJJLjava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 	public static final fun rememberNotificationSwipeState (ZLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;
 }
 
@@ -2826,6 +2826,7 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeDefaults {
 	public final fun getActionTop-D9Ej5fM ()F
 	public final fun getActionWidth-D9Ej5fM ()F
 	public final fun getBlendRange-D9Ej5fM ()F
+	public final fun getCardCornerRadius-D9Ej5fM ()F
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getEndPadding-D9Ej5fM ()F
 	public final fun getFollowDistance-D9Ej5fM ()F

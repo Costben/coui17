@@ -21,9 +21,6 @@ sealed interface Route : NavKey {
     data object FullPagePullToRefresh : Route
 
     @Serializable
-    data object NotificationSwipe : Route
-
-    @Serializable
     data object About : Route
 
     @Serializable

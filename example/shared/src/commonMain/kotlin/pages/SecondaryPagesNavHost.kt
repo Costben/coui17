@@ -51,7 +51,6 @@ fun SecondaryPagesNavHost(
                 subclass(Route.Main::class)
                 subclass(Route.PullToRefresh::class)
                 subclass(Route.FullPagePullToRefresh::class)
-                subclass(Route.NotificationSwipe::class)
                 subclass(Route.About::class)
                 subclass(Route.License::class)
                 subclass(Route.Navigation::class)
@@ -80,9 +79,6 @@ fun SecondaryPagesNavHost(
             }
             entry<Route.FullPagePullToRefresh> {
                 FullPagePullToRefreshPage(padding = padding)
-            }
-            entry<Route.NotificationSwipe> {
-                NotificationSwipePage(padding = padding)
             }
             entry<Route.About> {
                 AboutPage(padding = padding)
