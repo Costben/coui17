@@ -67,6 +67,8 @@ SearchBar(
 | enabled           | Boolean                   | 是否启用搜索框       | true     | 否    |
 | textStyle         | TextStyle?                | 搜索框中文本的样式     | null     | 否    |
 | colors            | SearchBarColors           | 输入框的颜色配置      | SearchBarDefaults.searchBarColors() | 否    |
+| stroke            | MaterialStrokeParams?     | 胶囊上的材质描边与内阴影  | SearchBarDefaults.searchBarStroke() | 否    |
+| glowColor         | Color?                    | 胶囊下方的焦散光，只画在胶囊外侧；真机只在编辑态点亮 | SearchBarDefaults.causticGlowColor() | 否    |
 | leadingIcon       | @Composable (() -> Unit)? | 前置图标          | 默认放大镜    | 否    |
 | trailingIcon      | @Composable (() -> Unit)? | 后置图标          | 默认清除按钮   | 否    |
 | interactionSource | MutableInteractionSource? | 交互源           | null     | 否    |
@@ -94,12 +96,34 @@ SearchBarDefaults 对象提供了 SearchBar 和 InputField 组件的默认值。
 | 方法名            | 类型            | 说明                     |
 | ----------------- | --------------- | ------------------------ |
 | searchBarColors() | SearchBarColors | 创建输入框的默认颜色配置 |
+| searchBarStroke() | MaterialStrokeParams | 解析胶囊描边与内阴影参数 |
+| causticGlowColor() | Color | 解析胶囊下方的光：浅色 `#2EFFFFFF`，深色 `#33FFFFFF` |
+
+### SearchBarActionButton
+
+`COUISearchBar` 的功能按钮——展开态输入框右侧那颗 40dp 胶囊，承载「取消」文案。
+
+| 属性名          | 类型                        | 说明                    | 默认值          | 是否必须 |
+|-----------------|-----------------------------|-------------------------|-----------------|----------|
+| text            | String                      | 按钮文案                | -               | 是       |
+| onClick         | () -> Unit                  | 点击回调                | -               | 是       |
+| modifier        | Modifier                    | 应用于按钮的修饰符      | Modifier        | 否       |
+| enabled         | Boolean                     | 是否响应输入            | true            | 否       |
+| interactionSource | MutableInteractionSource? | 可外部托管的交互源      | null            | 否       |
+| containerColor  | Color                       | 胶囊填充色              | 搜索框同一材质色 | 否       |
+| contentColor    | Color                       | 文案颜色                | onSurface 90%   | 否       |
+| glowColor       | Color?                      | 胶囊下方的焦散光，只画在胶囊外侧 | SearchBarDefaults.causticGlowColor() | 否 |
+
+`SearchBarActionButtonDefaults` 保存原生几何：`Height`（40dp，
+`coui_search_bar_normal_background_height`）、`HorizontalPadding`（16dp，
+`coui_search_bar_functional_button_text_padding_horizontal`）、`StartGap`（12dp，
+`coui_search_bar_functional_button_start_gap`）。文案为 14sp Medium（`couiTextAppearanceButton`）。
 
 ### SearchBarColors 类
 
 | 属性名          | 类型  | 说明                                                              |
 | --------------- | ----- | ----------------------------------------------------------------- |
-| backgroundColor | Color | 胶囊背景色（半透明；secondaryContainer，8% 黑 / 15% 白）          |
+| backgroundColor | Color | 胶囊填充色（工具栏材质层：深色 80% #262626，浅色 40% 白）          |
 | labelColor      | Color | 提示（hint）文字颜色（onSurfaceSecondary，54% 黑 / 54% 白）       |
 | iconColor       | Color | 默认前置放大镜图标着色（onSurfaceSecondary）                      |
 | clearIconColor  | Color | 默认清除按钮圆形填充色（onSurfaceContainerHigh）                  |
