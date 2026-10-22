@@ -4869,18 +4869,95 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlaySecurityDialogKt {
 	public static final fun OverlaySecurityDialog-JixYxRM (ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;JJJLio/github/suqi8/coui/kmp/layout/SecurityDialogColors;ZLkotlin/jvm/functions/Function0;ZLandroidx/compose/runtime/Composer;III)V
 }
 
+public final class io/github/suqi8/coui/kmp/theme/ButtonDimens {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;)V
+	public synthetic fun <init> (Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public final fun component2 ()Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public final fun component3 ()Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public final fun copy (Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;)Lio/github/suqi8/coui/kmp/theme/ButtonDimens;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/theme/ButtonDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/ButtonDimens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRegular ()Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public final fun getSmall ()Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public final fun getTiny ()Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public fun hashCode ()I
+	public final fun tier (Lio/github/suqi8/coui/kmp/basic/ButtonSize;)Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/theme/ButtonTierDimens {
+	public static final field $stable I
+	public synthetic fun <init> (FFFLandroidx/compose/foundation/layout/PaddingValues;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-D9Ej5fM ()F
+	public final fun component2-D9Ej5fM ()F
+	public final fun component3-D9Ej5fM ()F
+	public final fun component4 ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun copy-DRUOcmI (FFFLandroidx/compose/foundation/layout/PaddingValues;)Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public static synthetic fun copy-DRUOcmI$default (Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;FFFLandroidx/compose/foundation/layout/PaddingValues;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/ButtonTierDimens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getMinHeight-D9Ej5fM ()F
+	public final fun getMinWidth-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/suqi8/coui/kmp/theme/COUITheme {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/theme/COUITheme;
 	public final fun getColorScheme (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public final fun getColorSchemeMode (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/theme/ColorSchemeMode;
+	public final fun getDimens (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/theme/Dimens;
 	public final fun getTextStyles (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/theme/TextStyles;
 	public final fun isDynamicColor (Landroidx/compose/runtime/Composer;I)Z
 }
 
 public final class io/github/suqi8/coui/kmp/theme/COUIThemeKt {
-	public static final fun COUITheme (Lio/github/suqi8/coui/kmp/theme/Colors;Lio/github/suqi8/coui/kmp/theme/TextStyles;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun COUITheme (Lio/github/suqi8/coui/kmp/theme/ThemeController;Lio/github/suqi8/coui/kmp/theme/TextStyles;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun COUITheme (Lio/github/suqi8/coui/kmp/theme/Colors;Lio/github/suqi8/coui/kmp/theme/TextStyles;Lio/github/suqi8/coui/kmp/theme/Dimens;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun COUITheme (Lio/github/suqi8/coui/kmp/theme/Colors;Lio/github/suqi8/coui/kmp/theme/TextStyles;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun COUITheme (Lio/github/suqi8/coui/kmp/theme/ThemeController;Lio/github/suqi8/coui/kmp/theme/TextStyles;Lio/github/suqi8/coui/kmp/theme/Dimens;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun COUITheme (Lio/github/suqi8/coui/kmp/theme/ThemeController;Lio/github/suqi8/coui/kmp/theme/TextStyles;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ProvideCOUIDimens (Lio/github/suqi8/coui/kmp/theme/Dimens;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class io/github/suqi8/coui/kmp/theme/CardDimens {
+	public static final field $stable I
+	public synthetic fun <init> (FLandroidx/compose/foundation/layout/PaddingValues;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FLandroidx/compose/foundation/layout/PaddingValues;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-D9Ej5fM ()F
+	public final fun component2 ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun copy-D5KLDUw (FLandroidx/compose/foundation/layout/PaddingValues;)Lio/github/suqi8/coui/kmp/theme/CardDimens;
+	public static synthetic fun copy-D5KLDUw$default (Lio/github/suqi8/coui/kmp/theme/CardDimens;FLandroidx/compose/foundation/layout/PaddingValues;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/CardDimens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/theme/ChipDimens {
+	public static final field $stable I
+	public synthetic fun <init> (FFFFLandroidx/compose/foundation/layout/PaddingValues;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFLandroidx/compose/foundation/layout/PaddingValues;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-D9Ej5fM ()F
+	public final fun component2-D9Ej5fM ()F
+	public final fun component3-D9Ej5fM ()F
+	public final fun component4-D9Ej5fM ()F
+	public final fun component5 ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun copy-lDy3nrA (FFFFLandroidx/compose/foundation/layout/PaddingValues;)Lio/github/suqi8/coui/kmp/theme/ChipDimens;
+	public static synthetic fun copy-lDy3nrA$default (Lio/github/suqi8/coui/kmp/theme/ChipDimens;FFFFLandroidx/compose/foundation/layout/PaddingValues;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/ChipDimens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getMaxWidth-D9Ej5fM ()F
+	public final fun getMinHeight-D9Ej5fM ()F
+	public final fun getMinWidth-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/suqi8/coui/kmp/theme/ColorSchemeMode : java/lang/Enum {
@@ -4975,12 +5052,52 @@ public final class io/github/suqi8/coui/kmp/theme/ContentColorKt {
 	public static final fun getLocalContentColor ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
+public final class io/github/suqi8/coui/kmp/theme/Dimens {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lio/github/suqi8/coui/kmp/theme/ButtonDimens;Lio/github/suqi8/coui/kmp/theme/CardDimens;Lio/github/suqi8/coui/kmp/theme/ChipDimens;Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;)V
+	public synthetic fun <init> (Lio/github/suqi8/coui/kmp/theme/ButtonDimens;Lio/github/suqi8/coui/kmp/theme/CardDimens;Lio/github/suqi8/coui/kmp/theme/ChipDimens;Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/suqi8/coui/kmp/theme/ButtonDimens;
+	public final fun component2 ()Lio/github/suqi8/coui/kmp/theme/CardDimens;
+	public final fun component3 ()Lio/github/suqi8/coui/kmp/theme/ChipDimens;
+	public final fun component4 ()Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;
+	public final fun copy (Lio/github/suqi8/coui/kmp/theme/ButtonDimens;Lio/github/suqi8/coui/kmp/theme/CardDimens;Lio/github/suqi8/coui/kmp/theme/ChipDimens;Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;)Lio/github/suqi8/coui/kmp/theme/Dimens;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/theme/Dimens;Lio/github/suqi8/coui/kmp/theme/ButtonDimens;Lio/github/suqi8/coui/kmp/theme/CardDimens;Lio/github/suqi8/coui/kmp/theme/ChipDimens;Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Dimens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButton ()Lio/github/suqi8/coui/kmp/theme/ButtonDimens;
+	public final fun getCard ()Lio/github/suqi8/coui/kmp/theme/CardDimens;
+	public final fun getChip ()Lio/github/suqi8/coui/kmp/theme/ChipDimens;
+	public final fun getTextField ()Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/suqi8/coui/kmp/theme/DismissStateKt {
 	public static final fun getLocalDismissState ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
 public final class io/github/suqi8/coui/kmp/theme/DynamicColors_skikoKt {
 	public static final fun platformDynamicColors (ZLandroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/theme/Colors;
+}
+
+public final class io/github/suqi8/coui/kmp/theme/TextFieldDimens {
+	public static final field $stable I
+	public synthetic fun <init> (FJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-D9Ej5fM ()F
+	public final fun component2-MYxV2XQ ()J
+	public final fun component3-MYxV2XQ ()J
+	public final fun component4-MYxV2XQ ()J
+	public final fun copy-ZnRGCS4 (FJJJ)Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;
+	public static synthetic fun copy-ZnRGCS4$default (Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;FJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/TextFieldDimens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getLineInsideMargin-MYxV2XQ ()J
+	public final fun getNoneInsideMargin-MYxV2XQ ()J
+	public final fun getRectangleInsideMargin-MYxV2XQ ()J
+	public fun hashCode ()I
+	public final fun insideMargin-Gh9hcWk (Lio/github/suqi8/coui/kmp/basic/TextFieldMode;)J
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/suqi8/coui/kmp/theme/TextStyles {

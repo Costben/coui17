@@ -87,6 +87,7 @@ Miuix 的视觉语言**高度集中在 `theme/` 层**，组件全部走 `COUIThe
 | 全局字号 / 字重 | `TextStyles.kt` → `Main` / `Body*` / `Title*` 等私有 `val` | |
 | 控件圆角 | 对应组件的 `XxxDefaults.CornerRadius`（如 `ButtonDefaults.CornerRadius`） | 配合 squircle |
 | 控件尺寸 / 内边距 | 对应组件的 `XxxDefaults.MinWidth/MinHeight/InsideMargin` | |
+| 全局尺寸 / 圆角覆盖入口 | `theme/Dimens.kt` → `Dimens` / `ButtonDimens` / `CardDimens` / `ChipDimens` / `TextFieldDimens` | 下游不改库代码即可换尺寸：`COUITheme(dimens = …)`；字段默认值必须等于对应 `XxxDefaults` 常量，新增组件接入时同步加分组 |
 | squircle 平滑度 | `coui-squircle/` 模块参数 | 全局连续曲率 |
 | 单控件配色 | 该组件 `XxxDefaults.xxxColors()` 默认引用的色槽 | 不在组件体内写死颜色 |
 

@@ -85,10 +85,11 @@ fun Button(
 ) {
     @Suppress("NAME_SHADOWING")
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
-    val resolvedCornerRadius = cornerRadius ?: size.cornerRadiusValue()
-    val resolvedMinWidth = minWidth ?: size.minWidthValue()
-    val resolvedMinHeight = minHeight ?: size.minHeightValue()
-    val resolvedInsideMargin = insideMargin ?: size.insideMarginValue()
+    val tierDimens = COUITheme.dimens.button.tier(size)
+    val resolvedCornerRadius = cornerRadius ?: tierDimens.cornerRadius
+    val resolvedMinWidth = minWidth ?: tierDimens.minWidth
+    val resolvedMinHeight = minHeight ?: tierDimens.minHeight
+    val resolvedInsideMargin = insideMargin ?: tierDimens.insideMargin
     val rowModifier = remember(resolvedMinWidth, resolvedMinHeight, resolvedInsideMargin) {
         Modifier
             .defaultMinSize(minWidth = resolvedMinWidth, minHeight = resolvedMinHeight)
@@ -176,11 +177,11 @@ fun Button(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     pressScaleEnabled: Boolean = true,
-    cornerRadius: Dp = ButtonDefaults.CornerRadius,
-    minWidth: Dp = ButtonDefaults.MinWidth,
-    minHeight: Dp = ButtonDefaults.MinHeight,
+    cornerRadius: Dp = COUITheme.dimens.button.regular.cornerRadius,
+    minWidth: Dp = COUITheme.dimens.button.regular.minWidth,
+    minHeight: Dp = COUITheme.dimens.button.regular.minHeight,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
-    insideMargin: PaddingValues = ButtonDefaults.InsideMargin,
+    insideMargin: PaddingValues = COUITheme.dimens.button.regular.insideMargin,
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
     content: @Composable RowScope.() -> Unit,
@@ -333,34 +334,6 @@ enum class ButtonSize {
 
     /** The tiny size tier (`ButtonDefaults.MinWidthTiny` / `MinHeightTiny` / `CornerRadiusTiny` / `InsideMarginTiny`). */
     Tiny,
-}
-
-@OptIn(ExperimentalCOUIApi::class)
-private fun ButtonSize.minWidthValue(): Dp = when (this) {
-    ButtonSize.Regular -> ButtonDefaults.MinWidth
-    ButtonSize.Small -> ButtonDefaults.MinWidthSmall
-    ButtonSize.Tiny -> ButtonDefaults.MinWidthTiny
-}
-
-@OptIn(ExperimentalCOUIApi::class)
-private fun ButtonSize.minHeightValue(): Dp = when (this) {
-    ButtonSize.Regular -> ButtonDefaults.MinHeight
-    ButtonSize.Small -> ButtonDefaults.MinHeightSmall
-    ButtonSize.Tiny -> ButtonDefaults.MinHeightTiny
-}
-
-@OptIn(ExperimentalCOUIApi::class)
-private fun ButtonSize.cornerRadiusValue(): Dp = when (this) {
-    ButtonSize.Regular -> ButtonDefaults.CornerRadius
-    ButtonSize.Small -> ButtonDefaults.CornerRadiusSmall
-    ButtonSize.Tiny -> ButtonDefaults.CornerRadiusTiny
-}
-
-@OptIn(ExperimentalCOUIApi::class)
-private fun ButtonSize.insideMarginValue(): PaddingValues = when (this) {
-    ButtonSize.Regular -> ButtonDefaults.InsideMargin
-    ButtonSize.Small -> ButtonDefaults.InsideMarginSmall
-    ButtonSize.Tiny -> ButtonDefaults.InsideMarginTiny
 }
 
 object ButtonDefaults {

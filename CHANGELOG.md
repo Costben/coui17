@@ -30,6 +30,8 @@ All notable user-visible changes are documented here. The format follows
 - `InputField` accepts a `stroke`, defaulting to `SearchBarDefaults.searchBarStroke()`, so the search capsule wears the ColorOS rim and inner shadow (`TYPE_FRAMEWORK_CAPSULE_8`). Pass `null` when the caller paints the edge on a wider capsule.
 - `InputField` accepts a `glowColor`, defaulting to `SearchBarDefaults.causticGlowColor()`, so the capsule casts the native caustic light below it (`coui_caustic_color_1`). The light is punched out of the capsule, so the translucent fill is never brightened; measured on the device it reads +18 grey levels and fades out within 4.4dp. Pass `null` to opt out.
 - `SearchBarActionButton` reproduces `COUISearchBar`'s functional button: the 40dp capsule carrying the "取消"/"Cancel" label, with `SearchBarActionButtonDefaults` holding the native 16dp label inset and 12dp start gap. It casts the same caustic light as the field.
+- `Dimens`, the metric half of the theme: `COUITheme` takes a `dimens` argument and exposes it as `COUITheme.dimens`, and `ProvideCOUIDimens` overrides it for a subtree. Every field defaults to the matching `XxxDefaults` constant, so `Dimens()` reproduces the stock ColorOS metrics exactly. Groups: `button` (`regular` / `small` / `tiny`), `card`, `chip`, `textField`.
+- `Button`, `TextButton`, `Card`, `Chip` and `TextField` take their default metrics from `COUITheme.dimens`, so a project can retheme corner radii, control heights and inside margins without touching component call sites. An explicit argument still wins over the theme.
 
 ### Fixed
 

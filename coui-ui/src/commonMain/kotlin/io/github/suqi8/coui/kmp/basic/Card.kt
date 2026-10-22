@@ -56,8 +56,8 @@ import kotlin.coroutines.cancellation.CancellationException
 @NonRestartableComposable
 fun Card(
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = CardDefaults.CornerRadius,
-    insideMargin: PaddingValues = CardDefaults.InsideMargin,
+    cornerRadius: Dp = COUITheme.dimens.card.cornerRadius,
+    insideMargin: PaddingValues = COUITheme.dimens.card.insideMargin,
     colors: CardColors = CardDefaults.defaultColors(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -95,8 +95,8 @@ fun Card(
 @Composable
 fun Card(
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = CardDefaults.CornerRadius,
-    insideMargin: PaddingValues = CardDefaults.InsideMargin,
+    cornerRadius: Dp = COUITheme.dimens.card.cornerRadius,
+    insideMargin: PaddingValues = COUITheme.dimens.card.insideMargin,
     colors: CardColors = CardDefaults.defaultColors(),
     pressFeedbackType: PressFeedbackType = PressFeedbackType.Tint,
     showIndication: Boolean = false,

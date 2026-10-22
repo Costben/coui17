@@ -153,6 +153,7 @@ Access the current theme values through the `COUITheme` object:
 ```kotlin
 val colors = COUITheme.colorScheme
 val textStyles = COUITheme.textStyles
+val dimens = COUITheme.dimens
 val mode = COUITheme.colorSchemeMode
 val isDynamic = COUITheme.isDynamicColor
 ```
@@ -161,6 +162,7 @@ val isDynamic = COUITheme.isDynamicColor
 | --- | --- | --- |
 | colorScheme | Colors | Current color scheme |
 | textStyles | TextStyles | Current text styles |
+| dimens | Dimens | Current component metrics |
 | colorSchemeMode | ColorSchemeMode? | Current color scheme mode (null if using direct `colors` overload) |
 | isDynamicColor | Boolean | Whether the current mode is a Monet dynamic color mode |
 
@@ -190,6 +192,63 @@ COUITheme(
     // Your application content
 }
 ```
+
+## Customizing Metrics
+
+Colors and text styles are not the only things a theme carries. `COUITheme` also provides `Dimens`,
+the metrics a component falls back to when you do not pass its size arguments explicitly.
+
+```kotlin
+val stock = Dimens()
+val dimens = stock.copy(
+    // A 48dp, 16dp-corner regular button instead of the stock 44dp capsule.
+    button = stock.button.copy(
+        regular = stock.button.regular.copy(minHeight = 48.dp, cornerRadius = 16.dp),
+    ),
+    card = CardDimens(cornerRadius = 20.dp, insideMargin = PaddingValues(20.dp)),
+    chip = stock.chip.copy(minHeight = 36.dp),
+    textField = stock.textField.copy(cornerRadius = 14.dp),
+)
+
+COUITheme(controller = controller, dimens = dimens) {
+    App()
+}
+```
+
+`Dimens()` reproduces the stock ColorOS metrics: every field defaults to the matching `XxxDefaults`
+constant, so introducing the theme moves nothing.
+
+An argument passed to a component still wins over the theme:
+
+```kotlin
+COUITheme(dimens = dimens) {
+    // 40dp: the explicit argument beats the theme's 48dp.
+    Button(onClick = {}, minHeight = 40.dp) { Text("Cancel") }
+}
+```
+
+A nested `COUITheme` inherits the metrics of the theme around it, so a sub-theme that only changes
+colors keeps the outer metrics. To override metrics for one screen without touching colors or text
+styles, wrap that screen in `ProvideCOUIDimens`:
+
+```kotlin
+COUITheme(controller = controller) {
+    App()
+    ProvideCOUIDimens(dimens) {
+        CompactScreen()
+    }
+}
+```
+
+| Group | Fields | Read by |
+| --- | --- | --- |
+| `button` | `regular` / `small` / `tiny`, each with `minWidth`, `minHeight`, `cornerRadius`, `insideMargin` | `Button`, `TextButton` |
+| `card` | `cornerRadius`, `insideMargin` | `Card` |
+| `chip` | `cornerRadius`, `minWidth`, `minHeight`, `maxWidth`, `insideMargin` | `Chip` |
+| `textField` | `cornerRadius`, `rectangleInsideMargin`, `lineInsideMargin`, `noneInsideMargin` | `TextField` |
+
+Components that are not in this table keep their `XxxDefaults` constants; pass their size arguments
+directly to change them.
 
 ## Follow System Dark Mode
 

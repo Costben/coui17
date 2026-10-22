@@ -152,6 +152,7 @@ fun App() {
 ```kotlin
 val colors = COUITheme.colorScheme
 val textStyles = COUITheme.textStyles
+val dimens = COUITheme.dimens
 val mode = COUITheme.colorSchemeMode
 val isDynamic = COUITheme.isDynamicColor
 ```
@@ -160,6 +161,7 @@ val isDynamic = COUITheme.isDynamicColor
 | --- | --- | --- |
 | colorScheme | Colors | 当前颜色方案 |
 | textStyles | TextStyles | 当前文本样式 |
+| dimens | Dimens | 当前组件尺寸 |
 | colorSchemeMode | ColorSchemeMode? | 当前配色模式（使用直接 `colors` 重载时为 null） |
 | isDynamicColor | Boolean | 当前模式是否为 Monet 动态取色模式 |
 
@@ -189,6 +191,58 @@ COUITheme(
     // 您的应用内容
 }
 ```
+
+## 自定义尺寸
+
+主题不只承载颜色和文本样式。`COUITheme` 还提供 `Dimens`：当你不显式传入组件的尺寸参数时，组件回落到这里的值。
+
+```kotlin
+val stock = Dimens()
+val dimens = stock.copy(
+    // 常规按钮改成 48dp 高、16dp 圆角，替代默认的 44dp 胶囊。
+    button = stock.button.copy(
+        regular = stock.button.regular.copy(minHeight = 48.dp, cornerRadius = 16.dp),
+    ),
+    card = CardDimens(cornerRadius = 20.dp, insideMargin = PaddingValues(20.dp)),
+    chip = stock.chip.copy(minHeight = 36.dp),
+    textField = stock.textField.copy(cornerRadius = 14.dp),
+)
+
+COUITheme(controller = controller, dimens = dimens) {
+    App()
+}
+```
+
+`Dimens()` 就是出厂尺寸：每个字段默认取对应的 `XxxDefaults` 常量，所以引入主题不会让任何控件挪位。
+
+显式传给组件的参数优先级仍然高于主题：
+
+```kotlin
+COUITheme(dimens = dimens) {
+    // 40dp：显式参数压过主题里的 48dp。
+    Button(onClick = {}, minHeight = 40.dp) { Text("取消") }
+}
+```
+
+嵌套的 `COUITheme` 会继承外层主题的尺寸，所以只换颜色的子主题不会把尺寸打回默认。若只想给某个页面单独换尺寸、不动颜色和文本样式，用 `ProvideCOUIDimens` 包住那个页面：
+
+```kotlin
+COUITheme(controller = controller) {
+    App()
+    ProvideCOUIDimens(dimens) {
+        CompactScreen()
+    }
+}
+```
+
+| 分组 | 字段 | 读取者 |
+| --- | --- | --- |
+| `button` | `regular` / `small` / `tiny`，每组含 `minWidth`、`minHeight`、`cornerRadius`、`insideMargin` | `Button`、`TextButton` |
+| `card` | `cornerRadius`、`insideMargin` | `Card` |
+| `chip` | `cornerRadius`、`minWidth`、`minHeight`、`maxWidth`、`insideMargin` | `Chip` |
+| `textField` | `cornerRadius`、`rectangleInsideMargin`、`lineInsideMargin`、`noneInsideMargin` | `TextField` |
+
+不在这张表里的组件仍以各自的 `XxxDefaults` 常量为准，直接传尺寸参数即可。
 
 ## 跟随系统深色模式
 
