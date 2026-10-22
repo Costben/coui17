@@ -140,10 +140,19 @@ repositories {
 Maintainers publish the snapshot set to GitHub Packages with:
 
 ```bash
-./gradlew publishAllToGithubPackages            # GITHUB_ACTOR + GITHUB_TOKEN
-./gradlew publishAndVerifyGithubPackages \
-    -PcouiGithubPackagesUrl=file:///tmp/coui-github-packages   # full path, no token
+# GITHUB_ACTOR + GITHUB_TOKEN; -ProllingSnapshot keeps the version at 1.2.0-SNAPSHOT
+./gradlew publishAllToGithubPackages -ProllingSnapshot
+# Full path against a local directory, no token required
+./gradlew publishAndVerifyGithubPackages -ProllingSnapshot \
+    -PcouiGithubPackagesUrl=file:///tmp/coui-github-packages
 ```
+
+`-ProllingSnapshot` is what makes the channel usable: without it the version carries the commit
+hash (`1.2.0-62021765-SNAPSHOT`), so a consumer would have to edit the dependency after every push.
+With it the version stays `1.2.0-SNAPSHOT` and each push replaces what that coordinate resolves to.
+
+Add the dependencies to the consuming project — `1.2.0-SNAPSHOT` for GitHub Packages, `1.2.0` for a
+local `-Prelease` build:
 
 ```kotlin
 kotlin {

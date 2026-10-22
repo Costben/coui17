@@ -14,7 +14,8 @@ To use COUI in your project, follow these steps to add dependencies:
 
 1. This version is not on Maven Central. Pick one of two sources.
 
-   **GitHub Packages** — no local build. The token needs the `read:packages` scope:
+   **GitHub Packages** — no local build. The token needs the `read:packages` scope. The snapshot
+   channel publishes at the fixed version `1.2.0-SNAPSHOT`, so the dependency never has to change:
 
    ```kotlin
    repositories {

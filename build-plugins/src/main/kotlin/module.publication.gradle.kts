@@ -11,25 +11,8 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-val versionSuffix = when {
-    project.hasProperty("release") -> ""
-    project.hasProperty("alpha") -> {
-        val v = project.property("alpha")?.toString()
-        if (v.isNullOrBlank()) "-alpha" else "-alpha$v"
-    }
-
-    project.hasProperty("beta") -> {
-        val v = project.property("beta")?.toString()
-        if (v.isNullOrBlank()) "-beta" else "-beta$v"
-    }
-
-    project.hasProperty("rc") -> {
-        val v = project.property("rc")?.toString()
-        if (v.isNullOrBlank()) "-rc" else "-rc$v"
-    }
-
-    else -> "-${getGitHashShort()}-SNAPSHOT"
-}
+// Shared with the root release aggregation so the two cannot drift apart.
+val versionSuffix = releaseVersionSuffix()
 
 group = BuildConfig.LIBRARY_ID
 version = "${BuildConfig.LIBRARY_VERSION}$versionSuffix"

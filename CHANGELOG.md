@@ -79,6 +79,7 @@ All notable user-visible changes are documented here. The format follows
 - `HighlightedIconButtonDefaults` light-theme halo lowered (`LightHaloColor` alpha 0.05 to 0.03, `LightHaloRadius` 15.5dp to 12dp). Provisional values until a live circular-button reference can be measured.
 - `DropdownDefaults.ChevronSize` is 24x24dp (the native expandable-indicator box) instead of 12x24dp, and submenu rows draw `ExpandableIndicator` instead of an `ArrowRight`.
 - `OverlayCascadingListPopup` defaults `enableWindowDim` to `false`, matching the native popup window.
+- The GitHub Packages channel publishes at the fixed version `1.2.0-SNAPSHOT` (`-ProllingSnapshot`): each push replaces what that coordinate resolves to, instead of publishing a new commit-hash version that every consumer would have to follow.
 
 ## [1.2.0] - 2026-10-06
 

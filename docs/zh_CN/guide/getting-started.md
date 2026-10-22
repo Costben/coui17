@@ -14,7 +14,8 @@
 
 1. 当前版本没有发布到 Maven Central，两种来源二选一。
 
-   **GitHub Packages** —— 不用本地构建。token 需要 `read:packages` 权限：
+   **GitHub Packages** —— 不用本地构建。token 需要 `read:packages` 权限。快照通道的版本固定为
+   `1.2.0-SNAPSHOT`，依赖坐标不用跟着提交变：
 
    ```kotlin
    repositories {

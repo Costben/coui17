@@ -31,16 +31,9 @@ fun sha256Of(file: java.io.File): String {
     return digest.digest().joinToString("") { "%02x".format(it) }
 }
 
-val releaseVersion = run {
-    val suffix = when {
-        project.hasProperty("release") -> ""
-        project.hasProperty("alpha") -> project.property("alpha")?.toString()?.takeIf { it.isNotBlank() }?.let { "-alpha$it" } ?: "-alpha"
-        project.hasProperty("beta") -> project.property("beta")?.toString()?.takeIf { it.isNotBlank() }?.let { "-beta$it" } ?: "-beta"
-        project.hasProperty("rc") -> project.property("rc")?.toString()?.takeIf { it.isNotBlank() }?.let { "-rc$it" } ?: "-rc"
-        else -> "-${getGitHashShort()}-SNAPSHOT"
-    }
-    "${BuildConfig.LIBRARY_VERSION}$suffix"
-}
+// Shared with the publication plugin so every module and the verification tasks agree on the string.
+// `-ProllingSnapshot` pins the suffix at `-SNAPSHOT` for the GitHub Packages channel.
+val releaseVersion = "${BuildConfig.LIBRARY_VERSION}${releaseVersionSuffix()}"
 
 val stagingDir = layout.buildDirectory.dir("publishing/mavenCentral")
 val localRepoDir = layout.buildDirectory.dir("repository/local")

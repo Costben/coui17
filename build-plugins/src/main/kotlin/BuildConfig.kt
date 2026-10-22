@@ -27,3 +27,29 @@ fun org.gradle.api.Project.getGitHashShort(): String {
         commandLine("git", "rev-parse", "--short", "HEAD")
     }.standardOutput.asText.get().trim()
 }
+
+/**
+ * The version suffix every published module shares, resolved from the release flags.
+ *
+ * `-ProllingSnapshot` pins it at `-SNAPSHOT`: that is the GitHub Packages channel, where the version
+ * must stay put so a consumer can depend on `1.2.0-SNAPSHOT` once and have every push replace what
+ * that coordinate resolves to. Without the flag the version carries the commit hash, so separate
+ * commits publish as separate coordinates — which is what the local and staging repositories want.
+ *
+ * Lives here rather than in each build script because the publication plugin and the root release
+ * aggregation have to agree on the string, and they previously carried two copies of this `when`.
+ */
+fun org.gradle.api.Project.releaseVersionSuffix(): String = when {
+    hasProperty("release") -> ""
+    hasProperty("alpha") ->
+        property("alpha")?.toString()?.takeIf { it.isNotBlank() }?.let { "-alpha$it" } ?: "-alpha"
+
+    hasProperty("beta") ->
+        property("beta")?.toString()?.takeIf { it.isNotBlank() }?.let { "-beta$it" } ?: "-beta"
+
+    hasProperty("rc") ->
+        property("rc")?.toString()?.takeIf { it.isNotBlank() }?.let { "-rc$it" } ?: "-rc"
+
+    hasProperty("rollingSnapshot") -> "-SNAPSHOT"
+    else -> "-${getGitHashShort()}-SNAPSHOT"
+}

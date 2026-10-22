@@ -48,7 +48,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Publish SNAPSHOT to GitHub Packages
-        run: ./gradlew --no-daemon --stacktrace publishAllToGithubPackages --no-configuration-cache
+        run: ./gradlew --no-daemon --stacktrace publishAllToGithubPackages -ProllingSnapshot --no-configuration-cache
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -59,7 +59,7 @@ jobs:
       # `smokeLocalOnly` excludes the group from Maven Central, so nothing can satisfy it by accident.
       - name: Smoke-test the published coordinates
         run: |
-          version="$(./gradlew -q --no-daemon printReleaseVersion | tail -1)"
+          version="$(./gradlew -q --no-daemon printReleaseVersion -ProllingSnapshot | tail -1)"
           echo "Resolving $version from https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
           ./gradlew --no-daemon --stacktrace -p smoke compileKotlin \
             -PcouiVersion="$version" \
