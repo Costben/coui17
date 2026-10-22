@@ -39,9 +39,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import component.searchBarShadow
@@ -72,6 +70,7 @@ import io.github.suqi8.coui.kmp.icon.extended.Theme
 import io.github.suqi8.coui.kmp.icon.extended.Translate
 import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.rememberGalleryDensity
 
 /** One capsule tab of the accessory bar. [label] is the English source string `str` resolves. */
 private class Coui17Tab(val label: String, val icon: ImageVector)
@@ -384,18 +383,8 @@ fun Coui17AccessoryBar(
     modifier: Modifier = Modifier,
 ) {
     val systemDensity = LocalDensity.current
-    val windowSize = LocalWindowInfo.current.containerSize
-    val galleryDensity = remember(systemDensity, windowSize) {
-        // The gallery's 360dp short edge only describes a phone. Deriving a density from a larger
-        // window keeps growing the bar with it — a desktop window yields 5.16x against a 2x screen —
-        // so cap it at the platform density: tablets and desktop get the same 56dp bar as every
-        // other app, while a phone keeps the gallery's slightly denser rendering.
-        val density = minOf(
-            Coui17Dimens.galleryDensity(minOf(windowSize.width, windowSize.height)),
-            systemDensity.density,
-        )
-        Density(density = density, fontScale = systemDensity.fontScale)
-    }
+    // The Gallery's 360dp-short-edge density, capped at the platform density.
+    val galleryDensity = rememberGalleryDensity()
     // Gallery retracts both accessories once the third capsule tab is selected: `TabFragment`'s page
     // listener calls `hideStartAccessoryView(true)` / `hideEndAccessoryView(true)` for the 创作 tab and
     // shows them again for 照片 and 图集, so 创作 leaves a bare three-item capsule. `配色` is this bar's

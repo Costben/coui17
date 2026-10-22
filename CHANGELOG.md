@@ -33,6 +33,10 @@ All notable user-visible changes are documented here. The format follows
 - `Dimens`, the metric half of the theme: `COUITheme` takes a `dimens` argument and exposes it as `COUITheme.dimens`, and `ProvideCOUIDimens` overrides it for a subtree. Every field defaults to the matching `XxxDefaults` constant, so `Dimens()` reproduces the stock ColorOS metrics exactly. Groups: `button` (`regular` / `small` / `tiny`), `card`, `chip`, `textField`.
 - `Button`, `TextButton`, `Card`, `Chip` and `TextField` take their default metrics from `COUITheme.dimens`, so a project can retheme corner radii, control heights and inside margins without touching component call sites. An explicit argument still wins over the theme.
 
+- `PinnedTopAppBar` reproduces the ColorOS 17 Gallery's main-tab toolbar: a 32sp title on the first row beside the actions that never moves while the page scrolls, over the `AppBarBlurOverlay` material. Metrics measured on the PLK110 Gallery: 52dp row, 16dp insets, 40dp actions 10dp apart.
+- `PinnedScrollBehavior` tracks how far the content has scrolled under a bar without ever collapsing it, so a pinned bar can still fade its material in. `TopAppBar` given this behavior fades its divider in with the content instead of keeping it hidden.
+- `rememberGalleryDensity` returns the density the Gallery renders its bars at (a 360dp short edge, capped at the platform density, platform font scale kept); `GalleryDensityDefaults` holds the maths.
+
 ### Fixed
 
 - A `LayerBackdrop` attached to more than one node no longer blurs the wrong content or flickers off: the most recently attached node owns it, other nodes neither record nor publish coordinates, and a detaching node only clears a registration it owns. The documentation now states the one-node-per-backdrop rule and how to record a pager once.

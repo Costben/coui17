@@ -19,6 +19,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [Surface](../components/surface)                           | 基础容器组件           | 内容展示、背景容器   |
 | [TopAppBar](../components/topappbar)                       | 应用顶部的导航栏       | 页面标题、主要操作   |
 | [AppBarBlurOverlay](../components/appbarbluroverlay)       | 随滚动淡入的顶栏材质叠加层 | 覆盖页面的渐变模糊顶栏 |
+| [PinnedTopAppBar](../components/pinnedtopappbar)           | 相册风格、标题固定的顶部应用栏 | 始终不动的首行标题栏 |
 | [NavigationBar](../components/navigationbar)               | 底部导航组件           | 主要页面切换         |
 | [BottomFloatingAccessoryNavigationBar](../components/bottomfloatingaccessorynavigationbar) | 带两侧配件的悬浮胶囊导航栏 | 底部导航与快捷操作 |
 | [BottomFloatingEditToolbar](../components/bottomfloatingedittoolbar) | 悬浮编辑工具栏       | 编辑操作、快捷工具   |

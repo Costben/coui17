@@ -1165,6 +1165,12 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$MetaBallS
 	public final fun getLambda$501321855$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
+public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$PinnedTopAppBarKt {
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$PinnedTopAppBarKt;
+	public fun <init> ()V
+	public final fun getLambda$-897154722$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$ScaffoldKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$ScaffoldKt;
 	public fun <init> ()V
@@ -3001,6 +3007,24 @@ public final class io/github/suqi8/coui/kmp/basic/PageIndicatorDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/PageIndicatorKt {
 	public static final fun PageIndicator-jA1GFJw (IILandroidx/compose/ui/Modifier;JJLandroidx/compose/runtime/Composer;II)V
+}
+
+public final class io/github/suqi8/coui/kmp/basic/PinnedTopAppBarDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/PinnedTopAppBarDefaults;
+	public final fun getActionItemSize-D9Ej5fM ()F
+	public final fun getActionSpacing-D9Ej5fM ()F
+	public final fun getEndPadding-D9Ej5fM ()F
+	public final fun getHeight-D9Ej5fM ()F
+	public final fun getNavigationIconGap-D9Ej5fM ()F
+	public final fun getStartPadding-D9Ej5fM ()F
+	public final fun getTitleActionGap-D9Ej5fM ()F
+	public final fun titleStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/PinnedTopAppBarKt {
+	public static final fun PinnedScrollBehavior (Lio/github/suqi8/coui/kmp/basic/TopAppBarState;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;
+	public static final fun PinnedTopAppBar-VfO1hwQ (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZJJLandroidx/compose/ui/text/TextStyle;Lio/github/suqi8/coui/kmp/blur/Backdrop;FFFLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/PopupBarrierDefaults {
@@ -5289,6 +5313,17 @@ public final class io/github/suqi8/coui/kmp/utils/CouiHapticEffect : java/lang/E
 
 public final class io/github/suqi8/coui/kmp/utils/CouiHaptic_desktopKt {
 	public static final fun rememberCouiHaptic (Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function1;
+}
+
+public final class io/github/suqi8/coui/kmp/utils/GalleryDensityDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/utils/GalleryDensityDefaults;
+	public final fun density (IF)F
+	public final fun getShortEdgeDp ()F
+}
+
+public final class io/github/suqi8/coui/kmp/utils/GalleryDensityKt {
+	public static final fun rememberGalleryDensity (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/unit/Density;
 }
 
 public final class io/github/suqi8/coui/kmp/utils/LunarDateValue {

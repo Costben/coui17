@@ -56,6 +56,7 @@ internal val zhChrome: Map<String, String> = mapOf(
     "SpotLight" to "聚光灯",
     "TopAppBar (glass)" to "顶部应用栏（玻璃）",
     "TopAppBar (ColorOS 17 forms)" to "顶部应用栏（ColorOS 17 形态）",
+    "PinnedTopAppBar" to "固定顶部应用栏",
     "BreadcrumbBar" to "面包屑栏",
     "Tooltip" to "提示气泡",
     "NumberPicker" to "数字选择器",

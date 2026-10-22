@@ -13,9 +13,6 @@ import androidx.compose.ui.unit.dp
  */
 object Coui17Dimens {
 
-    /** Gallery activity density: 540dpi at 1216px, 565dpi at 1272px. */
-    fun galleryDensity(shortSidePixels: Int): Float = kotlin.math.round(shortSidePixels / 360f * 160f).coerceAtLeast(160f) / 160f
-
     /**
      * The settings home's `app_bar_layout`: 343px from the top of the screen.
      *

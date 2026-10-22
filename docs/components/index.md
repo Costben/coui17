@@ -19,6 +19,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [Surface](../components/surface)                           | Basic container component                  | Content display, background container |
 | [TopAppBar](../components/topappbar)                       | Application top navigation bar             | Page title, primary actions           |
 | [AppBarBlurOverlay](../components/appbarbluroverlay)       | Scrolling app bar material overlay         | Gradient-blur app bar over the page   |
+| [PinnedTopAppBar](../components/pinnedtopappbar)           | Gallery-style top bar with a fixed title    | Title row that never moves            |
 | [NavigationBar](../components/navigationbar)               | Bottom navigation component                | Main page switching                   |
 | [BottomFloatingAccessoryNavigationBar](../components/bottomfloatingaccessorynavigationbar) | Floating capsule navigation bar with side accessories | Bottom navigation with quick actions |
 | [BottomFloatingEditToolbar](../components/bottomfloatingedittoolbar) | Floating edit toolbar            | Editing actions, quick tools          |

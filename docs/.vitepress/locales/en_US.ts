@@ -64,6 +64,7 @@ export default defineConfig({
                     items: [
                         { text: "Surface", link: "/components/surface" },
                         { text: "TopAppBar", link: "/components/topappbar" },
+                        { text: "PinnedTopAppBar", link: "/components/pinnedtopappbar" },
                         { text: "AppBarBlurOverlay", link: "/components/appbarbluroverlay" },
                         { text: "NavigationBar", link: "/components/navigationbar" },
                         { text: "BottomFloatingAccessoryNavigationBar", link: "/components/bottomfloatingaccessorynavigationbar" },

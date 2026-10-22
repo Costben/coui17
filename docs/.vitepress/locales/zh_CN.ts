@@ -73,6 +73,7 @@ export default defineConfig({
                     items: [
                         { text: "Surface", link: "/zh_CN/components/surface" },
                         { text: "TopAppBar", link: "/zh_CN/components/topappbar" },
+                        { text: "PinnedTopAppBar", link: "/zh_CN/components/pinnedtopappbar" },
                         { text: "AppBarBlurOverlay", link: "/zh_CN/components/appbarbluroverlay" },
                         { text: "NavigationBar", link: "/zh_CN/components/navigationbar" },
                         { text: "BottomFloatingAccessoryNavigationBar", link: "/zh_CN/components/bottomfloatingaccessorynavigationbar" },

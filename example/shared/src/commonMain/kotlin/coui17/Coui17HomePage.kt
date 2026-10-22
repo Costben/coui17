@@ -74,6 +74,7 @@ import component.NotificationSwipeDemo
 import component.NumberPickerDemo
 import component.OtherDemo
 import component.PageIndicatorDemo
+import component.PinnedTopAppBarDemo
 import component.PopupMenuRotationDemo
 import component.ProgressIndicatorDemo
 import component.RadioButtonDemo
@@ -181,6 +182,7 @@ fun Coui17HomePage(
         coui17Entry("SpotLight") { SpotLightDemo() }
         coui17Entry("TopAppBar (glass)") { TopAppBarGlassDemo() }
         coui17Entry("TopAppBar (ColorOS 17 forms)") { TopAppBarColorOS17FormsDemo() }
+        coui17Entry("PinnedTopAppBar") { PinnedTopAppBarDemo() }
         coui17Entry("BreadcrumbBar") { BreadcrumbBarDemo() }
         coui17Entry("Tooltip") { TooltipDemo() }
         coui17Entry("NumberPicker") { NumberPickerDemo() }

@@ -1096,8 +1096,18 @@ private fun TopAppBarLayout(
     }
     // Divider progress: COUIDividerAppBarLayout fades the divider in over the whole
     // collapse range (alpha 0 -> 1, horizontal margin 24dp -> 0dp).
+    // A pinned behavior never collapses the bar, so its collapsed fraction stays 0; the divider
+    // follows how much of the bar the scrolled content overlaps instead.
     val dividerFraction = remember(scrollBehavior) {
-        { (scrollBehavior?.state?.collapsedFraction ?: 0f).coerceIn(0f, 1f) }
+        {
+            val state = scrollBehavior?.state
+            val fraction = when {
+                state == null -> 0f
+                scrollBehavior?.isPinned == true -> -state.contentOffset / (-state.heightOffsetLimit).coerceAtLeast(1f)
+                else -> state.collapsedFraction
+            }
+            fraction.coerceIn(0f, 1f)
+        }
     }
     val updateHeightOffsetLimit = remember(scrollBehavior) {
         { height: Int ->
