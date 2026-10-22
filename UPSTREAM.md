@@ -71,6 +71,20 @@ Making this repository a standalone project means, at minimum:
 
 None of that has been done. It is tracked here so a successor does not have to rediscover it.
 
+### What this fork does publish
+
+`publishAllToGithubPackages` pushes the snapshot set to
+`https://maven.pkg.github.com/Costben/coui17` under the inherited coordinates. That is a fork-local
+snapshot channel for consumers of this fork, not a release: Maven Central, the version numbers there
+and the `1.x` release train remain upstream's. The endpoint is overridable with `GITHUB_PACKAGES_URL`
+or `-PcouiGithubPackagesUrl`, and pointing it at a `file:` URL runs the whole path — publish,
+layout verification — without credentials:
+
+```bash
+./gradlew publishAndVerifyGithubPackages \
+    -PcouiGithubPackagesUrl=file:///tmp/coui-github-packages
+```
+
 ## Syncing with upstream
 
 The `upstream` remote is already configured:

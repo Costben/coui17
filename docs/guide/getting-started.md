@@ -12,25 +12,41 @@ To use COUI in your project, follow these steps to add dependencies:
 
 ### Gradle (Kotlin DSL)
 
-1. COUI is not on Maven Central for this version, and this fork does not publish. Clone
-   [the repository](https://github.com/Costben/coui17) and build it into a local Maven repository:
+1. This version is not on Maven Central. Pick one of two sources.
 
-```bash
-./gradlew publishAllToLocalRepository -Prelease   # writes the version to build/repository/local
-```
+   **GitHub Packages** — no local build. The token needs the `read:packages` scope:
 
-   Without `-Prelease` the version carries a `-<git hash>-SNAPSHOT` suffix.
+   ```kotlin
+   repositories {
+       maven {
+           url = uri("https://maven.pkg.github.com/Costben/coui17")
+           credentials {
+               username = System.getenv("GITHUB_ACTOR")
+               password = System.getenv("GITHUB_TOKEN")
+           }
+       }
+       mavenCentral()
+   }
+   ```
 
-2. Point the root `settings.gradle.kts` at that directory:
+   **Local build** — clone [the repository](https://github.com/Costben/coui17) and publish into a
+   local Maven repository:
 
-```kotlin
-repositories {
-    maven("file:///path/to/coui17/build/repository/local")
-    mavenCentral()
-}
-```
+   ```bash
+   ./gradlew publishAllToLocalRepository -Prelease   # writes the version to build/repository/local
+   ```
 
-3. Add dependencies to your project's `build.gradle.kts`:
+   Without `-Prelease` the version carries a `-<git hash>-SNAPSHOT` suffix. Then point the root
+   `settings.gradle.kts` at that directory:
+
+   ```kotlin
+   repositories {
+       maven("file:///path/to/coui17/build/repository/local")
+       mavenCentral()
+   }
+   ```
+
+2. Add dependencies to your project's `build.gradle.kts`:
 
 COUI is composed of several modules that can be used independently. All modules use the group
 `io.github.suqi8.coui.kmp` and share one version number.

@@ -42,10 +42,20 @@ dependencyResolutionManagement {
             central.content { excludeGroup(couiGroup) }
         }
         // Points at the release candidate under test: the shared staging repository during CI,
-        // Maven Central for the post-release smoke.
+        // Maven Central for the post-release smoke, or GitHub Packages for the snapshot channel.
         maven {
             name = "smoke"
             url = uri(smokeRepo ?: "https://repo1.maven.org/maven2")
+            // GitHub Packages requires authentication even for a public package. Credentials are
+            // optional so a `file:` staging repository keeps working without them.
+            val actor = System.getenv("GITHUB_ACTOR")
+            val token = System.getenv("GITHUB_TOKEN")
+            if (!actor.isNullOrBlank() && !token.isNullOrBlank()) {
+                credentials {
+                    username = actor
+                    password = token
+                }
+            }
         }
     }
 }

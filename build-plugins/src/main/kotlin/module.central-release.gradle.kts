@@ -183,6 +183,59 @@ val verifyLocal = tasks.register("verifyLocalPublication") {
 }
 
 /**
+ * The GitHub Packages repository, resolved as a local directory.
+ *
+ * `VerifyStagedRepositoryTask` walks a directory, so it can only inspect a `file:` repository — which
+ * is exactly how the publish path is exercised without a token. An `https:` endpoint has nothing
+ * local to walk, so asking for it here fails loudly rather than silently skipping the check.
+ */
+val githubPackagesRepoDir = providers.provider {
+    val url = githubPackagesUrl(providers).get()
+    if (!url.startsWith("file:")) {
+        throw GradleException(
+            "verifyGithubPackagesRepository inspects a local repository. Point -PcouiGithubPackagesUrl " +
+                "at a file: URL (for example " +
+                "file://${layout.buildDirectory.dir("repository/github").get().asFile.absolutePath}) " +
+                "to validate the layout. The current endpoint is $url.",
+        )
+    }
+    java.io.File(java.net.URI(url))
+}
+
+val verifyGithubPackages = tasks.register<VerifyStagedRepositoryTask>("verifyGithubPackagesRepository") {
+    group = "publishing"
+    description = "Validates the GitHub Packages repository a file: endpoint points at"
+    repositoryDir.set(layout.dir(githubPackagesRepoDir))
+    groupId.set(BuildConfig.LIBRARY_ID)
+    version.set(releaseVersion)
+    requireSignature.set(false)
+    rejectForeignVersions.set(true)
+}
+
+/**
+ * Publishes every module to GitHub Packages and validates what landed there.
+ *
+ * Against the real `https:` endpoint the publish is the only meaningful step; the verification task
+ * then refuses the endpoint and says so. Against a `file:` endpoint both run, which is how the
+ * coordinate layout a downstream project resolves is checked without credentials:
+ *
+ * ```
+ * ./gradlew publishAndVerifyGithubPackages \
+ *     -PcouiGithubPackagesUrl=file:///tmp/coui-github-packages
+ * ```
+ */
+tasks.register("publishAndVerifyGithubPackages") {
+    group = "publishing"
+    description = "Publishes every module to GitHub Packages and validates a file: endpoint"
+    dependsOn(publishGithub, verifyGithubPackages)
+}
+
+verifyGithubPackages.configure {
+    // The verification reads what the publish wrote.
+    mustRunAfter(publishGithub)
+}
+
+/**
  * Uploads the staged bundle. This task deliberately carries no dependency on the staging or
  * verification graph: the release workflow uploads after the consumers have accepted the staged
  * artifacts, and re-running staging there would re-clean and re-write the repository, so the bytes
@@ -260,6 +313,13 @@ gradle.projectsEvaluated {
         platformModules.set(targetSuffixes)
     }
     verifyLocalProbe.configure {
+        artifacts.set(coordinates)
+        rootArtifacts.set(rootCoordinates)
+        platformModules.set(targetSuffixes)
+    }
+    // The GitHub Packages endpoint receives the same coordinate set as the local and Central ones,
+    // so it is validated against the same fixed matrix.
+    verifyGithubPackages.configure {
         artifacts.set(coordinates)
         rootArtifacts.set(rootCoordinates)
         platformModules.set(targetSuffixes)

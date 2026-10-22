@@ -12,25 +12,40 @@
 
 ### Gradle (Kotlin DSL)
 
-1. 当前版本的 COUI 没有发布到 Maven Central，本 fork 也不发版。请克隆
-   [仓库](https://github.com/Costben/coui17)，构建到本地 Maven 仓库：
+1. 当前版本没有发布到 Maven Central，两种来源二选一。
 
-```bash
-./gradlew publishAllToLocalRepository -Prelease   # 产物写入 build/repository/local
-```
+   **GitHub Packages** —— 不用本地构建。token 需要 `read:packages` 权限：
 
-   不加 `-Prelease` 时版本号会带 `-<git hash>-SNAPSHOT` 后缀。
+   ```kotlin
+   repositories {
+       maven {
+           url = uri("https://maven.pkg.github.com/Costben/coui17")
+           credentials {
+               username = System.getenv("GITHUB_ACTOR")
+               password = System.getenv("GITHUB_TOKEN")
+           }
+       }
+       mavenCentral()
+   }
+   ```
 
-2. 在根目录的 settings.gradle.kts 中指向该目录：
+   **本地构建** —— 克隆[仓库](https://github.com/Costben/coui17)，构建到本地 Maven 仓库：
 
-```kotlin
-repositories {
-    maven("file:///path/to/coui17/build/repository/local")
-    mavenCentral()
-}
-```
+   ```bash
+   ./gradlew publishAllToLocalRepository -Prelease   # 产物写入 build/repository/local
+   ```
 
-3. 在项目的 build.gradle.kts 中添加依赖：
+   不加 `-Prelease` 时版本号会带 `-<git hash>-SNAPSHOT` 后缀。然后在根目录的
+   `settings.gradle.kts` 中指向该目录：
+
+   ```kotlin
+   repositories {
+       maven("file:///path/to/coui17/build/repository/local")
+       mavenCentral()
+   }
+   ```
+
+2. 在项目的 build.gradle.kts 中添加依赖：
 
 COUI 由多个可独立使用的模块组成。所有模块使用 `io.github.suqi8.coui.kmp` 组，并共用同一个版本号。
 

@@ -13,7 +13,8 @@ A ColorOS-styled UI library for Compose Multiplatform, forked from
 > [suqi8/coui](https://github.com/suqi8/coui) (COUI), which is itself a fork of
 > [Miuix](https://github.com/compose-miuix-ui/miuix). The COUI name, the
 > `io.github.suqi8.coui.kmp` Maven coordinates and the published documentation site belong to the
-> upstream COUI project; this fork does not publish its own releases. [`UPSTREAM.md`](UPSTREAM.md)
+> upstream COUI project; this fork publishes snapshots to its own GitHub Packages repository under
+> those coordinates and does not publish to Maven Central. [`UPSTREAM.md`](UPSTREAM.md)
 > records the full lineage, what this fork changes, and how to sync with upstream.
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4.10-7F52FF)](https://kotlinlang.org/)
@@ -102,8 +103,25 @@ are skipped and the content draws normally, so no module has to be left out of t
 
 ### Getting Started
 
-Version 1.2.0 is not on Maven Central — the latest published upstream release is 1.1.0, and this
-fork does not publish. Build it into a local Maven repository first:
+Version 1.2.0 is not on Maven Central — the latest published upstream release is 1.1.0. A consuming
+project picks one of two sources.
+
+**GitHub Packages** (no local build; the token needs `read:packages`):
+
+```kotlin
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/Costben/coui17")
+        credentials {
+            username = System.getenv("GITHUB_ACTOR")
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
+    mavenCentral()
+}
+```
+
+**Local build** — publish this checkout into a local Maven repository first:
 
 ```bash
 ./gradlew publishAllToLocalRepository -Prelease   # writes 1.2.0 to build/repository/local
@@ -117,6 +135,14 @@ repositories {
     maven("file:///path/to/coui17/build/repository/local")
     mavenCentral()
 }
+```
+
+Maintainers publish the snapshot set to GitHub Packages with:
+
+```bash
+./gradlew publishAllToGithubPackages            # GITHUB_ACTOR + GITHUB_TOKEN
+./gradlew publishAndVerifyGithubPackages \
+    -PcouiGithubPackagesUrl=file:///tmp/coui-github-packages   # full path, no token
 ```
 
 ```kotlin

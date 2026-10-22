@@ -54,3 +54,17 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      # Resolves the coordinates back out of GitHub Packages the way a downstream project does, so a
+      # snapshot that uploaded but cannot be consumed fails here instead of at the consumer's desk.
+      # `smokeLocalOnly` excludes the group from Maven Central, so nothing can satisfy it by accident.
+      - name: Smoke-test the published coordinates
+        run: |
+          version="$(./gradlew -q --no-daemon printReleaseVersion | tail -1)"
+          echo "Resolving $version from https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
+          ./gradlew --no-daemon --stacktrace -p smoke compileKotlin \
+            -PcouiVersion="$version" \
+            -PsmokeRepo="https://maven.pkg.github.com/${GITHUB_REPOSITORY}" \
+            -PsmokeLocalOnly=true
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }}

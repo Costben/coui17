@@ -3,6 +3,7 @@
 
 import java.io.FileInputStream
 import java.util.Properties
+import org.gradle.api.provider.Provider
 
 plugins {
     `maven-publish`
@@ -36,9 +37,9 @@ version = "${BuildConfig.LIBRARY_VERSION}$versionSuffix"
 val publicationExt = extensions.create<COUIPublicationExtension>("couiPublication")
 
 val projectUrl = "https://github.com/suqi8/coui"
-// Snapshot publishing targets whichever repository the build runs in, so a downstream fork
-// publishes to its own GitHub Packages rather than failing against the upstream's ACL.
-val githubPackagesUrl = "https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "suqi8/coui"}"
+
+/** Resolved by [githubPackagesUrl] in `GithubPackages.kt`; see there for the resolution order. */
+val githubPackagesRepositoryUrl: Provider<String> = githubPackagesUrl(providers)
 
 // Every published module stages into the same root-level directories, so a release
 // produces exactly one Maven Central bundle and one local repository that a smoke
@@ -79,10 +80,18 @@ publishing {
         }
         maven {
             name = "github"
-            url = uri(githubPackagesUrl)
-            credentials {
-                username = System.getenv("GITHUB_ACTOR") ?: localProperties.getProperty("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN") ?: localProperties.getProperty("GITHUB_TOKEN")
+            url = uri(githubPackagesRepositoryUrl.get())
+            // Only configured when both halves are present: Gradle 9 rejects a publish task whose
+            // `credentials.username` resolves to null, and a `file:` endpoint needs no credentials at
+            // all. A missing token against the real endpoint therefore fails at the HTTP layer, where
+            // the 401 says what is wrong, instead of during task configuration.
+            val actor = System.getenv("GITHUB_ACTOR") ?: localProperties.getProperty("GITHUB_ACTOR")
+            val token = System.getenv("GITHUB_TOKEN") ?: localProperties.getProperty("GITHUB_TOKEN")
+            if (!actor.isNullOrBlank() && !token.isNullOrBlank()) {
+                credentials {
+                    username = actor
+                    password = token
+                }
             }
         }
     }
