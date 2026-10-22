@@ -35,6 +35,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Fixed
 
+- A `LayerBackdrop` attached to more than one node no longer blurs the wrong content or flickers off: the most recently attached node owns it, other nodes neither record nor publish coordinates, and a detaching node only clears a registration it owns. The documentation now states the one-node-per-backdrop rule and how to record a pager once.
 - Notification cards match the shade: the corner follows the device outline (20dp, the fitted circular equivalent of ColorOS's 16dp continuous corner), the top and bottom edges carry the native `#4E4E4E` rim, and the example app's cards use the measured `#2D2D2D` fill, 8dp gaps, 32dp app icons and a 12sp timestamp.
 - The search capsule uses the toolbar material instead of the blur-off fallback: its fill reads 40 at night (was 61) and its rim 78 (was 177), so it is no longer brighter than the toolbar icons beside it. The light theme keeps the value it already matched.
 - The search field's hint stays visible in the expanded search bar until the first character is typed, as the device's `EditText` hint does, instead of disappearing on focus.

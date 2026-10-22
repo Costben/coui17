@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.unit.Density
 import io.github.suqi8.coui.kmp.blur.internal.InverseLayerScope
 
@@ -32,6 +33,9 @@ private val DefaultOnDraw: ContentDrawScope.() -> Unit = { drawContent() }
  *
  * The instance is keyed only on [graphicsLayer]; [onDraw] is read via [rememberUpdatedState]
  * so a fresh lambda each frame does not rebuild the backdrop and reset its layer coordinates.
+ *
+ * A backdrop must be recorded by exactly one [layerBackdrop] node; see that modifier for the
+ * ownership rule and why it must not be applied per pager page.
  *
  * @param graphicsLayer The graphics layer to record content into.
  * @param onDraw Custom draw logic for the layer content.
@@ -51,6 +55,13 @@ fun rememberLayerBackdrop(
  * A [Backdrop] that draws from a captured [GraphicsLayer].
  * The layer content is captured via [Modifier.layerBackdrop][layerBackdrop].
  *
+ * A [LayerBackdrop] has a single graphics layer and a single set of layer coordinates, so it supports
+ * exactly one attached [layerBackdrop] node at a time. Attaching a second node while another is
+ * still attached is a misuse: the most recently attached node becomes the owner and the others stop
+ * recording and publishing coordinates (they can no longer overwrite the owner's registration or
+ * clear it when they detach). In particular, do not attach one backdrop to every page of a pager;
+ * record once on the container that wraps the whole pager.
+ *
  * @property graphicsLayer The [GraphicsLayer] holding the captured content drawn as the backdrop.
  */
 @Stable
@@ -62,6 +73,38 @@ class LayerBackdrop internal constructor(
     override val isCoordinatesDependent: Boolean = true
 
     internal var layerCoordinates: LayoutCoordinates? by mutableStateOf(null)
+
+    // Attached nodes in attach order; the last one is the owner. Only touched on attach/detach.
+    private val attachedNodes = ArrayList<LayerBackdropNode>(1)
+
+    /**
+     * The node allowed to record into [graphicsLayer] and to publish [layerCoordinates]: the most
+     * recently attached one. Plain field so the draw path can compare it without allocating.
+     */
+    internal var owner: LayerBackdropNode? = null
+        private set
+
+    /** The number of [layerBackdrop] nodes currently attached; anything above 1 is a misuse. */
+    internal val attachedNodeCount: Int get() = attachedNodes.size
+
+    internal fun attachNode(node: LayerBackdropNode) {
+        attachedNodes.remove(node)
+        attachedNodes.add(node)
+        // A previous owner keeps drawing its content but stops recording; the new owner publishes
+        // its own coordinates once positioned.
+        owner = node
+        layerCoordinates = node.attachedCoordinates
+    }
+
+    internal fun detachNode(node: LayerBackdropNode) {
+        if (!attachedNodes.remove(node)) return
+        if (owner !== node) return
+        // Only the owner may clear the registration; hand it to the previous node, if any.
+        val next = if (attachedNodes.isEmpty()) null else attachedNodes[attachedNodes.lastIndex]
+        owner = next
+        layerCoordinates = next?.attachedCoordinates
+        next?.invalidateDraw()
+    }
 
     override var offsetResidualX: Float = 0f
         internal set
