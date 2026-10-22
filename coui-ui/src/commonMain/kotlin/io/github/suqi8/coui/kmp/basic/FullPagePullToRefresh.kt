@@ -84,7 +84,8 @@ import kotlin.math.roundToInt
  * Releasing past [refreshThreshold] commits the refresh; releasing earlier plays the same
  * decelerating rebound as the original implementation. When the hoisted [isRefreshing] flag flips
  * back to `false`, the success hint stays on screen for [completeHoldDurationMillis] before the
- * page returns to its resting position.
+ * page returns to its resting position. The return trip runs on its own timing — 45% of the
+ * downward settle, capped at 220ms — so the page snaps back instead of gliding up.
  *
  * The content must be scrollable and should consume [contentPadding] at its top. That padding is
  * also used as the immersive height: the visible band of the hint starts at the top padding line,
@@ -440,9 +441,17 @@ class FullPagePullToRefreshState internal constructor(
             snapTo(target)
             return
         }
-        val duration = ((distance / refreshThresholdPx) * 500f)
-            .roundToInt()
-            .coerceIn(0, 500)
+        // The downward settle (pull -> threshold) keeps the reference timing; the rebound back to
+        // the resting position runs on its own, shorter scale so releasing feels snappy instead of
+        // gliding up. Only the return trip is affected.
+        val baseDuration = ((distance / refreshThresholdPx) * 500f).roundToInt()
+        val duration = if (target <= 0f) {
+            (baseDuration * REBOUND_DURATION_SCALE)
+                .roundToInt()
+                .coerceIn(0, REBOUND_MAX_DURATION_MILLIS)
+        } else {
+            baseDuration.coerceIn(0, 500)
+        }
         if (duration == 0) {
             snapTo(target)
             return
@@ -774,6 +783,12 @@ fun fullPagePullToRefreshColors(
 )
 
 private const val PULL_DAMPING = 0.5f
+
+/** How much of the reference 500ms-per-threshold timing the rebound to rest keeps. */
+private const val REBOUND_DURATION_SCALE = 0.45f
+
+/** The longest the rebound to rest may take, no matter how far the page was pulled. */
+private const val REBOUND_MAX_DURATION_MILLIS = 220
 
 private val DecelerateQuadEasing = Easing { fraction ->
     1f - (1f - fraction) * (1f - fraction)
