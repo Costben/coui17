@@ -67,6 +67,8 @@ BottomFloatingAccessoryNavigationBar(
 }
 ```
 
+Configuring both accessories and keeping both collapsed is the ColorOS 17 Gallery's 创作 (Create) tab: a lone capsule, still centred because both slots reserve the same space. Configure both sides for this state; configuring only one leaves the capsule off centre. Measured on the PLK110 Gallery, the capsule wears the same translucent material whether its accessories are out or collapsed — its brightness follows the content behind it on every tab.
+
 ## Properties
 
 ### BottomFloatingAccessoryNavigationBar Properties

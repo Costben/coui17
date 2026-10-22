@@ -67,6 +67,8 @@ BottomFloatingAccessoryNavigationBar(
 }
 ```
 
+两侧配件都配置、且都收起，就是 ColorOS 17 相册「创作」页的状态：只剩一个胶囊，因为两侧插槽占位相同，胶囊仍然居中。要做这种形态请两侧都配置；只配置一侧会让胶囊偏离居中。PLK110 相册实测，配件展开与收起时胶囊是同一种半透明材质，各页签下胶囊亮度都随背后内容变化。
+
 ## 属性
 
 ### BottomFloatingAccessoryNavigationBar 属性
