@@ -47,6 +47,20 @@ expect fun platformDialogProperties(): DialogProperties
 expect fun RemovePlatformDialogDefaultEffects()
 
 /**
+ * Lets touches reach the window beneath while the dialog is only playing its exit animation.
+ *
+ * A dialog window stays touch-modal for as long as it is mounted, so a popup that keeps its window
+ * around to render the close animation keeps swallowing every drag until that animation ends.
+ * Call this from inside the dialog content, with a lambda that turns true as soon as the popup has
+ * been asked to dismiss, and the page underneath becomes draggable before the popup is gone.
+ *
+ * The lambda is observed rather than read in composition: the flag only has to change once, and
+ * recomposing the closing menu to deliver it would restart the very animation it is meant to free.
+ */
+@Composable
+expect fun DialogTouchPassThrough(passTouches: () -> Boolean)
+
+/**
  * Whether the platform has a bug where clearing focus causes automatic re-assignment
  * to the first focusable view. This occurs on Android API levels 26-27.
  *

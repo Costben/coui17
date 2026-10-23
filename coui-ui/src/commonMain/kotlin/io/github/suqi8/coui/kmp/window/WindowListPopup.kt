@@ -17,6 +17,7 @@ import io.github.suqi8.coui.kmp.basic.PreciseClickState
 import io.github.suqi8.coui.kmp.layout.ListPopupLayout
 import io.github.suqi8.coui.kmp.layout.popupPhysicalDensity
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
+import io.github.suqi8.coui.kmp.utils.DialogTouchPassThrough
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
@@ -65,14 +66,17 @@ fun WindowListPopup(
 
     ListPopupLayout(
         show = show,
-        // A dialog window cannot hand touches to the window beneath, so it closes as before.
-        popupHost = { visible, _, hostContent ->
+        // A dialog window is touch-modal while it is mounted, so the popup has to give its own
+        // window up as soon as the close starts — otherwise the page stays undraggable for the
+        // whole exit animation even though the panel is already gone from sight.
+        popupHost = { visible, passTouches, hostContent ->
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value?.invoke() },
                     properties = platformDialogProperties(),
                 ) {
                     RemovePlatformDialogDefaultEffects()
+                    DialogTouchPassThrough(passTouches)
                     WindowNavigationEventScope {
                         hostContent()
                     }

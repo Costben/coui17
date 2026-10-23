@@ -14,7 +14,9 @@ import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -80,6 +82,21 @@ actual fun RemovePlatformDialogDefaultEffects() {
         }
         onDispose {
             // No-op
+        }
+    }
+}
+
+@Composable
+actual fun DialogTouchPassThrough(passTouches: () -> Boolean) {
+    val parent = LocalView.current.parent
+    LaunchedEffect(parent) {
+        val window = (parent as? DialogWindowProvider)?.window ?: return@LaunchedEffect
+        snapshotFlow(passTouches).collect { enabled ->
+            if (enabled) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+            }
         }
     }
 }
