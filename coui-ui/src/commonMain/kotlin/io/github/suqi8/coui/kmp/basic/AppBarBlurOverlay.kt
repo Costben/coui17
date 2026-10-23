@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
@@ -323,7 +324,14 @@ internal fun AppBarMaterial(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .graphicsLayer { alpha = scrollFraction().coerceIn(0f, 1f) }
+            .graphicsLayer {
+                alpha = scrollFraction().coerceIn(0f, 1f)
+                // A grouped alpha renders the blur and the ramp into a full-width offscreen buffer
+                // on every frame the material is translucent, which is most of the time. Scaling
+                // each draw instead only differs where the blur and the sharp content behind it
+                // differ, by alpha * (1 - alpha) * rampAlpha at most.
+                compositingStrategy = CompositingStrategy.ModulateAlpha
+            }
             .then(effect),
     )
 }
