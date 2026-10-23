@@ -1736,7 +1736,10 @@ fun ListPopupContent(
                     .then(materialEdge),
             ) {
                 // COUI's main menu scales a true 0 -> 1; only the small-screen sub-menu clip-reveals.
-                val scale = fractionProgress()
+                // COBO: the entrance must not carry the glass backdrop sample with it — scaling the
+                // panel also scales the backdrop drawn inside it, so the page behind the menu appears
+                // to zoom. A pure alpha fade plus the gravity-path slide keeps the backdrop 1:1.
+                val scale = 1f
                 scaleX *= scale
                 scaleY *= scale
                 transformOrigin = localTransformOrigin

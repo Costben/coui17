@@ -100,9 +100,15 @@ internal fun ListPopupLayout(
     var windowExiting by remember { mutableStateOf(false) }
     val currentShow by rememberUpdatedState(show)
     // Derived so the per-frame exit alpha only recomposes the host once, when it crosses over.
+    // Handing touches back the moment the close starts, not when its fade is nearly over: the
+    // close spring runs ~340ms and `windowExiting` only flips after it settles, so keying off the
+    // alpha left a third of a second where the page looked dismissed but swallowed every drag.
+    // The host unmounts by itself, so a popup that is merely fading out must not hold input.
     val passTouches by remember {
         derivedStateOf {
-            windowExiting || (!currentShow && alphaProgress.value < ListPopupDefaults.ExitTouchPassThroughAlpha)
+            !currentShow ||
+                windowExiting ||
+                alphaProgress.value < ListPopupDefaults.ExitTouchPassThroughAlpha
         }
     }
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
