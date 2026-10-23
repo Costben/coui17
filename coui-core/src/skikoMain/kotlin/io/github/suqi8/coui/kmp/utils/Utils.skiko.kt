@@ -19,6 +19,11 @@ actual fun RemovePlatformDialogDefaultEffects() {
     // No-op for Skiko platforms
 }
 
+@Composable
+actual fun DialogTouchPassThrough(passTouches: () -> Boolean) {
+    // Skiko dialogs do not own a separate input window to disable.
+}
+
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 actual fun platformDialogProperties(): DialogProperties = DialogProperties(
