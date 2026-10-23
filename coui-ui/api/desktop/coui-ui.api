@@ -1733,8 +1733,8 @@ public final class io/github/suqi8/coui/kmp/basic/GlassDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/GlassSurfaceKt {
 	public static final fun couiGlassHeader-MBs18nI (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;JFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun couiGlassSurface-gF0flNs (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;JLandroidx/compose/ui/Modifier;FFLjava/util/List;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 	public static final fun couiGlassSurface-gF0flNs (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;JLandroidx/compose/ui/Modifier;FFLjava/util/List;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun couiGlassSurface-hkzSW1g (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/ui/graphics/Shape;JLandroidx/compose/ui/Modifier;FFLjava/util/List;Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 	public static final fun rememberGlassHighlight (Lio/github/suqi8/coui/kmp/basic/GlassContainer;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/highlight/Highlight;
 }
 

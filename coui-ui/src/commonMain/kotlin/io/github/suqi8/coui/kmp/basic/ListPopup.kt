@@ -44,6 +44,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
@@ -1709,6 +1710,17 @@ fun ListPopupContent(
         Modifier
     }
 
+    // The entrance scale below wraps the glass, so the blur would sample the page through it and
+    // the page behind the menu would appear to zoom. Handing the same scale to the glass as an
+    // enclosing transform inverts it on the sampling only: the panel scales, the backdrop stays 1:1.
+    val glassScaleCompensation: GraphicsLayerScope.() -> Unit = remember(fractionProgress) {
+        {
+            val scale = fractionProgress()
+            scaleX = scale
+            scaleY = scale
+        }
+    }
+
     Box(
         modifier = modifier
             .onGloballyPositioned { coordinates ->
@@ -1732,15 +1744,14 @@ fun ListPopupContent(
                         fallback = Modifier.squircleSurface(color = backgroundColor, cornerRadius = PopupCornerRadius),
                         blurRadius = blurRadius,
                         blendColors = popupGlassBlendColors(),
+                        enclosingLayerBlock = glassScaleCompensation,
                     )
                     .then(materialEdge),
             ) {
                 // COUI's main menu scales a true 0 -> 1; only the small-screen sub-menu clip-reveals.
-                // COBO: a glass panel must not carry the backdrop sample through the entrance scale —
-                // the page behind the menu would appear to zoom. Only the glass overlay host opts out
-                // (pure alpha fade plus the gravity-path slide keeps the backdrop 1:1); the window
-                // host keeps COUI's scale animation.
-                val scale = if (enableGlass) 1f else fractionProgress()
+                // Glass menus scale too (ColorOS 17's gallery menus and dropdowns grow from and shrink
+                // into their anchor); the glass inverts this scale on its sampling, see above.
+                val scale = fractionProgress()
                 scaleX *= scale
                 scaleY *= scale
                 transformOrigin = localTransformOrigin

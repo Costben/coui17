@@ -99,6 +99,12 @@ private const val NOISE_GRAIN_THRESHOLD = 0.005f
  *   without one the gradient is ignored and [effects] draws uniformly.
  * @param enabled Whether the backdrop effect is active. When false, content draws normally without
  *   blur. Also gated by [isRuntimeShaderSupported].
+ * @param enclosingLayerBlock A transformation an enclosing `graphicsLayer` already applies to this
+ *   composable — a popup's entrance scale, for instance. It is not applied again; only its inverse
+ *   reaches the backdrop sampling, exactly as [layerBlock]'s does, so the glass stays
+ *   screen-aligned instead of zooming with the surface. Only scale and rotation are inverted
+ *   (translation is already absorbed by the sampling position), about this composable's
+ *   top-left. Mutually exclusive with [layerBlock].
  */
 fun Modifier.drawBackdrop(
     backdrop: Backdrop,
@@ -113,7 +119,11 @@ fun Modifier.drawBackdrop(
     contentBlendMode: BlendMode = BlendMode.SrcOver,
     progressiveGradient: ProgressiveBlur? = null,
     enabled: Boolean = true,
+    enclosingLayerBlock: (GraphicsLayerScope.() -> Unit)? = null,
 ): Modifier {
+    require(layerBlock == null || enclosingLayerBlock == null) {
+        "drawBackdrop takes either layerBlock or enclosingLayerBlock, not both"
+    }
     // The effect pipeline (blur / blend / highlight / custom passes) is built on RuntimeShader.
     val effectiveEnabled = enabled && isRuntimeShaderSupported()
     return this
@@ -126,7 +136,8 @@ fun Modifier.drawBackdrop(
                 shape = shape,
                 effects = effects,
                 highlight = highlight,
-                layerBlock = layerBlock,
+                // The node only inverts this block; the real layer is the graphicsLayer above.
+                layerBlock = layerBlock ?: enclosingLayerBlock,
                 onDrawBehind = onDrawBehind,
                 onDrawBackdrop = onDrawBackdrop,
                 onDrawSurface = onDrawSurface,
