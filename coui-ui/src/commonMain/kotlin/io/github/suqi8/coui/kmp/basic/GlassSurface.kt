@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
@@ -136,6 +137,9 @@ fun rememberGlassHighlight(
  *   [containerAlpha] is used; pass an explicit list for surfaces whose native recipe tints with more
  *   than one color, such as the popup glass.
  * @param highlight The rim highlight, normally from [rememberGlassHighlight].
+ * @param enclosingLayerBlock The transform an enclosing layer applies to this surface, such as a
+ *   popup's entrance scale. Only its inverse reaches the blur sampling, so the page behind the glass
+ *   stays still while the surface scales; see `drawBackdrop`.
  */
 @Composable
 fun Modifier.couiGlassSurface(
@@ -147,6 +151,7 @@ fun Modifier.couiGlassSurface(
     containerAlpha: Float = GlassDefaults.ContainerAlpha,
     blendColors: List<BlendColorEntry>? = null,
     highlight: Highlight? = null,
+    enclosingLayerBlock: (GraphicsLayerScope.() -> Unit)? = null,
 ): Modifier {
     if (backdrop == null || !isRuntimeShaderSupported()) return fallback
     return textureBlur(
@@ -158,6 +163,7 @@ fun Modifier.couiGlassSurface(
                 ?: listOf(BlendColorEntry(color = containerColor.copy(alpha = containerAlpha))),
         ),
         highlight = highlight,
+        enclosingLayerBlock = enclosingLayerBlock,
     )
 }
 

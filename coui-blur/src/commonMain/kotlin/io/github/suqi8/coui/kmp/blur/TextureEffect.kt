@@ -3,6 +3,7 @@
 package io.github.suqi8.coui.kmp.blur
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Shape
 import io.github.suqi8.coui.kmp.blur.highlight.Highlight
 import androidx.compose.ui.graphics.BlendMode as ComposeBlendMode
@@ -24,6 +25,8 @@ import androidx.compose.ui.graphics.BlendMode as ComposeBlendMode
  *   Use [ComposeBlendMode.DstIn] for foreground blur (content alpha masks the blur).
  *   null means content draws normally on top.
  * @param enabled Whether blur is active. When false, the effect is skipped and content draws normally.
+ * @param enclosingLayerBlock See [drawBackdrop]: a transform an enclosing layer already applies,
+ *   inverted on the backdrop sampling only.
  */
 fun Modifier.textureBlur(
     backdrop: Backdrop,
@@ -34,6 +37,7 @@ fun Modifier.textureBlur(
     highlight: Highlight? = null,
     contentBlendMode: ComposeBlendMode = ComposeBlendMode.SrcOver,
     enabled: Boolean = true,
+    enclosingLayerBlock: (GraphicsLayerScope.() -> Unit)? = null,
 ): Modifier = textureEffect(
     backdrop = backdrop,
     shape = shape,
@@ -43,6 +47,7 @@ fun Modifier.textureBlur(
     highlight = highlight,
     contentBlendMode = contentBlendMode,
     enabled = enabled,
+    enclosingLayerBlock = enclosingLayerBlock,
 )
 
 /**
@@ -109,6 +114,7 @@ fun Modifier.textureEffect(
     highlight: Highlight? = null,
     contentBlendMode: ComposeBlendMode = ComposeBlendMode.SrcOver,
     enabled: Boolean = true,
+    enclosingLayerBlock: (GraphicsLayerScope.() -> Unit)? = null,
 ): Modifier = textureEffect(
     backdrop = backdrop,
     shape = shape,
@@ -119,6 +125,7 @@ fun Modifier.textureEffect(
     highlight = highlight,
     contentBlendMode = contentBlendMode,
     enabled = enabled,
+    enclosingLayerBlock = enclosingLayerBlock,
 )
 
 /**
@@ -149,6 +156,7 @@ fun Modifier.textureEffect(
     highlight: Highlight? = null,
     contentBlendMode: ComposeBlendMode = ComposeBlendMode.SrcOver,
     enabled: Boolean = true,
+    enclosingLayerBlock: (GraphicsLayerScope.() -> Unit)? = null,
 ): Modifier = this.drawBackdrop(
     backdrop = backdrop,
     shape = { shape },
@@ -167,6 +175,7 @@ fun Modifier.textureEffect(
     },
     contentBlendMode = contentBlendMode,
     enabled = enabled,
+    enclosingLayerBlock = enclosingLayerBlock,
 )
 
 /**
