@@ -1736,10 +1736,11 @@ fun ListPopupContent(
                     .then(materialEdge),
             ) {
                 // COUI's main menu scales a true 0 -> 1; only the small-screen sub-menu clip-reveals.
-                // COBO: the entrance must not carry the glass backdrop sample with it — scaling the
-                // panel also scales the backdrop drawn inside it, so the page behind the menu appears
-                // to zoom. A pure alpha fade plus the gravity-path slide keeps the backdrop 1:1.
-                val scale = 1f
+                // COBO: a glass panel must not carry the backdrop sample through the entrance scale —
+                // the page behind the menu would appear to zoom. Only the glass overlay host opts out
+                // (pure alpha fade plus the gravity-path slide keeps the backdrop 1:1); the window
+                // host keeps COUI's scale animation.
+                val scale = if (enableGlass) 1f else fractionProgress()
                 scaleX *= scale
                 scaleY *= scale
                 transformOrigin = localTransformOrigin
