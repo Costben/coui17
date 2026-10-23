@@ -12,8 +12,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [COUIScrollBehavior]'s `expandOnContentScroll`: by default the bar only expands once the list has
- * reached its top; when enabled it follows the content's downward drag anywhere in the list.
+ * [COUIScrollBehavior]'s `expandOnContentScroll`: by default the bar snaps, so the connection only
+ * tracks how far the content has scrolled and the bar collapses as soon as the content leaves the
+ * top; when enabled it follows the content's downward drag anywhere in the list.
  *
  * The behavior is created in a composition because [COUIScrollBehavior] is composable and remembers
  * its scroll behavior. The connection is then driven directly, which isolates the offset arithmetic
@@ -33,7 +34,13 @@ class COUIScrollBehaviorExpandTest {
         size = Size(320f, 480f),
         density = Density(1f),
     ) {
-        val state = initialState()
+        // The snap branch keeps the offset at or below zero: a positive value would mean the
+        // content is above its top, which the layout reads as "back at the top".
+        val state = TopAppBarState(
+            initialHeightOffsetLimit = -200f,
+            initialHeightOffset = -200f,
+            initialContentOffset = -300f,
+        )
         lateinit var behavior: ScrollBehavior
         setContent {
             behavior = COUIScrollBehavior(
@@ -50,8 +57,9 @@ class COUIScrollBehaviorExpandTest {
             source = NestedScrollSource.UserInput,
         )
 
+        // The layout owns the bar height in snap mode; the connection only records the scroll.
         assertEquals(-200f, state.heightOffset)
-        assertEquals(1050f, state.contentOffset)
+        assertEquals(-250f, state.contentOffset)
     }
 
     @Test

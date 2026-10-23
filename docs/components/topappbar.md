@@ -312,13 +312,15 @@ val scrollBehavior = COUIScrollBehavior(
 | ------------------ | --------------------------- | -------------------------- | ------------------------------------------------ |
 | state              | TopAppBarState              | rememberTopAppBarState()   | State object controlling scroll state            |
 | canScroll          | () -> Boolean               | { true }                   | Callback to control whether scrolling is allowed |
-| snapAnimationSpec  | AnimationSpec\<Float>?      | 180ms decelerate tween     | Defines the snap to fully expanded/collapsed when scrolling stops midway |
+| snapAnimationSpec  | AnimationSpec\<Float>?      | 180ms decelerate tween     | Defines the transition between the expanded and collapsed states, and the settle when the legacy continuous bar stops midway |
 | flingAnimationSpec | DecayAnimationSpec\<Float>? | rememberSplineBasedDecay() | Defines decay animation for fling                |
-| expandOnContentScroll | Boolean                  | false                      | Expand the bar when the content is dragged down anywhere in the list, not only once the list has reached its top |
+| expandOnContentScroll | Boolean                  | false                      | Follow the content's downward drag anywhere in the list (continuous expansion) instead of snapping the title into the toolbar row and expanding only at the top |
 
-By default the bar only expands once the list has reached its top. ColorOS 17's home page brings
-its collapsed header row back as soon as the list is dragged down, even from the middle of the
-list; set `expandOnContentScroll = true` for that behavior:
+By default the bar snaps: the title stays in the 52dp toolbar row while the list is scrolled, and
+the large title expands into its second row only once the list returns to the top. A small scroll
+cannot leave the header half-collapsed in the middle of the list. Set `expandOnContentScroll = true`
+for ColorOS 17's home-page behavior, where the bar follows the content's downward drag anywhere in
+the list:
 
 ```kotlin
 val scrollBehavior = COUIScrollBehavior(expandOnContentScroll = true)

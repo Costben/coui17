@@ -80,6 +80,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Changed
 
+- A collapsible `TopAppBar` snaps instead of tracking the scroll continuously: while the list is scrolled the title stays in the 52dp toolbar row, and the large title expands into its second row only when the list returns to the top. `COUIScrollBehavior(expandOnContentScroll = true)` keeps the continuous behaviour.
 - Swiping a notification no longer recomposes the notification box or rebuilds the card and menu shapes on every frame.
 - `HighlightedIconButtonDefaults` light-theme halo lowered (`LightHaloColor` alpha 0.05 to 0.03, `LightHaloRadius` 15.5dp to 12dp). Provisional values until a live circular-button reference can be measured.
 - `DropdownDefaults.ChevronSize` is 24x24dp (the native expandable-indicator box) instead of 12x24dp, and submenu rows draw `ExpandableIndicator` instead of an `ArrowRight`.

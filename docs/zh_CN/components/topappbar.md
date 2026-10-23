@@ -308,11 +308,11 @@ val scrollBehavior = COUIScrollBehavior(
 | ------------------ | --------------------------- | -------------------------- | -------------------------- |
 | state              | TopAppBarState              | rememberTopAppBarState()   | 控制滚动状态的状态对象     |
 | canScroll          | () -> Boolean               | { true }                   | 控制是否允许滚动的回调     |
-| snapAnimationSpec  | AnimationSpec\<Float>?      | 180ms 减速 tween           | 定义滚动停在中间态时吸附到全展开/全折叠的动画 |
+| snapAnimationSpec  | AnimationSpec\<Float>?      | 180ms 减速 tween           | 定义展开/折叠两态之间的过渡动画，以及旧的连续模式滚动停在中间态时的吸附动画 |
 | flingAnimationSpec | DecayAnimationSpec\<Float>? | rememberSplineBasedDecay() | 定义顶部栏滑动的衰减动画   |
-| expandOnContentScroll | Boolean                  | false                      | 列表在任意位置向下拖动时都展开顶栏，而不只在列表顶部展开 |
+| expandOnContentScroll | Boolean                  | false                      | 列表在任意位置向下拖动时连续展开顶栏，而不是把标题吸附到工具栏行、只在顶部展开 |
 
-默认情况下，只有列表回到顶部后顶栏才会展开。ColorOS 17 首页在列表向下拖动的瞬间就会把折叠的头部行带回来，即使列表停在中间；需要这种行为时设置 `expandOnContentScroll = true`：
+默认情况下顶栏是吸附的：列表滚动时标题固定在 52dp 工具栏行内，只有列表回到顶部后大标题才展开到第二行；列表中间的小幅滚动不会把头部停在半折叠状态。需要 ColorOS 17 首页那种连续行为时设置 `expandOnContentScroll = true`，顶栏会在列表任意位置跟随内容的实际向下位移：
 
 ```kotlin
 val scrollBehavior = COUIScrollBehavior(expandOnContentScroll = true)

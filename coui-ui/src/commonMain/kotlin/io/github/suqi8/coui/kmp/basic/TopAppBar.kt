@@ -3,6 +3,7 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.CubicBezierEasing
@@ -27,8 +28,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -521,26 +524,29 @@ fun SmallTopAppBar(
  * Returns a [ScrollBehavior] that adjusts its properties to affect the colors and
  * height of the top app bar.
  *
- * A top app bar that is set up with this [ScrollBehavior] will immediately collapse
- * when the nested content is pulled up, and will expand back the collapsed area when the
- * content is pulled all the way down.
+ * A top app bar that is set up with this [ScrollBehavior] starts collapsing as soon as the nested
+ * content is pulled up. By default the title stays in the toolbar row while the list is scrolled
+ * and expands into the large-title row only once the content returns to the top: the bar snaps
+ * between the two heights instead of tracking the scroll offset, so a small scroll cannot leave the
+ * header half-expanded in the middle of the list. Set [expandOnContentScroll] to `true` for the
+ * continuous Material3 behavior.
  *
  * @param state the state object to be used to control or observe the top app bar's scroll
  *   state. See [rememberTopAppBarState] for a state that is remembered across compositions.
  * @param canScroll a callback used to determine whether scroll events are to be handled by this
  *   [ExitUntilCollapsedScrollBehavior]
- * @param snapAnimationSpec an optional [AnimationSpec] that defines how the top app bar snaps
- *   to either fully collapsed or fully extended state when a fling or a drag scrolled it into
- *   an intermediate position.
+ * @param snapAnimationSpec an optional [AnimationSpec] that defines how the top app bar moves
+ *   between the expanded and collapsed states: the snapping transition by default, and the settle
+ *   to a fully collapsed or fully extended state when a fling or a drag left the legacy continuous
+ *   bar at an intermediate position.
  * @param flingAnimationSpec an optional [DecayAnimationSpec] that defined how to fling the top
  *   app bar when the user flings the app bar itself, or the content below it
- * @param expandOnContentScroll whether the bar expands when the content itself is dragged down
- *   anywhere in the list, not only once the list has reached its top. ColorOS 17's home page
- *   brings its collapsed header row back as soon as the list is dragged down, even from the middle
- *   of the list; setting this to `true` mirrors that. The expansion follows the content's actual
- *   displacement, so it moves in the same direction and by the same amount as the list, which keeps
- *   the material alpha — driven by that displacement — from dipping while the bar grows. Defaults
- *   to `false`, which keeps the upstream behavior of expanding only at the top of the list.
+ * @param expandOnContentScroll whether the bar follows the content's downward drag anywhere in the
+ *   list instead of waiting for the list to reach its top. `true` is the continuous Material3
+ *   behavior: the bar expands by the drag distance wherever the list is, which also keeps the
+ *   material alpha — driven by the content displacement — from dipping while the bar grows.
+ *   `false` (default) pins the title to the toolbar row while the content is scrolled and snaps it
+ *   back into the large-title row only at the top, matching the ColorOS notes/settings headers.
  */
 @Suppress("ComposableNaming")
 @Composable
@@ -883,6 +889,18 @@ interface ScrollBehavior {
 }
 
 /**
+ * Implemented by [ScrollBehavior]s that pin the title to the collapsed row while the content is
+ * scrolled and expand it back into the large-title row only when the content returns to the top.
+ *
+ * The behavior still reports [ScrollBehavior.isPinned] as `false`: the bar itself changes height,
+ * it just snaps between the two states instead of following the scroll offset.
+ */
+internal interface SnappingScrollBehavior {
+    /** Whether the bar snaps between the expanded and collapsed states instead of following scroll. */
+    val snapsToTop: Boolean
+}
+
+/**
  * A [ScrollBehavior] that adjusts its properties to affect the colors and height of a top
  * app bar.
  *
@@ -891,9 +909,10 @@ interface ScrollBehavior {
  * pulled all the way down.
  *
  * @param state a [TopAppBarState]
- * @param snapAnimationSpec an optional [AnimationSpec] that defines how the top app bar snaps to
- *   either fully collapsed or fully extended state when a fling or a drag scrolled it into an
- *   intermediate position
+ * @param snapAnimationSpec an optional [AnimationSpec] that defines how the top app bar moves
+ *   between the expanded and collapsed states: the snapping transition by default, and the settle
+ *   to a fully collapsed or fully extended state when a fling or a drag left the legacy continuous
+ *   bar at an intermediate position
  * @param flingAnimationSpec an optional [DecayAnimationSpec] that defined how to fling the top app
  *   bar when the user flings the app bar itself, or the content below it
  * @param canScroll a callback used to determine whether scroll events are to be handled by this
@@ -907,11 +926,20 @@ private class ExitUntilCollapsedScrollBehavior(
     override val flingAnimationSpec: DecayAnimationSpec<Float>?,
     val canScroll: () -> Boolean = { true },
     private val expandOnContentScroll: Boolean = false,
-) : ScrollBehavior {
+) : ScrollBehavior,
+    SnappingScrollBehavior {
     override val isPinned: Boolean = false
+
+    // The default (expandOnContentScroll = false) keeps the title in the toolbar row while the
+    // content is scrolled and only expands it at the top. expandOnContentScroll opts back into the
+    // continuous Material3 behavior, where the bar follows the content anywhere in the list.
+    override val snapsToTop: Boolean = !expandOnContentScroll
     override var nestedScrollConnection =
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                // The snapping bar never steals the gesture: the list starts moving immediately and
+                // the bar collapses alongside it, instead of consuming the first 58dp of scroll.
+                if (snapsToTop) return Offset.Zero
                 // Don't intercept if scrolling down.
                 if (!canScroll() || available.y > 0) return Offset.Zero
                 val prevHeightOffset = state.heightOffset
@@ -932,6 +960,17 @@ private class ExitUntilCollapsedScrollBehavior(
             ): Offset {
                 if (!canScroll()) return Offset.Zero
                 state.contentOffset += consumed.y
+
+                if (snapsToTop) {
+                    // Only measure the content's displacement; the bar's height and title position
+                    // are driven by the snap animation in TopAppBarLayout. Clamp to <= 0 so an
+                    // overscroll at the top cannot make the bar look scrolled, and clear the
+                    // residual when the list reports that it cannot consume any more downward
+                    // scroll (i.e. it is at the top).
+                    state.contentOffset = state.contentOffset.coerceAtMost(0f)
+                    if (available.y > 0f) state.contentOffset = 0f
+                    return Offset.Zero
+                }
 
                 if (expandOnContentScroll && consumed.y > 0f) {
                     // ColorOS 17 expands the header row as soon as the list is dragged down, even
@@ -964,6 +1003,10 @@ private class ExitUntilCollapsedScrollBehavior(
                     // Reset the total content offset to zero when scrolling all the way down. This
                     // will eliminate some float precision inaccuracies.
                     state.contentOffset = 0f
+                }
+                if (snapsToTop) {
+                    // The snap animation owns heightOffset; there is no bar fling to settle.
+                    return Velocity.Zero
                 }
                 val superConsumed = super.onPostFling(consumed, available)
                 return superConsumed +
@@ -1094,16 +1137,46 @@ private fun TopAppBarLayout(
     val scrolledOffset = remember(scrollBehavior) {
         { scrollBehavior?.state?.heightOffset ?: 0f }
     }
+    // A snapping behavior keeps the title in the toolbar row while the list is scrolled and
+    // expands it only after the list returns to the top. The fraction is animated here and read
+    // in the measure/draw phases, so the scroll itself never recomposes the bar.
+    val snapsToTop = (scrollBehavior as? SnappingScrollBehavior)?.snapsToTop == true
+    val atTop by remember(scrollBehavior) {
+        derivedStateOf {
+            val offset = scrollBehavior?.state?.contentOffset ?: 0f
+            // A pixel of tolerance absorbs the float residue left by the nested-scroll deltas.
+            offset >= -1f
+        }
+    }
+    val snapFraction = remember(scrollBehavior, snapsToTop) {
+        Animatable(if (snapsToTop && !atTop) 1f else 0f)
+    }
+    LaunchedEffect(scrollBehavior, snapsToTop, atTop) {
+        if (!snapsToTop) {
+            snapFraction.snapTo(0f)
+        } else {
+            snapFraction.animateTo(
+                targetValue = if (atTop) 0f else 1f,
+                animationSpec = scrollBehavior.snapAnimationSpec
+                    ?: tween(durationMillis = SnapAnimationDuration, easing = SnapAnimationEasing),
+            )
+        }
+    }
+    val collapseFractionOverride: (() -> Float)? = remember(snapsToTop, snapFraction) {
+        if (snapsToTop) ({ snapFraction.value }) else null
+    }
     // Divider progress: COUIDividerAppBarLayout fades the divider in over the whole
     // collapse range (alpha 0 -> 1, horizontal margin 24dp -> 0dp).
     // A pinned behavior never collapses the bar, so its collapsed fraction stays 0; the divider
     // follows how much of the bar the scrolled content overlaps instead.
-    val dividerFraction = remember(scrollBehavior) {
+    val dividerFraction = remember(scrollBehavior, collapseFractionOverride) {
         {
+            val override = collapseFractionOverride?.invoke()
             val state = scrollBehavior?.state
             val fraction = when {
+                override != null -> override
                 state == null -> 0f
-                scrollBehavior?.isPinned == true -> -state.contentOffset / (-state.heightOffsetLimit).coerceAtLeast(1f)
+                scrollBehavior.isPinned -> -state.contentOffset / (-state.heightOffsetLimit).coerceAtLeast(1f)
                 else -> state.collapsedFraction
             }
             fraction.coerceIn(0f, 1f)
@@ -1320,12 +1393,29 @@ private fun TopAppBarLayout(
         val expansion = (expandedBarHeight - collapsedHeight).coerceAtLeast(0)
         updateHeightOffsetLimit(expansion)
 
-        val offset = scrolledOffset()
-        val offsetPx = if (offset.isNaN()) 0 else offset.roundToInt()
-        val collapseFraction = if (expansion > 0) {
+        // A snapping behavior drives the bar from the animated fraction; the scroll offset only
+        // feeds the legacy continuous path.
+        val overrideFraction = collapseFractionOverride?.invoke()?.coerceIn(0f, 1f)
+        val offsetPx = if (overrideFraction != null) {
+            -(expansion * overrideFraction).roundToInt()
+        } else {
+            val offset = scrolledOffset()
+            if (offset.isNaN()) 0 else offset.roundToInt()
+        }
+        val collapseFraction = if (overrideFraction != null) {
+            overrideFraction
+        } else if (expansion > 0) {
             (abs(offsetPx) / expansion.toFloat()).coerceIn(0f, 1f)
         } else {
             0f
+        }
+        // Keep the public TopAppBarState in step with the snap animation so readers that only
+        // observe state.collapsedFraction (e.g. the search pill's shadow) see the same fraction.
+        if (overrideFraction != null) {
+            val targetHeightOffset = -(expansion * collapseFraction)
+            scrollBehavior?.state?.let { state ->
+                if (state.heightOffset != targetHeightOffset) state.heightOffset = targetHeightOffset
+            }
         }
         // The bar height follows the raw scroll offset; only the title morph below is
         // eased (COUIEaseInterpolator on the CollapsingTextHelper position/text size).
