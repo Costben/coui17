@@ -338,3 +338,28 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
 - 壁纸取值顺序：Android 系统壁纸 → Android 锁屏壁纸（仅 API 34 及以上，且系统壁纸没有静态图时）→ Web 预览的壁纸选择器（`utils.WallpaperState`）→ 内置的 `coui17_wallpaper.jpg`（compose resource）。
 - 旧外壳 `App.kt` / `AppContent.kt` / `MainPage.kt` 及其专用的 `Home` / `HomeLayoutScope` / `MainPagerState` 已删除；`component/` 下只为 `MainPage` 服务的 48 个 `LazyListScope.*Section()` 包装已删除，公开的 `*Demo` 内容 composable 保留。
 - 设置页删除了依赖旧外壳的 `LocalLegacyChromeSettingsEnabled` 分支（顶栏、导航栏、悬浮工具栏、悬浮按钮等 12 行），同时删除了已无读取方的 11 个 `AppState` 字段。
+
+## 20. 实现规范（2026-10-23）
+
+本库交付的不只是组件，还要交付**实现参考规范**：系统里的某个界面应该用哪几个组件、在什么密度下、怎样接线。统一落点在规范文档：
+
+| 文档 | 内容 |
+| :--- | :--- |
+| `docs/zh_CN/guide/specification.md`（英文 `docs/guide/specification.md`） | 实现规范：从 ColorOS 17 系统界面出发，定义组件选型映射、三种密度作用域、玻璃 backdrop 接线、浮层宿主、两层表面色彩、标准界面代码模板、交互细节与真机校验基准 |
+
+### 20.1 规范怎么来
+
+实现规范**从系统界面反推**，不从组件正推。顺序是：
+
+1. **找对标**：先确定界面对应哪个系统应用的哪个界面。主 tab 页对标相册「照片」，二级设置页对标「设置」。对标不同，结论就不同：相册的顶栏按钮按相册密度渲染（40dp = 141px），「设置」的按系统密度渲染（40dp = 155px）。
+2. **拆控件**：读对标界面的节点树，用系统控件的 `resource-id`（如 `coui_popup_list_view`、`coui_toolbar_more_view`）把它映射到库组件。
+3. **定密度**：区分应用密度、相册密度（`rememberGalleryDensity()`）和面板物理密度（弹出菜单内部自动切换）。只有固定尺寸的子树进相册密度作用域。
+4. **接材质**：玻璃界面要配齐录制（`rememberLayerBackdrop` + `Modifier.layerBackdrop`）、提供（`LocalBackdrop`）、采样三件套。一份 backdrop 只能被一个 `layerBackdrop` 节点录制，采样方不能处在自己的录制层里。
+5. **同屏比对**：在参照机型上，用同一个脚本量系统界面和库实现的剖面（圆角的逐行内缩、行高、按钮亮度剖面），记下数值。
+
+### 20.2 后续维护要求
+
+- **新增或修改用户可见的组件时**，同步检查 `specification.md`：明确该组件对应的系统控件、密度作用域与标准接线方式，并更新对应章节的代码模板。
+- **遇到与系统界面不一致的情况时**，先核对参照机型（OnePlus PLK110 / ColorOS 17）、密度作用域、浮层宿主及 `specification.md` 的标准接线方式；确认是库组件偏差时，直接在库内修正并同步更新 `specification.md`。
+- **示例代码必须对上真实 API**：写进 `specification.md` 的参数名和类型必须与当前源码一致，修改组件签名时同步更新规范代码。
+- 规范文档只写设计依据、组件组合、工程约束与比对基准，与 §3 一样，不记录设备连接方式、资源提取流程或具体下游项目的调试过程。
