@@ -86,7 +86,7 @@ import kotlin.math.roundToInt
 object AppBarGlassDefaults {
 
     /** `AppBarBlurParams.normalBlurRadiusPx`. In px, because that is what the framework consumes. */
-    val BlurRadiusPx = 50f
+    val BlurRadiusPx = 150f
 
     /** `AppBarBlurParams.normalBackgroundAlphaFraction`, light theme. */
     val BackgroundAlpha = 0.8f
@@ -94,8 +94,15 @@ object AppBarGlassDefaults {
     /** `AppBarBlurHelper.NORMAL_BLUR_DARK_ALPHA`. */
     val BackgroundAlphaDark = 0.6f
 
-    /** `AppBarBlurParams.startBlurRadius`, the gradient shape's full-strength radius. In px. */
-    val GradientBlurRadiusPx = 30f
+    /**
+     * `AppBarBlurParams.startBlurRadius`, the gradient shape's full-strength radius. In px.
+     *
+     * Raised from the platform's 30px, then from 50px: at 620dpi 50px is only ~13dp, and over a
+     * 52dp bar the gradient blur still reads as plain translucency rather than frost. 150px is
+     * ~24dp at that density — the radius ColorOS 17 actually shows in Gallery/Weibo, where content
+     * passing under the bar turns into a soft colour wash instead of legible glyphs.
+     */
+    val GradientBlurRadiusPx = 150f
 
     /** `AppBarBlurParams.endBlurRadius`, the radius at the far end of the gradient. In px. */
     val GradientEndBlurRadiusPx = 0f
@@ -188,7 +195,15 @@ private fun AppBarMaterialScaffold(
             if (behavior == null) {
                 1f
             } else {
-                AppBarBlurOverlayDefaults.scrollAlpha(abs(behavior.state.contentOffset), density)
+                // 折叠态下 `contentOffset` 会被钳回 0，但此时顶栏底下恰恰压着最多内容，
+                // 按 offset 算 alpha 会得到 0 —— material 整个消失，观感只剩半透明纯色。
+                // 所以折叠态（height > 0）直接常亮。
+                val collapsed = abs(behavior.state.heightOffset) > 0.5f
+                if (collapsed) {
+                    1f
+                } else {
+                    AppBarBlurOverlayDefaults.scrollAlpha(abs(behavior.state.contentOffset), density)
+                }
             }
         }
     }
