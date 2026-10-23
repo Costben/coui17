@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -89,9 +90,10 @@ actual fun RemovePlatformDialogDefaultEffects() {
 @Composable
 actual fun DialogTouchPassThrough(passTouches: () -> Boolean) {
     val parent = LocalView.current.parent
+    val currentPassTouches = rememberUpdatedState(passTouches)
     LaunchedEffect(parent) {
         val window = (parent as? DialogWindowProvider)?.window ?: return@LaunchedEffect
-        snapshotFlow(passTouches).collect { enabled ->
+        snapshotFlow { currentPassTouches.value() }.collect { enabled ->
             if (enabled) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             } else {

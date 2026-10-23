@@ -53,6 +53,7 @@ public final class io/github/suqi8/coui/kmp/utils/Utils_desktopKt {
 }
 
 public final class io/github/suqi8/coui/kmp/utils/Utils_skikoKt {
+	public static final fun DialogTouchPassThrough (Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 	public static final fun RemovePlatformDialogDefaultEffects (Landroidx/compose/runtime/Composer;I)V
 	public static final fun getHasFocusReassignBug ()Z
 	public static final fun getRoundedCorner (Landroidx/compose/runtime/Composer;I)F
