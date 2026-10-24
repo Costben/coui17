@@ -63,6 +63,7 @@ Scaffold(
 | popupHost                    | @Composable () -> Unit              | Container for displaying popup windows                                   | \{ COUIPopupHost() }             | No       |
 | containerColor               | Color                               | Background color of the scaffold                                         | COUITheme.colorScheme.surface | No       |
 | contentWindowInsets          | WindowInsets                        | Window insets passed to the content                                      | WindowInsets.systemBars.union(WindowInsets.displayCutout) | No       |
+| edgeToEdge                   | Boolean                             | Whether the content reaches the window edges and scrolls behind the top and bottom bars. The bar heights are still reported in the `PaddingValues`, but the top one belongs in the list's own `contentPadding` rather than a `Modifier.padding` — the COUI app bar material samples the content under the bar, and content pushed below it smears the first row into a flat band (see [TopAppBar](../components/topappbar), “Needs Edge-to-Edge”). Also published as `LocalEdgeToEdge` for the bar | false | No       |
 | content                      | @Composable (PaddingValues) -> Unit | Main content area of the scaffold                                        | -                                 | Yes      |
 
 ### FabPosition Options

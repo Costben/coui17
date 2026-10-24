@@ -203,8 +203,12 @@ fun AppBarBlurOverlay(
     extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
+    // Same contract as the app bar material in [TopAppBar]: the blur needs content underneath the
+    // bar. Outside a `Scaffold(edgeToEdge = true)` the caller has to provide [LocalEdgeToEdge]
+    // itself, otherwise this degrades to a plain box around [content].
+    val edgeToEdge = LocalEdgeToEdge.current
     AppBarMaterialLayout(
-        materialEnabled = true,
+        materialEnabled = edgeToEdge,
         containerColor = containerColor,
         backdrop = backdrop,
         extraHeight = extraHeight,

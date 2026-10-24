@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,21 @@ import io.github.suqi8.coui.kmp.utils.LocalDialogStates
 import io.github.suqi8.coui.kmp.utils.LocalPopupStates
 import io.github.suqi8.coui.kmp.utils.LocalRootDialogStates
 import io.github.suqi8.coui.kmp.utils.LocalRootPopupStates
+
+/**
+ * Whether the content under the current [Scaffold] reaches the window edges, i.e. scrolls behind the
+ * top bar and the bottom bar instead of starting below them.
+ *
+ * The COUI app bar material ([TopAppBar]'s `gradientGlass`, [AppBarBlurOverlay]) blurs whatever is
+ * drawn underneath the bar. When the content is padded below the bar there is nothing underneath it,
+ * and the blur samples the nearest row it can reach — the first content row — then clamps it, which
+ * paints the bar as a flat colour band that ends in a hard edge. The material is therefore only
+ * painted while this is `true`; otherwise the bar keeps its plain container colour.
+ *
+ * [Scaffold] provides it from its `edgeToEdge` parameter. A caller that lays out the bars by hand
+ * can provide it directly with [CompositionLocalProvider] once its content really goes edge to edge.
+ */
+val LocalEdgeToEdge = compositionLocalOf { false }
 
 /**
  * A [Scaffold] component with COUI style.
@@ -72,6 +88,13 @@ import io.github.suqi8.coui.kmp.utils.LocalRootPopupStates
  *   applied to the content root via [Modifier.padding] and [Modifier.consumeWindowInsets] to
  *   properly offset top and bottom bars. If using [Modifier.verticalScroll], apply this modifier to
  *   the child of the scroll, and not on the scroll itself.
+ * @param edgeToEdge whether the content scrolls behind the [topBar]/[bottomBar] instead of being
+ *   padded below them. It is the caller's contract, not something the scaffold can enforce on its
+ *   own: with `true` the scaffold still reports the bar heights in the [PaddingValues], but the
+ *   caller must not apply the top inset to the content root and instead feed it into the content's
+ *   own `contentPadding`, so the content actually reaches the top of the window. Only then is there
+ *   anything under the bar for the app bar material to sample — see [LocalEdgeToEdge]. Defaults to
+ *   `false`, which keeps the previous "content starts below the bar" layout.
  */
 @Composable
 fun Scaffold(
@@ -86,6 +109,7 @@ fun Scaffold(
     popupHost: @Composable () -> Unit = { COUIPopupHost() },
     containerColor: Color = COUITheme.colorScheme.surface,
     contentWindowInsets: WindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
+    edgeToEdge: Boolean = false,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val safeInsets = remember(contentWindowInsets) { MutableWindowInsets(contentWindowInsets) }
@@ -107,6 +131,7 @@ fun Scaffold(
             LocalDialogStates provides dialogStates,
             LocalRootDialogStates provides rootDialogStates,
             LocalRootPopupStates provides rootPopupStates,
+            LocalEdgeToEdge provides edgeToEdge,
         ) {
             ScaffoldLayout(
                 topBar = topBar,

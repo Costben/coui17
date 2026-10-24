@@ -63,6 +63,7 @@ Scaffold(
 | popupHost                    | @Composable () -> Unit              | 用于显示弹出窗口的容器                       | \{ COUIPopupHost() }             | 否       |
 | containerColor               | Color                               | 脚手架的背景颜色                             | COUITheme.colorScheme.surface | 否       |
 | contentWindowInsets          | WindowInsets                        | 传递给内容的窗口插入边距                     | WindowInsets.systemBars.union(WindowInsets.displayCutout) | 否       |
+| edgeToEdge                   | Boolean                             | 内容是否铺到窗口边缘、从顶栏与底栏底下穿过。开启后仍要在 `PaddingValues` 里给出栏高，但顶栏高度应挪进列表自己的 `contentPadding`，不要用 `Modifier.padding` 顶下去——COUI 顶栏的模糊材质靠采样栏底下的内容成像，内容被顶下去时会把第一行糊成一条平色横带（见 [TopAppBar](../components/topappbar) 的「需要 edge-to-edge」）。同时会通过 `LocalEdgeToEdge` 告知顶栏 | false | 否 |
 | content                      | @Composable (PaddingValues) -> Unit | 脚手架的主要内容区域                         | -                                 | 是       |
 
 ### FabPosition 选项

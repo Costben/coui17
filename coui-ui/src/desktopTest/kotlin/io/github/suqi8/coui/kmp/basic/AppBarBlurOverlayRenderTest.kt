@@ -190,7 +190,10 @@ class AppBarBlurOverlayRenderTest {
                 Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
                     Canvas(Modifier.fillMaxSize()) { drawRect(BackdropColor) }
                 }
-                CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                CompositionLocalProvider(
+                    LocalBackdrop provides backdrop,
+                    LocalEdgeToEdge provides true,
+                ) {
                     AppBarBlurOverlay(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -241,21 +244,25 @@ private fun OverlayScene(scrollFraction: Float, withBackdrop: Boolean) {
             .fillMaxWidth()
             .height(BarHeight)
             .testTag(OVERLAY_TAG)
-        if (withBackdrop) {
-            CompositionLocalProvider(LocalBackdrop provides backdrop) {
+        // The material is only painted for edge-to-edge content; these scenes put the overlay over
+        // a full-surface backdrop, so declare it.
+        CompositionLocalProvider(LocalEdgeToEdge provides true) {
+            if (withBackdrop) {
+                CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                    AppBarBlurOverlay(
+                        modifier = overlay,
+                        containerColor = Color.White,
+                        scrollFraction = scrollFraction,
+                    )
+                }
+            } else {
                 AppBarBlurOverlay(
                     modifier = overlay,
                     containerColor = Color.White,
+                    backdrop = null,
                     scrollFraction = scrollFraction,
                 )
             }
-        } else {
-            AppBarBlurOverlay(
-                modifier = overlay,
-                containerColor = Color.White,
-                backdrop = null,
-                scrollFraction = scrollFraction,
-            )
         }
     }
 }

@@ -205,6 +205,27 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 }
 ```
 
+### Needs Edge-to-Edge
+
+The material is an image of whatever sits **under** the bar. A page that lays its content out below
+the bar — the default `Scaffold` layout, where the content is pushed down by `Modifier.padding` —
+leaves no pixels there to sample: the sample clamps to the nearest row, the content's first row, and
+the bar turns into a flat colour band with a hard edge under it.
+
+COUI therefore only paints the material while `LocalEdgeToEdge` is `true`. Pass `edgeToEdge = true`
+to the `Scaffold` (or provide `LocalEdgeToEdge` yourself with `CompositionLocalProvider`), and move
+the bar height out of the `PaddingValues` into the list's own `contentPadding`, so the content really
+scrolls under the bar:
+
+```kotlin
+Scaffold(edgeToEdge = true, topBar = { SmallTopAppBar(title = "Title", gradientGlass = true) }) { padding ->
+    LazyColumn(contentPadding = PaddingValues(top = padding.calculateTopPadding())) { /* … */ }
+}
+```
+
+Without it the bar keeps its plain `color` surface (divider included) instead of showing that band,
+and `gradientGlass` degrades together with the uniform blur.
+
 ### Gradient Glass Overlay
 
 `gradientGlass` lays the material out behind the bar itself. When the page puts the material on a separate node that it lays out itself — the ColorOS 17 home page inflates `AppBarBlurOverlayView` as a sibling of the app bar and hollows the bar out — use [`AppBarBlurOverlay`](../components/appbarbluroverlay) instead. The two share the same measure behaviour and the same `AppBarGlassDefaults` blur radius and blend curve; the difference is who lays the node out, and where the alpha comes from: `AppBarBlurOverlay` takes it from its `scrollFraction`, while `gradientGlass` derives it from the bar's `scrollBehavior`.
@@ -233,7 +254,7 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 | titlePadding          | Dp                              | Horizontal content padding                     | TopAppBarDefaults.TitlePadding | No       |
 | navigationIconPadding      | Dp                              | Start padding of the navigation icon           | TopAppBarDefaults.NavigationIconPadding | No       |
 | actionIconPadding          | Dp                              | End padding of the action icons                | TopAppBarDefaults.ActionIconPadding | No       |
-| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `AppBarBlurOverlayDefaults.ExtraHeight` (24dp) past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass) | false | No |
+| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `AppBarBlurOverlayDefaults.ExtraHeight` (24dp) past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass). Requires `Scaffold(edgeToEdge = true)`, otherwise it degrades to the plain colour | false | No |
 | bottomContent              | @Composable () -> Unit          | Composable content displayed below the title bar area | {} | No |
 
 ### SmallTopAppBar Properties
@@ -255,7 +276,7 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 | centerTitle                | Boolean                         | Centre the title between the two icon slots (COUI `setIsTitleCenterStyle`); replaces the three paddings below with `centerTitleMargin` | false | No |
 | centerTitleMargin          | Dp                              | Horizontal margin the centred title reserves at each end | tier for the current window width | No |
 | segmentButton              | (@Composable () -> Unit)?       | Segmented control slotted between the navigation icon and the title; ignored while `centerTitle` is set | null | No |
-| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `AppBarBlurOverlayDefaults.ExtraHeight` (24dp) past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass) | false | No |
+| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `AppBarBlurOverlayDefaults.ExtraHeight` (24dp) past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass). Requires `Scaffold(edgeToEdge = true)`, otherwise it degrades to the plain colour | false | No |
 | titlePadding          | Dp                              | Horizontal content padding                     | TopAppBarDefaults.TitlePadding | No       |
 | navigationIconPadding      | Dp                              | Start padding of the navigation icon           | TopAppBarDefaults.NavigationIconPadding | No       |
 | actionIconPadding          | Dp                              | End padding of the action icons                | TopAppBarDefaults.ActionIconPadding | No       |

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
+import io.github.suqi8.coui.kmp.basic.LocalEdgeToEdge
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.TabRowWithContour
 import io.github.suqi8.coui.kmp.basic.Text
@@ -128,7 +129,12 @@ fun TopAppBarColorOS17FormsDemo() {
                 contentScale = ContentScale.Crop,
             )
         }
-        CompositionLocalProvider(LocalBackdrop provides backdrop) {
+        // The gallery stacks the bars over its own full-bleed backdrop, which is what the material
+        // needs to sample: declare edge to edge so the glass variants keep painting here.
+        CompositionLocalProvider(
+            LocalBackdrop provides backdrop,
+            LocalEdgeToEdge provides true,
+        ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // G1: the title is centred, with the responsive 16 / 24 / 40dp side clearance.
                 SmallTopAppBar(

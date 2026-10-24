@@ -49,6 +49,8 @@ Box(Modifier.fillMaxSize()) {
 
 The overlay needs the content it samples through `LocalBackdrop`; place it where a backdrop is provided, or pass `backdrop = null` for the plain ramp alone. When the platform cannot run runtime shaders (everything below Android 13) the blur is skipped as well, and only the ramp is painted.
 
+The material is an image of the content **under** it, so COUI only paints it while `LocalEdgeToEdge` is `true`: put it inside a `Scaffold(edgeToEdge = true)`, or declare it yourself with `CompositionLocalProvider(LocalEdgeToEdge provides true)`. With the content laid out below the bar there is nothing to sample, the sample clamps to the nearest row and smears it into a flat band; the overlay then behaves as a plain container and paints no material.
+
 ### Scroll Producer Overload
 
 `AppBarBlurOverlay` also has an overload whose first parameter is `scrollFraction: () -> Float` instead of a `Float`. The producer is read in the draw phase, so a scroll-driven alpha does not recompose the bar on every frame. At rest it must return `0`, which leaves the material drawing nothing and the content under the bar sharp; a caller with no scroll state to observe should return `1f`. The `Float` overload forwards to this one.

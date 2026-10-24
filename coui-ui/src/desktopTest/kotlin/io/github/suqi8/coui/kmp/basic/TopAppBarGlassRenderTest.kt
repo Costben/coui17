@@ -106,6 +106,33 @@ class TopAppBarGlassRenderTest {
     }
 
     /**
+     * The material samples the content behind the bar, so it is only painted for edge-to-edge
+     * content. Without the declaration the bar keeps its plain fill — no blur, no fade band — even
+     * though a backdrop is published and `gradientGlass` is on. Otherwise the blur would clamp to
+     * whatever the first row under the bar happens to be and smear it into a flat colour band.
+     */
+    @Test
+    fun materialIsNotPaintedWhenContentIsNotEdgeToEdge() = runSkikoComposeUiTest(
+        size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+        density = Density(1f),
+    ) {
+        setContent { GlassScene(withBackdrop = true, gradient = true, edgeToEdge = false) }
+        waitForIdle()
+
+        val (left, right) = captureAppBarSamples()
+
+        assertEquals(
+            left.toArgb(),
+            right.toArgb(),
+            "a bar outside edge-to-edge content must not sample the backdrop",
+        )
+        assertTrue(
+            channelDistanceToWhite(left) <= 2,
+            "the bar is expected to fall back to its plain fill, got $left",
+        )
+    }
+
+    /**
      * The gradient shape (`AppBarBlurHelper`'s `GradientBackgroundDrawable`) ramps the surface's
      * alpha to zero at the material's bottom edge, which sits [ExtraHeightPx] below the bar. A
      * column through the material must fade from the painted surface at the top into the raw
@@ -268,7 +295,11 @@ private fun SegmentScene() {
 }
 
 @Composable
-private fun GlassScene(withBackdrop: Boolean, gradient: Boolean = false) {
+private fun GlassScene(
+    withBackdrop: Boolean,
+    gradient: Boolean = false,
+    edgeToEdge: Boolean = true,
+) {
     val backdrop = rememberLayerBackdrop {
         drawRect(Color.Black)
         drawContent()
@@ -295,22 +326,28 @@ private fun GlassScene(withBackdrop: Boolean, gradient: Boolean = false) {
                 .background(CoverColor),
         )
         if (withBackdrop) {
-            CompositionLocalProvider(LocalBackdrop provides backdrop) { GlassAppBar(gradient) }
+            CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                GlassAppBar(gradient, edgeToEdge)
+            }
         } else {
-            GlassAppBar(gradient)
+            GlassAppBar(gradient, edgeToEdge)
         }
     }
 }
 
 @Composable
-private fun GlassAppBar(gradient: Boolean = false) {
-    SmallTopAppBar(
-        title = APP_BAR_TITLE,
-        modifier = Modifier.fillMaxWidth().testTag(APP_BAR_TAG),
-        color = Color.White,
-        gradientGlass = gradient,
-        defaultWindowInsetsPadding = false,
-    )
+private fun GlassAppBar(gradient: Boolean = false, edgeToEdge: Boolean = true) {
+    // The material only paints when the content behind the bar is edge to edge. The scenes here
+    // draw a backdrop over the whole surface, so they declare it instead of wrapping each one.
+    CompositionLocalProvider(LocalEdgeToEdge provides edgeToEdge) {
+        SmallTopAppBar(
+            title = APP_BAR_TITLE,
+            modifier = Modifier.fillMaxWidth().testTag(APP_BAR_TAG),
+            color = Color.White,
+            gradientGlass = gradient,
+            defaultWindowInsetsPadding = false,
+        )
+    }
 }
 
 /**

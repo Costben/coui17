@@ -49,6 +49,8 @@ Box(Modifier.fillMaxSize()) {
 
 overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背景层的位置，或传 `backdrop = null` 只保留剖面。平台无法运行 runtime shader 时（Android 13 以下）模糊同样会被跳过，只绘制剖面。
 
+材质靠采样它**下方**的内容成像，所以 COUI 只在 `LocalEdgeToEdge` 为 `true` 时才画材质：套在 `Scaffold(edgeToEdge = true)` 里，或自己用 `CompositionLocalProvider(LocalEdgeToEdge provides true)` 声明。内容被排在顶栏下方时顶栏底下没有像素可采，采样会钳到最近的一行、糊成一条平色横带；此时 overlay 只作为一层普通容器，不绘制材质。
+
 ### 滚动 producer 重载
 
 `AppBarBlurOverlay` 还有一个重载，第一个参数是 `scrollFraction: () -> Float`，而不是 `Float`。producer 在 draw 阶段读取，因此滚动驱动的 alpha 不会让导航栏在每一帧都重组。静止时它必须返回 `0`，此时材质不绘制任何内容，材质下方的内容保持清晰；没有可观察滚动状态的调用方应返回 `1f`。`Float` 重载会转发到这个重载。

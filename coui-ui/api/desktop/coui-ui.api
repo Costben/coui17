@@ -1174,12 +1174,12 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$PinnedTop
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$ScaffoldKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$ScaffoldKt;
 	public fun <init> ()V
-	public final fun getLambda$-1114431477$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$-239026917$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$1416047944$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$1543868762$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$1729064103$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$79211259$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-328938626$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-371910353$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-581130689$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$33098187$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$536392735$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$983210348$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SnackbarKt {
@@ -3277,7 +3277,8 @@ public final class io/github/suqi8/coui/kmp/basic/RichTooltipColors {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ScaffoldKt {
-	public static final fun Scaffold-hocDZ08 (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/functions/Function2;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JLandroidx/compose/foundation/layout/WindowInsets;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun Scaffold-EdQD2Dw (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/functions/Function2;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JLandroidx/compose/foundation/layout/WindowInsets;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun getLocalEdgeToEdge ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
 public abstract interface class io/github/suqi8/coui/kmp/basic/ScrollBarAdapter {

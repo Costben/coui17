@@ -147,6 +147,11 @@ object AppBarGlassDefaults {
 private fun Modifier.appBarSurface(color: Color): Modifier {
     // A fully transparent surface means the caller already paints the material behind the bar.
     if (color.alpha == 0f) return background(color)
+    // The blur samples what is drawn underneath the bar. Content that is laid out below the bar
+    // leaves nothing there: the sample clamps to the first content row and smears it into a flat
+    // band that ends in a hard edge under the bar. Paint the plain colour until the caller's content
+    // really reaches the top of the window — see [LocalEdgeToEdge].
+    if (!LocalEdgeToEdge.current) return background(color)
     val backdrop: Backdrop? = LocalBackdrop.current
     if (backdrop == null || !isRuntimeShaderSupported()) return background(color)
     val alpha = if (color.luminance() < 0.5f) {
@@ -207,8 +212,13 @@ private fun AppBarMaterialScaffold(
             }
         }
     }
+    // The material blurs what is drawn underneath the bar, so it only makes sense when the content
+    // scrolls behind it. A scaffold that pads the content below the bar leaves nothing to sample
+    // there: the blur clamps to the first content row and paints a flat band with a hard edge under
+    // the bar. Refuse the material instead of drawing that, and keep the plain container colour.
+    val edgeToEdge = LocalEdgeToEdge.current
     AppBarMaterialLayout(
-        materialEnabled = gradientGlass,
+        materialEnabled = gradientGlass && edgeToEdge,
         containerColor = color,
         backdrop = LocalBackdrop.current,
         extraHeight = AppBarBlurOverlayDefaults.ExtraHeight,
@@ -251,6 +261,9 @@ private fun AppBarMaterialScaffold(
  *   the bar plus [AppBarBlurOverlayDefaults.ExtraHeight] and drawn behind the bar, so the bar's
  *   bottom edge keeps some blur and surface alpha that fade out over that band; the layout still
  *   reports only the bar's height. The divider is suppressed while the material is on.
+ *   Requires [LocalEdgeToEdge] — the material blurs the content behind the bar, so it is only
+ *   painted when the enclosing [Scaffold] was built with `edgeToEdge = true`; otherwise the bar
+ *   falls back to its plain container colour.
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -406,6 +419,7 @@ fun TopAppBar(
  *   between the navigation icon and the title. It is mutually exclusive with [centerTitle].
  * @param gradientGlass Whether to paint the ColorOS gradient-blur app bar material
  *   (`AppBarBlurHelper`'s gradient shape) instead of the uniform one.
+ *   Requires [LocalEdgeToEdge] — only painted when the enclosing [Scaffold] is `edgeToEdge = true`.
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -1236,6 +1250,10 @@ private fun TopAppBarLayout(
         animationSpec = tween(durationMillis = 50),
     )
 
+    // The material is only painted for edge-to-edge content (see [LocalEdgeToEdge]); when it is
+    // refused, the bar has to paint itself and keep its divider, or it would be left transparent.
+    val materialOn = gradientGlass && LocalEdgeToEdge.current
+
     Layout(
         {
             Box(
@@ -1299,7 +1317,7 @@ private fun TopAppBarLayout(
         modifier = modifier
             // The material layer behind this layout paints the gradient shape when gradientGlass
             // is on; a second ramp here would end on the bar's edge under the soft one.
-            .then(if (gradientGlass) Modifier else Modifier.appBarSurface(color))
+            .then(if (materialOn) Modifier else Modifier.appBarSurface(color))
             // No clip: a toolbar icon's halo reaches past the bar's bottom edge too, and clipping
             // at the layout bounds cut it off in a straight line there. The bar's own surface stays
             // inside its bounds, so only the halo paints outside.
@@ -1316,7 +1334,7 @@ private fun TopAppBarLayout(
             .then(
                 // AppBarBlurHelper.syncAppBarDividerWithMaterialBlur: the divider is suppressed
                 // whenever the blur material is on, so it cannot cut across the fade.
-                if (showDivider && !gradientGlass) {
+                if (showDivider && !materialOn) {
                     Modifier.drawWithContent {
                         drawContent()
                         // COUIDividerAppBarLayout: hairline at the app bar's bottom edge,
@@ -1575,6 +1593,10 @@ private fun SmallTopAppBarLayout(
         { -(scrollBehavior?.state?.contentOffset ?: 0f) }
     }
 
+    // The material is only painted for edge-to-edge content (see [LocalEdgeToEdge]); when it is
+    // refused, the bar has to paint itself and keep its divider, or it would be left transparent.
+    val materialOn = gradientGlass && LocalEdgeToEdge.current
+
     Layout(
         {
             Box(
@@ -1631,7 +1653,7 @@ private fun SmallTopAppBarLayout(
         modifier = modifier
             // The material layer behind this layout paints the gradient shape when gradientGlass
             // is on; a second ramp here would end on the bar's edge under the soft one.
-            .then(if (gradientGlass) Modifier else Modifier.appBarSurface(color))
+            .then(if (materialOn) Modifier else Modifier.appBarSurface(color))
             // No clip: a toolbar icon's halo reaches past the bar's bottom edge too, and clipping
             // at the layout bounds cut it off in a straight line there. The bar's own surface stays
             // inside its bounds, so only the halo paints outside.
@@ -1648,7 +1670,7 @@ private fun SmallTopAppBarLayout(
             .then(
                 // AppBarBlurHelper.syncAppBarDividerWithMaterialBlur: the divider is suppressed
                 // whenever the blur material is on, so it cannot cut across the fade.
-                if (showDivider && !gradientGlass) {
+                if (showDivider && !materialOn) {
                     Modifier.drawWithContent {
                         drawContent()
                         // COUI second-page toolbar divider: fades in over the first 10dp of

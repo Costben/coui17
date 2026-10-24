@@ -234,6 +234,9 @@ private fun Coui17Root() {
             modifier = Modifier.fillMaxSize(),
             containerColor = pageColor,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            // The pager fills the window and every bar floats over it, so the app bar material has
+            // content to sample.
+            edgeToEdge = true,
             snackbarHost = { SnackbarHost(state = snackbarHostState) },
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
