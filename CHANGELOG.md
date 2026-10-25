@@ -39,6 +39,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Fixed
 
+- On ColorOS, the app bar material now uses the system's own gradient blur, the way Gallery and Settings do, so text and colours scrolling under the bar no longer shimmer. Other platforms keep COUI's blur.
 - The app bar material no longer flashes on and off at the top of a list. Its scroll alpha now fades the blur as well, where any alpha above 0 used to paint the full material; it follows the content and the collapse animation instead of jumping between transparent and opaque in one frame; and the blur stays in place at rest instead of being rebuilt on the first frame of every scroll.
 - A `LayerBackdrop` attached to more than one node no longer blurs the wrong content or flickers off: the most recently attached node owns it, other nodes neither record nor publish coordinates, and a detaching node only clears a registration it owns. The documentation now states the one-node-per-backdrop rule and how to record a pager once.
 - Notification cards match the shade: the corner follows the device outline (20dp, the fitted circular equivalent of ColorOS's 16dp continuous corner), the top and bottom edges carry the native `#4E4E4E` rim, and the example app's cards use the measured `#2D2D2D` fill, 8dp gaps, 32dp app icons and a 12sp timestamp.

@@ -147,6 +147,10 @@ object AppBarBlurOverlayDefaults {
  * Android 13 — the blur is skipped and the plain ramp is painted, the way the framework's gradient
  * lives in the app bar's own background drawable rather than in the RenderEffect.
  *
+ * On ColorOS with OplusView sub-SDK 33.34 or later, [backdrop] is not used: the material is the
+ * platform view `AppBarBlurHelper` dresses, with the framework's gradient-blur backdrop effect set
+ * once, and scrolling only changes that view's alpha.
+ *
  * @param modifier The modifier to be applied to the overlay. The reported size is the size of
  *   [content], coerced up to the incoming minimum constraints; the material is drawn [extraHeight]
  *   past the reported bottom edge.
@@ -307,6 +311,18 @@ internal fun AppBarMaterial(
     // It is a property of the theme, not of the base colour, so a caller-supplied colour cannot move
     // the ramp to the other branch.
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
+    // Where the platform has its own backdrop blur (ColorOS), use it exactly the way
+    // `AppBarBlurHelper` does instead of re-recording the content through COUI's engine.
+    val native = rememberPlatformAppBarBackdropRenderer()
+    if (native != null) {
+        native.Material(
+            containerColor = containerColor,
+            dark = isDarkTheme,
+            alpha = scrollFraction,
+            modifier = modifier.fillMaxSize(),
+        )
+        return
+    }
     val brush = appBarBlurOverlayBrush(containerColor, isDarkTheme)
     val effect =
         if (backdrop == null || !isRuntimeShaderSupported()) {

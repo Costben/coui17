@@ -49,6 +49,8 @@ Box(Modifier.fillMaxSize()) {
 
 overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背景层的位置，或传 `backdrop = null` 只保留剖面。平台无法运行 runtime shader 时（Android 13 以下）模糊同样会被跳过，只绘制剖面。
 
+在 OplusView 子 SDK 不低于 33.34 的 ColorOS 设备上，overlay 完全不使用 `backdrop`，而是承载一个与原生 helper 相同的系统视图：背景是同一条渐变剖面，再挂上系统的渐进模糊背景效果（30px 到 0px，速度 3），由系统渲染线程直接模糊视图后方已经画好的内容。效果只设置一次，滚动时只改视图的透明度，透明度为 0 时隐藏视图。其他平台继续使用 COUI 自己的模糊。
+
 材质靠采样它**下方**的内容成像，所以 COUI 只在 `LocalEdgeToEdge` 为 `true` 时才画材质：套在 `Scaffold(edgeToEdge = true)` 里，或自己用 `CompositionLocalProvider(LocalEdgeToEdge provides true)` 声明。内容被排在顶栏下方时顶栏底下没有像素可采，采样会钳到最近的一行、糊成一条平色横带；此时 overlay 只作为一层普通容器，不绘制材质。
 
 ### 滚动 producer 重载
