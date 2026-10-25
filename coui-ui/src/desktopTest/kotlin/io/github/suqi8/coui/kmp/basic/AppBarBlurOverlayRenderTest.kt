@@ -142,6 +142,44 @@ class AppBarBlurOverlayRenderTest {
     }
 
     /**
+     * The scroll alpha must fade the whole material, blur included. The blur draws through its own
+     * child layers, so an alpha that only modulates the node's direct draws left it at full strength:
+     * the material popped in on the first scrolled frame instead of fading in over 30dp.
+     */
+    @Test
+    fun halfScrollFractionFadesTheBlurredMaterial() {
+        fun topPixel(scrollFraction: Float): Color {
+            var pixel = Color.Unspecified
+            runSkikoComposeUiTest(
+                size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+                density = TestDensity,
+            ) {
+                setContent { OverlayScene(scrollFraction = scrollFraction, withBackdrop = true) }
+                waitForIdle()
+                val overlay = overlayBounds()
+                pixel = onRoot().captureToImage().toPixelMap()[
+                    overlay.center.x.roundToInt(),
+                    overlay.top.roundToInt() + 2,
+                ]
+            }
+            return pixel
+        }
+
+        val opaque = redChannel(topPixel(1f))
+        val half = redChannel(topPixel(0.5f))
+        val clear = redChannel(BackdropColor)
+        val expected = (clear + opaque) / 2
+        assertTrue(
+            opaque - clear > 100,
+            "the opaque material must differ from the backdrop: opaque=$opaque clear=$clear",
+        )
+        assertTrue(
+            abs(half - expected) <= 4,
+            "at alpha 0.5 the material must sit halfway: got $half, expected $expected (clear=$clear, opaque=$opaque)",
+        )
+    }
+
+    /**
      * `scrollDrivenAlphaEnabled`: at zero scroll the native overlay's alpha is 0, which makes the
      * whole view invisible. Nothing may be drawn over the backdrop across the entire material.
      */

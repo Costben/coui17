@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
@@ -200,15 +201,11 @@ private fun AppBarMaterialScaffold(
             if (behavior == null) {
                 1f
             } else {
-                // 折叠态下 `contentOffset` 会被钳回 0，但此时顶栏底下恰恰压着最多内容，
-                // 按 offset 算 alpha 会得到 0 —— material 整个消失，观感只剩半透明纯色。
-                // 所以折叠态（height > 0）直接常亮。
-                val collapsed = abs(behavior.state.heightOffset) > 0.5f
-                if (collapsed) {
-                    1f
-                } else {
-                    AppBarBlurOverlayDefaults.scrollAlpha(abs(behavior.state.contentOffset), density)
-                }
+                appBarMaterialAlpha(
+                    contentOffset = behavior.state.contentOffset,
+                    collapsedFraction = behavior.state.collapsedFraction,
+                    density = density,
+                )
             }
         }
     }
@@ -227,6 +224,25 @@ private fun AppBarMaterialScaffold(
         content = { content() },
     )
 }
+
+/**
+ * The app bar material's alpha for a bar driven by a [ScrollBehavior].
+ *
+ * The native overlay follows the content's displacement alone, `min(1, scroll / 30dp)` (see
+ * [AppBarBlurOverlayDefaults.scrollAlpha]). The bar's [collapsedFraction] is folded in with `max`
+ * because [TopAppBarState.contentOffset] can read `0` while the bar is collapsed over content, which
+ * would leave a collapsed bar without its material. Both inputs move continuously — the collapse is
+ * a snap animation, not a step — so the alpha never jumps between `0` and `1` in one frame when the
+ * bar starts collapsing or finishes expanding.
+ *
+ * @param contentOffset [TopAppBarState.contentOffset]; only its magnitude is used.
+ * @param collapsedFraction [TopAppBarState.collapsedFraction], coerced into `0f..1f`.
+ * @param density The density the 30dp threshold is converted with.
+ */
+internal fun appBarMaterialAlpha(contentOffset: Float, collapsedFraction: Float, density: Density): Float = maxOf(
+    AppBarBlurOverlayDefaults.scrollAlpha(abs(contentOffset), density),
+    collapsedFraction.coerceIn(0f, 1f),
+)
 
 /**
  * A [TopAppBar] with COUI style that can collapse and expand based on the

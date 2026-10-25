@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -288,7 +286,8 @@ internal fun AppBarMaterialLayout(
  * @param containerColor The base colour of the alpha ramp.
  * @param backdrop The content to sample; `null` skips the blur and paints the ramp alone.
  * @param scrollFraction The material's overall alpha, read in the draw phase. At `0` the material
- *   draws nothing, so the content under the bar stays sharp — the native overlay's resting state.
+ *   draws nothing, so the content under the bar stays sharp — the native overlay's resting state. The
+ *   node stays composed at `0`, so scrolling away from rest does not rebuild the blur.
  */
 @Composable
 internal fun AppBarMaterial(
@@ -298,16 +297,12 @@ internal fun AppBarMaterial(
     scrollFraction: () -> Float = { 1f },
 ) {
     val density = LocalDensity.current
-    // Compose the effect only while the scroll fraction is non-zero. The boolean changes once when
-    // scrolling starts and once when it returns to rest; the alpha itself is a draw-phase read, so
-    // the bar does not recompose on every scroll frame.
-    val active by remember(scrollFraction) {
-        derivedStateOf { scrollFraction() > 0f }
-    }
-    if (!active) {
-        Box(modifier = modifier.fillMaxSize())
-        return
-    }
+    // The effect stays composed at every alpha, including 0. `AppBarBlurOverlayBehavior` only
+    // changes the overlay's alpha (and visibility at exactly 0) while scrolling; the RenderEffect is
+    // set once. Removing the blur node at rest and rebuilding it when scrolling starts recreated its
+    // layers and shaders on the first frame of every scroll, which showed as a flash. The alpha is a
+    // draw-phase read, so the bar still does not recompose on scroll frames.
+    //
     // `isCOUIDarkThemeOrNightMode`, which picks the two-stop dark ramp over the three-stop light one.
     // It is a property of the theme, not of the base colour, so a caller-supplied colour cannot move
     // the ramp to the other branch.
@@ -330,11 +325,12 @@ internal fun AppBarMaterial(
             .fillMaxSize()
             .graphicsLayer {
                 alpha = scrollFraction().coerceIn(0f, 1f)
-                // A grouped alpha renders the blur and the ramp into a full-width offscreen buffer
-                // on every frame the material is translucent, which is most of the time. Scaling
-                // each draw instead only differs where the blur and the sharp content behind it
-                // differ, by alpha * (1 - alpha) * rampAlpha at most.
-                compositingStrategy = CompositingStrategy.ModulateAlpha
+                // The alpha must be grouped, the way the native overlay's View.setAlpha is. The
+                // blur draws through its own child layers, and a modulated alpha only scales this
+                // node's direct draws, so it never reached them: any alpha above 0 painted the
+                // material at full strength and the 30dp fade-in was a one-frame pop. The offscreen
+                // buffer only exists while the material is translucent.
+                compositingStrategy = CompositingStrategy.Auto
             }
             .then(effect),
     )
