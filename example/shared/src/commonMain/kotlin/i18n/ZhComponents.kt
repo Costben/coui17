@@ -27,6 +27,13 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Yesterday" to "昨天",
     // Shared sample slots
     "Title" to "标题",
+    "Status text" to "状态文本",
+    "List item" to "列表项",
+    "Sample text" to "示例内容",
+    "Enter a name" to "输入名称",
+    "Clear text" to "删除全部文字",
+    "A sample message showing how the dialog body is laid out" to
+        "这是一段示例说明文字，用来演示对话框正文的排版",
     "Summary" to "摘要",
     "Start" to "起始",
     "End" to "结束",
@@ -42,6 +49,10 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Settings" to "设置",
     // Buttons and actions
     "Cancel" to "取消",
+    "Close" to "关闭",
+    "Save" to "保存",
+    "Open panel" to "打开面板",
+    "Open dialog" to "打开对话框",
     "Confirm" to "确定",
     "OK" to "确定",
     "Submit" to "提交",

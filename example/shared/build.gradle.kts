@@ -75,6 +75,13 @@ kotlin {
                 implementation(libs.kotlinx.serialization.core)
             }
         }
+        val desktopTest by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation(libs.jetbrains.compose.ui.test)
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 
