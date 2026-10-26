@@ -369,6 +369,9 @@ object MaterialShadowEdgeDefaults {
  * @param cornerWeight The `u_commonArray[10]` corner weight; see
  *   [MaterialShadowEdgeDefaults.SingleItemCornerWeight].
  * @param cornerRadius The corner radius, or `null` for the capsule rule `height / 2`.
+ * @param cornerRadiusFor The corner radius in px derived from the node's own size, for a surface
+ *   whose radius is not a constant; takes precedence over [cornerRadius]. The popup uses it to keep
+ *   a short menu's corners off the capsule rule; see `popupCornerRadiusPx`.
  * @param edgeStyle The rim style, one of the [GradientStrokeStyle] presets.
  * @param shadowStyle The inner-shadow style, one of the [InnerShadowStyle] presets.
  * @param antiAliasing The shader's anti-aliasing band, `u_commonArray[11]`.
@@ -379,6 +382,7 @@ fun Modifier.materialShadowEdge(
     fallback: Modifier = Modifier,
     cornerWeight: Float = MaterialShadowEdgeDefaults.CornerWeight,
     cornerRadius: Dp? = null,
+    cornerRadiusFor: ((width: Float, height: Float) -> Float)? = null,
     edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
     shadowStyle: InnerShadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
     antiAliasing: Float = MaterialShadowEdgeDefaults.AntiAliasing,
@@ -386,13 +390,13 @@ fun Modifier.materialShadowEdge(
     val density = LocalDensity.current.density
     // A runtime shader is compiled by the driver on first use, so a source the platform rejects
     // would otherwise throw mid-composition; the fallback keeps the caller rendering.
-    val shader = rememberMaterialShadowEdgeShader(isRuntimeShaderSupported()) ?: return fallback
+    val shader = rememberMaterialShadowEdgeShader(isRuntimeShaderSupported()) ?: return this.then(fallback)
 
     return this.drawWithCache {
         val width = size.width
         val height = size.height
         if (width <= 0f || height <= 0f) return@drawWithCache onDrawBehind {}
-        val radius = cornerRadius?.toPx() ?: (height / 2f)
+        val radius = cornerRadiusFor?.invoke(width, height) ?: cornerRadius?.toPx() ?: (height / 2f)
         setMaterialShadowEdgeUniforms(
             shader = shader,
             width = width,

@@ -7,8 +7,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Dialog
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
@@ -55,6 +57,8 @@ fun WindowListPopup(
     maxHeight: Dp? = null,
     minWidth: Dp = ListPopupDefaults.MinWidth,
     preciseClickState: PreciseClickState? = null,
+    staticBackdrop: ImageBitmap? = null,
+    staticBackdropWindowSize: IntSize = IntSize.Zero,
     content: @Composable () -> Unit,
 ) {
     val currentOnDismissRequest = rememberUpdatedState(onDismissRequest)
@@ -92,6 +96,8 @@ fun WindowListPopup(
         maxHeight = maxHeight,
         minWidth = minWidth,
         preciseClickState = preciseClickState,
+        staticBackdrop = staticBackdrop,
+        staticBackdropWindowSize = staticBackdropWindowSize,
         content = {
             CompositionLocalProvider(
                 LocalDismissState provides {

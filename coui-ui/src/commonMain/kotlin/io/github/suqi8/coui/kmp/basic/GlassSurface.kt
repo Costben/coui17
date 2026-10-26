@@ -153,7 +153,7 @@ fun Modifier.couiGlassSurface(
     highlight: Highlight? = null,
     enclosingLayerBlock: (GraphicsLayerScope.() -> Unit)? = null,
 ): Modifier {
-    if (backdrop == null || !isRuntimeShaderSupported()) return fallback
+    if (backdrop == null || !isRuntimeShaderSupported()) return this.then(fallback)
     return textureBlur(
         backdrop = backdrop,
         shape = shape,
@@ -186,7 +186,7 @@ fun Modifier.couiGlassSurface(
     blendColors: List<BlendColorEntry>? = null,
     highlight: Highlight? = null,
 ): Modifier {
-    if (backdrop == null || !isRuntimeShaderSupported()) return fallback
+    if (backdrop == null || !isRuntimeShaderSupported()) return this.then(fallback)
     return textureBlur(
         backdrop = backdrop,
         shape = shape,

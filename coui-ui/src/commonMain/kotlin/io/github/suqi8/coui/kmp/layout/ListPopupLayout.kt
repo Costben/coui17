@@ -22,6 +22,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
@@ -89,6 +90,8 @@ internal fun ListPopupLayout(
     minWidth: Dp = ListPopupDefaults.MinWidth,
     preciseClickState: PreciseClickState? = null,
     enableGlass: Boolean = false,
+    staticBackdrop: ImageBitmap? = null,
+    staticBackdropWindowSize: IntSize = IntSize.Zero,
     content: @Composable () -> Unit,
 ) {
     val fractionProgress = remember { Animatable(0f) }
@@ -324,6 +327,8 @@ internal fun ListPopupLayout(
                     localTransformOrigin = layoutInfo.localTransformOrigin,
                     enableGlass = enableGlass,
                     interactionEnabled = show && backProgress.value == 0f,
+                    staticBackdrop = staticBackdrop,
+                    staticBackdropWindowSize = staticBackdropWindowSize,
                     content = {
                         CompositionLocalProvider(LocalDismissState provides requestDismiss) {
                             content()

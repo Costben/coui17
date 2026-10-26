@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -40,14 +41,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
@@ -69,6 +78,7 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -97,10 +107,8 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
-import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
-import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
@@ -112,6 +120,7 @@ import kotlin.jvm.JvmName
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 private fun PopupPositionProvider.Align.resolve(layoutDirection: LayoutDirection): PopupPositionProvider.Align {
     if (layoutDirection == LayoutDirection.Ltr) return this
@@ -1192,6 +1201,152 @@ object ListPopupDefaults {
  */
 internal val PopupCornerRadius = 28.dp
 
+/**
+ * Ceiling on the popup corner radius as a fraction of the surface height.
+ *
+ * 28dp is authored for a multi-row menu; on a single 56dp row it is exactly half the height, and
+ * the panel reads as a capsule rather than the rounded rectangle COUI draws for every other
+ * surface. Capping at 0.36 of the height keeps a straight vertical edge on that one-row menu
+ * (20dp) while leaving every menu of two rows or more at the full 28dp.
+ */
+private const val PopupCornerHeightRatio = 0.36f
+
+/**
+ * Lights the body of the panel from above.
+ *
+ * The material rim only draws a thin highlight on the outline; the body itself stayed flat, so the
+ * panel read as a sheet with a glowing border instead of a slab with thickness. A white wash over
+ * the top fifth and a dark one over the bottom fifth give the same top-lit, bottom-shaded fall-off
+ * COUI's material surfaces have — inside the silhouette, so it never asks for room the popup
+ * window does not have.
+ *
+ * @param shape Silhouette the shading is clipped to.
+ */
+/**
+ * Trims the bottom lip of the rim.
+ *
+ * COUI's material rim brightens all four edges by the same rule, but the bottom edge of a short
+ * panel sits close to its own body highlight, so the two stack and the bottom reads brighter than
+ * the top — the panel then looks lit from below. Dimming the last few pixels of the bottom edge
+ * puts the strongest highlight back on the top edge, where the light comes from.
+ *
+ * @param shape Silhouette the shading is clipped to.
+ */
+internal fun Modifier.popupBottomShade(shape: Shape): Modifier = drawWithCache {
+    val outline = shape.createOutline(size, layoutDirection, this@drawWithCache)
+    val silhouette = Path().apply { addOutline(outline) }
+    val brush = Brush.verticalGradient(
+        0.955f to Color.Transparent,
+        1f to Color.Black.copy(alpha = 0.16f),
+    )
+    onDrawWithContent {
+        drawContent()
+        clipPath(silhouette) { drawRect(brush) }
+    }
+}
+
+internal fun Modifier.popupMaterialShade(shape: Shape): Modifier = drawWithCache {
+    val outline = shape.createOutline(size, layoutDirection, this@drawWithCache)
+    val silhouette = Path().apply { addOutline(outline) }
+    val brush = Brush.verticalGradient(
+        0f to Color.White.copy(alpha = 0.07f),
+        0.28f to Color.Transparent,
+        0.70f to Color.Transparent,
+        1f to Color.Black.copy(alpha = 0.12f),
+    )
+    onDrawBehind {
+        clipPath(silhouette) { drawRect(brush) }
+    }
+}
+
+/**
+ * Draws the page under the popup back onto its surface, so a window-hosted menu keeps the glass.
+ *
+ * A `Dialog` window has no page underneath it for [LocalBackdrop] to sample, and a recorded layer
+ * cannot be read from another window either, so the host hands the popup a PixelCopy of the page
+ * it opened over. Painting that snapshot at the window origin puts the page exactly where it was,
+ * and because the host bakes the blur into the snapshot this stays a single plain image draw — no
+ * layer, no runtime shader, nothing per frame.
+ *
+ * @param image The captured page, already blurred by the host.
+ * @param windowSize Size of the window [image] was captured from, in pixels.
+ * @param originInWindow Position of the surface's top-left corner in that same window.
+ * @param shape Silhouette the snapshot is clipped to.
+ */
+internal fun Modifier.popupStaticBackdrop(
+    image: ImageBitmap?,
+    windowSize: IntSize,
+    originInWindow: Offset,
+    shape: Shape,
+): Modifier {
+    if (image == null || windowSize.width <= 0 || windowSize.height <= 0) return this
+    return drawWithCache {
+        val outline = shape.createOutline(size, layoutDirection, this@drawWithCache)
+        val silhouette = Path().apply { addOutline(outline) }
+        // The host hands over a downscaled capture; stretch it back to the window it came from and
+        // slide it so the page lands under the panel exactly where it was when it was captured.
+        // Both numbers are in this surface's pixels — the downscale is the bitmap's business only.
+        val dstOffset = IntOffset(
+            (-originInWindow.x).roundToInt(),
+            (-originInWindow.y).roundToInt(),
+        )
+        onDrawBehind {
+            clipPath(silhouette) {
+                drawImage(
+                    image = image,
+                    dstOffset = dstOffset,
+                    dstSize = windowSize,
+                    filterQuality = FilterQuality.Medium,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The popup corner radius in px for a surface of [heightPx], i.e. [PopupCornerRadius] capped by
+ * [PopupCornerHeightRatio]. The silhouette and its material rim share this one rule so the rim
+ * never parts from the fill.
+ */
+internal fun popupCornerRadiusPx(heightPx: Float, density: Density): Float =
+    min(with(density) { PopupCornerRadius.toPx() }, heightPx * PopupCornerHeightRatio)
+
+/**
+ * The popup silhouette: COUI's smooth corner at [PopupCornerRadius], tightened by
+ * [popupCornerRadiusPx] on a short menu.
+ *
+ * A [Shape] rather than a fixed [SquircleShape] because the radius depends on the height the node
+ * ends up with; `createOutline` is the only place that height is known.
+ */
+private class PopupCornerShape(private val squircleEnabled: Boolean) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        val radius = popupCornerRadiusPx(size.height, density)
+        if (!squircleEnabled) {
+            return Outline.Rounded(
+                RoundRect(
+                    left = 0f,
+                    top = 0f,
+                    right = size.width,
+                    bottom = size.height,
+                    cornerRadius = CornerRadius(radius, radius),
+                ),
+            )
+        }
+        val path = Path()
+        path.addSquircleRect(
+            width = size.width,
+            height = size.height,
+            cornerRadius = radius,
+            squircleEnabled = true,
+        )
+        return Outline.Generic(path)
+    }
+}
+
 /** RoundFrameLayout.initMaterialEffects: SHADOW_STYLE_2 / EDGE_STYLE_2 with per-theme overrides. */
 private val PopupStrokeLight = MaterialStrokeParams(edgeAlpha = 0.9f, edgeWidth = 4.dp, shadowFadeIn = 0.9f)
 private val PopupStrokeDark = MaterialStrokeParams(edgeAlpha = 0.4f, edgeWidth = 2.dp, shadowFadeIn = 0.1f)
@@ -1207,6 +1362,26 @@ private val PopupSurfaceLight = Color.White
 
 /** COUI popup surface in dark themes (coui_color_background_top #333333, values-night). */
 private val PopupSurfaceDark = Color(0xFF333333)
+
+/**
+ * Alpha of the popup fill on the surface that has no backdrop to sample.
+ *
+ * A window-hosted menu cannot read the page behind it, so the glass path is skipped and the panel
+ * falls back to the flat popup colour. Flat `#FFFFFF` is a dead end for the material treatment: the
+ * rim and the inner shadow are white gradients, and a white gradient has nothing to brighten on a
+ * fill that is already at the top of the range, so the panel reads as an opaque sticker with no
+ * edge at all. Leaving a little of the page showing through keeps the fill below white, which is
+ * what lets the rim and the top-edge inner shadow resolve.
+ */
+private const val POPUP_SOLID_SURFACE_ALPHA = 0.88f
+
+/**
+ * Alpha of the popup fill when the surface has a captured page behind it instead of a live backdrop.
+ *
+ * This is the glass weight COUI uses in-window; a blurred page tolerates far less white than a sharp
+ * one, so the fill only has to sit on top of it rather than hide it.
+ */
+private const val POPUP_GLASS_SURFACE_ALPHA = 0.60f
 
 /**
  * Resolves the COUI popup container color for the current theme: the popup floats above
@@ -1668,9 +1843,10 @@ fun popupGravityPath(
  * @param popupLayoutPosition The [PopupLayoutPosition] describing the popup's spawn direction.
  * @param localTransformOrigin The transform origin local to the content used while scaling.
  * @param modifier The modifier to be applied to the popup container.
- * @param enableGlass Whether to draw the ColorOS 17 popup glass behind the content. Only the
- *   in-window overlay host enables it; the `Dialog` host has no coordinates in the host window for
- *   a backdrop to sample.
+ * @param enableGlass Whether to draw the ColorOS 17 popup glass behind the content, sampling
+ *   [LocalBackdrop]. Only the in-window overlay host enables it; the `Dialog` host is a separate
+ *   composition whose window has no page underneath for a backdrop to sample, so it keeps the
+ *   opaque surface and its material edge instead.
  * @param interactionEnabled Whether the mounted surface accepts touches and row actions. Hosts
  *   disable it as soon as dismissal starts, while retaining the surface for its exit animation.
  * @param content The content of the popup.
@@ -1688,27 +1864,36 @@ fun ListPopupContent(
     modifier: Modifier = Modifier,
     enableGlass: Boolean = false,
     interactionEnabled: Boolean = true,
+    staticBackdrop: ImageBitmap? = null,
+    staticBackdropWindowSize: IntSize = IntSize.Zero,
     content: @Composable () -> Unit,
 ) {
     val backgroundColor = popupSurfaceColor()
-    val backdrop = if (enableGlass) LocalBackdrop.current else null
+    val glassBackdrop = if (enableGlass) LocalBackdrop.current else null
     val squircleEnabled = isSquircleEnabled()
-    val glassShape = remember(PopupCornerRadius, squircleEnabled) {
-        SquircleShape(cornerRadius = PopupCornerRadius, squircleEnabled = squircleEnabled)
-    }
+    val glassShape = remember(squircleEnabled) { PopupCornerShape(squircleEnabled) }
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val blurRadius = with(LocalDensity.current) { POPUP_BLUR_RADIUS_PX.toDp().value }
-    val materialEdge = if (backdrop != null) {
-        Modifier.materialShadowEdge(
-            stroke = if (isDark) PopupStrokeDark else PopupStrokeLight,
-            cornerRadius = PopupCornerRadius,
-            cornerWeight = if (squircleEnabled) POPUP_CORNER_WEIGHT else 1f,
-            edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
-            shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
-        )
-    } else {
-        Modifier
+    val density = LocalDensity.current
+    val blurRadius = with(density) { POPUP_BLUR_RADIUS_PX.toDp().value }
+    // Where the panel sits in its own window, needed to put a captured page back where it was.
+    var panelOriginInWindow by remember { mutableStateOf(Offset.Zero) }
+    // A snapshot only stands in for the backdrop when there is no live one to sample.
+    val snapshotBackdrop = staticBackdrop?.takeIf { glassBackdrop == null }
+    val surfaceAlpha =
+        if (snapshotBackdrop != null) POPUP_GLASS_SURFACE_ALPHA else POPUP_SOLID_SURFACE_ALPHA
+    val cornerRadiusFor = remember(density) {
+        { _: Float, height: Float -> popupCornerRadiusPx(height, density) }
     }
+    // The material rim is the popup's own surface treatment, not part of the glass: a popup
+    // without a backdrop still gets ColorOS's gradient edge and inner shadow, otherwise it is a
+    // flat opaque rectangle with nothing marking it as a material.
+    val materialEdge = Modifier.materialShadowEdge(
+        stroke = if (isDark) PopupStrokeDark else PopupStrokeLight,
+        cornerRadiusFor = cornerRadiusFor,
+        cornerWeight = if (squircleEnabled) POPUP_CORNER_WEIGHT else 1f,
+        edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
+        shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
+    )
 
     // The entrance scale below wraps the glass, so the blur would sample the page through it and
     // the page behind the menu would appear to zoom. Handing the same scale to the glass as an
@@ -1726,27 +1911,44 @@ fun ListPopupContent(
             .onGloballyPositioned { coordinates ->
                 val size = coordinates.size
                 if (popupContentSize != size) onPopupContentSizeChange(size)
+                val origin = coordinates.positionInWindow()
+                if (origin != panelOriginInWindow) panelOriginInWindow = origin
             }
             .couiTouchMotion(
                 enabled = interactionEnabled,
                 pressScaleEnabled = false,
                 consumeDrag = false,
-                lightEnabled = backdrop != null,
+                lightEnabled = glassBackdrop != null,
                 shape = glassShape,
                 lightParams = SpotLightDefaults.translucentLarge1(isDark),
                 surface = Modifier
                     .popupOpacity(alphaProgress)
                     .dropShadow(shape = glassShape, shadow = PopupShadow)
                     .couiGlassSurface(
-                        backdrop = backdrop,
+                        backdrop = glassBackdrop,
                         shape = glassShape,
                         containerColor = backgroundColor,
-                        fallback = Modifier.squircleSurface(color = backgroundColor, cornerRadius = PopupCornerRadius),
+                        // `background(color, shape)` rather than `clip(shape).background(...)`: the
+                        // clip layer it would add cuts the drop shadow this surface draws behind
+                        // itself, leaving the panel flat against the page.
+                        fallback = Modifier
+                            .popupStaticBackdrop(
+                                image = snapshotBackdrop,
+                                windowSize = staticBackdropWindowSize,
+                                originInWindow = panelOriginInWindow,
+                                shape = glassShape,
+                            )
+                            .background(
+                                color = backgroundColor.copy(alpha = surfaceAlpha),
+                                shape = glassShape,
+                            ),
                         blurRadius = blurRadius,
                         blendColors = popupGlassBlendColors(),
                         enclosingLayerBlock = glassScaleCompensation,
                     )
-                    .then(materialEdge),
+                    .popupMaterialShade(glassShape)
+                    .then(materialEdge)
+                    .popupBottomShade(glassShape),
             ) {
                 // COUI's main menu scales a true 0 -> 1; only the small-screen sub-menu clip-reveals.
                 // Glass menus scale too (ColorOS 17's gallery menus and dropdowns grow from and shrink
