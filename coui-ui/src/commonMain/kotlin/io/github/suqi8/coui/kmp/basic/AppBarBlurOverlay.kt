@@ -174,6 +174,7 @@ fun AppBarBlurOverlay(
     backdrop: Backdrop? = LocalBackdrop.current,
     extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
     scrollFraction: Float = 1f,
+    platformRenderer: Boolean = true,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     AppBarBlurOverlay(
@@ -182,6 +183,7 @@ fun AppBarBlurOverlay(
         backdrop = backdrop,
         extraHeight = extraHeight,
         scrollFraction = { scrollFraction },
+        platformRenderer = platformRenderer,
         content = content,
     )
 }
@@ -195,6 +197,12 @@ fun AppBarBlurOverlay(
  * the bar sharp. A caller with no scroll state to observe should return `1f`.
  *
  * The `scrollFraction` overload with a [Float] forwards to this one.
+ *
+ * @param platformRenderer When the platform has its own backdrop blur (ColorOS), use it. It samples
+ *   the window content, so a material whose **size changes every frame** — an app bar whose content
+ *   height animates, for instance — feeds its own output back into the effect and the bar goes black
+ *   for the duration of the animation. Pass `false` for those bars: COUI's own engine samples the
+ *   recorded [backdrop] layer instead, which is stable under resizes.
  */
 @Composable
 fun AppBarBlurOverlay(
@@ -203,6 +211,7 @@ fun AppBarBlurOverlay(
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
     extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    platformRenderer: Boolean = true,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     // Same contract as the app bar material in [TopAppBar]: the blur needs content underneath the
@@ -215,6 +224,7 @@ fun AppBarBlurOverlay(
         backdrop = backdrop,
         extraHeight = extraHeight,
         scrollFraction = scrollFraction,
+        platformRenderer = platformRenderer,
         modifier = modifier,
         content = content,
     )
@@ -239,6 +249,7 @@ internal fun AppBarMaterialLayout(
     backdrop: Backdrop?,
     extraHeight: Dp,
     scrollFraction: () -> Float,
+    platformRenderer: Boolean = true,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -251,6 +262,7 @@ internal fun AppBarMaterialLayout(
                     containerColor = containerColor,
                     backdrop = backdrop,
                     scrollFraction = scrollFraction,
+                    platformRenderer = platformRenderer,
                 )
             }
             Box(Modifier.layoutId("content")) { content() }
@@ -299,6 +311,7 @@ internal fun AppBarMaterial(
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
     scrollFraction: () -> Float = { 1f },
+    platformRenderer: Boolean = true,
 ) {
     val density = LocalDensity.current
     // The effect stays composed at every alpha, including 0. `AppBarBlurOverlayBehavior` only
@@ -313,7 +326,7 @@ internal fun AppBarMaterial(
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
     // Where the platform has its own backdrop blur (ColorOS), use it exactly the way
     // `AppBarBlurHelper` does instead of re-recording the content through COUI's engine.
-    val native = rememberPlatformAppBarBackdropRenderer()
+    val native = if (platformRenderer) rememberPlatformAppBarBackdropRenderer() else null
     if (native != null) {
         native.Material(
             containerColor = containerColor,
