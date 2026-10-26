@@ -249,8 +249,8 @@ internal fun AppBarMaterialLayout(
     backdrop: Backdrop?,
     extraHeight: Dp,
     scrollFraction: () -> Float,
-    platformRenderer: Boolean = true,
     modifier: Modifier = Modifier,
+    platformRenderer: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val extraHeightPx = with(LocalDensity.current) { extraHeight.roundToPx() }

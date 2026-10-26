@@ -1209,19 +1209,8 @@ internal val PopupCornerRadius = 28.dp
  * surface. Capping at 0.36 of the height keeps a straight vertical edge on that one-row menu
  * (20dp) while leaving every menu of two rows or more at the full 28dp.
  */
-private const val PopupCornerHeightRatio = 0.36f
+private const val POPUP_CORNER_HEIGHT_RATIO = 0.36f
 
-/**
- * Lights the body of the panel from above.
- *
- * The material rim only draws a thin highlight on the outline; the body itself stayed flat, so the
- * panel read as a sheet with a glowing border instead of a slab with thickness. A white wash over
- * the top fifth and a dark one over the bottom fifth give the same top-lit, bottom-shaded fall-off
- * COUI's material surfaces have — inside the silhouette, so it never asks for room the popup
- * window does not have.
- *
- * @param shape Silhouette the shading is clipped to.
- */
 /**
  * Trims the bottom lip of the rim.
  *
@@ -1245,6 +1234,17 @@ internal fun Modifier.popupBottomShade(shape: Shape): Modifier = drawWithCache {
     }
 }
 
+/**
+ * Lights the body of the panel from above.
+ *
+ * The material rim only draws a thin highlight on the outline; the body itself stayed flat, so the
+ * panel read as a sheet with a glowing border instead of a slab with thickness. A white wash over
+ * the top fifth and a dark one over the bottom fifth give the same top-lit, bottom-shaded fall-off
+ * COUI's material surfaces have — inside the silhouette, so it never asks for room the popup
+ * window does not have.
+ *
+ * @param shape Silhouette the shading is clipped to.
+ */
 internal fun Modifier.popupMaterialShade(shape: Shape): Modifier = drawWithCache {
     val outline = shape.createOutline(size, layoutDirection, this@drawWithCache)
     val silhouette = Path().apply { addOutline(outline) }
@@ -1305,11 +1305,10 @@ internal fun Modifier.popupStaticBackdrop(
 
 /**
  * The popup corner radius in px for a surface of [heightPx], i.e. [PopupCornerRadius] capped by
- * [PopupCornerHeightRatio]. The silhouette and its material rim share this one rule so the rim
+ * [POPUP_CORNER_HEIGHT_RATIO]. The silhouette and its material rim share this one rule so the rim
  * never parts from the fill.
  */
-internal fun popupCornerRadiusPx(heightPx: Float, density: Density): Float =
-    min(with(density) { PopupCornerRadius.toPx() }, heightPx * PopupCornerHeightRatio)
+internal fun popupCornerRadiusPx(heightPx: Float, density: Density): Float = min(with(density) { PopupCornerRadius.toPx() }, heightPx * POPUP_CORNER_HEIGHT_RATIO)
 
 /**
  * The popup silhouette: COUI's smooth corner at [PopupCornerRadius], tightened by
