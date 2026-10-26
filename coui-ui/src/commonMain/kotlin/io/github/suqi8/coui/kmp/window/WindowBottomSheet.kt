@@ -43,6 +43,9 @@ import io.github.suqi8.coui.kmp.utils.platformDialogProperties
  * @param insideMargin The margin inside the [WindowBottomSheet].
  * @param defaultWindowInsetsPadding Whether to apply default window insets padding.
  * @param dragHandleColor The color of the drag handle at the top.
+ * @param showDragHandle Whether to draw the drag handle bar at the top of the sheet. Panels that
+ *   carry their own toolbar (a capsule close button, an overflow button) hide it; the sheet keeps a
+ *   slim transparent strip so the panel stays draggable.
  * @param allowDismiss Whether to allow dismissing the sheet via drag or back gesture.
  * @param enableNestedScroll Whether to enable nested scrolling for the content.
  * @param content The [Composable] content of the [WindowBottomSheet].
@@ -64,6 +67,7 @@ fun WindowBottomSheet(
     insideMargin: DpSize = BottomSheetDefaults.insideMargin,
     defaultWindowInsetsPadding: Boolean = true,
     dragHandleColor: Color = BottomSheetDefaults.dragHandleColor(),
+    showDragHandle: Boolean = true,
     allowDismiss: Boolean = true,
     enableNestedScroll: Boolean = true,
     content: @Composable () -> Unit,
@@ -85,6 +89,7 @@ fun WindowBottomSheet(
         outsideMargin = outsideMargin,
         insideMargin = insideMargin,
         dragHandleColor = dragHandleColor,
+        showDragHandle = showDragHandle,
         popupHost = { visible, hostContent ->
             if (visible) {
                 Dialog(

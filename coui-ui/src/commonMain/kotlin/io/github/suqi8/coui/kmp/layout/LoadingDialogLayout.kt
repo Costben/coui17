@@ -115,10 +115,11 @@ object LoadingDialogDefaults {
     val CardMinHeight = 120.dp
 
     /**
-     * The corner radius of the loading card. COUI `coui_round_corner_m_radius`, used
-     * instead of the XXL radius of regular alert dialogs.
+     * The corner radius of the loading card. COUI `coui_round_corner_m_radius`, used instead of the
+     * XXL radius of regular alert dialogs; ColorOS 17's successor for that token is
+     * `coui_round_corner_m_radius_normal_16_1` = 15dp (the 16-era `m` radius is 9dp).
      */
-    val CornerRadius = 9.dp
+    val CornerRadius = 15.dp
 
     /**
      * The size of the rotating spinner. COUI `coui_spinner_loading_anim_width/height` (36dp).

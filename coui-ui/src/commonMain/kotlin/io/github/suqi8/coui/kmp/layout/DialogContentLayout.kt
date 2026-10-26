@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -59,8 +60,13 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
+import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
+import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
+import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.materialShadowEdge
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -109,6 +115,7 @@ internal fun DialogContentLayout(
     insideMargin: DpSize,
     popupHost: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit,
     modifier: Modifier = Modifier,
+    edgeModifier: Modifier = Modifier,
     title: String? = null,
     summary: String? = null,
     enableWindowDim: Boolean = true,
@@ -267,6 +274,7 @@ internal fun DialogContentLayout(
             dialogHeightPx = dialogHeightPx,
             onDismissRequest = requestDismiss,
             modifier = contentModifier,
+            edgeModifier = edgeModifier,
             forceCentered = forceCentered,
             maxWidth = maxWidth,
             largeScreen = largeScreen,
@@ -296,6 +304,7 @@ internal fun DialogContent(
     dialogHeightPx: MutableIntState,
     onDismissRequest: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    edgeModifier: Modifier = Modifier,
     forceCentered: Boolean = false,
     maxWidth: Dp = DialogDefaults.MaxWidth,
     largeScreen: Boolean? = null,
@@ -361,6 +370,17 @@ internal fun DialogContent(
         }
         // COUI panels carry no blanket inside padding; each slot brings its own margins.
         .squircleSurface(color = backgroundColor, cornerRadius = resolvedCornerRadius)
+        // The material edge must sit inside the surface so its rim paints over the fill. ColorOS 17
+        // gives every dialog panel the same rim, so it is drawn here rather than by each caller;
+        // `edgeModifier` stays as the per-call extension point.
+        .materialShadowEdge(
+            stroke = DialogDefaults.stroke(),
+            cornerWeight = DialogDefaults.CornerWeight,
+            cornerRadius = resolvedCornerRadius,
+            edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
+            shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
+        )
+        .then(edgeModifier)
 
     Box(
         modifier = Modifier
@@ -468,10 +488,60 @@ object DialogDefaults {
     fun backgroundColor() = COUITheme.colorScheme.background
 
     /**
-     * The default corner radius of the dialog panel. COUI smooth-corner token
-     * `coui_round_corner_xxl_radius`, reproduced by the squircle surface.
+     * The default corner radius of the dialog panel.
+     *
+     * `COUIAlertDialogMaxLinearLayout.setOutLineProvider()` gates on
+     * `COUIVersionUtil.getOSVersionCode() > 37` and then clips the panel with
+     * `R.dimen.coui_round_corner_xxxxl_radius_large_16_1` = **45dp** through
+     * `OplusOutlineAdapter.setSmoothRoundRect(..., 45dp, R.dimen.weight_16_1_large)`, i.e. a smooth
+     * round rect at weight 3.0. The 16-era branch used `attr/couiRoundCornerXXXXL` = 25dp at
+     * weight 2.5. `COUIAlertDialogBuilder` and `COUIBottomSheetDialog` resolve the same 45dp / 3.0
+     * pair for the blur backdrop layer.
+     *
+     * This library cannot reproduce 45dp at weight 3.0: `squircleSurface` bakes
+     * `SquirclePath.SQUIRCLE_CONTROL` for weight 2.5 and exposes no weight parameter (see
+     * `basic/Card.kt`). A heavier weight stretches the corner further along the edges, so the same
+     * outline needs a *smaller* radius at 2.5 — measured against a live ColorOS 17 settings dialog,
+     * 38dp on the baked squircle reproduces the native corner path to within 3px over the whole
+     * arc. 45dp at weight 2.5 overshoots by 15px at the tangent point.
      */
-    val CornerRadius = 19.dp
+    val CornerRadius = 38.dp
+
+    /**
+     * The `u_commonArray[10]` corner weight of a dialog panel.
+     *
+     * ColorOS 17 feeds the dialog's shadow-edge shader `R.dimen.weight_16_1_large` = 3.0, and the
+     * native panel *silhouette* is generated with that same weight, so the rim's SDF and the drawn
+     * shape agree. [`squircleSurface`] bakes `SquirclePath.SQUIRCLE_CONTROL` for weight 2.5 and
+     * cannot be parameterized (see `basic/Card.kt`), so the rim has to use 2.5 as well: passing 3.0
+     * here makes the shader's corner geometry disagree with the drawn outline and the rim fades out
+     * along the whole corner arc (measured: 0 luminance over body on the arc, against +36 native).
+     */
+    val CornerWeight = MaterialShadowEdgeDefaults.SquircleCornerWeight
+
+    /**
+     * The default material edge of the dialog panel.
+     *
+     * ColorOS 17 draws the rim from `COUIShadowEdgeDrawable` fed by
+     * `DialogShadowEdgeParamsExtKt.dialogShadowEdgeParamsDefault`, i.e. a 4dp / 0.6 alpha rim with
+     * a 0.4 inner-shadow fade in light mode and 2dp / 0.3 with 0.03 in dark mode. The panel uses
+     * the `EDGE_STYLE_2` "large panel" preset, which is the same gradient the dialog root layout
+     * installs.
+     */
+    @Composable
+    fun stroke(): MaterialStrokeParams = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialStrokeParams(
+            edgeAlpha = 0.3f,
+            edgeWidth = 2.dp,
+            shadowFadeIn = 0.03f,
+        )
+    } else {
+        MaterialStrokeParams(
+            edgeAlpha = 0.6f,
+            edgeWidth = 4.dp,
+            shadowFadeIn = 0.4f,
+        )
+    }
 
     /**
      * The default upper bound on dialog content width. Keeps dialogs from stretching across

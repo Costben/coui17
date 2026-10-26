@@ -123,8 +123,8 @@ public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayKt {
-	public static final fun AppBarBlurOverlay-71WW8_c (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FFLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
-	public static final fun AppBarBlurOverlay-yE4rkUQ (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun AppBarBlurOverlay-Gdeddnk (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun AppBarBlurOverlay-oIFW7jk (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FFZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarGlassDefaults {
@@ -1142,8 +1142,8 @@ public final class io/github/suqi8/coui/kmp/basic/ComponentKt {
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlurOverlayKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlurOverlayKt;
 	public fun <init> ()V
-	public final fun getLambda$-1759200601$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda$1203101323$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-1145730813$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-1285125913$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$HintAnimationLayoutKt {
@@ -2147,8 +2147,8 @@ public final class io/github/suqi8/coui/kmp/basic/ListPopupDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/ListPopupKt {
 	public static final fun ListPopupColumn (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ListPopupContent-BGOovGM (JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/anim/BezierGravityPathGeometry;Lio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;JLandroidx/compose/ui/Modifier;ZZLandroidx/compose/ui/graphics/ImageBitmap;JLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun ListPopupContent-SIU0soY (JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;JLandroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun ListPopupContent-e-ensJU (JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/anim/BezierGravityPathGeometry;Lio/github/suqi8/coui/kmp/basic/PopupLayoutPosition;JLandroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun PopupListDivider-iJQMabo (Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;II)V
 	public static final fun popupGravityPath-mL-hObY (Landroidx/compose/ui/unit/IntRect;Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;JLio/github/suqi8/coui/kmp/anim/PopupGravityMotion;)Lio/github/suqi8/coui/kmp/anim/BezierGravityPathGeometry;
 	public static synthetic fun popupGravityPath-mL-hObY$default (Landroidx/compose/ui/unit/IntRect;Lio/github/suqi8/coui/kmp/basic/ListPopupLayoutInfo;JLio/github/suqi8/coui/kmp/anim/PopupGravityMotion;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/anim/BezierGravityPathGeometry;
@@ -2492,7 +2492,7 @@ public final class io/github/suqi8/coui/kmp/basic/MaterialShadowEdgeDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/MaterialShadowEdgeKt {
-	public static final fun materialShadowEdge-ROuykTE (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Landroidx/compose/ui/Modifier;FLandroidx/compose/ui/unit/Dp;Lio/github/suqi8/coui/kmp/basic/GradientStrokeStyle;Lio/github/suqi8/coui/kmp/basic/InnerShadowStyle;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun materialShadowEdge-AWUJNSc (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Landroidx/compose/ui/Modifier;FLandroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function2;Lio/github/suqi8/coui/kmp/basic/GradientStrokeStyle;Lio/github/suqi8/coui/kmp/basic/InnerShadowStyle;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/MaterialStrokeParams {
@@ -4733,9 +4733,11 @@ public final class io/github/suqi8/coui/kmp/layout/BottomSheetDefaults {
 	public final fun backgroundColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
 	public final fun dragHandleColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
 	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getCornerWeight ()F
 	public final fun getInsideMargin-MYxV2XQ ()J
 	public final fun getMaxWidth-D9Ej5fM ()F
 	public final fun getOutsideMargin-MYxV2XQ ()J
+	public final fun stroke (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 }
 
 public final class io/github/suqi8/coui/kmp/layout/DialogButtonBarAction {
@@ -4791,9 +4793,11 @@ public final class io/github/suqi8/coui/kmp/layout/DialogDefaults {
 	public final fun getButtonBarInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getButtonBarMinHeight-D9Ej5fM ()F
 	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getCornerWeight ()F
 	public final fun getInsideMargin-MYxV2XQ ()J
 	public final fun getMaxWidth-D9Ej5fM ()F
 	public final fun getOutsideMargin-MYxV2XQ ()J
+	public final fun stroke (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun summaryColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
 	public final fun titleColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
 }
@@ -4866,7 +4870,7 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlayAlertDialogKt {
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomSheetKt {
-	public static final fun OverlayBottomSheet-4uulYMU (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun OverlayBottomSheet-swdjXLM (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayCascadingListPopupKt {
@@ -4875,7 +4879,7 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlayCascadingListPopupKt 
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayDialogKt {
-	public static final fun OverlayDialog-k3vBe-k (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;JLjava/lang/String;JJZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZZFLjava/lang/Boolean;Landroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun OverlayDialog-K9l846I (ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Ljava/lang/String;JLjava/lang/String;JJZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZZFLjava/lang/Boolean;Landroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayListPopupKt {
@@ -5498,7 +5502,7 @@ public final class io/github/suqi8/coui/kmp/window/WindowAlertDialogKt {
 }
 
 public final class io/github/suqi8/coui/kmp/window/WindowBottomSheetKt {
-	public static final fun WindowBottomSheet-wJ2fIaQ (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun WindowBottomSheet-4uulYMU (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/window/WindowCascadingListPopupKt {
@@ -5514,7 +5518,7 @@ public final class io/github/suqi8/coui/kmp/window/WindowGuideDialogKt {
 }
 
 public final class io/github/suqi8/coui/kmp/window/WindowListPopupKt {
-	public static final fun WindowListPopup-zvmsXUs (ZLandroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider$Align;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/unit/Dp;FLio/github/suqi8/coui/kmp/basic/PreciseClickState;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun WindowListPopup-1LzvXAY (ZLandroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider$Align;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/unit/Dp;FLio/github/suqi8/coui/kmp/basic/PreciseClickState;Landroidx/compose/ui/graphics/ImageBitmap;JLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/window/WindowLoadingDialogKt {

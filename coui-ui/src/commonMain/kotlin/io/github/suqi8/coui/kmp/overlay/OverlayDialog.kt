@@ -41,12 +41,15 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  *   instead of bottom slide-in). If null, detected from the window size.
  * @param cornerRadius Optional corner radius override. If null, [DialogDefaults.CornerRadius]
  *   is used.
+ * @param edgeModifier Extra modifier appended inside the surface fill, so a material edge painted by
+ *   `Modifier.materialShadowEdge` lands on top of the card instead of under it.
  * @param content The [Composable] content of the [OverlayDialog].
  */
 @Composable
 fun OverlayDialog(
     show: Boolean,
     modifier: Modifier = Modifier,
+    edgeModifier: Modifier = Modifier,
     title: String? = null,
     titleColor: Color = DialogDefaults.titleColor(),
     summary: String? = null,
@@ -95,6 +98,7 @@ fun OverlayDialog(
         maxWidth = maxWidth,
         largeScreen = largeScreen,
         cornerRadius = cornerRadius,
+        edgeModifier = edgeModifier,
         content = content,
     )
 }

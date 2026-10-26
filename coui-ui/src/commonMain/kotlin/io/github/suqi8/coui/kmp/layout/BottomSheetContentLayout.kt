@@ -52,6 +52,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -75,8 +76,13 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.anim.folmeSpring
+import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
+import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
+import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
+import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.materialShadowEdge
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
@@ -130,6 +136,7 @@ internal fun BottomSheetContentLayout(
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
     enableWindowDim: Boolean = true,
+    showDragHandle: Boolean = true,
     onDismissRequest: (() -> Unit)? = null,
     onDismissFinished: (() -> Unit)? = null,
     defaultWindowInsetsPadding: Boolean = true,
@@ -306,6 +313,7 @@ internal fun BottomSheetContentLayout(
                 insideMargin = insideMargin,
                 defaultWindowInsetsPadding = defaultWindowInsetsPadding,
                 dragHandleColor = dragHandleColor,
+                showDragHandle = showDragHandle,
                 allowDismiss = allowDismiss,
                 sheetHeightPx = sheetHeightPx,
                 dragOffsetY = dragOffsetY,
@@ -346,6 +354,7 @@ internal fun BottomSheetContent(
     insideMargin: DpSize,
     defaultWindowInsetsPadding: Boolean,
     dragHandleColor: Color,
+    showDragHandle: Boolean,
     allowDismiss: Boolean,
     sheetHeightPx: MutableIntState,
     dragOffsetY: Animatable<Float, *>,
@@ -550,6 +559,7 @@ internal fun BottomSheetContent(
         insideMargin = insideMargin,
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
         dragHandleColor = dragHandleColor,
+        showDragHandle = showDragHandle,
         allowDismiss = allowDismiss,
         windowHeight = windowHeight,
         topInset = calculatedTopInset,
@@ -579,6 +589,7 @@ private fun BottomSheetColumn(
     insideMargin: DpSize,
     defaultWindowInsetsPadding: Boolean,
     dragHandleColor: Color,
+    showDragHandle: Boolean,
     allowDismiss: Boolean,
     windowHeight: Dp,
     topInset: Dp,
@@ -637,11 +648,25 @@ private fun BottomSheetColumn(
                     bottomEnd = 0.dp,
                     bottomStart = 0.dp,
                 )
+                // ColorOS 17 rims every panel, not just dialogs:
+                // `COUIBottomSheetDialog.applyShadowEdgeParams()` installs the same
+                // `EDGE_STYLE_2` gradient with `SHADOW_STYLE_2` and `weight_16_1_large`. The edge
+                // has to sit inside the surface so its rim paints over the fill. The shader takes
+                // a single corner radius, so the square bottom corners stay with the surface: the
+                // rim's bottom arcs land outside the sheet, which is flush with the window edge.
+                .materialShadowEdge(
+                    stroke = BottomSheetDefaults.stroke(),
+                    cornerWeight = BottomSheetDefaults.CornerWeight,
+                    cornerRadius = cornerRadius,
+                    edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
+                    shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
+                )
                 .padding(horizontal = insideMargin.width)
                 .padding(bottom = insideMargin.height),
         ) {
             DragHandleArea(
                 dragHandleColor = dragHandleColor,
+                showDragHandle = showDragHandle,
                 allowDismiss = allowDismiss,
                 dragOffsetY = dragOffsetY,
                 coroutineScope = coroutineScope,
@@ -743,6 +768,13 @@ private fun CoroutineScope.animateHandlePressRelease(pressAlpha: Animatable<Floa
 }
 
 /**
+ * Height of the transparent drag strip left in place when a panel hides its drag handle.
+ * COUI panels that ship no drag view (`coui_panel_content_layout` with a toolbar only) still start
+ * their toolbar one top inset below the panel edge.
+ */
+private val HiddenHandleStripHeight = 10.dp
+
+/**
  * Drag handle strip at the top of the sheet, matching the COUI panel drag view: a fixed
  * capsule bar that never deforms; pressing or dragging fades in a rounded press background
  * centered behind it. Drag amounts are forwarded into [dragSnapChannel].
@@ -754,6 +786,7 @@ private fun CoroutineScope.animateHandlePressRelease(pressAlpha: Animatable<Floa
 @Composable
 private fun DragHandleArea(
     dragHandleColor: Color,
+    showDragHandle: Boolean,
     allowDismiss: Boolean,
     dragOffsetY: Animatable<Float, *>,
     coroutineScope: CoroutineScope,
@@ -767,11 +800,15 @@ private fun DragHandleArea(
     // COUI couiColorPress has no dedicated scheme slot; derive it from onSurface.
     val pressColor = COUITheme.colorScheme.onSurface.copy(alpha = 0.12f)
 
+    // COUI panels without a visible handle still reserve a strip at the top, so the first content
+    // row keeps the same offset from the panel edge as a handled panel.
+    val stripHeight = if (showDragHandle) 24.dp else HiddenHandleStripHeight
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(24.dp)
-            .pointerHoverIcon(PointerIcon.Hand)
+            .height(stripHeight)
+            .then(if (showDragHandle) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -811,29 +848,31 @@ private fun DragHandleArea(
                 },
             )
             // COUI coui_panel_drag_view_shadow_margin_top: aligns the band center with the bar center.
-            .padding(top = 4.dp),
+            .padding(top = if (showDragHandle) 4.dp else 0.dp),
         contentAlignment = Alignment.Center,
     ) {
-        // COUI press feedback background, faded in/out while the handle is touched.
-        Box(
-            modifier = Modifier
-                .width(70.dp)
-                .height(20.dp)
-                .clip(pressShape)
-                .drawBehind {
-                    drawRect(pressColor.copy(alpha = pressColor.alpha * pressAlpha.value))
-                },
-        )
-        // COUI drag bar: a fixed capsule, no press deformation.
-        Box(
-            modifier = Modifier
-                .width(36.dp)
-                .height(4.dp)
-                .clip(handleShape)
-                .drawBehind {
-                    drawRect(dragHandleColor)
-                },
-        )
+        if (showDragHandle) {
+            // COUI press feedback background, faded in/out while the handle is touched.
+            Box(
+                modifier = Modifier
+                    .width(70.dp)
+                    .height(20.dp)
+                    .clip(pressShape)
+                    .drawBehind {
+                        drawRect(pressColor.copy(alpha = pressColor.alpha * pressAlpha.value))
+                    },
+            )
+            // COUI drag bar: a fixed capsule, no press deformation.
+            Box(
+                modifier = Modifier
+                    .width(36.dp)
+                    .height(4.dp)
+                    .clip(handleShape)
+                    .drawBehind {
+                        drawRect(dragHandleColor)
+                    },
+            )
+        }
     }
 }
 
@@ -917,17 +956,58 @@ object BottomSheetDefaults {
     fun backgroundColor() = COUITheme.colorScheme.background
 
     /**
+     * The `u_commonArray[10]` corner weight of a panel.
+     *
+     * `COUIBottomSheetDialog` feeds the shadow-edge shader `R.dimen.weight_16_1_large` = 3.0, while
+     * [`squircleSurface`] bakes its corner control point for weight 2.5 and cannot be
+     * parameterized. The rim therefore uses 2.5 as well, so the shader's corner geometry agrees
+     * with the drawn outline; passing 3.0 makes the rim fade out along the whole corner arc.
+     */
+    val CornerWeight = MaterialShadowEdgeDefaults.SquircleCornerWeight
+
+    /**
+     * The default material edge of the panel.
+     *
+     * `COUIBottomSheetDialog.applyShadowEdgeParams()` uses the `EDGE_STYLE_2` gradient with
+     * `SHADOW_STYLE_2`, a 2dp / 0.15 rim with a 0.1 inner-shadow fade in dark mode and 4dp / 0.8
+     * with 0.4 in light mode.
+     */
+    @Composable
+    fun stroke(): MaterialStrokeParams = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialStrokeParams(
+            edgeAlpha = 0.15f,
+            edgeWidth = 2.dp,
+            shadowFadeIn = 0.1f,
+        )
+    } else {
+        MaterialStrokeParams(
+            edgeAlpha = 0.8f,
+            edgeWidth = 4.dp,
+            shadowFadeIn = 0.4f,
+        )
+    }
+
+    /**
      * The default color of the drag handle.
      */
     @Composable
     fun dragHandleColor() = COUITheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.2f)
 
     /**
-     * The default corner radius of the top corners of the bottom sheet. COUI `couiRoundCornerXL`,
-     * with the squircle surface supplying the smooth-corner shape; the bottom corners are square,
-     * matching the outline COUI extends off-screen.
+     * The default corner radius of the top corners of the bottom sheet.
+     *
+     * `COUIBottomSheetDialog` resolves it in the constructor's tail: on
+     * `COUIVersionUtil.getOSVersionCode() > 37` it takes
+     * `R.dimen.coui_round_corner_xxxxl_radius_large_16_1` = 45dp, otherwise the 16-era
+     * `R.dimen.coui_round_corner_xxxxl` = 32dp, and feeds the same value to
+     * `COUIShadowEdgeDrawable.setWeight(R.dimen.weight_16_1_large)` = 3.0 plus
+     * `setCornerType(2)`. The value is therefore identical to the dialog panel's.
+     *
+     * 38dp is the weight-2.5 equivalent of native's 45dp at weight 3.0, for the reason documented
+     * on [DialogDefaults.CornerRadius]: `squircleSurface` bakes the 2.5 control points. The bottom
+     * corners stay square, matching the outline COUI extends off-screen.
      */
-    val cornerRadius = 20.dp
+    val cornerRadius = 38.dp
 
     /**
      * The default maximum width cap of the bottom sheet. Unbounded by default: the effective

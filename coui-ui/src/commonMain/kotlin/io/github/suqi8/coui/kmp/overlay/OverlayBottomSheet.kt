@@ -34,6 +34,9 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  * @param insideMargin The margin inside the [OverlayBottomSheet].
  * @param defaultWindowInsetsPadding Whether to apply default window insets padding.
  * @param dragHandleColor The color of the drag handle at the top.
+ * @param showDragHandle Whether to draw the drag handle bar at the top of the sheet. Panels that
+ *   carry their own toolbar (a capsule close button, an overflow button) hide it; the sheet keeps a
+ *   slim transparent strip so the panel stays draggable.
  * @param allowDismiss Whether to allow dismissing the sheet via drag or back gesture.
  * @param enableNestedScroll Whether to enable nested scrolling for the content.
  * @param renderInRootScaffold Whether to render the bottom sheet in the root (outermost) Scaffold.
@@ -58,6 +61,7 @@ fun OverlayBottomSheet(
     insideMargin: DpSize = BottomSheetDefaults.insideMargin,
     defaultWindowInsetsPadding: Boolean = true,
     dragHandleColor: Color = BottomSheetDefaults.dragHandleColor(),
+    showDragHandle: Boolean = true,
     allowDismiss: Boolean = true,
     enableNestedScroll: Boolean = true,
     renderInRootScaffold: Boolean = true,
@@ -71,6 +75,7 @@ fun OverlayBottomSheet(
         outsideMargin = outsideMargin,
         insideMargin = insideMargin,
         dragHandleColor = dragHandleColor,
+        showDragHandle = showDragHandle,
         popupHost = { visible, hostContent ->
             val visibleState = remember { mutableStateOf(false) }
             visibleState.value = visible

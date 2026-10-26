@@ -129,7 +129,8 @@ object ProgressDialogDefaults {
     val CardMinHeight = LoadingDialogDefaults.CardMinHeight
 
     /**
-     * The corner radius of the progress card. COUI `coui_round_corner_m_radius` (9dp), shared with
+     * The corner radius of the progress card. COUI `coui_round_corner_m_radius`, ColorOS 17's
+     * successor `coui_round_corner_m_radius_normal_16_1` (15dp), shared with
      * [LoadingDialogDefaults.CornerRadius].
      */
     val CornerRadius = LoadingDialogDefaults.CornerRadius
