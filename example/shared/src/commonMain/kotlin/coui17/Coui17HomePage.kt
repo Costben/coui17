@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import component.ArrowDemo
 import component.BadgeDemo
@@ -113,9 +114,14 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 /**
  * The home page: the whole component list, in ColorOS 17 list form.
  *
- * The topology is the coui16 gallery's — the same 48 sections, in the same order, with no grouping
- * above them — but every entry now wears a COS17 list row as its group title, and the entries
- * themselves are the layout-free content composables the shared module exposes.
+ * The list is grouped into nine named runs — basics, actions, text input, pickers, overlays,
+ * navigation, preferences, visual effects, misc — because a flat run of 110 entries gave a reader no
+ * way to find anything. Each entry keeps its own COS17 group-title row under the section heading, and
+ * the entries themselves are the layout-free content composables the shared module exposes.
+ *
+ * Every heading and every string a demo shows resolves through [str], so the whole page follows the
+ * language switch: the section names and entry titles are English source keys, never a second copy
+ * of the same name in another language.
  */
 @Composable
 fun Coui17HomePage(
@@ -128,27 +134,37 @@ fun Coui17HomePage(
         modifier = modifier.fillMaxWidth(),
         contentPadding = contentPadding,
     ) {
+        coui17Section("Basic")
         coui17Entry("Basic Component") { BasicComponentDemo() }
         coui17Entry("Checkbox") { CheckboxDemo() }
         coui17Entry("RadioButton") { RadioButtonDemo() }
         coui17Entry("Switch") { SwitchDemo() }
         coui17Entry("Arrow") { ArrowDemo() }
-        coui17Entry("Dialog") { DialogDemo() }
-        coui17Entry("WindowDialog variants") { WindowDialogVariantsDemo() }
-        coui17Entry("WindowIconMenu variants") { WindowIconMenuVariantsDemo() }
-        coui17Entry("HorizontalScrollBar") { HorizontalScrollBarDemo() }
-        coui17Entry("NavigationBarEnterExit") { NavigationBarEnterExitDemo() }
-        coui17Entry("GuideDialog") { GuideDialogDemo() }
+        coui17Entry("Card") { CardDemo() }
+        coui17Entry("Chip") { ChipDemo() }
+        coui17Entry("ChipTab") { ChipTabDemo() }
+        coui17Entry("TagView") { TagViewDemo() }
+        coui17Entry("Badge") { BadgeDemo() }
         coui17Entry("PageIndicator") { PageIndicatorDemo() }
-        coui17Entry("BottomSheet") { BottomSheetDemo() }
-        coui17Entry("Dropdown") { DropdownDemo() }
-        coui17Entry("Dropdown Item Variants") { DropdownItemVariants() }
-        coui17Entry("HorizontalPopupMenu") { HorizontalPopupMenuDemo() }
-        coui17Entry("Spinner") { SpinnerDemo() }
+        coui17Entry("BannerIndicator") { BannerIndicatorDemo() }
+        coui17Entry("MarqueeText") { MarqueeTextDemo() }
+        coui17Entry("FlowLayout") { FlowLayoutDemo() }
+        coui17Entry("ExpandableList") { ExpandableListDemoContent() }
+
+        coui17Section("Buttons & actions")
         coui17Entry("Button") { ButtonDemo() }
-        coui17Entry("Snackbar") { SnackbarDemo(snackbarHostState) }
-        coui17Entry("NotificationSwipeBox") { NotificationSwipeDemo() }
+        coui17Entry("Loading Button") { LoadingButtonDemo() }
+        coui17Entry("LoadProgressButton") { LoadProgressButtonDemo() }
+        coui17Entry("FloatingButton") { FloatingButtonDemoContent() }
         coui17Entry("ProgressIndicator") { ProgressIndicatorDemo() }
+        coui17Entry("InstallLoadProgress") { InstallLoadProgressDemo() }
+        coui17Entry("Snackbar") { SnackbarDemo(snackbarHostState) }
+        coui17Entry("NotificationSnackBar") { NotificationSnackBarDemo() }
+        coui17Entry("NotificationSwipeBox") { NotificationSwipeDemo() }
+        coui17Entry("TopTips") { TopTipsDemoContent() }
+        coui17Entry("TopTips Styles") { TopTipsStylesDemo() }
+
+        coui17Section("Text input")
         coui17Entry("TextField (Line, Settings dialog form)") {
             TextFieldLineSettingsDialogFormDemo(focusManager)
         }
@@ -166,9 +182,45 @@ fun Coui17HomePage(
         }
         coui17Entry("CodeTextField") { CodeTextFieldDemo(focusManager) }
         coui17Entry("CodeTextField (security)") { CodeTextFieldSecurityDemo(focusManager) }
+        coui17Entry("TouchSearchView") { TouchSearchViewDemoContent() }
+        coui17Entry("SearchHistoryView") { SearchHistoryViewDemoContent() }
+        coui17Entry("SearchViewAnimate") { SearchViewAnimateDemo() }
+
+        coui17Section("Pickers")
         coui17Entry("Slider") { SliderDemo() }
         coui17Entry("RangeSlider") { RangeSliderDemo() }
         coui17Entry("VerticalSlider") { VerticalSliderDemo() }
+        coui17Entry("NumberPicker") { NumberPickerDemo() }
+        coui17Entry("DatePicker") { DatePickerDemo() }
+        coui17Entry("TimePicker (24-hour)") { TimePicker24HourDemo() }
+        coui17Entry("TimePicker (12-hour)") { TimePicker12HourDemo() }
+        coui17Entry("LunarDatePicker") { LunarDatePickerDemo() }
+        coui17Entry("CalendarView") { CalendarViewDemoContent() }
+        coui17Entry("IntentSeekBar") { IntentSeekBarDemoContent() }
+        coui17Entry("ColorSwatchPicker") { ColorSwatchPickerCard() }
+        coui17Entry("ColorPicker (HSV)") { ColorPickerHSVDemo() }
+        coui17Entry("ColorPicker (OKHSV)") { ColorPickerOKHSVDemo() }
+        coui17Entry("ColorPicker (OKLAB)") { ColorPickerOKLABDemo() }
+        coui17Entry("ColorPicker (OKLCH)") { ColorPickerOKLCHDemo() }
+        coui17Entry("ColorPalette") { ColorPaletteDemo() }
+
+        coui17Section("Overlays & menus")
+        coui17Entry("Dialog") { DialogDemo() }
+        coui17Entry("SingleInputDialog (ColorOS 17)") { SingleInputDialogDemo() }
+        coui17Entry("PanelTemplate (ColorOS 17)") { PanelTemplateDemo() }
+        coui17Entry("BottomSheet") { BottomSheetDemo() }
+        coui17Entry("WindowDialog variants") { WindowDialogVariantsDemo() }
+        coui17Entry("WindowIconMenu variants") { WindowIconMenuVariantsDemo() }
+        coui17Entry("GuideDialog") { GuideDialogDemo() }
+        coui17Entry("Dropdown") { DropdownDemo() }
+        coui17Entry("Dropdown Item Variants") { DropdownItemVariants() }
+        coui17Entry("HorizontalPopupMenu") { HorizontalPopupMenuDemo() }
+        coui17Entry("Spinner") { SpinnerDemo() }
+        coui17Entry("PopupMenuRotation") { PopupMenuRotationDemo() }
+        coui17Entry("ClickSelectMenu") { ClickSelectMenuDemoContent() }
+        coui17Entry("Tooltip") { TooltipDemo() }
+
+        coui17Section("Navigation & layout")
         coui17Entry("TabRow") { TabRowDemo() }
         coui17Entry("BottomFloatingNavigationBar") { BottomFloatingNavigationBarDemo() }
         coui17Entry("BottomFloatingAccessoryNavigationBar") {
@@ -177,51 +229,24 @@ fun Coui17HomePage(
         coui17Entry("BottomFloatingEditToolbar") { BottomFloatingEditToolbarDemo() }
         coui17Entry("BottomFloatingToolbar") { BottomFloatingToolbarDemo() }
         coui17Entry("NavigationPopupMenu") { NavigationPopupMenuDemo() }
-        coui17Entry("MetaBallSurface") { MetaBallSurfaceDemo() }
-        coui17Entry("MaterialShadowEdge") { MaterialShadowEdgeDemo() }
-        coui17Entry("SpotLight") { SpotLightDemo() }
         coui17Entry("TopAppBar (glass)") { TopAppBarGlassDemo() }
         coui17Entry("TopAppBar (ColorOS 17 forms)") { TopAppBarColorOS17FormsDemo() }
         coui17Entry("PinnedTopAppBar") { PinnedTopAppBarDemo() }
         coui17Entry("BreadcrumbBar") { BreadcrumbBarDemo() }
-        coui17Entry("Tooltip") { TooltipDemo() }
-        coui17Entry("NumberPicker") { NumberPickerDemo() }
-        coui17Entry("DatePicker") { DatePickerDemo() }
-        coui17Entry("TimePicker (24-hour)") { TimePicker24HourDemo() }
-        coui17Entry("TimePicker (12-hour)") { TimePicker12HourDemo() }
-        coui17Entry("ColorSwatchPicker") { ColorSwatchPickerCard() }
-        coui17Entry("ColorPicker (HSV)") { ColorPickerHSVDemo() }
-        coui17Entry("ColorPicker (OKHSV)") { ColorPickerOKHSVDemo() }
-        coui17Entry("ColorPicker (OKLAB)") { ColorPickerOKLABDemo() }
-        coui17Entry("ColorPicker (OKLCH)") { ColorPickerOKLCHDemo() }
-        coui17Entry("ColorPalette") { ColorPaletteDemo() }
-        coui17Entry("Card") { CardDemo() }
-        coui17Entry("Chip") { ChipDemo() }
-        coui17Entry("TopTips") { TopTipsDemoContent() }
-        coui17Entry("ChipTab") { ChipTabDemo() }
-        coui17Entry("CalendarView") { CalendarViewDemoContent() }
-        coui17Entry("FloatingButton") { FloatingButtonDemoContent() }
-        coui17Entry("ExpandableList") { ExpandableListDemoContent() }
+        coui17Entry("NavigationBarEnterExit") { NavigationBarEnterExitDemo() }
+        coui17Entry("HorizontalScrollBar") { HorizontalScrollBarDemo() }
+        coui17Entry("ListDetailView") { ListDetailViewDemo() }
+        coui17Entry("SideNavigationBar") { SideNavigationBarDemo() }
+        coui17Entry("SidePaneLayout") { SidePaneLayoutDemo() }
         coui17Entry(
             "LockPatternView / NumericKeyboard / SimpleLockView / LockScreenPwdInput / Banner",
         ) {
             LockAndBannerDemo()
         }
-        coui17Entry("IntentSeekBar") { IntentSeekBarDemoContent() }
-        coui17Entry("TouchSearchView") { TouchSearchViewDemoContent() }
-        coui17Entry("SearchHistoryView") { SearchHistoryViewDemoContent() }
-        coui17Entry("SearchViewAnimate") { SearchViewAnimateDemo() }
-        coui17Entry("LoadProgressButton") { LoadProgressButtonDemo() }
-        coui17Entry("PopupMenuRotation") { PopupMenuRotationDemo() }
-        coui17Entry("HintAnimationLayout") { HintAnimationLayoutDemo() }
-        coui17Entry("TopTips Styles") { TopTipsStylesDemo() }
-        coui17Entry("ClickSelectMenu") { ClickSelectMenuDemoContent() }
-        coui17Entry("InstallLoadProgress") { InstallLoadProgressDemo() }
-        coui17Entry("TagView") { TagViewDemo() }
-        coui17Entry("NotificationSnackBar") { NotificationSnackBarDemo() }
-        coui17Entry("MarqueeText") { MarqueeTextDemo() }
-        coui17Entry("Loading Button") { LoadingButtonDemo() }
-        coui17Entry("Badge") { BadgeDemo() }
+        coui17Entry("EmptyState") { EmptyStateDemo() }
+        coui17Entry("CompleteState") { CompleteStateDemo() }
+
+        coui17Section("Preferences")
         coui17Entry("SwitchLoadingPreference") { SwitchLoadingPreferenceDemo() }
         coui17Entry("MarkPreference") { MarkPreferenceDemo() }
         coui17Entry("MarkPreference (standalone, Full)") { MarkPreferenceStandaloneFullDemo() }
@@ -229,22 +254,6 @@ fun Coui17HomePage(
         coui17Entry("RecommendedPreference") { RecommendedPreferenceDemo() }
         coui17Entry("ListPreference") { ListPreferenceDemoContent() }
         coui17Entry("FullPageStatement") { FullPageStatementDemoContent() }
-        // Both blur demos draw through a runtime shader, which Android only offers from API 33.
-        if (isRuntimeShaderSupported()) {
-            coui17Entry("Texture Blur") { BlurDemo() }
-            coui17Entry("Foreground Blur") { ForegroundBlurDemo() }
-        }
-        coui17Entry("EmptyState") { EmptyStateDemo() }
-        coui17Entry("CompleteState") { CompleteStateDemo() }
-        coui17Entry("FlowLayout") { FlowLayoutDemo() }
-        coui17Entry("ListDetailView") { ListDetailViewDemo() }
-        coui17Entry("SideNavigationBar") { SideNavigationBarDemo() }
-        coui17Entry("SidePaneLayout") { SidePaneLayoutDemo() }
-        coui17Entry("LunarDatePicker") { LunarDatePickerDemo() }
-        coui17Entry("BannerIndicator") { BannerIndicatorDemo() }
-        coui17Entry("CheckBoxWithDivider / SwitchWithDivider / MarkWithDivider") {
-            DividerPreferenceGroupDemo()
-        }
         coui17Entry("EditTextPreference") { EditTextPreferenceDemo() }
         coui17Entry("InputPreference") { InputPreferenceDemo() }
         coui17Entry("LoadInstallProgressPreference") { LoadInstallProgressPreferenceDemo() }
@@ -260,7 +269,57 @@ fun Coui17HomePage(
         coui17Entry("CheckBoxPreferenceCategory / LoadingPreferenceCategory / BottomPreference") {
             CategoryHeaderPreferenceDemo()
         }
+        coui17Entry("CheckBoxWithDivider / SwitchWithDivider / MarkWithDivider") {
+            DividerPreferenceGroupDemo()
+        }
+
+        coui17Section("Visual effects")
+        coui17Entry("MetaBallSurface") { MetaBallSurfaceDemo() }
+        coui17Entry("MaterialShadowEdge") { MaterialShadowEdgeDemo() }
+        coui17Entry("SpotLight") { SpotLightDemo() }
+        coui17Entry("HintAnimationLayout") { HintAnimationLayoutDemo() }
+        if (isRuntimeShaderSupported()) {
+            coui17Entry("Texture Blur") { BlurDemo() }
+            coui17Entry("Foreground Blur") { ForegroundBlurDemo() }
+        }
+
+        coui17Section("Misc")
         coui17Entry("Other") { OtherDemo() }
+    }
+}
+
+/**
+ * A named run of gallery entries: one heading row, then the entries that belong to it.
+ *
+ * [title] is the English source string, resolved by [Coui17SectionTitle], so the entry list stays a
+ * plain list of keys and switching language renames every heading under it.
+ */
+private fun LazyListScope.coui17Section(title: String) {
+    item(key = "section:$title") { Coui17SectionTitle(title) }
+}
+
+/**
+ * The heading of one section: 20sp medium, one step above the 16sp group titles it contains.
+ *
+ * It shares the group title's 16dp card inset and 16dp text indent, so a section heading, an entry
+ * title and the text inside an entry's card all line up on the same x.
+ */
+@Composable
+private fun Coui17SectionTitle(title: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Coui17Dimens.ListCardInset)
+            .padding(top = Coui17Dimens.SectionTopGap, bottom = Coui17Dimens.SectionBottomGap)
+            .height(Coui17Dimens.ListRowHeight),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = str(title),
+            modifier = Modifier.padding(start = Coui17Dimens.ListTextIndent),
+            style = COUITheme.textStyles.title3.copy(fontWeight = FontWeight.Medium),
+            color = COUITheme.colorScheme.onBackground,
+        )
     }
 }
 

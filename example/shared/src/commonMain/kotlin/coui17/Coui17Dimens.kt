@@ -92,6 +92,12 @@ object Coui17Dimens {
     /** A compact section heading measured from the Settings second-level page. */
     val ListRowHeight = 32.dp
 
+    /** Room above a gallery section heading, so the nine runs read as separate blocks: 24dp. */
+    val SectionTopGap = 24.dp
+
+    /** Room between a gallery section heading and its first entry's group title: 4dp. */
+    val SectionBottomGap = 4.dp
+
     /** Heading text inset inside the 16dp card-aligned heading container. */
     val ListTextIndent = 16.dp
 
