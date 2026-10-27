@@ -8,10 +8,13 @@ import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -26,6 +29,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -62,6 +66,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -82,7 +87,11 @@ import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.materialShadowEdge
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurDefaults
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
@@ -611,6 +620,31 @@ private fun BottomSheetColumn(
     val effectiveMaxWidth = remember(windowSize, sheetMaxWidth) {
         min(sheetMaxWidth, couiPanelMaxWidth(windowSize))
     }
+    // ColorOS 17 frosts every panel: `COUIBottomSheetDialog.initBlurParams()` feeds
+    // `COUIBackgroundBlurBuilder` the two-tone recipe `coui_bottomdialog_list_mix_blur_*` +
+    // `coui_bottomdialog_list_blend_blur_*` at `coui_bottomdialog_blur_radius`, and
+    // `updateBlurAlphaParams()` scales the mix alpha with the reveal progress. Below Android 13 —
+    // or with no backdrop — the surface falls back to the flat `squircleSurface` fill.
+    val panelShape = RoundedCornerShape(
+        topStart = cornerRadius,
+        topEnd = cornerRadius,
+        bottomEnd = 0.dp,
+        bottomStart = 0.dp,
+    )
+    val panelSurface = Modifier.couiGlassSurface(
+        backdrop = LocalBackdrop.current,
+        shape = panelShape,
+        containerColor = backgroundColor,
+        fallback = Modifier.squircleSurface(
+            color = backgroundColor,
+            topStart = cornerRadius,
+            topEnd = cornerRadius,
+            bottomEnd = 0.dp,
+            bottomStart = 0.dp,
+        ),
+        blurRadius = BottomSheetDefaults.blurRadius(),
+        blendColors = BottomSheetDefaults.blurColors(),
+    )
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -641,13 +675,7 @@ private fun BottomSheetColumn(
                 }
                 .then(if (defaultWindowInsetsPadding) Modifier.imePadding() else Modifier)
                 .padding(horizontal = outsideMargin.width)
-                .squircleSurface(
-                    color = backgroundColor,
-                    topStart = cornerRadius,
-                    topEnd = cornerRadius,
-                    bottomEnd = 0.dp,
-                    bottomStart = 0.dp,
-                )
+                .then(panelSurface)
                 // ColorOS 17 rims every panel, not just dialogs:
                 // `COUIBottomSheetDialog.applyShadowEdgeParams()` installs the same
                 // `EDGE_STYLE_2` gradient with `SHADOW_STYLE_2` and `weight_16_1_large`. The edge
@@ -885,7 +913,11 @@ private fun TitleAndActionsRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 6.dp, bottom = 12.dp),
+            // `coui_list_dialog_toolbar_height` = 50dp, the height of the `COUIToolbar` a COUI
+            // panel puts its title and actions in. A 40dp action button then leaves 5dp above and
+            // below it, and the row no longer grows with whatever the caller drops in.
+            .heightIn(min = BottomSheetDefaults.HeaderHeight)
+            .padding(horizontal = BottomSheetDefaults.HeaderHorizontalPadding),
     ) {
         // Start action (e.g. close button)
         Box(modifier = Modifier.align(Alignment.CenterStart)) {
@@ -951,9 +983,66 @@ object BottomSheetDefaults {
     /**
      * The default background color of the bottom sheet. COUI tints the panel with
      * `couiColorSurface`, which the `background` slot matches in both modes.
+     *
+     * The sheet is not filled with it unless the glass pass is unavailable; on Android 13+ the
+     * surface is a blur tinted by [blurColors].
      */
     @Composable
     fun backgroundColor() = COUITheme.colorScheme.background
+
+    /**
+     * The panel blur radius, in px as the platform declares it.
+     *
+     * `COUIBottomSheetDialog.initBlurParams()` reads `coui_bottomdialog_blur_radius` (400) straight
+     * from `Resources.getInteger` and hands it to the blur shader, which works in device pixels.
+     * [blurRadius] converts it to the dp the Compose blur takes, so the strength stays the same
+     * fraction of the screen on any density.
+     */
+    val NativeBlurRadiusPx = 400f
+
+    /**
+     * [NativeBlurRadiusPx] expressed in dp for the current display, clamped to
+     * [BlurDefaults.MaxBlurRadius].
+     *
+     * Full strength, like the native panel: on a ColorOS 17 device panel the flat part varies by
+     * about one level over a page that varies by 23.
+     */
+    @Composable
+    fun blurRadius(): Float {
+        val density = LocalDensity.current.density
+        return (NativeBlurRadiusPx / density).coerceIn(0f, BlurDefaults.MaxBlurRadius)
+    }
+
+    /**
+     * The tint of the light panel over its blur.
+     *
+     * The native recipe is `coui_bottomdialog_list_blend_blur_light` (`#376E6E6E`) and
+     * `coui_bottomdialog_list_mix_blur_light` (`#DCC8C8C8`), handed to
+     * `OplusBlurParam.setMaterialParams`, which weighs them as material params rather than
+     * compositing them — stacked with `SrcOver` the two greys could never reach the live panel's
+     * (240,240,240). [io.github.suqi8.coui.kmp.blur.textureBlur] only has `SrcOver`, so the layer is
+     * fitted to the measured output instead: a neutral grey at the native mix's 86% weight, which
+     * lands on 240 over a light page and lets the blurred page tint the remaining 14%.
+     */
+    val BlurColorsLight: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0xDCF3F3F3)),
+    )
+
+    /**
+     * The dark counterpart, fitted the same way to the live dark panel's (22,22,22); the native pair
+     * is `coui_bottomdialog_list_blend_blur_dark` (`#B30F0F0F`) and
+     * `coui_bottomdialog_list_mix_blur_dark` (`#A4515151`).
+     */
+    val BlurColorsDark: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0xDC121212)),
+    )
+
+    /** [BlurColorsLight] or [BlurColorsDark] for the current theme. */
+    @Composable
+    fun blurColors(): List<BlendColorEntry> {
+        val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+        return if (isDark) BlurColorsDark else BlurColorsLight
+    }
 
     /**
      * The `u_commonArray[10]` corner weight of a panel.
@@ -1025,4 +1114,147 @@ object BottomSheetDefaults {
      * The default margin inside the bottom sheet.
      */
     val insideMargin = DpSize(24.dp, 0.dp)
+
+    /**
+     * The height of the title row, `coui_list_dialog_toolbar_height` = 50dp.
+     *
+     * A COUI panel's title bar is a `COUIToolbar` laid out at this fixed height, so the action
+     * buttons sit on the panel's vertical centre line rather than on a padding-derived row.
+     */
+    val HeaderHeight = 50.dp
+
+    /**
+     * The side inset of the title row, `toolbar_center_menu_padding_horizontal_compat` = 16dp in
+     * `values-v37`.
+     */
+    val HeaderHorizontalPadding = 16.dp
+
+    /**
+     * The size of a header action button, `coui_action_menu_item_min_width` = 40dp in
+     * `values-v37` (it drops from the 48dp of the pre-API-37 builds).
+     */
+    val ActionButtonSize = 40.dp
+
+    /**
+     * The icon inside a header action button, 24dp — 60% of [ActionButtonSize], inset 8dp.
+     */
+    val ActionButtonIconSize = 24.dp
+
+    /**
+     * The gap between two action buttons on the same side,
+     * `coui_actionbar_menuitemview_item_spacing` = 10dp in `values-v37`.
+     */
+    val ActionButtonSpacing = 10.dp
+
+    /**
+     * The press wash of a header action button, `?couiColorPress` = `#1F000000` in light theme.
+     *
+     * `ToolbarMaterialEffectDelegate` gives the item a transparent `ColorDrawable(0)` background
+     * and paints this wash — as a **circle** of radius `min(w, h) / 2`, i.e. 20dp on a 40dp button —
+     * only while it is pressed. A COUI toolbar action has no resting fill.
+     */
+    @Composable
+    fun actionButtonPressColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+        Color(0x33FFFFFF)
+    } else {
+        Color(0x1F000000)
+    }
+
+    /**
+     * The resting disc of a header action button, `?attr/couiColorControls` — the same circle the
+     * platform paints behind a close cross (`coui_ic_toptips_close`, #29000000 light / #40FFFFFF
+     * dark).
+     *
+     * The toolbar item itself carries no fill; on a light panel its `TYPE_FRAMEWORK_CIRCLE_1` rim is
+     * a 1.9dp white line at alpha 0.2, which measures +2 of 255 against the panel and reads as no
+     * circle at all. The disc is what makes the pair read as buttons.
+     */
+    @Composable
+    fun actionButtonContainerColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+        Color(0x40FFFFFF)
+    } else {
+        Color(0x29000000)
+    }
+}
+
+/**
+ * A header action button of a COUI panel, i.e. the tick / cross pair at the two ends of the title.
+ *
+ * The native item is `COUIActionMenuItemView` inside a `COUIToolbar`: a 40dp square with **no
+ * resting fill**, a 24dp icon, and a circular press wash (`?couiColorPress`) of radius
+ * `min(w, h) / 2` driven by a `response 0.3 / bounce 0` spring. The spot light and the 1.9dp
+ * circular stroke that the same delegate owns are gated behind
+ * `system_material_blur_enable && com.oplus.appcompat.texture_effect.Enable` and are off on a stock
+ * device, so they are not painted here.
+ *
+ * Use it for [OverlayBottomSheet]'s `startAction` / `endAction` slots instead of a bare
+ * [IconButton]: a plain icon button draws a rounded-square ripple and a resting surface, neither of
+ * which the panel header has.
+ *
+ * @param onClick Invoked when the button is clicked.
+ * @param modifier The modifier to be applied to the button.
+ * @param enabled Whether the button accepts input.
+ * @param content The icon, usually a 24dp [androidx.compose.material3.Icon] or a COUI icon.
+ */
+@Composable
+fun SheetActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val wash = remember { Animatable(0f) }
+    LaunchedEffect(pressed) {
+        wash.animateTo(
+            targetValue = if (pressed) 1f else 0f,
+            animationSpec = folmeSpring(damping = 1f, response = 0.3f),
+        )
+    }
+    val pressColor = BottomSheetDefaults.actionButtonPressColor()
+    val containerColor = BottomSheetDefaults.actionButtonContainerColor()
+    val currentOnClick by rememberUpdatedState(onClick)
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    Box(
+        modifier = modifier
+            .size(BottomSheetDefaults.ActionButtonSize)
+            // `min(w, h) / 2` on a square: the wash is a circle, not a rounded rect.
+            .squircleSurface(
+                color = Color.Transparent,
+                cornerRadius = BottomSheetDefaults.ActionButtonSize / 2,
+            )
+            .drawBehind {
+                drawCircle(color = containerColor, radius = size.minDimension / 2f)
+                if (wash.value > 0f) {
+                    drawCircle(color = pressColor, radius = size.minDimension / 2f, alpha = wash.value)
+                }
+            }
+            // `TYPE_FRAMEWORK_CIRCLE_1`: `ToolbarMaterialEffectDelegate` gives the item a circular
+            // stroke at 1.9dp / alpha 0.2 (0.6 at night) with `EDGE_STYLE_1` + `SHADOW_STYLE_1`,
+            // `cornerType` 2 and weight 2.0. On this device `system_material_stroke_enable` is 1, so
+            // the real header icons do carry it.
+            .materialShadowEdge(
+                stroke = MaterialStrokeParams.frameworkCircle1(isDark),
+                cornerRadius = BottomSheetDefaults.ActionButtonSize / 2,
+                cornerWeight = 2f,
+                edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
+                shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
+            )
+            .then(
+                if (enabled) {
+                    Modifier.clickable(
+                        role = Role.Button,
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = { currentOnClick() },
+                    )
+                } else {
+                    Modifier
+                },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
 }

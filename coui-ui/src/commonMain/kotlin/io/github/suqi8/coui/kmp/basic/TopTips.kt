@@ -267,12 +267,18 @@ fun TopTips(
                     layoutMode = layoutMode,
                     actionStyle = actionStyle,
                     colors = colors,
+                    expandDualButtons = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
                             top = BTN_TOP_MARGIN,
+                            start = CONTENT_END_MARGIN,
                             end = CONTENT_END_MARGIN,
-                            bottom = MULTI_BTN_BOTTOM_MARGIN,
+                            bottom = if (layoutMode == TopTipsLayoutMode.AiPayment && action != null && ignore != null) {
+                                AI_PAYMENT_DUAL_BTN_BOTTOM_MARGIN
+                            } else {
+                                MULTI_BTN_BOTTOM_MARGIN
+                            },
                         ),
                 )
             }
@@ -435,28 +441,36 @@ private fun TopTipsTrailing(
     actionStyle: TextStyle,
     colors: TopTipsColors,
     modifier: Modifier = Modifier,
+    expandDualButtons: Boolean = false,
 ) {
     if (layoutMode == TopTipsLayoutMode.AiPayment && action != null && ignore != null) {
+        // `applyDualButtonsHorizontalConstraints()` keeps the pair as one left-aligned row inside
+        // `mContentEndMargin` on both sides, with `coui_toptips_ai_payment_dual_btn_bottom_margin`
+        // under it, and gives each button `coui_toptips_ai_payment_btn_min_width`. The two buttons
+        // therefore share one baseline and one pair of margins; splitting the row in half keeps that
+        // true even when the banner is narrower than twice the minimum width, which is the case for
+        // every tip inside a card.
         Row(
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.spacedBy(TEXT_TO_BTN_GAP),
         ) {
             TopTipsActionLabel(
                 text = ignore,
                 color = colors.actionColor,
                 style = actionStyle,
                 onClick = onIgnore,
+                modifier = if (expandDualButtons) Modifier.weight(1f) else Modifier,
                 minWidth = AI_PAYMENT_BTN_MIN_WIDTH,
                 minHeight = AI_PAYMENT_BTN_MIN_HEIGHT,
                 horizontalPadding = AI_PAYMENT_BTN_HORIZONTAL_PADDING,
             )
-            Spacer(modifier = Modifier.width(TEXT_TO_BTN_GAP))
             TopTipsActionLabel(
                 text = action,
                 color = colors.actionColor,
                 style = actionStyle,
                 onClick = onAction,
+                modifier = if (expandDualButtons) Modifier.weight(1f) else Modifier,
                 minWidth = AI_PAYMENT_BTN_MIN_WIDTH,
                 minHeight = AI_PAYMENT_BTN_MIN_HEIGHT,
                 horizontalPadding = AI_PAYMENT_BTN_HORIZONTAL_PADDING,
@@ -524,12 +538,10 @@ private fun TopTipsActionLabel(
     minHeight: Dp = 0.dp,
     horizontalPadding: Dp = ACTION_PADDING_HORIZONTAL,
 ) {
-    Text(
-        text = text,
-        color = color,
-        style = style,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+    // The label sits centred in the width it is handed: `COUIButton` centres its text, and the
+    // dual-button row hands each button half the row, so a start-aligned label would drift towards
+    // the row's leading edge and leave the two labels visibly out of step with their margins.
+    Box(
         modifier = modifier
             .defaultMinSize(minWidth = minWidth, minHeight = minHeight)
             .clip(CircleShape)
@@ -540,7 +552,16 @@ private fun TopTipsActionLabel(
                     vertical = ACTION_PADDING_VERTICAL,
                 ),
             ),
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            color = color,
+            style = style,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 /**
@@ -923,6 +944,9 @@ private val AI_PAYMENT_BTN_MIN_HEIGHT = 32.dp
 
 /** COUI `coui_toptips_ai_payment_btn_horizontal_padding` (12dp), `mHorButHorPadding`. */
 private val AI_PAYMENT_BTN_HORIZONTAL_PADDING = 12.dp
+
+/** COUI `coui_toptips_ai_payment_dual_btn_bottom_margin`, 16dp, under the dual-button row. */
+private val AI_PAYMENT_DUAL_BTN_BOTTOM_MARGIN = 16.dp
 
 /** COUI `text_ripple_bg_padding_horizontal` (12dp), the press area of a text button. */
 private val ACTION_PADDING_HORIZONTAL = 12.dp

@@ -61,24 +61,24 @@ DialogButtonBar(
 
 其余任何情况都纵排。特别地，三按钮栏与单按钮栏都走纵排路径。推荐按钮**不参与**这个判定：`onMeasure` 读的是 `mDynamicLayout && (getButtonCount() != 2 || needSetButVertical(...))`，`mRecommendButtonId` 只影响单按钮纵排栏的顶边距。
 
-单元格宽度来自 `needSetButVertical`：栏宽（先夹到 `DialogDefaults.MaxWidth`，即 `coui_dialog_max_width` 392dp）减去分割线后按按钮数均分，每格再减去自己的两侧内边距：
+单元格宽度来自 `needSetButVertical`：栏宽（先夹到 `DialogDefaults.MaxWidth`，即 `coui_dialog_max_width` 392dp）减去两侧外边距和格间间距后按按钮数均分，每格再减去自己的两侧内边距：
 
 ```
-available = (min(392.dp, barWidth) - (buttonCount - 1) * StackedDividerThickness) / buttonCount
-            - ButtonHorizontalPadding * 2
+cellWidth = (min(392.dp, barWidth) - ButtonBarPaddingHorizontal * 2 - ButtonBarGap * (buttonCount - 1)) / buttonCount
+available = cellWidth - ButtonHorizontalPadding * 2
 ```
 
 任一文案宽于 `available` 即触发翻转。文案用 `TextMeasurer` 按解析后的 `textStyle` 单行测量，对应 COUI 的原始 paint 测量。
 
 ::: tip
-该公式里减掉的是**纵排**档的 0.33dp 分割线厚度，即使这一栏最终画的是更粗的 1dp 横排分割线也一样。这是 `COUIButtonBarLayout` 的原始行为，此处如实复刻。
+横排两档的单元格是等权重的，间距来自两个单元格各自的 4dp 内侧内边距（`coui_alert_dialog_button_parent_padding_horizontal_inside`），所以 `ButtonBarGap` 是 8dp，而不是某个单独的分割线宽度。ColorOS 17 的按钮栏没有任何分割线视图。
 :::
 
 传 `dynamicLayout = false` 可锁定横排，等同于 `COUIButtonBarLayout.setDynamicLayout(false)`。
 
-## 顺序与分割线
+## 顺序
 
-按钮顺序在两档之间反转，对应 `resortButton`：
+按钮顺序在两档之间反转，对应 `COUIButtonBarLayout.resortButton`：
 
 | 档位 | 顺序 |
 | :--- | :--- |
@@ -87,14 +87,39 @@ available = (min(392.dp, barWidth) - (buttonCount - 1) * StackedDividerThickness
 
 所以否定（取消）动作横排时在**最左**，纵排时在**最下**。
 
-分割线也不同：
+## 没有分割线
 
-| 档位 | 粗细 | 内缩 |
+ColorOS 17 的对话框按钮栏不画分割线。`coui_center_alert_dialog_button_panel.xml` 里只有三个空的 `LinearLayout` 单元格，
+`COUIButtonBarLayout.setShowDividerWhenHasItems` 是空方法，`coui_delete_alert_dialog_divider_height_*` 属于列表面板栏
+（`coui_panel_view_layout.xml`）而不是对话框。两个胶囊之间的分隔只来自胶囊自身的空隙与面板底色。
+
+`showDivider` 与 `dividerColor` 仅为源码兼容而保留，传任何值都不改变渲染。
+
+## 每一层是怎么画的
+
+按钮的观感由三层叠加而成，与 `COUIButton.draw()` / `onDraw()` 的顺序一致：
+
+| 层 | 内容 | 实现 |
 | :--- | :--- | :--- |
-| 横排 | 1dp（`DialogDefaults.ButtonBarDividerThickness`） | 上 17dp / 下 21dp |
-| 纵排 | 0.33dp（`DialogButtonBarDefaults.StackedDividerThickness`） | 左右各 24dp |
+| 容器层 | 胶囊底色 | `DialogButtonBarDefaults.buttonFill()` = `0xAAFFFFFF`。COUI 在模糊窗口下**不画**自己的背景（`onDraw` 里 `if (!isBlurEffectEnabled() \|\| mIsDrawMaterialEffect)`），胶囊其实是平台模糊层 `TYPE_CONTENT_SECONDARY_BUTTON` 提亮后的面板：实测面板 229、胶囊 246，正是 67% 白叠在面板上的结果 |
+| 光效层 | 描边高光 | `Modifier.materialShadowEdge`。非推荐按钮走 `MaterialStrokeParams.contentCapsule5()`（`TYPE_CONTENT_CAPSULE_5`，edgeAlpha 0.8），推荐按钮走 `ContentCapsule4`（edgeAlpha 0.3） |
+| 交互层 | 按压反馈 | `pressScaleEnabled = true`，对应 `COUIAlertDialogBottomButtonSecondary` 的 `scaleEnable=true`；禁用时填充换成 `disabledButtonFill()`（`#14000000`） |
 
-相邻的两个存在按钮之间会画一条分割线。传 `showDivider = false` 可全部隐藏（对应 `buttonBarShowDivider` 属性）。
+描边画在填充**之上**、文案**之下**——和 `COUIButton.onDraw()` 的 `drawButtonBackground` → `drawMaskAndStroke` → `super.onDraw` 一致。
+这也是填充必须保持半透明的原因：底色若不透明，描边就不再是"从边缘透出来的光"。
+
+## 尺寸
+
+横排栏的每一处内缩都由 `COUIButtonBarLayout` 的字段推出，而不是逐值写死：
+
+| 位置 | 值 | 来源 |
+| :--- | :--- | :--- |
+| 胶囊到面板侧边 | 16dp | `ButtonBarPaddingHorizontal`，`coui_alert_dialog_button_parent_padding_horizontal` |
+| 胶囊之间 | 8dp | `ButtonBarGap`：两个单元格本身贴合，各自贡献 4dp `coui_alert_dialog_button_parent_padding_horizontal_inside` |
+| 胶囊到上方内容 | 4dp | `ButtonBarPaddingTop`，`coui_alert_dialog_button_parent_padding_vertical` |
+| 胶囊到面板底边 | 16dp | `ButtonBarPaddingBottom`，`coui_alert_dialog_button_parent_padding_bottom` |
+| 胶囊高度 | 44dp | `ButtonHeight`，`coui_alert_dialog_button_height`；纵排折行时 56dp（`ButtonMultilineHeight`，`coui_alert_dialog_button_min_height_multiline`） |
+| 胶囊圆角 | 高度的一半 | `DialogBarButton` 按即将绘制的高度取 `minHeight / 2`：44dp 档即 22dp，56dp 折行档即 28dp |
 
 ## 属性
 
@@ -107,11 +132,11 @@ available = (min(392.dp, barWidth) - (buttonCount - 1) * StackedDividerThickness
 | modifier        | Modifier               | 应用于按钮栏的修饰符                             | Modifier                                    | 否   |
 | neutral         | DialogButtonBarAction? | 中性（第三个）动作，为 null 时隐藏               | null                                        | 否   |
 | dynamicLayout   | Boolean                | 是否允许自动纵排，false 则锁定横排               | true                                        | 否   |
-| showDivider     | Boolean                | 是否显示按钮之间的分割线                         | true                                        | 否   |
+| showDivider     | Boolean                | 仅为源码兼容保留，不画分割线                     | true                                        | 否   |
 | hasContentAbove | Boolean                | 栏上方是否有标题、正文或自定义面板               | true                                        | 否   |
 | colors          | TextButtonColors       | 非推荐按钮的配色                                 | ButtonDefaults.textButtonColorsBorderless() | 否   |
 | recommendColors | TextButtonColors       | 标记 `recommended` 的按钮的配色                  | ButtonDefaults.textButtonColorsPrimary()    | 否   |
-| dividerColor    | Color                  | 分割线颜色                                       | COUITheme.colorScheme.dividerLine           | 否   |
+| dividerColor    | Color                  | 仅为源码兼容保留，不画分割线                     | COUITheme.colorScheme.dividerLine           | 否   |
 | textStyle       | TextStyle              | 文案样式，同时用于纵排判定时测量文案             | COUITheme.textStyles.button                 | 否   |
 
 ::: warning
@@ -129,31 +154,53 @@ available = (min(392.dp, barWidth) - (buttonCount - 1) * StackedDividerThickness
 
 ### DialogButtonBarDefaults 对象
 
-纵排档的度量以及两档共用的值。横排档自身的度量在 `DialogDefaults.ButtonBar*`。
+| 属性                     | 类型 | 说明                                             | 值        |
+| :----------------------- | :--- | :----------------------------------------------- | :-------- |
+| ButtonBarPaddingHorizontal | Dp | 胶囊到面板侧边的内边距                           | 16.dp     |
+| ButtonBarPaddingTop        | Dp | 胶囊到上方内容的内边距                           | 4.dp      |
+| ButtonBarPaddingBottom     | Dp | 胶囊到面板底边的内边距                           | 16.dp     |
+| ButtonBarGap               | Dp | 两个胶囊之间的间距（横排与纵排同一值）           | 8.dp      |
+| ButtonHeight               | Dp | 胶囊高度                                         | 44.dp     |
+| ButtonMultilineHeight      | Dp | 文案折行时胶囊的最小高度                         | 56.dp     |
+| ButtonInsideMargin         | PaddingValues | 胶囊内文案的留白                        | 12dp / 4dp |
+| ButtonHorizontalPadding    | Dp | 按钮水平内边距，同时用于纵排判定                 | 12.dp     |
+| StackedButtonPaddingTopExtra | Dp | 上方无内容时，最顶部纵排按钮的额外上内边距     | 0.dp      |
+| StackedButtonPaddingBottomExtra | Dp | 最底部纵排按钮的额外下内边距                | 0.dp      |
+| StackedBarMarginTop        | Dp | 含多个按钮的纵排栏的上外边距                     | 0.dp      |
+| buttonFill()               | Color | 胶囊填充                                        | #AAFFFFFF |
+| disabledButtonFill()       | Color | 禁用胶囊填充                                    | #14000000 |
+| buttonColors()             | TextButtonColors | 普通胶囊的整套配色（填充 + 标签）      | 见上两行 + `onBackground` |
+| DangerTextColor            | Color | 破坏性动作的标签色                              | #EA3447   |
+| DangerDisabledTextColor    | Color | 破坏性动作禁用时的标签色                        | #66EA3447 |
+| dangerButtonColors()       | TextButtonColors | 破坏性胶囊：同样的半透明填充 + 红标签  | 见上两行 |
 
-| 属性                            | 类型 | 说明                                             | 值      |
-| :------------------------------ | :--- | :----------------------------------------------- | :------ |
-| ButtonHorizontalPadding         | Dp   | 按钮水平内边距，两档通用                         | 12.dp   |
-| StackedButtonMinHeight          | Dp   | 纵排按钮最小高度                                 | 44.dp   |
-| StackedButtonMinHeightBottom    | Dp   | 最底部纵排按钮的最小高度（44dp + 0dp 额外）      | 44.dp   |
-| StackedButtonPaddingVertical    | Dp   | 纵排按钮垂直内边距                               | 4.dp    |
-| StackedButtonPaddingTopExtra    | Dp   | 上方无内容时，最顶部纵排按钮的额外上内边距       | 0.dp    |
-| StackedButtonPaddingBottomExtra | Dp   | 最底部纵排按钮的额外下内边距（承载面板底部留白） | 0.dp    |
-| StackedBarMarginTop             | Dp   | 含多个按钮、或单个推荐按钮的纵排栏的上外边距     | 0.dp    |
-| StackedDividerThickness         | Dp   | 纵排按钮之间分割线的厚度                         | 0.33.dp |
-| StackedDividerInsetHorizontal   | Dp   | 纵排按钮之间分割线的水平内缩                     | 24.dp   |
-| ButtonCornerRadius              | Dp   | 按钮圆角（整格直角矩形）                         | 0.dp    |
+### 破坏性（红色）按钮
 
-横排档自身的度量同样出自设备资源表：
+ColorOS 17 里"删除"这类按钮**不是**一套独立样式：填充仍是普通半透明胶囊，只有标签变红。Settings 就是这么手写的 ——
+`StyleDialogUtil` 与 `ScreenLockFeature` 里都有
+`button.setTextColor(R.color.color_delete_alert_dialog_button_warning_color)`，该颜色是 `#ffea3447`，禁用态
+`color_delete_alert_dialog_button_warning_color_disable` 是同一个红压到 40% alpha。
 
-| 属性                      | 值         | COUI 令牌                                                |
-| :------------------------ | :--------- | :------------------------------------------------------- |
-| MaxWidth                  | 392.dp     | `coui_dialog_max_width`                                  |
-| ButtonBarMinHeight        | 44.dp      | `coui_alert_dialog_button_height`                        |
-| ButtonBarInsideMargin     | 12/12/12/22 | `coui_alert_dialog_button_horizontal_padding` + 栏自身上下留白 |
-| ButtonBarDividerThickness | 1.dp       | `coui_delete_alert_dialog_divider_height_horizontalbutton` |
-| ButtonBarDividerInsetTop  | 17.dp      | `coui_bottom_alert_dialog_horizontal_button_padding_top_extra_divider_new` |
-| ButtonBarDividerInsetBottom | 21.dp    | `coui_bottom_alert_dialog_horizontal_button_padding_bottom_extra_divider_new` |
+所以这里没有新增样式，只给了一个具名入口：
+
+```kotlin
+DialogButtonBar(
+    negative = DialogButtonBarAction(text = "取消", onClick = onCancel),
+    positive = DialogButtonBarAction(text = "删除车辆", onClick = onDelete),
+    // 整栏都是破坏性动作时直接换配色；只有一个按钮危险时，用 recommendColors 或自建 TextButtonColors。
+    colors = DialogButtonBarDefaults.dangerButtonColors(),
+)
+```
+
+`OverlayAlertDialog` / `AlertDialogContentLayout` 也接受 `buttonColors` 与 `recommendColors`，所以对话框不必再降到更低一层。
+
+::: tip
+同一张资源表里还有两个红：`coui_color_label_theme_red` 与 `coui_color_primary_text_red`，都是 `#db382c`。它们是**主题强调红**，
+用在列表项和偏好标题上，比删除对话框用的那个红暗一档，不要混用。
+:::
+
+面板侧的度量（最大宽度、圆角、内外边距、模糊半径）在 `DialogDefaults`：`MaxWidth` 392dp（`coui_dialog_max_width`）、
+`CornerRadius` 38dp、`outsideMargin` 16dp/32dp、`insideMargin` 24dp、`ButtonBarMinHeight` 44dp、`NativeBlurRadiusPx` 200。
 
 ## 推荐按钮
 
@@ -170,14 +217,17 @@ DialogButtonBar(
 
 - `getBlurWindowButtonType` 对 id 等于 `mRecommendButtonId` 的按钮返回 `ButtonType.PRIMARY`，其余返回 `SECONDARY`，所以按钮栏的填充正好沿 `recommended` 标记分界。
 - `applyRecommendStyle` 把按钮切到 `ButtonType.PRIMARY`、用 `color/coui_btn_default_text_color` 重设文案色，并打开实心填充动画模式（`setAnimType(1)`；`COUIButton.java` 在 `mAnimType == 1` 时直接用 `mDrawableColor` 填充）。`textButtonColorsPrimary()` 覆盖填充与文案着色。
+- 推荐按钮的光效换成 `TYPE_CONTENT_CAPSULE_4`（edgeAlpha 0.3）：主按钮本身已经很亮，描边要收得更淡。
 - 单按钮纵排栏在该按钮是推荐按钮时仍会拿到 `StackedBarMarginTop`（`onMeasure` 判 `getButtonCount() == 1 && mRecommendButtonId != -1`）。
 
 ## 行为说明
 
-- **底部按钮承载面板留白。** 最底部的纵排按钮拿到 0dp 额外下内边距和 44dp 最小高度，所以对话框面板本身不需要再加底部内边距。
-- **多按钮纵排栏有 0dp 上外边距。** 单个纵排按钮没有，除非它是推荐按钮。
-- **单独一个否定按钮回退到横排度量。** 这是纵排里唯一一种 `resetVerButsPadding` 改用 44dp 面板最小高度与横排内边距、而非纵排那套的情况。
-- **按钮是直角，且按下会缩放。** `COUIAlertDialogBottomButtonNewNormal` 设了 `drawableRadius=0dp`、`background=@null`、`stateListAnimator=@null`、`drawableColor=@color/coui_transparence` 配 `animType=2`，以及 **`scaleEnable=true`**。所以按压反馈是整格的遮罩着色加上 COUIButton 的按压缩放，这也是按钮栏传 `pressScaleEnabled = true` 的原因。
+- **按钮是胶囊，不是整格矩形。** `COUIAlertDialogBottomButtonSecondary` 的 `drawableRadius` 是 -1，`COUIButtonDrawable` 把它夹到高度的一半，
+  所以圆角永远等于 `minHeight / 2`；本库由 `DialogBarButton` 在绘制前按实际高度算出同一个值。
+- **面板底部留白由按钮栏承担。** `ButtonBarPaddingBottom` 的 16dp 就是面板圆角下方的空白，所以 `DialogContentLayout` 的面板不再额外加底部内边距。
+- **纵排栏的上外边距是 0dp**，除非它是单按钮的推荐栏。
+- **单独一个否定按钮回退到横排度量。** 这是纵排里唯一一种改用 44dp 面板最小高度与横排内边距、而非纵排那套的情况。
+- **按下会缩放。** `scaleEnable=true`，配合整格的遮罩着色，这也是按钮栏传 `pressScaleEnabled = true` 的原因。
 
 ## 未实现部分
 

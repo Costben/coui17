@@ -205,6 +205,31 @@ data class MaterialStrokeParams(
     val shadowFadeScale: Float = 1f,
 ) {
     companion object {
+        /**
+         * `FRAMEWORK_CIRCLE_PARAMS_1_LIGHT` — `TYPE_FRAMEWORK_CIRCLE_1`, light theme.
+         *
+         * The rim of a circular COUI control, e.g. a toolbar action item. `cornerType` 2 makes the
+         * outline a circle; the stroke is 1.9dp at alpha 0.2.
+         */
+        val FrameworkCircle1Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.2f,
+            edgeWidth = 1.9.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.15f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
+        /** `FRAMEWORK_CIRCLE_PARAMS_1_DARK` — `TYPE_FRAMEWORK_CIRCLE_1`, dark theme. */
+        val FrameworkCircle1Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.6f,
+            edgeWidth = 1.9.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.1f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
         /** `FRAMEWORK_CAPSULE_PARAMS_5_LIGHT` — `TYPE_FRAMEWORK_CAPSULE_5`, light theme. */
         val FrameworkCapsule5Light: MaterialStrokeParams = MaterialStrokeParams(
             edgeAlpha = 0.2f,
@@ -304,11 +329,60 @@ data class MaterialStrokeParams(
             shadowFadeScale = 1f,
         )
 
+        /**
+         * `CONTENT_CAPSULE_PARAMS_5_LIGHT` — `TYPE_CONTENT_CAPSULE_5`, the rim of a `COUIButton`
+         * whose `ButtonType` is `SECONDARY`, light theme.
+         *
+         * `COUIButton.getStrokeParams` resolves the rim through
+         * `COUIMaterialEffect.getStrokeParamsByType(TYPE_CONTENT_CAPSULE_5)` and hands it to
+         * `COUIShadowEdgeDrawable` with `EDGE_STYLE_0` / `SHADOW_STYLE_0` / `setWeight(2.0f)`. The
+         * 0.8 alpha / 3dp pair is why a secondary capsule's edge reads almost white against its own
+         * fill: the rim is brighter than the fill it sits on.
+         */
+        val ContentCapsule5Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.8f,
+            edgeWidth = 3.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.05f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** `CONTENT_CAPSULE_PARAMS_5_DARK` — `TYPE_CONTENT_CAPSULE_5`, dark theme. */
+        val ContentCapsule5Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.1f,
+            edgeWidth = 3.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.01f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** Resolves `TYPE_CONTENT_CAPSULE_5` by night mode, as `getStrokeParamsByType` does. */
+        fun contentCapsule5(isDark: Boolean): MaterialStrokeParams = if (isDark) ContentCapsule5Dark else ContentCapsule5Light
+
+        /**
+         * `CONTENT_CAPSULE_PARAMS_4_LIGHT` / `_DARK` — `TYPE_CONTENT_CAPSULE_4`, the rim of a
+         * `COUIButton` whose `ButtonType` is `PRIMARY`. ColorOS ships the same numbers for both
+         * themes; only the fill under the rim changes.
+         */
+        val ContentCapsule4: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.3f,
+            edgeWidth = 2.5.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.1f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_1` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule1(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule1Dark else FrameworkCapsule1Light
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_5` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule5(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule5Dark else FrameworkCapsule5Light
+
+        /** `TYPE_FRAMEWORK_CIRCLE_1`: the circular rim of a toolbar action item. */
+        fun frameworkCircle1(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCircle1Dark else FrameworkCircle1Light
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_8` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule8(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule8Dark else FrameworkCapsule8Light
@@ -341,6 +415,13 @@ object MaterialShadowEdgeDefaults {
      * `computeMaterialCornerWeight` when the visible item count is one).
      */
     val SingleItemCornerWeight = 2f
+
+    /**
+     * The `u_commonArray[10]` corner weight `COUIButton` uses for every capsule rim: its
+     * `initShadowEdgeParamsWithoutBlur` chain always ends with `setWeight(2.0f)`, independent of the
+     * button type or the number of buttons on screen.
+     */
+    val CapsuleCornerWeight = 2f
 }
 
 /**

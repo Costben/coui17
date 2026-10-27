@@ -59,9 +59,7 @@ fun OverlayCascadingListPopup(
     collapseOnSelection: Boolean = true,
     enableGlass: Boolean = true,
 ) {
-    // The popup composes in the root Scaffold's overlay rather than here, so the backdrop this call
-    // site sees has to be published again inside it: a surface reads whatever is current where it
-    // composes, and at the root that is nothing, which silently drops the glass to its opaque fill.
+    // Fallback only; see [PopupBackdrop]. The host's screen backdrop is the right source.
     val backdrop = LocalBackdrop.current
     CascadingListPopupLayout(
         show = show,
@@ -76,7 +74,7 @@ fun OverlayCascadingListPopup(
                 exitTransition = ExitTransition.None,
                 renderInRootScaffold = renderInRootScaffold,
             ) {
-                CompositionLocalProvider(LocalBackdrop provides backdrop) {
+                PopupBackdrop(hostBackdrop = backdrop) {
                     hostContent()
                 }
             }

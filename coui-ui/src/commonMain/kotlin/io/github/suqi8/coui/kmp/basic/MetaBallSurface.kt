@@ -117,12 +117,16 @@ object MetaBallDefaults {
  * renders their union as one blob, so the menu melts out of the bar instead of landing on top of it.
  * The recipe is `OplusMaterialMetaBallParams(MODE, 0, extension, factorX, factorY)`.
  *
- * On compatible ColorOS devices the system material renderer draws the chain, including its
- * proximity deformation and outline. Other platforms compute the union per pixel from each
- * silhouette's signed distance: the distances are folded
+ * The union is computed per pixel from each silhouette's signed distance: the distances are folded
  * together with a smooth minimum whose radius is [extension] stretched by [extensionFactorX] /
  * [extensionFactorY] along the direction joining the two silhouettes. The result is a single
  * silhouette with an anti-aliased fillet where the shapes meet — a metaball, not an overlap.
+ *
+ * The union is drawn by [META_BALL_SHADER] on every platform, including ColorOS itself: the system
+ * material renderer animates its own material whenever the window's overlay state changes, which
+ * shrank the blob to 84% for one frame when a dialog opened. Measured against that renderer the
+ * shader below draws the resting silhouette within one level, so there is nothing to gain by
+ * deferring to it.
  *
  * With a [backdrop] the merged silhouette masks the backdrop blur, so the blob is frosted glass the
  * same way [couiGlassSurface] renders a bar or a sheet; without one it is a solid [color] fill.
@@ -327,18 +331,17 @@ private fun MetaBallSilhouette(
     modifier: Modifier = Modifier,
     rimBottomScale: Float = 0f,
 ) {
-    val renderer = rememberPlatformMetaBallRenderer()
-    val fallback: @Composable () -> Unit = {
-        Canvas(modifier = modifier) {
-            drawMetaBall(
-                shader, particles, body, rim, extension, factorX, factorY, rimBlur,
-                rimBottomScale = rimBottomScale,
-            )
-        }
+    // Always the runtime shader, never the platform's `OplusMaterialUtil` chain: the vendor effect
+    // re-runs its own material animation whenever the window's overlay state changes, so opening a
+    // dialog shrank the whole silhouette to 84% of its size for one frame and sprang it back over
+    // ~160ms. Sampled frame by frame on the device, the shader below draws the resting silhouette
+    // within one level of the vendor chain, so the chain bought nothing and cost that blink.
+    Canvas(modifier = modifier) {
+        drawMetaBall(
+            shader, particles, body, rim, extension, factorX, factorY, rimBlur,
+            rimBottomScale = rimBottomScale,
+        )
     }
-    // Native blendEdge preserves the base alpha. A transparent rim-only RenderNode therefore
-    // produces no visible light; paint the recovered edge formula over the merged SDF instead.
-    if (renderer == null || rim.alpha > 0f) fallback() else renderer.Draw(particles, body, rim, extension, factorX, factorY, modifier, fallback)
 }
 
 /** Compiles (and remembers) the melt ball shader; `null` when runtime shaders are unavailable. */

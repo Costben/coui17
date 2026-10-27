@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.basic.ButtonDefaults
+import io.github.suqi8.coui.kmp.basic.TextButtonColors
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 
 /**
@@ -63,6 +65,8 @@ internal fun AlertDialogContentLayout(
     cornerRadius: Dp? = null,
     maxWidth: Dp = AlertDialogDefaults.MaxWidth,
     topInset: Dp? = null,
+    buttonColors: TextButtonColors = DialogButtonBarDefaults.buttonColors(),
+    recommendColors: TextButtonColors = ButtonDefaults.textButtonColorsPrimary(),
     content: (@Composable () -> Unit)? = null,
 ) {
     val currentOnConfirm by rememberUpdatedState(onConfirm)
@@ -101,8 +105,17 @@ internal fun AlertDialogContentLayout(
         DialogButtonBar(
             negative = cancelAction,
             positive = confirmAction,
-            // COUI coui_alert_dialog_customer_layout_padding_bottom, the gap above the bar.
-            modifier = Modifier.padding(top = AlertDialogDefaults.ButtonBarMarginTop),
+            // Only the custom panel carries a bottom inset: `coui_center_alert_dialog_layout.xml`
+            // puts `coui_alert_dialog_customer_layout_padding_bottom` (8dp) on `customPanel` and
+            // nothing at all between the message scroll view and the button panel, whose own
+            // `coui_alert_dialog_scroll_padding_bottom_message` already supplies that gap. Adding it
+            // unconditionally pushed the bar 8dp away from the message and made the panel 8dp taller
+            // than the real dialog.
+            modifier = Modifier.padding(
+                top = if (content == null) 0.dp else AlertDialogDefaults.ButtonBarMarginTop,
+            ),
+            colors = buttonColors,
+            recommendColors = recommendColors,
         )
     }
 }
@@ -130,8 +143,13 @@ object AlertDialogDefaults {
     val MaxWidth = DialogDefaults.MaxWidth
 
     /**
-     * The gap between the panel content and the button bar. COUI
-     * `coui_alert_dialog_customer_layout_padding_bottom` (8dp).
+     * The gap between a custom content panel and the button bar. COUI
+     * `coui_alert_dialog_customer_layout_padding_bottom` (8dp), the `android:paddingBottom` of
+     * `customPanel` in `coui_center_alert_dialog_layout.xml`.
+     *
+     * It applies only when the dialog has custom content. A title + message dialog stacks the
+     * button panel straight under the message scroll view, whose own
+     * `coui_alert_dialog_scroll_padding_bottom_message` (16dp) is the whole gap.
      */
     val ButtonBarMarginTop = 8.dp
 

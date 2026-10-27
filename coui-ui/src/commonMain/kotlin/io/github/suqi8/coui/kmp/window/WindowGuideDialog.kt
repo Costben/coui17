@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +38,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -386,18 +388,42 @@ private fun GuideButtonBar(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (!isSinglePage && skipWidth > 0.dp) {
-                TextButton(
-                    text = skipText,
-                    onClick = onSkip,
+            if (!isSinglePage) {
+                // Keep the skip button in the tree for the whole transition and let it shrink to
+                // zero instead of dropping it once `skipWidth` reaches 0: removing a child
+                // re-measures the row on that frame, and because the guide panel is centred that
+                // shows up as the bar stepping down for one frame. The spacer collapses with it so
+                // the primary button can still reach the full row width.
+                //
+                // The label itself is measured unbounded and clipped by this box. Handing the
+                // narrowing width to the button instead lets its text wrap, and a wrapped label is
+                // taller than the 44dp row: the row grew to four lines on the last page, and the
+                // primary button — centred in that taller row — sat 18.6dp above the 8dp bottom
+                // margin it has on every other page. Measured on the device: 32px on pages 1-2,
+                // 104px on page 3, with the panel edge itself unmoved.
+                Box(
                     modifier = Modifier
                         .width(skipWidth)
-                        .graphicsLayer { alpha = skipAlpha },
-                    pressScaleEnabled = false,
-                    minWidth = GuideDialogDefaults.ButtonMinWidth,
-                    minHeight = GuideDialogDefaults.ButtonMinHeight,
+                        .height(GuideDialogDefaults.ButtonMinHeight)
+                        .clipToBounds(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TextButton(
+                        text = skipText,
+                        onClick = onSkip,
+                        modifier = Modifier
+                            .wrapContentWidth(unbounded = true)
+                            .graphicsLayer { alpha = skipAlpha },
+                        pressScaleEnabled = false,
+                        minWidth = 0.dp,
+                        minHeight = GuideDialogDefaults.ButtonMinHeight,
+                    )
+                }
+                Spacer(
+                    modifier = Modifier.width(
+                        if (skipWidth > 0.dp) GuideDialogDefaults.ButtonSpacing else 0.dp,
+                    ),
                 )
-                Spacer(modifier = Modifier.width(GuideDialogDefaults.ButtonSpacing))
             }
             Button(
                 onClick = onPrimary,

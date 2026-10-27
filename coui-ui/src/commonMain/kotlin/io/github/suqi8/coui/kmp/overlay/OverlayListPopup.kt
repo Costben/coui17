@@ -15,6 +15,7 @@ import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
+import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.layout.ListPopupLayout
 import io.github.suqi8.coui.kmp.layout.popupPhysicalDensity
@@ -57,9 +58,11 @@ fun OverlayListPopup(
     preciseClickState: PreciseClickState? = null,
     content: @Composable () -> Unit,
 ) {
-    // The popup composes in the root Scaffold's overlay rather than here, so the backdrop this call
-    // site sees has to be published again inside it: a surface reads whatever is current where it
-    // composes, and at the root that is nothing, which silently drops the glass to its opaque fill.
+    // Fallback only: the popup composes in the root Scaffold's overlay, where the host publishes the
+    // backdrop the *screen* is recorded into. That one is the correct source — a menu samples what
+    // the user sees behind it — so the call site's backdrop is used only when the host has none.
+    // Publishing it unconditionally made every menu opened from a page sample that page's wallpaper
+    // layer instead, and a white page frosted into the wallpaper's cyan and yellow.
     val backdrop = LocalBackdrop.current
     // Same reason for the density: ColorOS menus render at the panel's density, not the display-size
     // override a third-party app follows, so the popup must re-provide it where it actually composes.
@@ -79,11 +82,10 @@ fun OverlayListPopup(
                 renderInRootScaffold = renderInRootScaffold,
                 passTouches = passTouches,
             ) {
-                CompositionLocalProvider(
-                    LocalBackdrop provides backdrop,
-                    LocalDensity provides popupDensity,
-                ) {
-                    hostContent()
+                CompositionLocalProvider(LocalDensity provides popupDensity) {
+                    PopupBackdrop(hostBackdrop = backdrop) {
+                        hostContent()
+                    }
                 }
             }
         },
@@ -99,4 +101,21 @@ fun OverlayListPopup(
         enableGlass = true,
         content = content,
     )
+}
+
+/**
+ * Publishes the backdrop a popup should sample: the one the host already provides, falling back to
+ * the call site's only when the host has none.
+ *
+ * The host publishes the layer the whole screen is recorded into, which is what a menu opened over a
+ * page must blur. The call site's backdrop is the layer *that page* records, and in an app whose
+ * pages keep their background transparent over a wallpaper it carries the wallpaper: the menu then
+ * frosts into the wallpaper's colours instead of the page it covers.
+ */
+@Composable
+internal fun PopupBackdrop(hostBackdrop: Backdrop?, content: @Composable () -> Unit) {
+    val ambient = LocalBackdrop.current
+    CompositionLocalProvider(LocalBackdrop provides (ambient ?: hostBackdrop)) {
+        content()
+    }
 }

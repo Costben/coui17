@@ -60,7 +60,7 @@ Scaffold {
 | show                       | Boolean                   | Whether to show the bottom sheet                               | -                                          | Yes      |
 | modifier                   | Modifier                  | Modifier applied to the bottom sheet                           | Modifier                                   | No       |
 | title                      | String?                   | Bottom sheet title                                             | null                                       | No       |
-| startAction                | @Composable (() -> Unit)? | Optional composable for start action (e.g., close button)      | null                                       | No       |
+| startAction                | @Composable (() -> Unit)? | Optional composable for start action (e.g., close button); use `SheetActionButton` for a header icon | null                                       | No       |
 | endAction                  | @Composable (() -> Unit)? | Optional composable for end action (e.g., submit button)       | null                                       | No       |
 | backgroundColor            | Color                     | Bottom sheet background color                                  | BottomSheetDefaults.backgroundColor() | No       |
 | enableWindowDim            | Boolean                   | Whether to enable dimming layer                                | true                                       | No       |
@@ -361,3 +361,57 @@ Scaffold {
     }
 }
 ```
+
+## Header Icon Buttons
+
+The title row is a 50dp `COUIToolbar` (`coui_list_dialog_toolbar_height`) with 16dp of side padding
+(`toolbar_center_menu_padding_horizontal_compat`, `values-v37`). An icon button inside it is a
+`COUIActionMenuItemView`:
+
+| Item | Value | Source |
+| :--- | :--- | :--- |
+| Button | 40dp × 40dp | `coui_action_menu_item_min_width`, 48dp → 40dp in `values-v37` |
+| Corner | 20dp (a circle) | `ToolbarMaterialEffectDelegate` uses `min(w, h) / 2` |
+| Resting fill | none | `new ColorDrawable(0)`; only the press paints |
+| Press | a `?couiColorPress` circle (`#1F000000` / `#33FFFFFF` at night), `response 0.3 / bounce 0` | `COUIMaskEffectDrawable` |
+| Icon | 24dp, inset 8dp | `abc_action_menu_item_layout.xml` |
+| Icon colour | `?couiColorLabelPrimary` (`#E6000000` / `#E6FFFFFF`) | `menu_ic_confirm_normal.xml` |
+| Same-side spacing | 10dp | `coui_actionbar_menuitemview_item_spacing`, `values-v37` |
+
+So use `SheetActionButton` at the two ends of the title, not `IconButton`: the latter is 48dp with a
+rounded-square ripple, which inflates the 50dp row and presses in the wrong shape.
+
+```kotlin
+OverlayBottomSheet(
+    show = show,
+    title = "Panel",
+    startAction = {
+        SheetActionButton(onClick = { dismiss?.invoke() }) {
+            Icon(COUIIcons.Close, contentDescription = "Cancel",
+                modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize))
+        }
+    },
+    endAction = {
+        SheetActionButton(onClick = { confirm() }) {
+            Icon(COUIIcons.Ok, contentDescription = "Confirm",
+                modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize))
+        }
+    },
+    onDismissRequest = { show = false },
+) { /* ... */ }
+```
+
+### Effect switches, measured on the device
+
+The same delegate owns two more things, each behind its own system switch. On a PLK110 running
+V17.0.0 the values are:
+
+| Effect | Switch | Value | Verdict |
+| :--- | :--- | :--- | :--- |
+| Circular stroke `TYPE_FRAMEWORK_CIRCLE_1` (1.9dp, α0.2 / 0.6 at night) | `system_material_stroke_enable` | **1** | **painted**; `SheetActionButton` carries it |
+| AGSL spot light `TYPE_OPAQUE_SMALL_2` | `system_material_blur_enable` × `com.oplus.appcompat.texture_effect.Enable` | 1 × unset | **not painted** (`AppFeatureProviderUtils.getBoolean(..., false)` defaults to false) |
+
+`COUIMaterialStateManager` decides this: `isStrokeEffectEnable()` returns `MATERIAL_STROKE_ENABLE`
+(`system_material_stroke_enable == 1`) directly, while `isSpotLightEffectEnable()` is
+`MATERIAL_BLUR_ENABLE && MATERIAL_FEATURE_ENABLE`. So the real tick and cross carry a rim and no
+spot light — turning the light on by default would make the header brighter than the real one.

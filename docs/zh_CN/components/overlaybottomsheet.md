@@ -60,7 +60,7 @@ Scaffold {
 | show                       | Boolean                   | 是否显示底部抽屉                             | -                                          | 是       |
 | modifier                   | Modifier                  | 应用于底部抽屉的修饰符                       | Modifier                                   | 否       |
 | title                      | String?                   | 底部抽屉的标题                               | null                                       | 否       |
-| startAction                | @Composable (() -> Unit)? | 可选的左侧操作按钮(例如关闭按钮)             | null                                       | 否       |
+| startAction                | @Composable (() -> Unit)? | 可选的左侧操作按钮(例如关闭按钮)，标题栏图标请用 `SheetActionButton` | null                                       | 否       |
 | endAction                  | @Composable (() -> Unit)? | 可选的右侧操作按钮(例如提交按钮)             | null                                       | 否       |
 | backgroundColor            | Color                     | 底部抽屉背景色                               | BottomSheetDefaults.backgroundColor() | 否       |
 | enableWindowDim            | Boolean                   | 是否启用遮罩层                               | true                                       | 否       |
@@ -359,3 +359,57 @@ Scaffold {
     }
 }
 ```
+
+## 标题栏图标按钮
+
+标题栏是一行 50dp 的 `COUIToolbar`（`coui_list_dialog_toolbar_height`），左右各 16dp 内边距
+（`toolbar_center_menu_padding_horizontal_compat`，`values-v37`）。放在里面的图标按钮在原生里是
+`COUIActionMenuItemView`：
+
+| 项 | 值 | 来源 |
+| :--- | :--- | :--- |
+| 按钮 | 40dp × 40dp | `coui_action_menu_item_min_width`，`values-v37` 从 48dp 降到 40dp |
+| 圆角 | 20dp（正圆） | `ToolbarMaterialEffectDelegate` 取 `min(w, h) / 2` |
+| 常态填充 | 无 | `new ColorDrawable(0)`，只有按下才画 |
+| 按下 | `?couiColorPress` 圆形（`#1F000000` / 夜间 `#33FFFFFF`），`response 0.3 / bounce 0` 弹簧 | `COUIMaskEffectDrawable` |
+| 图标 | 24dp，四周内缩 8dp | `abc_action_menu_item_layout.xml` |
+| 图标色 | `?couiColorLabelPrimary`（`#E6000000` / `#E6FFFFFF`） | `menu_ic_confirm_normal.xml` |
+| 同侧间距 | 10dp | `coui_actionbar_menuitemview_item_spacing`，`values-v37` |
+
+所以标题栏两端要用 `SheetActionButton`，不要用 `IconButton` —— 后者是 48dp 加圆角方形的水波纹，
+会把这个 50dp 的行撑高，按下时的形状也不对：
+
+```kotlin
+OverlayBottomSheet(
+    show = show,
+    title = "操作面板",
+    startAction = {
+        SheetActionButton(onClick = { dismiss?.invoke() }) {
+            Icon(COUIIcons.Close, contentDescription = "取消",
+                modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize))
+        }
+    },
+    endAction = {
+        SheetActionButton(onClick = { confirm() }) {
+            Icon(COUIIcons.Ok, contentDescription = "确定",
+                modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize))
+        }
+    },
+    onDismissRequest = { show = false },
+) { /* ... */ }
+```
+
+### 光效开关（按真机取值）
+
+同一个 delegate 还负责两样东西，它们各自有独立的系统开关，**在 PLK110 / V17.0.0 上的实测值是**：
+
+| 效果 | 开关 | 真机值 | 结论 |
+| :--- | :--- | :--- | :--- |
+| 圆形描边 `TYPE_FRAMEWORK_CIRCLE_1`（1.9dp，α0.2 / 夜间 0.6） | `system_material_stroke_enable` | **1** | **画**，`SheetActionButton` 已经带上 |
+| AGSL 光斑 `TYPE_OPAQUE_SMALL_2` | `system_material_blur_enable` × `com.oplus.appcompat.texture_effect.Enable` | 1 × 未设置 | **不画**（`AppFeatureProviderUtils.getBoolean(..., false)` 默认 false） |
+
+判定来自 `COUIMaterialStateManager`：`isStrokeEffectEnable()` 直接返回
+`MATERIAL_STROKE_ENABLE`（= `system_material_stroke_enable == 1`），而
+`isSpotLightEffectEnable()` 是 `MATERIAL_BLUR_ENABLE && MATERIAL_FEATURE_ENABLE`。
+所以真机的勾/叉**有描边、没有光斑** —— 光斑默认打开会比真机亮一档。
+:::

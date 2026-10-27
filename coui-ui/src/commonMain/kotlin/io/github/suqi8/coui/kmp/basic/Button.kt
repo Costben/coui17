@@ -64,6 +64,13 @@ import kotlin.coroutines.cancellation.CancellationException
  *   `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` arguments are `null`.
  *   [ButtonSize.Regular] keeps the original [ButtonDefaults] metrics. New in 1.2.0; pass it (by name)
  *   to opt into a tier.
+ * @param edgeStroke The rim drawn over the capsule fill, or `null` for no rim. ColorOS 17's
+ *   `COUIButton` always draws one (`COUIShadowEdgeDrawable` fed by
+ *   `COUIMaterialEffect.getStrokeParamsByType`), so a button that should look native passes the
+ *   preset matching its `ButtonType` — [MaterialStrokeParams.ContentCapsule5Light] for a secondary
+ *   button. It is opt-in here because the preset differs per button type and a filled primary
+ *   button's rim is far dimmer than a secondary one's. The rim is drawn *over* the fill and *under*
+ *   the label, inside the press-scale layer, exactly like the native draw order.
  * @param content The [Composable] content of the [Button].
  */
 @OptIn(ExperimentalCOUIApi::class)
@@ -81,6 +88,7 @@ fun Button(
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
     size: ButtonSize = ButtonSize.Regular,
+    edgeStroke: MaterialStrokeParams? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     @Suppress("NAME_SHADOWING")
@@ -131,6 +139,20 @@ fun Button(
     } else {
         containerColor
     }
+    // The native rim paints over the capsule fill (COUIButton.draw: background → mask/stroke →
+    // text → shadow edge), so it must be a later modifier than the surface, and an earlier one than
+    // the label. materialShadowEdge draws through onDrawBehind, which lands between the two.
+    val rimModifier = if (edgeStroke != null) {
+        Modifier.materialShadowEdge(
+            stroke = edgeStroke,
+            cornerWeight = MaterialShadowEdgeDefaults.CapsuleCornerWeight,
+            cornerRadius = resolvedCornerRadius,
+            edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+            shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
+        )
+    } else {
+        Modifier
+    }
 
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         Box(
@@ -146,6 +168,7 @@ fun Button(
                     }
                 }
                 .squircleSurface(color = fillColor, cornerRadius = resolvedCornerRadius)
+                .then(rimModifier)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = indication,
@@ -226,6 +249,8 @@ fun Button(
  * @param size The [ButtonSize] tier providing the default metrics when the explicit
  *   `cornerRadius` / `minWidth` / `minHeight` / `insideMargin` arguments are `null`.
  *   New in 1.2.0.
+ * @param edgeStroke The rim drawn over the capsule fill, or `null` for no rim. See
+ *   [Button]'s `edgeStroke`.
  */
 @OptIn(ExperimentalCOUIApi::class)
 @Composable
@@ -244,6 +269,7 @@ fun TextButton(
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
     size: ButtonSize = ButtonSize.Regular,
+    edgeStroke: MaterialStrokeParams? = null,
 ) {
     val mappedColors = remember(colors) {
         ButtonColors(
@@ -266,6 +292,7 @@ fun TextButton(
         interactionSource = interactionSource,
         indication = indication,
         size = size,
+        edgeStroke = edgeStroke,
     ) {
         Text(
             text = text,

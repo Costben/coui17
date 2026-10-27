@@ -1212,54 +1212,6 @@ internal val PopupCornerRadius = 28.dp
 private const val POPUP_CORNER_HEIGHT_RATIO = 0.36f
 
 /**
- * Trims the bottom lip of the rim.
- *
- * COUI's material rim brightens all four edges by the same rule, but the bottom edge of a short
- * panel sits close to its own body highlight, so the two stack and the bottom reads brighter than
- * the top — the panel then looks lit from below. Dimming the last few pixels of the bottom edge
- * puts the strongest highlight back on the top edge, where the light comes from.
- *
- * @param shape Silhouette the shading is clipped to.
- */
-internal fun Modifier.popupBottomShade(shape: Shape): Modifier = drawWithCache {
-    val outline = shape.createOutline(size, layoutDirection, this@drawWithCache)
-    val silhouette = Path().apply { addOutline(outline) }
-    val brush = Brush.verticalGradient(
-        0.955f to Color.Transparent,
-        1f to Color.Black.copy(alpha = 0.16f),
-    )
-    onDrawWithContent {
-        drawContent()
-        clipPath(silhouette) { drawRect(brush) }
-    }
-}
-
-/**
- * Lights the body of the panel from above.
- *
- * The material rim only draws a thin highlight on the outline; the body itself stayed flat, so the
- * panel read as a sheet with a glowing border instead of a slab with thickness. A white wash over
- * the top fifth and a dark one over the bottom fifth give the same top-lit, bottom-shaded fall-off
- * COUI's material surfaces have — inside the silhouette, so it never asks for room the popup
- * window does not have.
- *
- * @param shape Silhouette the shading is clipped to.
- */
-internal fun Modifier.popupMaterialShade(shape: Shape): Modifier = drawWithCache {
-    val outline = shape.createOutline(size, layoutDirection, this@drawWithCache)
-    val silhouette = Path().apply { addOutline(outline) }
-    val brush = Brush.verticalGradient(
-        0f to Color.White.copy(alpha = 0.07f),
-        0.28f to Color.Transparent,
-        0.70f to Color.Transparent,
-        1f to Color.Black.copy(alpha = 0.12f),
-    )
-    onDrawBehind {
-        clipPath(silhouette) { drawRect(brush) }
-    }
-}
-
-/**
  * Draws the page under the popup back onto its surface, so a window-hosted menu keeps the glass.
  *
  * A `Dialog` window has no page underneath it for [LocalBackdrop] to sample, and a recorded layer
@@ -1365,14 +1317,11 @@ private val PopupSurfaceDark = Color(0xFF333333)
 /**
  * Alpha of the popup fill on the surface that has no backdrop to sample.
  *
- * A window-hosted menu cannot read the page behind it, so the glass path is skipped and the panel
- * falls back to the flat popup colour. Flat `#FFFFFF` is a dead end for the material treatment: the
- * rim and the inner shadow are white gradients, and a white gradient has nothing to brighten on a
- * fill that is already at the top of the range, so the panel reads as an opaque sticker with no
- * edge at all. Leaving a little of the page showing through keeps the fill below white, which is
- * what lets the rim and the top-edge inner shadow resolve.
+ * Fully opaque, because `?couiColorBackgroundTop` is `#FFFFFF` / `#333333` with no alpha, and
+ * because the material rim is switched off in exactly this case (see [PopupMaterialEdgeActive]):
+ * there is no white gradient left that would need the fill to sit below white.
  */
-private const val POPUP_SOLID_SURFACE_ALPHA = 0.88f
+private const val POPUP_SOLID_SURFACE_ALPHA = 1f
 
 /**
  * Alpha of the popup fill when the surface has a captured page behind it instead of a live backdrop.
@@ -1883,16 +1832,24 @@ fun ListPopupContent(
     val cornerRadiusFor = remember(density) {
         { _: Float, height: Float -> popupCornerRadiusPx(height, density) }
     }
-    // The material rim is the popup's own surface treatment, not part of the glass: a popup
-    // without a backdrop still gets ColorOS's gradient edge and inner shadow, otherwise it is a
-    // flat opaque rectangle with nothing marking it as a material.
-    val materialEdge = Modifier.materialShadowEdge(
-        stroke = if (isDark) PopupStrokeDark else PopupStrokeLight,
-        cornerRadiusFor = cornerRadiusFor,
-        cornerWeight = if (squircleEnabled) POPUP_CORNER_WEIGHT else 1f,
-        edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
-        shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
-    )
+    // `RoundFrameLayout.updateMaterialEffectsState()` turns both shaders off whenever the popup is
+    // not on the blur path: `!useBackgroundBlur() || !checkThemeEnable || isLowAnimationLevel ||
+    // isLowPowerMode` sets `mShadowEdgeEnabled = mSpotLightEnabled = false`, and `onDraw` then
+    // skips `COUIShadowEdgeDrawable` entirely (`:361`) as well as the spot light (`:364`). A popup
+    // that falls back to the flat colour therefore has no rim and no inner shadow — which is also
+    // why the fill above can be opaque.
+    val materialEdgeActive = glassBackdrop != null || snapshotBackdrop != null
+    val materialEdge = if (materialEdgeActive) {
+        Modifier.materialShadowEdge(
+            stroke = if (isDark) PopupStrokeDark else PopupStrokeLight,
+            cornerRadiusFor = cornerRadiusFor,
+            cornerWeight = if (squircleEnabled) POPUP_CORNER_WEIGHT else 1f,
+            edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
+            shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
+        )
+    } else {
+        Modifier
+    }
 
     // The entrance scale below wraps the glass, so the blur would sample the page through it and
     // the page behind the menu would appear to zoom. Handing the same scale to the glass as an
@@ -1945,9 +1902,7 @@ fun ListPopupContent(
                         blendColors = popupGlassBlendColors(),
                         enclosingLayerBlock = glassScaleCompensation,
                     )
-                    .popupMaterialShade(glassShape)
-                    .then(materialEdge)
-                    .popupBottomShade(glassShape),
+                    .then(materialEdge),
             ) {
                 // COUI's main menu scales a true 0 -> 1; only the small-screen sub-menu clip-reveals.
                 // Glass menus scale too (ColorOS 17's gallery menus and dropdowns grow from and shrink

@@ -9,10 +9,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import io.github.suqi8.coui.kmp.basic.ButtonDefaults
+import io.github.suqi8.coui.kmp.basic.TextButtonColors
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.layout.AlertDialogColors
 import io.github.suqi8.coui.kmp.layout.AlertDialogContentLayout
 import io.github.suqi8.coui.kmp.layout.AlertDialogDefaults
+import io.github.suqi8.coui.kmp.layout.DialogButtonBarDefaults
 import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
 
 /**
@@ -62,6 +65,8 @@ fun OverlayAlertDialog(
     renderInRootScaffold: Boolean = true,
     cornerRadius: Dp? = null,
     maxWidth: Dp = AlertDialogDefaults.MaxWidth,
+    buttonColors: TextButtonColors = DialogButtonBarDefaults.buttonColors(),
+    recommendColors: TextButtonColors = ButtonDefaults.textButtonColorsPrimary(),
     content: (@Composable () -> Unit)? = null,
 ) {
     AlertDialogContentLayout(
@@ -92,6 +97,8 @@ fun OverlayAlertDialog(
         onDismissFinished = onDismissFinished,
         cornerRadius = cornerRadius,
         maxWidth = maxWidth,
+        buttonColors = buttonColors,
+        recommendColors = recommendColors,
         content = content,
     )
 }

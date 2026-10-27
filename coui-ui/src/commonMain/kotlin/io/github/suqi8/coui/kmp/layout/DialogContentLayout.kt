@@ -66,8 +66,13 @@ import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.materialShadowEdge
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurDefaults
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
@@ -343,6 +348,16 @@ internal fun DialogContent(
         if (isCentered) 0f else with(density) { (bottomPadding + outsideMargin.height).toPx() }
     }
 
+    val dialogShape = remember(resolvedCornerRadius) { SquircleShape(resolvedCornerRadius) }
+    val dialogSurface = Modifier.couiGlassSurface(
+        backdrop = LocalBackdrop.current,
+        shape = dialogShape,
+        containerColor = backgroundColor,
+        fallback = Modifier.squircleSurface(color = backgroundColor, cornerRadius = resolvedCornerRadius),
+        blurRadius = DialogDefaults.blurRadius(),
+        blendColors = DialogDefaults.blurColors(),
+    )
+
     val contentModifier = modifier
         .widthIn(max = maxWidth)
         .heightIn(max = if (isCentered) windowHeight * (2f / 3f) else Dp.Unspecified)
@@ -369,7 +384,12 @@ internal fun DialogContent(
             detectTapGestures { /* Consume click */ }
         }
         // COUI panels carry no blanket inside padding; each slot brings its own margins.
-        .squircleSurface(color = backgroundColor, cornerRadius = resolvedCornerRadius)
+        // ColorOS 17 frosts the dialog: `COUIAlertDialogBuilder` feeds `COUIBackgroundBlurBuilder`
+        // `coui_dialog_list_blend_blur_*` + `coui_dialog_list_mix_blur_*` at
+        // `coui_dialog_blur_radius`, and `coui_dialog_list_background_color_above_blur` is
+        // transparent, so the panel is blur + two tints with no opaque fill. Below Android 13 — or
+        // with no backdrop — it falls back to the flat squircle fill.
+        .then(dialogSurface)
         // The material edge must sit inside the surface so its rim paints over the fill. ColorOS 17
         // gives every dialog panel the same rim, so it is drawn here rather than by each caller;
         // `edgeModifier` stays as the per-call extension point.
@@ -414,12 +434,13 @@ internal fun DialogContent(
         ) {
             val titleMultiline = remember { mutableStateOf(false) }
             val summaryMultiline = remember { mutableStateOf(false) }
-            // COUI swaps the message scroll paddings for the tall variant once the title or message wraps.
-            val messagePadding = if (titleMultiline.value || summaryMultiline.value) {
-                MessagePaddingVerticalTall
-            } else {
-                MessagePaddingVertical
-            }
+            // `COUIAlertDialogMessageScrollViewStyle` pads the message scroller, not the message text,
+            // and the builder swaps in the no-title variant when `alertTitle` is absent. With a title
+            // the gap above the message is the title's own
+            // `coui_alert_dialog_title_margin_bottom` (6dp); with no title the scroller supplies
+            // `coui_alert_dialog_scroll_padding_top_message_no_title` (22dp) instead.
+            val messageTopPadding = if (title == null) MessageTopPaddingNoTitle else MessageTopPadding
+            val messageBottomPadding = if (title == null) MessageBottomPaddingNoTitle else MessageBottomPadding
             title?.let {
                 Text(
                     modifier = Modifier
@@ -440,7 +461,7 @@ internal fun DialogContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = insideMargin.width)
-                        .padding(vertical = messagePadding),
+                        .padding(top = messageTopPadding, bottom = messageBottomPadding),
                     text = it,
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     // COUI centers a single-line message and start-aligns once it wraps.
@@ -476,16 +497,75 @@ object DialogDefaults {
     fun titleColor() = COUITheme.colorScheme.onBackground
 
     /**
-     * The default color of the summary. COUI uses the same primary label color as the title.
+     * The default color of the summary.
+     *
+     * `COUIAlertDialogMessageStyle` sets `android:textColor="?couiColorLabelSecondary"`, which is
+     * `coui_color_label_secondary` (`#8a000000`): over the frosted panel that lands on `#696969`,
+     * noticeably lighter than the title. Not `onBackground`, which is the title's own
+     * `?couiColorLabelPrimary`.
      */
     @Composable
-    fun summaryColor() = COUITheme.colorScheme.onBackground
+    fun summaryColor() = COUITheme.colorScheme.onBackgroundVariant
 
     /**
      * The default background color of the dialog.
      */
     @Composable
     fun backgroundColor() = COUITheme.colorScheme.background
+
+    /**
+     * The dialog blur radius in px.
+     *
+     * `COUIAlertDialogBuilder` reads `R.integer.coui_dialog_blur_radius` (200) and hands it to
+     * `COUIBackgroundBlurBuilder` in device pixels — half the sheet's 400, because a centred dialog
+     * sits over less of the page.
+     */
+    val NativeBlurRadiusPx = 200f
+
+    /**
+     * [NativeBlurRadiusPx] in dp for the current display, clamped to [BlurDefaults.MaxBlurRadius].
+     *
+     * The native panel keeps none of the page's structure: on the ColorOS 17 "change device name"
+     * dialog the flat part of the panel varies by 1.7 levels over a page that varies by 26–43. Only
+     * the full strength gets there; anything weaker leaves the rows behind readable through the
+     * panel.
+     */
+    @Composable
+    fun blurRadius(): Float {
+        val density = LocalDensity.current.density
+        return (NativeBlurRadiusPx / density).coerceIn(0f, BlurDefaults.MaxBlurRadius)
+    }
+
+    /**
+     * The tint of the light dialog over its blur.
+     *
+     * The native recipe is `coui_dialog_list_blend_blur_light` (`#509F9F9F`) and
+     * `coui_dialog_list_mix_blur_light` (`#DC909090`), handed to `OplusBlurParam.setMaterialParams`.
+     * That platform shader weighs them as material params, not as `SrcOver` layers — stacked with
+     * `SrcOver` the two greys could never come out lighter than 160, yet the live panel is (228,228,228).
+     * So the layer here is fitted to the measured output instead: a neutral grey at the same 86%
+     * weight as the native mix, which lands on 228 over a light page and lets the blurred page tint
+     * the remaining 14%.
+     */
+    val BlurColorsLight: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0xDCE7E7E7)),
+    )
+
+    /**
+     * The dark counterpart, fitted the same way to the live dark panel's (40,40,40); the native pair
+     * is `coui_dialog_list_blend_blur_dark` (`#B2292929`) and `coui_dialog_list_mix_blur_dark`
+     * (`#8C777777`).
+     */
+    val BlurColorsDark: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0xDC272727)),
+    )
+
+    /** [BlurColorsLight] or [BlurColorsDark] for the current theme. */
+    @Composable
+    fun blurColors(): List<BlendColorEntry> {
+        val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+        return if (isDark) BlurColorsDark else BlurColorsLight
+    }
 
     /**
      * The default corner radius of the dialog panel.
@@ -571,29 +651,44 @@ object DialogDefaults {
     val ButtonBarMinHeight = 44.dp
 
     /**
-     * The paddings of a button in a horizontal dialog button bar. The horizontal start/end are
-     * COUI `coui_alert_dialog_button_horizontal_padding` (12dp); the vertical values are the
-     * bar's own top/bottom inset, carried on the buttons so the panel bottom inset rides on them
-     * (`COUIButtonBarLayout.resetHorButsPadding`).
+     * The interior padding of a button in a horizontal dialog button bar, i.e. the space between
+     * the capsule's edge and its label.
+     *
+     * The horizontal start/end are COUI `coui_alert_dialog_button_horizontal_padding` (12dp); the
+     * vertical values are `coui_bottom_alert_dialog_horizontal_button_padding_top_extra_new` and
+     * `..._bottom_extra_new` (4dp each), the insets `COUIButtonBarLayout.resetHorButsPadding` adds
+     * on top of the 44dp capsule height.
+     *
+     * These are *not* the bar's own insets: the 4dp above the capsules and the 16dp below them are
+     * cell padding (`coui_alert_dialog_button_parent_padding_vertical` / `..._bottom`), applied by
+     * the bar — see `DialogButtonBarDefaults.ButtonBarPaddingTop` / `ButtonBarPaddingBottom`. A
+     * capsule that carries the panel inset itself is what made the ported buttons spill over the
+     * panel's bottom corners.
      */
-    val ButtonBarInsideMargin = PaddingValues(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 22.dp)
+    val ButtonBarInsideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
 
     /**
-     * The thickness of the divider between horizontal dialog bar buttons. COUI
-     * `coui_delete_alert_dialog_divider_height_horizontalbutton`; the 0.33dp `_verticalbutton`
-     * token applies only when the bar stacks vertically.
+     * Retained for source compatibility and unused: the ColorOS 17 alert-dialog bar draws no
+     * dividers.
+     *
+     * `coui_center_alert_dialog_button_panel.xml` holds three bare button cells, and
+     * `COUIButtonBarLayout.setShowDividerWhenHasItems` is an empty method in ColorOS 17. This dimen
+     * (`coui_delete_alert_dialog_divider_height_horizontalbutton`) belongs to the delete-dialog bar,
+     * not to the alert dialog, whose capsules are separated by an 8dp gap instead.
      */
     val ButtonBarDividerThickness = 1.dp
 
     /**
-     * The top inset of the divider between horizontal dialog bar buttons. COUI
-     * `coui_bottom_alert_dialog_horizontal_button_padding_top_extra_divider_new`.
+     * Retained for source compatibility and unused, see [ButtonBarDividerThickness].
+     *
+     * COUI `coui_bottom_alert_dialog_horizontal_button_padding_top_extra_divider_new`.
      */
     val ButtonBarDividerInsetTop = 17.dp
 
     /**
-     * The bottom inset of the divider between horizontal dialog bar buttons. COUI
-     * `coui_bottom_alert_dialog_horizontal_button_padding_bottom_extra_divider_new`.
+     * Retained for source compatibility and unused, see [ButtonBarDividerThickness].
+     *
+     * COUI `coui_bottom_alert_dialog_horizontal_button_padding_bottom_extra_divider_new`.
      */
     val ButtonBarDividerInsetBottom = 21.dp
 }
@@ -619,8 +714,17 @@ private val DialogLineHeight = 1.29f.em
 /** COUI coui_no_message_alert_dialog_title_margin_bottom, applied for every non-tiny dialog. */
 private val TitleMarginBottom = 6.dp
 
-/** COUI coui_alert_dialog_scroll_padding_top/bottom_message_tallDialog (the resting values). */
-private val MessagePaddingVertical = 18.dp
+/** `coui_alert_dialog_scroll_padding_top_message` (0dp) — the title already ends with 6dp. */
+private val MessageTopPadding = 0.dp
 
-/** COUI message scroll padding once the title or message is multiline (a tall dialog). */
-private val MessagePaddingVerticalTall = 8.dp
+/** `coui_alert_dialog_scroll_padding_bottom_message` (16dp), shared by every titled dialog. */
+private val MessageBottomPadding = 16.dp
+
+/**
+ * `coui_alert_dialog_scroll_padding_top_message_no_title` (22dp) — a dialog without a title still
+ * needs roughly the 24dp `coui_alert_dialog_title_margin_top` in front of its first line of text.
+ */
+private val MessageTopPaddingNoTitle = 22.dp
+
+/** `coui_alert_dialog_scroll_padding_bottom_message_no_title` (4dp). */
+private val MessageBottomPaddingNoTitle = 4.dp

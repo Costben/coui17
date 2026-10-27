@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.Density
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.layout.DialogButtonBarDefaults
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
@@ -105,14 +106,16 @@ class AlertDialogInteractionTest {
 /**
  * The vertical centre of the panel. The panel itself carries no semantics node, so its bounds are
  * reconstructed from two descendants: `DialogContent` indents the title by `insideMargin.height`
- * from the panel top, and the merged confirm button spans the button bar down to the panel bottom.
+ * from the panel top, and the merged confirm button ends `ButtonBarPaddingBottom` above the panel
+ * bottom — the bar reserves that inset for the panel's own rounded footer.
  */
 @OptIn(ExperimentalTestApi::class)
 private fun ComposeUiTest.panelCenterY(): Float {
     val inset = with(density) { DialogDefaults.insideMargin.height.toPx() }
+    val barBottom = with(density) { DialogButtonBarDefaults.ButtonBarPaddingBottom.toPx() }
     val title = onNodeWithText("Delete backup?").fetchSemanticsNode().boundsInRoot
     val confirm = onNodeWithText("OK").fetchSemanticsNode().boundsInRoot
-    return (title.top - inset + confirm.bottom) / 2f
+    return (title.top - inset + confirm.bottom + barBottom) / 2f
 }
 
 /** The centre of the area the panel centres in: the window minus the bottom outside margin. */
