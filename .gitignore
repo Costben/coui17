@@ -69,3 +69,6 @@ RELEASE_BLOCKERS.md
 hs_err_pid*.log
 replay_pid*.log
 *.hprof
+
+# Local component catalog: device screenshots and the static site that serves them
+component-catalog/
