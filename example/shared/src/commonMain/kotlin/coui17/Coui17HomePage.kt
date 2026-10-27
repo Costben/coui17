@@ -160,7 +160,6 @@ fun Coui17HomePage(
         coui17Entry("InstallLoadProgress") { InstallLoadProgressDemo() }
         coui17Entry("Snackbar") { SnackbarDemo(snackbarHostState) }
         coui17Entry("NotificationSnackBar") { NotificationSnackBarDemo() }
-        coui17Entry("NotificationSwipeBox") { NotificationSwipeDemo() }
         coui17Entry("TopTips") { TopTipsDemoContent() }
         coui17Entry("TopTips Styles") { TopTipsStylesDemo() }
 
@@ -195,14 +194,7 @@ fun Coui17HomePage(
         coui17Entry("TimePicker (24-hour)") { TimePicker24HourDemo() }
         coui17Entry("TimePicker (12-hour)") { TimePicker12HourDemo() }
         coui17Entry("LunarDatePicker") { LunarDatePickerDemo() }
-        coui17Entry("CalendarView") { CalendarViewDemoContent() }
         coui17Entry("IntentSeekBar") { IntentSeekBarDemoContent() }
-        coui17Entry("ColorSwatchPicker") { ColorSwatchPickerCard() }
-        coui17Entry("ColorPicker (HSV)") { ColorPickerHSVDemo() }
-        coui17Entry("ColorPicker (OKHSV)") { ColorPickerOKHSVDemo() }
-        coui17Entry("ColorPicker (OKLAB)") { ColorPickerOKLABDemo() }
-        coui17Entry("ColorPicker (OKLCH)") { ColorPickerOKLCHDemo() }
-        coui17Entry("ColorPalette") { ColorPaletteDemo() }
 
         coui17Section("Overlays & menus")
         coui17Entry("Dialog") { DialogDemo() }
@@ -232,19 +224,15 @@ fun Coui17HomePage(
         coui17Entry("TopAppBar (glass)") { TopAppBarGlassDemo() }
         coui17Entry("TopAppBar (ColorOS 17 forms)") { TopAppBarColorOS17FormsDemo() }
         coui17Entry("PinnedTopAppBar") { PinnedTopAppBarDemo() }
-        coui17Entry("BreadcrumbBar") { BreadcrumbBarDemo() }
         coui17Entry("NavigationBarEnterExit") { NavigationBarEnterExitDemo() }
         coui17Entry("HorizontalScrollBar") { HorizontalScrollBarDemo() }
         coui17Entry("ListDetailView") { ListDetailViewDemo() }
-        coui17Entry("SideNavigationBar") { SideNavigationBarDemo() }
-        coui17Entry("SidePaneLayout") { SidePaneLayoutDemo() }
         coui17Entry(
             "LockPatternView / NumericKeyboard / SimpleLockView / LockScreenPwdInput / Banner",
         ) {
             LockAndBannerDemo()
         }
         coui17Entry("EmptyState") { EmptyStateDemo() }
-        coui17Entry("CompleteState") { CompleteStateDemo() }
 
         coui17Section("Preferences")
         coui17Entry("SwitchLoadingPreference") { SwitchLoadingPreferenceDemo() }
@@ -274,7 +262,6 @@ fun Coui17HomePage(
         }
 
         coui17Section("Visual effects")
-        coui17Entry("MetaBallSurface") { MetaBallSurfaceDemo() }
         coui17Entry("MaterialShadowEdge") { MaterialShadowEdgeDemo() }
         coui17Entry("SpotLight") { SpotLightDemo() }
         coui17Entry("HintAnimationLayout") { HintAnimationLayoutDemo() }

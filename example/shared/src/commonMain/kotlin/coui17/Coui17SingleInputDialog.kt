@@ -144,7 +144,9 @@ fun SingleInputDialog(
         // Title and message are drawn inside the content slot so the measured 24dp / 6dp /
         // 17.5dp vertical rhythm stays exact (the shared slot would apply 18dp message padding).
         insideMargin = DpSize(0.dp, 0.dp),
-        defaultWindowInsetsPadding = false,
+        // The field opens focused, so the keyboard comes up with the dialog; the IME padding keeps
+        // the panel above it, as the native dialog rises to sit 16dp over the keyboard.
+        defaultWindowInsetsPadding = true,
         onDismissRequest = onDismissRequest,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -361,17 +363,20 @@ private fun DialogTextButton(
         !enabled -> COUITheme.colorScheme.onSurfaceVariantActions
         else -> COUITheme.colorScheme.onBackground
     }
+    // Measured on the live dialog: the enabled Cancel capsule is a white layer over the panel
+    // (247 over 229 light, 84 over 40 dark), while the disabled Save capsule is
+    // `?couiColorContainer8` (213 over 229, 63 over 40). Press deepens the enabled fill.
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val fill = when {
+        !enabled -> if (isDark) Color(0x1AFFFFFF) else Color(0x14000000)
+        else -> if (isDark) Color(0x33FFFFFF) else Color(0xAAFFFFFF)
+    }
+    val pressedFill = if (isDark) Color(0x47FFFFFF) else Color(0x14000000)
     Box(
         modifier = modifier
             .height(44.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                if (pressed && enabled) {
-                    COUITheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.12f)
-                } else {
-                    Color.Transparent
-                },
-            )
+            .clip(RoundedCornerShape(22.dp))
+            .background(if (pressed && enabled) pressedFill else fill)
             .clickable(
                 enabled = enabled,
                 interactionSource = interactionSource,

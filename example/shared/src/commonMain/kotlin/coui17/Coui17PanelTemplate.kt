@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -28,19 +29,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -139,8 +146,11 @@ fun PanelTemplate(
                 .height(PanelTemplateDefaults.TitleHeight),
             contentAlignment = Alignment.CenterStart,
         ) {
+            // The 28sp line is taller than the 27dp ink box it is centred in; measured unbounded so
+            // the box only positions the title and never clips its ascenders or descenders.
             Text(
                 text = title,
+                modifier = Modifier.wrapContentHeight(unbounded = true),
                 style = trimmedLineHeight,
                 fontSize = 28.sp,
                 lineHeight = 28.sp,
@@ -163,62 +173,73 @@ fun PanelTemplate(
 }
 
 /**
- * The surface of the two panel toolbar buttons: the native icon-button treatment, i.e. a translucent
- * fill, the rim of `EDGE_STYLE_1` / `SHADOW_STYLE_1` and the soft fade below the button.
+ * The two panel toolbar buttons' shared dress, as measured on a live ColorOS 17 device panel.
+ *
+ * Light mode: no fill of its own (the capsule reads the panel's 240), a 1dp highlight along the top
+ * and bottom rim, and a soft dark halo around it that is deepest under the bottom edge (-18 levels)
+ * and dies out ~14dp from the edge. Dark mode: a 12% white fill (51 over the panel's 22), the same
+ * rim, and a faint light halo instead of a dark one. The halo never reaches inside the capsule, so
+ * it is drawn with the capsule cut out — a plain gradient started at the bottom edge left a hard
+ * line across the button's foot.
  */
 @Composable
-private fun Modifier.toolbarButtonSurface(): Modifier {
-    val fill = COUITheme.colorScheme.surfaceContainer
-    return this
-        // The native button edge is hard on top but dissolves into the panel over ~6dp below, so the
-        // fill is repeated as a fading capsule under the button instead of a drop shadow.
-        .drawBehind {
-            // The fill is repeated as a capsule that starts just below the button edge and fades out
-            // over 6dp, which is what the native blurred bottom edge looks like against the panel.
-            val fade = 6.dp.toPx()
-            val total = size.height + fade
-            val start = (size.height - 2.dp.toPx()) / total
-            drawRoundRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(fill.copy(alpha = fill.alpha * 0.5f), Color.Transparent),
-                    startY = size.height,
-                    endY = size.height + fade,
-                    // Decal keeps the gradient transparent above the edge instead of clamping it.
-                    tileMode = TileMode.Decal,
-                ),
-                size = Size(size.width, size.height + fade),
-                cornerRadius = CornerRadius(size.height / 2f),
-            )
-        }
-        .clip(CircleShape)
-        .background(fill)
-        .materialShadowEdge(
-            stroke = PanelTemplateDefaults.ToolbarButtonStroke,
-            edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
-            shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
+private fun ToolbarButtonSurface(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val fill = if (isDark) PanelTemplateDefaults.ToolbarFillDark else Color.Transparent
+    val halo = if (isDark) PanelTemplateDefaults.ToolbarHaloDark else PanelTemplateDefaults.ToolbarHaloLight
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .drawWithContent {
+                    val capsule = Path().apply {
+                        addOutline(CircleShape.createOutline(size, layoutDirection, this@drawWithContent))
+                    }
+                    clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
+                }
+                .dropShadow(CircleShape, halo),
         )
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(fill)
+                .materialShadowEdge(
+                    stroke = PanelTemplateDefaults.ToolbarButtonStroke,
+                    edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
+                    shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
+                )
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
+    }
 }
 
 /** The capsule close button in the panel toolbar: 60x40 dp, full radius. */
 @Composable
 private fun CloseCapsule(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .height(PanelTemplateDefaults.ToolbarHeight)
-            .toolbarButtonSurface()
-            .clickable(onClick = onClick)
-            // 16dp a side keeps the capsule at the native 60dp for a two-character label.
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = str("Close"),
-            style = trimmedLineHeight,
-            fontSize = 14.sp,
-            lineHeight = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = COUITheme.colorScheme.onBackground,
-        )
+    ToolbarButtonSurface(onClick = onClick) {
+        Box(
+            modifier = Modifier
+                .height(PanelTemplateDefaults.ToolbarHeight)
+                // 16dp a side keeps the capsule at the native 60dp for a two-character label.
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = str("Close"),
+                style = trimmedLineHeight,
+                fontSize = 14.sp,
+                lineHeight = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = COUITheme.colorScheme.onBackground,
+            )
+        }
     }
 }
 
@@ -226,23 +247,28 @@ private fun CloseCapsule(onClick: () -> Unit) {
 @Composable
 private fun OverflowButton(onClick: () -> Unit) {
     val ink = COUITheme.colorScheme.onBackground
-    Box(
-        modifier = Modifier
-            .size(PanelTemplateDefaults.ToolbarHeight)
-            .toolbarButtonSurface()
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(modifier = Modifier.size(width = 3.5.dp, height = 17.5.dp)) {
-            val radius = size.width / 2f
-            val pitch = (size.height - size.width) / 2f
-            repeat(3) { index ->
-                drawCircle(
-                    color = ink,
-                    radius = radius,
-                    center = Offset(size.width / 2f, radius + pitch * index),
-                )
-            }
+    ToolbarButtonSurface(onClick = onClick) {
+        Box(
+            modifier = Modifier.size(PanelTemplateDefaults.ToolbarHeight),
+            contentAlignment = Alignment.Center,
+        ) {
+            OverflowDots(ink)
+        }
+    }
+}
+
+/** The three stacked dots of the overflow button. */
+@Composable
+private fun OverflowDots(ink: Color) {
+    Canvas(modifier = Modifier.size(width = 3.5.dp, height = 17.5.dp)) {
+        val radius = size.width / 2f
+        val pitch = (size.height - size.width) / 2f
+        repeat(3) { index ->
+            drawCircle(
+                color = ink,
+                radius = radius,
+                center = Offset(size.width / 2f, radius + pitch * index),
+            )
         }
     }
 }
@@ -456,13 +482,37 @@ object PanelTemplateDefaults {
     /** Height of the capsule action: 171px. */
     val ActionHeight = 44.dp
 
-    /** `couiColorPrimary` vertical gradient measured on the live capsule: #1A8CFE -> #3198FF. */
+    /**
+     * The toolbar buttons' rim. The live rim lifts the top edge 5–12 levels over the fill in light
+     * mode and ~30 in dark mode, and the bottom edge 8 / 23.
+     */
     val ToolbarButtonStroke = MaterialStrokeParams(
-        edgeAlpha = 0.17f,
+        edgeAlpha = 0.5f,
         edgeWidth = 2.dp,
         shadowFadeIn = 0.03f,
     )
+
+    /** `couiColorPrimary` vertical gradient measured on the live capsule: #1A8CFE -> #3198FF. */
     val ActionGradient = listOf(Color(0xFF1A8CFE), Color(0xFF3198FF))
+
+    /** The dark-mode toolbar button fill: 12% white, (51,51,51) over the (22,22,22) panel. */
+    val ToolbarFillDark = Color(0x20FFFFFF)
+
+    /** The light-mode halo round a toolbar button: dark, deepest below the button. */
+    val ToolbarHaloLight = Shadow(
+        radius = 16.dp,
+        color = Color.Black,
+        offset = DpOffset(0.dp, 6.dp),
+        alpha = 0.12f,
+    )
+
+    /** The dark-mode halo: the same geometry in faint white. */
+    val ToolbarHaloDark = Shadow(
+        radius = 16.dp,
+        color = Color.White,
+        offset = DpOffset(0.dp, 6.dp),
+        alpha = 0.05f,
+    )
 
     /** The 1dp edge light of the capsule: white at both ends, clear across the middle. */
     val ActionEdgeGradient = listOf(

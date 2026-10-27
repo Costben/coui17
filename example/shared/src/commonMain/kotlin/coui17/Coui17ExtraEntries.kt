@@ -8,6 +8,7 @@ package coui17
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -142,10 +143,19 @@ fun CompleteStateDemo() {
     }
 }
 
-/** `FlowLayout` wrapping chips across lines. */
+/**
+ * `FlowLayout` wrapping checkable chips across lines.
+ *
+ * This is the ColorOS 17 suggestion-chip pattern: `item_search_chip_history.xml` in Settings puts
+ * `com.coui.appcompat.chip.COUIChip` rows inside a `COUICheckableGroup`, so every chip toggles its
+ * own checked state and the group reports the selection. The metrics are
+ * `Widget.COUI.Chip.Suggestion`: 28dp tall, 12dp chip padding, `couiTextBodyXS` label, `couiColorCard`
+ * while unchecked and `couiColorPrimary` with the on-color label once checked.
+ */
 @Composable
 fun FlowLayoutDemo() {
-    val tags = listOf("Compose", "Multiplatform", "ColorOS 17", "Material", "Design")
+    val tags = listOf("Recommended", "Popular", "Nearby", "Archived", "Inbox")
+    var selected by remember { mutableStateOf(emptySet<String>()) }
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -157,7 +167,16 @@ fun FlowLayoutDemo() {
             lineSpacing = 8.dp,
         ) {
             tags.forEach { tag ->
-                Chip(selected = false, onClick = {}, label = str(tag))
+                val checked = tag in selected
+                Chip(
+                    selected = checked,
+                    onClick = {
+                        selected = if (checked) selected - tag else selected + tag
+                    },
+                    label = str(tag),
+                    minHeight = 28.dp,
+                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                )
             }
         }
     }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,17 +21,15 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.CalendarView
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.DateValue
+import io.github.suqi8.coui.kmp.basic.ExpandArrow
 import io.github.suqi8.coui.kmp.basic.ExpandableList
 import io.github.suqi8.coui.kmp.basic.FloatingButton
 import io.github.suqi8.coui.kmp.basic.FloatingButtonItem
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
-import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Add
 import io.github.suqi8.coui.kmp.icon.extended.AddFolder
-import io.github.suqi8.coui.kmp.icon.extended.ExpandLess
-import io.github.suqi8.coui.kmp.icon.extended.ExpandMore
 import io.github.suqi8.coui.kmp.icon.extended.Favorites
 import io.github.suqi8.coui.kmp.icon.extended.Tune
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -146,11 +143,9 @@ private fun FloatingButtonDemo() {
 private fun ExpandableListDemo() {
     var expandedGroups by remember { mutableStateOf(setOf(0)) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-    ) {
+    // Full bleed inside the card: a row's press highlight is clipped by the card's own squircle,
+    // so an inset row painted a square block that stopped short of both card edges.
+    Column(modifier = Modifier.fillMaxWidth()) {
         ExpandableList(
             groupCount = DemoSettingsGroups.size,
             childCount = { groupIndex -> DemoSettingsGroups[groupIndex].second.size },
@@ -176,11 +171,7 @@ private fun ExpandableListDemo() {
 private fun AccordionExpandableListDemo() {
     var expandedGroup by remember { mutableStateOf(setOf<Int>()) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         ExpandableList(
             groupCount = DemoAccordionGroups.size,
             childCount = { groupIndex -> DemoAccordionGroups[groupIndex].second.size },
@@ -208,7 +199,7 @@ private fun SettingsGroupHeader(title: String, expanded: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -217,11 +208,9 @@ private fun SettingsGroupHeader(title: String, expanded: Boolean) {
             style = COUITheme.textStyles.body1,
             modifier = Modifier.weight(1f),
         )
-        Icon(
-            imageVector = if (expanded) COUIIcons.ExpandLess else COUIIcons.ExpandMore,
+        ExpandArrow(
+            expanded = expanded,
             contentDescription = if (expanded) "Collapse $title" else "Expand $title",
-            tint = COUITheme.colorScheme.onBackgroundVariant,
-            modifier = Modifier.size(24.dp),
         )
     }
 }
@@ -234,7 +223,7 @@ private fun SettingsChildRow(text: String) {
         style = COUITheme.textStyles.footnote1,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
     )
 }
 

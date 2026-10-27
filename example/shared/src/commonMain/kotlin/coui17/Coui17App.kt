@@ -58,6 +58,7 @@ import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.COUIPopupHost
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import pages.ColorPage
@@ -189,6 +190,14 @@ private fun Coui17Root() {
         drawWallpaper(surfaceColor, wallpaper.image)
         drawLayer(pageBackdrop.graphicsLayer)
     }
+    // What dialogs and bottom sheets sample: the screen exactly as the user sees it — the page on
+    // its own background with both bars over it. The native panel blurs the window behind it, and
+    // that window never shows the wallpaper; handing the overlays [backdrop] instead made a white
+    // page frost into the wallpaper's cyan and yellow.
+    val screenBackdrop = rememberLayerBackdrop {
+        drawRect(pageColor)
+        drawContent()
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val pagerState = rememberPagerState(pageCount = { Coui17Page.entries.size })
     val coroutineScope = rememberCoroutineScope()
@@ -248,8 +257,14 @@ private fun Coui17Root() {
             // content to sample.
             edgeToEdge = true,
             snackbarHost = { SnackbarHost(state = snackbarHostState) },
+            // The overlay host is a sibling of the recorded screen, so a panel never samples itself.
+            popupHost = {
+                CompositionLocalProvider(LocalBackdrop provides if (appState.enableBlur) screenBackdrop else null) {
+                    COUIPopupHost()
+                }
+            },
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize().layerBackdrop(screenBackdrop)) {
                 // Only the page content is recorded into the backdrop.
                 Box(
                     modifier = Modifier

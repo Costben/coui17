@@ -5,6 +5,7 @@ package io.github.suqi8.coui17
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -23,6 +24,7 @@ import io.github.suqi8.coui.kmp.utils.rememberGalleryDensity
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        voteHighRefreshRate()
 
         setContent {
             var colorMode by remember { mutableIntStateOf(0) }
@@ -53,5 +55,35 @@ class MainActivity : ComponentActivity() {
                 Coui17App(onColorModeChange = { colorMode = it })
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        voteHighRefreshRate()
+    }
+
+    /**
+     * Asks the display to run this window at the panel's high refresh rate.
+     *
+     * Left without a preference the window carries no frame-rate vote, and the OEM's adaptive
+     * refresh policy settles the whole screen on 90Hz: frames then land 11ms apart on a panel that
+     * ticks every 8.3ms, so a scroll advances in visible steps next to a system app. The gallery is
+     * nothing but scrolling lists, so it asks for 120Hz outright — the frame budget (roughly 4.5ms
+     * of UI and draw work) leaves room for it.
+     */
+    private fun voteHighRefreshRate() {
+        val decor = window.decorView
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            decor.setRequestedFrameRate(HIGH_REFRESH_RATE)
+        } else {
+            // The window-level preference is the only public route before the view-level one.
+            @Suppress("DEPRECATION")
+            window.attributes = window.attributes.apply { preferredRefreshRate = HIGH_REFRESH_RATE }
+        }
+    }
+
+    private companion object {
+        /** The panel's default mode; 165Hz is also offered but leaves no frame-budget margin. */
+        const val HIGH_REFRESH_RATE = 120f
     }
 }

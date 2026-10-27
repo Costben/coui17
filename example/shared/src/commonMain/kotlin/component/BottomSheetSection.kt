@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.captionBar
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,12 +26,13 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.IconButton
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TextField
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Close
 import io.github.suqi8.coui.kmp.icon.extended.Ok
+import io.github.suqi8.coui.kmp.layout.BottomSheetDefaults
+import io.github.suqi8.coui.kmp.layout.SheetActionButton
 import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
@@ -120,24 +122,24 @@ private fun SuperBottomSheetDemo(
         enableNestedScroll = enableNestedScroll,
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
+        // The native panel header is a COUIToolbar whose action items are 40dp squares with no
+        // resting fill, a 24dp icon and a circular press wash — not a rounded-square icon button.
         startAction = {
-            IconButton(
-                onClick = onDismissRequest,
-            ) {
+            SheetActionButton(onClick = onDismissRequest) {
                 Icon(
                     imageVector = COUIIcons.Close,
                     contentDescription = str("Cancel"),
+                    modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
         },
         endAction = {
-            IconButton(
-                onClick = onDismissRequest,
-            ) {
+            SheetActionButton(onClick = onDismissRequest) {
                 Icon(
                     imageVector = COUIIcons.Ok,
                     contentDescription = str("Confirm"),
+                    modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
@@ -242,24 +244,22 @@ private fun WindowBottomSheetDemo(
         onDismissFinished = onDismissFinished,
         startAction = {
             val dismissState = LocalDismissState.current
-            IconButton(
-                onClick = { dismissState?.invoke() },
-            ) {
+            SheetActionButton(onClick = { dismissState?.invoke() }) {
                 Icon(
                     imageVector = COUIIcons.Close,
                     contentDescription = str("Cancel"),
+                    modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
         },
         endAction = {
             val dismissState = LocalDismissState.current
-            IconButton(
-                onClick = { dismissState?.invoke() },
-            ) {
+            SheetActionButton(onClick = { dismissState?.invoke() }) {
                 Icon(
                     imageVector = COUIIcons.Ok,
                     contentDescription = str("Confirm"),
+                    modifier = Modifier.size(BottomSheetDefaults.ActionButtonIconSize),
                     tint = COUITheme.colorScheme.onBackground,
                 )
             }
