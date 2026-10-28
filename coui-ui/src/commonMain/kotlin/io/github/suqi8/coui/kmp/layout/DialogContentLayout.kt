@@ -259,7 +259,7 @@ internal fun DialogContentLayout(
                 val distance = if (show && heightPx > 0) {
                     heightPx + slideBottomPadding.toPx()
                 } else {
-                    windowInfo.containerDpSize.height.toPx()
+                    windowInfo.containerSize.height.toFloat()
                 }
                 translationY = (1f - progress) * distance
                 alpha = 1f
@@ -320,7 +320,8 @@ internal fun DialogContent(
     val resolvedCornerRadius = cornerRadius ?: DialogDefaults.CornerRadius
     val density = LocalDensity.current
     val windowInfo = LocalWindowInfo.current
-    val windowHeight = windowInfo.containerDpSize.height
+    // Converted at our density, not the platform's: see `BottomSheetContentLayout`.
+    val windowHeight = with(density) { windowInfo.containerSize.height.toDp() }
     val isCentered = forceCentered || (largeScreen ?: DialogDefaults.isLargeScreen())
     val contentAlignment = remember(isCentered) {
         if (isCentered) Alignment.Center else Alignment.BottomCenter

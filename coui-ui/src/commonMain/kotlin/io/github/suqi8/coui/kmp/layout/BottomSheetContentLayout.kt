@@ -165,7 +165,7 @@ internal fun BottomSheetContentLayout(
     LaunchedEffect(show) {
         // COUI samples the panel/container heights when the animation starts; mirror that
         // with a one-shot read (no recomposition subscription).
-        val containerPx = with(density) { windowInfo.containerDpSize.height.toPx() }
+        val containerPx = windowInfo.containerSize.height.toFloat()
         val peekPx = with(density) { PanelPeekHeight.toPx() }
         val travelPx = sheetHeightPx.intValue.takeIf { it > 0 }?.toFloat() ?: containerPx
         if (show) {
@@ -233,7 +233,7 @@ internal fun BottomSheetContentLayout(
             onBackCompleted = {
                 if (allowDismiss) {
                     coroutineScope.launch {
-                        val windowHeightPx = with(density) { windowInfo.containerDpSize.height.toPx() }
+                        val windowHeightPx = windowInfo.containerSize.height.toFloat()
                         animateDismissOffScreen(
                             dragOffsetY = dragOffsetY,
                             sheetHeightPx = sheetHeightPx.intValue,
@@ -308,7 +308,7 @@ internal fun BottomSheetContentLayout(
             val sheetModifier = modifier.graphicsLayer {
                 val progress = animationProgress.value
                 val currentHeight = sheetHeightPx.intValue.toFloat()
-                val windowHeightPx = with(density) { windowInfo.containerDpSize.height.toPx() }
+                val windowHeightPx = windowInfo.containerSize.height.toFloat()
                 val baseOffset = if (currentHeight > 0) currentHeight else windowHeightPx
                 translationY = baseOffset * (1f - progress) + dragOffsetY.value
             }
@@ -379,7 +379,10 @@ internal fun BottomSheetContent(
 ) {
     val density = LocalDensity.current
     val windowInfo = LocalWindowInfo.current
-    val windowHeight = windowInfo.containerDpSize.height
+    // `containerDpSize` converts at the platform density, so under a `LocalDensity` override (a
+    // ColorOS app pinned to its system density, say) it disagrees with every other dp here and the
+    // height cap lets the sheet run up under the status bar. Convert the pixels with ours instead.
+    val windowHeight = with(density) { windowInfo.containerSize.height.toDp() }
     // Do NOT use windowHeight as a remember key — IME resize would recreate handlers and trigger dismiss.
     val currentWindowHeight by rememberUpdatedState(windowHeight)
     val coroutineScope = rememberCoroutineScope()
