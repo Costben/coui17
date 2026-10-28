@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -35,6 +34,7 @@ import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TouchSearchView
 import io.github.suqi8.coui.kmp.basic.TouchSearchViewDefaults
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 private val DemoHistory = listOf(
@@ -161,7 +161,7 @@ private fun IntentSeekBarFixedColorsDemo() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .background(color = Color(0xFF1B1B1B), shape = RoundedCornerShape(12.dp))
+            .background(color = Color(0xFF1B1B1B), shape = SquircleShape(12.dp))
             .padding(16.dp),
     ) {
         IntentSeekBar(

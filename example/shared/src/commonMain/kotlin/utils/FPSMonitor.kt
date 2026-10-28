@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.roundToInt
 
@@ -92,7 +92,7 @@ fun FPSMonitor(modifier: Modifier = Modifier) {
                 }
                 .background(
                     color = COUITheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(PillCorner),
+                    shape = SquircleShape(PillCorner),
                 )
                 .padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,

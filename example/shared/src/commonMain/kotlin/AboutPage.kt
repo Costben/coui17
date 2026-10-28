@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
@@ -77,6 +76,7 @@ import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
 import io.github.suqi8.coui.kmp.preference.SwitchPreference
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.ic_launcher
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import misc.VersionInfo
 import navigation3.Route
@@ -247,7 +247,7 @@ private fun AboutContent(
                     .size(88.dp)
                     .graphicsLayer {
                         clip = true
-                        shape = RoundedCornerShape(24.dp)
+                        shape = SquircleShape(24.dp)
                         alpha = 1 - iconProgress
                         scaleX = 1 - (iconProgress * 0.05f)
                         scaleY = 1 - (iconProgress * 0.05f)
@@ -272,7 +272,7 @@ private fun AboutContent(
                             Modifier
                                 .textureBlur(
                                     backdrop = backdrop,
-                                    shape = RoundedCornerShape(16.dp),
+                                    shape = SquircleShape(16.dp),
                                     blurRadius = 150f,
                                     noiseCoefficient = noiseCoefficient,
                                     colors = BlurDefaults.blurColors(
@@ -348,7 +348,7 @@ private fun AboutContent(
                                     Modifier
                                         .textureBlur(
                                             backdrop = backdrop,
-                                            shape = RoundedCornerShape(16.dp),
+                                            shape = SquircleShape(16.dp),
                                             blurRadius = blurRadius,
                                             noiseCoefficient = noiseCoefficient,
                                             colors = BlurDefaults.blurColors(
@@ -400,7 +400,7 @@ private fun AboutContent(
                                     Modifier
                                         .textureBlur(
                                             backdrop = backdrop,
-                                            shape = RoundedCornerShape(16.dp),
+                                            shape = SquircleShape(16.dp),
                                             blurRadius = blurRadius,
                                             noiseCoefficient = noiseCoefficient,
                                             colors = BlurDefaults.blurColors(

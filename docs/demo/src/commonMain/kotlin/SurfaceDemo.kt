@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Surface
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 @Composable
@@ -40,14 +40,14 @@ fun SurfaceDemo() {
                     .size(height = 200.dp, width = 400.dp)
                     .padding(16.dp),
                 color = COUITheme.colorScheme.background,
-                shape = RoundedCornerShape(16.dp),
+                shape = SquircleShape(16.dp),
                 shadowElevation = 4.dp,
             ) {
                 Text(
                     text = "Surface Example\n\n" +
                         "Size: height = 200.dp, width = 400.dp\n" +
                         "color: COUITheme.colorScheme.background\n" +
-                        "shape: RoundedCornerShape(16.dp)\n" +
+                        "shape: SquircleShape(16.dp)\n" +
                         "shadowElevation: 4.dp\n" +
                         "isSystemInDarkTheme: ${isSystemInDarkTheme()}",
                     modifier = Modifier.padding(16.dp).fillMaxSize(),

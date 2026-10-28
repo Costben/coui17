@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -22,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +47,7 @@ import io.github.suqi8.coui.kmp.preference.SliderPreference
 import io.github.suqi8.coui.kmp.preference.SwitchPreference
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import org.jetbrains.compose.resources.painterResource
 import ui.isInDarkTheme
@@ -127,7 +128,7 @@ fun BlurDemo() {
                         .align(Alignment.Center)
                         .textureBlur(
                             backdrop = backdrop,
-                            shape = RoundedCornerShape(24.dp),
+                            shape = SquircleShape(24.dp),
                             blurRadiusX = blurRadiusX,
                             blurRadiusY = blurRadiusY,
                             noiseCoefficient = noiseCoefficient,
@@ -293,7 +294,7 @@ fun ForegroundBlurDemo() {
                         .align(Alignment.Center)
                         .textureBlur(
                             backdrop = backdrop,
-                            shape = RoundedCornerShape(0.dp),
+                            shape = RectangleShape,
                             blurRadiusX = blurRadiusX,
                             blurRadiusY = blurRadiusY,
                             noiseCoefficient = noiseCoefficient,

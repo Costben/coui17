@@ -41,6 +41,7 @@ import io.github.suqi8.coui.kmp.basic.SpotLightDefaults
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.materialShadowEdge
 import io.github.suqi8.coui.kmp.basic.spotLight
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /** Renders the "MaterialShadowEdge" gallery section content (capsule, circle and rounded plates showing the material shadow edge). */
@@ -59,7 +60,7 @@ fun MaterialShadowEdgeDemo() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(SquircleShape(20.dp))
                 .background(if (isDark) Color(0xFF0B0B0D) else Color(0xFF1B1B1F)),
             contentAlignment = Alignment.Center,
         ) {
@@ -96,7 +97,8 @@ private fun ShadowEdgeSurface(
     cornerWeight: Float = MaterialShadowEdgeDefaults.CornerWeight,
 ) {
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val shape = RoundedCornerShape(cornerRadius ?: (44.dp / 2))
+    // Without a radius the sample is a capsule, whose ends stay circular.
+    val shape = cornerRadius?.let { SquircleShape(it) } ?: RoundedCornerShape(44.dp / 2)
 
     Box(
         modifier = modifier
@@ -124,7 +126,7 @@ fun SpotLightDemo() {
     // dp this modifier takes.
     val endRadius = with(density) { params.endRadius.toDp() }
     val lightHeight = with(density) { params.lightHeight.toDp() }
-    val shape = RoundedCornerShape(20.dp)
+    val shape = SquircleShape(20.dp)
 
     Card(
         modifier = Modifier

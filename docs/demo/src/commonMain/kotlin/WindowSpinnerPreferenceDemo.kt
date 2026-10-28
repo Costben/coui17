@@ -16,9 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.Dp
@@ -28,6 +28,7 @@ import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.preference.WindowSpinnerPreference
+import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 
 @Composable
 fun WindowSpinnerPreferenceDemo() {
@@ -64,10 +65,9 @@ fun WindowSpinnerPreferenceDemo() {
                 override val intrinsicSize = Size.Unspecified
 
                 override fun DrawScope.onDraw() {
-                    drawRoundRect(
+                    drawPath(
+                        path = Path().apply { addSquircleRect(size.width, size.height, cornerRadius.toPx()) },
                         color = Color.White,
-                        size = Size(size.width, size.height),
-                        cornerRadius = CornerRadius(cornerRadius.toPx(), cornerRadius.toPx()),
                     )
                 }
             }

@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +31,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -43,6 +41,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.text.TextStyle
@@ -63,6 +62,7 @@ import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
 import io.github.suqi8.coui.kmp.shader.RuntimeShader
 import io.github.suqi8.coui.kmp.shader.asBrush
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
+import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
@@ -410,26 +410,25 @@ private fun ProductSlot() {
             x = (size.width - bodyWidth) / 2f,
             y = (size.height - bodyHeight) / 2f,
         )
-        drawRoundRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    scheme.onBackground.copy(alpha = 0.12f),
-                    scheme.onBackground.copy(alpha = 0.04f),
+        val body = Path().apply { addSquircleRect(bodyWidth, bodyHeight, 20.dp.toPx()) }
+        translate(left = bodyTopLeft.x, top = bodyTopLeft.y) {
+            drawPath(
+                path = body,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        scheme.onBackground.copy(alpha = 0.12f),
+                        scheme.onBackground.copy(alpha = 0.04f),
+                    ),
+                    startY = 0f,
+                    endY = bodyHeight,
                 ),
-                startY = bodyTopLeft.y,
-                endY = bodyTopLeft.y + bodyHeight,
-            ),
-            topLeft = bodyTopLeft,
-            size = Size(bodyWidth, bodyHeight),
-            cornerRadius = CornerRadius(20.dp.toPx()),
-        )
-        drawRoundRect(
-            color = scheme.onBackground.copy(alpha = 0.10f),
-            topLeft = bodyTopLeft,
-            size = Size(bodyWidth, bodyHeight),
-            cornerRadius = CornerRadius(20.dp.toPx()),
-            style = Stroke(width = 1.dp.toPx()),
-        )
+            )
+            drawPath(
+                path = body,
+                color = scheme.onBackground.copy(alpha = 0.10f),
+                style = Stroke(width = 1.dp.toPx()),
+            )
+        }
     }
 }
 
