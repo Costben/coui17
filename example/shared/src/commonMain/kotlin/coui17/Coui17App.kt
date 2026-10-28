@@ -32,8 +32,6 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -240,14 +238,12 @@ private fun Coui17Root() {
         panelOpen = false
     }
 
-    // Settings is a system app: on this 620 dpi device it lays out at 3.875 px/dp while a
-    // third-party app gets 3.5 px/dp for the same screen. Every screen in this gallery is a replica
-    // of a system screen, so the gallery is laid out at the system density — otherwise every dp here
-    // renders 10% smaller than the panel it copies and no side-by-side comparison holds.
-    val systemDensity = Density(Coui17Density.SYSTEM_APP, LocalDensity.current.fontScale)
+    // The gallery lays out at the platform density, the one ColorOS gives its own Settings: on the
+    // reference PLK110 both Settings and third-party apps report the system's 620 dpi (sw328dp), so
+    // the replicas match the screens they copy there and scale with the display-size setting on
+    // every other device instead of pinning one phone's px/dp.
     CompositionLocalProvider(
         LocalBackdrop provides if (appState.enableBlur) backdrop else null,
-        LocalDensity provides systemDensity,
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
