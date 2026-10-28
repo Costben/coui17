@@ -70,6 +70,12 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "21"
+      # Same gap as the CI desktop-tests job: the runner image has no CJK font, and the dialog
+      # button tests measure real Chinese labels.
+      - name: Install CJK fonts for the dialog text metrics
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Check formatting and binary compatibility

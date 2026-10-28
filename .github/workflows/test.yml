@@ -65,6 +65,13 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "21"
+      # The runner image ships no CJK font (only fonts-noto-color-emoji), and the dialog button
+      # tests measure real Chinese labels: without one, every glyph falls back to a narrow
+      # .notdef and a label that should wrap stays on one line.
+      - name: Install CJK fonts for the dialog text metrics
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Run the desktop test suites
