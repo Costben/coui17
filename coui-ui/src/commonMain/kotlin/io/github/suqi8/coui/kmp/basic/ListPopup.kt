@@ -4,6 +4,7 @@ package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -98,6 +100,7 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.anim.BezierGravityPathGeometry
 import io.github.suqi8.coui.kmp.anim.BezierGravityPathMath
 import io.github.suqi8.coui.kmp.anim.PopupGravityMotion
@@ -164,9 +167,11 @@ internal val PopupItemPressSpring = spring<Float>(dampingRatio = 1f, stiffness =
  * Geometry spring of a drag crossing into another row (COUI COUISpringForce response 0.15 /
  * bounce 0 for a vertical list, 0.2 when a horizontal row is involved; this column is vertical).
  *
- * COUITouchRecyclerView does not track the finger: it animates one shared mask from the old row's
- * rect to the new row's rect over a distance-normalised spring. Normalising by distance makes the
- * same spring resolve to a plain per-edge interpolation, so each edge animates with this stiffness.
+ * COUITouchRecyclerView does not track the finger: it animates one shared mask from where it
+ * currently is to the new row's rect, driving a single scalar spring over the centre-to-centre
+ * distance and lerping the rect by `value / distance`. Each crossing restarts that value at 0 but
+ * keeps the running velocity (COUISpringAnimation.setStartValue leaves mVelocity alone), so the
+ * carried speed always points at the newest row — a direction reversal never coasts the wrong way.
  */
 private val PopupItemMoveSpring = spring<Float>(dampingRatio = 1f, stiffness = 1754.6f)
 
@@ -252,13 +257,32 @@ internal class PopupListGestureHost {
 
     /**
      * The highlight is one shape for the whole list, not one per row: dragging to another row
-     * slides [highlightTop]/[highlightBottom] there instead of fading one row's mask out while
-     * another fades in, which read as a flicker (COUI COUITouchRecyclerView keeps one shared mask).
+     * slides it there instead of fading one row's mask out while another fades in, which read as
+     * a flicker (COUI COUITouchRecyclerView keeps one shared mask).
+     *
+     * The slide is COUI's: the rect lerps from [startTop]/[startBottom] to [endTop]/[endBottom] by
+     * [travelled] over [travelDistance], and [travelVelocity] survives a retarget (see
+     * [PopupItemMoveSpring]). All of it is snapshot state written synchronously by the gesture, so
+     * a frame never sees a new target paired with the previous slide's progress.
      */
-    private val highlightTop = Animatable(0f)
-    private val highlightBottom = Animatable(0f)
+    private var startTop by mutableFloatStateOf(0f)
+    private var startBottom by mutableFloatStateOf(0f)
+    private var endTop by mutableFloatStateOf(0f)
+    private var endBottom by mutableFloatStateOf(0f)
+    private var travelDistance by mutableFloatStateOf(0f)
+    private var travelled by mutableFloatStateOf(0f)
+    private var travelVelocity = 0f
+    private var geometryJob: Job? = null
+
     private val highlightAlpha = Animatable(0f)
-    private var highlightJob: Job? = null
+    private var alphaJob: Job? = null
+
+    /**
+     * Whether the mask is fading out (COUI mSharedMaskIsExiting). Only the colour fades: the slide
+     * keeps running to its row. The next row the finger enters snaps the mask onto itself rather
+     * than sliding from wherever the fading mask was.
+     */
+    private var exiting = false
 
     /** True while the list has no scroll range, i.e. COUI's mIsDynamicSelection. */
     var isDynamicSelection: Boolean = true
@@ -289,47 +313,75 @@ internal class PopupListGestureHost {
     /** The hairlines to paint, as `boundary index` to `Y offset` pairs. */
     fun hairlines(): Map<Int, Float> = dividerOffsets
 
+    private fun slideFraction(): Float = if (travelDistance > 0f) (travelled / travelDistance).coerceIn(0f, 1f) else 1f
+
     /** Current press mask top, in the list's content coordinates. */
-    fun pressTop(): Float = highlightTop.value
+    fun pressTop(): Float = lerp(startTop, endTop, slideFraction())
 
     /** Current press mask bottom, in the list's content coordinates. */
-    fun pressBottom(): Float = highlightBottom.value
+    fun pressBottom(): Float = lerp(startBottom, endBottom, slideFraction())
 
     /** Current press mask opacity. */
     fun pressAlpha(): Float = highlightAlpha.value
 
-    /** Snaps the mask onto [item] and fades it in (a fresh press). */
-    private fun placeHighlight(item: PopupListItemHandle, scope: CoroutineScope) {
-        highlightJob?.cancel()
-        highlightJob = scope.launch {
-            highlightTop.snapTo(item.top)
-            highlightBottom.snapTo(item.bottom)
-            highlightAlpha.animateTo(1f, PopupItemPressSpring)
-        }
+    private fun fadeIn(scope: CoroutineScope) {
+        exiting = false
+        alphaJob?.cancel()
+        alphaJob = scope.launch { highlightAlpha.animateTo(1f, PopupItemPressSpring) }
     }
 
-    /** Slides the mask to [item], keeping it visible while the bounds move. */
+    /** Snaps the mask onto [item] and fades it in (a fresh press, or a re-entry after exiting). */
+    private fun placeHighlight(item: PopupListItemHandle, scope: CoroutineScope) {
+        geometryJob?.cancel()
+        startTop = item.top
+        startBottom = item.bottom
+        endTop = item.top
+        endBottom = item.bottom
+        travelDistance = 0f
+        travelled = 0f
+        travelVelocity = 0f
+        fadeIn(scope)
+    }
+
+    /** Slides the mask from where it is now to [item], keeping it visible while the bounds move. */
     private fun moveHighlight(item: PopupListItemHandle, scope: CoroutineScope) {
-        highlightJob?.cancel()
-        highlightJob = scope.launch {
-            if (highlightAlpha.value <= 0f) {
-                highlightTop.snapTo(item.top)
-                highlightBottom.snapTo(item.bottom)
-            } else {
-                launch { highlightTop.animateTo(item.top, PopupItemMoveSpring) }
-                launch { highlightBottom.animateTo(item.bottom, PopupItemMoveSpring) }
-            }
-            highlightAlpha.animateTo(1f, PopupItemPressSpring)
+        if (exiting || highlightAlpha.value <= 0f) {
+            placeHighlight(item, scope)
+            return
         }
+        geometryJob?.cancel()
+        val fromTop = pressTop()
+        val fromBottom = pressBottom()
+        val distance = abs((item.top + item.bottom) / 2f - (fromTop + fromBottom) / 2f)
+        val velocity = travelVelocity
+        startTop = fromTop
+        startBottom = fromBottom
+        endTop = item.top
+        endBottom = item.bottom
+        travelDistance = distance
+        travelled = 0f
+        if (distance > 0f) {
+            geometryJob = scope.launch {
+                animate(0f, distance, velocity, PopupItemMoveSpring) { value, v ->
+                    travelled = value
+                    travelVelocity = v
+                }
+                travelVelocity = 0f
+            }
+        } else {
+            travelVelocity = 0f
+        }
+        fadeIn(scope)
     }
 
     /**
      * Fades the mask out, first holding a fast tap's fade-in until it passes
-     * [PopupItemPressMinVisibleProgress] so the press still flashes.
+     * [PopupItemPressMinVisibleProgress] so the press still flashes. The slide is left running.
      */
     private fun fadeHighlight(scope: CoroutineScope) {
-        highlightJob?.cancel()
-        highlightJob = scope.launch {
+        exiting = true
+        alphaJob?.cancel()
+        alphaJob = scope.launch {
             if (highlightAlpha.value > 0f && highlightAlpha.value < PopupItemPressMinVisibleProgress) {
                 try {
                     highlightAlpha.animateTo(1f, PopupItemPressSpring) {
@@ -343,8 +395,8 @@ internal class PopupListGestureHost {
         }
     }
 
-    /** Enters the row under [y], if any. Returns the row that took the highlight. */
-    fun onDown(y: Float, scope: CoroutineScope): PopupListItemHandle? {
+    /** Enters the row under [y], if any. */
+    fun onDown(y: Float, scope: CoroutineScope) {
         val target = sortedItems().firstOrNull { it.contains(y) }
         activeItem = target
         if (target != null && target.enabled) {
@@ -352,7 +404,6 @@ internal class PopupListGestureHost {
         } else {
             fadeHighlight(scope)
         }
-        return target
     }
 
     /** Whether a move to [y] would hand the highlight to a different, enabled row. */
@@ -362,16 +413,17 @@ internal class PopupListGestureHost {
     }
 
     /**
-     * Moves the highlight to the row under [y]. Only meaningful in dynamic selection mode; the
-     * scrollable case releases the highlight through [cancel] once the drag passes the touch slop.
+     * Moves the highlight to the row under [y], which must lie within the list content. Only
+     * meaningful in dynamic selection mode; the scrollable case releases the highlight through
+     * [cancel] once the drag passes the touch slop.
+     *
+     * A divider band or header under the finger changes nothing: COUI skips divider view types 3/4
+     * and non-selectable rows, so the mask keeps sliding to the last row and a release there still
+     * selects it. Only leaving the content, which the caller reports through [cancel], exits.
      */
     fun onMoveTo(y: Float, scope: CoroutineScope) {
         val previous = activeItem
-        val target = sortedItems().firstOrNull { it.contains(y) }
-        if (target == null) {
-            cancel(scope)
-            return
-        }
+        val target = sortedItems().firstOrNull { it.contains(y) } ?: return
         if (target === previous) return
 
         activeItem = target
@@ -744,7 +796,10 @@ private fun Modifier.popupListGestures(
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
         val downY = down.position.y
-        var pressed = host.onDown(downY, scope) != null
+        // A press that lands on a divider band or header still tracks: dragging into a row then
+        // picks it up, as COUITouchRecyclerView does for a DOWN with no selectable child.
+        host.onDown(downY, scope)
+        var pressed = true
         var released = false
 
         try {
@@ -759,9 +814,11 @@ private fun Modifier.popupListGestures(
                     break
                 }
 
-                // Resolve both axes and the final UP position. Leaving the menu cancels the row,
-                // while returning during the same gesture restores dynamic selection.
-                val inside = change.position.x >= 0f && change.position.x < size.width
+                // Resolve both axes and the final UP position. Leaving the list content (including
+                // into its vertical padding, where COUI finds no child) cancels the row, while
+                // returning during the same gesture restores dynamic selection.
+                val inside = change.position.x >= 0f && change.position.x < size.width &&
+                    change.position.y >= 0f && change.position.y < size.height
                 if (!inside) {
                     host.cancel(scope)
                 } else if (host.isDynamicSelection) {
