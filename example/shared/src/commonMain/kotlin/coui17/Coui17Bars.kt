@@ -63,24 +63,31 @@ import io.github.suqi8.coui.kmp.basic.couiTopAppBarActionItem
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.icon.extended.Back
-import io.github.suqi8.coui.kmp.icon.extended.Home
-import io.github.suqi8.coui.kmp.icon.extended.Image
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Settings
-import io.github.suqi8.coui.kmp.icon.extended.Theme
 import io.github.suqi8.coui.kmp.icon.extended.Translate
 import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.rememberGalleryDensity
 
 /** One capsule tab of the accessory bar. [label] is the English source string `str` resolves. */
-private class Coui17Tab(val label: String, val icon: ImageVector)
+private class Coui17Tab(
+    val label: String,
+    val icon: ImageVector,
+    val selectedIcon: ImageVector,
+)
 
-/** The capsule's three tabs, in the order the pages sit in the pager. */
+/**
+ * The capsule's three tabs, in the order the pages sit in the pager.
+ *
+ * The pair of glyphs is the set's line and filled form: the bar draws the line on an idle tab and
+ * swaps in the filled one on selection, which is the only place ColorOS 17 uses the filled weight
+ * in a bottom bar.
+ */
 private val Coui17Tabs = listOf(
-    Coui17Tab("Home", COUIIcons.Home),
-    Coui17Tab("Icons", COUIIcons.Image),
-    Coui17Tab("Color", COUIIcons.Theme),
+    Coui17Tab("Home", Coui17Icons.HomeLine, Coui17Icons.HomeFill),
+    Coui17Tab("Icons", Coui17Icons.GridLine, Coui17Icons.GridFill),
+    Coui17Tab("Color", Coui17Icons.PaletteLine, Coui17Icons.PaletteFill),
 )
 
 /**
@@ -468,6 +475,7 @@ fun Coui17AccessoryBar(
                     selected = currentPage == index,
                     onClick = { onSelectPage(index) },
                     icon = tab.icon,
+                    selectedIcon = tab.selectedIcon,
                     label = str(tab.label),
                 )
             }
