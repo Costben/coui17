@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package coui17
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,10 +13,12 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -30,12 +33,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import appstate.AppState
 import appstate.LocalAppState
@@ -45,6 +51,7 @@ import component.SearchPager
 import i18n.LocalAppStrings
 import i18n.LocalLanguageSwitchEnabled
 import i18n.str
+import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Scaffold
@@ -59,7 +66,10 @@ import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.COUIPopupHost
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import navigation3.Route
 import pages.ColorPage
@@ -104,6 +114,23 @@ enum class Coui17PanelPage(val title: String) {
 }
 
 private enum class Coui17PanelAnchor { TopBar, BottomBar }
+
+/**
+ * The cross-fade a capsule tap runs instead of scrolling while page swiping is off, after Gallery's
+ * `PageClickSwitchAlphaAnimator`: the pager jumps straight to [to], both pages are pinned in place,
+ * [from] fades out while [to] fades in, and every page in between stays at zero alpha, so neither
+ * the content nor the capsule ever shows the tabs the jump skips over.
+ */
+@Stable
+private class Coui17PageFade(val from: Int, val to: Int) {
+    val fromAlpha = Animatable(1f)
+    val toAlpha = Animatable(0f)
+}
+
+// Gallery's springs: bounce 0, response 0.15s for the page leaving and 0.2s for the page arriving,
+// both started together. Its `setMinimumVisibleChange(0.1f)` settles within 0.75 of that change.
+private val PageFadeOutSpec = folmeSpring(damping = 1f, response = 0.15f, visibilityThreshold = 0.075f)
+private val PageFadeInSpec = folmeSpring(damping = 1f, response = 0.2f, visibilityThreshold = 0.075f)
 
 /**
  * COUI 17 — the component gallery wearing ColorOS 17's clothes.
@@ -212,6 +239,46 @@ private fun Coui17Root() {
         navigator.push(page.route)
     }
     LaunchedEffect(currentPage) { panelOpen = false }
+    val pageUserScroll = LocalAppState.current.enablePageUserScroll
+    var pageFade by remember { mutableStateOf<Coui17PageFade?>(null) }
+    // The page a capsule tap is scrolling to. The capsule shows it from the tap on, so a slide from
+    // the first page to the third never lights up the tab it passes.
+    var tappedPage by remember { mutableStateOf<Int?>(null) }
+    var pageSwitchJob by remember { mutableStateOf<Job?>(null) }
+    val onSelectPage = { page: Int ->
+        val from = pagerState.currentPage
+        if (pageUserScroll) {
+            // With swiping on the pages stay a strip, so a tap slides along it as before.
+            pageSwitchJob?.cancel()
+            tappedPage = page
+            pageSwitchJob = coroutineScope.launch {
+                try {
+                    pagerState.animateScrollToPage(page)
+                } finally {
+                    if (tappedPage == page) tappedPage = null
+                }
+            }
+        } else if (page != from) {
+            pageSwitchJob?.cancel()
+            val fade = Coui17PageFade(from = from, to = page)
+            pageFade = fade
+            pageSwitchJob = coroutineScope.launch {
+                try {
+                    // The page being left has to stay composed after the jump, so wait for a pass
+                    // that keeps every page around before moving.
+                    snapshotFlow { pagerState.layoutInfo.beyondViewportPageCount }
+                        .first { it >= Coui17Page.entries.size - 1 }
+                    pagerState.scrollToPage(page)
+                    coroutineScope {
+                        launch { fade.fromAlpha.animateTo(0f, PageFadeOutSpec) }
+                        fade.toAlpha.animateTo(1f, PageFadeInSpec)
+                    }
+                } finally {
+                    if (pageFade === fade) pageFade = null
+                }
+            }
+        }
+    }
 
     Coui17Frame(
         snackbarHostState = snackbarHostState,
@@ -219,9 +286,31 @@ private fun Coui17Root() {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = LocalAppState.current.enablePageUserScroll && searchStatus.isCollapsed(),
+                beyondViewportPageCount = if (pageFade != null) {
+                    Coui17Page.entries.size - 1
+                } else {
+                    PagerDefaults.BeyondViewportPageCount
+                },
+                // Gallery also locks the pager while a tap's fade runs (`setUserInputEnabled(... &&
+                // !alphaAnimator.isRunning)`).
+                userScrollEnabled = pageUserScroll &&
+                    searchStatus.isCollapsed() &&
+                    pageFade == null,
             ) { page ->
+                val layoutDirection = LocalLayoutDirection.current
                 Coui17PageContent(
+                    modifier = Modifier.graphicsLayer {
+                        // Read in the draw phase only, so a running fade never recomposes the pages.
+                        val fade = pageFade ?: return@graphicsLayer
+                        val position = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                        val direction = if (layoutDirection == LayoutDirection.Rtl) 1f else -1f
+                        translationX = direction * (page - position) * size.width
+                        alpha = when (page) {
+                            fade.from -> fade.fromAlpha.value
+                            fade.to -> fade.toAlpha.value
+                            else -> 0f
+                        }
+                    },
                     scrollBehavior = topBarScrollBehaviors[page],
                     contentTop = if (page == Coui17Page.Home.ordinal) {
                         expandedHomeTopBarHeight
@@ -263,11 +352,9 @@ private fun Coui17Root() {
                 searchPillVisible = searchStatus.isCollapsed(),
             )
             Coui17AccessoryBar(
-                currentPage = pagerState.currentPage,
+                currentPage = tappedPage ?: pagerState.currentPage,
                 panelOpen = panelOpen && panelAnchor == Coui17PanelAnchor.BottomBar,
-                onSelectPage = { page ->
-                    coroutineScope.launch { pagerState.animateScrollToPage(page) }
-                },
+                onSelectPage = onSelectPage,
                 onSearch = onSearch,
                 onOpenPanel = {
                     panelAnchor = Coui17PanelAnchor.BottomBar
@@ -446,6 +533,7 @@ private fun Coui17PageContent(
     scrollBehavior: ScrollBehavior,
     contentTop: Dp,
     contentBottom: Dp,
+    modifier: Modifier = Modifier,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val pagePadding = PaddingValues(top = contentTop, bottom = contentBottom)
@@ -458,7 +546,7 @@ private fun Coui17PageContent(
     // The lambda overload is deliberate: it is read in the layout phase only, so a scrolling page
     // re-lays out without recomposing the list. `Modifier.offset(y = dp)` would recompose every frame.
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             // Keep the content's bottom edge attached to the viewport while the top follows
             // the collapsing app bar. A plain offset on a fillMaxSize node leaves a gap at the
