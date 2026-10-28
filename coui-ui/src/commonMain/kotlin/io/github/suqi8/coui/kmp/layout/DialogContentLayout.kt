@@ -69,6 +69,7 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.materialShadowEdge
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
@@ -553,19 +554,37 @@ object DialogDefaults {
     )
 
     /**
-     * The dark counterpart, fitted the same way to the live dark panel's (40,40,40); the native pair
-     * is `coui_dialog_list_blend_blur_dark` (`#B2292929`) and `coui_dialog_list_mix_blur_dark`
-     * (`#8C777777`).
+     * The tint of the dark dialog over its blur: the native recipe itself, not a fit.
+     *
+     * In night mode `COUIBackgroundBlurBuilder` hands `OplusBlurParam.setMaterialParams` mode 2 with
+     * `coui_dialog_list_blend_blur_dark` (`#B2292929`) and `coui_dialog_list_mix_blur_dark`
+     * (`#8C777777`). BlurService's composite shader (`librenderkit.so`, `bgBlend`) reads mode 2 as
+     * "luminosity + dodge": the blur takes the blend colour's luminance at its alpha, keeping its own
+     * hue and saturation, then the mix colour dodges it at its alpha. Both steps are standard blend
+     * modes, so the layers reproduce it exactly. Over a black page it lands on (42,42,42) against the
+     * measured (40,40,40), and because luminosity keeps the page's hue a coloured page still tints
+     * the panel — the translucency a flat grey layer erased.
      */
     val BlurColorsDark: List<BlendColorEntry> = listOf(
-        BlendColorEntry(color = Color(0xDC272727)),
+        BlendColorEntry(color = Color(0xB2292929), mode = BlurBlendMode.Luminosity),
+        BlendColorEntry(color = Color(0x8C777777), mode = BlurBlendMode.ColorDodge),
     )
 
-    /** [BlurColorsLight] or [BlurColorsDark] for the current theme. */
+    /**
+     * [BlurColorsLight] or, in dark theme, [BlurColorsDark] behind a `windowDimming` layer.
+     *
+     * The platform blurs what lies under the dialog's window, and the dim layer is one of those
+     * layers, so the native recipe works on the dimmed page: over the gallery's grey dark page the
+     * undimmed input lands the dialog on (85,85,85) instead of the system's ~(40,40,40). Blurring then
+     * dimming equals dimming then blurring, so the dim leads the layer list. The light layers are
+     * fitted to the measured output, which already carries the dim, and stay as they are.
+     */
     @Composable
     fun blurColors(): List<BlendColorEntry> {
         val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-        return if (isDark) BlurColorsDark else BlurColorsLight
+        if (!isDark) return BlurColorsLight
+        val dim = COUITheme.colorScheme.windowDimming
+        return remember(dim) { listOf(BlendColorEntry(color = dim)) + BlurColorsDark }
     }
 
     /**
