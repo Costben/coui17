@@ -42,10 +42,38 @@ object SquircleDefaults {
  */
 internal const val SQUIRCLE_CONTROL = 0.6877f
 
+/** The [SQUIRCLE_CONTROL] counterpart for a circular arc: the cubic quarter-circle constant. */
+private const val CIRCLE_CONTROL = 0.5522848f
+
+/**
+ * Share of half the shorter side (π/4) above which a smooth corner starts to degrade into a circular
+ * arc, reaching it when the corner spans the whole half side. ColorOS 17 draws capsules with round
+ * ends — its pills and capsule buttons trace a circle, not the Lp superellipse — so a capsule here
+ * must too. The shader-backed fill and the glass rim blend over the same range.
+ */
+internal const val CIRCLE_BLEND_START = 0.7853982f
+
+/**
+ * How far a corner of [tile] px has moved from the smooth corner toward a circular arc, `0..1`, on a
+ * rect whose shorter side is `2 * halfMin`. [tile] is the unclamped corner tile, so any radius at or
+ * past the capsule radius is fully circular.
+ */
+internal fun circleBlendWeight(tile: Float, halfMin: Float): Float {
+    val threshold = halfMin * CIRCLE_BLEND_START
+    val range = halfMin - threshold
+    return if (range <= 0f) 1f else ((tile - threshold) / range).coerceIn(0f, 1f)
+}
+
+// Distance from the corner point to each Bézier handle of a corner [tile] px wide.
+private fun cornerHandle(tile: Float, circleWeight: Float): Float = tile * (1f - (SQUIRCLE_CONTROL + (CIRCLE_CONTROL - SQUIRCLE_CONTROL) * circleWeight))
+
 /**
  * Appends a squircle-shaped rounded rectangle path. Use this for path-based effects that can't
  * ride the shader pipeline (e.g. `clipPath` reveals rebuilt per frame); for static fills/clips
  * prefer the modifier APIs.
+ *
+ * A corner that approaches half the shorter side blends into a circular arc, so a capsule keeps
+ * round ends the way ColorOS draws them.
  *
  * Pass `squircleEnabled = false` (typically forwarded from [isSquircleEnabled]) to append a
  * plain rounded rectangle of the same dimensions instead — useful when the surrounding visuals
@@ -86,12 +114,13 @@ fun Path.addSquircleRect(
     }
     val extClamped = extension.coerceIn(SquircleDefaults.ExtensionMin, SquircleDefaults.ExtensionMax)
     val halfMin = min(width, height) * 0.5f
-    val tile = max(0f, cornerRadius * extClamped).coerceAtMost(halfMin)
+    val requestedTile = max(0f, cornerRadius * extClamped)
+    val tile = requestedTile.coerceAtMost(halfMin)
     if (tile <= 0f) {
         addRect(Rect(0f, 0f, width, height))
         return
     }
-    val handle = tile * (1f - SQUIRCLE_CONTROL)
+    val handle = cornerHandle(tile, circleBlendWeight(requestedTile, halfMin))
     moveTo(tile, 0f)
     lineTo(width - tile, 0f)
     cubicTo(width - handle, 0f, width, handle, width, tile)
@@ -176,15 +205,18 @@ fun Path.addSquircleRoundRect(
     val t = rect.top
     val r = rect.right
     val b = rect.bottom
-    fun handle(tile: Float): Float = tile * (1f - SQUIRCLE_CONTROL)
+    val handleTl = cornerHandle(tl, circleBlendWeight(topLeft * extClamped, halfMin))
+    val handleTr = cornerHandle(tr, circleBlendWeight(topRight * extClamped, halfMin))
+    val handleBr = cornerHandle(br, circleBlendWeight(bottomRight * extClamped, halfMin))
+    val handleBl = cornerHandle(bl, circleBlendWeight(bottomLeft * extClamped, halfMin))
     moveTo(l + tl, t)
     lineTo(r - tr, t)
-    cubicTo(r - handle(tr), t, r, t + handle(tr), r, t + tr)
+    cubicTo(r - handleTr, t, r, t + handleTr, r, t + tr)
     lineTo(r, b - br)
-    cubicTo(r, b - handle(br), r - handle(br), b, r - br, b)
+    cubicTo(r, b - handleBr, r - handleBr, b, r - br, b)
     lineTo(l + bl, b)
-    cubicTo(l + handle(bl), b, l, b - handle(bl), l, b - bl)
+    cubicTo(l + handleBl, b, l, b - handleBl, l, b - bl)
     lineTo(l, t + tl)
-    cubicTo(l, t + handle(tl), l + handle(tl), t, l + tl, t)
+    cubicTo(l, t + handleTl, l + handleTl, t, l + tl, t)
     close()
 }

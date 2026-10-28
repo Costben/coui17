@@ -328,6 +328,10 @@ internal fun applyLightUniforms(
     }
 }
 
+// π/4 of half the shorter side: where a smooth corner starts to turn circular (`coui-squircle`'s
+// `CIRCLE_BLEND_START`; this module does not depend on it).
+private const val CIRCLE_BLEND_START = 0.7853982f
+
 // Pack [TL, TR, BL, BR] into a vec4 uniform without a per-frame FloatArray allocation.
 internal fun DrawScope.setCornerRadiiUniform(shader: RuntimeShader, shape: Shape) {
     val sizePx = size
@@ -335,9 +339,9 @@ internal fun DrawScope.setCornerRadiiUniform(shader: RuntimeShader, shape: Shape
     // A Generic outline is a path the shape built itself — the smooth corner. Anything else
     // (Rounded / Rectangle) is an arc, and the stroke has to fall back to n = 2.0 to stay on it.
     val smoothCorner = shape.createOutline(sizePx, layoutDirection, this) is Outline.Generic
-    shader.setFloatUniform("cornerExponent", if (smoothCorner) 2.5f else 2.0f)
     val cornerShape = shape as? CornerBasedShape
     if (cornerShape == null) {
+        shader.setFloatUniform("cornerExponent", if (smoothCorner) 2.5f else 2.0f)
         shader.setFloatUniform("cornerRadii", maxRadius, maxRadius, maxRadius, maxRadius)
         return
     }
@@ -350,6 +354,12 @@ internal fun DrawScope.setCornerRadiiUniform(shader: RuntimeShader, shape: Shape
         if (isLtr) cornerShape.bottomEnd.toPx(sizePx, this) else cornerShape.bottomStart.toPx(sizePx, this)
     val bottomLeft =
         if (isLtr) cornerShape.bottomStart.toPx(sizePx, this) else cornerShape.bottomEnd.toPx(sizePx, this)
+    // A smooth corner near the capsule radius bends into a circular arc (`SquirclePath`'s
+    // `circleBlendWeight`, which this mirrors), and the stroke follows it there.
+    val largestRadius = maxOf(topLeft, topRight, bottomRight, bottomLeft)
+    val threshold = maxRadius * CIRCLE_BLEND_START
+    val circleWeight = if (maxRadius - threshold <= 0f) 1f else ((largestRadius - threshold) / (maxRadius - threshold)).coerceIn(0f, 1f)
+    shader.setFloatUniform("cornerExponent", if (smoothCorner) 2.5f - 0.5f * circleWeight else 2.0f)
     shader.setFloatUniform(
         "cornerRadii",
         topLeft.fastCoerceAtMost(maxRadius),

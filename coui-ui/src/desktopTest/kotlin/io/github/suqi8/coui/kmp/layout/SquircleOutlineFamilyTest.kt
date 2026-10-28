@@ -90,8 +90,9 @@ class SquircleOutlineFamilyTest {
     @Test
     fun smoothCornerSitsOnTheLpSuperellipseAndAnArcDoesNot() {
         val radius = 108.5f
+        // A 4r square: the corner is a quarter of the side, far below the capsule blend.
         val smooth = cornerDeviationFromSuperellipse(
-            Path().apply { addSquircleRect(2 * radius, 2 * radius, radius) },
+            Path().apply { addSquircleRect(4 * radius, 4 * radius, radius) },
             radius,
         )
         val arc = cornerDeviationFromSuperellipse(
@@ -114,11 +115,33 @@ class SquircleOutlineFamilyTest {
     }
 
     /**
+     * ColorOS 17 draws capsules with circular ends (measured on device: its pill buttons and floating
+     * bar fit n = 2.0 to 0.4px, n = 2.5 misses by 2px). A smooth corner at the capsule radius has to
+     * land on the circle, and one just below the blend threshold has to stay on the superellipse.
+     */
+    @Test
+    fun capsuleRadiusBlendsTheSmoothCornerIntoACircle() {
+        val radius = 108.5f
+        val capsule = cornerDeviationFromSuperellipse(
+            Path().apply { addSquircleRect(4 * radius, 2 * radius, radius) },
+            radius,
+            exponent = 2f,
+        )
+        assertTrue(capsule < 0.003f * radius, "capsule end deviates ${capsule}px from a circle")
+
+        val belowBlend = cornerDeviationFromSuperellipse(
+            Path().apply { addSquircleRect(4 * radius, 2 * radius / 0.78f, radius) },
+            radius,
+        )
+        assertTrue(belowBlend < 0.005f * radius, "a corner below the blend left the superellipse by ${belowBlend}px")
+    }
+
+    /**
      * Largest distance, in pixels, between the path's top-left corner and the superellipse, measured
      * as a radial miss: each path sample is pushed onto the superellipse along its own ray from the
      * corner centre and the two radii are compared.
      */
-    private fun cornerDeviationFromSuperellipse(path: Path, radius: Float): Float {
+    private fun cornerDeviationFromSuperellipse(path: Path, radius: Float, exponent: Float = 2.5f): Float {
         val measure = PathMeasure()
         measure.setPath(path, false)
         val centreX = radius
@@ -134,7 +157,7 @@ class SquircleOutlineFamilyTest {
                 val angle = kotlin.math.atan2(-dy, -dx)
                 val cosA = kotlin.math.cos(angle)
                 val sinA = kotlin.math.sin(angle)
-                val lp = radius / (cosA.pow(2.5f) + sinA.pow(2.5f)).pow(1f / 2.5f)
+                val lp = radius / (cosA.pow(exponent) + sinA.pow(exponent)).pow(1f / exponent)
                 val radial = sqrt(dx * dx + dy * dy)
                 worst = maxOf(worst, abs(radial - lp))
             }

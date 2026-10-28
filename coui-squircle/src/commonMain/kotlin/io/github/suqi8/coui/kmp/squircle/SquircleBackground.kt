@@ -395,14 +395,12 @@ private class SquircleShaderBrush(
 
     override fun createShader(size: Size): Shader {
         val halfMin = minOf(size.width, size.height) * 0.5f
-        val threshold = halfMin * BLEND_THRESHOLD_RATIO
-        val range = halfMin - threshold
         for (i in 0..3) {
             val tile = cornerTilesPx[i]
             val effective = effectiveCornerPx(i, size)
             effectiveSizes[i] = effective
             halfRanges[i] = BakedSquircleSdf.HALF_RANGE * effective
-            weights[i] = if (range <= 0f) 1f else ((tile - threshold) / range).coerceIn(0f, 1f)
+            weights[i] = circleBlendWeight(tile, halfMin)
         }
         runtimeShader.setColorUniform("color", color)
         runtimeShader.setFloatUniform("size", size.width, size.height)
@@ -429,10 +427,6 @@ private class SquircleShaderBrush(
 // Max node dimension composited in one offscreen layer. 2048 px is the texture-size floor guaranteed
 // by GL ES 3.0 / WebGL2 / Metal, so it never overflows the GPU max texture; larger nodes go banded.
 private const val MAX_OFFSCREEN_PX = 2048f
-
-// π/4 — squircle → circle blend threshold. Above this ratio of cornerSize / halfMin the SDF result
-// is mixed with a pure circle SDF so capsule / pill / circle silhouettes degrade cleanly.
-private const val BLEND_THRESHOLD_RATIO = 0.7853982f
 
 // Decoded once per process; LINEAR-sampled so the corner branch does one bilinear tap (see [makeLinearShader]).
 private val bakedSdfShader: Shader by lazy {

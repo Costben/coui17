@@ -99,6 +99,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Changed
 
+- A smooth corner that reaches half the shorter side now turns into a circular arc in `SquircleShape`, `Path.addSquircleRect`, `Path.addSquircleRoundRect` and `squircleBorder`, and the glass rim follows it, so a capsule has round ends as on ColorOS 17. The shader-backed `squircleBackground` family already did this; the path-based shapes kept a squarer end.
 - The example app keeps one entry per component. The single-input dialog is a row of the "Dialog" card, built from the same `OverlayDialog` as every other dialog there instead of a button of its own, and the panel template is the first row of the "BottomSheet" card with the overlay and window sheets under it, so a variant is a row rather than a separate entry.
 - A collapsible `TopAppBar` snaps instead of tracking the scroll continuously: while the list is scrolled the title stays in the 52dp toolbar row, and the large title expands into its second row only when the list returns to the top. `COUIScrollBehavior(expandOnContentScroll = true)` keeps the continuous behaviour.
 - Swiping a notification no longer recomposes the notification box or rebuilds the card and menu shapes on every frame.
