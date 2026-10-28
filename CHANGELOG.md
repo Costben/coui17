@@ -8,6 +8,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Added
 
+- `SquircleShape` takes one radius per corner, so a surface that rounds only some corners, such as a bottom sheet's top edge, gets smooth corners too. `copy` with differing corners now returns a `SquircleShape` instead of a `RoundedCornerShape`.
 - `FullPagePullToRefresh` reproduces the App Market's featured page: the whole page follows the finger, a full-screen layer and a clipped hint are revealed underneath, with the native 93.187dp threshold, 0.5 damping and 800ms success hold.
 - Notifications reveal settings and delete actions with a melting transition while swiping left.
 - `NotificationSwipeBox` accepts a `rimColor`, the light traced along the merged outline. The default half-transparent white suits a card on a bright wallpaper; a shade card passes opaque white.

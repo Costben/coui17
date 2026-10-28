@@ -48,6 +48,40 @@ class SquircleOutlineFamilyTest {
     }
 
     /**
+     * A sheet rounds only its top edge. The per-corner shape has to stay a smooth-corner path with
+     * square bottom corners, keep its radii readable for the rim, and mirror them in RTL.
+     */
+    @Test
+    fun perCornerShapeKeepsSquareCornersSquareAndFollowsLayoutDirection() {
+        val topOnly = SquircleShape(topStart = 28.dp, topEnd = 0.dp, bottomEnd = 0.dp, bottomStart = 0.dp)
+        val size = androidx.compose.ui.geometry.Size(200f, 200f)
+        val ltr = topOnly.createOutline(size, LayoutDirection.Ltr, DensityStub)
+        assertTrue(ltr is Outline.Generic, "per-corner squircle outline must be a path")
+        // Square corners reach the very corner point; the rounded one leaves it outside the path.
+        assertTrue(ltr.path.contains(Rect(199f, 199f, 200f, 200f)), "bottom-end corner must stay square")
+        assertTrue(ltr.path.contains(Rect(199f, 0f, 200f, 1f)), "top-end corner must stay square")
+        assertTrue(!ltr.path.contains(Rect(0f, 0f, 1f, 1f)), "top-start corner must be rounded")
+
+        val rtl = topOnly.createOutline(size, LayoutDirection.Rtl, DensityStub)
+        assertTrue(rtl.path.contains(Rect(0f, 0f, 1f, 1f)), "RTL mirrors top-start to the right")
+        assertTrue(!rtl.path.contains(Rect(199f, 0f, 200f, 1f)), "RTL rounds the top-right corner")
+
+        // copy() keeps the corner family instead of falling back to circular arcs.
+        val copied = smoothCorner.copy(bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp))
+        assertTrue(copied is SquircleShape, "copy must stay a squircle")
+        assertTrue(copied.createOutline(size, LayoutDirection.Ltr, DensityStub) is Outline.Generic)
+    }
+
+    private val Outline.path: Path get() = (this as Outline.Generic).path
+
+    // A path op can leave empty contours behind, so emptiness is read off the bounds.
+    private fun Path.contains(cell: Rect): Boolean = Path.combine(
+        androidx.compose.ui.graphics.PathOperation.Difference,
+        Path().apply { addRect(cell) },
+        this,
+    ).getBounds().isEmpty
+
+    /**
      * Walks the corner the path actually emits and measures how far it sits from the Lp superellipse
      * `|x|^n + |y|^n = r^n` with `n = 2.5`, in units of the corner radius. The cubic approximates
      * that curve to under half a percent of the radius; a circular arc, the shape this replaced,
