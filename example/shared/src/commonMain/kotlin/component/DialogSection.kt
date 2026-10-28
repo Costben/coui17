@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coui17.SingleInputDialogDemo
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -54,6 +55,8 @@ fun DialogDemo() {
     var showProgressDialog by remember { mutableStateOf(false) }
     var progressDialogHoldDown by remember { mutableStateOf(false) }
     var progressDialogValue by remember { mutableStateOf<Float?>(null) }
+    var showSingleInputDialog by remember { mutableStateOf(false) }
+    var singleInputDialogHoldDown by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -139,7 +142,23 @@ fun DialogDemo() {
             },
             holdDownState = securityDialogHoldDown,
         )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = str("Single Input Dialog (O)"),
+            summary = str("A text field with a byte counter above the button bar"),
+            onClick = {
+                showSingleInputDialog = true
+                singleInputDialogHoldDown = true
+            },
+            holdDownState = singleInputDialogHoldDown,
+        )
     }
+
+    SingleInputDialogDemo(
+        show = showSingleInputDialog,
+        onDismissRequest = { showSingleInputDialog = false },
+        onDismissFinished = { singleInputDialogHoldDown = false },
+    )
 
     SuperDialogDemo(
         show = showSuperDialog,

@@ -198,8 +198,6 @@ fun Coui17HomePage(
 
         coui17Section("Overlays & menus")
         coui17Entry("Dialog") { DialogDemo() }
-        coui17Entry("SingleInputDialog (ColorOS 17)") { SingleInputDialogDemo() }
-        coui17Entry("PanelTemplate (ColorOS 17)") { PanelTemplateDemo() }
         coui17Entry("BottomSheet") { BottomSheetDemo() }
         coui17Entry("WindowDialog variants") { WindowDialogVariantsDemo() }
         coui17Entry("WindowIconMenu variants") { WindowIconMenuVariantsDemo() }

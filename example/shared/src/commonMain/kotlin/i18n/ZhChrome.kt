@@ -105,8 +105,6 @@ internal val zhChrome: Map<String, String> = mapOf(
     "Foreground Blur" to "前景模糊",
     "Other" to "其他",
     // Entries the list grew after the first pass, kept in the same gallery order.
-    "SingleInputDialog (ColorOS 17)" to "单行输入对话框（ColorOS 17）",
-    "PanelTemplate (ColorOS 17)" to "底部面板模板（ColorOS 17）",
     "WindowDialog variants" to "窗口对话框（多种形态）",
     "WindowIconMenu variants" to "窗口图标菜单（多种形态）",
     "HorizontalScrollBar" to "水平滚动条",

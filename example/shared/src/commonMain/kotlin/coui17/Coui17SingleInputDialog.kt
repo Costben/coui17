@@ -59,35 +59,37 @@ import androidx.compose.ui.unit.sp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Button
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.layout.DialogButtonBar
+import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * The gallery entry for [SingleInputDialog]: opens the template with neutral placeholder copy.
+ * The single-input dialog as the gallery shows it, with neutral placeholder copy. The "Dialog"
+ * entry opens it from its own row, next to the other dialogs, so every dialog in the gallery is
+ * the same [OverlayDialog] reached the same way.
  *
- * The dialog is a shape / rhythm template, not a copy of any particular settings screen, so the
- * strings here are deliberately generic — swap them for whatever the caller needs.
+ * @param show Whether the dialog is shown.
+ * @param onDismissRequest Called when the dialog closes.
+ * @param onDismissFinished Called once the exit animation has finished.
  */
 @Composable
-fun SingleInputDialogDemo() {
-    var show by remember { mutableStateOf(false) }
+fun SingleInputDialogDemo(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    onDismissFinished: () -> Unit,
+) {
     val initial = str("Sample text")
     var value by remember { mutableStateOf(initial) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Coui17Dimens.ListCardInset),
-    ) {
-        Button(onClick = { show = true }) { Text(str("Open dialog")) }
-    }
     SingleInputDialog(
         show = show,
         title = str("Enter a name"),
         message = str("A sample message showing how the dialog body is laid out"),
         value = value,
         onValueChange = { value = it },
-        onDismissRequest = { show = false },
-        onConfirm = { show = false },
+        onDismissRequest = onDismissRequest,
+        onDismissFinished = onDismissFinished,
+        onConfirm = onDismissRequest,
         confirmText = str("Save"),
         cancelText = str("Cancel"),
     )
@@ -110,6 +112,7 @@ fun SingleInputDialogDemo() {
  *   tap or back.
  * @param onConfirm Called when the positive button is tapped.
  * @param modifier The modifier applied to the dialog.
+ * @param onDismissFinished Called once the exit animation has finished.
  * @param maxCount The byte budget of the field; the counter shows `used/maxCount` in UTF-8 bytes,
  *   mirroring `Utf8ByteLengthFilter`.
  * @param confirmText The positive button label.
@@ -125,6 +128,7 @@ fun SingleInputDialog(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
+    onDismissFinished: (() -> Unit)? = null,
     maxCount: Int = 32,
     confirmText: String = "Save",
     cancelText: String = "Cancel",
@@ -133,49 +137,20 @@ fun SingleInputDialog(
     val canSave = value.isNotBlank()
     val focusRequester = remember { FocusRequester() }
 
-    // The panel rim, its 38dp squircle corners and the night-mode preset are the library defaults
-    // DialogContentLayout applies to every dialog, so nothing has to be passed in here.
+    // The same OverlayDialog every other gallery dialog uses: its title, message, panel material
+    // and button bar are the library's, and only the input row is this template's own.
     OverlayDialog(
         show = show,
         modifier = modifier,
-        backgroundColor = COUITheme.colorScheme.background.copy(
-            alpha = if (COUITheme.colorScheme.background.luminance() < 0.5f) 0.86f else 1f,
-        ),
-        // Title and message are drawn inside the content slot so the measured 24dp / 6dp /
-        // 17.5dp vertical rhythm stays exact (the shared slot would apply 18dp message padding).
-        insideMargin = DpSize(0.dp, 0.dp),
+        title = title,
+        summary = message,
         // The field opens focused, so the keyboard comes up with the dialog; the IME padding keeps
         // the panel above it, as the native dialog rises to sit 16dp over the keyboard.
         defaultWindowInsetsPadding = true,
         onDismissRequest = onDismissRequest,
+        onDismissFinished = onDismissFinished,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-                    .height(24.dp),
-                style = trimmedLineHeight,
-                fontSize = 18.sp,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                color = COUITheme.colorScheme.onBackground,
-            )
-            Text(
-                text = message,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 6.dp, bottom = 4.dp)
-                    .height(35.dp),
-                style = trimmedLineHeight,
-                fontSize = 13.sp,
-                lineHeight = 17.5.sp,
-                textAlign = TextAlign.Center,
-                color = COUITheme.colorScheme.onBackgroundVariant,
-            )
             SingleInputField(
                 value = value,
                 onValueChange = { onValueChange(it.limitUtf8Bytes(maxCount)) },
@@ -183,16 +158,13 @@ fun SingleInputDialog(
                 maxCount = maxCount,
                 focusRequester = focusRequester,
                 autoFocus = show,
-                modifier = Modifier.padding(horizontal = 24.dp),
+                // 24dp side inset like the title; 18dp below plus the bar's own 4dp top padding
+                // keeps the measured 22dp between the row and the buttons.
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 18.dp),
             )
             DialogButtonBar(
-                confirmEnabled = canSave,
-                confirmText = confirmText,
-                cancelText = cancelText,
-                onCancel = onDismissRequest,
-                onConfirm = onConfirm,
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 16.dp, top = 22.dp, bottom = 16.dp),
+                negative = DialogButtonBarAction(text = cancelText, onClick = onDismissRequest),
+                positive = DialogButtonBarAction(text = confirmText, enabled = canSave, onClick = onConfirm),
             )
         }
     }
@@ -313,84 +285,6 @@ private fun ClearTextButton(
             contentDescription = str("Clear text"),
             modifier = Modifier.size(22.dp),
             colorFilter = ColorFilter.tint(tint),
-        )
-    }
-}
-
-/**
- * `coui_center_alert_dialog_button_panel.xml` → `COUIButtonBarLayout`: two equal-width
- * `COUIAlertDialogBottomButtonSecondary` slots (128dp each on a 296dp card), 8dp apart,
- * 44dp tall, 16sp medium label in `couiColorLabelPrimary` and `#42000000` when disabled.
- */
-@Composable
-private fun DialogButtonBar(
-    confirmEnabled: Boolean,
-    confirmText: String,
-    cancelText: String,
-    onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        DialogTextButton(
-            text = cancelText,
-            enabled = true,
-            onClick = onCancel,
-            modifier = Modifier.weight(1f),
-        )
-        DialogTextButton(
-            text = confirmText,
-            enabled = confirmEnabled,
-            onClick = onConfirm,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun DialogTextButton(
-    text: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val pressed by interactionSource.collectIsPressedAsState()
-    val contentColor = when {
-        !enabled -> COUITheme.colorScheme.onSurfaceVariantActions
-        else -> COUITheme.colorScheme.onBackground
-    }
-    // Measured on the live dialog: the enabled Cancel capsule is a white layer over the panel
-    // (247 over 229 light, 84 over 40 dark), while the disabled Save capsule is
-    // `?couiColorContainer8` (213 over 229, 63 over 40). Press deepens the enabled fill.
-    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val fill = when {
-        !enabled -> if (isDark) Color(0x1AFFFFFF) else Color(0x14000000)
-        else -> if (isDark) Color(0x33FFFFFF) else Color(0xAAFFFFFF)
-    }
-    val pressedFill = if (isDark) Color(0x47FFFFFF) else Color(0x14000000)
-    Box(
-        modifier = modifier
-            .height(44.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(if (pressed && enabled) pressedFill else fill)
-            .clickable(
-                enabled = enabled,
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            lineHeight = 19.2.sp,
-            fontWeight = FontWeight.Medium,
-            color = contentColor,
         )
     }
 }
