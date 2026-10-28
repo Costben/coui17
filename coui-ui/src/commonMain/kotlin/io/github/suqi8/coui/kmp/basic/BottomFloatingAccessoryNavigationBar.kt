@@ -170,6 +170,8 @@ fun BottomFloatingAccessoryNavigationBar(
 
             // The blob and the row share this box, so the particles below are expressed in the
             // capsule's own coordinates, and the whole group is lifted off the bar's bottom edge.
+            // The overlap alpha fades only the accessory's content. Its body and shadow stay whole
+            // while it slides under the capsule, so the merged material never thins out mid-tuck.
             Box(
                 modifier = Modifier
                     .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance)
@@ -212,7 +214,6 @@ fun BottomFloatingAccessoryNavigationBar(
                                 // draws, so a dragged ball keeps its shadow under it instead of
                                 // leaving it behind on the resting position.
                                 .graphicsLayer {
-                                    alpha = startAlpha
                                     translationX = startTouchState?.translation?.x ?: 0f
                                     translationY = startTouchState?.translation?.y ?: 0f
                                     scaleX = startTouchState?.scaleX ?: 1f
@@ -231,7 +232,6 @@ fun BottomFloatingAccessoryNavigationBar(
                                 )
                                 .size(diameter)
                                 .graphicsLayer {
-                                    alpha = endAlpha
                                     translationX = endTouchState?.translation?.x ?: 0f
                                     translationY = endTouchState?.translation?.y ?: 0f
                                     scaleX = endTouchState?.scaleX ?: 1f
@@ -265,7 +265,6 @@ fun BottomFloatingAccessoryNavigationBar(
                                     height = accessorySize * startExpansion.scale,
                                     scaleX = startTouchState?.scaleX ?: 1f,
                                     scaleY = startTouchState?.scaleY ?: 1f,
-                                    alpha = startAlpha,
                                     cornerRadius = accessorySize * startExpansion.scale / 2,
                                 ),
                             )
@@ -279,7 +278,6 @@ fun BottomFloatingAccessoryNavigationBar(
                                     height = accessorySize * endExpansion.scale,
                                     scaleX = endTouchState?.scaleX ?: 1f,
                                     scaleY = endTouchState?.scaleY ?: 1f,
-                                    alpha = endAlpha,
                                     cornerRadius = accessorySize * endExpansion.scale / 2,
                                 ),
                             )

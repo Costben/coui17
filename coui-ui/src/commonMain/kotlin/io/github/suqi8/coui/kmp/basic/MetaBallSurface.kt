@@ -561,6 +561,13 @@ half4 main(float2 xy) {
     int owner = 0;
     float has = 0.0;
     float opacity = 0.0;
+    // SkSL(ES2) has no fwidth, dFdx or dFdy: any of them fails the whole shader to compile and
+    // silently degrades to the unmerged silhouettes. The SDF gradient magnitude is ~1, so a fixed
+    // 0.6 device pixels approximates the one-pixel antialiasing band fwidth would have measured.
+    float aa = 0.6;
+    // The nearest edge only owns the fillet between members. Inside a member's own silhouette its
+    // alpha is a floor, so a member fading out never cuts into an opaque neighbour it overlaps.
+    float inside = 0.0;
     for (int i = 0; i < 8; i++) {
         if (float(i) >= in_count) {
             break;
@@ -568,6 +575,7 @@ half4 main(float2 xy) {
         float2 c = in_center[i];
         float di = couiSdRoundBox((xy - c) / in_scale[i], in_half[i],
             min(in_corner[i], min(in_half[i].x, in_half[i].y)));
+        inside = max(inside, in_alpha[i] * (1.0 - smoothstep(-aa, aa, di)));
         if (has < 0.5) {
             d = di;
             nearest = c;
@@ -596,11 +604,7 @@ half4 main(float2 xy) {
         return half4(0.0);
     }
 
-    // SkSL(ES2) has no fwidth, dFdx or dFdy: any of them fails the whole shader to compile and
-    // silently degrades to the unmerged silhouettes. The SDF gradient magnitude is ~1, so a fixed
-    // 0.6 device pixels approximates the one-pixel antialiasing band fwidth would have measured.
-    float aa = 0.6;
-    float cover = (1.0 - smoothstep(-aa, aa, d)) * opacity;
+    float cover = (1.0 - smoothstep(-aa, aa, d)) * max(opacity, inside);
     float2 localPos = (xy - nearest) / nearestScale;
     if (cover <= 0.003) return half4(0.0);
 

@@ -139,6 +139,33 @@ class MetaBallSurfaceRenderTest {
         assertTrue(blueChannel(pixel) >= 200, "the moving particle must not be cut at the resting 40dp bottom")
     }
 
+    /**
+     * A member fading out over an opaque one must only fade its own exposed part. At x=88 the
+     * circle's edge is nearer than the capsule's, yet the pixel lies inside the capsule, so it has to
+     * keep the capsule's full body; at x=105 only the faded circle covers it, so it stays background.
+     */
+    @Test
+    fun aFadingMemberNeverCutsIntoAnOpaqueOne() = runSkikoComposeUiTest(size = CanvasSize, density = Density(1f)) {
+        setContent {
+            Box(Modifier.fillMaxSize().background(BackgroundColor)) {
+                MetaBallSurface(
+                    particles = listOf(
+                        MetaBallParticle(CapsuleCenterX, CapsuleCenterY, CapsuleWidth, CapsuleHeight),
+                        MetaBallParticle.circle(90.dp, CapsuleCenterY, ParticleDiameter).copy(alpha = 0f),
+                    ),
+                    modifier = Modifier.fillMaxSize(),
+                    color = BlobColor,
+                    backdrop = null,
+                    rimColor = null,
+                )
+            }
+        }
+        waitForIdle()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        assertTrue(blueChannel(pixels[88, 60]) >= 200, "the capsule must stay whole where the faded circle's edge is nearer")
+        assertTrue(greenChannel(pixels[105, 60]) >= 200, "the circle's exposed part must take its own alpha")
+    }
+
     @Test
     fun silhouettesThatMeetMeltIntoOneBlob() = runSkikoComposeUiTest(
         size = CanvasSize,
