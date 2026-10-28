@@ -56,6 +56,7 @@ import io.github.suqi8.coui.kmp.basic.InputField
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
+import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TopAppBar
 import io.github.suqi8.coui.kmp.basic.couiTopAppBarActionItem
@@ -83,9 +84,12 @@ private val Coui17Tabs = listOf(
 )
 
 /**
- * The shared ColorOS 17 page chrome. The library's [TopAppBar] owns the native large-title
- * transition, so every page follows the same 32dp expanded title -> 24dp toolbar title motion.
- * Search and overflow actions stay in the 40dp toolbar slots throughout the transition.
+ * The capsule pages' chrome. The library's [TopAppBar] owns the native large-title transition, so
+ * every capsule page follows the same 32dp expanded title -> 24dp toolbar title motion. Search and
+ * overflow actions stay in the 40dp toolbar slots throughout the transition.
+ *
+ * The large title belongs to the keyless top level alone: a page with a back key is a second-level
+ * page and wears [Coui17SecondaryTopAppBar] instead.
  *
  * @param onSearchPillPositioned the collapsed pill's top edge in window coordinates, reported on
  *   every layout. The expanded search bar is pinned there so the bar never moves when the page
@@ -98,12 +102,10 @@ fun Coui17TopAppBar(
     title: String,
     searchLabel: String,
     showSearchField: Boolean,
-    showBack: Boolean,
-    onBack: () -> Unit,
     onSearch: () -> Unit,
     panelOpen: Boolean,
     onOpenPanel: () -> Unit,
-    onPanelSelect: (Int) -> Unit,
+    onPanelSelect: (Coui17PanelPage) -> Unit,
     onPanelDismiss: () -> Unit,
     scrollBehavior: ScrollBehavior,
     modifier: Modifier = Modifier,
@@ -120,19 +122,6 @@ fun Coui17TopAppBar(
         // ColorOS 17's home bar carries no hairline: the material ramps out on its own, and the
         // library's line would otherwise fade in under the search pill as soon as the page scrolls.
         showDivider = false,
-        navigationIcon = {
-            // Only a panel page has somewhere to go back to; the capsule pages would otherwise show
-            // a dead key. Dropping it also moves the collapsed title to the 16dp start edge, which is
-            // what the device's keyless toolbars do.
-            if (showBack) {
-                HighlightedIconButton(
-                    onClick = onBack,
-                    modifier = Modifier.couiTopAppBarActionItem(),
-                ) {
-                    Icon(imageVector = COUIIcons.Back, contentDescription = str("Back"))
-                }
-            }
-        },
         actions = {
             HighlightedIconButton(
                 onClick = onSearch,
@@ -178,6 +167,57 @@ fun Coui17TopAppBar(
                     // edge instead of fading out.
                     Spacer(modifier = Modifier.height(Coui17Dimens.AppBarBlurExtra))
                 }
+            }
+        },
+    )
+}
+
+/**
+ * A second-level page's chrome: the back key, an 18dp title right after it and the overflow key on
+ * the gradient-blur material.
+ *
+ * A toolbar with keys on both sides sets its title in `TextAppearance.COUI.Toolbar.SecondTitle`,
+ * start-aligned against the back key, and never grows a large title, so the bar stays pinned at the
+ * 52dp toolbar row however far the page scrolls.
+ */
+@Composable
+fun Coui17SecondaryTopAppBar(
+    title: String,
+    onBack: () -> Unit,
+    panelOpen: Boolean,
+    onOpenPanel: () -> Unit,
+    onPanelSelect: (Coui17PanelPage) -> Unit,
+    onPanelDismiss: () -> Unit,
+    scrollBehavior: ScrollBehavior,
+    modifier: Modifier = Modifier,
+) {
+    SmallTopAppBar(
+        title = title,
+        modifier = modifier.fillMaxWidth(),
+        scrollBehavior = scrollBehavior,
+        showDivider = false,
+        gradientGlass = true,
+        navigationIcon = {
+            HighlightedIconButton(
+                onClick = onBack,
+                modifier = Modifier.couiTopAppBarActionItem(),
+            ) {
+                Icon(imageVector = COUIIcons.Back, contentDescription = str("Back"))
+            }
+        },
+        actions = {
+            Box {
+                HighlightedIconButton(
+                    onClick = onOpenPanel,
+                    modifier = Modifier.couiTopAppBarActionItem(),
+                ) {
+                    Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
+                }
+                Coui17Panel(
+                    show = panelOpen,
+                    onSelect = onPanelSelect,
+                    onDismiss = onPanelDismiss,
+                )
             }
         },
     )
@@ -378,7 +418,7 @@ fun Coui17AccessoryBar(
     onSelectPage: (Int) -> Unit,
     onSearch: () -> Unit,
     onOpenPanel: () -> Unit,
-    onPanelSelect: (Int) -> Unit,
+    onPanelSelect: (Coui17PanelPage) -> Unit,
     onPanelDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -457,13 +497,13 @@ private fun Coui17AccessoryBall(
 }
 
 /**
- * The panel the end ball opens: the list panel COUI uses for its filter menus, carrying the two
+ * The panel the overflow keys open: the list panel COUI uses for its filter menus, carrying the two
  * second-level entries the capsule has no room for.
  */
 @Composable
 fun Coui17Panel(
     show: Boolean,
-    onSelect: (Int) -> Unit,
+    onSelect: (Coui17PanelPage) -> Unit,
     onDismiss: () -> Unit,
 ) {
     OverlayListPopup(
@@ -472,30 +512,29 @@ fun Coui17Panel(
         onDismissRequest = onDismiss,
     ) {
         ListPopupColumn {
-            DropdownImpl(
-                item = DropdownItem(
-                    text = str("Text style"),
-                    icon = { Icon(imageVector = COUIIcons.Translate, contentDescription = null, modifier = it) },
-                ),
-                optionSize = 2,
-                isSelected = false,
-                index = 0,
-                groupKey = "coui17-panel",
-                role = Role.Button,
-                onSelectedIndexChange = { onSelect(Coui17Page.TextStyle.ordinal) },
-            )
-            DropdownImpl(
-                item = DropdownItem(
-                    text = str("Settings items"),
-                    icon = { Icon(imageVector = COUIIcons.Settings, contentDescription = null, modifier = it) },
-                ),
-                optionSize = 2,
-                isSelected = false,
-                index = 1,
-                groupKey = "coui17-panel",
-                role = Role.Button,
-                onSelectedIndexChange = { onSelect(Coui17Page.Settings.ordinal) },
-            )
+            Coui17PanelPage.entries.forEachIndexed { index, page ->
+                DropdownImpl(
+                    item = DropdownItem(
+                        text = str(page.title),
+                        icon = {
+                            Icon(
+                                imageVector = when (page) {
+                                    Coui17PanelPage.TextStyle -> COUIIcons.Translate
+                                    Coui17PanelPage.Settings -> COUIIcons.Settings
+                                },
+                                contentDescription = null,
+                                modifier = it,
+                            )
+                        },
+                    ),
+                    optionSize = Coui17PanelPage.entries.size,
+                    isSelected = false,
+                    index = index,
+                    groupKey = "coui17-panel",
+                    role = Role.Button,
+                    onSelectedIndexChange = { onSelect(page) },
+                )
+            }
         }
     }
 }

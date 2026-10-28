@@ -35,12 +35,15 @@ import navigation3.Route
  *
  * @param padding The outer padding the host already applies to its own content. Each page adds it
  *   to the insets of the scaffold it draws, so this is normally zero for a full-window host.
+ * @param panelPage Draws a [Route.Panel], one of the host's own second-level pages: they wear the
+ *   host's chrome, so the host renders them rather than this composable.
  * @param mainContent The host's home screen: the `Route.Main` entry.
  */
 @Composable
 fun SecondaryPagesNavHost(
     padding: PaddingValues,
     modifier: Modifier = Modifier,
+    panelPage: @Composable (Route.Panel) -> Unit = {},
     mainContent: @Composable () -> Unit,
 ) {
     val appState = LocalAppState.current
@@ -55,6 +58,7 @@ fun SecondaryPagesNavHost(
                 subclass(Route.License::class)
                 subclass(Route.Navigation::class)
                 subclass(Route.MultiScaffold::class)
+                subclass(Route.Panel::class)
             }
         }
     }
@@ -96,6 +100,7 @@ fun SecondaryPagesNavHost(
             entry<Route.MultiScaffold> {
                 MultiScaffoldTestPage(padding = padding)
             }
+            entry<Route.Panel> { route -> panelPage(route) }
         }
     }
 

@@ -31,4 +31,8 @@ sealed interface Route : NavKey {
 
     @Serializable
     data object MultiScaffold : Route
+
+    /** A second-level page of the ColorOS 17 gallery, reached from its overflow panel; [page] names it. */
+    @Serializable
+    data class Panel(val page: String) : Route
 }
