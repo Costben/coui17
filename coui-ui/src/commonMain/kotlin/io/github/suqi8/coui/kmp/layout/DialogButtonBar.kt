@@ -570,23 +570,47 @@ object DialogButtonBarDefaults {
      * `COUIMaterialEffect.setViewBlurEffect(TYPE_CONTENT_SECONDARY_BUTTON)` instead, i.e. a
      * frosted, brightened copy of the panel behind the capsule.
      *
-     * Measured on the ColorOS 17 dialog, the capsule reads (246,246,246)–(249,249,249) over a
-     * (229,229,229) panel, which is what a 67% white layer produces over that panel
-     * (229 + 0.667 × 26 = 246.3); the leftover variance is the blurred page showing through. So the
-     * port keeps the measured result rather than the unused flat recipe.
+     * That effect is `CONTENT_SECONDARY_BUTTON_PARAMS_LIGHT` / `_DARK` in `COUIMaterialBlurEffect`:
+     * a 25px blur of what lies behind the capsule, then one `SRC_OVER` white layer — `#CCFFFFFF` in
+     * light theme and only `#33FFFFFF` in dark. The capsule therefore owns no colour of its own; it
+     * is the panel underneath, brightened, and whatever the panel lets through (a blue page behind
+     * a dark dialog tints its buttons blue as well) shows in it.
+     *
+     * Light, measured on the ColorOS 17 dialog: the capsule reads (246,246,246)–(249,249,249) over
+     * a (229,229,229) panel, a 67% white layer (229 + 0.667 × 26 = 246.3), so the port keeps that
+     * measured result. Dark: (86,86,86) over a (44,44,44) panel, and (81–86, 90, 97) over a
+     * blue-tinted (44,49,55) one in Settings — 20% white either way, the `#33FFFFFF` of the recipe.
+     * Using the light value in dark theme renders the capsule at (185,185,185), so light the white
+     * label all but disappears.
      */
     @Composable
-    fun buttonFill(): Color = Color(0xAAFFFFFF)
+    fun buttonFill(): Color = if (isDarkPanel()) DarkButtonFill else LightButtonFill
 
     /**
      * The fill of a disabled non-recommended capsule.
      *
-     * `COUIButton.changeButtonAlphaColor` returns `?couiColorContainer8` = `#14000000` in light
-     * theme when the button is not enabled and not pressed, so a disabled capsule sinks back into
-     * the panel instead of standing out of it.
+     * `COUIButton.changeButtonAlphaColor` returns `?couiColorContainer8` when the button is not
+     * enabled and not pressed — `#14000000` in light theme, `#1AFFFFFF` in dark — so a disabled
+     * capsule sinks back into the panel instead of standing out of it.
      */
     @Composable
-    fun disabledButtonFill(): Color = Color(0x14000000)
+    fun disabledButtonFill(): Color = if (isDarkPanel()) DarkDisabledButtonFill else LightDisabledButtonFill
+
+    /** Light-theme capsule fill: the measured 67% white layer, see [buttonFill]. */
+    private val LightButtonFill = Color(0xAAFFFFFF)
+
+    /** Dark-theme capsule fill: `CONTENT_SECONDARY_BUTTON_PARAMS_DARK`'s `#33FFFFFF`. */
+    private val DarkButtonFill = Color(0x33FFFFFF)
+
+    /** `coui_color_container8_light`. */
+    private val LightDisabledButtonFill = Color(0x14000000)
+
+    /** `coui_color_container8_dark`. */
+    private val DarkDisabledButtonFill = Color(0x1AFFFFFF)
+
+    /** The capsule recipes switch on the night configuration, read here off the theme background. */
+    @Composable
+    private fun isDarkPanel(): Boolean = COUITheme.colorScheme.background.luminance() < 0.5f
 
     /**
      * The colours of an ordinary (non-recommended) capsule: the translucent fill with the

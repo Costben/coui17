@@ -101,7 +101,7 @@ The capsule is built from three layers, in the same order as `COUIButton.draw()`
 
 | Layer | What it is | How it is done |
 | :--- | :--- | :--- |
-| Container | The capsule fill | `DialogButtonBarDefaults.buttonFill()` = `0xAAFFFFFF`. Under a blur window COUI does **not** paint its own background (`onDraw` guards it with `if (!isBlurEffectEnabled() \|\| mIsDrawMaterialEffect)`); the capsule is really the panel brightened by the platform blur layer `TYPE_CONTENT_SECONDARY_BUTTON` — measured 229 on the panel and 246 on the capsule, exactly a 67% white overlay |
+| Container | The capsule fill | `DialogButtonBarDefaults.buttonFill()` = `0xAAFFFFFF` in light theme, `0x33FFFFFF` in dark. Under a blur window COUI does **not** paint its own background (`onDraw` guards it with `if (!isBlurEffectEnabled() \|\| mIsDrawMaterialEffect)`); the capsule is really the panel brightened by the platform blur layer `TYPE_CONTENT_SECONDARY_BUTTON` — measured 229 on the panel and 246 on the capsule, exactly a 67% white overlay. In dark theme the recipe (`CONTENT_SECONDARY_BUTTON_PARAMS_DARK`) is a 25px blur plus `#33FFFFFF`: 86 over a 44 panel |
 | Edge light | The rim highlight | `Modifier.materialShadowEdge`. A secondary button uses `MaterialStrokeParams.contentCapsule5()` (`TYPE_CONTENT_CAPSULE_5`, edgeAlpha 0.8); a recommended button uses `ContentCapsule4` (edgeAlpha 0.3) |
 | Interaction | Press feedback | `pressScaleEnabled = true`, mirroring `scaleEnable=true` on `COUIAlertDialogBottomButtonSecondary`; a disabled button swaps the fill for `disabledButtonFill()` (`#14000000`) |
 
@@ -169,8 +169,8 @@ Every inset of the horizontal bar is derived from a `COUIButtonBarLayout` field 
 | StackedButtonPaddingTopExtra | Dp         | Extra top padding for the top stacked button        | 0.dp       |
 | StackedButtonPaddingBottomExtra | Dp      | Extra bottom padding for the bottom stacked button  | 0.dp       |
 | StackedBarMarginTop        | Dp            | Top margin of a stacked bar                         | 0.dp       |
-| buttonFill()               | Color         | Capsule fill                                        | #AAFFFFFF  |
-| disabledButtonFill()       | Color         | Disabled capsule fill                               | #14000000  |
+| buttonFill()               | Color         | Capsule fill                                        | #AAFFFFFF light / #33FFFFFF dark |
+| disabledButtonFill()       | Color         | Disabled capsule fill                               | #14000000 light / #1AFFFFFF dark |
 | buttonColors()             | TextButtonColors | The whole colour set of an ordinary capsule      | the two above + `onBackground` |
 | DangerTextColor            | Color         | Label colour of a destructive action                | #EA3447    |
 | DangerDisabledTextColor    | Color         | Its disabled counterpart                            | #66EA3447  |

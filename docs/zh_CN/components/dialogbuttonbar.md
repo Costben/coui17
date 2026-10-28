@@ -101,7 +101,7 @@ ColorOS 17 的对话框按钮栏不画分割线。`coui_center_alert_dialog_butt
 
 | 层 | 内容 | 实现 |
 | :--- | :--- | :--- |
-| 容器层 | 胶囊底色 | `DialogButtonBarDefaults.buttonFill()` = `0xAAFFFFFF`。COUI 在模糊窗口下**不画**自己的背景（`onDraw` 里 `if (!isBlurEffectEnabled() \|\| mIsDrawMaterialEffect)`），胶囊其实是平台模糊层 `TYPE_CONTENT_SECONDARY_BUTTON` 提亮后的面板：实测面板 229、胶囊 246，正是 67% 白叠在面板上的结果 |
+| 容器层 | 胶囊底色 | `DialogButtonBarDefaults.buttonFill()` 浅色 `0xAAFFFFFF`、深色 `0x33FFFFFF`。COUI 在模糊窗口下**不画**自己的背景（`onDraw` 里 `if (!isBlurEffectEnabled() \|\| mIsDrawMaterialEffect)`），胶囊其实是平台模糊层 `TYPE_CONTENT_SECONDARY_BUTTON` 提亮后的面板：实测面板 229、胶囊 246，正是 67% 白叠在面板上的结果。深色下的配方（`CONTENT_SECONDARY_BUTTON_PARAMS_DARK`）是 25px 模糊加 `#33FFFFFF`：面板 44、胶囊 86 |
 | 光效层 | 描边高光 | `Modifier.materialShadowEdge`。非推荐按钮走 `MaterialStrokeParams.contentCapsule5()`（`TYPE_CONTENT_CAPSULE_5`，edgeAlpha 0.8），推荐按钮走 `ContentCapsule4`（edgeAlpha 0.3） |
 | 交互层 | 按压反馈 | `pressScaleEnabled = true`，对应 `COUIAlertDialogBottomButtonSecondary` 的 `scaleEnable=true`；禁用时填充换成 `disabledButtonFill()`（`#14000000`） |
 
@@ -167,8 +167,8 @@ ColorOS 17 的对话框按钮栏不画分割线。`coui_center_alert_dialog_butt
 | StackedButtonPaddingTopExtra | Dp | 上方无内容时，最顶部纵排按钮的额外上内边距     | 0.dp      |
 | StackedButtonPaddingBottomExtra | Dp | 最底部纵排按钮的额外下内边距                | 0.dp      |
 | StackedBarMarginTop        | Dp | 含多个按钮的纵排栏的上外边距                     | 0.dp      |
-| buttonFill()               | Color | 胶囊填充                                        | #AAFFFFFF |
-| disabledButtonFill()       | Color | 禁用胶囊填充                                    | #14000000 |
+| buttonFill()               | Color | 胶囊填充                                        | 浅色 #AAFFFFFF / 深色 #33FFFFFF |
+| disabledButtonFill()       | Color | 禁用胶囊填充                                    | 浅色 #14000000 / 深色 #1AFFFFFF |
 | buttonColors()             | TextButtonColors | 普通胶囊的整套配色（填充 + 标签）      | 见上两行 + `onBackground` |
 | DangerTextColor            | Color | 破坏性动作的标签色                              | #EA3447   |
 | DangerDisabledTextColor    | Color | 破坏性动作禁用时的标签色                        | #66EA3447 |
