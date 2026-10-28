@@ -149,7 +149,8 @@ object AppBarBlurOverlayDefaults {
  *
  * On ColorOS with OplusView sub-SDK 33.34 or later, [backdrop] is not used: the material is the
  * platform view `AppBarBlurHelper` dresses, with the framework's gradient-blur backdrop effect set
- * once, and scrolling only changes that view's alpha.
+ * once, and scrolling only changes that view's alpha. On other Android 16 builds the same view
+ * carries AOSP's backdrop RenderEffect instead, with the gradient blur rebuilt from public effects.
  *
  * @param modifier The modifier to be applied to the overlay. The reported size is the size of
  *   [content], coerced up to the incoming minimum constraints; the material is drawn [extraHeight]
@@ -198,11 +199,13 @@ fun AppBarBlurOverlay(
  *
  * The `scrollFraction` overload with a [Float] forwards to this one.
  *
- * @param platformRenderer When the platform has its own backdrop blur (ColorOS), use it. It samples
+ * @param platformRenderer When the platform has its own backdrop blur (ColorOS, or Android 16), use
+ *   it. It samples
  *   the window content, so a material whose **size changes every frame** — an app bar whose content
  *   height animates, for instance — feeds its own output back into the effect and the bar goes black
- *   for the duration of the animation. Pass `false` for those bars: COUI's own engine samples the
- *   recorded [backdrop] layer instead, which is stable under resizes.
+ *   for the duration of the animation. Prefer keeping the material a fixed size (fold the bar's
+ *   content inside a bar that stays as tall as its expanded form); for a bar that cannot, pass
+ *   `false` to use COUI's own engine, which samples the recorded [backdrop] layer instead.
  */
 @Composable
 fun AppBarBlurOverlay(
@@ -324,7 +327,7 @@ internal fun AppBarMaterial(
     // It is a property of the theme, not of the base colour, so a caller-supplied colour cannot move
     // the ramp to the other branch.
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
-    // Where the platform has its own backdrop blur (ColorOS), use it exactly the way
+    // Where the platform has its own backdrop blur (ColorOS, Android 16), use it exactly the way
     // `AppBarBlurHelper` does instead of re-recording the content through COUI's engine.
     val native = if (platformRenderer) rememberPlatformAppBarBackdropRenderer() else null
     if (native != null) {

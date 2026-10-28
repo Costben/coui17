@@ -61,6 +61,10 @@ kotlin {
 
             implementation(libs.materialKolor.utilities) // Material Color for Multiplatform
         }
+        androidMain.dependencies {
+            // Resolves the one hidden AOSP backdrop setter the native app bar blur needs.
+            implementation(libs.lsposed.hiddenapibypass)
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }

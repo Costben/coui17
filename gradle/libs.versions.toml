@@ -17,6 +17,7 @@ jetbrains-dokka = "2.2.0"
 jetbrains-compose-hotReload = "1.2.0"
 jetbrains-lifecycle = "2.11.0"
 materialKolor-utilities = "5.0.0"
+lsposed-hiddenapibypass = "6.1"
 spotless = "8.8.0"
 
 junit = "1.3.0"
@@ -51,6 +52,7 @@ jetbrains-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecyc
 jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "jetbrains-lifecycle" }
 jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrains-lifecycle" }
 materialKolor-utilities = { module = "com.materialkolor:material-color-utilities", version.ref = "materialKolor-utilities" }
+lsposed-hiddenapibypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version.ref = "lsposed-hiddenapibypass" }
 
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }

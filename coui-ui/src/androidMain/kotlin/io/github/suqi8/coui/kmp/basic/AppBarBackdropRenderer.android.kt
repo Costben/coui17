@@ -5,17 +5,21 @@ package io.github.suqi8.coui.kmp.basic
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapShader
+import android.graphics.BlendMode
 import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.graphics.RenderEffect
+import android.graphics.RuntimeShader
 import android.graphics.Shader
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -23,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
+import org.lsposed.hiddenapibypass.HiddenApiBypass
 import kotlin.math.abs
 import kotlin.math.floor
 
@@ -38,13 +43,26 @@ private const val NATIVE_END_BLUR_RADIUS_PX = 0f
 private const val NATIVE_GRADIENT_BLUR_SPEED = 3f
 
 /**
+ * A way to put a gradient blur on the overlay view's RenderNode as a backdrop effect, so HWUI blurs
+ * what is already drawn behind the view on the RenderThread in the same frame.
+ */
+private interface BackdropBlurApi {
+    /** Whether the effect depends on the view's height and has to be set again when it changes. */
+    val sizeDependent: Boolean
+
+    fun apply(view: View)
+
+    fun clear(view: View)
+}
+
+/**
  * The vendor gradient-blur APIs `AppBarBlurHelper.applyGradientBlurRenderEffect` calls, resolved once
  * and invoked reflectively.
  *
  * `COUIMaterialEffect.canApplyBackgroundRenderEffect` gates the call on the OplusView sub-SDK being
  * at least 33.34, which is checked here too: below it the backdrop node is not wired up.
  */
-private class GradientBlurApi {
+private class OplusGradientBlurApi : BackdropBlurApi {
     private val renderEffect = Class.forName("android.graphics.RenderEffect")
     private val create = Class.forName("com.oplus.graphics.OplusRenderEffect").getMethod(
         "createGradientBlurEffect",
@@ -63,22 +81,91 @@ private class GradientBlurApi {
         check(major > 33 || (major == 33 && sub >= 34)) { "OplusView sub-SDK $major.$sub below 33.34" }
     }
 
-    fun apply(view: View) {
+    override val sizeDependent: Boolean get() = false
+
+    override fun apply(view: View) {
         val effect = create.invoke(null, NATIVE_START_BLUR_RADIUS_PX, NATIVE_END_BLUR_RADIUS_PX, true, NATIVE_GRADIENT_BLUR_SPEED)
         set.invoke(null, effect, view)
     }
 
-    fun clear(view: View) {
+    override fun clear(view: View) {
         set.invoke(null, null, view)
     }
 }
+
+/**
+ * AOSP's own backdrop hook, `View.setBackdropRenderEffect` (Android 16), which is the same
+ * `RenderNode` backdrop the vendor call ends in. AOSP has no gradient blur, so the vendor effect is
+ * rebuilt from public RenderEffects: [PLATFORM_GRADIENT_BLUR_LEVELS] full-resolution Gaussians, each
+ * weighted by a tent around its radius on the native radius curve `start × (1 − (y / h)^speed)`, and
+ * summed. Where the weights add up to less than one the sharp content below shows through, which is
+ * the radius-0 end of the curve.
+ */
+@RequiresApi(Build.VERSION_CODES.BAKLAVA)
+private class PlatformGradientBlurApi : BackdropBlurApi {
+    // The setter is @hide and on the hidden-API blocklist, so plain reflection cannot see it.
+    // HiddenApiBypass looks up this one method without lifting the restriction for the process.
+    private val set = HiddenApiBypass.getDeclaredMethod(View::class.java, "setBackdropRenderEffect", RenderEffect::class.java)
+
+    private val step = NATIVE_START_BLUR_RADIUS_PX / PLATFORM_GRADIENT_BLUR_LEVELS
+
+    // Compiled once; a resize only updates the height uniform and re-wraps the effect.
+    private val weights = Array(PLATFORM_GRADIENT_BLUR_LEVELS) { i ->
+        RuntimeShader(PLATFORM_GRADIENT_BLUR_WEIGHT_SHADER).apply {
+            setFloatUniform("level", step * (i + 1))
+            setFloatUniform("spacing", step)
+            setFloatUniform("startRadius", NATIVE_START_BLUR_RADIUS_PX)
+            setFloatUniform("speed", NATIVE_GRADIENT_BLUR_SPEED)
+        }
+    }
+    private val blurs = Array(PLATFORM_GRADIENT_BLUR_LEVELS) { i ->
+        val radius = step * (i + 1)
+        RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
+    }
+
+    override val sizeDependent: Boolean get() = true
+
+    override fun apply(view: View) {
+        val height = view.height
+        if (height <= 0) return
+        var effect: RenderEffect? = null
+        for (i in 0 until PLATFORM_GRADIENT_BLUR_LEVELS) {
+            weights[i].setFloatUniform("height", height.toFloat())
+            val level = RenderEffect.createChainEffect(RenderEffect.createRuntimeShaderEffect(weights[i], "content"), blurs[i])
+            effect = effect?.let { RenderEffect.createBlendModeEffect(it, level, BlendMode.PLUS) } ?: level
+        }
+        set.invoke(view, effect)
+    }
+
+    override fun clear(view: View) {
+        set.invoke(view, null)
+    }
+}
+
+private const val PLATFORM_GRADIENT_BLUR_LEVELS = 3
+
+private const val PLATFORM_GRADIENT_BLUR_WEIGHT_SHADER = """
+uniform shader content;
+uniform float height;
+uniform float level;
+uniform float spacing;
+uniform float startRadius;
+uniform float speed;
+
+half4 main(float2 coord) {
+    float t = clamp(coord.y / height, 0.0, 1.0);
+    float radius = startRadius * (1.0 - pow(t, speed));
+    float weight = max(0.0, 1.0 - abs(radius - level) / spacing);
+    return content.eval(coord) * half(weight);
+}
+"""
 
 /**
  * `AppBarBlurOverlayView`: an empty view whose background is the alpha ramp and whose RenderNode
  * carries the gradient-blur backdrop effect. The effect is set once, when the view is first
  * attached; afterwards only [setAlpha] and the visibility change.
  */
-private class AppBarBlurOverlayView(context: Context, private val api: GradientBlurApi) : View(context) {
+private class AppBarBlurOverlayView(context: Context, private val api: BackdropBlurApi) : View(context) {
     private var effectApplied = false
     private var rampColor = 0
     private var rampDark: Boolean? = null
@@ -112,7 +199,15 @@ private class AppBarBlurOverlayView(context: Context, private val api: GradientB
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (effectApplied) return
+        if (!effectApplied) applyEffect()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (api.sizeDependent && h != oldh) applyEffect()
+    }
+
+    private fun applyEffect() {
         runCatching { api.apply(this) }
             .onSuccess { effectApplied = true }
             .onFailure { Log.w(TAG, "Native gradient blur could not be applied", it) }
@@ -248,13 +343,18 @@ internal actual fun rememberPlatformAppBarBackdropRenderer(): AppBarBackdropRend
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         null
     } else {
-        runCatching { AndroidAppBarBackdropRenderer(GradientBlurApi()) }.onFailure {
-            Log.d(TAG, "Native gradient blur unavailable", it)
-        }.getOrNull()
+        val api = runCatching<BackdropBlurApi> { OplusGradientBlurApi() }
+            .recoverCatching {
+                check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) { "No backdrop RenderEffect before Android 16" }
+                PlatformGradientBlurApi()
+            }
+            .onFailure { Log.d(TAG, "Native gradient blur unavailable", it) }
+            .getOrNull()
+        api?.let(::AndroidAppBarBackdropRenderer)
     }
 }
 
-private class AndroidAppBarBackdropRenderer(private val api: GradientBlurApi) : AppBarBackdropRenderer {
+private class AndroidAppBarBackdropRenderer(private val api: BackdropBlurApi) : AppBarBackdropRenderer {
     @Composable
     override fun Material(containerColor: Color, dark: Boolean, alpha: () -> Float, modifier: Modifier) {
         val color = containerColor.toArgb()
