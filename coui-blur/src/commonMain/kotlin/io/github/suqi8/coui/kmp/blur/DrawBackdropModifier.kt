@@ -1034,9 +1034,15 @@ private class DrawBackdropNode(
     }
 
     /**
-     * Sets the downsample effect (cached per [target]/[slot]) on [source], records [dest] at
-     * ([destW], [destH]) by drawing [source] with [scale], then clears [source]'s render effect
-     * so it does not leak to the next pass.
+     * Sets the downsample effect (cached per [target]/[slot]) on [source] and records [dest] at
+     * ([destW], [destH]) by drawing [source] with [scale].
+     *
+     * The effect stays on [source]. Drawing a layer records a reference to it, not its pixels: the
+     * renderer composites [source] later with whatever properties it holds then. Clearing the
+     * effect after the recording therefore dropped the box prefilter from every frame — the step
+     * became a plain bilinear decimation that saw thin content only when it crossed a sample, and
+     * a list scrolling under the blur pulsed once per downscaled texel. Each cascade layer is the
+     * source of exactly one step, so the effect cannot leak into another pass.
      */
     private fun DrawScope.applyDownsampleStep(
         target: LevelTarget,
@@ -1062,7 +1068,6 @@ private class DrawBackdropNode(
         recordLayer(dest, size = IntSize(destW, destH)) {
             scale(scale, scale, Offset.Zero) { drawLayer(source) }
         }
-        source.renderEffect = null
     }
 
     /**
@@ -1100,8 +1105,9 @@ private class DrawBackdropNode(
                 } else {
                     IntOffset.Zero
                 }
+            // The noise layer keeps its effect for the same reason a cascade layer does: the
+            // recorded draw composites it with the properties it holds at render time.
             translate(-residualX, -residualY) { drawLayer(noiseL) }
-            noiseL.renderEffect = null
         } else {
             layer.topLeft =
                 if (currentPadding != 0f) {
