@@ -33,9 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -50,6 +48,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.squircle.addSquircleRect
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 
@@ -355,11 +355,15 @@ private fun BoxScope.NotificationSwipeCard(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val density = LocalDensity.current
-    val cardShape = remember(density, state) {
+    val squircleEnabled = isSquircleEnabled()
+    val cardShape = remember(density, state, squircleEnabled) {
         GenericShape { size, _ ->
             val visibleWidth = (size.width - with(density) { (NotificationSwipeDefaults.RevealWidth * state.revealFraction).toPx() }).coerceAtLeast(0f)
-            addRoundRect(
-                RoundRect(0f, 0f, visibleWidth, size.height, CornerRadius(with(density) { NotificationSwipeDefaults.CardCornerRadius.toPx() })),
+            addSquircleRect(
+                width = visibleWidth,
+                height = size.height,
+                cornerRadius = with(density) { NotificationSwipeDefaults.CardCornerRadius.toPx() },
+                squircleEnabled = squircleEnabled,
             )
         }
     }

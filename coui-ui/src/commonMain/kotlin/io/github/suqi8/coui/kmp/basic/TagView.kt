@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
@@ -23,15 +22,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
  * A small text corner badge with ColorOS style.
  *
  * The design is a `LinearLayout` whose background is a `MaterialShapeDrawable` with four
- * independent corner radii; [TagView] draws the same silhouette with [RoundedCornerShape] and an
- * optional [strokeWidth] outline, wraps a single-line label that is ellipsized at the end, and
- * offers an optional leading and trailing image slot. A "NEW" / "BETA" badge is text only.
+ * independent corner radii; [TagView] draws the same silhouette with the smooth corner of
+ * [SquircleShape] and an optional [strokeWidth] outline, wraps a single-line label that is
+ * ellipsized at the end, and offers an optional leading and trailing image slot. A "NEW" / "BETA"
+ * badge is text only.
  *
  * The label uses [TagViewDefaults.textStyle] (`couiTextTag`: 10sp, `sans-serif-medium`), the
  * leading slot is the fixed 5dp x 10dp image of the layout with 3dp top/bottom and 2dp end margins,
@@ -74,7 +76,10 @@ fun TagView(
     strokeWidth: Dp = TagViewDefaults.StrokeWidth,
     colors: TagViewColors = TagViewDefaults.tagViewColors(),
 ) {
-    val shape = remember(cornerRadius) { RoundedCornerShape(cornerRadius) }
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
     Row(
         modifier = modifier
             .background(color = colors.containerColor, shape = shape)

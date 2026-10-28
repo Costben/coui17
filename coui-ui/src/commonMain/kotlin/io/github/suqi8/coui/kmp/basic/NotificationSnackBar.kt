@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Close
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
@@ -65,13 +66,13 @@ import kotlinx.coroutines.sync.withLock
  * The container is the `?attr/couiColorBackgroundTop` card with the `couiRoundCornerL` (16dp)
  * corner radius and the `support_shadow_size_level_four` (24dp) elevation the native applies
  * through `ShadowUtils`; the port keeps the radius and drops the elevation to the caller's
- * modifier so it can be composed with the app's own shadow stack.
+ * modifier so it can be composed with the app's own shadow stack. The corner is the library's
+ * smooth corner ([SquircleShape]) at that radius, like every other card.
  *
  * Not ported, because no consumer in this library reaches them:
- * - the smooth-round corner of `OplusOutline.setSmoothRoundRect` (`couiRoundCornerLRadius` 13dp /
- *   `couiRoundCornerLWeight` 0.99) used when `RoundCornerUtil.isVersionSupport()` is true; the port
- *   draws the `RoundedCornerShape` fallback the native uses otherwise (`outline.setRoundRect` with
- *   `couiRoundCornerL`);
+ * - the `couiRoundCornerLRadius` 13dp / `couiRoundCornerLWeight` 0.99 pair that
+ *   `OplusOutline.setSmoothRoundRect` takes when `RoundCornerUtil.isVersionSupport()` is true; the
+ *   port keeps the `couiRoundCornerL` radius of the native fallback;
  * - the swipe-to-dismiss gesture of `onInterceptTouchEvent` / `onTouchEvent` (a swipe past 1/8 of the
  *   measured width dismisses along X, a downward swipe past 1/8 dismisses along Y, the cancel
  *   animation returns on the `COUISpringAnimation` response 0.35 / bounce 0 exposed as
@@ -108,7 +109,10 @@ fun NotificationSnackBar(
     cornerRadius: Dp = NotificationSnackBarDefaults.CornerRadius,
     colors: NotificationSnackBarColors = NotificationSnackBarDefaults.colors(),
 ) {
-    val shape = remember(cornerRadius) { RoundedCornerShape(cornerRadius) }
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
     val closeSize = NotificationSnackBarDefaults.CloseSize
     Box(modifier = modifier.padding(end = NotificationSnackBarDefaults.LayoutMarginEnd)) {
         Surface(

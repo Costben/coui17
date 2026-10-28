@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +44,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -523,7 +524,12 @@ private fun FloatingButtonAction(
                             pivotFractionY = 0.5f,
                         )
                     }
-                    .clip(RoundedCornerShape(FloatingButtonDefaults.LabelCornerRadius))
+                    .clip(
+                        SquircleShape(
+                            cornerRadius = FloatingButtonDefaults.LabelCornerRadius,
+                            squircleEnabled = isSquircleEnabled(),
+                        ),
+                    )
                     .background(colors.labelContainerColor)
                     .padding(
                         horizontal = FloatingButtonDefaults.LabelTextHorizontalPadding,

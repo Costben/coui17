@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,6 +63,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.SearchCleanup
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
@@ -385,7 +386,10 @@ fun Snackbar(
     // COUISnackBar.adjustLayout: a snack bar whose content spans a single line keeps the large
     // "default" radius (capsule-like couiRoundCornerXXL), otherwise it falls back to couiRoundCornerL.
     var isSingleLine by remember(visuals.message) { mutableStateOf(true) }
-    val shape = RoundedCornerShape(if (isSingleLine) singleLineCornerRadius else cornerRadius)
+    val shape = SquircleShape(
+        cornerRadius = if (isSingleLine) singleLineCornerRadius else cornerRadius,
+        squircleEnabled = isSquircleEnabled(),
+    )
 
     Surface(
         modifier = modifier

@@ -93,6 +93,8 @@ import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
@@ -629,11 +631,12 @@ private fun BottomSheetColumn(
     // `coui_bottomdialog_list_blend_blur_*` at `coui_bottomdialog_blur_radius`, and
     // `updateBlurAlphaParams()` scales the mix alpha with the reveal progress. Below Android 13 —
     // or with no backdrop — the surface falls back to the flat `squircleSurface` fill.
-    val panelShape = RoundedCornerShape(
+    val panelShape = SquircleShape(
         topStart = cornerRadius,
         topEnd = cornerRadius,
         bottomEnd = 0.dp,
         bottomStart = 0.dp,
+        squircleEnabled = isSquircleEnabled(),
     )
     val panelSurface = Modifier.couiGlassSurface(
         backdrop = LocalBackdrop.current,
@@ -828,7 +831,8 @@ private fun DragHandleArea(
 ) {
     val pressAlpha = remember { Animatable(0f) }
     val handleShape = remember { RoundedCornerShape(2.dp) }
-    val pressShape = remember { RoundedCornerShape(16.dp) }
+    val squircleEnabled = isSquircleEnabled()
+    val pressShape = remember(squircleEnabled) { SquircleShape(16.dp, squircleEnabled = squircleEnabled) }
     // COUI couiColorPress has no dedicated scheme slot; derive it from onSurface.
     val pressColor = COUITheme.colorScheme.onSurface.copy(alpha = 0.12f)
 

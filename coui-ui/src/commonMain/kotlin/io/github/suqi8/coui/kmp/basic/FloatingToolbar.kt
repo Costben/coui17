@@ -6,7 +6,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.remember
@@ -17,6 +16,8 @@ import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -43,7 +44,10 @@ fun FloatingToolbar(
     showDivider: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val shape = remember(cornerRadius) { RoundedCornerShape(cornerRadius) }
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
     val dividerColor = COUITheme.colorScheme.dividerLine
 
     val dividerMod = if (showDivider) {

@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -69,6 +68,8 @@ import io.github.suqi8.coui.kmp.anim.COUILinear
 import io.github.suqi8.coui.kmp.anim.COUIOutEase
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.Platform
@@ -486,7 +487,10 @@ fun FloatingNavigationBar(
     defaultWindowInsetsPadding: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val shape = RoundedCornerShape(cornerRadius)
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
 
     val navBarBottomPadding = WindowInsets.navigationBars.only(WindowInsetsSides.Bottom).asPaddingValues().calculateBottomPadding()
     val bottomPaddingValue = when (platform()) {

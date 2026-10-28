@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -73,6 +72,8 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -595,7 +596,7 @@ private fun TooltipScope.TooltipSurface(
                     bottom = if (drawCaret && !caretOnTop) caretSize.height else 0.dp,
                 )
                 .dropShadow(
-                    shape = RoundedCornerShape(cornerRadius),
+                    shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = isSquircleEnabled()),
                     shadow = Shadow(radius = 10.dp, color = Color.Black, alpha = 0.1f),
                 )
                 .squircleBackground(color = containerColor, cornerRadius = cornerRadius)

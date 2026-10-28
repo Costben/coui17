@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.selection.triStateToggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,8 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -46,6 +45,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.SinkFeedback
 import io.github.suqi8.coui.kmp.utils.pressable
@@ -132,6 +134,10 @@ fun Checkbox(
     val markColor = colors.checkedForegroundColor(enabled)
 
     val checkPath = remember { Path() }
+    val squircleEnabled = isSquircleEnabled()
+    val clipShape = remember(squircleEnabled) {
+        SquircleShape(cornerRadius = CheckboxClipCornerRadius, squircleEnabled = squircleEnabled)
+    }
     val sinkFeedback = remember { SinkFeedback(sinkAmount = 0.85f, animationSpec = spring(0.99f, 986.96f)) }
 
     val finalModifier = if (onClick != null) {
@@ -169,17 +175,33 @@ fun Checkbox(
                 enabled = enabled,
                 delay = null,
             )
-            .clip(CheckboxClipShape)
+            .clip(clipShape)
             .drawWithCache {
                 val d = size.minDimension
 
-                val fillTopLeft = Offset(FillInsetFraction * d, FillInsetFraction * d)
-                val fillSize = Size(FillSizeFraction * d, FillSizeFraction * d)
-                val fillCornerRadius = CornerRadius(FillCornerRadiusFraction * d)
+                val fillPath = Path().apply {
+                    val radius = FillCornerRadiusFraction * d
+                    addSquircleRoundRect(
+                        rect = Rect(Offset(FillInsetFraction * d, FillInsetFraction * d), Size(FillSizeFraction * d, FillSizeFraction * d)),
+                        topLeft = radius,
+                        topRight = radius,
+                        bottomRight = radius,
+                        bottomLeft = radius,
+                        squircleEnabled = squircleEnabled,
+                    )
+                }
 
-                val ringTopLeft = Offset(RingInsetFraction * d, RingInsetFraction * d)
-                val ringSize = Size(RingSizeFraction * d, RingSizeFraction * d)
-                val ringCornerRadius = CornerRadius(RingCornerRadiusFraction * d)
+                val ringPath = Path().apply {
+                    val radius = RingCornerRadiusFraction * d
+                    addSquircleRoundRect(
+                        rect = Rect(Offset(RingInsetFraction * d, RingInsetFraction * d), Size(RingSizeFraction * d, RingSizeFraction * d)),
+                        topLeft = radius,
+                        topRight = radius,
+                        bottomRight = radius,
+                        bottomLeft = radius,
+                        squircleEnabled = squircleEnabled,
+                    )
+                }
                 val ringStroke = Stroke(width = RingStrokeWidthFraction * d)
 
                 val checkCache = CheckmarkCache(
@@ -201,22 +223,10 @@ fun Checkbox(
                     scale(scale = popScale.value) {
                         val fillFraction = fillFractionState.value
                         if (fillFraction < 1f) {
-                            drawRoundRect(
-                                color = ringColor,
-                                topLeft = ringTopLeft,
-                                size = ringSize,
-                                cornerRadius = ringCornerRadius,
-                                style = ringStroke,
-                            )
+                            drawPath(path = ringPath, color = ringColor, style = ringStroke)
                         }
                         if (fillFraction > 0f) {
-                            drawRoundRect(
-                                color = fillColor,
-                                topLeft = fillTopLeft,
-                                size = fillSize,
-                                cornerRadius = fillCornerRadius,
-                                alpha = fillFraction,
-                            )
+                            drawPath(path = fillPath, color = fillColor, alpha = fillFraction)
                         }
                         drawTrimmedCheckmark(
                             color = markColor,
@@ -371,4 +381,4 @@ private val PopPeakScale = 1.08f
 private val PopHalfDurationMillis = 150
 
 // Clip proportional to the drawn square, scaled up to the 24dp layout box (24 * 4 / 18).
-private val CheckboxClipShape = RoundedCornerShape((ViewportSize * 4f / 18f).dp)
+private val CheckboxClipCornerRadius = (ViewportSize * 4f / 18f).dp

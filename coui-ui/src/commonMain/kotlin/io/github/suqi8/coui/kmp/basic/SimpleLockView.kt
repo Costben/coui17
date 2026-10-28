@@ -22,13 +22,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.squircle.addSquircleRect
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -122,6 +123,11 @@ fun SimpleLockView(
     val dotSizePx = with(density) { SimpleLockViewDefaults.DotSize.toPx() }
     val paddingPx = with(density) { SimpleLockViewDefaults.RectanglePadding.toPx() }
     val cornerRadiusPx = with(density) { SimpleLockViewDefaults.CornerRadius.toPx() }
+    val squircleEnabled = isSquircleEnabled()
+    // One dot at the origin, translated to each slot: the shake and the fall move every frame.
+    val dotPath = remember(dotSizePx, cornerRadiusPx, squircleEnabled) {
+        Path().apply { addSquircleRect(dotSizePx, dotSizePx, cornerRadiusPx, squircleEnabled = squircleEnabled) }
+    }
     val fallHeightDp = with(density) { SimpleLockViewDefaults.FallHeight.toDp() }
 
     var previousCount by remember(dotCount) { mutableIntStateOf(count.coerceIn(0, dotCount)) }
@@ -178,12 +184,9 @@ fun SimpleLockView(
             val fallDelays = SimpleLockViewDefaults.fallDelays(type)
             for (index in 0 until dotCount) {
                 val left = startX + index * (dotSizePx + paddingPx)
-                drawRoundRect(
-                    color = colors.outlinedColor,
-                    topLeft = Offset(left + shakeX, 0f),
-                    size = Size(dotSizePx, dotSizePx),
-                    cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
-                )
+                translate(left = left + shakeX, top = 0f) {
+                    drawPath(path = dotPath, color = colors.outlinedColor)
+                }
                 val fill = dots[index].fill.value.coerceIn(0f, 1f)
                 if (fill <= 0f) continue
                 val fall = if (falling > 0f) (fallY - fallDelays[index]).coerceAtLeast(0f) else 0f
@@ -192,12 +195,9 @@ fun SimpleLockView(
                 } else {
                     fill
                 }
-                drawRoundRect(
-                    color = colors.filledColor.copy(alpha = colors.filledColor.alpha * alpha),
-                    topLeft = Offset(left + shakeX, fall),
-                    size = Size(dotSizePx, dotSizePx),
-                    cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
-                )
+                translate(left = left + shakeX, top = fall) {
+                    drawPath(path = dotPath, color = colors.filledColor.copy(alpha = colors.filledColor.alpha * alpha))
+                }
             }
         }
     }
