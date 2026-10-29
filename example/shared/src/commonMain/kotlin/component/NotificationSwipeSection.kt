@@ -46,7 +46,6 @@ import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
-import io.github.suqi8.coui.kmp.icon.extended.Delete
 import io.github.suqi8.coui.kmp.icon.extended.Messages
 import io.github.suqi8.coui.kmp.icon.extended.Notes
 import io.github.suqi8.coui.kmp.icon.extended.Photos
@@ -100,6 +99,8 @@ private data class DemoNotification(
     val body: String,
     val time: String,
     val bodyLines: Int,
+    /** Delete-only rows drop the settings cell and delete on a full swipe, like a history entry. */
+    val deleteOnly: Boolean = false,
 )
 
 /**
@@ -144,6 +145,7 @@ fun NotificationSwipeDemo() {
             body = str("128 items, 2.4 GB in total"),
             time = str("Yesterday"),
             bodyLines = 1,
+            deleteOnly = true,
         ),
     )
 
@@ -177,7 +179,7 @@ fun NotificationSwipeDemo() {
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                Text(str("Swipe left to reveal notification actions"), color = shade.info)
+                Text(str("Swipe left to reveal notification actions; the last one deletes on a full swipe"), color = shade.info)
                 if (settingsSelected) Text(str("Notification settings selected"), color = shade.info)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     TextButton(
@@ -210,16 +212,17 @@ private fun DemoNotificationCard(
     onDismiss: () -> Unit,
 ) {
     NotificationSwipeBox(
-        onSettings = onSettings,
+        onSettings = if (item.deleteOnly) null else onSettings,
         onDismiss = onDismiss,
-        settingsIcon = COUIIcons.Settings,
-        dismissIcon = COUIIcons.Delete,
+        settingsIcon = if (item.deleteOnly) null else COUIIcons.Settings,
+        dismissIcon = null,
         state = state,
         minHeight = 0.dp,
         containerColor = shade.card,
         rimColor = Color.White,
         settingsDescription = str("Settings"),
         dismissDescription = str("Delete"),
+        dismissOnFullSwipe = item.deleteOnly,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),

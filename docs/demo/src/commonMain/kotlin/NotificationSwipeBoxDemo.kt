@@ -17,16 +17,31 @@ import io.github.suqi8.coui.kmp.icon.extended.Settings
 
 @Composable
 fun NotificationSwipeBoxDemo() {
-    NotificationSwipeBox(
-        onSettings = {},
-        onDismiss = {},
-        settingsIcon = COUIIcons.Settings,
-        dismissIcon = COUIIcons.Delete,
-        modifier = Modifier.padding(16.dp),
-    ) {
-        Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            Text("New message")
-            Text("Swipe left to reveal settings and delete")
+    Column(Modifier.fillMaxWidth()) {
+        NotificationSwipeBox(
+            onSettings = {},
+            onDismiss = {},
+            settingsIcon = COUIIcons.Settings,
+            dismissIcon = COUIIcons.Delete,
+            modifier = Modifier.padding(16.dp),
+        ) {
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("New message")
+                Text("Swipe left to reveal settings and delete")
+            }
+        }
+        NotificationSwipeBox(
+            onSettings = null,
+            onDismiss = {},
+            settingsIcon = null,
+            dismissIcon = null,
+            modifier = Modifier.padding(16.dp),
+            dismissOnFullSwipe = true,
+        ) {
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("Delete-only notification")
+                Text("Swipe left to reveal delete, or all the way to delete")
+            }
         }
     }
 }

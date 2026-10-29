@@ -220,4 +220,190 @@ class NotificationSwipeBoxTest {
         assertEquals(8.dp, particles[1].centerY - particles[1].height / 2)
         assertEquals(10.dp, particles[1].centerX - particles[2].centerX - particles[1].width)
     }
+
+    /** A delete-only notification has one cell, and it sits against the outer padding. */
+    @Test
+    fun deleteOnlyNotificationRevealsOneCell() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(null, { deleted++ }, null, COUIIcons.Basic.Close, state = state) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        onNodeWithContentDescription("Settings").assertDoesNotExist()
+        onRoot().performTouchInput { swipe(Offset(340f, 42f), Offset(280f, 42f), 700) }
+        waitForIdle()
+        assertTrue(state.isRevealed)
+        assertEquals(74.dp, NotificationSwipeDefaults.revealWidth(1) * state.revealFraction)
+        assertTrue(
+            onNodeWithContentDescription("Delete").fetchSemanticsNode().boundsInRoot.left > 290f,
+            "The single cell must sit against the outer padding",
+        )
+        assertEquals(0, deleted)
+    }
+
+    /** A drag that stops on the menu only reveals it; it never falls through to the delete. */
+    @Test
+    fun dragThatStopsAtTheMenuOnlyRevealsIt() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(null, { deleted++ }, null, COUIIcons.Basic.Close, state = state, dismissOnFullSwipe = true) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        onRoot().performTouchInput { swipe(Offset(340f, 42f), Offset(270f, 42f), 2000) }
+        waitForIdle()
+        assertTrue(state.isRevealed)
+        assertEquals(0, deleted)
+        onNodeWithContentDescription("Delete").assertIsDisplayed()
+    }
+
+    /** Carried past the dismiss threshold, the same swipe deletes and leaves nothing behind. */
+    @Test
+    fun fullSwipePastTheThresholdDeletes() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(null, { deleted++ }, null, COUIIcons.Basic.Close, state = state, dismissOnFullSwipe = true) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        // The 74dp menu plus the 40dp merge.
+        assertEquals(114.dp, NotificationSwipeDefaults.dismissThreshold(NotificationSwipeDefaults.revealWidth(1)))
+        onRoot().performTouchInput { swipe(Offset(340f, 42f), Offset(100f, 42f), 700) }
+        waitForIdle()
+        assertEquals(1, deleted)
+        assertFalse(state.isRevealed)
+        assertEquals(0f, state.revealFraction)
+        onNodeWithContentDescription("Delete").assertDoesNotExist()
+    }
+
+    /** Releasing past the menu but short of the merge springs back to the menu. */
+    @Test
+    fun releasingShortOfTheThresholdKeepsTheMenu() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(null, { deleted++ }, null, COUIIcons.Basic.Close, state = state, dismissOnFullSwipe = true) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        // About 87dp after the touch slop: past the 74dp menu, short of its 40dp merge.
+        onRoot().performTouchInput { swipe(Offset(340f, 42f), Offset(235f, 42f), 2000) }
+        waitForIdle()
+        assertEquals(0, deleted)
+        assertTrue(state.isRevealed)
+        assertEquals(74.dp, NotificationSwipeDefaults.revealWidth(1) * state.revealFraction)
+        onNodeWithContentDescription("Delete").assertIsDisplayed()
+    }
+
+    /** The threshold is the merge, where the device ticks: a slow release just past it still deletes. */
+    @Test
+    fun slowReleaseJustPastTheMergeDeletes() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(null, { deleted++ }, null, null, state = state, dismissOnFullSwipe = true) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        // About 120dp after the touch slop, against the 114dp threshold.
+        onRoot().performTouchInput { swipe(Offset(340f, 42f), Offset(202f, 42f), 2000) }
+        waitForIdle()
+        assertEquals(1, deleted)
+        assertFalse(state.isRevealed)
+        onNodeWithContentDescription("Delete").assertDoesNotExist()
+    }
+
+    /** The built-in trash keyframes its lid from flat to open and back, as SystemUI's lottie does. */
+    @Test
+    fun trashLidOpensAndClosesAcrossTheLottie() {
+        assertEquals(-18f, notificationTrashLidRotation(0f), 0.0001f)
+        assertEquals(-9f, notificationTrashLidRotation(0.25f), 0.0001f)
+        assertEquals(0f, notificationTrashLidRotation(0.5f), 0.0001f)
+        assertEquals(-9f, notificationTrashLidRotation(0.75f), 0.0001f)
+        assertEquals(-18f, notificationTrashLidRotation(1f), 0.0001f)
+    }
+
+    /** Past the menu the card keeps following the finger, and the delete cell fills the space. */
+    @Test
+    fun cardKeepsFollowingTheFingerPastTheMenu() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(null, { deleted++ }, null, COUIIcons.Basic.Close, state = state, dismissOnFullSwipe = true) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        onRoot().performTouchInput {
+            down(Offset(340f, 42f))
+            repeat(12) { moveBy(Offset(-20f, 0f)) }
+        }
+        waitForIdle()
+        assertTrue(state.offsetPx < -200f, "The card must follow the finger past the menu, was ${state.offsetPx}")
+        val delete = onNodeWithContentDescription("Delete").fetchSemanticsNode().boundsInRoot
+        assertTrue(delete.width > 150f, "The delete cell must stretch into the vacated space, was ${delete.width}")
+        assertEquals(0, deleted)
+        onRoot().performTouchInput { repeat(6) { moveBy(Offset(20f, 0f)) } }
+        waitForIdle()
+        onRoot().performTouchInput { up() }
+        waitForIdle()
+        assertEquals(0, deleted, "Dragging back inside the threshold before the release must not delete")
+    }
+
+    /** The row only goes away on release; a held drag past the threshold must not delete by itself. */
+    @Test
+    fun deleteWaitsForTheRelease() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState()
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(null, { deleted++ }, null, COUIIcons.Basic.Close, state = state, dismissOnFullSwipe = true) {
+                    Box(Modifier.fillMaxWidth().height(84.dp))
+                }
+            }
+        }
+        onRoot().performTouchInput {
+            down(Offset(340f, 42f))
+            repeat(12) { moveBy(Offset(-20f, 0f)) }
+        }
+        waitForIdle()
+        assertEquals(0, deleted)
+        onRoot().performTouchInput { up() }
+        waitForIdle()
+        assertEquals(1, deleted)
+        assertFalse(state.isRevealed)
+        onNodeWithContentDescription("Delete").assertDoesNotExist()
+    }
+
+    /** Merged, the delete cell spans both slots and ends one gap short of the card. */
+    @Test
+    fun mergedDeleteCellSwallowsTheSettingsCell() {
+        val particles = notificationSwipeParticles(360.dp, 84.dp, 144.dp, 1f, 1f, 2, overshoot = 60.dp, merge = 1f)
+        val (card, delete, settings) = particles
+        assertEquals(156.dp, card.width)
+        assertEquals(190.dp, delete.width)
+        assertEquals(card.width + NotificationSwipeDefaults.ActionGap, delete.centerX - delete.width / 2)
+        assertEquals(0.2f, settings.scaleX, 0.0001f)
+        // The settings cell stopped moving at the merge distance and sits inside the delete cell.
+        assertEquals(360.dp - 4.dp - 30.dp - 70.dp - 40.dp, settings.centerX)
+        val split = notificationSwipeParticles(360.dp, 84.dp, 144.dp, 1f, 1f, 2, overshoot = 20.dp)
+        assertEquals(80.dp, split[1].width)
+        assertEquals(1f, split[2].scaleX)
+        assertEquals(360.dp - 4.dp - 30.dp - 70.dp - 20.dp, split[2].centerX)
+    }
 }

@@ -2844,13 +2844,14 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarVisuals {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeBoxKt {
-	public static final fun NotificationSwipeBox-kvMUd9U (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;ZFJJJLjava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun NotificationSwipeBox-luOQtGQ (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;ZFJJJLjava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 	public static final fun rememberNotificationSwipeState (ZLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/NotificationSwipeDefaults;
+	public final fun dismissThreshold-5rwHm24 (F)F
 	public final fun getActionGap-D9Ej5fM ()F
 	public final fun getActionHeight-D9Ej5fM ()F
 	public final fun getActionTop-D9Ej5fM ()F
@@ -2858,11 +2859,15 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeDefaults {
 	public final fun getBlendRange-D9Ej5fM ()F
 	public final fun getCardCornerRadius-D9Ej5fM ()F
 	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getDismissFadeSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getEndPadding-D9Ej5fM ()F
 	public final fun getFollowDistance-D9Ej5fM ()F
+	public final fun getMergeDistance-D9Ej5fM ()F
+	public final fun getMergeSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getRevealWidth-D9Ej5fM ()F
 	public final fun getSettleSpring ()Landroidx/compose/animation/core/SpringSpec;
+	public final fun revealWidth-u2uoSUM (I)F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeState {
@@ -2879,6 +2884,10 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeState {
 
 public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeState$Companion {
 	public final fun getSaver ()Landroidx/compose/runtime/saveable/Saver;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/NotificationTrashIconKt {
+	public static final fun NotificationTrashIcon-sW7UJKQ (FJLandroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NumberPickerColors {
