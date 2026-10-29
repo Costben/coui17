@@ -1,3 +1,5 @@
+<img src="favicon.png" width="96" height="96" alt="COUI" />
+
 ## COUI
 
 A ColorOS-styled UI library for Compose Multiplatform, forked from
