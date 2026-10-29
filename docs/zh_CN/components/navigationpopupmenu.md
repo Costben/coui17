@@ -48,6 +48,38 @@ Box {
 }
 ```
 
+## 玻璃版：画在弹层宿主上
+
+`OverlayNavigationPopupMenu` 是同一个菜单，但画在窗口内的弹层宿主上，而不是 `PopupWindow`：定位仍用 `NavigationPopupMenuDefaults.PositionProvider`，宽高仍受 `MinWidth` / `MaxHeight` 约束，材质换成 ColorOS 17 的弹窗玻璃——背后的模糊内容、面板自己的投影、材质边光，也就是相册底栏上那个「更多」菜单的样子。它的行是分组的 `DropdownEntry`，而不是内容插槽，所以带 `children` 的行会展开子菜单。
+
+菜单要压在活的页面内容之上（弹层宿主才拿得到 backdrop 做模糊）时用它；底下没有页面可采样时用 `NavigationPopupMenu`。
+
+```kotlin
+import io.github.suqi8.coui.kmp.overlay.OverlayNavigationPopupMenu
+
+Box {
+    IconButton(onClick = { menuExpanded = true }) {
+        Icon(imageVector = COUIIcons.More, contentDescription = null)
+    }
+    OverlayNavigationPopupMenu(
+        expanded = menuExpanded,
+        entries = listOf(
+            DropdownEntry(
+                items = listOf(
+                    DropdownItem(text = "搜索", onClick = { menuExpanded = false }),
+                    DropdownItem(text = "设置", onClick = { menuExpanded = false }),
+                ),
+            ),
+        ),
+        onDismissRequest = { menuExpanded = false },
+    )
+}
+```
+
+`alignment` 决定菜单贴锚点的哪条边：默认 `BottomEnd` 沿用导航栏右对齐的惯例，锚点在左侧时用 `BottomStart`。它也决定卡片从哪个角长出来。
+
+收起不再独占触摸：菜单一被关闭，面板照常往锚点缩回去，但触摸已经交还给下方页面，用户不必等退场动画播完就能上下拖动、滚动或左右滑动。落在正在缩小的面板上的按压同样交给页面，不会选中任何一行。
+
 ## 作为导航栏的溢出菜单
 
 `BottomFloatingNavigationBarItem` 提供 `overflowMenu` 插槽；填入内容即启用长按菜单，置为 `null` 则禁用长按：
@@ -78,6 +110,23 @@ BottomFloatingNavigationBarItem(
 | onDismissRequest | () -> Unit              | 用户关闭菜单（点按外部或返回）时调用       | -        | 是       |
 | modifier         | Modifier                | 应用于弹窗的修饰符                         | Modifier | 否       |
 | content          | @Composable () -> Unit   | 菜单各行，通常是 `NavigationPopupMenuItem` | -        | 是       |
+
+### OverlayNavigationPopupMenu 属性
+
+| 属性名           | 类型                      | 说明                                          | 默认值                                        | 是否必须 |
+| ---------------- | ------------------------- | --------------------------------------------- | --------------------------------------------- | -------- |
+| expanded         | Boolean                   | 是否显示菜单                                  | -                                             | 是       |
+| entries          | List<DropdownEntry>       | 菜单各行，与下拉条目的分组方式一致            | -                                             | 是       |
+| onDismissRequest | () -> Unit                | 用户关闭菜单（点按外部或返回）时调用          | -                                             | 是       |
+| modifier         | Modifier                  | 应用于弹窗的修饰符                            | Modifier                                      | 否       |
+| alignment        | PopupPositionProvider.Align | 菜单贴锚点的哪条边                          | `Align.BottomEnd`                             | 否       |
+| popupPositionProvider | PopupPositionProvider | 定位策略                                      | `NavigationPopupMenuDefaults.PositionProvider` | 否      |
+| minWidth         | Dp                        | 菜单最小宽度                                  | `NavigationPopupMenuDefaults.MinWidth`        | 否       |
+| maxHeight        | Dp?                       | 菜单最大高度，`null` 时受安全区约束           | `NavigationPopupMenuDefaults.MaxHeight`       | 否       |
+| onDismissFinished | (() -> Unit)?            | 退场动画结束时调用                            | null                                          | 否       |
+| renderInRootScaffold | Boolean               | 是否渲染到最外层 `Scaffold` 的弹层宿主         | true                                          | 否       |
+| dropdownColors   | DropdownColors            | 每行使用的配色                                | `DropdownDefaults.dropdownColors()`           | 否       |
+| collapseOnSelection | Boolean                | 选择任意叶子行是否关闭菜单                    | true                                          | 否       |
 
 ### NavigationPopupMenuItem 属性
 

@@ -48,6 +48,38 @@ Box {
 }
 ```
 
+## Glass Variant on the Popup Host
+
+`OverlayNavigationPopupMenu` is the same menu drawn on the in-window popup host instead of a `PopupWindow`: it keeps `NavigationPopupMenuDefaults.PositionProvider`, `MinWidth` and `MaxHeight`, but the surface is the ColorOS 17 popup glass — the blurred backdrop behind the panel, the panel's drop shadow and the material rim — which is what the Gallery's "More" menu on the bottom bar renders. It takes grouped `DropdownEntry` rows rather than a content slot, so a row that owns `children` opens a submenu.
+
+Use it when the menu must sit over live app content (the popup host can sample the backdrop); use `NavigationPopupMenu` when there is no page underneath to blur.
+
+```kotlin
+import io.github.suqi8.coui.kmp.overlay.OverlayNavigationPopupMenu
+
+Box {
+    IconButton(onClick = { menuExpanded = true }) {
+        Icon(imageVector = COUIIcons.More, contentDescription = null)
+    }
+    OverlayNavigationPopupMenu(
+        expanded = menuExpanded,
+        entries = listOf(
+            DropdownEntry(
+                items = listOf(
+                    DropdownItem(text = "Search", onClick = { menuExpanded = false }),
+                    DropdownItem(text = "Settings", onClick = { menuExpanded = false }),
+                ),
+            ),
+        ),
+        onDismissRequest = { menuExpanded = false },
+    )
+}
+```
+
+`alignment` picks which edge of the anchor the menu hugs: the default `BottomEnd` keeps the bar's right-edge convention, and `BottomStart` mirrors it for an anchor on the leading edge. It also decides the corner the card grows out of.
+
+Closing is not modal: the moment the menu is dismissed, the panel keeps shrinking back into its anchor, but touches already reach the page beneath, so the user can drag, scroll or swipe without waiting for the exit animation to finish. A press that lands on the shrinking panel goes to the page too, and selects no row.
+
 ## Using It as a Navigation Bar Overflow Menu
 
 `BottomFloatingNavigationBarItem` takes an `overflowMenu` slot; filling it enables the long-press menu, and `null` disables the long press:
@@ -78,6 +110,23 @@ BottomFloatingNavigationBarItem(
 | onDismissRequest | () -> Unit             | Called when the user dismisses the menu (outside tap or back) | -        | Yes      |
 | modifier         | Modifier               | Modifier applied to the popup                            | Modifier      | No       |
 | content          | @Composable () -> Unit  | The rows, usually `NavigationPopupMenuItem`s             | -             | Yes      |
+
+### OverlayNavigationPopupMenu Properties
+
+| Property Name    | Type                     | Description                                                    | Default Value                        | Required |
+| ---------------- | ------------------------ | -------------------------------------------------------------- | ------------------------------------ | -------- |
+| expanded         | Boolean                  | Whether the menu is shown                                      | -                                    | Yes      |
+| entries          | List<DropdownEntry>      | The rows, grouped like any dropdown entry                       | -                                    | Yes      |
+| onDismissRequest | () -> Unit               | Called when the user dismisses the menu                         | -                                    | Yes      |
+| modifier         | Modifier                 | Modifier applied to the popup                                   | Modifier                             | No       |
+| alignment        | PopupPositionProvider.Align | Which edge of the anchor the menu aligns to                  | `Align.BottomEnd`                    | No       |
+| popupPositionProvider | PopupPositionProvider | Position strategy                                               | `NavigationPopupMenuDefaults.PositionProvider` | No |
+| minWidth         | Dp                       | Minimum width of the menu                                       | `NavigationPopupMenuDefaults.MinWidth` | No     |
+| maxHeight        | Dp?                      | Maximum height; null bounds it by the safe area                 | `NavigationPopupMenuDefaults.MaxHeight` | No     |
+| onDismissFinished | (() -> Unit)?           | Called after the exit animation finishes                        | null                                 | No       |
+| renderInRootScaffold | Boolean              | Whether to render in the outermost `Scaffold`'s popup host      | true                                 | No       |
+| dropdownColors   | DropdownColors           | Colors used by every row                                        | `DropdownDefaults.dropdownColors()`  | No       |
+| collapseOnSelection | Boolean               | Whether selecting any leaf dismisses the menu                    | true                                 | No       |
 
 ### NavigationPopupMenuItem Properties
 

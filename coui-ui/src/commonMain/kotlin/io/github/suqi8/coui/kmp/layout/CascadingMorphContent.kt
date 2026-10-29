@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -42,19 +43,27 @@ import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.GlassContainer
+import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
+import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
+import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
 import io.github.suqi8.coui.kmp.basic.PopupLayoutPosition
 import io.github.suqi8.coui.kmp.basic.PopupListDivider
 import io.github.suqi8.coui.kmp.basic.PopupShadow
+import io.github.suqi8.coui.kmp.basic.PopupStrokeDark
+import io.github.suqi8.coui.kmp.basic.PopupStrokeLight
 import io.github.suqi8.coui.kmp.basic.couiGlassSurface
+import io.github.suqi8.coui.kmp.basic.materialShadowEdge
 import io.github.suqi8.coui.kmp.basic.popupClipReveal
 import io.github.suqi8.coui.kmp.basic.popupGlassBlendColors
+import io.github.suqi8.coui.kmp.basic.popupOpacity
 import io.github.suqi8.coui.kmp.basic.rememberGlassHighlight
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
+import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /** Primary side of a cascading popup. While a secondary is expanded, scales towards its top-right
  *  pivot to [PRIMARY_SHRUNK_SCALE] and its content fades to [PRIMARY_SHRUNK_ALPHA]. */
@@ -85,6 +94,25 @@ internal fun CascadingPrimaryContent(
     }
     val backdrop = if (enableGlass) LocalBackdrop.current else null
     val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    // COUI's material effects switch off entirely when the popup is not on the blur path
+    // (`updateMaterialEffectsState`): no backdrop, no blur, and `onDraw` then skips both the rim
+    // drawable and the spot light. Mirror that here instead of rimming the flat fallback fill.
+    val materialEdge = if (backdrop != null) {
+        Modifier.materialShadowEdge(
+            stroke = if (isDark) PopupStrokeDark else PopupStrokeLight,
+            cornerRadius = CascadingPopupCornerRadius,
+            cornerWeight = if (squircleEnabled) {
+                MaterialShadowEdgeDefaults.SquircleCornerWeight
+            } else {
+                MaterialShadowEdgeDefaults.CornerWeight
+            },
+            edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
+            shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
+        )
+    } else {
+        Modifier
+    }
     // Both boxes propagate the minimum width: [CascadingListPopupLayout] already floors the panel at
     // the caller's `minWidth`, and without passing that floor down to the list the two sizes
     // disagree — the column clamps to its own `ListPopupDefaults.MinWidth` while the panel takes the
@@ -97,7 +125,6 @@ internal fun CascadingPrimaryContent(
                 val s = ENTER_SCALE_FROM + ENTER_SCALE_RANGE * enterFraction()
                 scaleX = s
                 scaleY = s
-                alpha = enterAlpha()
                 this.transformOrigin = transformOrigin
             }
             .graphicsLayer {
@@ -107,6 +134,11 @@ internal fun CascadingPrimaryContent(
                 translationY = primaryTranslationY()
                 this.transformOrigin = shrinkTransformOrigin
             }
+            // Fade the whole group — shadow included — through a saveLayer that outgrows the panel.
+            // A `graphicsLayer` alpha would composite into an offscreen the size of the panel and
+            // crop the exterior shadow, which then reads as a hard-edged rectangle over the page
+            // for the length of the entrance animation.
+            .popupOpacity(enterAlpha)
             // Draw the shadow outside popupClipReveal's hard clip so it is not erased.
             .dropShadow(shape = shape, shadow = PopupShadow)
             .popupClipReveal(enterFraction, popupLayoutPosition, CascadingPopupCornerRadius, squircleEnabled)
@@ -120,7 +152,10 @@ internal fun CascadingPrimaryContent(
                 ),
                 blendColors = popupGlassBlendColors(),
                 highlight = highlight,
-            ),
+            )
+            // Rim last in the chain, i.e. painted over the glass fill and under the rows — the same
+            // position `ListPopupContent` gives it.
+            .then(materialEdge),
     ) {
         Box(
             propagateMinConstraints = true,

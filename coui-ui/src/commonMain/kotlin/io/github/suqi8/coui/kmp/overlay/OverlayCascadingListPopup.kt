@@ -63,7 +63,7 @@ fun OverlayCascadingListPopup(
     val backdrop = LocalBackdrop.current
     CascadingListPopupLayout(
         show = show,
-        popupHost = { visible, hostContent ->
+        popupHost = { visible, passTouches, hostContent ->
             val visibleState = remember { mutableStateOf(false) }
             visibleState.value = visible
             PopupLayout(
@@ -73,6 +73,7 @@ fun OverlayCascadingListPopup(
                 enterTransition = EnterTransition.None,
                 exitTransition = ExitTransition.None,
                 renderInRootScaffold = renderInRootScaffold,
+                passTouches = passTouches,
             ) {
                 PopupBackdrop(hostBackdrop = backdrop) {
                     hostContent()

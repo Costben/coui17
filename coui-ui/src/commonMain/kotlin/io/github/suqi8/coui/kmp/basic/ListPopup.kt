@@ -7,6 +7,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -40,6 +41,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
@@ -79,6 +81,7 @@ import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
@@ -768,7 +771,16 @@ fun ListPopupColumn(
             // COUI pads the popup RecyclerView itself (coui_popup_list_padding_vertical) on top of
             // the per-row padding. The band sits outside the scroller, i.e. clipToPadding stays on.
             .padding(vertical = PopupListVerticalPadding)
-            .verticalScroll(state = scrollState)
+            // A closing popup stops scrolling as well, so a drag on the shrinking panel is the page's.
+            // A disabled scroller is still a hit target, hence the frozen stand-in, which keeps the
+            // rows exactly where the scroller left them.
+            .then(
+                if (interactionEnabled) {
+                    Modifier.verticalScroll(state = scrollState)
+                } else {
+                    Modifier.frozenVerticalScroll(scrollState)
+                },
+            )
             .popupListGestures(host, coroutineScope, touchSlop, performHaptic, interactionEnabled)
             .drawWithContent {
                 drawPopupItemHighlight(host, pressColor, squircleEnabled)
@@ -778,6 +790,21 @@ fun ListPopupColumn(
         measurePolicy = measurePolicy,
     )
 }
+
+/**
+ * Lays the content out as [verticalScroll] would at [state]'s current offset, without taking any
+ * input: the scroll position of a closing popup, held still while its panel shrinks away.
+ */
+private fun Modifier.frozenVerticalScroll(state: ScrollState): Modifier = this
+    .clipToBounds()
+    .layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints.copy(maxHeight = Constraints.Infinity))
+        val height = placeable.height.coerceAtMost(constraints.maxHeight)
+        val offset = state.value.coerceIn(0, (placeable.height - height).coerceAtLeast(0))
+        layout(placeable.width, height) {
+            placeable.placeRelative(0, -offset)
+        }
+    }
 
 /**
  * The COUI popup drag-to-select gesture (COUI COUITouchRecyclerView.dispatchTouchEvent). A single
@@ -791,67 +818,72 @@ private fun Modifier.popupListGestures(
     touchSlop: Float,
     performHaptic: (CouiHapticEffect) -> Unit,
     enabled: Boolean,
-): Modifier = pointerInput(host, enabled) {
-    if (!enabled) return@pointerInput
-    awaitEachGesture {
-        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-        val downY = down.position.y
-        // A press that lands on a divider band or header still tracks: dragging into a row then
-        // picks it up, as COUITouchRecyclerView does for a DOWN with no selectable child.
-        host.onDown(downY, scope)
-        var pressed = true
-        var released = false
+): Modifier = if (!enabled) {
+    // Not merely idle: an installed pointer input is still a hit target, and on a closing popup it
+    // would keep the page beneath from receiving the press that lands on the shrinking panel.
+    this
+} else {
+    pointerInput(host) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            val downY = down.position.y
+            // A press that lands on a divider band or header still tracks: dragging into a row then
+            // picks it up, as COUITouchRecyclerView does for a DOWN with no selectable child.
+            host.onDown(downY, scope)
+            var pressed = true
+            var released = false
 
-        try {
-            while (pressed && !released) {
-                val event = awaitPointerEvent(PointerEventPass.Initial)
-                val change: PointerInputChange = event.changes.firstOrNull { it.id == down.id } ?: break
+            try {
+                while (pressed && !released) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val change: PointerInputChange = event.changes.firstOrNull { it.id == down.id } ?: break
 
-                if (event.changes.size > 1) {
-                    // A second pointer cancels the selection, as COUI does on ACTION_POINTER_DOWN.
-                    host.cancel(scope)
-                    pressed = false
-                    break
-                }
-
-                // Resolve both axes and the final UP position. Leaving the list content (including
-                // into its vertical padding, where COUI finds no child) cancels the row, while
-                // returning during the same gesture restores dynamic selection.
-                val inside = change.position.x >= 0f && change.position.x < size.width &&
-                    change.position.y >= 0f && change.position.y < size.height
-                if (!inside) {
-                    host.cancel(scope)
-                } else if (host.isDynamicSelection) {
-                    val crossing = host.willChangeRow(change.position.y)
-                    host.onMoveTo(change.position.y, scope)
-                    if (crossing) performHaptic(CouiHapticEffect.Switch)
-                }
-
-                if (change.changedToUpIgnoreConsumed()) {
-                    // Compose represents ACTION_CANCEL as an already-consumed synthetic UP.
-                    // It must release the mask without activating the item under the pointer.
-                    if (change.isConsumed) {
+                    if (event.changes.size > 1) {
+                        // A second pointer cancels the selection, as COUI does on ACTION_POINTER_DOWN.
                         host.cancel(scope)
-                    } else {
-                        // Consume the release before selecting: the popup host wraps the whole
-                        // window in an outside-tap detector, and leaving the UP unconsumed made it
-                        // treat a row tap as a dismissal. An action that swaps the popup's content
-                        // (a submenu) was then undone in the same frame.
-                        change.consume()
-                        host.onUp(scope)
+                        pressed = false
+                        break
                     }
-                    released = true
-                    break
-                }
 
-                val y = change.position.y
-                if (!host.isDynamicSelection && abs(y - downY) > touchSlop) {
-                    host.cancel(scope)
-                    pressed = false
+                    // Resolve both axes and the final UP position. Leaving the list content (including
+                    // into its vertical padding, where COUI finds no child) cancels the row, while
+                    // returning during the same gesture restores dynamic selection.
+                    val inside = change.position.x >= 0f && change.position.x < size.width &&
+                        change.position.y >= 0f && change.position.y < size.height
+                    if (!inside) {
+                        host.cancel(scope)
+                    } else if (host.isDynamicSelection) {
+                        val crossing = host.willChangeRow(change.position.y)
+                        host.onMoveTo(change.position.y, scope)
+                        if (crossing) performHaptic(CouiHapticEffect.Switch)
+                    }
+
+                    if (change.changedToUpIgnoreConsumed()) {
+                        // Compose represents ACTION_CANCEL as an already-consumed synthetic UP.
+                        // It must release the mask without activating the item under the pointer.
+                        if (change.isConsumed) {
+                            host.cancel(scope)
+                        } else {
+                            // Consume the release before selecting: the popup host wraps the whole
+                            // window in an outside-tap detector, and leaving the UP unconsumed made it
+                            // treat a row tap as a dismissal. An action that swaps the popup's content
+                            // (a submenu) was then undone in the same frame.
+                            change.consume()
+                            host.onUp(scope)
+                        }
+                        released = true
+                        break
+                    }
+
+                    val y = change.position.y
+                    if (!host.isDynamicSelection && abs(y - downY) > touchSlop) {
+                        host.cancel(scope)
+                        pressed = false
+                    }
                 }
+            } finally {
+                host.cancel(scope)
             }
-        } finally {
-            host.cancel(scope)
         }
     }
 }
@@ -1355,9 +1387,14 @@ private class PopupCornerShape(private val squircleEnabled: Boolean) : Shape {
     }
 }
 
-/** RoundFrameLayout.initMaterialEffects: SHADOW_STYLE_2 / EDGE_STYLE_2 with per-theme overrides. */
-private val PopupStrokeLight = MaterialStrokeParams(edgeAlpha = 0.9f, edgeWidth = 4.dp, shadowFadeIn = 0.9f)
-private val PopupStrokeDark = MaterialStrokeParams(edgeAlpha = 0.4f, edgeWidth = 2.dp, shadowFadeIn = 0.1f)
+/**
+ * RoundFrameLayout.initMaterialEffects: SHADOW_STYLE_2 / EDGE_STYLE_2 with per-theme overrides.
+ *
+ * Shared with the cascading panel, which is the same material surface — COUI draws one rim shader
+ * for every popup, main menu and submenu alike.
+ */
+internal val PopupStrokeLight = MaterialStrokeParams(edgeAlpha = 0.9f, edgeWidth = 4.dp, shadowFadeIn = 0.9f)
+internal val PopupStrokeDark = MaterialStrokeParams(edgeAlpha = 0.4f, edgeWidth = 2.dp, shadowFadeIn = 0.1f)
 
 /** RoundFrameLayout.DEFAULT_BLUR_RADIUS_PX, authored in physical pixels. */
 private const val POPUP_BLUR_RADIUS_PX = 160f
@@ -1482,8 +1519,13 @@ internal val PopupShadow: Shadow = Shadow(
     offset = DpOffset(0.dp, 3.67.dp),
 )
 
-/** Group opacity must include the exterior shadow, not just the menu's rectangular bounds. */
-private fun Modifier.popupOpacity(progress: () -> Float): Modifier = drawWithCache {
+/**
+ * Group opacity must include the exterior shadow, not just the menu's rectangular bounds.
+ *
+ * Shared with the cascading popup, whose entrance alpha used to ride on `graphicsLayer` and cropped
+ * the same exterior shadow to the panel rectangle while the menu faded in.
+ */
+internal fun Modifier.popupOpacity(progress: () -> Float): Modifier = drawWithCache {
     val paint = Paint()
     // DropShadowPainter's bitmap extends by radius + spread, then moves by the shadow offset.
     val xOutset = ceil((PopupShadow.radius.toPx() + PopupShadow.spread.toPx() + abs(PopupShadow.offset.x.toPx())).coerceAtLeast(0f))

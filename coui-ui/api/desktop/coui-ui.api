@@ -4954,6 +4954,10 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlayLoadingDialogKt {
 	public static final fun OverlayLoadingDialog-aJPAViM (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;JJJZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ZLandroidx/compose/runtime/Composer;II)V
 }
 
+public final class io/github/suqi8/coui/kmp/overlay/OverlayNavigationPopupMenuKt {
+	public static final fun OverlayNavigationPopupMenu-RQe73fg (ZLjava/util/List;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider$Align;Lio/github/suqi8/coui/kmp/basic/PopupPositionProvider;FLandroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function0;ZLio/github/suqi8/coui/kmp/basic/DropdownColors;ZLandroidx/compose/runtime/Composer;III)V
+}
+
 public final class io/github/suqi8/coui/kmp/overlay/OverlayProgressDialogKt {
 	public static final fun OverlayProgressDialog-Yod850M (ZLandroidx/compose/ui/Modifier;Ljava/lang/Float;Ljava/lang/String;Lio/github/suqi8/coui/kmp/layout/ProgressDialogColors;JZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ZLandroidx/compose/runtime/Composer;II)V
 }

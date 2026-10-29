@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -58,6 +59,7 @@ import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.ListPopupLayoutInfo
+import io.github.suqi8.coui.kmp.basic.LocalPopupInteractionEnabled
 import io.github.suqi8.coui.kmp.basic.PopupCornerRadius
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.popupSurfaceColor
@@ -229,11 +231,16 @@ private class PopupShift {
  * app density would make every row, font and padding about 10% larger than the popup it mimics on a
  * phone whose density was raised above the panel's. [popupPhysicalDensity] restores the native
  * geometry; on a device without an override it is the identity.
+ *
+ * [popupHost] receives the mounted state, a `passTouches` probe and the content. `passTouches` turns
+ * true the moment the close starts: the panel keeps shrinking into its anchor, but a host that blocks
+ * touches outside the panel has to stop doing so right away, so the page beneath can already be
+ * dragged or swiped while the exit plays (see [ListPopupLayout]).
  */
 @Composable
 internal fun CascadingListPopupLayout(
     show: Boolean,
-    popupHost: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit,
+    popupHost: @Composable (visible: Boolean, passTouches: () -> Boolean, content: @Composable () -> Unit) -> Unit,
     entries: List<DropdownEntry>,
     onDismissRequest: () -> Unit,
     dropdownColors: DropdownColors,
@@ -287,7 +294,7 @@ internal fun popupPhysicalDensity(base: Density): Density {
 @Composable
 private fun CascadingListPopupLayoutImpl(
     show: Boolean,
-    popupHost: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit,
+    popupHost: @Composable (visible: Boolean, passTouches: () -> Boolean, content: @Composable () -> Unit) -> Unit,
     entries: List<DropdownEntry>,
     onDismissRequest: () -> Unit,
     dropdownColors: DropdownColors,
@@ -320,6 +327,11 @@ private fun CascadingListPopupLayoutImpl(
     val layoutDirection = LocalLayoutDirection.current
 
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
+    val currentShow by rememberUpdatedState(show)
+    // Hand touches back the moment the close starts, as ListPopupLayout does: the exit springs run
+    // for a third of a second, and a popup that is merely shrinking into its anchor must not hold
+    // every drag on the page beneath until they settle. Derived, so only the flip recomposes.
+    val passTouches by remember { derivedStateOf { !currentShow } }
     val currentOnDismissFinished by rememberUpdatedState(onDismissFinished)
     val coroutineScope = rememberCoroutineScope()
     // Defer enter until both are measured — otherwise transformOrigin and offset jump on frame 1.
@@ -504,7 +516,7 @@ private fun CascadingListPopupLayoutImpl(
     val hasSubMenuRows = entries.any { entry -> entry.items.any { !it.children.isNullOrEmpty() } }
     val resolvedMinWidth = if (hasSubMenuRows) maxOf(minWidth, PopupSubMenuMinWidth) else minWidth
 
-    popupHost(internalVisible.value) {
+    popupHost(internalVisible.value, { passTouches }) {
         val backState = rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
         NavigationBackHandler(
             state = backState,
@@ -574,49 +586,70 @@ private fun CascadingListPopupLayoutImpl(
                             hostPositionInWindow = IntOffset(pos.x.toInt(), pos.y.toInt())
                             hostMeasured = true
                         }
-                        .pointerInput(Unit) {
-                            detectTapGestures(onTap = { position ->
-                                // COUI hosts the popup in its own window, so a touch on a row never
-                                // reaches the window-level dismiss handler. Here both share one
-                                // hierarchy, and this layer sits above the list in the hit path:
-                                // without the bounds check the row's own gesture runs first and this
-                                // handler then resets the very item that gesture just expanded.
-                                val bounds = popupContentBounds.rect
-                                val inside = bounds != IntRect.Zero &&
-                                    position.x >= bounds.left && position.x <= bounds.right &&
-                                    position.y >= bounds.top && position.y <= bounds.bottom
-                                if (inside) return@detectTapGestures
-                                if (expandedItem != null) {
-                                    expandedItem = null
-                                } else {
-                                    currentOnDismiss()
+                        // Without a pointer input this layer is no hit target at all, so once the
+                        // close starts both handlers below drop out and touches reach the page.
+                        .then(
+                            if (passTouches) {
+                                Modifier
+                            } else {
+                                Modifier.pointerInput(Unit) {
+                                    detectTapGestures(onTap = { position ->
+                                        // COUI hosts the popup in its own window, so a touch on a row
+                                        // never reaches the window-level dismiss handler. Here both
+                                        // share one hierarchy, and this layer sits above the list in
+                                        // the hit path: without the bounds check the row's own gesture
+                                        // runs first and this handler then resets the very item that
+                                        // gesture just expanded.
+                                        val bounds = popupContentBounds.rect
+                                        val inside = bounds != IntRect.Zero &&
+                                            position.x >= bounds.left && position.x <= bounds.right &&
+                                            position.y >= bounds.top && position.y <= bounds.bottom
+                                        if (inside) return@detectTapGestures
+                                        if (expandedItem != null) {
+                                            expandedItem = null
+                                        } else {
+                                            currentOnDismiss()
+                                        }
+                                    })
                                 }
-                            })
-                        }
+                            },
+                        )
                         // The drag itself arrives through panelNestedScroll; this layer only has to
                         // notice the gesture ending, which the scrollable reports to nobody once it
                         // has consumed the last move. Observing in the Final pass keeps this out of
                         // every other handler's way, and it consumes nothing.
                         .nestedScroll(panelNestedScroll)
-                        .pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    awaitFirstDown(requireUnconsumed = false)
-                                    var lifted = false
-                                    while (!lifted) {
-                                        val event = awaitPointerEvent(PointerEventPass.Final)
-                                        lifted = event.changes.none { it.pressed }
+                        .then(
+                            if (passTouches) {
+                                Modifier
+                            } else {
+                                Modifier.pointerInput(Unit) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            awaitFirstDown(requireUnconsumed = false)
+                                            var lifted = false
+                                            while (!lifted) {
+                                                val event = awaitPointerEvent(PointerEventPass.Final)
+                                                lifted = event.changes.none { it.pressed }
+                                            }
+                                            endPanelDrag()
+                                        }
                                     }
-                                    endPanelDrag()
                                 }
-                            }
-                        },
+                            },
+                        ),
                 ) {
                     // The host invokes this content in its own composition (COUIPopupUtils
                     // `popupState.content()`), so the density provided around this function never
                     // reaches it. Re-provide it here, inside the lambda, to render the menu at the
                     // panel density.
-                    CompositionLocalProvider(LocalDensity provides panelDensity) {
+                    // A closing panel stops taking row input at once, like ListPopup's: the rows
+                    // drop their gesture handlers, so a press on the shrinking card reaches the
+                    // page as well instead of re-triggering a row.
+                    CompositionLocalProvider(
+                        LocalDensity provides panelDensity,
+                        LocalPopupInteractionEnabled provides !passTouches,
+                    ) {
                         CascadingMorphSubLayout(
                             modifier = Modifier.graphicsLayer { translationY = panelDragOffset.value },
                             entries = entries,

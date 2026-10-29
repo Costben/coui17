@@ -14,6 +14,7 @@ import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.layout.CascadingListPopupLayout
+import io.github.suqi8.coui.kmp.utils.DialogTouchPassThrough
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
@@ -55,13 +56,16 @@ fun WindowCascadingListPopup(
 
     CascadingListPopupLayout(
         show = show,
-        popupHost = { visible, hostContent ->
+        // A dialog window is touch-modal while it is mounted, so the popup gives its own window up
+        // as soon as the close starts, exactly like WindowListPopup.
+        popupHost = { visible, passTouches, hostContent ->
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value() },
                     properties = platformDialogProperties(),
                 ) {
                     RemovePlatformDialogDefaultEffects()
+                    DialogTouchPassThrough(passTouches)
                     WindowNavigationEventScope {
                         hostContent()
                     }
