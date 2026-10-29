@@ -201,7 +201,9 @@ The `BottomFloatingNavigationBarDefaults` object provides the metrics shared by 
 | BarHeight                       | Dp       | The capsule height                                             | 56.dp         |
 | MinHeightWithoutPaddingVertical | Dp       | The minimum outer height of the bar                            | 88.dp         |
 | PaddingHorizontal               | Dp       | The outside padding on a small screen                          | 16.dp         |
-| MenuToScreenNaviDistance        | Dp       | The gap between the capsule and the bottom edge of the bar's box | 8.dp        |
+| MenuToScreenNaviDistance        | Dp       | The host's bottom padding under gesture navigation              | 8.dp          |
+| ButtonNavigationDistance        | Dp       | The host's bottom padding under three-button navigation         | 36.dp         |
+| navigationBarPadding()          | Dp       | The host's bottom padding for the current navigation mode       | 8.dp / 36.dp / 0.dp |
 | ExpansionSize                   | Dp       | The footprint of the expansion view                            | 56.dp         |
 | SideSpacing                     | Dp       | The gap between the capsule and the expansion view             | 12.dp         |
 | BarShadow                       | Shadow   | The spot shadow the capsule and the expansion view cast (COUI `SHADOW_LV_B`) | 6.dp radius, black 12%, 2.dp down |
@@ -400,7 +402,7 @@ The capsule is measured the way `BaseBottomFloatingMenuView.onMeasure` measures 
 
 The 12dp inner padding is part of the capsule's own width rather than a `padding` modifier, so the glass surface and the radial touch highlight span the whole capsule. `RowScope.weight` and `RowScope.align` do nothing inside this bar: the row measures every child itself, matching the native menu view, which has no weight concept and places each child at its own computed x.
 
-Vertically, the capsule sits `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` (8dp, `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`) above the bottom edge of the bar's box. With the system's 16dp `navigationBars` inset that is 24dp of clearance at rest.
+Vertically, the capsule is centred in the bar's 88dp box, as `COUIBottomFloatingNavigationBar.onLayout` centres its menu view. The room under the box belongs to the host: pad it with `BottomFloatingNavigationBarDefaults.navigationBarPadding()` — 8dp under gesture navigation (`MenuToScreenNaviDistance`), 36dp under three-button navigation (`ButtonNavigationDistance`), nothing without a navigation bar — in place of `navigationBarsPadding()`. Under gesture navigation the capsule then ends 24dp above the screen edge, as in the ColorOS 17 Gallery.
 
 #### Expansion View (Melt Ball)
 

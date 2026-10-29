@@ -140,7 +140,7 @@ fun BottomFloatingAccessoryNavigationBar(
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.BottomCenter,
+            contentAlignment = Alignment.Center,
         ) {
             var barWidthPx by remember { mutableIntStateOf(0) }
             var capsuleWidthPx by remember { mutableIntStateOf(0) }
@@ -169,13 +169,12 @@ fun BottomFloatingAccessoryNavigationBar(
             val endAlpha = accessoryAlpha(barWidth - accessorySize / 2 - endTuck, endExpansion, endTouchState)
 
             // The blob and the row share this box, so the particles below are expressed in the
-            // capsule's own coordinates, and the whole group is lifted off the bar's bottom edge.
+            // capsule's own coordinates, and the whole group is centred in the bar's box, as
+            // `COUIBottomFloatingAccessoryNavigationBar.onLayout` centres its children.
             // The overlap alpha fades only the accessory's content. Its body and shadow stay whole
             // while it slides under the capsule, so the merged material never thins out mid-tuck.
             Box(
-                modifier = Modifier
-                    .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance)
-                    .onSizeChanged { barWidthPx = it.width },
+                modifier = Modifier.onSizeChanged { barWidthPx = it.width },
             ) {
                 // The device lifts the bar with COUI's `SHADOW_LV_B` spot shadow. Each view casts its
                 // own — `ShadowUtils.setElevationToView(this, 2, ...)` runs both in
@@ -447,15 +446,11 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.BottomCenter,
+            contentAlignment = Alignment.Center,
         ) {
-            // `couiGlassSurface` returns its own chain instead of appending to the receiver, so a
-            // modifier placed ahead of it is discarded. The lift therefore cannot ride on the row's
-            // own modifier chain and needs a wrapper the row is measured inside.
-            Box(
-                modifier = Modifier
-                    .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
-            ) {
+            // `couiGlassSurface` returns its own chain instead of appending to the receiver, so the
+            // row is measured inside a wrapper rather than carrying the layout on its own chain.
+            Box {
                 FloatingCapsuleRow(
                     modifier = Modifier
                         .couiTouchMotion(

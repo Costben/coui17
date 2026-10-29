@@ -17,12 +17,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.tappableElement
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
@@ -107,8 +110,9 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * is as wide as its items at [BottomFloatingNavigationBarDefaults.ItemMaxWidth] plus the 12dp
  * [BottomFloatingNavigationBarDefaults.ItemInnerPadding] and the gaps between them, and it is
  * squeezed — items and all — into the width the bar leaves over when they do not all fit. The
- * capsule sits [BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance] above the bottom edge
- * of the bar's box.
+ * capsule is centred vertically in the bar's 88dp box, as `COUIBottomFloatingNavigationBar.onLayout`
+ * centres its menu view; the room below the box belongs to the host, which ColorOS apps fill with
+ * [BottomFloatingNavigationBarDefaults.navigationBarPadding] rather than the full navigation inset.
  *
  * When [expansion] is supplied the bar reserves room for it next to the capsule and draws both
  * silhouettes through one [MetaBallSurface], so the expansion view melts out of the capsule the way
@@ -359,15 +363,11 @@ private fun BottomFloatingNavigationBarCapsule(
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.BottomCenter,
+            contentAlignment = Alignment.Center,
         ) {
-            // `couiGlassSurface` returns its own chain instead of appending to the receiver, so a
-            // modifier placed ahead of it is discarded. The lift therefore cannot ride on the row's
-            // own modifier chain and needs a wrapper the row is measured inside.
-            Box(
-                modifier = Modifier
-                    .padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
-            ) {
+            // `couiGlassSurface` returns its own chain instead of appending to the receiver, so the
+            // shadow and the row share a wrapper rather than the row's own modifier chain.
+            Box {
                 if (shadow != null) {
                     // The shadow rides the press transform so it stays under the capsule it lifts.
                     Box(
@@ -460,13 +460,13 @@ private fun BottomFloatingNavigationBarMeltBall(
             expanded = 0.dp,
         )
         // The blob and the row share one box, so the particles below use the capsule's own centre
-        // line, and the whole group is lifted off the bar's bottom edge as one.
+        // line, and the whole group is centred in the bar's box as one.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = BottomFloatingNavigationBarDefaults.MinHeightWithoutPaddingVertical)
                 .padding(horizontal = horizontalPadding),
-            contentAlignment = Alignment.BottomCenter,
+            contentAlignment = Alignment.Center,
         ) {
             val capsuleWidth = with(density) { capsuleWidthPx.toDp() }
             // `BaseBottomFloatingMenuView.updateOuterShadow` lifts the menu view with either the
@@ -475,9 +475,7 @@ private fun BottomFloatingNavigationBarMeltBall(
             // would darken the light it casts, so only a caller's own shadow is kept.
             val systemCaustic = rememberPlatformCausticShadowRenderer() != null
             val liftShadow = shadow.takeUnless { systemCaustic && it == BottomFloatingNavigationBarDefaults.BarShadow }
-            Box(
-                modifier = Modifier.padding(bottom = BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance),
-            ) {
+            Box {
                 // The native menu view and expansion view each cast their own shadow, so the capsule
                 // and the ball get one apiece under the blob MetaBallSurface paints over them. Each
                 // rides its particle's press transform.
@@ -847,10 +845,37 @@ object BottomFloatingNavigationBarDefaults {
     val PaddingHorizontal = 16.dp
 
     /**
-     * The gap between the capsule and the bottom edge of the bar's box.
-     * COUI `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`.
+     * The bottom padding a ColorOS host gives the bar under gesture navigation.
+     *
+     * COUI `coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`, and the same 8dp as
+     * the Gallery's `common_bottom_gesture_height`, which `TemplateFragment` sets as the bar's
+     * bottom padding when the navigation bar is a gesture handle. The handle's own inset is not
+     * added on top: the bar floats over it.
      */
     val MenuToScreenNaviDistance = 8.dp
+
+    /**
+     * The bottom padding a ColorOS host gives the bar under three-button navigation: the Gallery's
+     * `common_bottom_navigation_height`, which replaces the navigation inset rather than adding to it.
+     */
+    val ButtonNavigationDistance = 36.dp
+
+    /**
+     * The bottom padding ColorOS 17 hosts put under a floating bar, in place of the navigation
+     * inset: [MenuToScreenNaviDistance] under gesture navigation, [ButtonNavigationDistance] under
+     * three-button navigation and nothing without a navigation bar — the branches of the Gallery's
+     * `TemplateFragment.getBottomPadding`. With it a 56dp capsule ends 24dp above the screen's
+     * bottom edge under gesture navigation, as the Gallery's does.
+     */
+    @Composable
+    fun navigationBarPadding(): Dp {
+        val density = LocalDensity.current
+        return when {
+            WindowInsets.tappableElement.getBottom(density) > 0 -> ButtonNavigationDistance
+            WindowInsets.navigationBars.getBottom(density) > 0 -> MenuToScreenNaviDistance
+            else -> 0.dp
+        }
+    }
 
     /**
      * The footprint of the expansion view that melts out of the capsule.

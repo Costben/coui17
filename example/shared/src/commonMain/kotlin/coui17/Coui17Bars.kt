@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -119,6 +118,9 @@ fun Coui17TopAppBar(
     onSearchPillPositioned: (Dp) -> Unit = {},
     searchPillVisible: Boolean = true,
 ) {
+    // Gallery's toolbar keys ignore the display-size setting the way its bottom bar does, so the
+    // keys alone take its density; the row, title and margins keep scaling with the system.
+    val galleryDensity = rememberGalleryDensity()
     TopAppBar(
         title = title,
         largeTitle = title,
@@ -130,18 +132,22 @@ fun Coui17TopAppBar(
         // library's line would otherwise fade in under the search pill as soon as the page scrolls.
         showDivider = false,
         actions = {
-            HighlightedIconButton(
-                onClick = onSearch,
-                modifier = Modifier.couiTopAppBarActionItem(),
-            ) {
-                Icon(imageVector = COUIIcons.Basic.Search, contentDescription = str("Search"))
-            }
-            Box {
+            CompositionLocalProvider(LocalDensity provides galleryDensity) {
                 HighlightedIconButton(
-                    onClick = onOpenPanel,
+                    onClick = onSearch,
                     modifier = Modifier.couiTopAppBarActionItem(),
                 ) {
-                    Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
+                    Icon(imageVector = COUIIcons.Basic.Search, contentDescription = str("Search"))
+                }
+            }
+            Box {
+                CompositionLocalProvider(LocalDensity provides galleryDensity) {
+                    HighlightedIconButton(
+                        onClick = onOpenPanel,
+                        modifier = Modifier.couiTopAppBarActionItem(),
+                    ) {
+                        Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
+                    }
                 }
                 Coui17Panel(
                     show = panelOpen,
@@ -430,7 +436,7 @@ fun Coui17AccessoryBar(
     modifier: Modifier = Modifier,
 ) {
     val systemDensity = LocalDensity.current
-    // The Gallery's 360dp-short-edge density, capped at the platform density.
+    // The density Gallery pins itself to, whatever display size the user picked.
     val galleryDensity = rememberGalleryDensity()
     // Gallery retracts both accessories once the third capsule tab is selected: `TabFragment`'s page
     // listener calls `hideStartAccessoryView(true)` / `hideEndAccessoryView(true)` for the 创作 tab and
@@ -439,13 +445,15 @@ fun Coui17AccessoryBar(
     // reserve is computed from the *configured* accessory icons, not from the active ones
     // (`computeSideReserveForConfiguredIcons`).
     val accessoriesVisible = Coui17Page.entries[currentPage] != Coui17Page.Color
-    // Gallery uses a 360dp short edge (540dpi on the 15T, 565dpi on the earlier reference).
+    // Gallery pins its own density (565dpi on the PLK110, the panel's 560dpi on the PKT110).
     // Scope that density to the bar; the anchored popup uses the device density below.
     CompositionLocalProvider(LocalDensity provides galleryDensity) {
         BottomFloatingAccessoryNavigationBar(
+            // Gallery floats the bar over the navigation handle instead of above its inset: the
+            // host pads 8dp under gesture navigation and 36dp under three-button navigation.
             modifier = modifier
                 .fillMaxWidth()
-                .navigationBarsPadding(),
+                .padding(bottom = BottomFloatingNavigationBarDefaults.navigationBarPadding()),
             startAccessoryVisible = accessoriesVisible,
             endAccessoryVisible = accessoriesVisible,
             startAccessory = {

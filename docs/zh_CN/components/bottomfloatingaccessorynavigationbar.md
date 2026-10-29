@@ -105,7 +105,7 @@ BottomFloatingAccessoryNavigationBar(
 
 与普通悬浮导航栏一致，16dp 的外部内边距只在小屏下保留，中屏与大屏下收缩为 0。胶囊会在两个配件视图让出的空间中居中。
 
-胶囊本身按 `BaseBottomFloatingMenuView.onMeasure` 测量原生菜单视图的方式测量——能放下时等于各项在 `BottomFloatingNavigationBarDefaults.ItemMaxWidth`（70dp）下的总宽加上 12dp 内边距与 8dp 间距，放不下时被压缩进配件视图让出的宽度。纵向上它位于导航栏盒子下边缘之上 `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance`（8dp，`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`），亦即加上系统 16dp `navigationBars` inset 后距屏幕边缘 24dp。
+胶囊本身按 `BaseBottomFloatingMenuView.onMeasure` 测量原生菜单视图的方式测量——能放下时等于各项在 `BottomFloatingNavigationBarDefaults.ItemMaxWidth`（70dp）下的总宽加上 12dp 内边距与 8dp 间距，放不下时被压缩进配件视图让出的宽度。纵向上它在导航栏 88dp 的盒子里居中，与 `COUIBottomFloatingAccessoryNavigationBar.onLayout` 让子视图居中一致。盒子下方的留白由宿主决定：用 `BottomFloatingNavigationBarDefaults.navigationBarPadding()`（手势导航 8dp、三键导航 36dp）代替 `navigationBarsPadding()`，手势导航下胶囊底边即距屏幕边缘 24dp，与 ColorOS 17 相册一致。
 
 布局在同一档位上会在小屏与中屏摆放之间选择，但这个选择在这里观察不到。小屏摆放把每个配件视图贴到导航栏各自的外侧边缘，并把菜单居中于两者之间——本实现已经如此，因为原生组件把自身测量为「内容 + 内边距」，而本移植同样包裹内容。
 

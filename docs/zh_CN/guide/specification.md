@@ -38,7 +38,7 @@ ColorOS 17 的同一屏幕中同时存在三种密度基准。不同区域必须
 | 密度类型 | 参照机（PLK110）基准值 | 适用范围 | 接入方式 |
 | :--- | :--- | :--- | :--- |
 | **应用密度** | `620dpi = 3.875 px/dp`（随系统「显示大小」缩放） | 应用窗口默认布局、二级设置页、正文列表、常规弹窗 | Compose 默认 `LocalDensity`，无需额外包裹 |
-| **相册密度** | `565dpi = 3.53125 px/dp`（短边固定为 `360dp`） | 主 Tab 页顶栏操作按钮、底部悬浮导航栏及其两侧配件圆钮 | 通过 [`rememberGalleryDensity()`](../components/pinnedtopappbar#相册密度) 显式提供 `LocalDensity` |
+| **相册密度** | `565dpi = 3.53125 px/dp`（固定不随显示大小变化；支持切换分辨率的机型短边钉为 `360dp`，其余机型取屏幕物理密度，PKT110 上为 `560dpi = 3.5 px/dp`） | 主 Tab 页顶栏操作按钮、底部悬浮导航栏及其两侧配件圆钮 | 通过 [`rememberGalleryDensity()`](../components/pinnedtopappbar#相册密度) 显式提供 `LocalDensity` |
 | **面板物理密度** | `560dpi = 3.5 px/dp`（面板物理 `ro.sf.lcd_density`） | 系统级弹出菜单（`OverlayListPopup`、`WindowListPopup`、级联菜单） | 组件内部通过 `popupPhysicalDensity` 自动从基准密度换算至物理密度，调用方无需手动切换 |
 
 ### 密度作用域约束
@@ -139,7 +139,7 @@ fun MainShell(pages: List<Tab>) {
                 LocalBackdrop provides barBackdrop,
                 LocalDensity provides rememberGalleryDensity(),
             ) {
-                Box(Modifier.fillMaxWidth().navigationBarsPadding()) {
+                Box(Modifier.fillMaxWidth().padding(bottom = BottomFloatingNavigationBarDefaults.navigationBarPadding())) {
                     BottomFloatingNavigationBar {
                         pages.forEachIndexed { index, tab ->
                             BottomFloatingNavigationBarItem(

@@ -130,7 +130,10 @@ Taken from the 照片 tab of the ColorOS 17 Gallery on a OnePlus PLK110 (ColorOS
 
 ## Gallery Density
 
-The Gallery lays its bottom bar out at a denser setting than the rest of the system (565 dpi against 620 dpi on the PLK110). `rememberGalleryDensity()` returns that density: a 360dp short edge, `round(shortEdgePx / 360 * 160) / 160`, capped at the platform density, with the platform `fontScale` kept. With it a bottom bar's item pitch measures 207px, identical to the real Gallery's.
+The Gallery ignores the display-size setting: `BaseActivity.adjustDensity` pins its resources to a fixed dpi before any view is inflated, so its toolbar keys, bottom bar and accessory balls measure the same pixels at any density the user picks. `rememberGalleryDensity()` returns that density, with the platform `fontScale` kept:
+
+- On a device that can switch the panel's resolution (the `oplus.software.display.resolution_switch_support` feature) the display's short edge is pinned to 360dp, `(shortEdgePx / 360 * 160).toInt()`: 565 dpi = 3.53125 px/dp on the 1272px PLK110.
+- On every other device it is the panel's own density: 560 dpi = 3.5 px/dp on the 1240px PKT110, against 620 dpi for the rest of the system. There a 56dp accessory ball measures 196px and a 40dp toolbar key 140px, identical to the real Gallery's.
 
 ```kotlin
 import io.github.suqi8.coui.kmp.utils.rememberGalleryDensity
@@ -140,4 +143,4 @@ CompositionLocalProvider(LocalDensity provides rememberGalleryDensity()) {
 }
 ```
 
-Keep content that should follow the system density, such as an anchored popup, outside the scope. The cap exists because 360dp only describes a phone: a desktop window would derive 5.16x against a 2x screen, so tablets and desktops get the platform density. An unknown window size (before the first layout) also yields the platform density. The math is exposed as `GalleryDensityDefaults.density(shortEdgePx, platformDensity)`.
+Keep the layout around that chrome — its alignment, insets and outer margins — at the system density. Anchored popups convert to the panel density on their own, so they are safe either side of the scope. Desktop, Apple and web targets have no display-size override and get the platform density. The math is exposed as `GalleryDensityDefaults.densityDpi(physicalDpi, shortEdgePx, resolutionSwitch)`.

@@ -315,6 +315,7 @@ public final class io/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarDef
 	public final fun getBarShadow ()Landroidx/compose/ui/graphics/shadow/Shadow;
 	public final fun getBlurColorsDark ()Ljava/util/List;
 	public final fun getBlurColorsLight ()Ljava/util/List;
+	public final fun getButtonNavigationDistance-D9Ej5fM ()F
 	public final fun getCausticColor-0d7_KjU ()J
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getExpansionSize-D9Ej5fM ()F
@@ -357,6 +358,7 @@ public final class io/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarDef
 	public final fun getRedDotTopOverflow-D9Ej5fM ()F
 	public final fun getSideSpacing-D9Ej5fM ()F
 	public final fun getTouchEffectRadius-D9Ej5fM ()F
+	public final fun navigationBarPadding-chRvn1I (Landroidx/compose/runtime/Composer;I)F
 	public final fun pressColor-l2rxGTc (J)J
 	public final fun pressScale-YgX7TsA (FF)F
 }
@@ -5376,7 +5378,7 @@ public final class io/github/suqi8/coui/kmp/utils/CouiHaptic_desktopKt {
 public final class io/github/suqi8/coui/kmp/utils/GalleryDensityDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/utils/GalleryDensityDefaults;
-	public final fun density (IF)F
+	public final fun densityDpi (IIZ)I
 	public final fun getShortEdgeDp ()F
 }
 

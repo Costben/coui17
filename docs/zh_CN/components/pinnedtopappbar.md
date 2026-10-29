@@ -130,7 +130,10 @@ val scrollBehavior = PinnedScrollBehavior(state = rememberTopAppBarState())
 
 ## 相册密度
 
-相册的底栏使用比系统其余部分更高的密度（PLK110 上为 565 dpi，系统为 620 dpi）。`rememberGalleryDensity()` 返回的正是这个密度：短边 360dp，即 `round(shortEdgePx / 360 * 160) / 160`，并以平台密度为上限，保留平台的 `fontScale`。使用后，底栏的条目间距实测为 207px，与真实相册一致。
+相册不跟随「显示大小」设置：`BaseActivity.adjustDensity` 在加载任何视图之前就把资源钉在一个固定 dpi 上，所以无论用户选哪档密度，它的顶栏按钮、底栏和两侧配件球的像素尺寸都不变。`rememberGalleryDensity()` 返回的正是这个密度，并保留平台的 `fontScale`：
+
+- 支持切换屏幕分辨率的机型（`oplus.software.display.resolution_switch_support` 特性）把屏幕短边钉为 360dp，即 `(shortEdgePx / 360 * 160).toInt()`：1272px 的 PLK110 上为 565 dpi = 3.53125 px/dp。
+- 其余机型直接使用屏幕自身的物理密度：1240px 的 PKT110 上为 560 dpi = 3.5 px/dp，而系统其余部分为 620 dpi。此时 56dp 的配件球实测 196px、40dp 的顶栏按钮 140px，与真实相册一致。
 
 ```kotlin
 import io.github.suqi8.coui.kmp.utils.rememberGalleryDensity
@@ -140,4 +143,4 @@ CompositionLocalProvider(LocalDensity provides rememberGalleryDensity()) {
 }
 ```
 
-应跟随系统密度的内容（例如锚定的弹出菜单）要放在该作用域之外。设置上限是因为 360dp 只描述手机：桌面窗口会推导出 5.16 倍，而屏幕只有 2 倍，所以平板与桌面使用平台密度。窗口尺寸未知（首次布局之前）时同样返回平台密度。该计算以 `GalleryDensityDefaults.density(shortEdgePx, platformDensity)` 公开。
+这些控件外围的布局（对齐、系统栏内边距、外边距）保持系统密度。锚定的弹出菜单会自行换算到屏幕物理密度，放在作用域内外都可以。桌面、Apple 与 Web 平台没有显示大小覆盖，返回平台密度。该计算以 `GalleryDensityDefaults.densityDpi(physicalDpi, shortEdgePx, resolutionSwitch)` 公开。

@@ -201,7 +201,9 @@ BottomFloatingNavigationBar {
 | BarHeight                       | Dp       | 胶囊高度                                         | 56.dp  |
 | MinHeightWithoutPaddingVertical | Dp       | 导航栏的最小外部高度                             | 88.dp  |
 | PaddingHorizontal               | Dp       | 小屏下的外部内边距                               | 16.dp  |
-| MenuToScreenNaviDistance        | Dp       | 胶囊与导航栏盒子下边缘之间的间距                 | 8.dp   |
+| MenuToScreenNaviDistance        | Dp       | 手势导航下宿主给导航栏的底部留白                 | 8.dp   |
+| ButtonNavigationDistance        | Dp       | 三键导航下宿主给导航栏的底部留白                 | 36.dp  |
+| navigationBarPadding()          | Dp       | 按当前导航方式取宿主的底部留白                   | 8.dp / 36.dp / 0.dp |
 | ExpansionSize                   | Dp       | 展开视图的占位尺寸                               | 56.dp  |
 | SideSpacing                     | Dp       | 胶囊与展开视图之间的间距                         | 12.dp  |
 | BarShadow                       | Shadow   | 胶囊与展开视图投下的阴影（COUI `SHADOW_LV_B`）   | 半径 6.dp、黑色 12%、下移 2.dp |
@@ -400,7 +402,7 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 
 12dp 的内边距是胶囊自身宽度的一部分，而不是一个 `padding` 修饰符，因此玻璃表面与径向触摸高亮都覆盖整条胶囊。`RowScope.weight` 与 `RowScope.align` 在本栏内不起作用：这一行自行测量每个子项，与原生菜单视图一致——后者没有 weight 概念，而是把每个子项放到自己算出的 x 上。
 
-纵向上，胶囊位于导航栏盒子下边缘之上 `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance`（8dp，`coui_bottom_floating_navigation_bar_menu_to_screen_navi_distance`）。加上系统的 16dp `navigationBars` inset，静止时留出 24dp。
+纵向上，胶囊在导航栏 88dp 的盒子里居中，与 `COUIBottomFloatingNavigationBar.onLayout` 让菜单视图居中一致。盒子下方的留白由宿主决定：用 `BottomFloatingNavigationBarDefaults.navigationBarPadding()` 代替 `navigationBarsPadding()`——手势导航 8dp（`MenuToScreenNaviDistance`）、三键导航 36dp（`ButtonNavigationDistance`）、没有导航栏时为 0。手势导航下胶囊底边即距屏幕边缘 24dp，与 ColorOS 17 相册一致。
 
 #### 展开视图（融球）
 

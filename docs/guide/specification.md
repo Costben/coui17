@@ -38,7 +38,7 @@ A single ColorOS 17 screen operates across three distinct density baselines. Eac
 | Density Tier | Reference Value on PLK110 | Applicable Scope | Integration Method |
 | :--- | :--- | :--- | :--- |
 | **App Density** | `620dpi = 3.875 px/dp` (scales with system *Display size*) | Default app window layout, secondary settings pages, content lists, standard dialogs | Default Compose `LocalDensity`; no extra wrapper needed |
-| **Gallery Density** | `565dpi = 3.53125 px/dp` (short edge fixed at `360dp`) | Main tab toolbar action keys, floating bottom navigation bar, and side accessory balls | Provide `LocalDensity` explicitly via [`rememberGalleryDensity()`](../components/pinnedtopappbar#gallery-density) |
+| **Gallery Density** | `565dpi = 3.53125 px/dp` (fixed; a `360dp` short edge on devices that can switch resolution, the panel density elsewhere — `560dpi = 3.5 px/dp` on the PKT110) | Main tab toolbar action keys, floating bottom navigation bar, and side accessory balls | Provide `LocalDensity` explicitly via [`rememberGalleryDensity()`](../components/pinnedtopappbar#gallery-density) |
 | **Panel Physical Density** | `560dpi = 3.5 px/dp` (panel hardware `ro.sf.lcd_density`) | System popup menus (`OverlayListPopup`, `WindowListPopup`, cascading menus) | Switched automatically inside the popup via `popupPhysicalDensity`; no caller wrapper needed |
 
 ### Density Scoping Rules
@@ -139,7 +139,7 @@ fun MainShell(pages: List<Tab>) {
                 LocalBackdrop provides barBackdrop,
                 LocalDensity provides rememberGalleryDensity(),
             ) {
-                Box(Modifier.fillMaxWidth().navigationBarsPadding()) {
+                Box(Modifier.fillMaxWidth().padding(bottom = BottomFloatingNavigationBarDefaults.navigationBarPadding())) {
                     BottomFloatingNavigationBar {
                         pages.forEachIndexed { index, tab ->
                             BottomFloatingNavigationBarItem(
