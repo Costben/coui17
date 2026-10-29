@@ -30,6 +30,7 @@ Compose Multiplatform UI component library. Targets Android, iOS, Desktop (JVM),
 | Verify local release  | `./gradlew publishAllToLocalRepository verifyLocalPublication`   |
 | Verify staged release | `./gradlew verifyStagedMavenCentral -Prelease` (wipes and re-stages `build/publishing/mavenCentral`; `-Prelease` requires GPG signatures) |
 | Smoke-test published  | `./gradlew -p smoke compileKotlin -PcouiVersion=<version>`       |
+| Rolling local snapshot | `.githooks/publish-rolling-snapshot.sh` (republishes `1.2.0-SNAPSHOT` to `build/repository/local` for the apps on this machine; runs on every commit after `git config core.hooksPath .githooks`) |
 | Release-scenario drill | `bash .github/scripts/test-staged-repository-verification.sh` (staged-repository checks) and `bash .github/scripts/test-release-tag-resolution.sh` (is the release built from the tag?) |
 | Run Android demo      | `./gradlew :example:android:installDebug`                        |
 | Run Desktop demo      | `./gradlew :example:desktop:hotRunDesktop --auto`                |

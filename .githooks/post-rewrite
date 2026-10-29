@@ -1,0 +1,3 @@
+#!/bin/sh
+# Republishes the rolling 1.2.0-SNAPSHOT in the background; see publish-rolling-snapshot.sh.
+exec "$(dirname "$0")/publish-rolling-snapshot.sh" --background
