@@ -118,7 +118,7 @@ BottomFloatingNavigationBarItem(
 | 属性名           | 类型                      | 说明                                          | 默认值                                        | 是否必须 |
 | ---------------- | ------------------------- | --------------------------------------------- | --------------------------------------------- | -------- |
 | expanded         | Boolean                   | 是否显示菜单                                  | -                                             | 是       |
-| entries          | List<DropdownEntry>       | 菜单各行，与下拉条目的分组方式一致            | -                                             | 是       |
+| entries          | `List<DropdownEntry>`     | 菜单各行，与下拉条目的分组方式一致            | -                                             | 是       |
 | onDismissRequest | () -> Unit                | 用户关闭菜单（点按外部或返回）时调用          | -                                             | 是       |
 | modifier         | Modifier                  | 应用于弹窗的修饰符                            | Modifier                                      | 否       |
 | alignment        | PopupPositionProvider.Align | 菜单贴锚点的哪条边                          | `Align.BottomEnd`                             | 否       |

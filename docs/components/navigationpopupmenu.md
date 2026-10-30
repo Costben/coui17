@@ -118,7 +118,7 @@ BottomFloatingNavigationBarItem(
 | Property Name    | Type                     | Description                                                    | Default Value                        | Required |
 | ---------------- | ------------------------ | -------------------------------------------------------------- | ------------------------------------ | -------- |
 | expanded         | Boolean                  | Whether the menu is shown                                      | -                                    | Yes      |
-| entries          | List<DropdownEntry>      | The rows, grouped like any dropdown entry                       | -                                    | Yes      |
+| entries          | `List<DropdownEntry>`    | The rows, grouped like any dropdown entry                       | -                                    | Yes      |
 | onDismissRequest | () -> Unit               | Called when the user dismisses the menu                         | -                                    | Yes      |
 | modifier         | Modifier                 | Modifier applied to the popup                                   | Modifier                             | No       |
 | alignment        | PopupPositionProvider.Align | Which edge of the anchor the menu aligns to                  | `Align.BottomEnd`                    | No       |
