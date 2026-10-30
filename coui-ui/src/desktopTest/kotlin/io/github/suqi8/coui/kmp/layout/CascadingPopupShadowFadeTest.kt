@@ -23,6 +23,8 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.BezierGravityPathGeometry
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
@@ -72,6 +74,8 @@ class CascadingPopupShadowFadeTest {
                                     onAnchorBounds = { _, _ -> },
                                     enterFraction = { 1f },
                                     enterAlpha = { opacity },
+                                    pathProgress = { 1f },
+                                    gravityPath = BezierGravityPathGeometry(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f),
                                     popupLayoutPosition = PopupLayoutPosition(
                                         showBelow = false,
                                         showAbove = true,
@@ -79,7 +83,7 @@ class CascadingPopupShadowFadeTest {
                                     ),
                                     transformOrigin = TransformOrigin(0f, 1f),
                                     shrinkTransformOrigin = TransformOrigin.Center,
-                                    surfaceColor = Color.White,
+                                    minWidth = 168.dp,
                                     dropdownColors = TestDropdownColors,
                                     primaryScale = { 1f },
                                     primaryAlpha = { 1f },

@@ -52,6 +52,7 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import io.github.suqi8.coui.kmp.anim.BezierGravityPathGeometry
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownDefaults
@@ -62,6 +63,7 @@ import io.github.suqi8.coui.kmp.basic.ListPopupLayoutInfo
 import io.github.suqi8.coui.kmp.basic.LocalPopupInteractionEnabled
 import io.github.suqi8.coui.kmp.basic.PopupCornerRadius
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
+import io.github.suqi8.coui.kmp.basic.popupGravityPath
 import io.github.suqi8.coui.kmp.basic.popupSurfaceColor
 import io.github.suqi8.coui.kmp.basic.rememberListPopupLayoutInfo
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -200,8 +202,6 @@ private const val PRIMARY_SHRUNK_SCALE = 0.9f
 
 /** COUI SmallScreenAnimationController.DEFAULT_MAIN_MENU_ALPHA_PERCENT (small screen: 0.3). */
 private const val PRIMARY_SHRUNK_ALPHA = 0.3f
-internal const val ENTER_SCALE_FROM = 0.15f
-internal const val ENTER_SCALE_RANGE = 1f - ENTER_SCALE_FROM
 
 /**
  * Popup content bounds in the dismiss layer's local coordinates.
@@ -311,6 +311,7 @@ private fun CascadingListPopupLayoutImpl(
     val internalVisible = remember { mutableStateOf(false) }
     val enterFraction = remember { Animatable(0f) }
     val enterAlpha = remember { Animatable(0f) }
+    val enterPath = remember { Animatable(0f) }
     val dimProgress = remember { Animatable(0f) }
     // Two tracks: a depth-0 gesture may start while the depth-1 collapse is still settling.
     val backEnterProgress = remember { Animatable(0f) }
@@ -347,15 +348,19 @@ private fun CascadingListPopupLayoutImpl(
             launch { dimProgress.animateTo(1f, ListPopupDefaults.DimEnterAnimationSpec) }
             snapshotFlow { primarySize to hostMeasured }
                 .first { (size, ready) -> size != IntSize.Zero && ready }
+            // COUI runs three independent waves open (runOpenWaves): path t, scale and alpha.
+            launch { enterPath.animateTo(1f, ListPopupDefaults.PathEnterAnimationSpec) }
             launch { enterFraction.animateTo(1f, ListPopupDefaults.FractionAnimationSpec) }
             launch { enterAlpha.animateTo(1f, ListPopupDefaults.AlphaEnterAnimationSpec) }
         } else {
             if (!internalVisible.value) return@LaunchedEffect
             expandedItem = null
+            launch { enterPath.animateTo(0f, ListPopupDefaults.PathExitAnimationSpec) }
             launch { enterFraction.animateTo(0f, ListPopupDefaults.FractionExitAnimationSpec) }
             launch { dimProgress.animateTo(0f, ListPopupDefaults.DimExitAnimationSpec) }
             enterAlpha.animateTo(0f, ListPopupDefaults.AlphaExitAnimationSpec)
-            enterFraction.stop()
+            enterPath.snapTo(0f)
+            enterFraction.snapTo(0f)
             dimProgress.stop()
             backEnterProgress.snapTo(0f)
             backExpandProgress.snapTo(0f)
@@ -475,6 +480,12 @@ private fun CascadingListPopupLayoutImpl(
         parentBounds = parentBounds,
         popupContentSize = primarySize,
     )
+
+    // COUI PopupMotionAnimateKitController.rebuildGeom: the trajectory is rebuilt from the anchor
+    // offset on every motion start, so it follows the menu when the anchor moves.
+    val gravityPath = remember(parentBounds, layoutInfo, primarySize) {
+        popupGravityPath(parentBounds, layoutInfo, primarySize)
+    }
 
     val primaryShift = remember { PopupShift() }
 
@@ -685,6 +696,8 @@ private fun CascadingListPopupLayoutImpl(
                             dropdownColors = dropdownColors,
                             enterFraction = { enterFraction.value * (1f - backEnterProgress.value) },
                             enterAlpha = { enterAlpha.value * (1f - backEnterProgress.value) },
+                            enterPath = { enterPath.value * (1f - backEnterProgress.value) },
+                            gravityPath = gravityPath,
                             primaryScale = { 1f + (primaryScale.value - 1f) * (1f - backExpandProgress.value) },
                             primaryAlpha = { 1f + (primaryAlpha.value - 1f) * (1f - backExpandProgress.value) },
                             expandFraction = { expandFraction.value * (1f - backExpandProgress.value) },
@@ -733,6 +746,8 @@ private fun CascadingMorphSubLayout(
     dropdownColors: DropdownColors,
     enterFraction: () -> Float,
     enterAlpha: () -> Float,
+    enterPath: () -> Float,
+    gravityPath: BezierGravityPathGeometry,
     primaryScale: () -> Float,
     primaryAlpha: () -> Float,
     expandFraction: () -> Float,
@@ -787,10 +802,12 @@ private fun CascadingMorphSubLayout(
                 onAnchorBounds = setAnchorBounds,
                 enterFraction = enterFraction,
                 enterAlpha = enterAlpha,
+                pathProgress = enterPath,
+                gravityPath = gravityPath,
                 popupLayoutPosition = layoutInfo.popupLayoutPosition,
                 transformOrigin = layoutInfo.localTransformOrigin,
                 shrinkTransformOrigin = TransformOrigin(primaryPivotX, 0f),
-                surfaceColor = surfaceColor,
+                minWidth = minWidth,
                 dropdownColors = dropdownColors,
                 primaryScale = primaryScale,
                 primaryAlpha = primaryAlpha,

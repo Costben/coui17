@@ -78,6 +78,8 @@ Box {
 
 `alignment` picks which edge of the anchor the menu hugs: the default `BottomEnd` keeps the bar's right-edge convention, and `BottomStart` mirrors it for an anchor on the leading edge. It also decides the corner the card grows out of.
 
+The card opens and closes the way the Gallery's "More" menu does: it springs out of the anchor along a curved path while scaling up from nothing and fading in, each on its own spring, and retraces the same path when it closes.
+
 Closing is not modal: the moment the menu is dismissed, the panel keeps shrinking back into its anchor, but touches already reach the page beneath, so the user can drag, scroll or swipe without waiting for the exit animation to finish. A press that lands on the shrinking panel goes to the page too, and selects no row.
 
 ## Using It as a Navigation Bar Overflow Menu
