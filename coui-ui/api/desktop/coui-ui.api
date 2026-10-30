@@ -2895,8 +2895,28 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarVisuals {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeAction {
+	public static final field $stable I
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/Color;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Landroidx/compose/ui/graphics/vector/ImageVector;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlin/jvm/functions/Function0;
+	public final fun component4-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun copy-gP2Z1ig (Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/Color;)Lio/github/suqi8/coui/kmp/basic/NotificationSwipeAction;
+	public static synthetic fun copy-gP2Z1ig$default (Lio/github/suqi8/coui/kmp/basic/NotificationSwipeAction;Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/Color;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/NotificationSwipeAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getIcon ()Landroidx/compose/ui/graphics/vector/ImageVector;
+	public final fun getOnClick ()Lkotlin/jvm/functions/Function0;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeBoxKt {
 	public static final fun NotificationSwipeBox-luOQtGQ (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;ZFJJJLjava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun NotificationSwipeBox-xVmtA0A (Ljava/util/List;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;ZFJJJZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun rememberNotificationSwipeState (ZLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/NotificationSwipeState;
 }
 
@@ -2914,6 +2934,8 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSwipeDefaults {
 	public final fun getDismissFadeSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getEndPadding-D9Ej5fM ()F
 	public final fun getFollowDistance-D9Ej5fM ()F
+	public final fun getFollowRatio ()F
+	public final fun getLidDistance-D9Ej5fM ()F
 	public final fun getMergeDistance-D9Ej5fM ()F
 	public final fun getMergeSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getMinHeight-D9Ej5fM ()F

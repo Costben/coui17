@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -63,6 +64,16 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
+
+/** An action revealed by a left swipe on a [NotificationSwipeBox]. */
+@Immutable
+@ExperimentalCOUIApi
+data class NotificationSwipeAction(
+    val icon: ImageVector?,
+    val description: String,
+    val onClick: () -> Unit,
+    val color: Color? = null,
+)
 
 /** A saveable, interruptible swipe position for [NotificationSwipeBox]. */
 @Stable
@@ -203,6 +214,18 @@ object NotificationSwipeDefaults {
      */
     fun dismissThreshold(revealWidth: Dp): Dp = revealWidth + MergeDistance
 
+    /**
+     * `NotificationMenuRowItemAnimatorStage2.getDeleteDistance()`: the span past [MergeDistance]
+     * over which the bin's lid opens, `dp2px(12.8f)` in SystemUI.
+     */
+    val LidDistance = 12.8.dp
+
+    /**
+     * `NotificationMenuRowItemAnimatorStage1`: a menu item's extra travel is the drag times
+     * `followDistance / (iconWidth + followDistance)`, not a fixed distance.
+     */
+    val FollowRatio: Float = FollowDistance.value / (ActionWidth + FollowDistance).value
+
     /** AnimateParamOne: response 0.55, bounce 0.4. */
     val SettleSpring: SpringSpec<Float> = folmeSpring(damping = 0.6f, response = 0.55f)
 
@@ -228,9 +251,6 @@ object NotificationSwipeDefaults {
     /** AnimateParamThree.LOTTIE_DURATION, the lid closing as the row goes. */
     internal const val LID_CLOSE_MILLIS = 200
 
-    /** The lid's open: fast enough to read as one move, slow enough not to snap. */
-    internal const val LID_OPEN_MILLIS = 150
-
     /** The lid's close, Android's AccelerateDecelerateInterpolator. */
     internal val LidCloseEasing = Easing { (cos((it + 1f) * PI.toFloat()) / 2f) + 0.5f }
 
@@ -238,7 +258,9 @@ object NotificationSwipeDefaults {
     internal val FlingVelocity = 125.dp
 
     internal const val FADE_START = 0.6f
-    internal const val ICON_BLUR = 15f
+
+    /** Stage1's `updateViewBlur`: a `RenderEffect` radius of 15 **pixels**, not dp. */
+    internal const val ICON_BLUR_PX = 15f
 
     /** The settings cell keeps a fifth of its size while the delete cell swallows it. */
     internal const val MERGED_SCALE = 0.2f
@@ -309,10 +331,51 @@ fun NotificationSwipeBox(
     dismissOnFullSwipe: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val actions = remember(onSettings, onDismiss, settingsIcon, dismissIcon, settingsDescription, dismissDescription) {
+        buildList {
+            if (onSettings != null && settingsIcon != null) {
+                add(NotificationSwipeAction(settingsIcon, settingsDescription, onSettings))
+            }
+            add(NotificationSwipeAction(dismissIcon, dismissDescription, onDismiss))
+        }
+    }
+    NotificationSwipeBox(
+        actions = actions,
+        modifier = modifier,
+        state = state,
+        enabled = enabled,
+        minHeight = minHeight,
+        containerColor = containerColor,
+        actionColor = actionColor,
+        rimColor = rimColor,
+        dismissOnFullSwipe = dismissOnFullSwipe,
+        content = content,
+    )
+}
+
+/**
+ * A notification that reveals up to 3 actions on a physical left swipe.
+ *
+ * Supply actions in visual left-to-right order: the last action sits at the far outer edge and is revealed first.
+ */
+@Composable
+@ExperimentalCOUIApi
+fun NotificationSwipeBox(
+    actions: List<NotificationSwipeAction>,
+    modifier: Modifier = Modifier,
+    state: NotificationSwipeState = rememberNotificationSwipeState(),
+    enabled: Boolean = true,
+    minHeight: Dp = NotificationSwipeDefaults.MinHeight,
+    containerColor: Color = COUITheme.colorScheme.bar,
+    actionColor: Color = COUITheme.colorScheme.onSurface,
+    rimColor: Color = Color.White.copy(alpha = 0.55f),
+    dismissOnFullSwipe: Boolean = false,
+    content: @Composable BoxScope.() -> Unit,
+) {
     val density = LocalDensity.current
     var measuredSize by remember { mutableStateOf(IntSize.Zero) }
-    val actions = if (onSettings != null && settingsIcon != null) 2 else 1
-    val revealWidth = NotificationSwipeDefaults.revealWidth(actions)
+    val actionCount = actions.size
+    val revealWidth = NotificationSwipeDefaults.revealWidth(actionCount)
     val revealWidthPx = with(density) { revealWidth.toPx() }
     val widthPx = measuredSize.width.toFloat()
     val width = with(density) { measuredSize.width.toDp() }
@@ -321,14 +384,13 @@ fun NotificationSwipeBox(
     val dismissThresholdPx = with(density) { NotificationSwipeDefaults.dismissThreshold(revealWidth).toPx() }
     val flingVelocityPx = with(density) { NotificationSwipeDefaults.FlingVelocity.toPx() }
 
-    // A revealed or restored state learns where "revealed" is only once the menu is measured.
     LaunchedEffect(state, revealWidthPx, maxPx) {
         state.revealPx = revealWidthPx
         state.maxPx = maxPx
         if (!state.dragging && !state.dismissing) state.snapTo(if (state.revealedTarget) -revealWidthPx else 0f)
     }
 
-    val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val primaryAction = actions.lastOrNull()
 
     Box(
         modifier = modifier
@@ -338,21 +400,16 @@ fun NotificationSwipeBox(
             .draggable(
                 state = state.draggable,
                 orientation = Orientation.Horizontal,
-                // The native left-swipe affordance has a physical direction even in RTL content.
                 reverseDirection = false,
-                enabled = enabled && !state.dismissing && width > revealWidth,
+                enabled = enabled && !state.dismissing && width > revealWidth && actionCount > 0,
                 onDragStarted = { state.dragging = true },
                 onDragStopped = { velocity ->
                     state.dragging = false
                     val pulled = -state.offsetPx
-                    if (dismissOnFullSwipe && pulled >= dismissThresholdPx) {
-                        // Deciding on the release alone: a held drag past the threshold must still be
-                        // able to come back, and velocity never deletes a row the finger left short.
+                    if (dismissOnFullSwipe && pulled >= dismissThresholdPx && primaryAction != null) {
                         state.dismissing = true
                         state.revealedTarget = false
                         try {
-                            // A tween rather than a spring: there is no settling tail to wait out, and
-                            // a fling's speed is not spent overshooting the clamped end.
                             val fling = velocity < -flingVelocityPx
                             val remaining = state.maxPx + state.offsetPx
                             val millis = if (fling) {
@@ -365,7 +422,7 @@ fun NotificationSwipeBox(
                                 velocity = 0f,
                                 spec = tween(millis, easing = if (fling) LinearEasing else FastOutLinearInEasing),
                             )
-                            currentOnDismiss()
+                            primaryAction.onClick()
                             state.snapTo(0f)
                         } finally {
                             state.dismissing = false
@@ -382,28 +439,18 @@ fun NotificationSwipeBox(
             )
             .semantics {
                 customActions = if (enabled) {
-                    buildList {
-                        if (onSettings != null) {
-                            add(
-                                CustomAccessibilityAction(settingsDescription) {
-                                    onSettings()
-                                    true
-                                },
-                            )
+                    actions.map { action ->
+                        CustomAccessibilityAction(action.description) {
+                            action.onClick()
+                            true
                         }
-                        add(
-                            CustomAccessibilityAction(dismissDescription) {
-                                onDismiss()
-                                true
-                            },
-                        )
                     }
                 } else {
                     emptyList()
                 }
             },
     ) {
-        if (measuredSize != IntSize.Zero) {
+        if (measuredSize != IntSize.Zero && actionCount > 0) {
             NotificationSwipeMenu(
                 state = state,
                 width = width,
@@ -412,13 +459,7 @@ fun NotificationSwipeBox(
                 containerColor = containerColor,
                 actionColor = actionColor,
                 rimColor = rimColor,
-                settingsIcon = settingsIcon,
-                dismissIcon = dismissIcon,
-                settingsDescription = settingsDescription,
-                dismissDescription = dismissDescription,
                 enabled = enabled,
-                onSettings = onSettings,
-                onDismiss = onDismiss,
             )
         }
         NotificationSwipeCard(state = state, minHeight = minHeight, content = content)
@@ -434,33 +475,25 @@ private fun BoxScope.NotificationSwipeMenu(
     state: NotificationSwipeState,
     width: Dp,
     height: Dp,
-    actions: Int,
+    actions: List<NotificationSwipeAction>,
     containerColor: Color,
     actionColor: Color,
     rimColor: Color,
-    settingsIcon: ImageVector?,
-    dismissIcon: ImageVector?,
-    settingsDescription: String,
-    dismissDescription: String,
     enabled: Boolean,
-    onSettings: (() -> Unit)?,
-    onDismiss: () -> Unit,
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    val revealWidth = NotificationSwipeDefaults.revealWidth(actions)
+    val actionCount = actions.size
+    val revealWidth = NotificationSwipeDefaults.revealWidth(actionCount)
     val distance = revealWidth * state.revealFraction
     val overshoot = with(density) { state.overshootPx.toDp() }
     val dismissing = state.dismissing
     // Stage two: past the merge distance the delete cell springs across the settings cell, and
     // springs back off it when the card returns inside that distance.
     val merge by animateFloatAsState(
-        targetValue = if (actions > 1 && (dismissing || overshoot >= NotificationSwipeDefaults.MergeDistance)) 1f else 0f,
+        targetValue = if (actionCount > 1 && (dismissing || overshoot >= NotificationSwipeDefaults.MergeDistance)) 1f else 0f,
         animationSpec = NotificationSwipeDefaults.MergeSpring,
     )
-    // The dismiss threshold: the device ticks as the finger crosses it either way, as
-    // NotificationMenuRow.onTouchMove does. The tick is the only emphasis; the bin itself just
-    // lifts its lid, so nothing is left mid-animation when the finger releases.
     val armed = state.dragging && overshoot >= NotificationSwipeDefaults.MergeDistance
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(armed) {
@@ -474,39 +507,41 @@ private fun BoxScope.NotificationSwipeMenu(
         targetValue = if (dismissing) 1f else 0f,
         animationSpec = tween(NotificationSwipeDefaults.LID_CLOSE_MILLIS, easing = NotificationSwipeDefaults.LidCloseEasing),
     )
-    // The lid opens once, as soon as the finger is past the merge, and stays open; it does not
-    // track the finger, so a slow drag cannot make it flap open and shut a pixel at a time.
-    val lidLatch by animateFloatAsState(
-        targetValue = if (dismissing || overshoot >= NotificationSwipeDefaults.MergeDistance) 1f else 0f,
-        animationSpec = tween(NotificationSwipeDefaults.LID_OPEN_MILLIS, easing = NotificationSwipeDefaults.LidCloseEasing),
-    )
-    // The lottie's first half is the lift; its second half lays the lid back down as the row goes.
+    // Stage2 tracks the finger: past the merge threshold the lid opens over LidDistance (12.8dp),
+    // and closes again the moment the card comes back inside that threshold.
     val lidProgress = if (dismissing) {
         0.5f + 0.5f * lidClose
     } else {
-        lidLatch / 2f
+        ((overshoot - NotificationSwipeDefaults.MergeDistance) / NotificationSwipeDefaults.LidDistance).coerceIn(0f, 1f) / 2f
     }
     val deleteFade by animateFloatAsState(
         targetValue = if (dismissing) 0f else 1f,
         animationSpec = NotificationSwipeDefaults.DismissFadeSpring,
     )
-    val deleteProgress = notificationActionProgress(distance, 0)
-    val settingsProgress = notificationActionProgress(distance, 1)
-    val deleteRecoil by animateFloatAsState(
-        targetValue = if (deleteProgress >= 1f) 1f else 0f,
+
+    val progress0 = notificationActionProgress(distance, 0)
+    val progress1 = if (actionCount > 1) notificationActionProgress(distance, 1) else 0f
+    val progress2 = if (actionCount > 2) notificationActionProgress(distance, 2) else 0f
+
+    val recoil0 by animateFloatAsState(
+        targetValue = if (progress0 >= 1f) 1f else 0f,
         animationSpec = NotificationSwipeDefaults.SettleSpring,
     )
-    val settingsRecoil by animateFloatAsState(
-        targetValue = if (settingsProgress >= 1f) 1f else 0f,
+    val recoil1 by animateFloatAsState(
+        targetValue = if (progress1 >= 1f) 1f else 0f,
         animationSpec = NotificationSwipeDefaults.SettleSpring,
     )
+    val recoil2 by animateFloatAsState(
+        targetValue = if (progress2 >= 1f) 1f else 0f,
+        animationSpec = NotificationSwipeDefaults.SettleSpring,
+    )
+
     val particles = notificationSwipeParticles(
         width = width,
         height = height,
         distance = distance,
-        deleteRecoil = deleteRecoil,
-        settingsRecoil = settingsRecoil,
-        actionCount = actions,
+        actionRecoils = listOf(recoil0, recoil1, recoil2),
+        actionCount = actionCount,
         overshoot = overshoot,
         merge = merge,
         menuAlpha = deleteFade.coerceIn(0f, 1f),
@@ -530,33 +565,31 @@ private fun BoxScope.NotificationSwipeMenu(
         rimBottomScale = 2f,
     )
     Box(Modifier.matchParentSize().clip(menuShape), contentAlignment = AbsoluteAlignment.TopLeft) {
-        NotificationMenuAction(
-            particle = particles[1],
-            progress = deleteProgress,
-            icon = dismissIcon,
-            description = dismissDescription,
-            color = actionColor,
-            enabled = enabled && !dismissing,
-            fade = deleteFade,
-            trashProgress = lidProgress,
-            onClick = {
-                scope.launch { state.close() }
-                onDismiss()
-            },
-        )
-        if (actions > 1 && settingsIcon != null && onSettings != null) {
+        for (i in 0 until actionCount) {
+            val action = actions[actionCount - 1 - i]
+            val particle = particles[i + 1]
+            val progress = when (i) {
+                0 -> progress0
+                1 -> progress1
+                else -> progress2
+            }
+            val isPrimary = i == 0
+            val isPrimaryDelete = isPrimary && action.icon == null
+            val fade = if (isPrimary) deleteFade else (1f - merge)
+            val scale = if (isPrimary) 1f else particle.scaleX
             NotificationMenuAction(
-                particle = particles[2],
-                progress = settingsProgress,
-                icon = settingsIcon,
-                description = settingsDescription,
-                color = actionColor,
-                enabled = enabled && merge == 0f,
-                fade = 1f - merge,
-                scale = particles[2].scaleX,
+                particle = particle,
+                progress = progress,
+                icon = action.icon,
+                description = action.description,
+                color = action.color ?: actionColor,
+                enabled = enabled && (!dismissing || isPrimary) && (isPrimary || merge == 0f),
+                fade = fade,
+                scale = scale,
+                trashProgress = if (isPrimaryDelete) lidProgress else 0f,
                 onClick = {
                     scope.launch { state.close() }
-                    onSettings()
+                    action.onClick()
                 },
             )
         }
@@ -635,7 +668,7 @@ private fun NotificationMenuAction(
                 scaleX = scale
                 scaleY = scale
             }
-            .blur(with(density) { (NotificationSwipeDefaults.ICON_BLUR * (1f - alpha)).toDp() })
+            .blur(with(density) { (NotificationSwipeDefaults.ICON_BLUR_PX * (1f - alpha) / density.density).toDp() })
         if (icon == null) {
             NotificationTrashIcon(progress = trashProgress, color = color, modifier = glyph, contentDescription = description)
         } else {
@@ -659,6 +692,7 @@ internal fun notificationSwipeParticles(
     width: Dp,
     height: Dp,
     distance: Dp,
+    actionRecoils: List<Float> = emptyList(),
     deleteRecoil: Float = 0f,
     settingsRecoil: Float = 0f,
     actionCount: Int = 2,
@@ -671,7 +705,11 @@ internal fun notificationSwipeParticles(
     val pitch = NotificationSwipeDefaults.ActionWidth + NotificationSwipeDefaults.ActionGap
     val end = width - NotificationSwipeDefaults.EndPadding
     val centerY = NotificationSwipeDefaults.ActionTop + buttonHeight / 2
-    val deleteFollow = NotificationSwipeDefaults.FollowDistance * notificationActionProgress(distance, 0) * (1f - deleteRecoil)
+    val card = MetaBallParticle(cardWidth / 2, height / 2, cardWidth, height, NotificationSwipeDefaults.CardCornerRadius)
+    if (actionCount <= 0) return listOf(card)
+
+    val actualDeleteRecoil = if (actionRecoils.isNotEmpty()) actionRecoils[0] else deleteRecoil
+    val deleteFollow = distance * NotificationSwipeDefaults.FollowRatio * (1f - actualDeleteRecoil)
     val deleteWidth = (NotificationSwipeDefaults.ActionWidth + overshoot + if (actionCount > 1) pitch * merge else 0.dp).coerceIn(0.dp, end)
     val delete = MetaBallParticle(
         centerX = end - deleteWidth / 2 - deleteFollow,
@@ -681,19 +719,24 @@ internal fun notificationSwipeParticles(
         cornerRadius = NotificationSwipeDefaults.CornerRadius,
         alpha = menuAlpha,
     )
-    val card = MetaBallParticle(cardWidth / 2, height / 2, cardWidth, height, NotificationSwipeDefaults.CardCornerRadius)
-    if (actionCount < 2) return listOf(card, delete)
-    val settingsFollow = NotificationSwipeDefaults.FollowDistance * notificationActionProgress(distance, 1) * (1f - settingsRecoil)
-    val settingsScale = 1f - (1f - NotificationSwipeDefaults.MERGED_SCALE) * merge.coerceIn(0f, 1f)
-    val settings = MetaBallParticle(
-        centerX = end - NotificationSwipeDefaults.ActionWidth / 2 - pitch - settingsFollow - minOf(overshoot, NotificationSwipeDefaults.MergeDistance),
-        centerY = centerY,
-        width = NotificationSwipeDefaults.ActionWidth,
-        height = buttonHeight,
-        cornerRadius = NotificationSwipeDefaults.CornerRadius,
-        scaleX = settingsScale,
-        scaleY = settingsScale,
-        alpha = menuAlpha,
-    )
-    return listOf(card, delete, settings)
+    val particles = mutableListOf(card, delete)
+
+    for (i in 1 until actionCount) {
+        val recoil = if (actionRecoils.size > i) actionRecoils[i] else if (i == 1) settingsRecoil else 0f
+        val follow = distance * NotificationSwipeDefaults.FollowRatio * (1f - recoil)
+        val scale = 1f - (1f - NotificationSwipeDefaults.MERGED_SCALE) * merge.coerceIn(0f, 1f)
+        particles.add(
+            MetaBallParticle(
+                centerX = end - NotificationSwipeDefaults.ActionWidth / 2 - pitch * i - follow - minOf(overshoot, NotificationSwipeDefaults.MergeDistance),
+                centerY = centerY,
+                width = NotificationSwipeDefaults.ActionWidth,
+                height = buttonHeight,
+                cornerRadius = NotificationSwipeDefaults.CornerRadius,
+                scaleX = scale,
+                scaleY = scale,
+                alpha = menuAlpha,
+            )
+        )
+    }
+    return particles
 }
