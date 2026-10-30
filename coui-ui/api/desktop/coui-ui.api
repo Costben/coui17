@@ -259,6 +259,7 @@ public final class io/github/suqi8/coui/kmp/basic/BottomFloatingAccessoryNavigat
 }
 
 public final class io/github/suqi8/coui/kmp/basic/BottomFloatingAccessoryNavigationBarKt {
+	public static final fun BottomFloatingAccessoryBall-Ccamzx0 (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;ZJLio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun BottomFloatingAccessoryNavigationBar-Y2L_72g (Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;ZZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -549,6 +550,7 @@ public final class io/github/suqi8/coui/kmp/basic/ButtonSize : java/lang/Enum {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/COUITouchMotionKt {
+	public static final fun couiTouchMotion (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLio/github/suqi8/coui/kmp/basic/COUITouchMotionSpec;Landroidx/compose/ui/graphics/Shape;Lio/github/suqi8/coui/kmp/basic/SpotLightParams;Lio/github/suqi8/coui/kmp/basic/COUITouchMotionState;ZZZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)Landroidx/compose/ui/Modifier;
 	public static final fun rememberCOUITouchMotionState (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/COUITouchMotionState;
 }
 
@@ -1148,6 +1150,12 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlu
 	public fun <init> ()V
 	public final fun getLambda$-1145730813$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-1285125913$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$BottomFloatingAccessoryNavigationBarKt {
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$BottomFloatingAccessoryNavigationBarKt;
+	public fun <init> ()V
+	public final fun getLambda$-515572694$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$HintAnimationLayoutKt {

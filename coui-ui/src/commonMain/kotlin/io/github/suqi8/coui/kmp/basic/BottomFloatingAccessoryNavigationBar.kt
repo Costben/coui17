@@ -3,6 +3,8 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -32,8 +34,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -590,4 +595,112 @@ object BottomFloatingAccessoryNavigationBarDefaults {
         response = 0.5f,
         visibilityThreshold = 0.001f,
     )
+}
+
+/**
+ * A standalone bottom floating accessory ball in ColorOS 17 style.
+ *
+ * It shares the exact same 56dp circular silhouette, frosted-glass [MetaBallSurface], drop shadow,
+ * rim highlight, bottom caustic diffusion, and [couiTouchMotion] physics as the accessory balls of
+ * [BottomFloatingAccessoryNavigationBar], positioned independently (e.g. at the bottom end of a screen).
+ *
+ * @param onClick The callback when the ball is clicked.
+ * @param modifier The modifier to be applied to the ball.
+ * @param icon The [ImageVector] to be displayed inside the ball.
+ * @param contentDescription The text used by accessibility services.
+ * @param enabled Whether the ball is interactive.
+ * @param containerColor The background color of the glass silhouette.
+ * @param backdrop The content blurred behind the ball, defaulting to [LocalBackdrop].
+ * @param menu Optional anchor slot for popups such as `OverlayNavigationPopupMenu`.
+ * @param content Optional custom content drawn inside the ball.
+ */
+@Composable
+fun BottomFloatingAccessoryBall(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    contentDescription: String? = null,
+    enabled: Boolean = true,
+    containerColor: Color = COUITheme.colorScheme.bar,
+    backdrop: Backdrop? = LocalBackdrop.current,
+    menu: @Composable () -> Unit = {},
+    content: (@Composable BoxScope.() -> Unit)? = null,
+) {
+    val size = BottomFloatingAccessoryNavigationBarDefaults.AccessorySize
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val touchState = rememberCOUITouchMotionState()
+    val density = LocalDensity.current
+    val barShadow = BottomFloatingAccessoryNavigationBarDefaults.BarShadow
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .semantics(mergeDescendants = true) {
+                if (contentDescription != null) this.contentDescription = contentDescription
+            },
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    translationX = touchState.translation.x
+                    translationY = touchState.translation.y
+                    scaleX = touchState.scaleX
+                    scaleY = touchState.scaleY
+                }
+                .dropShadow(shape = CircleShape, shadow = barShadow),
+        )
+
+        MetaBallSurface(
+            particles = listOf(
+                MetaBallParticle(
+                    centerX = size / 2 + with(density) { touchState.translation.x.toDp() },
+                    centerY = size / 2 + with(density) { touchState.translation.y.toDp() },
+                    width = size,
+                    height = size,
+                    scaleX = touchState.scaleX,
+                    scaleY = touchState.scaleY,
+                    cornerRadius = size / 2,
+                ),
+            ),
+            modifier = Modifier.matchParentSize(),
+            color = containerColor,
+            backdrop = backdrop,
+            containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
+            rimColor = Color.White.copy(alpha = if (isDark) 0.8f else 0.25f),
+            bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
+            rimBottomScale = 1f,
+        )
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .couiTouchMotion(
+                    enabled = enabled,
+                    shape = CircleShape,
+                    lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                    motionState = touchState,
+                )
+                .clickable(
+                    enabled = enabled,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (content != null) {
+                content()
+            } else if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = COUITheme.colorScheme.onSurface,
+                )
+            }
+        }
+
+        menu()
+    }
 }

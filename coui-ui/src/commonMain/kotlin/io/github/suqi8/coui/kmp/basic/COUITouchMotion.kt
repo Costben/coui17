@@ -310,7 +310,7 @@ internal class COUITouchSpring(initialValue: Float) {
 }
 
 @Composable
-internal fun Modifier.couiTouchMotion(
+fun Modifier.couiTouchMotion(
     surface: Modifier = Modifier,
     enabled: Boolean = true,
     spec: COUITouchMotionSpec = COUITouchMotionSpec(),
