@@ -908,8 +908,8 @@ private fun DrawScope.drawPopupItemHighlight(
     val width = (size.width - inset * 2f).coerceAtLeast(0f)
     if (width <= 0f) return
 
-    val singleLine = height == PopupItemPressMaskRadius.toPx() * 2f
-    val radius = if (singleLine) PopupItemPressMaskRadius else PopupItemPressMaskRadiusTall
+    val singleLine = height <= PopupItemPressMaskRadius.toPx() * 2f + 1f
+    val radius = PopupItemPressMaskRadius
     val path = Path()
     path.addSquircleRect(
         width = width,
