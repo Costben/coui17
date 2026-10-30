@@ -59,6 +59,7 @@ HintAnimationLayout(
 | `textSize` | `TextUnit` | 提示文字大小；`TextUnit.Unspecified` 保留 `style` 的大小 |
 | `textColor` | `Color` | 提示颜色；`Color.Unspecified` 保留样式自身颜色 |
 | `style` | `TextStyle` | 提示文本样式，默认使用主题中 `couiTextAppearanceBodyL` 这一档 |
+| `hintStartPadding` | `Dp` | 提示文字起始内缩，让它落在搜索框前置图标之后 |
 | `onHintAnimationChange` | `(index: Int, hint: String) -> Unit` | 切换开始时回调，携带新的下标与即将进入的字符串 |
 | `content` | `@Composable BoxScope.() -> Unit` | 提示所覆盖的搜索框 |
 

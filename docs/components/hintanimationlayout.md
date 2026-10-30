@@ -59,6 +59,7 @@ HintAnimationLayout(
 | `textSize` | `TextUnit` | The hint text size; `TextUnit.Unspecified` keeps the size of `style` |
 | `textColor` | `Color` | The hint colour; `Color.Unspecified` keeps the style's colour |
 | `style` | `TextStyle` | The hint text style, defaulting to the theme's `couiTextAppearanceBodyL` tier |
+| `hintStartPadding` | `Dp` | The start inset of the hint, so it sits behind the search field's leading icon |
 | `onHintAnimationChange` | `(index: Int, hint: String) -> Unit` | Called when a transition starts, with the new index and the incoming string |
 | `content` | `@Composable BoxScope.() -> Unit` | The search field the hints are drawn over |
 

@@ -7,6 +7,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -90,6 +92,8 @@ import kotlinx.coroutines.launch
  * @param textColor The colour of the hint text. `Color.Unspecified` keeps the style's colour.
  * @param style The text style of the hints. Defaults to `COUITheme.textStyles.body1`, the 16sp
  *   `couiTextAppearanceBodyL` tier.
+ * @param hintStartPadding The start inset of the hint text, so it can sit behind the search field's
+ *   leading icon instead of over it.
  * @param onHintAnimationChange Called when a transition starts, with the new index and the incoming
  *   string. Mirrors `COUIHintAnimationChangeListener.hintAnimationChange`, which fires from
  *   `applyHintChangeAnimation` once the outgoing animation has been started.
@@ -106,6 +110,7 @@ fun HintAnimationLayout(
     textSize: TextUnit = TextUnit.Unspecified,
     textColor: Color = Color.Unspecified,
     style: TextStyle = HintAnimationDefaults.textStyle(),
+    hintStartPadding: Dp = 0.dp,
     onHintAnimationChange: (index: Int, hint: String) -> Unit = { _, _ -> },
     content: @Composable BoxScope.() -> Unit = {},
 ) {
@@ -187,6 +192,7 @@ fun HintAnimationLayout(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
+                        .padding(start = hintStartPadding)
                         .graphicsLayer {
                             translationY = shifts[slot].value
                             alpha = alphas[slot].value

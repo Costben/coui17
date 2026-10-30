@@ -26,6 +26,7 @@ import io.github.suqi8.coui.kmp.basic.HintAnimationLayout
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.InputField
+import io.github.suqi8.coui.kmp.basic.SearchBarDefaults
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TopTips
@@ -83,6 +84,10 @@ private fun HintAnimationDemo() {
         HintAnimationLayout(
             hints = hints,
             query = query,
+            hintStartPadding = SearchBarDefaults.LeadingIconStartPadding +
+                24.dp +
+                SearchBarDefaults.LeadingIconEndPadding,
+            textColor = COUITheme.colorScheme.onSurfaceVariantSummary,
             onHintAnimationChange = { index, hint -> lastHint = "$index: $hint" },
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -92,7 +97,6 @@ private fun HintAnimationDemo() {
                 onSearch = {},
                 expanded = false,
                 onExpandedChange = {},
-                leadingIcon = {},
                 label = "",
                 modifier = Modifier.fillMaxWidth(),
             )
