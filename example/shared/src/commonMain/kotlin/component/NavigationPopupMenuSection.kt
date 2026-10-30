@@ -15,19 +15,56 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.str
+import io.github.suqi8.coui.kmp.basic.DropdownEntry
+import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.NavigationPopupMenu
-import io.github.suqi8.coui.kmp.basic.NavigationPopupMenuItem
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Search
 import io.github.suqi8.coui.kmp.icon.extended.Settings
+import io.github.suqi8.coui.kmp.overlay.OverlayNavigationPopupMenu
 
-/** Renders the "NavigationPopupMenu" gallery section content: a button that opens a navigation popup menu. */
+/**
+ * Renders the "NavigationPopupMenu" gallery section content: a button that opens the bottom-bar
+ * overflow menu on the in-window popup host, so the card samples the page behind it and wears the
+ * glass, rim and drop shadow the Gallery's own "More" menu has.
+ */
 @Composable
 fun NavigationPopupMenuDemo() {
     var expanded by remember { mutableStateOf(false) }
+    val searchLabel = str("Search")
+    val settingsLabel = str("Settings")
+    val aboutLabel = str("About")
+    val entries = listOf(
+        DropdownEntry(
+            items = listOf(
+                DropdownItem(
+                    text = searchLabel,
+                    icon = { Icon(imageVector = COUIIcons.Search, contentDescription = null, modifier = it) },
+                    onClick = { expanded = false },
+                ),
+            ),
+        ),
+        DropdownEntry(
+            items = listOf(
+                DropdownItem(
+                    text = settingsLabel,
+                    icon = { Icon(imageVector = COUIIcons.Settings, contentDescription = null, modifier = it) },
+                    onClick = { expanded = false },
+                ),
+            ),
+        ),
+        DropdownEntry(
+            items = listOf(
+                DropdownItem(
+                    text = aboutLabel,
+                    enabled = false,
+                    icon = { Icon(imageVector = COUIIcons.More, contentDescription = null, modifier = it) },
+                ),
+            ),
+        ),
+    )
 
     // The popup anchors to the bounds of its parent layout node. Keep that node around the
     // three-dot action so the menu opens above the same material button as the system bar.
@@ -45,27 +82,11 @@ fun NavigationPopupMenuDemo() {
             ) {
                 Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
             }
-            NavigationPopupMenu(
+            OverlayNavigationPopupMenu(
                 expanded = expanded,
+                entries = entries,
                 onDismissRequest = { expanded = false },
-            ) {
-                NavigationPopupMenuItem(
-                    label = str("Search"),
-                    icon = COUIIcons.Search,
-                    onClick = { expanded = false },
-                )
-                NavigationPopupMenuItem(
-                    label = str("Settings"),
-                    icon = COUIIcons.Settings,
-                    onClick = { expanded = false },
-                )
-                NavigationPopupMenuItem(
-                    label = str("About"),
-                    icon = COUIIcons.More,
-                    enabled = false,
-                    onClick = {},
-                )
-            }
+            )
         }
     }
 }
