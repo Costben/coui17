@@ -139,6 +139,9 @@ import kotlinx.coroutines.launch
  *   mirroring the `0dp` chained input view of the layout.
  * @param label The hint shown while the field is empty.
  * @param enabled Whether the field and the next button react to input.
+ * @param scene Which presentation the field wears; see [LockScreenPwdInputScene]. [colors]
+ *   defaults to the matching palette, and the border, inner shadow and light sweep only exist in
+ *   [LockScreenPwdInputScene.Desktop].
  * @param minCount The number of characters the next button needs before it fires
  *   (`couiInputMinCount`, `DEFAULT_MIN_INPUT_COUNT`). While [value] is shorter the button is drawn
  *   with [LockScreenPwdInputColors.nextDisabledIconColor] and ignores pointers, which is the normal /
@@ -165,18 +168,25 @@ fun LockScreenPwdInput(
     modifier: Modifier = Modifier,
     label: String = "",
     enabled: Boolean = true,
+    scene: LockScreenPwdInputScene = LockScreenPwdInputScene.Desktop,
     minCount: Int = LockScreenPwdInputDefaults.MinInputCount,
     maxCount: Int = LockScreenPwdInputDefaults.MaxInputCount,
     onNextClick: (String) -> Unit = {},
     nextIcon: ImageVector? = LockScreenPwdInputDefaults.NextIcon,
     nextContentDescription: String = LockScreenPwdInputDefaults.NextDescription,
-    colors: LockScreenPwdInputColors = LockScreenPwdInputDefaults.colors(),
+    colors: LockScreenPwdInputColors = LockScreenPwdInputDefaults.colors(scene),
     textStyle: TextStyle = LockScreenPwdInputDefaults.textStyle(),
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = PasswordVisualTransformation(),
     interactionSource: MutableInteractionSource? = null,
 ) {
+    val resolvedColors = if (scene == LockScreenPwdInputScene.Setting) {
+        LockScreenPwdInputDefaults.settingColors()
+    } else {
+        colors
+    }
+    val decorated = scene == LockScreenPwdInputScene.Desktop
     val density = LocalDensity.current
     val heightPx = with(density) { LockScreenPwdInputDefaults.Height.toPx() }
     val iconMarginPx = with(density) { LockScreenPwdInputDefaults.IconMargin.toPx() }
@@ -198,8 +208,8 @@ fun LockScreenPwdInput(
     val innerLight = remember { Animatable(0f) }
     val outerLight = remember { Animatable(0f) }
     val pressProgress = remember { Animatable(0f) }
-    val outerStops = remember(colors) { LockScreenPwdInputDefaults.outerGradientStops(colors) }
-    val innerStops = remember(colors) { LockScreenPwdInputDefaults.innerGradientStops(colors) }
+    val outerStops = remember(resolvedColors) { LockScreenPwdInputDefaults.outerGradientStops(resolvedColors) }
+    val innerStops = remember(resolvedColors) { LockScreenPwdInputDefaults.innerGradientStops(resolvedColors) }
 
     LaunchedEffect(isNextPressed, nextEnabled) {
         if (!nextEnabled) {
@@ -224,37 +234,39 @@ fun LockScreenPwdInput(
                 .weight(1f)
                 .height(LockScreenPwdInputDefaults.Height)
                 .clip(RoundedCornerShape(percent = 50))
-                .background(colors.containerColor),
+                .background(resolvedColors.containerColor),
         ) {
-            Canvas(modifier = Modifier.matchParentSize()) {
-                val radius = size.height / 2f
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to colors.upperInnerShadowColor,
-                            1f to colors.upperInnerShadowColor.copy(alpha = 0f),
+            if (decorated) {
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    val radius = size.height / 2f
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0f to resolvedColors.upperInnerShadowColor,
+                                1f to resolvedColors.upperInnerShadowColor.copy(alpha = 0f),
+                            ),
+                            startY = 0f,
+                            endY = upperShadowReachPx,
                         ),
-                        startY = 0f,
-                        endY = upperShadowReachPx,
-                    ),
-                )
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to colors.lowerInnerShadowColor.copy(alpha = 0f),
-                            1f to colors.lowerInnerShadowColor,
+                    )
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0f to resolvedColors.lowerInnerShadowColor.copy(alpha = 0f),
+                                1f to resolvedColors.lowerInnerShadowColor,
+                            ),
+                            startY = size.height - lowerShadowReachPx,
+                            endY = size.height,
                         ),
-                        startY = size.height - lowerShadowReachPx,
-                        endY = size.height,
-                    ),
-                )
-                drawRoundRect(
-                    color = colors.borderColor,
-                    topLeft = Offset(borderWidthPx / 2f, borderWidthPx / 2f),
-                    size = Size(size.width - borderWidthPx, size.height - borderWidthPx),
-                    cornerRadius = CornerRadius(radius, radius),
-                    style = Stroke(width = borderWidthPx),
-                )
+                    )
+                    drawRoundRect(
+                        color = resolvedColors.borderColor,
+                        topLeft = Offset(borderWidthPx / 2f, borderWidthPx / 2f),
+                        size = Size(size.width - borderWidthPx, size.height - borderWidthPx),
+                        cornerRadius = CornerRadius(radius, radius),
+                        style = Stroke(width = borderWidthPx),
+                    )
+                }
             }
             TextField(
                 value = value,
@@ -267,50 +279,52 @@ fun LockScreenPwdInput(
                     ),
                 backgroundMode = TextFieldMode.None,
                 insideMargin = DpSize(0.dp, 0.dp),
-                colors = LockScreenPwdInputDefaults.textFieldColors(colors.textColor),
+                colors = LockScreenPwdInputDefaults.textFieldColors(resolvedColors.textColor),
                 label = label,
                 enabled = enabled,
-                textStyle = textStyle.copy(color = colors.textColor),
+                textStyle = textStyle.copy(color = resolvedColors.textColor),
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
                 singleLine = true,
                 visualTransformation = visualTransformation,
                 interactionSource = interactionSource,
-                cursorBrush = SolidColor(colors.textColor),
+                cursorBrush = SolidColor(resolvedColors.textColor),
             )
-            Canvas(modifier = Modifier.matchParentSize()) {
-                val outerAlpha = outerLight.value
-                val innerAlpha = innerLight.value
-                if (outerAlpha <= 0f && innerAlpha <= 0f) return@Canvas
-                val center = Offset(size.width + iconMarginPx + heightPx / 2f, size.height / 2f)
-                if (outerAlpha > 0f) {
-                    val outerRadius = (center.x - size.width / 2f).coerceAtLeast(1f)
-                    val outerStart = LockScreenPwdInputDefaults.LightRadiusStartFraction * outerRadius
-                    val scale = (outerStart + (outerRadius - outerStart) * outerAlpha) / outerRadius
-                    drawRect(
-                        brush = Brush.radialGradient(
-                            colorStops = outerStops,
-                            center = center,
-                            radius = outerRadius * scale,
-                        ),
-                        alpha = outerAlpha,
-                        blendMode = BlendMode.Lighten,
-                    )
-                }
-                if (innerAlpha > 0f) {
-                    val scale = 1f - (1f - LockScreenPwdInputDefaults.PressedScale) * pressProgress.value
-                    val innerRadius = heightPx / 2f * scale
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colorStops = innerStops,
-                            center = center,
+            if (decorated) {
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    val outerAlpha = outerLight.value
+                    val innerAlpha = innerLight.value
+                    if (outerAlpha <= 0f && innerAlpha <= 0f) return@Canvas
+                    val center = Offset(size.width + iconMarginPx + heightPx / 2f, size.height / 2f)
+                    if (outerAlpha > 0f) {
+                        val outerRadius = (center.x - size.width / 2f).coerceAtLeast(1f)
+                        val outerStart = LockScreenPwdInputDefaults.LightRadiusStartFraction * outerRadius
+                        val scale = (outerStart + (outerRadius - outerStart) * outerAlpha) / outerRadius
+                        drawRect(
+                            brush = Brush.radialGradient(
+                                colorStops = outerStops,
+                                center = center,
+                                radius = outerRadius * scale,
+                            ),
+                            alpha = outerAlpha,
+                            blendMode = BlendMode.Lighten,
+                        )
+                    }
+                    if (innerAlpha > 0f) {
+                        val scale = 1f - (1f - LockScreenPwdInputDefaults.PressedScale) * pressProgress.value
+                        val innerRadius = heightPx / 2f * scale
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colorStops = innerStops,
+                                center = center,
+                                radius = innerRadius,
+                            ),
                             radius = innerRadius,
-                        ),
-                        radius = innerRadius,
-                        center = center,
-                        alpha = innerAlpha,
-                        blendMode = BlendMode.Lighten,
-                    )
+                            center = center,
+                            alpha = innerAlpha,
+                            blendMode = BlendMode.Lighten,
+                        )
+                    }
                 }
             }
         }
@@ -325,7 +339,7 @@ fun LockScreenPwdInput(
                         scaleY = scale
                     }
                     .clip(CircleShape)
-                    .background(colors.nextBackgroundColor)
+                    .background(resolvedColors.nextBackgroundColor)
                     .clickable(
                         interactionSource = nextInteractionSource,
                         indication = null,
@@ -338,11 +352,27 @@ fun LockScreenPwdInput(
                     imageVector = nextIcon,
                     contentDescription = nextContentDescription,
                     modifier = Modifier.size(LockScreenPwdInputDefaults.NextIconSize),
-                    tint = if (nextEnabled) colors.nextIconColor else colors.nextDisabledIconColor,
+                    tint = if (nextEnabled) resolvedColors.nextIconColor else resolvedColors.nextDisabledIconColor,
                 )
             }
         }
     }
+}
+
+/**
+ * Which presentation a [LockScreenPwdInput] wears.
+ *
+ * `COUILockScreenPwdInputLayout` reads `couiIsScenesMode` and keeps two of them: the lock screen's
+ * `desktop` pill — translucent white, an inner shadow and the light sweep behind the next key —
+ * and the `setting` form used inside a settings card, which is a plain card-coloured field with no
+ * border, shadow or light at all.
+ */
+enum class LockScreenPwdInputScene {
+    /** The lock screen form: `#33FFFFFF` pill, inner shadow, light sweep. */
+    Desktop,
+
+    /** The settings form: card fill, no border, no inner shadow, no light. */
+    Setting,
 }
 
 /**
@@ -596,7 +626,8 @@ object LockScreenPwdInputDefaults {
      * `coui_color_primary_neutral`, which the `_allow` arrow points at, is day/night qualified.
      */
     @Composable
-    fun colors(): LockScreenPwdInputColors {
+    fun colors(scene: LockScreenPwdInputScene = LockScreenPwdInputScene.Desktop): LockScreenPwdInputColors {
+        if (scene == LockScreenPwdInputScene.Setting) return settingColors()
         val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
         return LockScreenPwdInputColors(
             containerColor = ContainerColorDesktop,
@@ -610,6 +641,31 @@ object LockScreenPwdInputDefaults {
             innerGradientColor2 = InnerGradientColor2,
             textColor = TextColorDesktop,
             nextBackgroundColor = NextBackgroundColor,
+            nextIconColor = if (isDark) NextIconColorDark else NextIconColorLight,
+            nextDisabledIconColor = NextDisabledIconColor,
+        )
+    }
+
+    /**
+     * The colours of the `setting` scene: `COUILockScreenPwdInputLayout.initScenesModeUI` fills the
+     * field with `?attr/couiColorCard` and draws neither border nor inner shadow, and the text takes
+     * the ordinary label colour instead of the desktop white.
+     */
+    @Composable
+    fun settingColors(): LockScreenPwdInputColors {
+        val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+        return LockScreenPwdInputColors(
+            containerColor = if (isDark) CardBackgroundDark else CardBackgroundLight,
+            borderColor = Color.Transparent,
+            upperInnerShadowColor = Color.Transparent,
+            lowerInnerShadowColor = Color.Transparent,
+            outerGradientColor1 = Color.Transparent,
+            outerGradientColor2 = Color.Transparent,
+            outerGradientColor3 = Color.Transparent,
+            innerGradientColor1 = Color.Transparent,
+            innerGradientColor2 = Color.Transparent,
+            textColor = COUITheme.colorScheme.onSurface,
+            nextBackgroundColor = COUITheme.colorScheme.surfaceContainerHigh,
             nextIconColor = if (isDark) NextIconColorDark else NextIconColorLight,
             nextDisabledIconColor = NextDisabledIconColor,
         )

@@ -62,6 +62,13 @@ An icon is drawn at its own intrinsic size and tinted with `NumericKeyboardColor
 | 10         | onNumberClick(0)                        |
 | 11         | onRightClick                            |
 
+## Press Effect
+
+`pressEffect` selects the two `COUINumericKeyboard.couiPressEffect` styles:
+
+- `NumericKeyboardPressEffect.Light` (default): `pressLight`, the style the ColorOS 17 lock screen's `LauncherNumericKeyboardStyle` selects. The key scales to 0.89, an outer radial light (124dp, `coui_numeric_light_shader_radius`) spreads over the key clipped to its circle, the inner radial gradient and the 0.6dp inner border light up, and an inner-shadow ring darkens the rim.
+- `NumericKeyboardPressEffect.Ripple`: `pressRipple`, the legacy translucent circle that pops to 2.15x and fades.
+
 ## Properties
 
 | Property Name | Type                      | Description                                              | Default Value                    | Required |
@@ -71,6 +78,7 @@ An icon is drawn at its own intrinsic size and tinted with `NumericKeyboardColor
 | leftStyle     | NumericKeyboardSideStyle? | Content of the bottom-left cell, or null for an empty cell | null                           | No       |
 | rightStyle    | NumericKeyboardSideStyle? | Content of the bottom-right cell, or null for an empty cell | null                          | No       |
 | colors        | NumericKeyboardColors     | The digit, press and side colours                        | NumericKeyboardDefaults.colors() | No       |
+| pressEffect   | NumericKeyboardPressEffect | `Light` (lock screen material press) or `Ripple` (the legacy circle) | NumericKeyboardPressEffect.Light | No  |
 | enabled       | Boolean                   | Whether the pad reacts to pointers                       | true                             | No       |
 | onLeftClick   | () -> Unit                | Called when the left side cell is released               | {}                               | No       |
 | onRightClick  | () -> Unit                | Called when the right side cell is released              | {}                               | No       |

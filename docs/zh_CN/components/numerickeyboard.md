@@ -71,6 +71,7 @@ NumericKeyboard(
 | leftStyle     | NumericKeyboardSideStyle? | 左下角格子内容，null 表示空格子            | null                             | 否   |
 | rightStyle    | NumericKeyboardSideStyle? | 右下角格子内容，null 表示空格子            | null                             | 否   |
 | colors        | NumericKeyboardColors     | 数字、按压与两侧颜色                       | NumericKeyboardDefaults.colors() | 否   |
+| pressEffect   | NumericKeyboardPressEffect | `Light`（锁屏材质按压）或 `Ripple`（旧的圆形涟漪） | NumericKeyboardPressEffect.Light | 否   |
 | enabled       | Boolean                   | 是否响应指针                               | true                             | 否   |
 | onLeftClick   | () -> Unit                | 左侧格子抬手时回调                         | {}                               | 否   |
 | onRightClick  | () -> Unit                | 右侧格子抬手时回调                         | {}                               | 否   |

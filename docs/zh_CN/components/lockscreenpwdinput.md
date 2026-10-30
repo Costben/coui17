@@ -52,12 +52,13 @@ LockScreenPwdInput(
 | modifier               | Modifier                  | 应用在整行上的修饰符；胶囊占据剩余宽度            | Modifier                            | 否   |
 | label                  | String                    | 文本为空时显示的提示                            | ""                                  | 否   |
 | enabled                | Boolean                   | 输入框与按钮是否响应输入                        | true                                | 否   |
+| scene                  | LockScreenPwdInputScene   | `Desktop`（锁屏胶囊、内阴影、光扫）或 `Setting`（纯卡片输入框） | LockScreenPwdInputScene.Desktop | 否   |
 | minCount               | Int                       | 下一步按钮生效前所需的字符数                     | LockScreenPwdInputDefaults.MinInputCount | 否 |
 | maxCount               | Int                       | 硬性字符上限                                    | LockScreenPwdInputDefaults.MaxInputCount | 否 |
 | onNextClick            | (String) -> Unit          | 下一步按钮松开时回调文本                        | {}                                  | 否   |
 | nextIcon               | ImageVector?              | 按钮内的箭头；为 null 时隐藏按钮                 | LockScreenPwdInputDefaults.NextIcon | 否   |
 | nextContentDescription | String                    | 下一步按钮的描述                                | LockScreenPwdInputDefaults.NextDescription | 否 |
-| colors                 | LockScreenPwdInputColors  | 描边、阴影、光效与按钮颜色                      | LockScreenPwdInputDefaults.colors() | 否   |
+| colors                 | LockScreenPwdInputColors  | 描边、阴影、光效与按钮颜色                      | LockScreenPwdInputDefaults.colors(scene) | 否   |
 | textStyle              | TextStyle                 | 文本样式，其颜色会被 `colors.textColor` 覆盖     | LockScreenPwdInputDefaults.textStyle() | 否 |
 | keyboardOptions        | KeyboardOptions           | 输入框的键盘选项                                | KeyboardOptions.Default             | 否   |
 | keyboardActions        | KeyboardActions           | 输入框的键盘动作                                | KeyboardActions.Default             | 否   |

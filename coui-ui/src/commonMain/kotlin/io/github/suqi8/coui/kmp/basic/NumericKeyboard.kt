@@ -26,11 +26,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
@@ -140,6 +145,7 @@ fun NumericKeyboard(
     leftStyle: NumericKeyboardSideStyle? = null,
     rightStyle: NumericKeyboardSideStyle? = null,
     colors: NumericKeyboardColors = NumericKeyboardDefaults.colors(),
+    pressEffect: NumericKeyboardPressEffect = NumericKeyboardPressEffect.Light,
     enabled: Boolean = true,
     onLeftClick: () -> Unit = {},
     onRightClick: () -> Unit = {},
@@ -305,12 +311,90 @@ fun NumericKeyboard(
                             (NumericKeyboardDefaults.PressEndScale - NumericKeyboardDefaults.PressPeakScale) * state.fade.value
                         alpha = colors.circleMaxAlpha * (1f - state.fade.value)
                     }
-                    if (pressable && alpha > 0f) {
-                        drawCircle(
-                            color = colors.pressColor.copy(alpha = colors.pressColor.alpha * alpha),
-                            radius = cellSizePx / 2f * scale,
-                            center = center,
-                        )
+                    when (pressEffect) {
+                        NumericKeyboardPressEffect.Ripple -> {
+                            if (pressable && alpha > 0f) {
+                                drawCircle(
+                                    color = colors.pressColor.copy(alpha = colors.pressColor.alpha * alpha),
+                                    radius = cellSizePx / 2f * scale,
+                                    center = center,
+                                )
+                            }
+                        }
+
+                        NumericKeyboardPressEffect.Light -> {
+                            // COUINumericKeyboard's LIGHT_EFFECT: the key itself scales, an outer
+                            // radial light is clipped to its circle, an inner radial gradient and the
+                            // inner border sit on top, and the inner-shadow ring darkens the rim.
+                            val lightAlpha = if (pressed) state.show.value else 1f - state.fade.value
+                            if (pressable && lightAlpha > 0f) {
+                                val keyScale = 1f - (1f - ButtonDefaults.PressedScale) * lightAlpha
+                                val keyRadius = cellSizePx / 2f * keyScale
+                                val keyPath = Path().apply {
+                                    addOval(
+                                        Rect(
+                                            left = center.x - keyRadius,
+                                            top = center.y - keyRadius,
+                                            right = center.x + keyRadius,
+                                            bottom = center.y + keyRadius,
+                                        ),
+                                    )
+                                }
+                                clipPath(keyPath) {
+                                    val lightRadius = NumericKeyboardDefaults.LightShaderRadius.toPx()
+                                    drawCircle(
+                                        brush = Brush.radialGradient(
+                                            colorStops = NumericKeyboardDefaults.outerGradientStops(colors),
+                                            center = center,
+                                            radius = lightRadius,
+                                        ),
+                                        radius = lightRadius,
+                                        center = center,
+                                        alpha = lightAlpha,
+                                    )
+                                    drawCircle(
+                                        brush = Brush.radialGradient(
+                                            colorStops = NumericKeyboardDefaults.innerGradientStops(colors),
+                                            center = center,
+                                            radius = keyRadius,
+                                        ),
+                                        radius = keyRadius,
+                                        center = center,
+                                        alpha = lightAlpha,
+                                    )
+                                    drawCircle(
+                                        brush = Brush.radialGradient(
+                                            colorStops = arrayOf(
+                                                0f to Color.Transparent,
+                                                0.72f to Color.Transparent,
+                                                0.88f to colors.upperInnerShadowColor.copy(
+                                                    alpha = colors.upperInnerShadowColor.alpha * lightAlpha,
+                                                ),
+                                                1f to Color.Transparent,
+                                            ),
+                                            center = center,
+                                            radius = keyRadius,
+                                        ),
+                                        radius = keyRadius,
+                                        center = center,
+                                    )
+                                    drawCircle(
+                                        color = colors.borderHighlightColor.copy(
+                                            alpha = colors.borderHighlightColor.alpha * lightAlpha,
+                                        ),
+                                        radius = keyRadius,
+                                        center = center,
+                                        style = Stroke(width = NumericKeyboardDefaults.BorderWidth.toPx() * 2f),
+                                    )
+                                    drawCircle(
+                                        color = colors.borderColor.copy(alpha = colors.borderColor.alpha),
+                                        radius = keyRadius,
+                                        center = center,
+                                        style = Stroke(width = NumericKeyboardDefaults.BorderWidth.toPx() * 2f),
+                                    )
+                                }
+                            }
+                        }
                     }
                     when (index) {
                         9, 11 -> drawNumericKeyboardSide(
@@ -341,6 +425,19 @@ fun NumericKeyboard(
             }
         }
     }
+}
+
+/** What a [NumericKeyboard] draws under a finger, `COUINumericKeyboard.couiPressEffect`. */
+enum class NumericKeyboardPressEffect {
+    /** `pressRipple`: a translucent circle that pops and fades. `RIPPLE_EFFECT`. */
+    Ripple,
+
+    /**
+     * `pressLight`: the lock screen's material press — the key scales, a radial light spreads over
+     * it, and the inner border and inner shadow light up. `LIGHT_EFFECT`, the style the ColorOS 17
+     * lock screen's `LauncherNumericKeyboardStyle` selects.
+     */
+    Light,
 }
 
 /** A side cell of a [NumericKeyboard], mirroring `COUINumericKeyboard.SideStyle`. */
@@ -405,6 +502,13 @@ data class NumericKeyboardColors(
     val borderHighlightColor: Color,
     val sideBackgroundColor: Color,
     val circleMaxAlpha: Float,
+    val outerGradientColor1: Color = Color(0x80FFFFFF),
+    val outerGradientColor2: Color = Color(0x33FFFFFF),
+    val outerGradientColor3: Color = Color(0x0DFFFFFF),
+    val innerGradientColor1: Color = Color(0x8FFFFFFF),
+    val innerGradientColor2: Color = Color(0xE6FFFFFF),
+    val upperInnerShadowColor: Color = Color(0x5CFFFFFF),
+    val lowerInnerShadowColor: Color = Color(0x33FFFFFF),
 )
 
 /** Contains the default values used by [NumericKeyboard]. */
@@ -523,6 +627,32 @@ object NumericKeyboardDefaults {
 
     /** The side circle colour. `couiSideBackgroundColor` is unset by the style, so transparent. */
     val SideBackgroundColor = Color(0x00000000)
+
+    /** `coui_numeric_light_shader_radius`, the radius of the outer press light, 124dp. */
+    val LightShaderRadius = 124.dp
+
+    /** `coui_keyboard_button_border_width`, the light-effect inner border, 0.6dp. */
+    val BorderWidth = 0.6.dp
+
+    /**
+     * `COUINumericKeyboard.initRadialGradient`'s outer stops: transparent, then
+     * `coui_numeric_keyboard_outer_gradient_color_1` at 0.3, `_2` at 0.6 and `_3` at 0.8, then
+     * transparent.
+     */
+    fun outerGradientStops(colors: NumericKeyboardColors): Array<Pair<Float, Color>> = arrayOf(
+        0f to Color.Transparent,
+        0.3f to colors.outerGradientColor1,
+        0.6f to colors.outerGradientColor2,
+        0.8f to colors.outerGradientColor3,
+        1f to Color.Transparent,
+    )
+
+    /** `initRadialGradient`'s inner stops: transparent, `_1` at 0.7, `_2` at 1. */
+    fun innerGradientStops(colors: NumericKeyboardColors): Array<Pair<Float, Color>> = arrayOf(
+        0f to Color.Transparent,
+        0.7f to colors.innerGradientColor1,
+        1f to colors.innerGradientColor2,
+    )
 
     /** `couiCircleMaxAlpha` in `Widget.COUI.COUINumericKeyboard`, written literally as 0.12. */
     val CircleMaxAlpha = 0.12f

@@ -31,9 +31,12 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.LockPatternDisplayMode
 import io.github.suqi8.coui.kmp.basic.LockPatternView
+import io.github.suqi8.coui.kmp.basic.LockPatternViewDefaults
 import io.github.suqi8.coui.kmp.basic.LockScreenPwdInput
+import io.github.suqi8.coui.kmp.basic.LockScreenPwdInputScene
 import io.github.suqi8.coui.kmp.basic.NumericKeyboard
 import io.github.suqi8.coui.kmp.basic.NumericKeyboardDefaults
+import io.github.suqi8.coui.kmp.basic.NumericKeyboardPressEffect
 import io.github.suqi8.coui.kmp.basic.SimpleLockType
 import io.github.suqi8.coui.kmp.basic.SimpleLockView
 import io.github.suqi8.coui.kmp.basic.Text
@@ -74,24 +77,37 @@ private fun LockPatternDemo() {
     val wrongStatus = str("Pattern: 0-1-2-5-8 (wrong)")
     val replayStatus = str("Replaying 0-3-6-7-8")
 
+    // The lock screen draws the pattern over the wallpaper with the Launcher palette, not on a
+    // light card: `keyguard_security_view` maps `lockPatternView` to
+    // `LauncherLockPatternStyle` / `Widget.COUI.COUILockPatternView.Launcher`.
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        LockPatternView(
-            onPatternComplete = { drawn ->
-                pattern = drawn
-                status = patternPrefix + drawn.joinToString("-")
-            },
-            mode = mode,
-            pattern = pattern,
-        )
-        Text(
-            text = status,
-            modifier = Modifier.padding(top = 12.dp),
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .squircleSurface(color = Color(0xFF1B1B1B), cornerRadius = 24.dp)
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            LockPatternView(
+                onPatternComplete = { drawn ->
+                    pattern = drawn
+                    status = patternPrefix + drawn.joinToString("-")
+                },
+                mode = mode,
+                pattern = pattern,
+                colors = LockPatternViewDefaults.launcherColors(),
+            )
+            Text(
+                text = status,
+                modifier = Modifier.padding(top = 12.dp),
+                color = Color(0xE6FFFFFF),
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -140,6 +156,9 @@ private fun NumericKeyboardDemo() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(text = if (pin.isEmpty()) str("Enter a PIN") else pin)
+        // The lock screen's PIN pad sits on the wallpaper: `keyguard_security_view` maps
+        // `numericKeyboardStyle` to `LauncherNumericKeyboardStyle`, whose `couiPressEffect` is
+        // `pressLight` — the key scales under a radial light instead of the ripple circle.
         Box(
             modifier = Modifier
                 .padding(top = 12.dp)
@@ -150,9 +169,9 @@ private fun NumericKeyboardDemo() {
                     if (pin.length < 6) pin += digit.toString()
                 },
                 leftStyle = NumericKeyboardDefaults.deleteSideStyle(COUIIcons.Delete),
-                rightStyle = NumericKeyboardDefaults.finishSideStyle(),
+                rightStyle = null,
+                pressEffect = NumericKeyboardPressEffect.Light,
                 onLeftClick = { pin = pin.dropLast(1) },
-                onRightClick = { pin = "" },
             )
         }
     }
@@ -236,6 +255,7 @@ private fun SimpleLockDemo() {
 @Composable
 private fun LockScreenPwdInputDemo() {
     var password by remember { mutableStateOf("") }
+    var settingPassword by remember { mutableStateOf("") }
     val typeAPasswordStatus = str("Type a password")
     var status by remember { mutableStateOf(typeAPasswordStatus) }
     val nextPrefix = str("Next: ")
@@ -247,18 +267,41 @@ private fun LockScreenPwdInputDemo() {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        LockScreenPwdInput(
-            value = password,
-            onValueChange = { password = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = str("Password"),
-            minCount = 4,
-            onNextClick = { status = nextPrefix + it.length.toString() + charactersSuffix },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-        )
+        // The lock screen's own form: the desktop pill over the wallpaper, with the inner shadow
+        // and the light sweep the next key throws back across the field.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .squircleSurface(color = Color(0xFF1B1B1B), cornerRadius = 24.dp)
+                .padding(16.dp),
+        ) {
+            LockScreenPwdInput(
+                value = password,
+                onValueChange = { password = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = str("Password"),
+                minCount = 4,
+                scene = LockScreenPwdInputScene.Desktop,
+                onNextClick = { status = nextPrefix + it.length.toString() + charactersSuffix },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            )
+        }
         Text(
             text = status,
             modifier = Modifier.padding(top = 12.dp),
+        )
+        // The settings form: a plain card-coloured field with no border, inner shadow or light.
+        LockScreenPwdInput(
+            value = settingPassword,
+            onValueChange = { settingPassword = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            label = str("Password"),
+            minCount = 4,
+            scene = LockScreenPwdInputScene.Setting,
+            onNextClick = { status = nextPrefix + it.length.toString() + charactersSuffix },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         )
     }
 }

@@ -51,13 +51,14 @@ LockScreenPwdInput(
 | onValueChange          | (String) -> Unit         | Called with the new text, truncated to `maxCount`                          | -                                   | Yes      |
 | modifier               | Modifier                 | Modifier applied to the row; the pill takes the remaining width            | Modifier                            | No       |
 | label                  | String                   | The hint shown while the field is empty                                    | ""                                  | No       |
-| enabled                | Boolean                  | Whether the field and the button react to input                            | true                                | No       |
+| enabled       | Boolean                   | Whether the field and the button react to input                            | true                                | No       |
+| scene         | LockScreenPwdInputScene   | `Desktop` (lock screen pill, inner shadow, light sweep) or `Setting` (plain card field) | LockScreenPwdInputScene.Desktop | No |
 | minCount               | Int                      | Characters needed before the next button fires                             | LockScreenPwdInputDefaults.MinInputCount | No  |
 | maxCount               | Int                      | Hard character limit                                                       | LockScreenPwdInputDefaults.MaxInputCount | No  |
 | onNextClick            | (String) -> Unit         | Called with the text when the next button is released                      | {}                                  | No       |
 | nextIcon               | ImageVector?             | The arrow in the button; null hides the button                             | LockScreenPwdInputDefaults.NextIcon | No       |
 | nextContentDescription | String                   | The description of the next button                                         | LockScreenPwdInputDefaults.NextDescription | No |
-| colors                 | LockScreenPwdInputColors | The border, shadow, light and button colours                               | LockScreenPwdInputDefaults.colors() | No       |
+| colors                 | LockScreenPwdInputColors | The border, shadow, light and button colours                               | LockScreenPwdInputDefaults.colors(scene) | No  |
 | textStyle              | TextStyle                | The text style; its colour is overridden with `colors.textColor`          | LockScreenPwdInputDefaults.textStyle() | No    |
 | keyboardOptions        | KeyboardOptions          | The keyboard options of the field                                          | KeyboardOptions.Default             | No       |
 | keyboardActions        | KeyboardActions          | The keyboard actions of the field                                          | KeyboardActions.Default             | No       |
