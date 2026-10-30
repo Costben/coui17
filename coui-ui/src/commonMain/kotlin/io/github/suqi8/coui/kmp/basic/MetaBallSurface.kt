@@ -217,7 +217,7 @@ internal fun MetaBallSurface(
 ) {
     val runsShader = isRuntimeShaderSupported()
     val shader = rememberMetaBallShader(runsShader)
-    val glass = backdrop != null && shader != null
+    val glass = backdrop != null && shader != null && SystemMaterialState.blurEnabled
 
     Box(modifier = modifier) {
         // Both the blur mask and the native material nodes need drawing room outside the resting
