@@ -206,6 +206,49 @@ fun Button(
     }
 }
 
+/** Binary-compatibility bridge for the [Button] overload that predates `spotLight`. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds a spotLight parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@OptIn(ExperimentalCOUIApi::class)
+@Composable
+fun Button(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    pressScaleEnabled: Boolean = true,
+    cornerRadius: Dp? = null,
+    minWidth: Dp? = null,
+    minHeight: Dp? = null,
+    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    insideMargin: PaddingValues? = null,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+    size: ButtonSize = ButtonSize.Regular,
+    edgeStroke: MaterialStrokeParams? = null,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        pressScaleEnabled = pressScaleEnabled,
+        cornerRadius = cornerRadius,
+        minWidth = minWidth,
+        minHeight = minHeight,
+        colors = colors,
+        insideMargin = insideMargin,
+        interactionSource = interactionSource,
+        indication = indication,
+        size = size,
+        edgeStroke = edgeStroke,
+        spotLight = null,
+        content = content,
+    )
+}
+
 /**
  * The 1.1.0-shaped [Button] overload: same parameter sequence as before the [ButtonSize] tier existed.
  *
@@ -321,6 +364,51 @@ fun TextButton(
             style = textStyle,
         )
     }
+}
+
+/** Binary-compatibility bridge for the [TextButton] overload that predates `spotLight`. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds a spotLight parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@OptIn(ExperimentalCOUIApi::class)
+@Composable
+fun TextButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    pressScaleEnabled: Boolean = true,
+    cornerRadius: Dp? = null,
+    minWidth: Dp? = null,
+    minHeight: Dp? = null,
+    colors: TextButtonColors = ButtonDefaults.textButtonColors(),
+    insideMargin: PaddingValues? = null,
+    textStyle: TextStyle = COUITheme.textStyles.button,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+    size: ButtonSize = ButtonSize.Regular,
+    edgeStroke: MaterialStrokeParams? = null,
+) {
+    TextButton(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        pressScaleEnabled = pressScaleEnabled,
+        cornerRadius = cornerRadius,
+        minWidth = minWidth,
+        minHeight = minHeight,
+        colors = colors,
+        insideMargin = insideMargin,
+        textStyle = textStyle,
+        interactionSource = interactionSource,
+        indication = indication,
+        size = size,
+        edgeStroke = edgeStroke,
+        spotLight = null,
+    )
 }
 
 /**

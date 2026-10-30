@@ -8,6 +8,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Added
 
+- `Button` and `TextButton` accept a `spotLight`, the press light of a ColorOS 17 button that follows the finger while it is held. `DialogButtonBar` turns it on for the recommended button, as ColorOS does.
 - `SquircleShape` takes one radius per corner, so a surface that rounds only some corners, such as a bottom sheet's top edge, gets smooth corners too. `copy` with differing corners now returns a `SquircleShape` instead of a `RoundedCornerShape`.
 - `FullPagePullToRefresh` reproduces the App Market's featured page: the whole page follows the finger, a full-screen layer and a clipped hint are revealed underneath, with the native 93.187dp threshold, 0.5 damping and 800ms success hold.
 - Notifications reveal settings and delete actions with a melting transition while swiping left.
