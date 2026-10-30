@@ -78,6 +78,10 @@ TabRowWithContour(
 )
 ```
 
+### Indicator Motion
+
+The indicator moves like the system's: on a selection change it flattens to 90% of its height and swells in width on its way over, then rounds out on arrival. Pressing it lets it lean toward the finger through a rubber band, and dragging 5dp into a neighbouring segment selects that segment. No parameter is needed, and the same motion applies to `TabRow` and `TabRowWithContour`.
+
 ## Properties
 
 ### TabRow Properties
