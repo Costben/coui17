@@ -17,11 +17,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
+import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -38,6 +44,10 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param minWidth The minimum width of the [FloatingActionButton].
  * @param minHeight The minimum height of the [FloatingActionButton].
  * @param interactionSource The [MutableInteractionSource] to be used for the [FloatingActionButton].
+ * @param backdrop The backdrop to blur under the button, or `null` for a flat fill. With one, the
+ *   button wears `COUIFloatingButton`'s `TYPE_FRAMEWORK_FAB` material instead: a 10px blur under
+ *   [containerColor] at alpha 229 (light) / 230 (dark) and a faint white `Overlay` layer, so the
+ *   content behind it shows through the accent.
  * @param content The [Composable] content of the [FloatingActionButton].
  */
 @Composable
@@ -50,6 +60,7 @@ fun FloatingActionButton(
     minWidth: Dp = FloatingActionButtonDefaults.MinWidth,
     minHeight: Dp = FloatingActionButtonDefaults.MinHeight,
     interactionSource: MutableInteractionSource? = null,
+    backdrop: Backdrop? = null,
     content: @Composable () -> Unit,
 ) {
     @Suppress("NAME_SHADOWING")
@@ -63,6 +74,24 @@ fun FloatingActionButton(
         label = "fabPressScale",
     )
 
+    val glass = backdrop != null && isRuntimeShaderSupported()
+    val glassModifier = if (glass) {
+        val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+        val layers = remember(containerColor, isDark) { FloatingActionButtonDefaults.fabBlurColors(containerColor, isDark) }
+        Modifier.couiGlassSurface(
+            backdrop = backdrop,
+            shape = shape,
+            containerColor = containerColor,
+            fallback = Modifier,
+            blurRadius = with(LocalDensity.current) {
+                (FloatingActionButtonDefaults.NATIVE_BLUR_RADIUS_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+            },
+            blendColors = layers,
+        )
+    } else {
+        Modifier
+    }
+
     Surface(
         onClick = onClick,
         modifier = modifier
@@ -70,9 +99,10 @@ fun FloatingActionButton(
             .graphicsLayer {
                 scaleX = pressScale
                 scaleY = pressScale
-            },
+            }
+            .then(glassModifier),
         shape = shape,
-        color = containerColor,
+        color = if (glass) Color.Transparent else containerColor,
         shadowElevation = shadowElevation,
         interactionSource = interactionSource,
     ) {
@@ -101,4 +131,48 @@ object FloatingActionButtonDefaults {
 
     /** The scale the button springs down to while pressed (COUIPressFeedbackHelper end ratio). */
     val PressedScale = 0.92f
+
+    /** The blur sigma of `FRAMEWORK_FAB_PARAMS`, in pixels. */
+    const val NATIVE_BLUR_RADIUS_PX = 10f
+
+    /**
+     * The colour layers of `FRAMEWORK_FAB_PARAMS_LIGHT` / `_DARK`: the container colour
+     * (`couiColorContainerTheme`) at alpha 229 / 230 in `SrcOver`, then `#1AFFFFFF` / `#19FFFFFF` in
+     * `Overlay`.
+     */
+    fun fabBlurColors(containerColor: Color, isDark: Boolean): List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = containerColor.copy(alpha = (if (isDark) 230 else 229) / 255f)),
+        BlendColorEntry(color = if (isDark) Color(0x19FFFFFF) else Color(0x1AFFFFFF), mode = BlurBlendMode.Overlay),
+    )
+}
+
+/** Binary-compatibility bridge for the [FloatingActionButton] overload that predates `backdrop`. */
+@Deprecated(
+    message = "Migrated to the overload that adds backdrop.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun FloatingActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    shape: Shape = CircleShape,
+    containerColor: Color = COUITheme.colorScheme.primary,
+    shadowElevation: Dp = FloatingActionButtonDefaults.ShadowElevation,
+    minWidth: Dp = FloatingActionButtonDefaults.MinWidth,
+    minHeight: Dp = FloatingActionButtonDefaults.MinHeight,
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable () -> Unit,
+) {
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = shape,
+        containerColor = containerColor,
+        shadowElevation = shadowElevation,
+        minWidth = minWidth,
+        minHeight = minHeight,
+        interactionSource = interactionSource,
+        backdrop = null,
+        content = content,
+    )
 }

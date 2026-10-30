@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -234,6 +236,46 @@ fun AppBarBlurOverlay(
 }
 
 /**
+ * Whether an enclosing toolbar or app bar already applies a backdrop blur beneath its children.
+ *
+ * When `true` (or when [LocalToolbarBackdropBlurFraction] returns a positive value), nested glass
+ * controls such as [HighlightedIconButton], [Button], [TabRowWithContour] and [InputField] scale
+ * their own secondary blur radius down toward [TOOLBAR_NESTED_BLUR_SCALE] (`0.35f`) so two stacked
+ * blurs do not compound into an overly soft halo, matching ColorOS 17 toolbar controls over
+ * `AppBarBlurOverlay`.
+ */
+val LocalToolbarBackdropBlurred = compositionLocalOf { false }
+
+/**
+ * Scroll-driven blur alpha `[0f..1f]` of an enclosing [AppBarBlurOverlay] or
+ * `TopAppBar(gradientGlass = true)`.
+ */
+val LocalToolbarBackdropBlurFraction = compositionLocalOf<() -> Float> { ZeroBlurFraction }
+
+private val ZeroBlurFraction: () -> Float = { 0f }
+
+internal const val TOOLBAR_NESTED_BLUR_SCALE = 0.35f
+
+/**
+ * Resolves the multiplier (`0.35f..1.0f`) nested toolbar glass controls apply to their blur radius.
+ */
+@Composable
+internal fun rememberToolbarAttenuatedBlurScale(): () -> Float {
+    val explicitBlurred = LocalToolbarBackdropBlurred.current
+    val fractionProvider = LocalToolbarBackdropBlurFraction.current
+    return remember(explicitBlurred, fractionProvider) {
+        {
+            if (explicitBlurred) {
+                TOOLBAR_NESTED_BLUR_SCALE
+            } else {
+                val fraction = fractionProvider().coerceIn(0f, 1f)
+                1f - (1f - TOOLBAR_NESTED_BLUR_SCALE) * fraction
+            }
+        }
+    }
+}
+
+/**
  * The single measure policy behind [AppBarBlurOverlay] and the app bar scaffold in [TopAppBar].
  *
  * [content] is measured with its minimum constraints dropped, and the layout reports its size
@@ -257,6 +299,7 @@ internal fun AppBarMaterialLayout(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val extraHeightPx = with(LocalDensity.current) { extraHeight.roundToPx() }
+    val activeFraction = if (materialEnabled) scrollFraction else ZeroBlurFraction
     Layout(
         content = {
             if (materialEnabled) {
@@ -268,7 +311,9 @@ internal fun AppBarMaterialLayout(
                     platformRenderer = platformRenderer,
                 )
             }
-            Box(Modifier.layoutId("content")) { content() }
+            CompositionLocalProvider(LocalToolbarBackdropBlurFraction provides activeFraction) {
+                Box(Modifier.layoutId("content")) { content() }
+            }
         },
         modifier = modifier,
     ) { measurables, constraints ->
@@ -329,7 +374,7 @@ internal fun AppBarMaterial(
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
     // Where the platform has its own backdrop blur (ColorOS, Android 16), use it exactly the way
     // `AppBarBlurHelper` does instead of re-recording the content through COUI's engine.
-    val native = if (platformRenderer) rememberPlatformAppBarBackdropRenderer() else null
+    val native = if (platformRenderer && SystemMaterialState.blurEnabled) rememberPlatformAppBarBackdropRenderer() else null
     if (native != null) {
         native.Material(
             containerColor = containerColor,
@@ -341,13 +386,16 @@ internal fun AppBarMaterial(
     }
     val brush = appBarBlurOverlayBrush(containerColor, isDarkTheme)
     val effect =
-        if (backdrop == null || !isRuntimeShaderSupported()) {
+        if (backdrop == null || !isRuntimeShaderSupported() || !SystemMaterialState.blurEnabled) {
             Modifier.background(brush)
         } else {
             Modifier.progressiveTextureBlur(
                 backdrop = backdrop,
                 shape = RectangleShape,
-                blurRadius = with(density) { AppBarGlassDefaults.GradientBlurRadiusPx.toDp().value },
+                // The native radius is a sigma in pixels; textureBlur derives sigma as 0.45 x its radius.
+                blurRadius = with(density) {
+                    (AppBarGlassDefaults.GradientBlurRadiusPx / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+                },
                 gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
                 colors = BlurDefaults.blurColors(),
             ).background(brush)

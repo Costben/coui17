@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -24,10 +25,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 
@@ -44,6 +48,13 @@ import io.github.suqi8.coui.kmp.theme.LocalContentColor
  * EDGE_STYLE_1. Its near/far ramps keep the top sharp and the lower edge softer. Fill and rim
  * share one sampled surface, while icons and exterior caustics remain outside the RGB effect.
  *
+ * By default the disc does not blur: ColorOS 17 resolves a toolbar item's material through
+ * `ToolbarMaterialEffectResolver`, whose default preset is `TYPE_FRAMEWORK_TOP_BAR` with a zero
+ * blur radius, because the app bar under it is already blurred. Passing a [backdrop] opts into the
+ * blurred preset, `TYPE_FRAMEWORK_TOP_BAR_BLUR` (a 20px sigma), for a button that floats over
+ * content without a blurred bar. Inside a blurred app bar that blur drops toward 0.35x so the two
+ * do not stack.
+ *
  * The content colour is published through [LocalContentColor], so a default [Icon] in [content]
  * follows the fill as it brightens.
  *
@@ -51,6 +62,9 @@ import io.github.suqi8.coui.kmp.theme.LocalContentColor
  * @param modifier The modifier to be applied to the button.
  * @param size The diameter of the button.
  * @param enabled Whether the button can be clicked.
+ * @param backdrop The backdrop blurred inside the disc, or `null` for the default unblurred preset.
+ * @param spotLightEnabled Whether pressing lights the disc from the touch point
+ *   (`TYPE_FRAMEWORK_CIRCLE_1` spotlight).
  * @param content The content of the button, typically an [Icon], drawn centred in the circle.
  */
 @Composable
@@ -59,6 +73,8 @@ fun HighlightedIconButton(
     modifier: Modifier = Modifier,
     size: Dp = HighlightedIconButtonDefaults.Size,
     enabled: Boolean = true,
+    backdrop: Backdrop? = null,
+    spotLightEnabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val touchMotion = rememberCOUITouchMotionState()
@@ -72,6 +88,8 @@ fun HighlightedIconButton(
 
     val scheme = COUITheme.colorScheme
     val isDark = scheme.background.luminance() < 0.5f
+    val density = LocalDensity.current
+    val blurScale = rememberToolbarAttenuatedBlurScale()
     val scale = 1f - (1f - HighlightedIconButtonDefaults.PressedScale) * pressProgress
     val contentColor = lerp(
         scheme.onBackground,
@@ -92,6 +110,22 @@ fun HighlightedIconButton(
             Modifier
         }
     }
+    // Opt-in TYPE_FRAMEWORK_TOP_BAR_BLUR: only the blur is sampled, since the measured radial fill
+    // above already carries the preset's colour layers.
+    val glassDiscModifier = if (backdrop != null && isRuntimeShaderSupported()) {
+        Modifier.couiGlassSurface(
+            backdrop = backdrop,
+            shape = CircleShape,
+            containerColor = Color.Transparent,
+            fallback = Modifier,
+            blurRadius = with(density) {
+                (HighlightedIconButtonDefaults.NATIVE_BLUR_RADIUS_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+            } * blurScale(),
+            blendColors = emptyList(),
+        )
+    } else {
+        Modifier
+    }
 
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         Box(
@@ -101,7 +135,9 @@ fun HighlightedIconButton(
                     enabled = enabled,
                     motionState = touchMotion,
                     pressScaleEnabled = false,
-                    lightEnabled = false,
+                    shape = CircleShape,
+                    lightParams = SpotLightDefaults.circleParams1(isDark),
+                    lightEnabled = spotLightEnabled,
                     extraTransform = {
                         // Press shrink and native drag deformation belong to one visual layer.
                         scaleX += scale - 1f
@@ -131,6 +167,7 @@ fun HighlightedIconButton(
                         if (!isDark && pressProgress < 1f) drawSoftDropHalo(center, this.size.minDimension / 2f, 1f - pressProgress)
                         drawContent()
                     }
+                    .then(glassDiscModifier)
                     .nativeMaterialEdge(
                         particles = listOf(MetaBallParticle.circle(size / 2, size / 2, size)),
                         rim = Color.White.copy(alpha = HighlightedIconButtonDefaults.stroke(isDark).edgeAlpha * (1f - pressProgress).coerceIn(0f, 1f)),
@@ -171,6 +208,31 @@ fun HighlightedIconButton(
     }
 }
 
+/** Binary-compatibility bridge for [HighlightedIconButton] callers compiled before backdrop/spotLight args. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload with backdrop and spotLightEnabled.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun HighlightedIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = HighlightedIconButtonDefaults.Size,
+    enabled: Boolean = true,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HighlightedIconButton(
+        onClick = onClick,
+        modifier = modifier,
+        size = size,
+        enabled = enabled,
+        backdrop = null,
+        spotLightEnabled = true,
+        content = content,
+    )
+}
+
 /**
  * The light theme's halo: a soft dark shadow all around the rim, offset slightly downward.
  *
@@ -203,6 +265,13 @@ object HighlightedIconButtonDefaults {
 
     /** The diameter of the button. Measurement: a true circle, 155px at 1dp = 3.875px, i.e. 40dp. */
     val Size = 40.dp
+
+    /**
+     * The blur sigma of `FRAMEWORK_TOP_BAR_BLUR_PARAMS`, in pixels, used when a backdrop is passed.
+     * Inside a blurred [AppBarBlurOverlay] or `TopAppBar(gradientGlass = true)` it drops toward
+     * 0.35x.
+     */
+    const val NATIVE_BLUR_RADIUS_PX = 20f
 
     /**
      * The scale the whole control springs to while pressed. Measurement: the 77.5px radius shrinks

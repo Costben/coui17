@@ -37,8 +37,10 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +71,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -199,6 +203,13 @@ fun SearchBar(
  *   light is clipped to the outside of the capsule, so it never brightens the translucent fill.
  *   The device only lights the capsule up while the search bar is being edited — its collapsed
  *   pill on the settings home casts no light at all — so a collapsed stand-in should pass `null`.
+ * @param backdrop the backdrop blurred under the capsule, or `null` for a flat fill. `COUISearchBar`
+ *   blurs nothing by default because the app bar under it already does; pass a backdrop for a field
+ *   that floats over content, the blurred preset (`TYPE_FRAMEWORK_TOP_BAR_BLUR`), or a list scrolled
+ *   under it shows straight through the translucent fill.
+ *
+ * Submitting a search from the keyboard hides the keyboard and keeps [query]; collapsing the bar
+ * (cancel or back) is what clears it.
  */
 @Composable
 fun InputField(
@@ -217,6 +228,7 @@ fun InputField(
     trailingIcon: @Composable (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
     glowColor: Color? = SearchBarDefaults.causticGlowColor(),
+    backdrop: Backdrop? = null,
 ) {
     val currentOnQueryChange by rememberUpdatedState(onQueryChange)
     val currentOnSearch by rememberUpdatedState(onSearch)
@@ -279,6 +291,11 @@ fun InputField(
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val textAlpha = remember { Animatable(1f) }
+    val density = LocalDensity.current
+    val blurScale = rememberToolbarAttenuatedBlurScale()
+    // A search submitted from the keyboard drops focus, so collapse must not depend on focus to
+    // clear the query; it only skips the initial composition.
+    var hasBeenExpanded by remember { mutableStateOf(expanded) }
 
     val textColor = LocalContentColor.current
     // COUI input text: 16sp regular (couiEditTextTextAppearance).
@@ -322,7 +339,13 @@ fun InputField(
         textStyle = inputTextStyle,
         cursorBrush = cursorBrush,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { currentOnSearch(query) }),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                // COUISearchBar: submitting only dismisses the keyboard; the filter stays.
+                focusManager.clearFocus()
+                currentOnSearch(query)
+            },
+        ),
         interactionSource = internalInteractionSource,
         decorationBox = { innerTextField ->
             // COUISearchBar capsule on the material path: the toolbar material layer
@@ -332,6 +355,18 @@ fun InputField(
                 Modifier.materialShadowEdge(stroke = stroke)
             } else {
                 Modifier
+            }
+            val fillModifier = if (backdrop != null) {
+                Modifier.couiGlassSurface(
+                    backdrop = backdrop,
+                    shape = capsuleShape,
+                    containerColor = colors.backgroundColor,
+                    fallback = Modifier.background(color = colors.backgroundColor, shape = capsuleShape),
+                    blurRadius = with(density) { (SearchBarDefaults.NATIVE_BLUR_SIGMA_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value } * blurScale(),
+                    blendColors = listOf(BlendColorEntry(color = colors.backgroundColor)),
+                )
+            } else {
+                Modifier.background(color = colors.backgroundColor, shape = capsuleShape)
             }
             Box {
                 if (glowColor != null) {
@@ -356,10 +391,7 @@ fun InputField(
                 }
                 Box(
                     modifier = Modifier
-                        .background(
-                            color = colors.backgroundColor,
-                            shape = capsuleShape,
-                        )
+                        .then(fillModifier)
                         .then(edgeModifier),
                     contentAlignment = Alignment.CenterStart,
                 ) {
@@ -400,16 +432,60 @@ fun InputField(
             // the TextField when collapsed, so the initial tap doesn't grant focus — this
             // ensures the keyboard appears after the TextField becomes enabled again.
             focusRequester.requestFocus()
-        } else if (focused) {
+            hasBeenExpanded = true
+        } else if (hasBeenExpanded) {
             delay(100)
             if (query.isNotEmpty()) {
                 textAlpha.animateTo(0f)
                 currentOnQueryChange("")
                 textAlpha.snapTo(1f)
             }
-            focusManager.clearFocus()
+            if (focused) focusManager.clearFocus()
         }
     }
+}
+
+/** Binary-compatibility bridge for the [InputField] overload that predates `backdrop`. */
+@Deprecated(
+    message = "Migrated to the overload that adds backdrop.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun InputField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "",
+    enabled: Boolean = true,
+    textStyle: TextStyle? = null,
+    colors: SearchBarColors = SearchBarDefaults.searchBarColors(),
+    stroke: MaterialStrokeParams? = SearchBarDefaults.searchBarStroke(),
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
+    glowColor: Color? = SearchBarDefaults.causticGlowColor(),
+) {
+    InputField(
+        query = query,
+        onQueryChange = onQueryChange,
+        onSearch = onSearch,
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = modifier,
+        label = label,
+        enabled = enabled,
+        textStyle = textStyle,
+        colors = colors,
+        stroke = stroke,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        interactionSource = interactionSource,
+        glowColor = glowColor,
+        backdrop = null,
+    )
 }
 
 /**
@@ -463,6 +539,12 @@ private fun materialBarColor(): Color = if (COUITheme.colorScheme.background.lum
 
 /** Contains default values used by [SearchBar] and [InputField]. */
 object SearchBarDefaults {
+    /**
+     * The blur sigma of `FRAMEWORK_TOP_BAR_BLUR_PARAMS`, in pixels: the preset `COUISearchBar` uses
+     * when it is set to blur (material type 2). Its default preset blurs nothing.
+     */
+    const val NATIVE_BLUR_SIGMA_PX = 20f
+
     /**
      * The default inside margin of the [SearchBar].
      * COUI `coui_search_bar_responsive_horizontal_padding_compat` (16dp) x (52dp - 40dp) / 2.

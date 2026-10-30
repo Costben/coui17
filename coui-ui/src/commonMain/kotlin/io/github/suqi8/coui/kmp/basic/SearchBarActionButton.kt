@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,6 +27,80 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.theme.COUITheme
+
+/**
+ * The functional button beside an expanded search bar: `SearchBarFunctionButton` of `COUISearchBar`.
+ *
+ * It is a 40dp capsule (`coui_search_bar_normal_background_height`) filled with the same material as
+ * the search field.
+ *
+ * `COUISearchBar.updateCausticShadow` attaches the light to the functional button as well as to the
+ * field, so the button casts its own caustic band while the search bar is being edited.
+ *
+ * COUI gives it the standard touch motion, so pressing shrinks the capsule and lights it from the
+ * touch point.
+ *
+ * @param onClick the callback invoked when the button is clicked.
+ * @param modifier the [Modifier] to be applied to the button.
+ * @param enabled whether the button responds to input.
+ * @param interactionSource an optional hoisted [MutableInteractionSource] for observing presses.
+ * @param containerColor the capsule fill; defaults to the search field's own material.
+ * @param glowColor the caustic light cast below the capsule, or `null` to disable it. It is clipped
+ *   to the outside of the capsule, so the fill is never brightened.
+ * @param content the content to be displayed inside the button capsule.
+ */
+@Composable
+fun SearchBarActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    containerColor: Color = SearchBarDefaults.searchBarColors().backgroundColor,
+    glowColor: Color? = SearchBarDefaults.causticGlowColor(),
+    content: @Composable () -> Unit,
+) {
+    val actualInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+    Box(modifier = modifier.height(SearchBarActionButtonDefaults.Height)) {
+        if (glowColor != null) {
+            // Same outside-only layer the field uses: the capsule is punched out of the light.
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .drawWithContent {
+                        val radius = size.height / 2f
+                        val capsule = Path().apply {
+                            addRoundRect(RoundRect(0f, 0f, size.width, size.height, radius, radius))
+                        }
+                        clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
+                    },
+            ) {
+                SearchBarCausticGlow(color = glowColor, modifier = Modifier.matchParentSize())
+            }
+        }
+        Box(
+            modifier = Modifier
+                .defaultMinSize(minWidth = SearchBarActionButtonDefaults.Height)
+                .fillMaxHeight()
+                .clip(CircleShape)
+                .background(color = containerColor)
+                .materialShadowEdge(stroke = SearchBarDefaults.searchBarStroke())
+                .couiTouchMotion(
+                    enabled = enabled,
+                    shape = CircleShape,
+                )
+                .clickable(
+                    interactionSource = actualInteractionSource,
+                    indication = null,
+                    enabled = enabled,
+                    role = Role.Button,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
+    }
+}
 
 /**
  * The functional button beside an expanded search bar: `SearchBarFunctionButton` of `COUISearchBar`,
@@ -63,42 +138,16 @@ fun SearchBarActionButton(
     contentColor: Color = SearchBarActionButtonDefaults.contentColor(),
     glowColor: Color? = SearchBarDefaults.causticGlowColor(),
 ) {
-    val actualInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
-    Box(modifier = modifier.height(SearchBarActionButtonDefaults.Height)) {
-        if (glowColor != null) {
-            // Same outside-only layer the field uses: the capsule is punched out of the light.
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .drawWithContent {
-                        val radius = size.height / 2f
-                        val capsule = Path().apply {
-                            addRoundRect(RoundRect(0f, 0f, size.width, size.height, radius, radius))
-                        }
-                        clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
-                    },
-            ) {
-                SearchBarCausticGlow(color = glowColor, modifier = Modifier.matchParentSize())
-            }
-        }
+    SearchBarActionButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        containerColor = containerColor,
+        glowColor = glowColor,
+    ) {
         Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .clip(CircleShape)
-                .background(color = containerColor)
-                .materialShadowEdge(stroke = SearchBarDefaults.searchBarStroke())
-                .couiTouchMotion(
-                    enabled = enabled,
-                    shape = CircleShape,
-                )
-                .clickable(
-                    interactionSource = actualInteractionSource,
-                    indication = null,
-                    enabled = enabled,
-                    role = Role.Button,
-                    onClick = onClick,
-                )
-                .padding(horizontal = SearchBarActionButtonDefaults.HorizontalPadding),
+            modifier = Modifier.padding(horizontal = SearchBarActionButtonDefaults.HorizontalPadding),
             contentAlignment = Alignment.Center,
         ) {
             Text(

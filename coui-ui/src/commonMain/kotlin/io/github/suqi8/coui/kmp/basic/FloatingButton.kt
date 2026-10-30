@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -97,7 +98,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Not ported:
  * - `COUIFloatingButtonSeamlessImpl` and `COUIFloatingButtonTouchAnimation`, the seamless material
- *   transitions, together with the `COUIMaterialBlurEffect` path of `setBlurEffectEnable`;
+ *   transitions (the `TYPE_FRAMEWORK_FAB` blur itself is available through `backdrop`);
  * - `COUIMaskEffectDrawable` (`mMaskDrawable`, touched by `onTouchEvent` and `animatePress`) and the
  *   caustic outer shadow of `COUIFABShadowUtils.setOuterShadowEffect`;
  * - `COUIFloatingButton$COUIFloatingButtonBehavior`, `$ScrollViewBehavior`, the
@@ -130,6 +131,8 @@ import kotlin.time.Duration.Companion.milliseconds
  *   row while it is open, so anchor it to the end of a [Box] to keep the main button in place.
  * @param enabled Whether the speed dial reacts to clicks.
  * @param colors The [FloatingButtonColors] of the buttons and the label chips.
+ * @param backdrop The backdrop the main and child buttons blur, or `null` for flat fills. See
+ *   [FloatingActionButton]'s `backdrop`.
  */
 @Composable
 fun FloatingButton(
@@ -141,6 +144,7 @@ fun FloatingButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: FloatingButtonColors = FloatingButtonDefaults.colors(),
+    backdrop: Backdrop? = null,
 ) {
     // mRotateForwardInterpolator / mRotateBackwardInterpolator: PathInterpolator(0.25, 0.1, 0.25, 1).
     val rotation by animateFloatAsState(
@@ -167,6 +171,7 @@ fun FloatingButton(
                 keepOpen = onItemClick,
                 onExpandedChange = onExpandedChange,
                 colors = colors,
+                backdrop = backdrop,
                 modifier = Modifier.align(Alignment.BottomEnd),
             )
         }
@@ -184,6 +189,7 @@ fun FloatingButton(
             },
             minWidth = FloatingButtonDefaults.ItemSize,
             minHeight = FloatingButtonDefaults.ItemSize,
+            backdrop = backdrop,
         ) {
             Icon(
                 imageVector = mainIcon,
@@ -193,6 +199,35 @@ fun FloatingButton(
             )
         }
     }
+}
+
+/** Binary-compatibility bridge for the [FloatingButton] overload that predates `backdrop`. */
+@Deprecated(
+    message = "Migrated to the overload that adds backdrop.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun FloatingButton(
+    items: List<FloatingButtonItem>,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onItemClick: (FloatingButtonItem) -> Boolean,
+    mainIcon: ImageVector,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: FloatingButtonColors = FloatingButtonDefaults.colors(),
+) {
+    FloatingButton(
+        items = items,
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        onItemClick = onItemClick,
+        mainIcon = mainIcon,
+        modifier = modifier,
+        enabled = enabled,
+        colors = colors,
+        backdrop = null,
+    )
 }
 
 /**
@@ -444,6 +479,7 @@ private fun FloatingButtonAction(
     keepOpen: (FloatingButtonItem) -> Boolean,
     onExpandedChange: (Boolean) -> Unit,
     colors: FloatingButtonColors,
+    backdrop: Backdrop?,
     modifier: Modifier = Modifier,
 ) {
     // A row is composed while the menu is open and until the close animation has finished; the native
@@ -555,6 +591,7 @@ private fun FloatingButtonAction(
             shadowElevation = 0.dp,
             minWidth = FloatingButtonDefaults.ItemSize,
             minHeight = FloatingButtonDefaults.ItemSize,
+            backdrop = backdrop,
         ) {
             Icon(
                 imageVector = item.icon,

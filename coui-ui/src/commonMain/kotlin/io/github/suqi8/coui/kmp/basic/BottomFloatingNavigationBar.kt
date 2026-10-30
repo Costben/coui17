@@ -782,8 +782,8 @@ sealed interface BottomFloatingRedDot {
 }
 
 /**
- * The shared red-dot helper for the floating bottom bars, used by [BottomFloatingNavigationBarItem]
- * and [BottomFloatingEditToolbarItem].
+ * The shared red-dot helper for the floating bottom bars, used by
+ * [BottomFloatingNavigationBarItem] and [BottomFloatingToolbarItem].
  *
  * `COUIBottomFloatingToolbarItemView.layoutRedDotRelativeToIcon` anchors the dot to the icon box: a
  * plain dot sits flush with the icon's top and end edges, a number capsule is pushed out by
@@ -1203,7 +1203,7 @@ private val LabelLineHeightStyle = LineHeightStyle(
 )
 
 /** coui-blur's radius-to-sigma factor (`BLUR_RADIUS_TO_SIGMA`, internal to that module). */
-private const val TEXTURE_BLUR_SIGMA_SCALE = 0.45f
+internal const val TEXTURE_BLUR_SIGMA_SCALE = 0.45f
 
 /**
  * The centre alpha of the radial touch highlight.
