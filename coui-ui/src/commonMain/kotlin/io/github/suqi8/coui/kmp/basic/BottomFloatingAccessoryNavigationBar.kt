@@ -290,6 +290,10 @@ fun BottomFloatingAccessoryNavigationBar(
                     modifier = Modifier.matchParentSize(),
                     color = containerColor,
                     backdrop = backdrop,
+                    // COUIBottomFloatingAccessoryView.updateBlurEffect: TYPE_FRAMEWORK_BOTTOM_BAR, the
+                    // same material as the plain floating bar.
+                    blurColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
+                    blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
                     containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
                     // Both the bar and accessory views request TYPE_FRAMEWORK_CAPSULE_3.
                     // Its native near/far ramps draw a sharp upper line and a weaker lower line.
@@ -467,6 +471,8 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
                                 shape = shape,
                                 containerColor = containerColor,
                                 fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                                blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
+                                blendColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
                                 highlight = highlight,
                             ),
                         ),
@@ -666,6 +672,8 @@ fun BottomFloatingAccessoryBall(
             modifier = Modifier.matchParentSize(),
             color = containerColor,
             backdrop = backdrop,
+            blurColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
+            blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
             containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
             rimColor = Color.White.copy(alpha = if (isDark) 0.8f else 0.25f),
             bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
