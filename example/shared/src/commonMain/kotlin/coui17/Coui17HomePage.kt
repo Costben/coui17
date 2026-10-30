@@ -160,6 +160,7 @@ fun Coui17HomePage(
         coui17Entry("InstallLoadProgress") { InstallLoadProgressDemo() }
         coui17Entry("Snackbar") { SnackbarDemo(snackbarHostState) }
         coui17Entry("NotificationSnackBar") { NotificationSnackBarDemo() }
+        coui17Entry("NotificationSwipeBox") { NotificationSwipeDemo() }
         coui17Entry("TopTips") { TopTipsDemoContent() }
         coui17Entry("TopTips Styles") { TopTipsStylesDemo() }
 

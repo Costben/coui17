@@ -92,6 +92,7 @@ internal val zhChrome: Map<String, String> = mapOf(
     "InstallLoadProgress" to "安装加载进度",
     "TagView" to "标签视图",
     "NotificationSnackBar" to "通知提示条",
+    "NotificationSwipeBox" to "通知式滑动盒",
     "MarqueeText" to "跑马灯文本",
     "Loading Button" to "加载中按钮",
     "Badge" to "角标",
