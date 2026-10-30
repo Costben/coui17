@@ -1973,6 +1973,9 @@ fun ListPopupContent(
                 enabled = interactionEnabled,
                 pressScaleEnabled = false,
                 consumeDrag = false,
+                // A closing panel keeps shrinking into its anchor; a drag that lands on it while it
+                // does belongs to the page beneath, so the disabled card must not catch the touch.
+                hitTestWhenDisabled = false,
                 lightEnabled = glassBackdrop != null,
                 shape = glassShape,
                 lightParams = SpotLightDefaults.translucentLarge1(isDark),

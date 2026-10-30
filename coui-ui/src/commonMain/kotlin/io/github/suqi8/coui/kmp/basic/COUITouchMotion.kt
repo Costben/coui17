@@ -320,6 +320,7 @@ internal fun Modifier.couiTouchMotion(
     pressScaleEnabled: Boolean = true,
     consumeDrag: Boolean = true,
     lightEnabled: Boolean = true,
+    hitTestWhenDisabled: Boolean = true,
     extraTransform: GraphicsLayerScope.() -> Unit = {},
 ): Modifier {
     val ownerState = motionState ?: rememberCOUITouchMotionState()
@@ -377,11 +378,11 @@ internal fun Modifier.couiTouchMotion(
         }
     }
 
-    val pointerModifier = Modifier
-        .onSizeChanged {
-            widthPx.value = it.width.toFloat()
-            heightPx.value = it.height.toFloat()
-        }
+    val sizeModifier = Modifier.onSizeChanged {
+        widthPx.value = it.width.toFloat()
+        heightPx.value = it.height.toFloat()
+    }
+    val pointerModifier = sizeModifier
         .pointerInput(enabled, spec, density.density, consumeDrag) {
             if (!enabled) return@pointerInput
             coroutineScope {
@@ -627,5 +628,8 @@ internal fun Modifier.couiTouchMotion(
     }
     // Keep the surface, clipped light and content inside one transform. The pointer detector stays
     // outside it so the moving visual layer does not alter the gesture's displacement coordinates.
-    return this.then(pointerModifier).then(visualModifier).then(surface).then(lightModifier)
+    // A disabled detector handles nothing but still wins the hit test, which hides every sibling
+    // beneath it from the touch. Owners that hand touches on while disabled drop it altogether.
+    val gestureModifier = if (enabled || hitTestWhenDisabled) pointerModifier else sizeModifier
+    return this.then(gestureModifier).then(visualModifier).then(surface).then(lightModifier)
 }
