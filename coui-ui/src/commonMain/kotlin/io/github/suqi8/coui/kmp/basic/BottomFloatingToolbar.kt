@@ -23,10 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -59,12 +62,12 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * The ColorOS 17 floating text-selection toolbar (`COUIBottomFloatingToolbar`).
  *
  * One or more capsules of [BottomFloatingToolbarItem]s that float over the content, sliding up from
- * below the screen edge and back out again. It is the text-selection sibling of
- * [BottomFloatingEditToolbar] and [BottomFloatingNavigationBar]: the same
+ * below the screen edge and back out again. It is the text-selection and note sibling of
+ * [BottomFloatingNavigationBar] and [BottomFloatingScrollToolbar]: the same
  * `BaseBottomFloatingMenuView` slide motion, but the items are grouped — a selection toolbar shows
  * *cut / copy / paste* in one capsule and *select all / translate* in another — and each capsule
  * carries the ColorOS 17 material edge of [Modifier.materialShadowEdge] rather than the glass
- * highlight the other two use.
+ * highlight the navigation bar uses.
  *
  * Groups are placed like the native `COUIBottomFloatingToolbar.onLayout`: a single group is centred,
  * two groups take the start and end edges, and three or more keep the outermost groups on the edges
@@ -78,9 +81,6 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * Not ported, because no consumer in this library reaches them:
  * - the framework-only `OplusMaterialEdgeParams` path (`TYPE_FRAMEWORK_CAPSULE_5`), used when the
  *   runtime shader is unavailable; the opaque [containerColor] stands in for it;
- * - the caustics shadow and the spot-light touch feedback
- *   (`COUISpotLightEffectDrawable`, `SHADER_TOUCH_FEEDBACK_ENABLED = false`); the radial
- *   [bottomFloatingTouchHighlight] shared with [BottomFloatingNavigationBar] is drawn instead;
  * - the group insert / remove animation (`COUIBottomFloatingToolbarAction`) and the XML menu
  *   inflation (`inflateMenu`); content is composed directly.
  *
@@ -91,6 +91,7 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  *   keeps them opaque.
  * @param visible Whether the toolbar is on screen; toggling it plays the slide motion above.
  * @param content The content of the toolbar, one or more [BottomFloatingToolbarGroup]s.
+ * @see BottomFloatingScrollToolbar for the labelled, scrolling bar of the Photos editor.
  */
 @Composable
 fun BottomFloatingToolbar(
@@ -212,15 +213,16 @@ private fun Placeable.PlacementScope.placeRelativeGroups(
 /**
  * A capsule of [BottomFloatingToolbarItem]s inside a [BottomFloatingToolbar].
  *
- * The capsule is the visible surface: it is blurred, tinted with the container colour, edged with
- * [Modifier.materialShadowEdge] and given the radial press highlight of
- * [Modifier.bottomFloatingTouchHighlight], exactly like `COUIBottomFloatingToolbarMenuView.onDraw`
- * (background RenderEffect, then `drawPanelStroke`, then the item views).
+ * The capsule is the visible surface: it is blurred, tinted with the container colour and edged with
+ * [Modifier.materialShadowEdge], exactly like `COUIBottomFloatingToolbarMenuView.onDraw`, and it lifts
+ * off the content with the system's caustic shadow, or [BottomFloatingToolbarDefaults.Shadow] where
+ * the system has none. The whole capsule answers the finger
+ * through [couiTouchMotion], the native `COUITouchMotionAnimator` with deformation, rubber band and
+ * press scale, and carries its `TYPE_BOTTOM_NAVIGATION` spot light.
  *
  * The layout is the native `onMeasure`: the items sit on one line, separated by
- * [BottomFloatingToolbarDefaults.ItemViewSpace], with [BottomFloatingToolbarDefaults.MenuViewPadding]
- * of content padding at either end. `menu_view_padding` is applied inside the capsule rather than
- * around it, so the capsule hugs its items — see [BottomFloatingToolbarDefaults.MenuViewPadding].
+ * [BottomFloatingToolbarDefaults.ItemViewSpace], with
+ * [BottomFloatingToolbarDefaults.MenuViewItemBgInsetHorizontal] between them and the capsule's ends.
  *
  * Smooth-corner surfaces use [MaterialShadowEdgeDefaults.SquircleCornerWeight] so the material rim
  * follows the glass silhouette. Plain rounded surfaces retain the native single-item versus
@@ -248,10 +250,16 @@ fun BottomFloatingToolbarGroup(
     }
     val stroke = remember(isDark) { MaterialStrokeParams.frameworkCapsule13(isDark) }
     val blurColors = BottomFloatingToolbarDefaults.blurColors(isDark)
+    val touchState = rememberCOUITouchMotionState()
+    val systemCaustic = rememberPlatformCausticShadowRenderer() != null
+    val density = LocalDensity.current
+    val height = BottomFloatingToolbarDefaults.MenuViewHeight
+    var capsuleWidthPx by remember { mutableIntStateOf(0) }
+    val capsuleWidth = with(density) { capsuleWidthPx.toDp() }
 
     // COUIBottomFloatingToolbarMenuView.setRenderEffect / updateSmoothRoundPath: the blur sits under
     // the edge, and both fill the capsule's own silhouette.
-    val surfaceModifier = if (backdrop != null && isRuntimeShaderSupported()) {
+    val blurSurface = if (backdrop != null && isRuntimeShaderSupported() && SystemMaterialState.blurEnabled) {
         Modifier.textureBlur(
             backdrop = backdrop,
             shape = shape,
@@ -261,49 +269,90 @@ fun BottomFloatingToolbarGroup(
     } else {
         Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius)
     }
-    val base = modifier
-        .height(BottomFloatingToolbarDefaults.MenuViewHeight)
-        // getDisplayFrame: the union of the visible menu views is the toolbar's popup barrier.
-        .popupBottomBarrier()
-        .then(surfaceModifier)
 
-    Layout(
-        content = content,
-        modifier = base
-            // materialShadowEdge returns a bare fallback when the platform rejects runtime shaders,
-            // which would drop the height and the surface, so the chain is handed back as its own
-            // fallback.
-            .materialShadowEdge(
-                stroke = stroke,
-                cornerWeight = if (squircleEnabled) {
-                    // The glass fill and highlight use the same Lp(2.5) squircle. Keeping the
-                    // material rim on that geometry prevents bright corner lobes outside the fill.
-                    MaterialShadowEdgeDefaults.SquircleCornerWeight
-                } else if (itemCount == 1) {
-                    MaterialShadowEdgeDefaults.SingleItemCornerWeight
-                } else {
-                    MaterialShadowEdgeDefaults.CornerWeight
-                },
-                cornerRadius = cornerRadius,
-                fallback = base,
-            )
-            .bottomFloatingTouchHighlight(shape),
-    ) { measurables, constraints ->
-        itemCount = measurables.size
-        val heightPx = BottomFloatingToolbarDefaults.MenuViewHeight.roundToPx()
-        val paddingPx = BottomFloatingToolbarDefaults.MenuViewPadding.roundToPx()
-        val spacingPx = BottomFloatingToolbarDefaults.ItemViewSpace.roundToPx()
-        val placeables = measurables.map { it.measure(Constraints()) }
-        val contentWidth = placeables.sumOf { it.width } +
-            spacingPx * (placeables.size - 1).coerceAtLeast(0)
-        layout(
-            constraints.constrainWidth(contentWidth + paddingPx * 2),
-            constraints.constrainHeight(heightPx),
-        ) {
-            var x = paddingPx
-            placeables.forEach { placeable ->
-                placeable.placeRelative(x, (heightPx - placeable.height) / 2)
-                x += placeable.width + spacingPx
+    // getDisplayFrame: the union of the visible menu views is the toolbar's popup barrier.
+    Box(modifier = modifier.popupBottomBarrier()) {
+        // The lift rides the press transform so it stays under the capsule. updateOuterShadow gives
+        // the capsule either the system's caustic shadow or the level 2 shadow, never both.
+        if (capsuleWidthPx > 0) {
+            if (systemCaustic) {
+                MaterialCausticShadow(
+                    particles = listOf(
+                        CausticShadowParticle(
+                            shape = MetaBallParticle(
+                                centerX = capsuleWidth / 2 + with(density) { touchState.translation.x.toDp() },
+                                centerY = height / 2 + with(density) { touchState.translation.y.toDp() },
+                                width = capsuleWidth,
+                                height = height,
+                                scaleX = touchState.scaleX,
+                                scaleY = touchState.scaleY,
+                                cornerRadius = cornerRadius,
+                            ),
+                            profile = CausticShadowProfile.Bar,
+                        ),
+                    ),
+                    color = BottomFloatingNavigationBarDefaults.CausticColor,
+                    modifier = Modifier.matchParentSize(),
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            translationX = touchState.translation.x
+                            translationY = touchState.translation.y
+                            scaleX = touchState.scaleX
+                            scaleY = touchState.scaleY
+                        }
+                        .dropShadow(shape = shape, shadow = BottomFloatingToolbarDefaults.Shadow),
+                )
+            }
+        }
+        Layout(
+            content = content,
+            modifier = Modifier
+                .height(height)
+                .onSizeChanged { capsuleWidthPx = it.width }
+                .couiTouchMotion(
+                    shape = shape,
+                    lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                    motionState = touchState,
+                    surface = blurSurface
+                        // materialShadowEdge returns a bare fallback when the platform rejects
+                        // runtime shaders, so the surface is handed back as its own fallback.
+                        .materialShadowEdge(
+                            stroke = stroke,
+                            cornerWeight = if (squircleEnabled) {
+                                // The glass fill and highlight use the same Lp(2.5) squircle. Keeping
+                                // the material rim on that geometry prevents bright corner lobes
+                                // outside the fill.
+                                MaterialShadowEdgeDefaults.SquircleCornerWeight
+                            } else if (itemCount == 1) {
+                                MaterialShadowEdgeDefaults.SingleItemCornerWeight
+                            } else {
+                                MaterialShadowEdgeDefaults.CornerWeight
+                            },
+                            cornerRadius = cornerRadius,
+                            fallback = blurSurface,
+                        ),
+                ),
+        ) { measurables, constraints ->
+            itemCount = measurables.size
+            val heightPx = BottomFloatingToolbarDefaults.MenuViewHeight.roundToPx()
+            val insetPx = BottomFloatingToolbarDefaults.MenuViewItemBgInsetHorizontal.roundToPx()
+            val spacingPx = BottomFloatingToolbarDefaults.ItemViewSpace.roundToPx()
+            val placeables = measurables.map { it.measure(Constraints()) }
+            val contentWidth = placeables.sumOf { it.width } +
+                spacingPx * (placeables.size - 1).coerceAtLeast(0)
+            layout(
+                constraints.constrainWidth(contentWidth + insetPx * 2),
+                constraints.constrainHeight(heightPx),
+            ) {
+                var x = insetPx
+                placeables.forEach { placeable ->
+                    placeable.placeRelative(x, (heightPx - placeable.height) / 2)
+                    x += placeable.width + spacingPx
+                }
             }
         }
     }
@@ -339,7 +388,7 @@ fun BottomFloatingToolbarItem(
     val colorScheme = COUITheme.colorScheme
     // COUIBottomFloatingToolbarItemView takes the item's colours from the same
     // couiColorLabelPrimaryVariant / couiColorOnSurfaceVariantActions family the other floating
-    // toolbars use, so the tint mapping is shared with BottomFloatingEditToolbarItem.
+    // toolbars use, so the tint mapping is shared with BottomFloatingNavigationBarItem.
     val tint = if (enabled) colorScheme.labelPrimaryVariant else colorScheme.onSurfaceVariantActions
     val clickable = Modifier.clickable(
         interactionSource = interactionSource,
@@ -386,6 +435,52 @@ fun BottomFloatingToolbarItem(
 }
 
 /**
+ * An item of a [BottomFloatingToolbarGroup] whose icon keeps its own colours, like the gradient AI
+ * glyph of the Notes toolbar. The cell is the icon cell of the other overload, without the tint.
+ *
+ * @param label The label of the item; it is also the icon's content description when
+ *   [contentDescription] is absent.
+ * @param onClick Called when the item is activated.
+ * @param painter The icon of the item, drawn at [BottomFloatingToolbarDefaults.IconSize].
+ * @param modifier The modifier to be applied to the item.
+ * @param enabled Whether the item can be activated.
+ * @param contentDescription The icon's content description, or `null` for [label].
+ */
+@Composable
+fun BottomFloatingToolbarItem(
+    label: String,
+    onClick: () -> Unit,
+    painter: Painter,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    contentDescription: String? = null,
+) {
+    val alpha = remember(enabled) { if (enabled) 1f else 0.3f }
+    Box(
+        modifier = modifier
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .size(
+                width = BottomFloatingToolbarDefaults.ItemWidth,
+                height = BottomFloatingToolbarDefaults.ItemHeight,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painter,
+            contentDescription = contentDescription ?: label,
+            alpha = alpha,
+            modifier = Modifier.size(BottomFloatingToolbarDefaults.IconSize),
+        )
+    }
+}
+
+/**
  * The color scheme each [BottomFloatingToolbarGroup] draws its capsule with.
  *
  * The toolbar publishes it so the groups nested in `BottomFloatingToolbar.content` pick up the
@@ -412,14 +507,22 @@ object BottomFloatingToolbarDefaults {
     val MinHeight = 76.dp
 
     /**
-     * The content padding at either end of a group capsule.
-     *
-     * COUI `coui_floating_toolbar_menu_view_padding` is the padding of the menu view *around* the
-     * background by `menu_view_item_bg_inset_horizontal`; that inset is not part of this port, so the
-     * token is applied inside the capsule as its content padding instead, matching how
-     * [BottomFloatingEditToolbarDefaults.InnerPaddingHorizontal] treats the edit toolbar.
+     * The space around the capsule inside the menu view, which `COUIBottomFloatingToolbar` subtracts
+     * again when it places the group. COUI `coui_floating_toolbar_menu_view_padding`.
      */
     val MenuViewPadding = 16.dp
+
+    /**
+     * The distance between a capsule's ends and its first and last items.
+     * COUI `coui_floating_toolbar_menu_view_item_bg_inset_horizontal`.
+     */
+    val MenuViewItemBgInsetHorizontal = 6.dp
+
+    /**
+     * The shadow lifting a capsule off the content. `BaseBottomFloatingMenuView.updateOuterShadow`
+     * gives every floating menu the same level 2 elevation.
+     */
+    val Shadow: Shadow = BottomFloatingNavigationBarDefaults.BarShadow
 
     /** The icon cell width. COUI `coui_floating_toolbar_item_width`. */
     val ItemWidth = 44.dp

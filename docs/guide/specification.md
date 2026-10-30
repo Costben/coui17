@@ -23,6 +23,8 @@ Follow this workflow when implementing any screen:
 | Toolbar overflow popup menu | `coui_popup_wrapper`, `coui_popup_list_view` | `OverlayListPopup` + `ListPopupColumn` + `DropdownImpl(role = Role.Button)` | Panel physical density (switched automatically) |
 | Floating bottom navigation capsule | `TYPE_FRAMEWORK_BOTTOM_BAR` | `BottomFloatingNavigationBar` | Gallery density |
 | Floating bottom bar with side accessory balls | `TYPE_FRAMEWORK_BOTTOM_BAR` (accessory form) | `BottomFloatingAccessoryNavigationBar` | Gallery density |
+| Floating icon / selection capsule (Notes editor) | `COUIBottomFloatingToolbar` | `BottomFloatingToolbar` + `BottomFloatingToolbarGroup` | App density |
+| Scrolling labelled editor pill (Photos editor) | `MainMenuPillContainerLayout` + `EditorLinearListView` | `BottomFloatingScrollToolbar` + `BottomFloatingScrollToolbarItem` | App density |
 | Confirmation & action dialog | System confirmation dialog | `WindowAlertDialog` | App density |
 | Custom-content modal dialog | System modal panel | `WindowDialog` (or `OverlayDialog` / `OverlayBottomSheet` when glass material is required) | App density |
 | Settings group cards and preference rows | System settings rows | `Card` + `coui-preference` components | App density |

@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 
 /**
  * Fades the content out over [fadeWidth] at whichever horizontal edge [scrollState] can still scroll
@@ -29,7 +30,10 @@ internal fun Modifier.scrollEdgeFade(scrollState: ScrollState, fadeWidth: Dp): M
         if (scrollState.maxValue <= 0) return@drawWithContent
         val fadePx = fadeWidth.toPx().coerceAtMost(size.width / 2f)
         if (fadePx <= 0f) return@drawWithContent
-        if (scrollState.value > 0) {
+        val rtl = layoutDirection == LayoutDirection.Rtl
+        val fadeLeft = if (rtl) scrollState.canScrollForward else scrollState.canScrollBackward
+        val fadeRight = if (rtl) scrollState.canScrollBackward else scrollState.canScrollForward
+        if (fadeLeft) {
             drawRect(
                 brush = Brush.horizontalGradient(
                     colors = listOf(Color.White, Color.Transparent),
@@ -40,7 +44,7 @@ internal fun Modifier.scrollEdgeFade(scrollState: ScrollState, fadeWidth: Dp): M
                 blendMode = BlendMode.DstOut,
             )
         }
-        if (scrollState.value < scrollState.maxValue) {
+        if (fadeRight) {
             drawRect(
                 brush = Brush.horizontalGradient(
                     colors = listOf(Color.Transparent, Color.White),

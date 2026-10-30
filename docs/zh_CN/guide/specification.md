@@ -23,6 +23,8 @@
 | 顶栏三点弹出菜单 | `coui_popup_wrapper`、`coui_popup_list_view` | `OverlayListPopup` + `ListPopupColumn` + `DropdownImpl(role = Role.Button)` | 面板物理密度（组件内部自动切换） |
 | 底部悬浮导航胶囊 | `TYPE_FRAMEWORK_BOTTOM_BAR` | `BottomFloatingNavigationBar` | 相册密度 |
 | 带两侧独立圆钮的底部悬浮栏 | `TYPE_FRAMEWORK_BOTTOM_BAR`（配件形态） | `BottomFloatingAccessoryNavigationBar` | 相册密度 |
+| 底部悬浮无字图标 / 选择胶囊（便签编辑页） | `COUIBottomFloatingToolbar` | `BottomFloatingToolbar` + `BottomFloatingToolbarGroup` | 应用密度 |
+| 带文字横向可滚动编辑胶囊（相册编辑页） | `MainMenuPillContainerLayout` + `EditorLinearListView` | `BottomFloatingScrollToolbar` + `BottomFloatingScrollToolbarItem` | 应用密度 |
 | 确认与操作对话框 | 系统确认对话框 | `WindowAlertDialog` | 应用密度 |
 | 自定义内容模态弹窗 | 系统模态面板 | `WindowDialog`（或需要玻璃材质时用 `OverlayDialog` / `OverlayBottomSheet`） | 应用密度 |
 | 设置分组卡片与设置行 | 系统设置列表项 | `Card` + `coui-preference` 系列组件 | 应用密度 |

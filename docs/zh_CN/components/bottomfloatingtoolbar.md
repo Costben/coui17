@@ -2,7 +2,7 @@
 
 `BottomFloatingToolbar` 是 ColorOS 17 的悬浮文本选择工具栏（`COUIBottomFloatingToolbar`）。它由一条或多条 `BottomFloatingToolbarItem` 组成的胶囊构成，悬浮在内容之上，从屏幕下边缘滑入、再滑出。
 
-它是 `BottomFloatingEditToolbar` 与 `BottomFloatingNavigationBar` 的文本选择姊妹组件：滑动动画相同，但导航项按组划分——文本选择工具栏会把「剪切 / 复制 / 粘贴」放在一条胶囊里，「全选 / 翻译」放在另一条里——并且每条胶囊使用 ColorOS 17 的材质描边，而不是另外两个组件使用的玻璃高光。
+它是 `BottomFloatingNavigationBar` 与 `BottomFloatingScrollToolbar` 的文本选择 / 便签姊妹组件：滑动动画相同，但导航项按组划分——文本选择工具栏会把「剪切 / 复制 / 粘贴」放在一条胶囊里，「全选 / 翻译」放在另一条里——并且每条胶囊使用 ColorOS 17 的材质描边，而不是导航栏使用的玻璃高光。
 
 ## 引入
 
@@ -76,7 +76,19 @@ BottomFloatingToolbar(visible = isSelecting) {
 
 ## 胶囊表面
 
-胶囊通过 `LocalBackdrop` 采样其后方的画面。存在背景层且平台支持运行时着色器时，胶囊会被模糊并叠加工具栏配色；否则回退为不透明的 `containerColor` 填充。两种情况下，描边与内阴影都由 `Modifier.materialShadowEdge` 以 `TYPE_FRAMEWORK_CAPSULE_13` 参数绘制；只含一个导航项的胶囊会使用单项圆角权重，使描边成为完整胶囊形。
+胶囊通过 `LocalBackdrop` 采样其后方的画面。存在背景层、平台支持运行时着色器且系统启用了材质模糊（`SystemMaterialState.blurEnabled`）时，胶囊会被模糊并叠加工具栏配色；否则回退为不透明的 `containerColor` 填充。两种情况下，描边与内阴影都由 `Modifier.materialShadowEdge` 以 `TYPE_FRAMEWORK_CAPSULE_13` 参数绘制，胶囊下方带有系统焦散光影（不支持系统焦散时回退为 `BottomFloatingToolbarDefaults.Shadow` 投影）。按压与拖动通过 `couiTouchMotion` 产生形变、橡皮筋位移与缩放，并携带 `SpotLightDefaults.opaqueMedium2` 聚光反馈。
+
+## 多色图标
+
+传入 `Painter` 而非 `ImageVector` 时，图标会保留自身原始颜色而不被单色着色，适用于便签底部悬浮工具栏中的渐变 AI 写作图标等场景：
+
+```kotlin
+BottomFloatingToolbarItem(
+    label = "AI 写作",
+    onClick = { /* 打开 AI 写作 */ },
+    painter = painterResource(Res.drawable.note_toolbar_ai),
+)
+```
 
 ## 属性
 
@@ -97,7 +109,7 @@ BottomFloatingToolbar(visible = isSelecting) {
 | modifier| Modifier              | 应用于胶囊的修饰符       | Modifier | 否       |
 | content | @Composable () -> Unit | 胶囊内容，通常是导航项   | -        | 是       |
 
-### BottomFloatingToolbarItem 属性
+### BottomFloatingToolbarItem 属性（矢量图标 / 纯文字重载）
 
 | 属性名             | 类型         | 说明                                             | 默认值 | 是否必须 |
 | ------------------ | ------------ | ------------------------------------------------ | ------ | -------- |
@@ -107,13 +119,26 @@ BottomFloatingToolbar(visible = isSelecting) {
 | enabled            | Boolean      | 导航项是否可激活                                 | true   | 否       |
 | contentDescription | String?      | 图标的无障碍描述，`null` 时使用 label            | null   | 否       |
 
+### BottomFloatingToolbarItem 属性（Painter 多色图标重载）
+
+| 属性名             | 类型       | 说明                                             | 默认值   | 是否必须 |
+| ------------------ | ---------- | ------------------------------------------------ | -------- | -------- |
+| label              | String     | 导航项的标签；同时也是图标的无障碍描述           | -        | 是       |
+| onClick            | () -> Unit | 导航项被激活时调用                               | -        | 是       |
+| painter            | Painter    | 导航项的图标，不叠加单色滤镜                     | -        | 是       |
+| modifier           | Modifier   | 应用于导航项的修饰符                             | Modifier | 否       |
+| enabled            | Boolean    | 导航项是否可激活                                 | true     | 否       |
+| contentDescription | String?    | 图标的无障碍描述，`null` 时使用 label            | null     | 否       |
+
 ### BottomFloatingToolbarDefaults 对象
 
 | 常量名                          | 类型                        | 说明                                       | 值                           |
 | ------------------------------- | --------------------------- | ------------------------------------------ | ---------------------------- |
 | MenuViewHeight                  | Dp                          | 分组胶囊的高度                             | 44.dp                        |
 | MinHeight                       | Dp                          | 工具栏的最小外部高度                       | 76.dp                        |
-| MenuViewPadding                 | Dp                          | 胶囊两端的内容内边距                       | 16.dp                        |
+| MenuViewPadding                 | Dp                          | 原生菜单视图在胶囊外侧保留的留白           | 16.dp                        |
+| MenuViewItemBgInsetHorizontal   | Dp                          | 胶囊端边与首尾导航项之间的内缩间距         | 6.dp                         |
+| Shadow                          | Shadow                      | 无系统焦散接口时的回退投影                 | BarShadow                    |
 | ItemWidth                       | Dp                          | 图标单元格宽度                             | 44.dp                        |
 | ItemHeight                      | Dp                          | 图标单元格高度                             | 40.dp                        |
 | ItemViewSpace                   | Dp                          | 胶囊内导航项之间的间距                     | 4.dp                         |
@@ -147,32 +172,30 @@ BottomFloatingToolbar(visible = isSelecting) {
 
 ## 原生资源对照
 
-| 默认值                 | COUI 资源名                                             |
-| ---------------------- | ------------------------------------------------------- |
-| MenuViewHeight         | `coui_floating_toolbar_menu_view_height`                |
-| MinHeight              | `coui_floating_toolbar_min_height`                      |
-| MenuViewPadding        | `coui_floating_toolbar_menu_view_padding`               |
-| ItemWidth              | `coui_floating_toolbar_item_width`                      |
-| ItemHeight             | `coui_floating_toolbar_item_height`                     |
-| ItemViewSpace          | `coui_floating_toolbar_item_view_space`                 |
-| IconSize               | `coui_floating_toolbar_item_icon_width` / `..._icon_height` |
-| LabelFontSize          | `coui_floating_toolbar_text_size`                       |
-| ItemTextPadding*       | `coui_floating_toolbar_item_text_padding_horizontal` / `..._vertical` |
-| ItemTextMinWidth       | `coui_floating_toolbar_item_text_min_width`             |
-| ItemTextMaxWidth       | `coui_floating_toolbar_item_text_max_width`             |
-| ItemCircleRadius       | `coui_floating_toolbar_item_circle_radius`              |
-| MaskViewIconRadius     | `coui_floating_toolbar_mask_view_icon_radius`           |
-| MenuTouchEffectRadius  | `coui_floating_toolbar_menu_touch_effect_radius`        |
-| ItemSingleMaskInsetHorizontal | `coui_floating_toolbar_item_single_mask_inset_horizontal` |
-| RedDotOffset           | `coui_floating_toolbar_red_dot_offset`                  |
-| RedDotRadius           | `coui_floating_toolbar_red_dot_radius`                  |
-| MinGroupSpace          | `coui_floating_toolbar_min_group_space`                 |
-| GroupMargin*           | `coui_floating_toolbar_group_margin_small_screen` / `..._medium_screen` / `..._large_screen` |
-
-`menu_view_padding` 被用作胶囊内部的内容内边距。原生中它加在菜单视图上、位于背景外侧，并与 `menu_view_item_bg_inset_horizontal` 配合；本次移植不包含该内缩量，因此胶囊紧贴其导航项。
+| 默认值                        | COUI 资源名                                                |
+| ----------------------------- | ---------------------------------------------------------- |
+| MenuViewHeight                | `coui_floating_toolbar_menu_view_height`                   |
+| MinHeight                     | `coui_floating_toolbar_min_height`                         |
+| MenuViewPadding               | `coui_floating_toolbar_menu_view_padding`                  |
+| MenuViewItemBgInsetHorizontal | `coui_floating_toolbar_menu_view_item_bg_inset_horizontal` |
+| ItemWidth                     | `coui_floating_toolbar_item_width`                         |
+| ItemHeight                    | `coui_floating_toolbar_item_height`                        |
+| ItemViewSpace                 | `coui_floating_toolbar_item_view_space`                    |
+| IconSize                      | `coui_floating_toolbar_item_icon_width` / `..._icon_height` |
+| LabelFontSize                 | `coui_floating_toolbar_text_size`                          |
+| ItemTextPadding*              | `coui_floating_toolbar_item_text_padding_horizontal` / `..._vertical` |
+| ItemTextMinWidth              | `coui_floating_toolbar_item_text_min_width`                |
+| ItemTextMaxWidth              | `coui_floating_toolbar_item_text_max_width`                |
+| ItemCircleRadius              | `coui_floating_toolbar_item_circle_radius`                 |
+| MaskViewIconRadius            | `coui_floating_toolbar_mask_view_icon_radius`              |
+| MenuTouchEffectRadius         | `coui_floating_toolbar_menu_touch_effect_radius`           |
+| ItemSingleMaskInsetHorizontal | `coui_floating_toolbar_item_single_mask_inset_horizontal`  |
+| RedDotOffset                  | `coui_floating_toolbar_red_dot_offset`                     |
+| RedDotRadius                  | `coui_floating_toolbar_red_dot_radius`                     |
+| MinGroupSpace                 | `coui_floating_toolbar_min_group_space`                    |
+| GroupMargin*                  | `coui_floating_toolbar_group_margin_small_screen` / `..._medium_screen` / `..._large_screen` |
 
 ## 未移植内容
 
 - 仅框架可用的 `OplusMaterialEdgeParams` 路径（`TYPE_FRAMEWORK_CAPSULE_5`），即运行时着色器不可用时的兜底；这里由不透明的 `containerColor` 代替。
-- 焦散阴影与聚光灯触摸反馈（`COUISpotLightEffectDrawable`）；这里改用与 `BottomFloatingNavigationBar` 共用的径向按压高光。
 - 分组插入 / 移除动画（`COUIBottomFloatingToolbarAction`）与 XML 菜单加载（`inflateMenu`）。

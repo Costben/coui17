@@ -22,8 +22,8 @@ import component.BadgeDemo
 import component.BasicComponentDemo
 import component.BlurDemo
 import component.BottomFloatingAccessoryNavigationBarDemo
-import component.BottomFloatingEditToolbarDemo
 import component.BottomFloatingNavigationBarDemo
+import component.BottomFloatingScrollToolbarDemo
 import component.BottomFloatingToolbarDemo
 import component.BottomSheetDemo
 import component.BreadcrumbBarDemo
@@ -216,8 +216,8 @@ fun Coui17HomePage(
         coui17Entry("BottomFloatingAccessoryNavigationBar") {
             BottomFloatingAccessoryNavigationBarDemo()
         }
-        coui17Entry("BottomFloatingEditToolbar") { BottomFloatingEditToolbarDemo() }
         coui17Entry("BottomFloatingToolbar") { BottomFloatingToolbarDemo() }
+        coui17Entry("BottomFloatingScrollToolbar") { BottomFloatingScrollToolbarDemo() }
         coui17Entry("NavigationPopupMenu") { NavigationPopupMenuDemo() }
         coui17Entry("TopAppBar (glass)") { TopAppBarGlassDemo() }
         coui17Entry("TopAppBar (ColorOS 17 forms)") { TopAppBarColorOS17FormsDemo() }

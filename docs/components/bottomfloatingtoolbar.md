@@ -2,7 +2,7 @@
 
 `BottomFloatingToolbar` is the ColorOS 17 floating text-selection toolbar (`COUIBottomFloatingToolbar`). It is one or more capsules of `BottomFloatingToolbarItem`s that float over the content, sliding up from below the screen edge and back out again.
 
-It is the text-selection sibling of `BottomFloatingEditToolbar` and `BottomFloatingNavigationBar`: the same slide motion, but the items are grouped — a selection toolbar shows *cut / copy / paste* in one capsule and *select all / translate* in another — and each capsule carries the ColorOS 17 material edge instead of the glass highlight the other two use.
+It is the text-selection and note sibling of `BottomFloatingNavigationBar` and `BottomFloatingScrollToolbar`: the same slide motion, but the items are grouped — a selection toolbar shows *cut / copy / paste* in one capsule and *select all / translate* in another — and each capsule carries the ColorOS 17 material edge instead of the glass highlight the navigation bar uses.
 
 ## Import
 
@@ -76,7 +76,19 @@ BottomFloatingToolbar(visible = isSelecting) {
 
 ## Capsule Surface
 
-The capsule samples the content behind it through `LocalBackdrop`. When a backdrop is present and the platform can run runtime shaders, the capsule is blurred and tinted with the toolbar colors; otherwise it falls back to an opaque `containerColor` fill. Either way the rim and inner shadow are drawn by `Modifier.materialShadowEdge` with the `TYPE_FRAMEWORK_CAPSULE_13` parameters, and a capsule holding a single item gets the single-item corner weight so its rim is a full capsule.
+The capsule samples the content behind it through `LocalBackdrop`. When a backdrop is present, runtime shaders are supported and material blur is enabled on the system (`SystemMaterialState.blurEnabled`), the capsule is blurred and tinted with the toolbar colors; otherwise it falls back to an opaque `containerColor` fill. Either way the rim and inner shadow are drawn by `Modifier.materialShadowEdge` with the `TYPE_FRAMEWORK_CAPSULE_13` parameters, and the capsule lifts off the page with the system's caustic shadow (or `BottomFloatingToolbarDefaults.Shadow` where the system has none). Pressing and dragging deform and scale the capsule through `couiTouchMotion` with the `SpotLightDefaults.opaqueMedium2` spotlight.
+
+## Multi-Color Icons
+
+Pass a `Painter` instead of an `ImageVector` to keep an icon's own colors untinted, such as the gradient AI writing glyph in the Notes toolbar:
+
+```kotlin
+BottomFloatingToolbarItem(
+    label = "AI writing",
+    onClick = { /* open AI assistant */ },
+    painter = painterResource(Res.drawable.note_toolbar_ai),
+)
+```
 
 ## Properties
 
@@ -97,7 +109,7 @@ The capsule samples the content behind it through `LocalBackdrop`. When a backdr
 | modifier      | Modifier              | Modifier applied to the capsule               | Modifier      | No       |
 | content       | @Composable () -> Unit | The content of the capsule, usually items     | -             | Yes      |
 
-### BottomFloatingToolbarItem Properties
+### BottomFloatingToolbarItem Properties (Vector / Text Overload)
 
 | Property Name      | Type         | Description                                                       | Default Value | Required |
 | ------------------ | ------------ | ----------------------------------------------------------------- | ------------- | -------- |
@@ -107,13 +119,26 @@ The capsule samples the content behind it through `LocalBackdrop`. When a backdr
 | enabled            | Boolean      | Whether the item can be activated                                 | true          | No       |
 | contentDescription | String?      | The icon's content description, or `null` for the label           | null          | No       |
 
+### BottomFloatingToolbarItem Properties (Painter Overload)
+
+| Property Name      | Type       | Description                                                       | Default Value | Required |
+| ------------------ | ---------- | ----------------------------------------------------------------- | ------------- | -------- |
+| label              | String     | The label of the item; also the icon's content description        | -             | Yes      |
+| onClick            | () -> Unit | Called when the item is activated                                 | -             | Yes      |
+| painter            | Painter    | The icon of the item, drawn without a color filter                | -             | Yes      |
+| modifier           | Modifier   | Modifier applied to the item                                      | Modifier      | No       |
+| enabled            | Boolean    | Whether the item can be activated                                 | true          | No       |
+| contentDescription | String?    | The icon's content description, or `null` for the label           | null          | No       |
+
 ### BottomFloatingToolbarDefaults Object
 
 | Constant Name                   | Type                    | Description                                             | Value                        |
 | ------------------------------- | ----------------------- | ------------------------------------------------------- | ---------------------------- |
 | MenuViewHeight                  | Dp                      | The height of a group capsule                           | 44.dp                        |
 | MinHeight                       | Dp                      | The minimum outer height of the toolbar                 | 76.dp                        |
-| MenuViewPadding                 | Dp                      | The content padding at either end of a capsule          | 16.dp                        |
+| MenuViewPadding                 | Dp                      | Space around the capsule inside the native menu view    | 16.dp                        |
+| MenuViewItemBgInsetHorizontal   | Dp                      | Distance between a capsule's ends and its outer items   | 6.dp                         |
+| Shadow                          | Shadow                  | Fallback drop shadow when the system has no caustic API | BarShadow                    |
 | ItemWidth                       | Dp                      | The icon cell width                                     | 44.dp                        |
 | ItemHeight                      | Dp                      | The icon cell height                                    | 40.dp                        |
 | ItemViewSpace                   | Dp                      | The spacing between items inside a capsule              | 4.dp                         |
@@ -147,32 +172,30 @@ The capsule samples the content behind it through `LocalBackdrop`. When a backdr
 
 ## Native Tokens
 
-| Default                | COUI resource                                          |
-| ---------------------- | ------------------------------------------------------ |
-| MenuViewHeight         | `coui_floating_toolbar_menu_view_height`               |
-| MinHeight              | `coui_floating_toolbar_min_height`                     |
-| MenuViewPadding        | `coui_floating_toolbar_menu_view_padding`              |
-| ItemWidth              | `coui_floating_toolbar_item_width`                     |
-| ItemHeight             | `coui_floating_toolbar_item_height`                    |
-| ItemViewSpace          | `coui_floating_toolbar_item_view_space`                |
-| IconSize               | `coui_floating_toolbar_item_icon_width` / `..._icon_height` |
-| LabelFontSize          | `coui_floating_toolbar_text_size`                      |
-| ItemTextPadding*       | `coui_floating_toolbar_item_text_padding_horizontal` / `..._vertical` |
-| ItemTextMinWidth       | `coui_floating_toolbar_item_text_min_width`            |
-| ItemTextMaxWidth       | `coui_floating_toolbar_item_text_max_width`            |
-| ItemCircleRadius       | `coui_floating_toolbar_item_circle_radius`             |
-| MaskViewIconRadius     | `coui_floating_toolbar_mask_view_icon_radius`          |
-| MenuTouchEffectRadius  | `coui_floating_toolbar_menu_touch_effect_radius`       |
-| ItemSingleMaskInsetHorizontal | `coui_floating_toolbar_item_single_mask_inset_horizontal` |
-| RedDotOffset           | `coui_floating_toolbar_red_dot_offset`                 |
-| RedDotRadius           | `coui_floating_toolbar_red_dot_radius`                 |
-| MinGroupSpace          | `coui_floating_toolbar_min_group_space`                |
-| GroupMargin*           | `coui_floating_toolbar_group_margin_small_screen` / `..._medium_screen` / `..._large_screen` |
-
-`menu_view_padding` is applied inside the capsule as its content padding. Natively it pads the menu view around the background, together with `menu_view_item_bg_inset_horizontal`; that inset is not part of this port, so the capsule hugs its items.
+| Default                       | COUI resource                                                     |
+| ----------------------------- | ----------------------------------------------------------------- |
+| MenuViewHeight                | `coui_floating_toolbar_menu_view_height`                          |
+| MinHeight                     | `coui_floating_toolbar_min_height`                                |
+| MenuViewPadding               | `coui_floating_toolbar_menu_view_padding`                         |
+| MenuViewItemBgInsetHorizontal | `coui_floating_toolbar_menu_view_item_bg_inset_horizontal`        |
+| ItemWidth                     | `coui_floating_toolbar_item_width`                                |
+| ItemHeight                    | `coui_floating_toolbar_item_height`                               |
+| ItemViewSpace                 | `coui_floating_toolbar_item_view_space`                           |
+| IconSize                      | `coui_floating_toolbar_item_icon_width` / `..._icon_height`       |
+| LabelFontSize                 | `coui_floating_toolbar_text_size`                                 |
+| ItemTextPadding*              | `coui_floating_toolbar_item_text_padding_horizontal` / `..._vertical` |
+| ItemTextMinWidth              | `coui_floating_toolbar_item_text_min_width`                       |
+| ItemTextMaxWidth              | `coui_floating_toolbar_item_text_max_width`                       |
+| ItemCircleRadius              | `coui_floating_toolbar_item_circle_radius`                        |
+| MaskViewIconRadius            | `coui_floating_toolbar_mask_view_icon_radius`                     |
+| MenuTouchEffectRadius         | `coui_floating_toolbar_menu_touch_effect_radius`                  |
+| ItemSingleMaskInsetHorizontal | `coui_floating_toolbar_item_single_mask_inset_horizontal`         |
+| RedDotOffset                  | `coui_floating_toolbar_red_dot_offset`                            |
+| RedDotRadius                  | `coui_floating_toolbar_red_dot_radius`                            |
+| MinGroupSpace                 | `coui_floating_toolbar_min_group_space`                           |
+| GroupMargin*                  | `coui_floating_toolbar_group_margin_small_screen` / `..._medium_screen` / `..._large_screen` |
 
 ## Not Ported
 
 - The framework-only `OplusMaterialEdgeParams` path (`TYPE_FRAMEWORK_CAPSULE_5`), used when the runtime shader is unavailable; the opaque `containerColor` stands in for it.
-- The caustics shadow and the spot-light touch feedback (`COUISpotLightEffectDrawable`); the radial press highlight shared with `BottomFloatingNavigationBar` is drawn instead.
 - The group insert / remove animation (`COUIBottomFloatingToolbarAction`) and XML menu inflation (`inflateMenu`).
