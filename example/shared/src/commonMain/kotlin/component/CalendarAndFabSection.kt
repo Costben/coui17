@@ -151,9 +151,7 @@ private fun ExpandableListDemo() {
             childCount = { groupIndex -> DemoSettingsGroups[groupIndex].second.size },
             expandedGroups = expandedGroups,
             onExpandedGroupsChange = { expandedGroups = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(280.dp),
+            modifier = Modifier.fillMaxWidth(),
             groupContent = { groupIndex, expanded ->
                 SettingsGroupHeader(
                     title = str(DemoSettingsGroups[groupIndex].first),
@@ -178,9 +176,7 @@ private fun AccordionExpandableListDemo() {
             expandedGroups = expandedGroup,
             onExpandedGroupsChange = { expandedGroup = it },
             maxExpandedGroupCount = 1,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(224.dp),
+            modifier = Modifier.fillMaxWidth(),
             groupContent = { groupIndex, expanded ->
                 SettingsGroupHeader(
                     title = str(DemoAccordionGroups[groupIndex].first),

@@ -11,7 +11,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,7 +41,9 @@ import androidx.compose.ui.semantics.Role
  * The list is not `wrap_content`: `COUIExpandableListView.setLayoutParams` throws
  * `"cannot set wrap_content"` for a height of `-2`, and the connectors animate against the
  * recycler's own bottom edge. [modifier] therefore has to carry a bounded height — a
- * `Modifier.weight` inside a `Column`, or a `Modifier.height` — and the list scrolls itself.
+ * `Modifier.weight` inside a `Column`, or a `Modifier.height` — and the list scrolls itself. A
+ * caller that leaves the height unbounded gets a plain column that wraps its groups instead, so a
+ * settings card can grow with its content without leaving a blank band under the last group.
  *
  * Not ported:
  * - the group indicator and the separators. `COUIExpandableListView.init()` calls
@@ -90,8 +94,12 @@ fun ExpandableList(
     easing: Easing = ExpandableListDefaults.MoveEase,
     childContent: @Composable (groupIndex: Int, childIndex: Int) -> Unit,
 ) {
-    LazyColumn(modifier = modifier) {
-        items(count = groupCount, key = { groupIndex -> groupIndex }) { groupIndex ->
+    // A bounded parent (a fixed height or a weight) keeps the recycler so a long list scrolls
+    // itself. An unbounded one — a card that grows with its content, the way every settings page
+    // lays the list out — would make LazyColumn throw, and a fixed height there left a blank band
+    // under the last group. Wrap the content instead.
+    BoxWithConstraints(modifier = modifier) {
+        val item: @Composable (Int) -> Unit = { groupIndex ->
             ExpandableGroup(
                 expanded = groupIndex in expandedGroups,
                 childCount = childCount(groupIndex),
@@ -115,6 +123,19 @@ fun ExpandableList(
                 groupContent = { groupContent(groupIndex, groupIndex in expandedGroups) },
                 childContent = { childIndex -> childContent(groupIndex, childIndex) },
             )
+        }
+        if (constraints.hasBoundedHeight) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(count = groupCount, key = { groupIndex -> groupIndex }) { groupIndex ->
+                    item(groupIndex)
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                for (groupIndex in 0 until groupCount) {
+                    item(groupIndex)
+                }
+            }
         }
     }
 }

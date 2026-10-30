@@ -46,7 +46,7 @@ ExpandableList(
 
 分组头由调用方提供,与 `ExpandableListAdapter.getGroupView` 完全一致;点击分组头会切换该组,对应 `COUIExpandableListView.init()` 内部的 `OnGroupClickListener`。由于分组头归调用方所有,指示器也由调用方负责绘制,详见下文。
 
-列表不支持 `wrap_content`。`COUIExpandableListView.setLayoutParams` 在高度为 `-2` 时抛出 `"cannot set wrap_content"`,而且连接器是相对 recycler 自身的底边做动画的,因此 `modifier` 必须限定高度——`Modifier.height`,或 `Column` 中的 `Modifier.weight`。列表自行滚动。
+列表不支持 `wrap_content`。`COUIExpandableListView.setLayoutParams` 在高度为 `-2` 时抛出 `"cannot set wrap_content"`,而且连接器是相对 recycler 自身的底边做动画的,因此限定高度的 `modifier`——`Modifier.height`,或 `Column` 中的 `Modifier.weight`——会保留自行滚动的 `LazyColumn`。高度不受限时则改用普通 `Column` 包裹各组,设置卡片可以随内容增高,不会在最后一组下方留下空白带。
 
 ## 限制同时展开的分组数
 
@@ -78,7 +78,7 @@ ExpandableList(
 | expandedGroups         | Set&lt;Int&gt;                               | 已展开的分组                           | -                             | 是   |
 | onExpandedGroupsChange | (Set&lt;Int&gt;) -> Unit                     | 切换分组时返回新集合的回调             | -                             | 是   |
 | groupContent           | (groupIndex: Int, expanded: Boolean) -> Unit | 分组头;会传入该组是否展开              | -                             | 是   |
-| modifier               | Modifier                                     | 应用于列表的修饰符;必须限定高度        | Modifier                      | 否   |
+| modifier               | Modifier                                     | 应用于列表的修饰符;限定高度时自行滚动,不限定高度时包裹各组 | Modifier                      | 否   |
 | maxExpandedGroupCount  | Int                                          | 同时可展开的分组数                     | Int.MAX_VALUE                 | 否   |
 | durationMillis         | Int                                          | 展开/收起时长                          | 400                           | 否   |
 | easing                 | Easing                                       | 展开/收起缓动                          | cubic-bezier(0.3, 0, 0.1, 1)  | 否   |

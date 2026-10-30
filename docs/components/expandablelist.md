@@ -46,7 +46,7 @@ ExpandableList(
 
 The group header is supplied by the caller, exactly as `ExpandableListAdapter.getGroupView` does, and clicking it toggles the group — that is the internal `OnGroupClickListener` of `COUIExpandableListView.init()`. Because the header is yours, it also owns its own indicator; see below.
 
-The list is not `wrap_content`. `COUIExpandableListView.setLayoutParams` throws `"cannot set wrap_content"` for a height of `-2`, and the connectors animate against the recycler's own bottom edge, so `modifier` has to bound the height — a `Modifier.height`, or a `Modifier.weight` inside a `Column`. The list scrolls itself.
+The list is not `wrap_content`. `COUIExpandableListView.setLayoutParams` throws `"cannot set wrap_content"` for a height of `-2`, and the connectors animate against the recycler's own bottom edge, so a bounded `modifier` — a `Modifier.height`, or a `Modifier.weight` inside a `Column` — keeps a `LazyColumn` that scrolls itself. A caller that leaves the height unbounded gets a plain `Column` that wraps its groups instead, so a settings card can grow with its content without leaving a blank band under the last group.
 
 ## Capping How Many Groups Are Open
 
@@ -78,7 +78,7 @@ Opening a group at the cap closes an already-open one to make room. The connecto
 | expandedGroups          | Set&lt;Int&gt;                                   | The groups that are open                                          | -                                | Yes      |
 | onExpandedGroupsChange  | (Set&lt;Int&gt;) -> Unit                         | Called with the new set when a group is toggled                   | -                                | Yes      |
 | groupContent            | (groupIndex: Int, expanded: Boolean) -> Unit     | The group header; the group's open state is passed along          | -                                | Yes      |
-| modifier                | Modifier                                         | Modifier applied to the list; it must bound the height            | Modifier                         | No       |
+| modifier                | Modifier                                         | Modifier applied to the list; a bounded height scrolls itself, an unbounded one wraps its groups | Modifier                         | No       |
 | maxExpandedGroupCount   | Int                                              | How many groups may be open at once                               | Int.MAX_VALUE                    | No       |
 | durationMillis          | Int                                              | The open/close duration                                           | 400                              | No       |
 | easing                  | Easing                                           | The open/close easing                                             | cubic-bezier(0.3, 0, 0.1, 1)     | No       |
