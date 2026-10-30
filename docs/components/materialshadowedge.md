@@ -49,6 +49,24 @@ The modifier is drawn after whatever the node has already painted, so put it aft
 
 The corners are a capsule by default: the modifier writes the same radius into all four slots of the shader's `u_commonArray`, derived from `height / 2`, because every consumer of `GradientStrokeStyle.EDGE_STYLE_0` here is a capsule. Pass `cornerRadius` for a surface whose corners are not a capsule.
 
+## Inner Glow
+
+`Modifier.materialInnerGlow` marks the selected option of a tinted choice card: a soft white ring that fades inward from the rim and is strongest along the bottom edge. It is the inner-shadow half of the material edge with the rim switched off, and it draws over the content, so apply it before `background` in the modifier chain.
+
+```kotlin
+Column(
+    modifier = Modifier
+        .clip(RoundedCornerShape(20.dp))
+        .then(if (selected) Modifier.materialInnerGlow() else Modifier)
+        .background(tint)
+        .border(1.dp, accent, RoundedCornerShape(20.dp)),
+) {
+    // Icon and labels
+}
+```
+
+Nothing is drawn where runtime shaders are unavailable.
+
 ## Properties
 
 ### Modifier.materialShadowEdge

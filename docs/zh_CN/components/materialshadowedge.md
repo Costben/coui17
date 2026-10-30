@@ -49,6 +49,24 @@ Box(
 
 默认情况下四角为胶囊：修饰符把 `height / 2` 得到的同一半径写入 shader `u_commonArray` 的四个槽位，因为本库中 `GradientStrokeStyle.EDGE_STYLE_0` 的消费者都是胶囊。若表面四角不是胶囊，请传入 `cornerRadius`。
 
+## 内发光
+
+`Modifier.materialInnerGlow` 用于标记着色选择卡片的选中项：一圈从边缘向内淡出的柔和白光，底边最强。它是材质边缘的内阴影部分，不画描边，并且绘制在内容之上，所以要放在修饰符链中 `background` 之前。
+
+```kotlin
+Column(
+    modifier = Modifier
+        .clip(RoundedCornerShape(20.dp))
+        .then(if (selected) Modifier.materialInnerGlow() else Modifier)
+        .background(tint)
+        .border(1.dp, accent, RoundedCornerShape(20.dp)),
+) {
+    // 图标和文字
+}
+```
+
+不支持运行时着色器的平台上不绘制。
+
 ## 属性
 
 ### Modifier.materialShadowEdge

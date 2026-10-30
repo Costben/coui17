@@ -422,6 +422,25 @@ object MaterialShadowEdgeDefaults {
      * button type or the number of buttons on screen.
      */
     val CapsuleCornerWeight = 2f
+
+    /** The corner radius of [Modifier.materialInnerGlow], the `20dp` of `BatteryModePreference`. */
+    val InnerGlowCornerRadius = 20.dp
+
+    /** The corner weight of [Modifier.materialInnerGlow], `BatteryModePreference`'s `setWeight(3.0f)`. */
+    val InnerGlowCornerWeight = 3f
+
+    /**
+     * The fade of [Modifier.materialInnerGlow]: `BatteryModePreference` sets `setFadeAlpha(0.6, 0.05)`
+     * and `setFadeWidthScale(0.7)`. It draws no rim, so the edge fields stay empty.
+     */
+    val InnerGlowFade: MaterialStrokeParams = MaterialStrokeParams(
+        edgeAlpha = 0f,
+        edgeWidth = 0.dp,
+        edgeAngle = 0f,
+        shadowFadeIn = 0.6f,
+        shadowFadeOut = 0.05f,
+        shadowFadeScale = 0.7f,
+    )
 }
 
 /**
@@ -495,6 +514,54 @@ fun Modifier.materialShadowEdge(
 }
 
 /**
+ * Lays the ColorOS 17 inner glow over this node's content: a soft white ring that fades inward from
+ * the rim, strongest along the bottom edge. It marks the selected option of a tinted choice card,
+ * such as the battery mode cards.
+ *
+ * This is the inner-shadow half of [materialShadowEdge] with the rim switched off, drawn in front of
+ * the content like the foreground `COUIShadowEdgeDrawable` of `BatteryModePreference`. Nothing is
+ * drawn where runtime shaders are unavailable.
+ *
+ * @param cornerRadius The corner radius of the surface.
+ * @param cornerWeight The `u_commonArray[10]` corner weight.
+ * @param fade The inner-shadow reach; only its shadow fields are read.
+ * @param shadowStyle The inner-shadow style, one of the [InnerShadowStyle] presets.
+ */
+@Composable
+fun Modifier.materialInnerGlow(
+    cornerRadius: Dp = MaterialShadowEdgeDefaults.InnerGlowCornerRadius,
+    cornerWeight: Float = MaterialShadowEdgeDefaults.InnerGlowCornerWeight,
+    fade: MaterialStrokeParams = MaterialShadowEdgeDefaults.InnerGlowFade,
+    shadowStyle: InnerShadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
+): Modifier {
+    val density = LocalDensity.current.density
+    val shader = rememberMaterialShadowEdgeShader(isRuntimeShaderSupported()) ?: return this
+
+    return this.drawWithCache {
+        val width = size.width
+        val height = size.height
+        if (width <= 0f || height <= 0f) return@drawWithCache onDrawWithContent { drawContent() }
+        setMaterialShadowEdgeUniforms(
+            shader = shader,
+            width = width,
+            height = height,
+            radius = cornerRadius.toPx(),
+            stroke = fade,
+            cornerWeight = cornerWeight,
+            antiAliasing = MaterialShadowEdgeDefaults.AntiAliasing,
+            edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+            shadowStyle = shadowStyle,
+            density = density,
+            edgeEnabled = false,
+        )
+        onDrawWithContent {
+            drawContent()
+            drawRect(brush = shader.asBrush(), size = size)
+        }
+    }
+}
+
+/**
  * Writes the material edge uniforms for a surface of [width] x [height] px whose four corners all
  * have [radius] px. Shared by [materialShadowEdge] and by callers that paint the edge on a sub-rect
  * of a larger node, such as a segment indicator.
@@ -510,6 +577,7 @@ internal fun setMaterialShadowEdgeUniforms(
     edgeStyle: GradientStrokeStyle,
     shadowStyle: InnerShadowStyle,
     density: Float,
+    edgeEnabled: Boolean = true,
 ) {
     // u_commonArray = [resolution.x, resolution.y, position.x, position.y, size.w, size.h,
     //                  cornerRadius.(lb, rb, rt, lt), weight, antiAliasing]
@@ -530,7 +598,7 @@ internal fun setMaterialShadowEdgeUniforms(
             density = density,
         ),
     )
-    shader.setFloatUniform("u_edge", 1f)
+    shader.setFloatUniform("u_edge", if (edgeEnabled) 1f else 0f)
     shader.setFloatUniform(
         "u_edgeArray",
         GradientStrokeStyleMapper.toEdgeArray16(
