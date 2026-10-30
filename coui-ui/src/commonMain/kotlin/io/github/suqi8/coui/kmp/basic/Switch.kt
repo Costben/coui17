@@ -6,10 +6,14 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -23,8 +27,10 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,7 +49,14 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.isPrimaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.role
@@ -54,13 +67,18 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
+import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.COUITheme.isDynamicColor
 import io.github.suqi8.coui.kmp.theme.LocalColors
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -94,41 +112,32 @@ fun Switch(
     // COUI toggle interpolator, shared by every child animator (COUISwitch.animateWhenStateChanged()).
     val couiToggleEasing = remember { CubicBezierEasing(0.3f, 0f, 0.1f, 1f) }
 
-    // COUI switch is tap-driven: the thumb never tracks the finger.
-    val thumbOffset = remember {
-        Animatable(
-            if (checked) SwitchDefaults.ThumbEndOffset else SwitchDefaults.ThumbStartOffset,
-            Dp.VectorConverter,
-        )
-    }
+    val thumb = remember { SwitchThumb(checked) }
 
-    // COUI thumb stretch ("tail drag"), played on toggle only (COUISwitch.animateWhenStateChanged()).
-    val thumbSquash = remember { Animatable(1f) }
-    var isFirstComposition by remember { mutableStateOf(true) }
-    LaunchedEffect(checked) {
-        if (isFirstComposition) {
-            isFirstComposition = false
-            return@LaunchedEffect
+    // Every way the thumb comes to rest ends here, so a caller that refuses a drag's result pulls
+    // the thumb back instead of leaving it on the wrong side.
+    LaunchedEffect(checked, thumb.settleRequests) {
+        val rest = switchRestOffset(checked)
+        if (thumb.held || thumb.offset.value == rest) return@LaunchedEffect
+        thumb.toggling = true
+        try {
+            thumb.offset.animateTo(rest, SwitchDefaults.ToggleSpring)
+        } finally {
+            thumb.toggling = false
         }
-        // A new toggle snaps the running animation to its settled values first (COUISwitch.setChecked()).
-        thumbOffset.snapTo(if (checked) SwitchDefaults.ThumbStartOffset else SwitchDefaults.ThumbEndOffset)
-        thumbSquash.snapTo(1f)
-        launch {
-            thumbOffset.animateTo(
-                if (checked) SwitchDefaults.ThumbEndOffset else SwitchDefaults.ThumbStartOffset,
-                tween(durationMillis = 383, easing = couiToggleEasing),
-            )
-        }
-        thumbSquash.animateTo(1.3f, tween(durationMillis = 133, easing = couiToggleEasing))
-        thumbSquash.animateTo(1f, tween(durationMillis = 250, easing = couiToggleEasing))
     }
 
     val thumbColorState = animateColorAsState(
         if (checked) colors.checkedThumbColor(enabled) else colors.uncheckedThumbColor(enabled),
     )
 
-    val backgroundColorState = animateColorAsState(
-        if (checked) colors.checkedTrackColor(enabled) else colors.uncheckedTrackColor(enabled),
+    // The track blends by thumb position, whether a finger or a spring moves it (COUISwitch.setBarColor).
+    val checkedTrackColorState = animateColorAsState(
+        colors.checkedTrackColor(enabled),
+        animationSpec = tween(durationMillis = 450, easing = couiToggleEasing),
+    )
+    val uncheckedTrackColorState = animateColorAsState(
+        colors.uncheckedTrackColor(enabled),
         animationSpec = tween(durationMillis = 450, easing = couiToggleEasing),
     )
 
@@ -169,14 +178,34 @@ fun Switch(
     // Loading switches cannot be toggled (COUISwitch loading style swallows touch).
     val interactive = enabled && !isLoading
     val hasCallback = onCheckedChange != null
+    val onToggle: (Boolean) -> Unit = remember {
+        { value ->
+            currentOnCheckedChange?.invoke(value)
+            currentCouiHaptic(CouiHapticEffect.Switch)
+        }
+    }
+    val currentChecked by rememberUpdatedState(checked)
+    val scope = rememberCoroutineScope()
+    val layoutDirection = LocalLayoutDirection.current
     val toggleableModifier = if (hasCallback) {
-        remember(checked, interactive, interactionSource) {
-            Modifier.toggleable(
+        remember(checked, interactive, interactionSource, thumb, layoutDirection) {
+            // The touch modifier sits outside toggleable and takes the pointer first, which leaves
+            // toggleable with the semantics, focus and keyboard handling.
+            val touch = if (interactive) {
+                Modifier.switchTouch(
+                    thumb = thumb,
+                    interactionSource = interactionSource,
+                    layoutDirection = layoutDirection,
+                    scope = scope,
+                    isChecked = { currentChecked },
+                    onToggle = onToggle,
+                )
+            } else {
+                Modifier
+            }
+            touch.toggleable(
                 value = checked,
-                onValueChange = { v ->
-                    currentOnCheckedChange?.invoke(v)
-                    currentCouiHaptic(CouiHapticEffect.Switch)
-                },
+                onValueChange = onToggle,
                 enabled = interactive,
                 role = Role.Switch,
                 interactionSource = interactionSource,
@@ -196,7 +225,13 @@ fun Switch(
             .size(SwitchDefaults.TrackWidth, SwitchDefaults.TrackHeight)
             .clip(capsuleShape)
             .drawBehind {
-                drawRect(backgroundColorState.value)
+                drawRect(
+                    blendArgb(
+                        uncheckedTrackColorState.value,
+                        checkedTrackColorState.value,
+                        thumb.progress.coerceIn(0f, 1f),
+                    ),
+                )
                 drawRect(pressOverlayState.value)
             }
             .hoverable(
@@ -208,19 +243,12 @@ fun Switch(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .offset {
-                    // The stretch extends backwards, against the direction of travel
-                    // (COUISwitch.setOuterCircleRectF()).
-                    val thumbPx = SwitchDefaults.ThumbSize.roundToPx()
-                    val stretchedPx = (thumbPx * thumbSquash.value).roundToInt()
-                    val restingLeft = thumbOffset.value.roundToPx()
-                    val left = if (checked) restingLeft + thumbPx - stretchedPx else restingLeft
-                    IntOffset(left, 0)
-                }
+                .offset { IntOffset(thumb.offset.value.roundToPx(), 0) }
                 .layout { measurable, _ ->
-                    // Stretch by resizing instead of scaling so the thumb stays a capsule.
+                    // Stretch by resizing instead of scaling so the thumb stays a capsule. The
+                    // leading edge stays put (COUISwitch.setOuterCircleRectF()).
                     val thumbPx = SwitchDefaults.ThumbSize.roundToPx()
-                    val stretchedPx = (thumbPx * thumbSquash.value).roundToInt()
+                    val stretchedPx = (thumbPx * thumb.stretch).roundToInt()
                     val placeable = measurable.measure(Constraints.fixed(stretchedPx, thumbPx))
                     layout(stretchedPx, thumbPx) { placeable.place(0, 0) }
                 },
@@ -288,6 +316,156 @@ fun Switch(
     }
 }
 
+/** The thumb position, and what is moving it right now. */
+@Stable
+private class SwitchThumb(checked: Boolean) {
+    val offset = Animatable(switchRestOffset(checked), Dp.VectorConverter)
+
+    /** A toggle spring is running: the thumb stretches and a new press cannot grab it. */
+    var toggling by mutableStateOf(false)
+
+    /** A finger holds the thumb or just let go of it, and the state is reported once it lands. */
+    var held = false
+
+    /** Bumped when [held] ends, to send the thumb back to wherever `checked` says it belongs. */
+    var settleRequests by mutableIntStateOf(0)
+        private set
+
+    val progress: Float
+        get() = (offset.value - SwitchDefaults.ThumbStartOffset) / SwitchDefaults.Travel
+
+    val stretch: Float
+        get() = if (toggling) switchThumbStretch(progress) else 1f
+
+    fun release() {
+        held = false
+        settleRequests++
+    }
+}
+
+private fun switchRestOffset(checked: Boolean): Dp = if (checked) SwitchDefaults.ThumbEndOffset else SwitchDefaults.ThumbStartOffset
+
+/**
+ * The width of the thumb during a toggle, as a multiple of its height: it peaks at a third of the
+ * track and tapers off on either side of it, overshoot included (COUISwitch.initToggleSpringAnim()).
+ */
+internal fun switchThumbStretch(progress: Float): Float {
+    val peak = 0.34725848f
+    val amount = 0.29999995f
+    return if (progress < peak) {
+        1f + progress / peak * amount
+    } else {
+        1.3f - (progress - peak) / (1f - peak) * amount
+    }
+}
+
+/**
+ * Where a released thumb lands: towards a fast enough fling, otherwise on the nearer side, with the
+ * exact middle going to off (COUISpringDragHelper.getAttachPosition()).
+ *
+ * @param offset The thumb offset when it was released.
+ * @param velocity The release velocity in dp per second, positive towards on.
+ */
+internal fun switchAttachChecked(offset: Dp, velocity: Float): Boolean = if (abs(velocity) >= SwitchDefaults.FLING_VELOCITY) {
+    velocity > 0f
+} else {
+    offset - SwitchDefaults.ThumbStartOffset > SwitchDefaults.Travel / 2
+}
+
+/**
+ * Takes over the pointer: a press that stays within the touch slop toggles, one that leaves it
+ * drags the thumb. The thumb cannot be grabbed mid-toggle, and a landing thumb ignores touch
+ * (COUISwitch.canDrag(), COUISwitch.onTouchEvent()).
+ */
+private fun Modifier.switchTouch(
+    thumb: SwitchThumb,
+    interactionSource: MutableInteractionSource,
+    layoutDirection: LayoutDirection,
+    scope: CoroutineScope,
+    isChecked: () -> Boolean,
+    onToggle: (Boolean) -> Unit,
+): Modifier = pointerInput(thumb, interactionSource, layoutDirection) {
+    val direction = if (layoutDirection == LayoutDirection.Rtl) -1f else 1f
+    // The finger's travel across the track maps onto the thumb's travel (COUISwitch.convertToTranslationCoordinates()).
+    val thumbPerFinger = SwitchDefaults.Travel / SwitchDefaults.TrackWidth
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        if (down.type == PointerType.Mouse && !currentEvent.buttons.isPrimaryPressed) return@awaitEachGesture
+        // Consuming from the first event keeps a scrolling parent out, as requestDisallowInterceptTouchEvent does.
+        down.consume()
+        if (thumb.held) return@awaitEachGesture
+
+        val draggable = !thumb.toggling
+        val startOffset = thumb.offset.value
+        val press = PressInteraction.Press(down.position)
+        interactionSource.tryEmit(press)
+
+        // The native tracker reads the finger scaled from the view onto the thumb's travel, so its
+        // velocity is a fraction of the finger's.
+        val velocityTracker = VelocityTracker()
+        val trackWidth = size.width.toFloat()
+        fun trackVelocity(change: PointerInputChange) {
+            val fromLeading = if (direction < 0f) trackWidth - change.position.x else change.position.x
+            val travelled = (fromLeading / trackWidth).coerceIn(0f, 1f) * SwitchDefaults.Travel.value
+            velocityTracker.addPosition(change.uptimeMillis, Offset(travelled, 0f))
+        }
+        trackVelocity(down)
+
+        var dragging = false
+        var ended = false
+        try {
+            while (true) {
+                val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: break
+                if (!change.pressed) {
+                    ended = true
+                    // A cancelled pointer arrives consumed; a drag still lands, a tap does not fire.
+                    val cancelled = change.isConsumed
+                    change.consume()
+                    interactionSource.tryEmit(if (cancelled) PressInteraction.Cancel(press) else PressInteraction.Release(press))
+                    if (dragging) {
+                        val limit = SwitchDefaults.FLING_VELOCITY
+                        val velocity = velocityTracker.calculateVelocity().x.coerceIn(-limit, limit)
+                        val checked = switchAttachChecked(thumb.offset.value, velocity)
+                        scope.launch {
+                            thumb.offset.animateTo(switchRestOffset(checked), SwitchDefaults.AttachSpring, velocity.dp)
+                            if (checked != isChecked()) onToggle(checked)
+                            thumb.release()
+                        }
+                    } else if (!cancelled) {
+                        onToggle(!isChecked())
+                    }
+                    break
+                }
+                change.consume()
+
+                trackVelocity(change)
+
+                val moved = change.position - down.position
+                if (draggable && (dragging || moved.getDistance() > viewConfiguration.touchSlop)) {
+                    dragging = true
+                    thumb.held = true
+                    val target = (startOffset + (moved.x * direction).toDp() * thumbPerFinger)
+                        .coerceIn(SwitchDefaults.ThumbStartOffset, SwitchDefaults.ThumbEndOffset)
+                    scope.launch { thumb.offset.animateTo(target, SwitchDefaults.DragSpring) }
+                }
+            }
+        } finally {
+            if (!ended) {
+                interactionSource.tryEmit(PressInteraction.Cancel(press))
+                if (dragging) thumb.release()
+            }
+        }
+    }
+}
+
+/** Blends two colors channel by channel in sRGB, as `ColorUtils.blendARGB` does. */
+private fun blendArgb(start: Color, end: Color, ratio: Float): Color = Color(
+    red = lerp(start.red, end.red, ratio),
+    green = lerp(start.green, end.green, ratio),
+    blue = lerp(start.blue, end.blue, ratio),
+    alpha = lerp(start.alpha, end.alpha, ratio),
+)
+
 object SwitchDefaults {
 
     /** The track width of the [Switch] (COUISwitch bar_width). */
@@ -310,6 +488,22 @@ object SwitchDefaults {
 
     /** The distance the thumb travels between off and on. */
     val Travel: Dp = ThumbEndOffset - ThumbStartOffset
+
+    /** The spring of a toggle (COUISwitchParams.toggleSpring: bounce 0.3, response 0.4). */
+    internal val ToggleSpring: SpringSpec<Dp> = folmeSpring(damping = 0.7f, response = 0.4f, visibilityThreshold = 0.1.dp)
+
+    /** The spring that trails the finger (COUISwitchParams.responseDrag, bounceDrag). */
+    internal val DragSpring: SpringSpec<Dp> = folmeSpring(damping = 1f, response = 0.3f, visibilityThreshold = 0.1.dp)
+
+    /** The spring of a thumb landing after a drag (COUISwitchParams.responseAttach, bounceAttach). */
+    internal val AttachSpring: SpringSpec<Dp> = folmeSpring(damping = 0.8f, response = 0.4f, visibilityThreshold = 0.1.dp)
+
+    /**
+     * The release velocity in dp per second past which a drag lands towards the fling, and the most
+     * it hands the landing spring (COUISwitchParams.transformVelocity: 1000 px/s at the 3.5x ColorOS
+     * reference density).
+     */
+    internal const val FLING_VELOCITY: Float = 1000f / 3.5f
 
     /**
      * The drop shadow under the thumb while the [Switch] is enabled

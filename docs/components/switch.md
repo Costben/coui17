@@ -25,6 +25,8 @@ Switch(
 )
 ```
 
+The thumb can also be dragged: it follows the finger and lands on the nearer side, or towards a fling. `onCheckedChange` is called once it has landed. A thumb that is mid-toggle cannot be grabbed, and a drag starting on the switch keeps a scrolling parent from taking over.
+
 ## Component States
 
 ### Disabled State
