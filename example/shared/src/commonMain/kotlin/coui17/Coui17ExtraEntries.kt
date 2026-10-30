@@ -162,7 +162,9 @@ fun FlowLayoutDemo() {
             .padding(bottom = 16.dp),
     ) {
         FlowLayout(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             itemSpacing = 8.dp,
             lineSpacing = 8.dp,
         ) {
@@ -352,7 +354,9 @@ fun BannerIndicatorDemo() {
             .padding(bottom = 16.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Banner(
