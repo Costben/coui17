@@ -62,6 +62,7 @@ import io.github.suqi8.coui.kmp.basic.couiTopAppBarActionItem
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.icon.extended.Back
+import io.github.suqi8.coui.kmp.icon.extended.Layers
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Settings
 import io.github.suqi8.coui.kmp.icon.extended.Translate
@@ -537,6 +538,7 @@ fun Coui17Panel(
                                 imageVector = when (page) {
                                     Coui17PanelPage.TextStyle -> COUIIcons.Translate
                                     Coui17PanelPage.Settings -> COUIIcons.Settings
+                                    Coui17PanelPage.SystemAlignment -> COUIIcons.Layers
                                 },
                                 contentDescription = null,
                                 modifier = it,

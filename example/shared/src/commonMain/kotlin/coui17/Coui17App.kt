@@ -76,6 +76,7 @@ import pages.ColorPage
 import pages.IconsPage
 import pages.SecondaryPagesNavHost
 import pages.SettingsPage
+import pages.SystemAlignmentPage
 import pages.TextStylePage
 import ui.AppTheme
 import ui.keyColorFor
@@ -104,6 +105,7 @@ enum class Coui17Page(val title: String) {
 enum class Coui17PanelPage(val title: String) {
     TextStyle("Text style"),
     Settings("Settings items"),
+    SystemAlignment("System alignment"),
     ;
 
     val route: Route.Panel get() = Route.Panel(name)
@@ -401,6 +403,7 @@ private fun Coui17PanelScreen(page: Coui17PanelPage) {
                 when (page) {
                     Coui17PanelPage.TextStyle -> TextStylePage(padding = pagePadding)
                     Coui17PanelPage.Settings -> SettingsPage(padding = pagePadding)
+                    Coui17PanelPage.SystemAlignment -> SystemAlignmentPage(padding = pagePadding)
                 }
             }
         },
