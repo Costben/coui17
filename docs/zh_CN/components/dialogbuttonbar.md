@@ -102,7 +102,7 @@ ColorOS 17 的对话框按钮栏不画分割线。`coui_center_alert_dialog_butt
 | 层 | 内容 | 实现 |
 | :--- | :--- | :--- |
 | 容器层 | 胶囊底色 | `DialogButtonBarDefaults.buttonFill()` 浅色 `0xAAFFFFFF`、深色 `0x33FFFFFF`。COUI 在模糊窗口下**不画**自己的背景（`onDraw` 里 `if (!isBlurEffectEnabled() \|\| mIsDrawMaterialEffect)`），胶囊其实是平台模糊层 `TYPE_CONTENT_SECONDARY_BUTTON` 提亮后的面板：实测面板 229、胶囊 246，正是 67% 白叠在面板上的结果。深色下的配方（`CONTENT_SECONDARY_BUTTON_PARAMS_DARK`）是 25px 模糊加 `#33FFFFFF`：面板 44、胶囊 86 |
-| 光效层 | 描边高光 | `Modifier.materialShadowEdge`。非推荐按钮走 `MaterialStrokeParams.contentCapsule5()`（`TYPE_CONTENT_CAPSULE_5`，edgeAlpha 0.8），推荐按钮走 `ContentCapsule4`（edgeAlpha 0.3） |
+| 光效层 | 描边高光 + 按压聚光 | `Modifier.materialShadowEdge`。非推荐按钮走 `MaterialStrokeParams.contentCapsule5()`（`TYPE_CONTENT_CAPSULE_5`，edgeAlpha 0.8），推荐按钮走 `ContentCapsule4`（edgeAlpha 0.3）。推荐按钮另外带 `TextButton(spotLight = SpotLightDefaults.capsuleParams1(isDark))`：`COUIButton.isSpotlightEffectEnabled()` 的聚光，按下时跟随手指，画在描边之上、文案之下 |
 | 交互层 | 按压反馈 | `pressScaleEnabled = true`，对应 `COUIAlertDialogBottomButtonSecondary` 的 `scaleEnable=true`；禁用时填充换成 `disabledButtonFill()`（`#14000000`） |
 
 描边画在填充**之上**、文案**之下**——和 `COUIButton.onDraw()` 的 `drawButtonBackground` → `drawMaskAndStroke` → `super.onDraw` 一致。
@@ -218,6 +218,7 @@ DialogButtonBar(
 - `getBlurWindowButtonType` 对 id 等于 `mRecommendButtonId` 的按钮返回 `ButtonType.PRIMARY`，其余返回 `SECONDARY`，所以按钮栏的填充正好沿 `recommended` 标记分界。
 - `applyRecommendStyle` 把按钮切到 `ButtonType.PRIMARY`、用 `color/coui_btn_default_text_color` 重设文案色，并打开实心填充动画模式（`setAnimType(1)`；`COUIButton.java` 在 `mAnimType == 1` 时直接用 `mDrawableColor` 填充）。`textButtonColorsPrimary()` 覆盖填充与文案着色。
 - 推荐按钮的光效换成 `TYPE_CONTENT_CAPSULE_4`（edgeAlpha 0.3）：主按钮本身已经很亮，描边要收得更淡。
+- 推荐按钮带按压聚光：`TextButton(spotLight = SpotLightDefaults.capsuleParams1(isDark))`，`pressSpotLight` 用 `COUISpotLightEffect` 默认的 `CAPSULE_PARAMS_1` 与 glow / move / extinguish 三根弹簧驱动，非推荐按钮为 `null`。
 - 单按钮纵排栏在该按钮是推荐按钮时仍会拿到 `StackedBarMarginTop`（`onMeasure` 判 `getButtonCount() == 1 && mRecommendButtonId != -1`）。
 
 ## 行为说明

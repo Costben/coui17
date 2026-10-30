@@ -102,7 +102,7 @@ The capsule is built from three layers, in the same order as `COUIButton.draw()`
 | Layer | What it is | How it is done |
 | :--- | :--- | :--- |
 | Container | The capsule fill | `DialogButtonBarDefaults.buttonFill()` = `0xAAFFFFFF` in light theme, `0x33FFFFFF` in dark. Under a blur window COUI does **not** paint its own background (`onDraw` guards it with `if (!isBlurEffectEnabled() \|\| mIsDrawMaterialEffect)`); the capsule is really the panel brightened by the platform blur layer `TYPE_CONTENT_SECONDARY_BUTTON` — measured 229 on the panel and 246 on the capsule, exactly a 67% white overlay. In dark theme the recipe (`CONTENT_SECONDARY_BUTTON_PARAMS_DARK`) is a 25px blur plus `#33FFFFFF`: 86 over a 44 panel |
-| Edge light | The rim highlight | `Modifier.materialShadowEdge`. A secondary button uses `MaterialStrokeParams.contentCapsule5()` (`TYPE_CONTENT_CAPSULE_5`, edgeAlpha 0.8); a recommended button uses `ContentCapsule4` (edgeAlpha 0.3) |
+| Edge light | The rim highlight and the press spotlight | `Modifier.materialShadowEdge`. A secondary button uses `MaterialStrokeParams.contentCapsule5()` (`TYPE_CONTENT_CAPSULE_5`, edgeAlpha 0.8); a recommended button uses `ContentCapsule4` (edgeAlpha 0.3). The recommended button also carries `TextButton(spotLight = SpotLightDefaults.capsuleParams1(isDark))`: the `COUIButton.isSpotlightEffectEnabled()` light, which follows the finger while pressed and paints over the rim and under the label |
 | Interaction | Press feedback | `pressScaleEnabled = true`, mirroring `scaleEnable=true` on `COUIAlertDialogBottomButtonSecondary`; a disabled button swaps the fill for `disabledButtonFill()` (`#14000000`) |
 
 The rim paints **over** the fill and **under** the label, exactly like `drawButtonBackground` → `drawMaskAndStroke` → `super.onDraw`.
@@ -225,6 +225,7 @@ Mirrors `COUIButtonBarLayout.setRecommendButtonId`:
 - `getBlurWindowButtonType` returns `ButtonType.PRIMARY` for the button whose id equals `mRecommendButtonId` and `SECONDARY` for the rest, so the fill of the bar splits exactly along the `recommended` flag.
 - `applyRecommendStyle` switches the button to `ButtonType.PRIMARY`, recolours the label through `color/coui_btn_default_text_color` and turns on the solid-fill animation mode (`setAnimType(1)`; `COUIButton.java` fills straight from `mDrawableColor` when `mAnimType == 1`). `textButtonColorsPrimary()` covers both the fill and the label tint.
 - The recommended button's rim switches to `TYPE_CONTENT_CAPSULE_4` (edgeAlpha 0.3): the primary fill is already bright, so the edge light has to be quieter.
+- The recommended button carries the press spotlight: `TextButton(spotLight = SpotLightDefaults.capsuleParams1(isDark))`, driven by `pressSpotLight` with `CAPSULE_PARAMS_1` — the default of `COUISpotLightEffect` — and its glow / move / extinguish springs. Every other button passes `null`.
 - A single-button stacked bar still gets `StackedBarMarginTop` when that button is the recommended one (`onMeasure` checks `getButtonCount() == 1 && mRecommendButtonId != -1`).
 
 ## Behavior Notes

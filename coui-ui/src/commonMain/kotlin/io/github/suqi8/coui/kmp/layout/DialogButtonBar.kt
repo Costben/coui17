@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
+import io.github.suqi8.coui.kmp.basic.SpotLightDefaults
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TextButtonColors
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
@@ -104,9 +105,10 @@ data class DialogButtonBarAction(
  *    than the `?couiColorContainer8` the style names.
  * 2. **光效层** — `COUIButton.isSpotlightEffectEnabled()` clips a `COUISpotLightEffectDrawable` to
  *    the button path, and `COUIShadowEdgeDrawable` (edge style 0 / shadow style 0, corner type 2,
- *    weight 2.0) paints the rim. Only the recommend button (`PRIMARY`) gets the spotlight; the rim
- *    survives in this port as the panel's own `materialShadowEdge`, because the capsule is drawn by
- *    [TextButton] whose fill sits above any edge modifier the caller can pass.
+ *    weight 2.0) paints the rim. Only the recommend button (`PRIMARY`) gets the spotlight: it is
+ *    [TextButton]'s `spotLight`, driven by `pressSpotLight` with `CAPSULE_PARAMS_1`, the default of
+ *    `COUISpotLightEffect`. The rim is the capsule's `edgeStroke`; the panel's own
+ *    `materialShadowEdge` is a separate, larger outline around the whole dialog.
  * 3. **交互层** — `COUITouchMotionAnimator` scales the capsule down while pressed and
  *    `COUIMaskEffectDrawable` washes it. Both live in [TextButton].
  *
@@ -451,10 +453,11 @@ private fun DialogBarButton(
     // COUIMaterialEffect.getStrokeParamsByType). A secondary button uses TYPE_CONTENT_CAPSULE_5,
     // whose 0.8 alpha is why the native capsule's edge reads almost white; a recommended button is
     // a PRIMARY button and takes the much dimmer TYPE_CONTENT_CAPSULE_4.
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val edgeStroke = if (action.recommended) {
         MaterialStrokeParams.ContentCapsule4
     } else {
-        MaterialStrokeParams.contentCapsule5(COUITheme.colorScheme.background.luminance() < 0.5f)
+        MaterialStrokeParams.contentCapsule5(isDark)
     }
     TextButton(
         text = action.text,
@@ -474,6 +477,9 @@ private fun DialogBarButton(
         insideMargin = DialogButtonBarDefaults.ButtonInsideMargin,
         textStyle = textStyle,
         edgeStroke = edgeStroke,
+        // `COUIButton.isSpotlightEffectEnabled()`: only the PRIMARY (recommend) button carries the
+        // light. It is painted under the label and follows the finger while the capsule is held.
+        spotLight = if (action.recommended) SpotLightDefaults.capsuleParams1(isDark) else null,
     )
 }
 

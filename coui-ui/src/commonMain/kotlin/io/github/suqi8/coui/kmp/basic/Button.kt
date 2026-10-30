@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -71,6 +72,11 @@ import kotlin.coroutines.cancellation.CancellationException
  *   button. It is opt-in here because the preset differs per button type and a filled primary
  *   button's rim is far dimmer than a secondary one's. The rim is drawn *over* the fill and *under*
  *   the label, inside the press-scale layer, exactly like the native draw order.
+ * @param spotLight The press spotlight of a `COUIButton`, or `null` for no light. ColorOS 17 turns
+ *   it on for the recommend button (`COUIButton.ButtonType.PRIMARY`); pass
+ *   [SpotLightDefaults.capsuleParams1] resolved for the current night mode. The light is painted
+ *   *over* the fill and the rim and *under* the label, and follows the finger while pressed — see
+ *   [pressSpotLight].
  * @param content The [Composable] content of the [Button].
  */
 @OptIn(ExperimentalCOUIApi::class)
@@ -89,6 +95,7 @@ fun Button(
     indication: Indication? = null,
     size: ButtonSize = ButtonSize.Regular,
     edgeStroke: MaterialStrokeParams? = null,
+    spotLight: SpotLightParams? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     @Suppress("NAME_SHADOWING")
@@ -153,6 +160,17 @@ fun Button(
     } else {
         Modifier
     }
+    // COUIButton.draw: background → mask/stroke → spotlight → text. The light is a later modifier
+    // than the surface and the rim, and an earlier one than the label.
+    val lightModifier = if (spotLight != null) {
+        Modifier.pressSpotLight(
+            params = spotLight,
+            shape = SquircleShape(resolvedCornerRadius),
+            enabled = enabled,
+        )
+    } else {
+        Modifier
+    }
 
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         Box(
@@ -169,6 +187,7 @@ fun Button(
                 }
                 .squircleSurface(color = fillColor, cornerRadius = resolvedCornerRadius)
                 .then(rimModifier)
+                .then(lightModifier)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = indication,
@@ -251,6 +270,7 @@ fun Button(
  *   New in 1.2.0.
  * @param edgeStroke The rim drawn over the capsule fill, or `null` for no rim. See
  *   [Button]'s `edgeStroke`.
+ * @param spotLight The press spotlight, or `null` for no light. See [Button]'s `spotLight`.
  */
 @OptIn(ExperimentalCOUIApi::class)
 @Composable
@@ -270,6 +290,7 @@ fun TextButton(
     indication: Indication? = null,
     size: ButtonSize = ButtonSize.Regular,
     edgeStroke: MaterialStrokeParams? = null,
+    spotLight: SpotLightParams? = null,
 ) {
     val mappedColors = remember(colors) {
         ButtonColors(
@@ -293,6 +314,7 @@ fun TextButton(
         indication = indication,
         size = size,
         edgeStroke = edgeStroke,
+        spotLight = spotLight,
     ) {
         Text(
             text = text,
