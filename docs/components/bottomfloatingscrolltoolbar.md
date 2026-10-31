@@ -40,6 +40,8 @@ BottomFloatingScrollToolbar {
 
 Because the ColorOS Photos editor runs on a fixed dark canvas, `BottomFloatingScrollToolbarDefaults.colors()` defaults to the editor's dark palette (`#232323` fill, `0.67.dp` `#0DFFFFFF` hairline under `TYPE_FRAMEWORK_CAPSULE_13` material rim, `#73FFFFFF` idle items, and `#FFB200` selected items). Pass a custom `BottomFloatingScrollToolbarColors` when adapting the bar to another surface.
 
+The pill's fill, border, clip and touch highlight share one `CapsuleOutlineShape` and follow the system capsule curve (`addSegmentCapsule`); the material rim uses the capsule corner weight (1.0 for a wide pill, 2.0 for a square one).
+
 ## Properties
 
 ### BottomFloatingScrollToolbar Properties
@@ -77,7 +79,7 @@ Because the ColorOS Photos editor runs on a fixed dark canvas, `BottomFloatingSc
 | Constant Name        | Type                | Description                                              | Value                         |
 | -------------------- | ------------------- | -------------------------------------------------------- | ----------------------------- |
 | Height               | Dp                  | Height of the pill and of each item                      | 56.dp                         |
-| CornerRadius         | Dp                  | Stadium corner radius of the pill                        | 28.dp                         |
+| CornerRadius         | Dp                  | Pill corner radius; at 28dp on the 56dp pill it draws the system capsule curve | 28.dp                         |
 | MaxWidth             | Dp                  | Maximum width of the pill                                | 460.dp                        |
 | MarginHorizontal     | Dp                  | Outer horizontal margin kept on either side              | 16.dp                         |
 | ContentPadding       | Dp                  | Horizontal padding inside the scrolling row              | 16.dp                         |

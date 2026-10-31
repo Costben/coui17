@@ -4,7 +4,9 @@
 
 package component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -29,6 +31,7 @@ import io.github.suqi8.coui.kmp.icon.extended.Copy
 import io.github.suqi8.coui.kmp.icon.extended.Delete
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Share
+import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
 
@@ -36,6 +39,11 @@ import io.github.suqi8.coui.kmp.window.WindowListPopup
 @Composable
 fun HorizontalPopupMenuDemo() {
     var showPopup by remember { mutableStateOf(false) }
+    // The shortest menu the popup draws: one row, so the fixed 28dp corner radius is exactly half
+    // the panel height. Both hosts are covered because the window host is a separate window and
+    // the overlay host composes into the root scaffold.
+    var showSingleRowWindow by remember { mutableStateOf(false) }
+    var showSingleRowOverlay by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableIntStateOf(0) }
     val s = LocalAppStrings.current
     val rows = remember(s) { listOf(s["Option 1"], s["Option 2"], s["Option 3"]) }
@@ -47,10 +55,50 @@ fun HorizontalPopupMenuDemo() {
             .padding(bottom = 24.dp),
         contentAlignment = Alignment.Center,
     ) {
-        TextButton(
-            text = str("Show HorizontalPopupMenu"),
-            onClick = { showPopup = true },
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                text = str("Show HorizontalPopupMenu"),
+                onClick = { showPopup = true },
+            )
+            TextButton(
+                text = str("Show single-row WindowListPopup"),
+                onClick = { showSingleRowWindow = true },
+            )
+            TextButton(
+                text = str("Show single-row OverlayListPopup"),
+                onClick = { showSingleRowOverlay = true },
+            )
+        }
+        WindowListPopup(
+            show = showSingleRowWindow,
+            onDismissRequest = { showSingleRowWindow = false },
+        ) {
+            val dismiss = LocalDismissState.current
+            ListPopupColumn {
+                DropdownImpl(
+                    text = str("Only row"),
+                    optionSize = 1,
+                    isSelected = false,
+                    index = 0,
+                    onSelectedIndexChange = { dismiss?.invoke() },
+                )
+            }
+        }
+        OverlayListPopup(
+            show = showSingleRowOverlay,
+            onDismissRequest = { showSingleRowOverlay = false },
+        ) {
+            val dismiss = LocalDismissState.current
+            ListPopupColumn {
+                DropdownImpl(
+                    text = str("Only row"),
+                    optionSize = 1,
+                    isSelected = false,
+                    index = 0,
+                    onSelectedIndexChange = { dismiss?.invoke() },
+                )
+            }
+        }
         WindowListPopup(
             show = showPopup,
             onDismissRequest = { showPopup = false },

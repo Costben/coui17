@@ -7,9 +7,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.PixelMap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -20,9 +26,12 @@ import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 private const val CANVAS_WIDTH_DP = 240f
@@ -245,6 +254,116 @@ class MetaBallSurfaceRenderTest {
             "merged=$merged and separated=$separated must be visibly different",
         )
     }
+
+    @Test
+    fun metaBallContinuousCurveMatchesSegmentCapsuleWithinThreshold() {
+        val radius = 28f
+        val halfW = 150f
+        fun shaderDistance(x: Float, y: Float, continuousCurve: Boolean): Float {
+            val qx = abs(x) - (halfW - radius)
+            val qy = abs(y)
+            var d = minOf(maxOf(qx, qy), 0f) + sqrt(maxOf(qx, 0f) * maxOf(qx, 0f) + maxOf(qy, 0f) * maxOf(qy, 0f)) - radius
+            if (continuousCurve) {
+                if (halfW > radius && radius >= radius - 0.001f) {
+                    val s = halfW - abs(x)
+                    val tail = minOf(1.5f, halfW / radius)
+                    val s0 = 0.2250555f * radius
+                    val s1 = tail * radius
+                    if (s > s0 && s < s1) {
+                        val u = (s - s0) / (s1 - s0)
+                        val uFactor = u * u * (1f - u) * (1f - u)
+                        d += uFactor * (0.003318f + u * (1.529298f - 1.888829f * u)) * radius
+                    }
+                }
+            }
+            return d
+        }
+
+        // Circular particles remain pure circles:
+        val r = 28f
+        val qx = 20f
+        val qy = 20f
+        val circleDist = minOf(maxOf(qx, qy), 0f) + sqrt(qx * qx + qy * qy) - r
+        val expectedCircleDist = sqrt(20f * 20f + 20f * 20f) - 28f
+        assertEquals(expectedCircleDist, circleDist, 1e-4f, "Circular particles must remain pure circles")
+
+        // SegmentCapsule contour error:
+        val path = Path().apply { addSegmentCapsule(Rect(0f, 0f, halfW * 2f, radius * 2f)) }
+        val measure = PathMeasure().apply { setPath(path, false) }
+        val length = measure.length
+        val sampleCount = 2000
+        var maxError = 0f
+        var maxDipAtR = 0f
+        for (i in 0..sampleCount) {
+            val pos = measure.getPosition(i * length / sampleCount)
+            val xLocal = pos.x - halfW
+            val yLocal = pos.y - radius
+            val dist = abs(shaderDistance(xLocal, yLocal, continuousCurve = true))
+            if (dist > maxError) maxError = dist
+
+            val s = halfW - abs(xLocal)
+            if (abs(s - radius) < 0.2f && abs(yLocal) > radius * 0.5f) {
+                val roundboxDist = abs(shaderDistance(xLocal, yLocal, continuousCurve = false))
+                if (roundboxDist > maxDipAtR) maxDipAtR = roundboxDist
+            }
+        }
+        println("[metaball-curve] maxError=${maxError / radius}R maxDipAtR=${maxDipAtR / radius}R")
+        assertTrue(maxError <= 0.005f * radius, "Contour error $maxError must be <= 0.005R (${0.005f * radius})")
+        assertTrue(abs(maxDipAtR / radius - 0.0134f) < 0.001f, "Dip at x=R should be ~0.0134R, was ${maxDipAtR / radius}")
+    }
+
+    @Test
+    fun metaBallContinuousCurveRendersSegmentCapsuleCorner() = runSkikoComposeUiTest(
+        size = Size(600f, 300f),
+        density = Density(4f),
+    ) {
+        setContent {
+            COUITheme {
+                Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
+                    MetaBallSurface(
+                        particles = listOf(MetaBallParticle(75.dp, 35.dp, 120.dp, 56.dp, cornerRadius = 28.dp)),
+                        modifier = Modifier.size(150.dp, 70.dp),
+                        color = Color.Black,
+                        backdrop = null,
+                        rimColor = null,
+                        blurColors = null,
+                        continuousCurve = true,
+                    )
+                }
+            }
+        }
+        waitForIdle()
+        val fit = fitTopLeftCorner(onRoot().captureToImage().toPixelMap()) { it.luminance() < 0.2f }
+        println("[metaball-render] rmsSegment=${fit.rmsSegment} rmsCircle=${fit.rmsCircle}")
+        assertTrue(fit.rmsSegment < fit.rmsCircle, "MetaBallSurface with continuousCurve must fit SegmentCapsule better than circle")
+        assertTrue(fit.rmsSegment < 1.0, "segment residual ${fit.rmsSegment}px too large")
+    }
+
+    @Test
+    fun metaBallWithoutContinuousCurveStaysStandardRoundBox() = runSkikoComposeUiTest(
+        size = Size(600f, 300f),
+        density = Density(4f),
+    ) {
+        setContent {
+            COUITheme {
+                Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
+                    MetaBallSurface(
+                        particles = listOf(MetaBallParticle(75.dp, 35.dp, 120.dp, 56.dp, cornerRadius = 28.dp)),
+                        modifier = Modifier.size(150.dp, 70.dp),
+                        color = Color.Black,
+                        backdrop = null,
+                        rimColor = null,
+                        blurColors = null,
+                        continuousCurve = false,
+                    )
+                }
+            }
+        }
+        waitForIdle()
+        val fit = fitTopLeftCorner(onRoot().captureToImage().toPixelMap()) { it.luminance() < 0.2f }
+        println("[metaball-nocontrol] rmsSegment=${fit.rmsSegment} rmsCircle=${fit.rmsCircle}")
+        assertTrue(fit.rmsCircle < fit.rmsSegment, "MetaBallSurface without continuousCurve must be a circle")
+    }
 }
 
 @Composable
@@ -316,5 +435,83 @@ private fun maxChannelDelta(a: Color, b: Color): Int {
         abs((aArgb shr 16 and 0xFF) - (bArgb shr 16 and 0xFF)),
         abs((aArgb shr 8 and 0xFF) - (bArgb shr 8 and 0xFF)),
         abs((aArgb and 0xFF) - (bArgb and 0xFF)),
+    )
+}
+
+private data class CornerFit(val rmsCircle: Double, val rmsSegment: Double, val r: Int)
+
+private fun fitTopLeftCorner(pixels: PixelMap, fill: (Color) -> Boolean): CornerFit {
+    var left = Int.MAX_VALUE
+    var top = Int.MAX_VALUE
+    var right = -1
+    var bottom = -1
+    for (y in 0 until pixels.height) {
+        for (x in 0 until pixels.width) {
+            if (!fill(pixels[x, y])) continue
+            if (x < left) left = x
+            if (x > right) right = x
+            if (y < top) top = y
+            if (y > bottom) bottom = y
+        }
+    }
+    check(right > left && bottom > top) { "no filled pixels" }
+    val width = right - left + 1
+    val r = (bottom - top + 1) / 2
+    val measured = ArrayList<Double>()
+    val rows = ArrayList<Double>()
+    val maxU = (1.6 * r).toInt()
+    for (y in top + 1 until top + r) {
+        var edge = -1
+        for (x in maxOf(0, left - 2) until minOf(pixels.width, left + maxU)) {
+            if (fill(pixels[x, y])) {
+                edge = x
+                break
+            }
+        }
+        if (edge >= 0) {
+            measured += (edge - left).toDouble()
+            rows += (y - top).toDouble()
+        }
+    }
+    val circle = DoubleArray(measured.size) { index ->
+        val v = rows[index]
+        r - sqrt((r * r - (r - v) * (r - v)).coerceAtLeast(0.0))
+    }
+    val segment = segmentProfile(rows, r, width)
+    return CornerFit(rms(measured, circle), rms(measured, segment), r)
+}
+
+private fun segmentProfile(rows: List<Double>, r: Int, width: Int): DoubleArray {
+    val path = Path().apply { addSegmentCapsule(Rect(0f, 0f, width.toFloat(), (2 * r).toFloat())) }
+    val measure = PathMeasure().apply { setPath(path, false) }
+    val samples = DoubleArray(r + 1) { Double.NaN }
+    val steps = 20_000
+    for (i in 0..steps) {
+        val point = measure.getPosition(measure.length * i / steps)
+        val v = point.y.toInt()
+        if (v in 0..r && point.x <= 1.6f * r) {
+            if (samples[v].isNaN() || point.x < samples[v]) samples[v] = point.x.toDouble()
+        }
+    }
+    for (i in samples.indices) {
+        if (!samples[i].isNaN()) continue
+        val lower = (i - 1 downTo 0).firstOrNull { !samples[it].isNaN() }
+        val upper = (i + 1..r).firstOrNull { !samples[it].isNaN() }
+        samples[i] = when {
+            lower != null -> samples[lower]
+            upper != null -> samples[upper]
+            else -> 0.0
+        }
+    }
+    return DoubleArray(rows.size) { samples[rows[it].toInt()] }
+}
+
+private fun rms(measured: List<Double>, model: DoubleArray): Double {
+    val offset = measured.indices.sumOf { measured[it] - model[it] } / measured.size
+    return sqrt(
+        measured.indices.sumOf {
+            val d = measured[it] - model[it] - offset
+            d * d
+        } / measured.size,
     )
 }

@@ -722,7 +722,13 @@ internal fun notificationSwipeParticles(
     val particles = mutableListOf(card, delete)
 
     for (i in 1 until actionCount) {
-        val recoil = if (actionRecoils.size > i) actionRecoils[i] else if (i == 1) settingsRecoil else 0f
+        val recoil = if (actionRecoils.size > i) {
+            actionRecoils[i]
+        } else if (i == 1) {
+            settingsRecoil
+        } else {
+            0f
+        }
         val follow = distance * NotificationSwipeDefaults.FollowRatio * (1f - recoil)
         val scale = 1f - (1f - NotificationSwipeDefaults.MERGED_SCALE) * merge.coerceIn(0f, 1f)
         particles.add(
@@ -735,7 +741,7 @@ internal fun notificationSwipeParticles(
                 scaleX = scale,
                 scaleY = scale,
                 alpha = menuAlpha,
-            )
+            ),
         )
     }
     return particles

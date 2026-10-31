@@ -106,7 +106,7 @@ Chip(
 | dismissIcon       | (@Composable () -> Unit)?  | 自定义关闭按钮内容               | null(内置 Close)         | 否   |
 | dismissContentDescription | String             | 关闭按钮的无障碍描述             | ChipDefaults.DISMISS_CONTENT_DESCRIPTION | 否 |
 | dismissButtonSize | Dp                         | 关闭按钮的点击目标尺寸           | ChipDefaults.DismissButtonSize | 否   |
-| cornerRadius      | Dp                         | 胶囊圆角                         | ChipDefaults.CornerRadius | 否   |
+| cornerRadius      | Dp                         | 胶囊圆角；默认取实测高度的一半并走系统胶囊曲线，显式传入更小值保持 Lp 超椭圆 | ChipDefaults.CornerRadius | 否   |
 | minWidth          | Dp                         | 最小宽度                         | ChipDefaults.MinWidth     | 否   |
 | minHeight         | Dp                         | 最小高度                         | ChipDefaults.MinHeight    | 否   |
 | maxWidth          | Dp                         | 最大宽度                         | ChipDefaults.MaxWidth     | 否   |
@@ -123,7 +123,7 @@ Chip(
 | MinHeight    | Dp            | 32.dp                             | coui_chip_selection_style_height                 |
 | MaxWidth     | Dp            | 300.dp                            | coui_chip_default_max_width                      |
 | TextMaxWidth | Dp            | 200.dp                            | coui_chip_default_max_text_width                 |
-| CornerRadius | Dp            | 16.dp                             | chipCornerRadius -1 → 胶囊(高度 / 2)          |
+| CornerRadius | Dp            | 16.dp                             | chipCornerRadius -1 → 胶囊(高度 / 2)，按系统胶囊曲线绘制 |
 | IconSize     | Dp            | 16.dp                             | coui_chip_selection_style_chip_icon_size         |
 | IconSpacing  | Dp            | 4.dp                              | coui_chip_selection_style_chip_icon_end_padding  |
 | DismissIconSize | Dp         | 14.dp                             | 内置关闭图标的大小                               |

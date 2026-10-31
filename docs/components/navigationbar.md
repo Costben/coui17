@@ -400,6 +400,8 @@ The capsule is measured the way `BaseBottomFloatingMenuView.onMeasure` measures 
 - when `totalItemMax` fits the width the bar leaves over, the capsule is exactly `totalItemMax` wide and every item is 70dp; otherwise the capsule takes the available width and every item gets `(available - 24 - (n - 1) * 8) / n`, truncated to whole pixels;
 - every child is measured with an exact width and placed at `x = 12 + i * (itemWidth + 8)`, centred vertically in the capsule.
 
+The capsule's fill, blur, shadow and touch highlight share one `CapsuleOutlineShape`. At the 28dp radius of the 56dp bar it follows the system capsule curve (`addSegmentCapsule`, `OplusPathAdapter.addSmoothRoundRect` without a weight), not a circular stadium; a smaller explicit radius keeps the Lp squircle. The expansion view's round silhouette stays a circle.
+
 The 12dp inner padding is part of the capsule's own width rather than a `padding` modifier, so the glass surface and the radial touch highlight span the whole capsule. `RowScope.weight` and `RowScope.align` do nothing inside this bar: the row measures every child itself, matching the native menu view, which has no weight concept and places each child at its own computed x.
 
 Vertically, the capsule is centred in the bar's 88dp box, as `COUIBottomFloatingNavigationBar.onLayout` centres its menu view. The room under the box belongs to the host: pad it with `BottomFloatingNavigationBarDefaults.navigationBarPadding()` — 8dp under gesture navigation (`MenuToScreenNaviDistance`), 36dp under three-button navigation (`ButtonNavigationDistance`), nothing without a navigation bar — in place of `navigationBarsPadding()`. Under gesture navigation the capsule then ends 24dp above the screen edge, as in the ColorOS 17 Gallery.

@@ -120,7 +120,7 @@ TopTips(
 | style             | TopTipsStyle               | `Standard` 或 `AiPayment`；决定布局模式                  | TopTipsStyle.Standard                      | 否   |
 | backgroundStyle   | TopTipsBackgroundStyle     | 纯色填充：`White`（`couiColorCard`）或 `Gray`（`couiColorContainer4`） | TopTipsBackgroundStyle.Gray     | 否   |
 | backgroundOverlay | (@Composable () -> Unit)?  | 覆盖在填充之上的叠层；设置后卡片填充变透明                | null                                       | 否   |
-| cornerRadius      | Dp?                        | 显式圆角；null 时遵循原生圆角规则                        | null                                       | 否   |
+| cornerRadius      | Dp?                        | 显式圆角；null 时遵循原生规则：无标题单行为正圆，其余为 28dp 的 Lp(2.5) 超椭圆 | null                                       | 否   |
 | colors            | TopTipsColors              | 颜色配置                                                 | TopTipsDefaults.topTipsColors(backgroundStyle) | 否 |
 | content           | (@Composable () -> Unit)?  | 自定义文案插槽；非 null 时替换 `text`（1.2.0 新增）       | null                                       | 否   |
 
@@ -129,7 +129,7 @@ TopTips(
 | 常量                   | 类型 | 值     | COUI 来源                                  |
 | ---------------------- | ---- | ------ | ------------------------------------------ |
 | CornerRadius           | Dp   | 28.dp  | coui_toptips_view_radius（ColorOS 17）     |
-| SingleLineCornerRadius | Dp   | 72.dp  | couiRoundCornerFULL                        |
+| SingleLineCornerRadius | Dp   | 72.dp  | couiRoundCornerFULL；解析为满半径正圆 |
 | ContentPadding         | Dp   | 12.dp  | coui_toptips_view_content_top_margin       |
 | IconSize               | Dp   | 24.dp  | coui_toptips_view_icon_btn_size            |
 | TitleIconSize          | Dp   | 36.dp  | coui_toptips_view_title_icon_size          |
@@ -137,7 +137,7 @@ TopTips(
 | TextMinHeight          | Dp   | 20.dp  | coui_toptips_view_content_min_height       |
 | TitleMinHeight         | Dp   | 22.dp  | coui_toptips_view_title_min_height         |
 
-`getMultiLineRadius` 对不是「无标题单行」的提示条使用 `CornerRadius`；`getSingleLineRadius` 对能放进一行的无标题文案使用 `SingleLineCornerRadius`。
+`getMultiLineRadius` 对不是「无标题单行」的提示条使用 `CornerRadius`；`getSingleLineRadius` 对能放进一行的无标题文案使用 `SingleLineCornerRadius`。单行形态走 Outline 路径、权重 1.0，即满半径正圆。多行形态继续使用 28dp 的 Lp(2.5) 超椭圆：系统的 3.0 目前没有对应实现。
 
 #### 方法
 

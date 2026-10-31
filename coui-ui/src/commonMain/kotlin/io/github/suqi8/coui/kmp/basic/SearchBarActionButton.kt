@@ -10,14 +10,13 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -32,7 +31,8 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * The functional button beside an expanded search bar: `SearchBarFunctionButton` of `COUISearchBar`.
  *
  * It is a 40dp capsule (`coui_search_bar_normal_background_height`) filled with the same material as
- * the search field.
+ * the search field. Its ends follow the ColorOS capsule curve — a circular arc joined to a
+ * 1.5-radius easing tail — rather than a circular stadium.
  *
  * `COUISearchBar.updateCausticShadow` attaches the light to the functional button as well as to the
  * field, so the button casts its own caustic band while the search bar is being edited.
@@ -60,6 +60,13 @@ fun SearchBarActionButton(
     content: @Composable () -> Unit,
 ) {
     val actualInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+    // The system capsule: the fill, the glow cut-out and the press clip all trace the arc plus the
+    // 1.5-radius easing tail measured on ColorOS 17, not a circular stadium.
+    val cornerWeightFor: (Float, Float) -> Float = remember {
+        { width, height ->
+            if (width == height) MaterialShadowEdgeDefaults.CapsuleCornerWeight else MaterialShadowEdgeDefaults.CornerWeight
+        }
+    }
     Box(modifier = modifier.height(SearchBarActionButtonDefaults.Height)) {
         if (glowColor != null) {
             // Same outside-only layer the field uses: the capsule is punched out of the light.
@@ -67,10 +74,7 @@ fun SearchBarActionButton(
                 modifier = Modifier
                     .matchParentSize()
                     .drawWithContent {
-                        val radius = size.height / 2f
-                        val capsule = Path().apply {
-                            addRoundRect(RoundRect(0f, 0f, size.width, size.height, radius, radius))
-                        }
+                        val capsule = Path().apply { addSegmentCapsule(size.toRect()) }
                         clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
                     },
             ) {
@@ -81,12 +85,15 @@ fun SearchBarActionButton(
             modifier = Modifier
                 .defaultMinSize(minWidth = SearchBarActionButtonDefaults.Height)
                 .fillMaxHeight()
-                .clip(CircleShape)
+                .clip(SegmentCapsuleShape)
                 .background(color = containerColor)
-                .materialShadowEdge(stroke = SearchBarDefaults.searchBarStroke())
+                .materialShadowEdgeBySize(
+                    stroke = SearchBarDefaults.searchBarStroke(),
+                    cornerWeightFor = cornerWeightFor,
+                )
                 .couiTouchMotion(
                     enabled = enabled,
-                    shape = CircleShape,
+                    shape = SegmentCapsuleShape,
                 )
                 .clickable(
                     interactionSource = actualInteractionSource,

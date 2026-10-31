@@ -4,6 +4,7 @@
 
 package component
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -137,6 +138,7 @@ fun WindowDialogVariantsDemo() {
 fun WindowIconMenuVariantsDemo() {
     var selected by remember { mutableIntStateOf(0) }
     var popupShown by remember { mutableStateOf(false) }
+    var singleRowPopupShown by remember { mutableStateOf(false) }
     val entries = remember(selected) {
         listOf(
             DropdownEntry(
@@ -175,26 +177,49 @@ fun WindowIconMenuVariantsDemo() {
         )
     }
 
+    val singleRowCascading = remember {
+        listOf(
+            DropdownEntry(
+                items = listOf(
+                    DropdownItem(
+                        text = "Section A",
+                        children = listOf(DropdownItem(text = "A-1")),
+                    ),
+                ),
+            ),
+        )
+    }
+
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            WindowIconDropdownMenu(
-                entries = entries,
-                content = { Icon(imageVector = COUIIcons.More, contentDescription = null) },
-            )
-            Spacer(modifier = Modifier.width(24.dp))
-            WindowIconCascadingDropdownMenu(
-                entries = cascading,
-                content = { Icon(imageVector = COUIIcons.More, contentDescription = null) },
-            )
-            Spacer(modifier = Modifier.width(24.dp))
+        Column {
+            Row(modifier = Modifier.padding(16.dp)) {
+                WindowIconDropdownMenu(
+                    entries = entries,
+                    content = { Icon(imageVector = COUIIcons.More, contentDescription = null) },
+                )
+                Spacer(modifier = Modifier.width(24.dp))
+                WindowIconCascadingDropdownMenu(
+                    entries = cascading,
+                    content = { Icon(imageVector = COUIIcons.More, contentDescription = null) },
+                )
+                Spacer(modifier = Modifier.width(24.dp))
+                ArrowPreference(
+                    title = str("WindowCascadingListPopup"),
+                    summary = str("The popup the cascading icon menu hosts"),
+                    onClick = { popupShown = true },
+                )
+            }
+            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            // A cascading menu whose primary panel carries a single row, so the one-row geometry is
+            // reachable on the cascading path too.
             ArrowPreference(
-                title = str("WindowCascadingListPopup"),
-                summary = str("The popup the cascading icon menu hosts"),
-                onClick = { popupShown = true },
+                title = str("WindowCascadingListPopup (single row)"),
+                summary = str("A one-row primary panel"),
+                onClick = { singleRowPopupShown = true },
             )
         }
     }
@@ -203,5 +228,11 @@ fun WindowIconMenuVariantsDemo() {
         show = popupShown,
         entries = cascading,
         onDismissRequest = { popupShown = false },
+    )
+
+    WindowCascadingListPopup(
+        show = singleRowPopupShown,
+        entries = singleRowCascading,
+        onDismissRequest = { singleRowPopupShown = false },
     )
 }

@@ -4,6 +4,7 @@ package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -52,9 +53,7 @@ import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
-import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
-import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
 
@@ -224,9 +223,8 @@ private fun Placeable.PlacementScope.placeRelativeGroups(
  * [BottomFloatingToolbarDefaults.ItemViewSpace], with
  * [BottomFloatingToolbarDefaults.MenuViewItemBgInsetHorizontal] between them and the capsule's ends.
  *
- * Smooth-corner surfaces use [MaterialShadowEdgeDefaults.SquircleCornerWeight] so the material rim
- * follows the glass silhouette. Plain rounded surfaces retain the native single-item versus
- * multi-item weights; the count comes from the items this group measured.
+ * The fill, blur and material rim use the system capsule curve, and the rim's corner weight follows
+ * `COUIButton.updateStrokeCorner`: 1.0 for a wide capsule, 2.0 for a square one.
  *
  * @param modifier The modifier to be applied to the capsule.
  * @param content The content of the capsule, usually [BottomFloatingToolbarItem]s.
@@ -240,19 +238,20 @@ fun BottomFloatingToolbarGroup(
     val containerColor = LocalBottomFloatingToolbarContainerColor.current ?: COUITheme.colorScheme.bar
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
 
-    var itemCount by remember { mutableIntStateOf(0) }
     val cornerRadius = BottomFloatingToolbarDefaults.capsuleCornerRadius(
         height = BottomFloatingToolbarDefaults.MenuViewHeight,
     )
     val squircleEnabled = isSquircleEnabled()
     val shape = remember(cornerRadius, squircleEnabled) {
-        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+        CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val stroke = remember(isDark) { MaterialStrokeParams.frameworkCapsule13(isDark) }
     val blurColors = BottomFloatingToolbarDefaults.blurColors(isDark)
     val touchState = rememberCOUITouchMotionState()
     val systemCaustic = rememberPlatformCausticShadowRenderer() != null
     val density = LocalDensity.current
+    val cornerRadiusPx = with(density) { cornerRadius.toPx() }
+    val itemCount = remember { intArrayOf(0) }
     val height = BottomFloatingToolbarDefaults.MenuViewHeight
     var capsuleWidthPx by remember { mutableIntStateOf(0) }
     val capsuleWidth = with(density) { capsuleWidthPx.toDp() }
@@ -267,7 +266,7 @@ fun BottomFloatingToolbarGroup(
             colors = blurColors,
         )
     } else {
-        Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius)
+        Modifier.background(color = containerColor, shape = shape)
     }
 
     // getDisplayFrame: the union of the visible menu views is the toolbar's popup barrier.
@@ -320,24 +319,23 @@ fun BottomFloatingToolbarGroup(
                     surface = blurSurface
                         // materialShadowEdge returns a bare fallback when the platform rejects
                         // runtime shaders, so the surface is handed back as its own fallback.
-                        .materialShadowEdge(
+                        // The rim follows native computeMaterialCornerWeight: 2.0 when the visible
+                        // item count is one (SingleItemCornerWeight), otherwise capsuleRimCornerWeight.
+                        .materialShadowEdgeBySize(
                             stroke = stroke,
-                            cornerWeight = if (squircleEnabled) {
-                                // The glass fill and highlight use the same Lp(2.5) squircle. Keeping
-                                // the material rim on that geometry prevents bright corner lobes
-                                // outside the fill.
-                                MaterialShadowEdgeDefaults.SquircleCornerWeight
-                            } else if (itemCount == 1) {
-                                MaterialShadowEdgeDefaults.SingleItemCornerWeight
-                            } else {
-                                MaterialShadowEdgeDefaults.CornerWeight
+                            cornerWeightFor = { width, height ->
+                                if (itemCount[0] == 1) {
+                                    MaterialShadowEdgeDefaults.SingleItemCornerWeight
+                                } else {
+                                    capsuleRimCornerWeight(width, height, cornerRadiusPx)
+                                }
                             },
                             cornerRadius = cornerRadius,
                             fallback = blurSurface,
                         ),
                 ),
         ) { measurables, constraints ->
-            itemCount = measurables.size
+            itemCount[0] = measurables.size
             val heightPx = BottomFloatingToolbarDefaults.MenuViewHeight.roundToPx()
             val insetPx = BottomFloatingToolbarDefaults.MenuViewItemBgInsetHorizontal.roundToPx()
             val spacingPx = BottomFloatingToolbarDefaults.ItemViewSpace.roundToPx()

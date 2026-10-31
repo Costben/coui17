@@ -430,6 +430,7 @@ private class SecondaryBandShape(
                     bottomRight = r,
                     bottomLeft = r,
                     squircleEnabled = squircleEnabled,
+                    capsuleCircleBlend = false,
                 )
             }
         }

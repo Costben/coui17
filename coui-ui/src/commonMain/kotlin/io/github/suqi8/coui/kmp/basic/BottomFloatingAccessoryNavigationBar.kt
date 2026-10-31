@@ -3,6 +3,7 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,9 +45,7 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
-import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
-import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
 
@@ -116,6 +114,10 @@ fun BottomFloatingAccessoryNavigationBar(
     val accessorySize = BottomFloatingAccessoryNavigationBarDefaults.AccessorySize
     val sideSpacing = BottomFloatingAccessoryNavigationBarDefaults.SideSpacing
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
     // The rim's weight is a property of the theme, the way `rememberGlassHighlight` picks its
     // stroke: a white bloom reads much stronger over the dark bar colour than over the light one.
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
@@ -200,7 +202,7 @@ fun BottomFloatingAccessoryNavigationBar(
                                     scaleY = menuTouchState.scaleY
                                 }
                                 .dropShadow(
-                                    shape = RoundedCornerShape(cornerRadius),
+                                    shape = shape,
                                     shadow = barShadow,
                                 ),
                         )
@@ -300,6 +302,7 @@ fun BottomFloatingAccessoryNavigationBar(
                     rimColor = Color.White.copy(alpha = if (isDark) 0.8f else 0.25f),
                     bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
                     rimBottomScale = 1f,
+                    continuousCurve = true,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (startAccessory != null) {
@@ -317,7 +320,7 @@ fun BottomFloatingAccessoryNavigationBar(
                         modifier = Modifier
                             .onSizeChanged { capsuleWidthPx = it.width }
                             .couiTouchMotion(
-                                shape = RoundedCornerShape(cornerRadius),
+                                shape = shape,
                                 lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                                 motionState = menuTouchState,
                             ),
@@ -433,7 +436,7 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
     val squircleEnabled = isSquircleEnabled()
     val shape = remember(cornerRadius, squircleEnabled) {
-        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+        CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val highlight = rememberGlassHighlight(GlassContainer.Medium, backdrop)
     val touchState = rememberCOUITouchMotionState()
@@ -470,7 +473,7 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
                                 backdrop = backdrop,
                                 shape = shape,
                                 containerColor = containerColor,
-                                fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                                fallback = Modifier.background(color = containerColor, shape = shape),
                                 blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
                                 blendColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
                                 highlight = highlight,
@@ -678,6 +681,7 @@ fun BottomFloatingAccessoryBall(
             rimColor = Color.White.copy(alpha = if (isDark) 0.8f else 0.25f),
             bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
             rimBottomScale = 1f,
+            continuousCurve = true,
         )
 
         Box(

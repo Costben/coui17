@@ -106,7 +106,7 @@ Chip(
 | dismissIcon       | (@Composable () -> Unit)?  | Custom dismiss affordance content          | null (built-in Close)     | No       |
 | dismissContentDescription | String             | Content description of the dismiss button  | ChipDefaults.DISMISS_CONTENT_DESCRIPTION | No |
 | dismissButtonSize | Dp                         | Touch target of the dismiss affordance     | ChipDefaults.DismissButtonSize | No   |
-| cornerRadius      | Dp                         | Corner radius of the capsule               | ChipDefaults.CornerRadius | No       |
+| cornerRadius      | Dp                         | Corner radius of the capsule; the default follows half the measured height and draws the system capsule curve, an explicit smaller value keeps the Lp squircle | ChipDefaults.CornerRadius | No       |
 | minWidth          | Dp                         | Minimum width                              | ChipDefaults.MinWidth     | No       |
 | minHeight         | Dp                         | Minimum height                             | ChipDefaults.MinHeight    | No       |
 | maxWidth          | Dp                         | Maximum width                              | ChipDefaults.MaxWidth     | No       |
@@ -123,7 +123,7 @@ Chip(
 | MinHeight    | Dp            | 32.dp                            | coui_chip_selection_style_height               |
 | MaxWidth     | Dp            | 300.dp                           | coui_chip_default_max_width                    |
 | TextMaxWidth | Dp            | 200.dp                           | coui_chip_default_max_text_width               |
-| CornerRadius | Dp            | 16.dp                            | chipCornerRadius -1 → capsule (height / 2)     |
+| CornerRadius | Dp            | 16.dp                            | chipCornerRadius -1 → capsule (height / 2), drawn as the system capsule curve |
 | IconSize     | Dp            | 16.dp                            | coui_chip_selection_style_chip_icon_size       |
 | IconSpacing  | Dp            | 4.dp                             | coui_chip_selection_style_chip_icon_end_padding |
 | DismissIconSize | Dp         | 14.dp                            | Size of the built-in dismiss icon              |

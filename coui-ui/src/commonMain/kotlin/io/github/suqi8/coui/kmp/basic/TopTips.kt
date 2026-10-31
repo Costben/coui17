@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -129,9 +131,9 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param backgroundOverlay An optional overlay drawn over the fill, mirroring
  *   `COUIDefaultTopTips.setTipsBackgroundDrawable` and its `BackgroundOverlayView`. When set, the
  *   card fill is left transparent the way `applyBackgroundOverlayState` blanks it.
- * @param cornerRadius An explicit corner radius. `null` follows `updateRadius`, i.e.
- *   [TopTipsDefaults.SingleLineCornerRadius] for an untitled single-line banner and
- *   [TopTipsDefaults.CornerRadius] otherwise.
+ * @param cornerRadius An explicit corner radius. `null` follows `updateRadius`: an untitled
+ *   single-line banner is a full-radius true circle (the Outline path at weight 1.0), while any
+ *   other banner keeps the 28dp Lp(2.5) squircle.
  * @param colors The [TopTipsColors] of the banner.
  * @param content An optional custom message slot, the Compose equivalent of
  *   `COUICustomTopTips`'s fully custom content view. When non-null it replaces the plain [text]
@@ -219,24 +221,24 @@ fun TopTips(
         val availableWidthPx = with(density) { maxWidth.toPx() }
         val textWidthPx = maxOf(titleWidthPx, contentWidthPx)
         val multiText = leadingWidthPx + textWidthPx + trailingWidthPx > availableWidthPx
-        val radius = cornerRadius ?: if (displayTitle == null && !multiText) {
-            TopTipsDefaults.SingleLineCornerRadius
+        // COUIDefaultTopTips.setSmoothRoundRect(rect, radius, 1.0) with setClipToOutline: an
+        // untitled single line is the pure Outline path at weight 1.0, i.e. n = max(1, 2) = 2, a
+        // true circle. The multi-line form keeps the Lp(2.5) squircle: the system's weight 3.0 has
+        // no equivalent here yet.
+        val singleLine = cornerRadius == null && displayTitle == null && !multiText
+        val fillColor = if (backgroundOverlay == null) colors.containerColor else Color.Transparent
+        val backgroundModifier = if (singleLine) {
+            Modifier
+                .clip(topTipsSingleLineShape())
+                .background(fillColor)
         } else {
-            TopTipsDefaults.CornerRadius
+            Modifier.squircleSurface(
+                color = fillColor,
+                cornerRadius = cornerRadius ?: TopTipsDefaults.CornerRadius,
+            )
         }
 
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .squircleSurface(
-                    color = if (backgroundOverlay == null) {
-                        colors.containerColor
-                    } else {
-                        Color.Transparent
-                    },
-                    cornerRadius = radius,
-                ),
-        ) {
+        Box(modifier = Modifier.matchParentSize().then(backgroundModifier)) {
             backgroundOverlay?.invoke()
         }
 
@@ -654,6 +656,15 @@ enum class TopTipsLayoutMode {
      */
     AiPayment,
 }
+
+/**
+ * The single-line banner's silhouette.
+ *
+ * `COUIDefaultTopTips` draws it with `setSmoothRoundRect(rect, radius, 1.0)` and
+ * `setClipToOutline(true)`: the pure Outline path clamps the weight to `max(weight, 2.0) = 2`, so
+ * the end is a true circle rather than the Lp(2.5) superellipse the multi-line form keeps.
+ */
+internal fun topTipsSingleLineShape(): RoundedCornerShape = RoundedCornerShape(percent = 50)
 
 /** Contains default values used by [TopTips]. */
 object TopTipsDefaults {

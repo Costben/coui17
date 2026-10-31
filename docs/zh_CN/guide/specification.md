@@ -243,7 +243,7 @@ fun OverflowMenu(onOpenSettings: () -> Unit) {
 **实现要求**：
 - **挂载 `nestedScroll`**：外层容器必须挂载 `Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)`，确保列表滚动增量正常传递至顶栏大标题折叠状态机。
 - **使用 `Modifier.couiTopAppBarActionItem()`**：顶栏操作按钮统一添加该修饰符，确保按钮尺寸、内边距及溢出菜单右边缘锚点对齐系统相册（参照机实测菜单右边缘与系统相册同为 `1214px`）。
-- **保持 `OverlayListPopup` 默认几何参数**：不要覆写 `minWidth`、不要给菜单行添加额外的 `heightIn`、不要传入自定义 `PopupPositionProvider`。组件内置的面板物理密度、行高（参照机单行 `191px` 对系统 `190px`）与连续圆角剖面已与真机校准完毕（单行菜单高 `57dp` 时，默认的 `28dp` 圆角半径自然形成胶囊半圆端头）。
+- **保持 `OverlayListPopup` 默认几何参数**：不要覆写 `minWidth`、不要给菜单行添加额外的 `heightIn`、不要传入自定义 `PopupPositionProvider`。组件内置的面板物理密度、行高（参照机单行 `191px` 对系统 `190px`）与连续圆角剖面已与真机校准完毕（单行菜单高约 `56dp` 时，固定的 `28dp` 圆角恰好落在胶囊半径，面板仍按 `n ≈ 2.5` 超椭圆画到端头，与 §7.1 的胶囊按钮族、圆形控件族都不同）。
 - **语义角色**：触发页面跳转或普通命令的菜单项显式指定 `role = Role.Button`（默认的 `Role.RadioButton` 仅用于单选列表项）。
 
 ### 6.3 带两侧配件圆钮的悬浮底栏（对标系统「相册 · 创作」）
@@ -348,10 +348,16 @@ fun SettingsPage(onBack: () -> Unit, onOverflow: () -> Unit) {
 
 ## 七、形状、交互反馈、导航与图标规范
 
-### 1. 连续曲率圆角（Squircle）与正圆胶囊
+### 1. 圆角族：系统胶囊曲线、Lp 超椭圆、正圆
 
-- `SquircleShape` 采用超椭圆连续曲率曲线。当圆角半径等于控件半高时，超椭圆在 45° 方向向外饱满延伸，两端会保留极短的近似垂直段，视觉上呈超椭圆跑道形而非正圆半弧。
-- 若目标系统控件经参照机核对确认为**标准正圆胶囊（Stadium / Pill）**，在该子树局部提供 `CompositionLocalProvider(LocalSquircleEnabled provides false)`，`SquircleShape` 即自动退化为标准正圆弧 `Outline.Rounded(min(w, h) / 2)`。
+COUI 17 使用三种不同的圆角族。按系统控件实际使用的那一种来选，不要默认所有胶囊都以正圆收尾。
+
+- **系统胶囊曲线**（`SearchBar`、`InputField`、`Button`、`TextButton`、`SearchBarActionButton`、`TabRow`、`InstallLoadProgress`、四个 `BottomFloating*` 底栏、`Chip`）：正圆弧接 `1.5R` 过渡段。系统调用是 `OplusPathAdapter.addSmoothRoundRect(rect, r, r, dir)` 的无 weight 重载。半径达到较短边一半时该重载会转发 weight `1.0`，但屏幕上的结果仍是这条曲线而不是正圆：裸进程里 `Path` 输出的是圆弧，实际渲染的控件走的是实测的缓入过渡段。模型为 `basic/SegmentCapsule.kt` 的 `addSegmentCapsule`。参考机（132）实测像素证实：时钟 56dp 悬浮底栏在过渡段对 segment RMS 0.042px、对圆 0.534px；文件管理 28dp Chip 对 segment RMS 0.110px、对圆 0.314px；44dp 按钮对 segment 约 0.08px、对正圆端约 0.6px、对 `n = 2.5` 超椭圆约 4px；40dp 搜索栏背景对 segment RMS 0.124px、对圆 0.415px，高光对 segment RMS 0.127px、对圆 0.472px，高光与填充轮廓偏差仅 0.0009R RMS（最大 0.0024R）。`CapsuleOutlineShape` 在满半径时选择这一族，调用方传入更小半径时仍走 squircle；纵向胶囊（高度 > 宽度）回退正圆端头保证轮廓不越界。搜索栏（`SearchBar` / `InputField`）已将背景填充、裁剪、材质高光 rim、焦散光挖空全线统一至系统胶囊曲线；`MaterialShadowEdge` 对宽胶囊施加相同的 $\delta$ 距离场修正（`couiSegmentCapsuleDelta`），彻底解决控件内高光走连续曲率而背景走正圆跑道形导致的轮廓割裂问题。
+- **Lp 超椭圆**（`ListPopup` 与级联面板、多行 `TopTips`）：`n = weight`，角的切点等于半径。弹出面板固定 `28dp` 半径，按 `n ≈ 2.5` 超椭圆一直画到胶囊端头；单行 `56dp` 恰好是半径的两倍，视觉上仍是圆角矩形而不是跑道形。多行 `TopTips` 也仍是 `n ≈ 2.5`：系统的 `3.0` 目前没有对应实现。弹出面板由 `SquircleShape(..., capsuleCircleBlend = false)` 选择。
+- **正圆**：满半径且走 Outline 路径、权重 `≤ 2` 的控件——Outline 会把权重钳制为 `n = max(weight, 2) = 2`。单行 `TopTips` 属于这一类（`setSmoothRoundRect(rect, radius, 1.0)` 加 `setClipToOutline(true)`）。单行 `Snackbar` 的半径跟随实测高度（`getHeight() / 2`）；其曲线来源尚未确认，因此在该半径下继续使用 squircle 族。注：单行 `TopTips` 与单行 `Snackbar` 目前仍没有系统截图像素实测，依据来自系统源码反编译。
+- **圆形控件**（`IconButton`、`HighlightedIconButton`、`FloatingActionButton`、悬浮按钮）：参照机实测为正圆。
+
+不要用 `LocalSquircleEnabled = false` 去近似悬浮底栏：它们是 Path 胶囊，按上面的系统胶囊曲线绘制。半径达到较短边一半的 `Shape` 走 `CapsuleOutlineShape`；低于一半的继续走 Lp 超椭圆。
 
 ### 2. 按压反馈（Indication）
 

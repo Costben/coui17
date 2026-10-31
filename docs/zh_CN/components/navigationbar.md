@@ -400,6 +400,8 @@ CompositionLocalProvider(LocalBackdrop provides backdrop) {
 - `totalItemMax` 能放进导航栏让出的宽度时，胶囊正好宽 `totalItemMax`，每项 70dp；放不下时胶囊取满可用宽度，每项拿到 `(available - 24 - (n - 1) * 8) / n`，截断到整数像素；
 - 每个子项都以精确宽度测量，并放置在 `x = 12 + i * (itemWidth + 8)`，在胶囊内垂直居中。
 
+胶囊的填充、模糊、阴影与触摸高亮共用一个 `CapsuleOutlineShape`。在 56dp 胶囊的 28dp 半径下，它走系统胶囊曲线（`addSegmentCapsule`，即无 weight 的 `OplusPathAdapter.addSmoothRoundRect`），而不是正圆跑道形；显式传入更小半径时保持 Lp 超椭圆。展开视图的圆形轮廓仍为正圆。
+
 12dp 的内边距是胶囊自身宽度的一部分，而不是一个 `padding` 修饰符，因此玻璃表面与径向触摸高亮都覆盖整条胶囊。`RowScope.weight` 与 `RowScope.align` 在本栏内不起作用：这一行自行测量每个子项，与原生菜单视图一致——后者没有 weight 概念，而是把每个子项放到自己算出的 x 上。
 
 纵向上，胶囊在导航栏 88dp 的盒子里居中，与 `COUIBottomFloatingNavigationBar.onLayout` 让菜单视图居中一致。盒子下方的留白由宿主决定：用 `BottomFloatingNavigationBarDefaults.navigationBarPadding()` 代替 `navigationBarsPadding()`——手势导航 8dp（`MenuToScreenNaviDistance`）、三键导航 36dp（`ButtonNavigationDistance`）、没有导航栏时为 0。手势导航下胶囊底边即距屏幕边缘 24dp，与 ColorOS 17 相册一致。

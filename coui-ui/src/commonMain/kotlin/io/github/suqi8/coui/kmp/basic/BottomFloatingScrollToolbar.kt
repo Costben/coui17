@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -55,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.utils.overScrollHorizontal
 import kotlinx.coroutines.launch
 import kotlin.math.pow
@@ -91,7 +91,11 @@ fun BottomFloatingScrollToolbar(
     content: @Composable () -> Unit,
 ) {
     val cornerRadius = BottomFloatingScrollToolbarDefaults.CornerRadius
-    val shape = remember(cornerRadius) { RoundedCornerShape(cornerRadius) }
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
+    val radiusPx = with(LocalDensity.current) { cornerRadius.toPx() }
     val stroke = remember { MaterialStrokeParams.frameworkCapsule13(isDark = true) }
     val layoutDirection = LocalLayoutDirection.current
     val paddingPx = with(LocalDensity.current) {
@@ -140,8 +144,11 @@ fun BottomFloatingScrollToolbar(
                     lightParams = SpotLightDefaults.capsuleParams1(isDark = true),
                     consumeDrag = false,
                     // photo_editor_main_menu_pill_bg under the rim of the pill's stroke layer.
-                    surface = pillFill.materialShadowEdge(
+                    surface = pillFill.materialShadowEdgeBySize(
                         stroke = stroke,
+                        cornerWeightFor = { width, height ->
+                            capsuleRimCornerWeight(width, height, radiusPx)
+                        },
                         cornerRadius = cornerRadius,
                         fallback = pillFill,
                     ),

@@ -13,9 +13,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -213,11 +215,13 @@ internal fun MetaBallSurface(
     rimBlur: Dp = MetaBallDefaults.RimBlur,
     rimBottomScale: Float = 0f,
     bottomGlowColor: Color? = null,
+    continuousCurve: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val runsShader = isRuntimeShaderSupported()
     val shader = rememberMetaBallShader(runsShader)
     val glass = backdrop != null && shader != null && SystemMaterialState.blurEnabled
+    val pathCaches = remember { List(META_BALL_MAX_PARTICLES) { SegmentCapsulePathCache() } }
 
     Box(modifier = modifier) {
         // Both the blur mask and the native material nodes need drawing room outside the resting
@@ -247,6 +251,7 @@ internal fun MetaBallSurface(
                             extension = extension,
                             factorX = extensionFactorX,
                             factorY = extensionFactorY,
+                            continuousCurve = continuousCurve,
                         )
                         .textureBlur(
                             backdrop = backdrop,
@@ -268,6 +273,7 @@ internal fun MetaBallSurface(
                         factorX = extensionFactorX,
                         factorY = extensionFactorY,
                         rimBlur = rimBlur,
+                        continuousCurve = continuousCurve,
                     )
                 }
             } else if (shader != null) {
@@ -280,6 +286,7 @@ internal fun MetaBallSurface(
                         extension = extension,
                         factorX = extensionFactorX,
                         factorY = extensionFactorY,
+                        continuousCurve = continuousCurve,
                     ),
                     shader = shader,
                     body = color,
@@ -289,10 +296,16 @@ internal fun MetaBallSurface(
                     factorY = extensionFactorY,
                     rimBlur = rimBlur,
                     rimBottomScale = rimBottomScale,
+                    continuousCurve = continuousCurve,
                 )
             } else {
                 Canvas(modifier = Modifier.matchParentSize()) {
-                    drawUnmergedParticles(particles = paintedParticles, color = color)
+                    drawUnmergedParticles(
+                        particles = paintedParticles,
+                        color = color,
+                        continuousCurve = continuousCurve,
+                        pathCaches = pathCaches,
+                    )
                 }
             }
         }
@@ -330,6 +343,7 @@ private fun MetaBallSilhouette(
     rimBlur: Dp,
     modifier: Modifier = Modifier,
     rimBottomScale: Float = 0f,
+    continuousCurve: Boolean = false,
 ) {
     // Always the runtime shader, never the platform's `OplusMaterialUtil` chain: the vendor effect
     // re-runs its own material animation whenever the window's overlay state changes, so opening a
@@ -340,6 +354,7 @@ private fun MetaBallSilhouette(
         drawMetaBall(
             shader, particles, body, rim, extension, factorX, factorY, rimBlur,
             rimBottomScale = rimBottomScale,
+            continuousCurve = continuousCurve,
         )
     }
 }
@@ -365,8 +380,20 @@ private fun DrawScope.drawMetaBall(
     extensionFactorY: Float,
     rimBlur: Dp,
     rimBottomScale: Float = 0f,
+    continuousCurve: Boolean = false,
 ) {
-    setMetaBallUniforms(shader, particles, body, rim, extension, extensionFactorX, extensionFactorY, rimBlur, rimBottomScale)
+    setMetaBallUniforms(
+        shader = shader,
+        particles = particles,
+        body = body,
+        rim = rim,
+        extension = extension,
+        extensionFactorX = extensionFactorX,
+        extensionFactorY = extensionFactorY,
+        rimBlur = rimBlur,
+        rimBottomScale = rimBottomScale,
+        continuousCurve = continuousCurve,
+    )
     drawRect(brush = shader.asBrush())
 }
 
@@ -382,6 +409,7 @@ internal fun Density.setMetaBallUniforms(
     rimBottomScale: Float,
     edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
     lineWidth: Dp = 2.5.dp,
+    continuousCurve: Boolean = false,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
     if (count == 0) return
@@ -430,19 +458,57 @@ internal fun Density.setMetaBallUniforms(
     shader.setFloatUniform("in_rimWidth", MetaBallDefaults.RimWidth.toPx())
     shader.setFloatUniform("in_rimBlur", rimBlur.toPx())
     shader.setFloatUniform("in_rimBottom", rimBottomScale)
+    shader.setFloatUniform("in_continuousCurve", if (continuousCurve) 1f else 0f)
+}
+
+private class SegmentCapsulePathCache {
+    private var lastWidth = -1f
+    private var lastHeight = -1f
+    val path = Path()
+
+    fun get(width: Float, height: Float): Path {
+        if (width != lastWidth || height != lastHeight) {
+            path.reset()
+            path.addSegmentCapsule(Rect(0f, 0f, width, height))
+            lastWidth = width
+            lastHeight = height
+        }
+        return path
+    }
 }
 
 /** Degraded path for platforms without runtime shaders: the silhouettes, but not merged. */
-private fun DrawScope.drawUnmergedParticles(particles: List<MetaBallParticle>, color: Color) {
-    particles.forEach { particle ->
+private fun DrawScope.drawUnmergedParticles(
+    particles: List<MetaBallParticle>,
+    color: Color,
+    continuousCurve: Boolean = false,
+    pathCaches: List<SegmentCapsulePathCache>? = null,
+) {
+    particles.forEachIndexed { index, particle ->
         val centre = Offset(particle.centerX.toPx(), particle.centerY.toPx())
+        val widthPx = particle.width.toPx()
+        val heightPx = particle.height.toPx()
+        val cornerRadiusPx = particle.cornerRadius.toPx()
+        val isWideCapsule = continuousCurve && widthPx > heightPx && cornerRadiusPx >= (heightPx / 2f - 0.001f)
+        val particleColor = color.copy(alpha = color.alpha * particle.alpha)
         withTransform({ scale(particle.scaleX, particle.scaleY, pivot = centre) }) {
-            drawRoundRect(
-                color = color.copy(alpha = color.alpha * particle.alpha),
-                topLeft = Offset((particle.centerX - particle.width / 2).toPx(), (particle.centerY - particle.height / 2).toPx()),
-                size = Size(particle.width.toPx(), particle.height.toPx()),
-                cornerRadius = CornerRadius(particle.cornerRadius.toPx()),
-            )
+            val topLeft = Offset((particle.centerX - particle.width / 2).toPx(), (particle.centerY - particle.height / 2).toPx())
+            if (isWideCapsule) {
+                val cache = pathCaches?.getOrNull(index)
+                val path = cache?.get(widthPx, heightPx) ?: Path().apply {
+                    addSegmentCapsule(Rect(0f, 0f, widthPx, heightPx))
+                }
+                withTransform({ translate(topLeft.x, topLeft.y) }) {
+                    drawPath(path = path, color = particleColor)
+                }
+            } else {
+                drawRoundRect(
+                    color = particleColor,
+                    topLeft = topLeft,
+                    size = Size(widthPx, heightPx),
+                    cornerRadius = CornerRadius(cornerRadiusPx),
+                )
+            }
         }
     }
 }
@@ -492,10 +558,28 @@ uniform float4 in_rim;
 uniform float in_rimWidth;
 uniform float in_rimBlur;
 uniform float in_rimBottom;
+uniform float in_continuousCurve;
 
 float couiSdRoundBox(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
     return min(max(q.x, q.y), 0.0) + length(max(q, float2(0.0, 0.0))) - r;
+}
+
+float couiSegmentCapsuleDelta(float2 p, float2 b, float r) {
+    if (b.x <= b.y || r < b.y - 0.001) {
+        return 0.0;
+    }
+    float R = b.y;
+    float s = b.x - abs(p.x);
+    float tail = min(1.5, b.x / R);
+    float s0 = 0.2250555 * R;
+    float s1 = tail * R;
+    if (s <= s0 || s >= s1) {
+        return 0.0;
+    }
+    float u = (s - s0) / (s1 - s0);
+    float u2_1u2 = u * u * (1.0 - u) * (1.0 - u);
+    return u2_1u2 * (0.003318 + u * (1.529298 - 1.888829 * u)) * R;
 }
 
 float couiSmin(float a, float b, float k) {
@@ -573,8 +657,12 @@ half4 main(float2 xy) {
             break;
         }
         float2 c = in_center[i];
-        float di = couiSdRoundBox((xy - c) / in_scale[i], in_half[i],
-            min(in_corner[i], min(in_half[i].x, in_half[i].y)));
+        float2 pLocal = (xy - c) / in_scale[i];
+        float corner = min(in_corner[i], min(in_half[i].x, in_half[i].y));
+        float di = couiSdRoundBox(pLocal, in_half[i], corner);
+        if (in_continuousCurve > 0.5) {
+            di += couiSegmentCapsuleDelta(pLocal, in_half[i], corner);
+        }
         inside = max(inside, in_alpha[i] * (1.0 - smoothstep(-aa, aa, di)));
         if (has < 0.5) {
             d = di;

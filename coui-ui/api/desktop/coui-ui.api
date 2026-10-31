@@ -1196,7 +1196,7 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$ListDetai
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$MetaBallSurfaceKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$MetaBallSurfaceKt;
 	public fun <init> ()V
-	public final fun getLambda$1493635969$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-445604643$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$501321855$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 

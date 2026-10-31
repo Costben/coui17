@@ -417,9 +417,9 @@ object MaterialShadowEdgeDefaults {
     val SingleItemCornerWeight = 2f
 
     /**
-     * The `u_commonArray[10]` corner weight `COUIButton` uses for every capsule rim: its
-     * `initShadowEdgeParamsWithoutBlur` chain always ends with `setWeight(2.0f)`, independent of the
-     * button type or the number of buttons on screen.
+     * The `u_commonArray[10]` corner weight `COUIButton.updateStrokeCorner` passes for a square
+     * capsule (`width == height`): `setWeight(2.0f)`. A capsule that is wider than it is tall passes
+     * [CornerWeight] (1.0) instead, where the shader's `smoothSDF_D` takes the `sdCapsule` branch.
      */
     val CapsuleCornerWeight = 2f
 
@@ -441,6 +441,23 @@ object MaterialShadowEdgeDefaults {
         shadowFadeOut = 0.05f,
         shadowFadeScale = 0.7f,
     )
+}
+
+/**
+ * The material rim's corner weight for a capsule, following `COUIButton.updateStrokeCorner`.
+ *
+ * A capsule whose radius reaches half the shorter side selects the shader's `sdCapsule` branch: a
+ * wide capsule passes [MaterialShadowEdgeDefaults.CornerWeight] and a square one
+ * [MaterialShadowEdgeDefaults.CapsuleCornerWeight]. A radius below half the shorter side keeps the
+ * squircle weight, as the button's own rim does.
+ */
+internal fun capsuleRimCornerWeight(widthPx: Float, heightPx: Float, radiusPx: Float): Float {
+    val halfMin = minOf(widthPx, heightPx) / 2f
+    return when {
+        radiusPx < halfMin - 0.5f -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
+        widthPx == heightPx -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
+        else -> MaterialShadowEdgeDefaults.CornerWeight
+    }
 }
 
 /**
@@ -470,8 +487,7 @@ object MaterialShadowEdgeDefaults {
  *   [MaterialShadowEdgeDefaults.SingleItemCornerWeight].
  * @param cornerRadius The corner radius, or `null` for the capsule rule `height / 2`.
  * @param cornerRadiusFor The corner radius in px derived from the node's own size, for a surface
- *   whose radius is not a constant; takes precedence over [cornerRadius]. The popup uses it to keep
- *   a short menu's corners off the capsule rule; see `popupCornerRadiusPx`.
+ *   whose radius is not a constant; takes precedence over [cornerRadius].
  * @param edgeStyle The rim style, one of the [GradientStrokeStyle] presets.
  * @param shadowStyle The inner-shadow style, one of the [InnerShadowStyle] presets.
  * @param antiAliasing The shader's anti-aliasing band, `u_commonArray[11]`.
@@ -492,25 +508,83 @@ fun Modifier.materialShadowEdge(
     // would otherwise throw mid-composition; the fallback keeps the caller rendering.
     val shader = rememberMaterialShadowEdgeShader(isRuntimeShaderSupported()) ?: return this.then(fallback)
 
-    return this.drawWithCache {
-        val width = size.width
-        val height = size.height
-        if (width <= 0f || height <= 0f) return@drawWithCache onDrawBehind {}
-        val radius = cornerRadiusFor?.invoke(width, height) ?: cornerRadius?.toPx() ?: (height / 2f)
-        setMaterialShadowEdgeUniforms(
-            shader = shader,
-            width = width,
-            height = height,
-            radius = radius,
-            stroke = stroke,
-            cornerWeight = cornerWeight,
-            antiAliasing = antiAliasing,
-            edgeStyle = edgeStyle,
-            shadowStyle = shadowStyle,
-            density = density,
-        )
-        onDrawBehind { drawRect(brush = shader.asBrush(), size = size) }
-    }
+    return drawMaterialShadowEdge(
+        shader = shader,
+        stroke = stroke,
+        cornerWeightFor = { _, _ -> cornerWeight },
+        cornerRadius = cornerRadius,
+        cornerRadiusFor = cornerRadiusFor,
+        edgeStyle = edgeStyle,
+        shadowStyle = shadowStyle,
+        antiAliasing = antiAliasing,
+        density = density,
+    )
+}
+
+/**
+ * [materialShadowEdge] for a surface whose corner weight depends on its final size, such as the
+ * `COUIButton` rim: `updateStrokeCorner` passes 2.0 when the button is square and 1.0 otherwise.
+ *
+ * The layout size is only known in the draw phase, so [cornerWeightFor] receives the node's
+ * measured width and height instead of a constant.
+ *
+ * @param cornerWeightFor The `u_commonArray[10]` corner weight for a node of the given px size.
+ */
+@Composable
+internal fun Modifier.materialShadowEdgeBySize(
+    stroke: MaterialStrokeParams,
+    cornerWeightFor: (width: Float, height: Float) -> Float,
+    fallback: Modifier = Modifier,
+    cornerRadius: Dp? = null,
+    edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+    shadowStyle: InnerShadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
+    antiAliasing: Float = MaterialShadowEdgeDefaults.AntiAliasing,
+): Modifier {
+    val density = LocalDensity.current.density
+    val shader = rememberMaterialShadowEdgeShader(isRuntimeShaderSupported()) ?: return this.then(fallback)
+
+    return drawMaterialShadowEdge(
+        shader = shader,
+        stroke = stroke,
+        cornerWeightFor = cornerWeightFor,
+        cornerRadius = cornerRadius,
+        cornerRadiusFor = null,
+        edgeStyle = edgeStyle,
+        shadowStyle = shadowStyle,
+        antiAliasing = antiAliasing,
+        density = density,
+    )
+}
+
+/** Shared draw phase of [materialShadowEdge] and [materialShadowEdgeBySize]. */
+private fun Modifier.drawMaterialShadowEdge(
+    shader: RuntimeShader,
+    stroke: MaterialStrokeParams,
+    cornerWeightFor: (width: Float, height: Float) -> Float,
+    cornerRadius: Dp?,
+    cornerRadiusFor: ((width: Float, height: Float) -> Float)?,
+    edgeStyle: GradientStrokeStyle,
+    shadowStyle: InnerShadowStyle,
+    antiAliasing: Float,
+    density: Float,
+): Modifier = this.drawWithCache {
+    val width = size.width
+    val height = size.height
+    if (width <= 0f || height <= 0f) return@drawWithCache onDrawBehind {}
+    val radius = cornerRadiusFor?.invoke(width, height) ?: cornerRadius?.toPx() ?: (height / 2f)
+    setMaterialShadowEdgeUniforms(
+        shader = shader,
+        width = width,
+        height = height,
+        radius = radius,
+        stroke = stroke,
+        cornerWeight = cornerWeightFor(width, height),
+        antiAliasing = antiAliasing,
+        edgeStyle = edgeStyle,
+        shadowStyle = shadowStyle,
+        density = density,
+    )
+    onDrawBehind { drawRect(brush = shader.asBrush(), size = size) }
 }
 
 /**
@@ -909,6 +983,23 @@ float sdRoundRect(float2 p, float2 halfSize, float r, float n, inout float2 q) {
 }
 
 
+float couiSegmentCapsuleDelta(float2 p, float2 b, float r) {
+    if (b.x <= b.y || r < b.y - 0.001) {
+        return 0.0;
+    }
+    float R = b.y;
+    float s = b.x - abs(p.x);
+    float tail = min(1.5, b.x / R);
+    float s0 = 0.2250555 * R;
+    float s1 = tail * R;
+    if (s <= s0 || s >= s1) {
+        return 0.0;
+    }
+    float u = (s - s0) / (s1 - s0);
+    float u2_1u2 = u * u * (1.0 - u) * (1.0 - u);
+    return u2_1u2 * (0.003318 + u * (1.529298 - 1.888829 * u)) * R;
+}
+
 float smoothSDF_D(float2 p, float2 b, float corner, float weight, inout float aaFactor){
     float rectSdf = 0.0;
     float d_corner_zone = 0.0;
@@ -917,7 +1008,10 @@ float smoothSDF_D(float2 p, float2 b, float corner, float weight, inout float aa
 
     if (weight  < 2.0) {
         float zoneCap = 0.0;
-        if(weight  > 1.005){
+        if (b.x > b.y && corner >= b.y - 0.001) {
+            rectSdf = sdRoundRect( p, b, corner, 2.0, q_rect);
+            d_corner_zone = min(q_rect.x, q_rect.y);
+        } else if(weight  > 1.005){
             float t = smoothstep(2.0, 1.0, weight);
             float d_G2 = sdRoundRect( p, b, corner, 2.0, q_rect);
             float zone_G2 = min(q_rect.x, q_rect.y);
@@ -935,6 +1029,7 @@ float smoothSDF_D(float2 p, float2 b, float corner, float weight, inout float aa
         rectSdf = sdRoundRect( p, b, corner, weight, q_rect);
         d_corner_zone = min(q_rect.x, q_rect.y);
     }
+    rectSdf += couiSegmentCapsuleDelta(p, b, corner);
     // 计算抗锯齿因子 (注意区间：从直线区走向圆角区)
     aaFactor = smoothstep(-transitionPixels - 2.0, -transitionPixels * 0.2, d_corner_zone);
     return rectSdf;

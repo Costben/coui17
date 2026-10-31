@@ -33,12 +33,26 @@ internal fun Modifier.nativeMaterialEdge(
     extension: Dp = MetaBallDefaults.Extension,
     factorX: Float = MetaBallDefaults.EXTENSION_FACTOR_X,
     factorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
+    continuousCurve: Boolean = false,
 ): Modifier {
     if (!isRuntimeShaderSupported()) return this
     val shader = remember { RuntimeShader(META_BALL_NATIVE_EDGE_SHADER) }
     return drawWithCache {
         val layer = obtainGraphicsLayer()
-        setMetaBallUniforms(shader, particles, Color.Transparent, rim, extension, factorX, factorY, MetaBallDefaults.RimBlur, bottomScale, edgeStyle, lineWidth)
+        setMetaBallUniforms(
+            shader = shader,
+            particles = particles,
+            body = Color.Transparent,
+            rim = rim,
+            extension = extension,
+            extensionFactorX = factorX,
+            extensionFactorY = factorY,
+            rimBlur = MetaBallDefaults.RimBlur,
+            rimBottomScale = bottomScale,
+            edgeStyle = edgeStyle,
+            lineWidth = lineWidth,
+            continuousCurve = continuousCurve,
+        )
         shader.setFloatUniform("in_tint", tint.red, tint.green, tint.blue, tint.alpha)
         layer.renderEffect = shader.nativeMaterialEdgeEffect()
         onDrawWithContent {

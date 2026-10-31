@@ -40,6 +40,8 @@ BottomFloatingScrollToolbar {
 
 由于系统相册编辑器固定采用深色画布，`BottomFloatingScrollToolbarDefaults.colors()` 默认使用编辑器的深色配方（`#232323` 底色、`TYPE_FRAMEWORK_CAPSULE_13` 材质描边叠加 `0.67.dp` 的 `#0DFFFFFF` 细描边、未选中项 `#73FFFFFF`、选中项 `#FFB200`）。用于其他背景时可传入自定义 `BottomFloatingScrollToolbarColors`。
 
+胶囊的填充、描边、裁剪与触摸高亮共用一个 `CapsuleOutlineShape`，走系统胶囊曲线（`addSegmentCapsule`）；材质描边按胶囊角权重绘制（宽胶囊 1.0，方形胶囊 2.0）。
+
 ## 属性
 
 ### BottomFloatingScrollToolbar 属性
@@ -77,7 +79,7 @@ BottomFloatingScrollToolbar {
 | 常量名               | 类型                   | 说明                                       | 值                            |
 | -------------------- | ---------------------- | ------------------------------------------ | ----------------------------- |
 | Height               | Dp                     | 胶囊与工具项高度                           | 56.dp                         |
-| CornerRadius         | Dp                     | 胶囊正圆端头圆角半径                       | 28.dp                         |
+| CornerRadius         | Dp                     | 胶囊圆角；56dp 胶囊上的 28dp 走系统胶囊曲线 | 28.dp                         |
 | MaxWidth             | Dp                     | 胶囊最大宽度                               | 460.dp                        |
 | MarginHorizontal     | Dp                     | 胶囊两侧外边距                             | 16.dp                         |
 | ContentPadding       | Dp                     | 滚动行首尾内边距                           | 16.dp                         |

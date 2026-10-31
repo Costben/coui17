@@ -124,7 +124,7 @@ fun Snackbar(
 | modifier               | Modifier       | Modifier applied to the Snackbar container                 | Modifier                                | No       |
 | icon                   | (@Composable () -> Unit)? | Optional leading icon shown in a 30.dp box (pass it through the `content` lambda of `SnackbarHost`) | null | No       |
 | cornerRadius           | Dp             | Corner radius when the message spans multiple lines        | SnackbarDefaults.CornerRadius           | No       |
-| singleLineCornerRadius | Dp             | Corner radius when the message fits on a single line       | SnackbarDefaults.SingleLineCornerRadius | No       |
+| singleLineCornerRadius | Dp             | Corner radius when the message fits on a single line; the default follows half the measured height (`getHeight() / 2`), another value pins the radius | SnackbarDefaults.SingleLineCornerRadius | No       |
 | colors                 | SnackbarColors | Color configuration for the Snackbar                       | SnackbarDefaults.snackbarColors()       | No       |
 | insideMargin           | PaddingValues  | Inner padding of the Snackbar content (the end padding collapses to 4.dp when the action button is the trailing element) | SnackbarDefaults.InsideMargin | No       |
 
@@ -159,7 +159,7 @@ val colors = SnackbarDefaults.snackbarColors(
 | Constant Name          | Type          | Description                                              | Default Value                                       |
 | ---------------------- | ------------- | -------------------------------------------------------- | --------------------------------------------------- |
 | CornerRadius           | Dp            | Corner radius when the message spans multiple lines      | 16.dp                                               |
-| SingleLineCornerRadius | Dp            | Corner radius when the message fits on a single line     | 24.dp                                               |
+| SingleLineCornerRadius | Dp            | Single-line radius token; the component resolves the default to the live `getHeight() / 2` | 24.dp                                               |
 | InsideMargin           | PaddingValues | Default inner padding of the Snackbar                    | PaddingValues(horizontal = 16.dp, vertical = 10.dp) |
 | IconSize               | Dp            | Size of the optional leading icon box                    | 30.dp                                               |
 

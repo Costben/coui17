@@ -76,7 +76,7 @@ BottomFloatingToolbar(visible = isSelecting) {
 
 ## Capsule Surface
 
-The capsule samples the content behind it through `LocalBackdrop`. When a backdrop is present, runtime shaders are supported and material blur is enabled on the system (`SystemMaterialState.blurEnabled`), the capsule is blurred and tinted with the toolbar colors; otherwise it falls back to an opaque `containerColor` fill. Either way the rim and inner shadow are drawn by `Modifier.materialShadowEdge` with the `TYPE_FRAMEWORK_CAPSULE_13` parameters, and the capsule lifts off the page with the system's caustic shadow (or `BottomFloatingToolbarDefaults.Shadow` where the system has none). Pressing and dragging deform and scale the capsule through `couiTouchMotion` with the `SpotLightDefaults.opaqueMedium2` spotlight.
+The capsule samples the content behind it through `LocalBackdrop`. When a backdrop is present, runtime shaders are supported and material blur is enabled on the system (`SystemMaterialState.blurEnabled`), the capsule is blurred and tinted with the toolbar colors; otherwise it falls back to an opaque `containerColor` fill. The capsule and its rim share the system capsule curve (`addSegmentCapsule`); the rim and inner shadow are drawn by `Modifier.materialShadowEdge` with the `TYPE_FRAMEWORK_CAPSULE_13` parameters and the capsule corner weight (1.0 for a wide capsule, 2.0 for a square one). The capsule lifts off the page with the system's caustic shadow (or `BottomFloatingToolbarDefaults.Shadow` where the system has none). Pressing and dragging deform and scale the capsule through `couiTouchMotion` with the `SpotLightDefaults.opaqueMedium2` spotlight.
 
 ## Multi-Color Icons
 

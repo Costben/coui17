@@ -45,17 +45,14 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -113,6 +110,7 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -1287,18 +1285,12 @@ object ListPopupDefaults {
  * Corner radius of the popup container (COUI coui_popup_round_frame_layout_corner_radius, applied by
  * RoundFrameLayout.getSmoothRadiusAndWeight once the OPlus SDK version is above 37). The 12dp
  * `couiRoundCornerM` / `coui_round_corner_m` radius the layout declares is overridden on ColorOS 17.
+ *
+ * The radius is fixed, not capped by the panel height: a single 56dp row is exactly twice 28dp, and
+ * COUI keeps its 28dp superellipse (n ≈ 2.5, measured on device: a 168 x 56dp panel) all the way to
+ * the capsule ends there. The panel does not take the system capsule curve the buttons use.
  */
 internal val PopupCornerRadius = 28.dp
-
-/**
- * Ceiling on the popup corner radius as a fraction of the surface height.
- *
- * 28dp is authored for a multi-row menu; on a single 56dp row it is exactly half the height, and
- * the panel reads as a capsule rather than the rounded rectangle COUI draws for every other
- * surface. Capping at 0.36 of the height keeps a straight vertical edge on that one-row menu
- * (20dp) while leaving every menu of two rows or more at the full 28dp.
- */
-private const val POPUP_CORNER_HEIGHT_RATIO = 0.36f
 
 /**
  * Draws the page under the popup back onto its surface, so a window-hosted menu keeps the glass.
@@ -1345,47 +1337,15 @@ internal fun Modifier.popupStaticBackdrop(
 }
 
 /**
- * The popup corner radius in px for a surface of [heightPx], i.e. [PopupCornerRadius] capped by
- * [POPUP_CORNER_HEIGHT_RATIO]. The silhouette and its material rim share this one rule so the rim
- * never parts from the fill.
+ * The popup silhouette: the 28dp superellipse (n ≈ 2.5) COUI draws for panels, kept on the
+ * superellipse all the way to the capsule ends. A single 56dp row is exactly twice the radius, so
+ * the panel is a full-height superellipse rather than the system capsule curve the buttons use.
  */
-internal fun popupCornerRadiusPx(heightPx: Float, density: Density): Float = min(with(density) { PopupCornerRadius.toPx() }, heightPx * POPUP_CORNER_HEIGHT_RATIO)
-
-/**
- * The popup silhouette: COUI's smooth corner at [PopupCornerRadius], tightened by
- * [popupCornerRadiusPx] on a short menu.
- *
- * A [Shape] rather than a fixed [SquircleShape] because the radius depends on the height the node
- * ends up with; `createOutline` is the only place that height is known.
- */
-private class PopupCornerShape(private val squircleEnabled: Boolean) : Shape {
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density,
-    ): Outline {
-        val radius = popupCornerRadiusPx(size.height, density)
-        if (!squircleEnabled) {
-            return Outline.Rounded(
-                RoundRect(
-                    left = 0f,
-                    top = 0f,
-                    right = size.width,
-                    bottom = size.height,
-                    cornerRadius = CornerRadius(radius, radius),
-                ),
-            )
-        }
-        val path = Path()
-        path.addSquircleRect(
-            width = size.width,
-            height = size.height,
-            cornerRadius = radius,
-            squircleEnabled = true,
-        )
-        return Outline.Generic(path)
-    }
-}
+private fun popupCornerShape(squircleEnabled: Boolean): SquircleShape = SquircleShape(
+    cornerRadius = PopupCornerRadius,
+    squircleEnabled = squircleEnabled,
+    capsuleCircleBlend = false,
+)
 
 /**
  * RoundFrameLayout.initMaterialEffects: SHADOW_STYLE_2 / EDGE_STYLE_2 with per-theme overrides.
@@ -1918,7 +1878,7 @@ fun ListPopupContent(
     val backgroundColor = popupSurfaceColor()
     val glassBackdrop = if (enableGlass) LocalBackdrop.current else null
     val squircleEnabled = isSquircleEnabled()
-    val glassShape = remember(squircleEnabled) { PopupCornerShape(squircleEnabled) }
+    val glassShape = remember(squircleEnabled) { popupCornerShape(squircleEnabled) }
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val density = LocalDensity.current
     val blurRadius = with(density) { POPUP_BLUR_RADIUS_PX.toDp().value }
@@ -1928,9 +1888,6 @@ fun ListPopupContent(
     val snapshotBackdrop = staticBackdrop?.takeIf { glassBackdrop == null }
     val surfaceAlpha =
         if (snapshotBackdrop != null) POPUP_GLASS_SURFACE_ALPHA else POPUP_SOLID_SURFACE_ALPHA
-    val cornerRadiusFor = remember(density) {
-        { _: Float, height: Float -> popupCornerRadiusPx(height, density) }
-    }
     // `RoundFrameLayout.updateMaterialEffectsState()` turns both shaders off whenever the popup is
     // not on the blur path: `!useBackgroundBlur() || !checkThemeEnable || isLowAnimationLevel ||
     // isLowPowerMode` sets `mShadowEdgeEnabled = mSpotLightEnabled = false`, and `onDraw` then
@@ -1941,7 +1898,7 @@ fun ListPopupContent(
     val materialEdge = if (materialEdgeActive) {
         Modifier.materialShadowEdge(
             stroke = if (isDark) PopupStrokeDark else PopupStrokeLight,
-            cornerRadiusFor = cornerRadiusFor,
+            cornerRadius = PopupCornerRadius,
             cornerWeight = if (squircleEnabled) POPUP_CORNER_WEIGHT else 1f,
             edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
             shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,

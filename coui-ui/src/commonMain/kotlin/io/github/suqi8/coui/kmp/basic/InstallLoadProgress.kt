@@ -263,12 +263,12 @@ fun InstallLoadProgress(
             // updateRoundRectPath: the radius is half the path rect's height. The legacy ColorOS 16
             // branch subtracts dimen/coui_install_download_progress_round_border_radius_offset
             // (0.5dp); the ColorOS 17 branch passes the half height straight through.
-            val shapeHeight = box.height - expandY * 2
-            val shape = remember(shapeHeight, squircleEnabled) {
-                SquircleShape(
-                    cornerRadius = shapeHeight / 2,
-                    squircleEnabled = squircleEnabled,
-                )
+            //
+            // The shape reads that radius off the size the clip node ends up with, so the press
+            // expansion never has to rebuild it frame by frame. Capsule ends follow the system
+            // capsule curve; `squircleEnabled = false` keeps the plain rounded fallback.
+            val shape = remember(squircleEnabled) {
+                CapsuleOutlineShape(squircleEnabled = squircleEnabled)
             }
             Box(
                 modifier = Modifier

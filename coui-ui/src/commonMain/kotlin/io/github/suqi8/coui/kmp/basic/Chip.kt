@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -51,7 +52,7 @@ import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Close
-import io.github.suqi8.coui.kmp.squircle.squircleSurface
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 import kotlin.coroutines.cancellation.CancellationException
@@ -85,8 +86,9 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param dismissButtonSize The touch target of the dismiss affordance. Defaults to
  *   [ChipDefaults.DismissButtonSize] (48dp) so the close button meets the minimum touch target
  *   size. New in 1.2.0.
- * @param cornerRadius The corner radius of the [Chip]. COUIChip uses a capsule (half of the
- *   default 32dp height) drawn on the smooth-corner path.
+ * @param cornerRadius The corner radius of the [Chip]. The default resolves to half the measured
+ *   height, as COUIChipDrawable's `-1` does, and follows the system capsule curve; an explicit
+ *   smaller radius keeps the Lp squircle.
  * @param minWidth The minimum width of the [Chip].
  * @param minHeight The minimum height of the [Chip].
  * @param maxWidth The maximum width of the [Chip].
@@ -173,6 +175,19 @@ fun Chip(
     } else {
         containerColor
     }
+    // COUIChipDrawable.clipSmoothRoundRect: the default chipCornerRadius (-1) resolves to half the
+    // background height, so the default token follows the measured size and draws the system
+    // capsule curve. An explicit other radius keeps the Lp squircle. See CapsuleOutlineShape.
+    val squircleEnabled = isSquircleEnabled()
+    val defaultRadius = COUITheme.dimens.chip.cornerRadius
+    val shape = remember(cornerRadius, defaultRadius, squircleEnabled) {
+        val resolvedRadius = cornerRadius.takeUnless { it == defaultRadius }
+        CapsuleOutlineShape(cornerRadius = resolvedRadius, squircleEnabled = squircleEnabled)
+    }
+    val fillColorState = rememberUpdatedState(fillColor)
+    val fillModifier = remember(shape, fillColorState) {
+        Modifier.shapeFill(shape = shape) { fillColorState.value }
+    }
 
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         Box(
@@ -183,7 +198,7 @@ fun Chip(
                     scaleY = scale
                 }
                 .widthIn(max = maxWidth)
-                .squircleSurface(color = fillColor, cornerRadius = cornerRadius)
+                .then(fillModifier)
                 .selectable(
                     selected = selected,
                     interactionSource = interactionSource,

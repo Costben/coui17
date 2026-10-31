@@ -124,7 +124,7 @@ fun Snackbar(
 | modifier               | Modifier       | 应用于 Snackbar 容器的修饰符 | Modifier                      | 否       |
 | icon                   | (@Composable () -> Unit)? | 可选前置图标，布局在 30.dp 容器内（通过 `SnackbarHost` 的 `content` 插槽传入） | null | 否       |
 | cornerRadius           | Dp             | 消息为多行时的圆角半径   | SnackbarDefaults.CornerRadius     | 否       |
-| singleLineCornerRadius | Dp             | 消息为单行时的圆角半径   | SnackbarDefaults.SingleLineCornerRadius | 否 |
+| singleLineCornerRadius | Dp             | 消息为单行时的圆角半径；默认取实测高度的一半（`getHeight() / 2`），传入其他值则固定半径 | SnackbarDefaults.SingleLineCornerRadius | 否 |
 | colors                 | SnackbarColors | Snackbar 的颜色配置      | SnackbarDefaults.snackbarColors() | 否       |
 | insideMargin           | PaddingValues  | Snackbar 内容区域的内边距（当操作按钮位于尾部时，末端内边距收窄为 4.dp） | SnackbarDefaults.InsideMargin | 否       |
 
@@ -159,7 +159,7 @@ val colors = SnackbarDefaults.snackbarColors(
 | 常量名                 | 类型          | 说明                      | 默认值                                               |
 | ---------------------- | ------------- | ------------------------- | ---------------------------------------------------- |
 | CornerRadius           | Dp            | 消息为多行时的圆角半径    | 16.dp                                                |
-| SingleLineCornerRadius | Dp            | 消息为单行时的圆角半径    | 24.dp                                                |
+| SingleLineCornerRadius | Dp            | 单行圆角 token；组件默认解析为实测的 `getHeight() / 2` | 24.dp                                                |
 | InsideMargin           | PaddingValues | Snackbar 内容的默认内边距 | PaddingValues(horizontal = 16.dp, vertical = 10.dp)  |
 | IconSize               | Dp            | 可选前置图标容器的尺寸    | 30.dp                                                |
 

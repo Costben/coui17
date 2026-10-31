@@ -72,8 +72,9 @@ class DialogButtonBarPaintTest {
         // Walk down a column that sits well inside the left capsule. Only the capsule body and its
         // rim are brighter than the panel there, so the run of such rows is the capsule's height.
         // The panel's own rim is a 1-4px band that also clears the threshold, so take the longest
-        // contiguous run instead of the first and last matching rows.
-        val probeX = panelLeft + panelWidth / 8
+        // contiguous run instead of the first and last matching rows. The column stays past the
+        // capsule's 1.5R tail, where the edge is straight, and short of the centred label.
+        val probeX = panelLeft + panelWidth * 3 / 16
         val runs = mutableListOf<IntRange>()
         var runStart = -1
         for (y in 0..HEIGHT_PX) {

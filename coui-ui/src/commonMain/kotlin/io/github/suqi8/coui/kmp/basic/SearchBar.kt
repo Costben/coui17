@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
@@ -75,6 +76,7 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 import io.github.suqi8.coui.kmp.utils.hasFocusReassignBug
@@ -235,7 +237,11 @@ fun InputField(
     val currentOnExpandedChange by rememberUpdatedState(onExpandedChange)
     val internalInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
     // COUISearchBarDrawingProxyDrawable.setBackgroundRect: corner radius = rect.height() / 2.
-    val capsuleShape = CircleShape
+    // The capsule follows the ColorOS system capsule curve (arc + 1.5R easing tail).
+    val squircleEnabled = isSquircleEnabled()
+    val capsuleShape = remember(squircleEnabled) {
+        CapsuleOutlineShape(squircleEnabled = squircleEnabled)
+    }
 
     val actualLeadingIcon = leadingIcon ?: {
         // coui_search_view_icon: 20dp glyph filled with couiColorSecondNeutral.
@@ -260,7 +266,7 @@ fun InputField(
                 modifier = Modifier
                     .padding(start = SearchBarDefaults.TrailingIconStartPadding, end = SearchBarDefaults.TrailingIconEndPadding)
                     .size(SearchBarDefaults.TrailingIconTouchTargetSize)
-                    .clip(capsuleShape)
+                    .clip(CircleShape)
                     .clickable { currentOnQueryChange("") }
                     .semantics { contentDescription = "Search Cleanup" },
                 contentAlignment = Alignment.Center,
@@ -376,9 +382,9 @@ fun InputField(
                         modifier = Modifier
                             .matchParentSize()
                             .drawWithContent {
-                                val radius = size.height / 2f
                                 val capsule = Path().apply {
-                                    addRoundRect(RoundRect(0f, 0f, size.width, size.height, radius, radius))
+                                    val outline = capsuleShape.createOutline(size, layoutDirection, this@drawWithContent)
+                                    addOutline(outline)
                                 }
                                 clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
                             },

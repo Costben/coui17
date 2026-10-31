@@ -115,9 +115,9 @@ class SquircleOutlineFamilyTest {
     }
 
     /**
-     * ColorOS 17 draws capsules with circular ends (measured on device: its pill buttons and floating
-     * bar fit n = 2.0 to 0.4px, n = 2.5 misses by 2px). A smooth corner at the capsule radius has to
-     * land on the circle, and one just below the blend threshold has to stay on the superellipse.
+     * The default `capsuleCircleBlend = true` blends a corner at the capsule radius into a circle,
+     * while a corner below the blend threshold stays on the superellipse. This is the family the
+     * floating bar and the other `SquircleShape` callers still rely on.
      */
     @Test
     fun capsuleRadiusBlendsTheSmoothCornerIntoACircle() {
@@ -134,6 +134,33 @@ class SquircleOutlineFamilyTest {
             radius,
         )
         assertTrue(belowBlend < 0.005f * radius, "a corner below the blend left the superellipse by ${belowBlend}px")
+    }
+
+    /**
+     * With `capsuleCircleBlend = false` the smooth corner keeps the superellipse even at the capsule
+     * radius. The 28dp popup panel opts into this family through
+     * [SquircleShape.capsuleCircleBlend]; the button traces the system capsule curve instead.
+     */
+    @Test
+    fun capsuleCircleBlendFalseKeepsTheSuperellipseAtTheCapsuleRadius() {
+        val radius = 108.5f
+        val capsule = cornerDeviationFromSuperellipse(
+            Path().apply {
+                addSquircleRect(4 * radius, 2 * radius, radius, capsuleCircleBlend = false)
+            },
+            radius,
+        )
+        assertTrue(capsule < 0.005f * radius, "capsule end left the superellipse by ${capsule}px")
+
+        val shape = SquircleShape(cornerRadius = radius.dp, capsuleCircleBlend = false)
+        val outline = shape.createOutline(
+            androidx.compose.ui.geometry.Size(4 * radius, 2 * radius),
+            LayoutDirection.Ltr,
+            DensityStub,
+        )
+        assertTrue(outline is Outline.Generic, "the smooth capsule must stay a path")
+        val shapeMiss = cornerDeviationFromSuperellipse(outline.path, radius)
+        assertTrue(shapeMiss < 0.005f * radius, "SquircleShape missed the superellipse by ${shapeMiss}px")
     }
 
     /**

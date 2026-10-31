@@ -76,7 +76,7 @@ BottomFloatingToolbar(visible = isSelecting) {
 
 ## 胶囊表面
 
-胶囊通过 `LocalBackdrop` 采样其后方的画面。存在背景层、平台支持运行时着色器且系统启用了材质模糊（`SystemMaterialState.blurEnabled`）时，胶囊会被模糊并叠加工具栏配色；否则回退为不透明的 `containerColor` 填充。两种情况下，描边与内阴影都由 `Modifier.materialShadowEdge` 以 `TYPE_FRAMEWORK_CAPSULE_13` 参数绘制，胶囊下方带有系统焦散光影（不支持系统焦散时回退为 `BottomFloatingToolbarDefaults.Shadow` 投影）。按压与拖动通过 `couiTouchMotion` 产生形变、橡皮筋位移与缩放，并携带 `SpotLightDefaults.opaqueMedium2` 聚光反馈。
+胶囊通过 `LocalBackdrop` 采样其后方的画面。存在背景层、平台支持运行时着色器且系统启用了材质模糊（`SystemMaterialState.blurEnabled`）时，胶囊会被模糊并叠加工具栏配色；否则回退为不透明的 `containerColor` 填充。胶囊与其描边共用系统胶囊曲线（`addSegmentCapsule`）；描边与内阴影由 `Modifier.materialShadowEdge` 以 `TYPE_FRAMEWORK_CAPSULE_13` 参数和胶囊角权重绘制（宽胶囊 1.0，方形胶囊 2.0）。胶囊下方带有系统焦散光影（不支持系统焦散时回退为 `BottomFloatingToolbarDefaults.Shadow` 投影）。按压与拖动通过 `couiTouchMotion` 产生形变、橡皮筋位移与缩放，并携带 `SpotLightDefaults.opaqueMedium2` 聚光反馈。
 
 ## 多色图标
 

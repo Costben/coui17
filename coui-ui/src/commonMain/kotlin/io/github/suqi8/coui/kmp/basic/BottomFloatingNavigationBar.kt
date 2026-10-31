@@ -5,6 +5,7 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -30,7 +31,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -82,9 +82,7 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
-import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
-import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
 
@@ -336,8 +334,10 @@ private fun BottomFloatingNavigationBarCapsule(
 ) {
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
     val squircleEnabled = isSquircleEnabled()
+    // A full-radius bar follows the system capsule curve; a smaller explicit radius keeps the Lp
+    // squircle. See CapsuleOutlineShape.
     val shape = remember(cornerRadius, squircleEnabled) {
-        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+        CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val highlight = rememberGlassHighlight(GlassContainer.Medium, backdrop)
     val touchState = rememberCOUITouchMotionState()
@@ -392,7 +392,7 @@ private fun BottomFloatingNavigationBarCapsule(
                                 backdrop = backdrop,
                                 shape = shape,
                                 containerColor = containerColor,
-                                fallback = Modifier.squircleBackground(color = containerColor, cornerRadius = cornerRadius),
+                                fallback = Modifier.background(color = containerColor, shape = shape),
                                 blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
                                 blendColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
                                 highlight = highlight,
@@ -428,6 +428,10 @@ private fun BottomFloatingNavigationBarMeltBall(
     val density = LocalDensity.current
     val barHeight = BottomFloatingNavigationBarDefaults.BarHeight
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
     val expansionSize = BottomFloatingNavigationBarDefaults.ExpansionSize
     val sideSpacing = BottomFloatingNavigationBarDefaults.SideSpacing
     val expansionTouchState = rememberCOUITouchMotionState()
@@ -489,7 +493,7 @@ private fun BottomFloatingNavigationBarMeltBall(
                                 scaleX = menuTouchState.scaleX
                                 scaleY = menuTouchState.scaleY
                             }
-                            .dropShadow(shape = RoundedCornerShape(cornerRadius), shadow = liftShadow),
+                            .dropShadow(shape = shape, shadow = liftShadow),
                     )
                 }
                 if (liftShadow != null && capsuleWidthPx > 0 && expansionFootprint > 0.dp) {
@@ -563,13 +567,14 @@ private fun BottomFloatingNavigationBarMeltBall(
                     },
                     rimBottomScale = 1f,
                     bottomGlowColor = BottomFloatingNavigationBarDefaults.CausticColor,
+                    continuousCurve = true,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FloatingCapsuleRow(
                         modifier = Modifier
                             .onSizeChanged { capsuleWidthPx = it.width }
                             .couiTouchMotion(
-                                shape = RoundedCornerShape(cornerRadius),
+                                shape = shape,
                                 lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                                 motionState = menuTouchState,
                             ),

@@ -43,7 +43,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -56,14 +63,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.SearchCleanup
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.CompletableDeferred
@@ -364,7 +374,9 @@ fun SnackbarHost(
  * @param icon optional leading icon, mirroring COUISnackBar's iv_snack_bar_icon slot. Pass it
  *   through [SnackbarHost]'s `content` lambda: `SnackbarHost(state) { Snackbar(it, icon = { ... }) }`.
  * @param cornerRadius corner radius of the [Snackbar] when the message spans multiple lines
- * @param singleLineCornerRadius corner radius of the [Snackbar] when the message fits on a single line
+ * @param singleLineCornerRadius corner radius of the [Snackbar] when the message fits on a single
+ *   line; the default token resolves to half the measured height (`getHeight() / 2`), while any
+ *   other value pins the radius
  * @param colors colors of the [Snackbar]
  * @param insideMargin margin inside the [Snackbar]; the end margin is replaced by a 4dp action
  *   margin when the action button is the trailing element
@@ -386,10 +398,22 @@ fun Snackbar(
     // COUISnackBar.adjustLayout: a snack bar whose content spans a single line keeps the large
     // "default" radius (capsule-like couiRoundCornerXXL), otherwise it falls back to couiRoundCornerL.
     var isSingleLine by remember(visuals.message) { mutableStateOf(true) }
-    val shape = SquircleShape(
-        cornerRadius = if (isSingleLine) singleLineCornerRadius else cornerRadius,
-        squircleEnabled = isSquircleEnabled(),
-    )
+    val squircleEnabled = isSquircleEnabled()
+    // COUISnackBar's Outline provider resolves the single-line radius to view.getHeight() / 2, so the
+    // default token follows the measured height. Any other value pins a fixed radius.
+    val shape = when {
+        !isSingleLine -> remember(cornerRadius, squircleEnabled) {
+            SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+        }
+
+        singleLineCornerRadius == SnackbarDefaults.SingleLineCornerRadius -> remember(squircleEnabled) {
+            SnackbarSingleLineShape(squircleEnabled = squircleEnabled)
+        }
+
+        else -> remember(singleLineCornerRadius, squircleEnabled) {
+            SquircleShape(cornerRadius = singleLineCornerRadius, squircleEnabled = squircleEnabled)
+        }
+    }
 
     Surface(
         modifier = modifier
@@ -499,13 +523,53 @@ data class SnackbarColors(
 )
 
 /**
+ * The single-line [Snackbar] silhouette.
+ *
+ * `COUISnackBar`'s Outline provider resolves the single-line radius to `view.getHeight() / 2` on the
+ * live height, so the corner follows the measured size rather than a token. It keeps the squircle
+ * family the fixed radius used; at half the height the family's capsule blend reduces the end to a
+ * circular arc.
+ */
+internal class SnackbarSingleLineShape(private val squircleEnabled: Boolean) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        val radius = size.minDimension / 2f
+        if (radius <= 0f) return Outline.Rectangle(size.toRect())
+        if (!squircleEnabled) {
+            return Outline.Rounded(RoundRect(rect = size.toRect(), cornerRadius = CornerRadius(radius)))
+        }
+        val path = Path().apply {
+            addSquircleRect(
+                width = size.width,
+                height = size.height,
+                cornerRadius = radius,
+                squircleEnabled = true,
+            )
+        }
+        return Outline.Generic(path)
+    }
+
+    override fun equals(other: Any?): Boolean = other is SnackbarSingleLineShape && other.squircleEnabled == squircleEnabled
+
+    override fun hashCode(): Int = squircleEnabled.hashCode()
+}
+
+/**
  * Defaults for [Snackbar].
  */
 object SnackbarDefaults {
     /** The default corner radius when the message spans multiple lines (COUI coui_snack_bar_radius / couiRoundCornerL). */
     val CornerRadius = 16.dp
 
-    /** The default corner radius when the message fits on a single line (COUI coui_snack_bar_radius_single_line / couiRoundCornerXXL). */
+    /**
+     * The single-line radius token (COUI `coui_snack_bar_radius_single_line` / `couiRoundCornerXXL`).
+     *
+     * `COUISnackBar` resolves a single line to `view.getHeight() / 2` on the live height, so passing
+     * this default keeps that rule; any other value pins a fixed radius.
+     */
     val SingleLineCornerRadius = 24.dp
 
     /**

@@ -214,7 +214,12 @@ class NotificationSwipeBoxTest {
     fun settingsFollowsDeleteAndTallCardsKeepTopAlignedMenu() {
         assertEquals(1f, notificationActionProgress(74.dp, 0))
         assertEquals(0f, notificationActionProgress(74.dp, 1))
-        val particles = notificationSwipeParticles(360.dp, 180.dp, 144.dp, 1f, 1f)
+        val particles = notificationSwipeParticles(
+            width = 360.dp,
+            height = 180.dp,
+            distance = 144.dp,
+            actionRecoils = listOf(1f, 1f),
+        )
         assertEquals(216.dp, particles[0].width)
         assertEquals(68.dp, particles[1].height)
         assertEquals(8.dp, particles[1].centerY - particles[1].height / 2)
@@ -393,7 +398,15 @@ class NotificationSwipeBoxTest {
     /** Merged, the delete cell spans both slots and ends one gap short of the card. */
     @Test
     fun mergedDeleteCellSwallowsTheSettingsCell() {
-        val particles = notificationSwipeParticles(360.dp, 84.dp, 144.dp, 1f, 1f, 2, overshoot = 60.dp, merge = 1f)
+        val particles = notificationSwipeParticles(
+            width = 360.dp,
+            height = 84.dp,
+            distance = 144.dp,
+            actionRecoils = listOf(1f, 1f),
+            actionCount = 2,
+            overshoot = 60.dp,
+            merge = 1f,
+        )
         val (card, delete, settings) = particles
         assertEquals(156.dp, card.width)
         assertEquals(190.dp, delete.width)
@@ -401,7 +414,14 @@ class NotificationSwipeBoxTest {
         assertEquals(0.2f, settings.scaleX, 0.0001f)
         // The settings cell stopped moving at the merge distance and sits inside the delete cell.
         assertEquals(360.dp - 4.dp - 30.dp - 70.dp - 40.dp, settings.centerX)
-        val split = notificationSwipeParticles(360.dp, 84.dp, 144.dp, 1f, 1f, 2, overshoot = 20.dp)
+        val split = notificationSwipeParticles(
+            width = 360.dp,
+            height = 84.dp,
+            distance = 144.dp,
+            actionRecoils = listOf(1f, 1f),
+            actionCount = 2,
+            overshoot = 20.dp,
+        )
         assertEquals(80.dp, split[1].width)
         assertEquals(1f, split[2].scaleX)
         assertEquals(360.dp - 4.dp - 30.dp - 70.dp - 20.dp, split[2].centerX)

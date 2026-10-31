@@ -22,6 +22,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -42,8 +43,7 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
-import io.github.suqi8.coui.kmp.squircle.SquircleShape
-import io.github.suqi8.coui.kmp.squircle.squircleSurface
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 import kotlin.coroutines.cancellation.CancellationException
@@ -58,6 +58,9 @@ import kotlin.coroutines.cancellation.CancellationException
  *   Defaults to `true`, matching COUIButton's own default; `COUIAlertDialogBottomButtonNewNormal`
  *   also sets `scaleEnable=true` explicitly. Set to `false` only where the device style does.
  * @param cornerRadius The corner radius of the [Button]. `null` uses the radius of [size].
+ *   Once the radius reaches half the shorter side the button is a capsule and follows the ColorOS
+ *   capsule curve — a circular arc joined to a 1.5-radius easing tail — rather than a circular
+ *   stadium. A caller-supplied radius below that keeps the continuous-curvature squircle.
  * @param minWidth The minimum width of the [Button]. `null` uses the width of [size].
  * @param minHeight The minimum height of the [Button]. `null` uses the height of [size].
  * @param colors The [ButtonColors] of the [Button].
@@ -124,7 +127,14 @@ fun Button(
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val density = LocalDensity.current
     val blurScale = rememberToolbarAttenuatedBlurScale()
-    val buttonShape = remember(resolvedCornerRadius) { SquircleShape(resolvedCornerRadius) }
+    // A default button is a capsule. Its ends follow the system capsule curve (circular arc plus a
+    // 1.5-radius easing tail); a caller-supplied radius below half the shorter side keeps the
+    // squircle. CapsuleOutlineShape picks the family in createOutline, where the size is known, so
+    // composition never reads the measured size.
+    val squircleEnabled = isSquircleEnabled()
+    val buttonShape = remember(resolvedCornerRadius, squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = resolvedCornerRadius, squircleEnabled = squircleEnabled)
+    }
     val touchMotionState = rememberCOUITouchMotionState()
 
     // COUI press feedback: scale/deformation (COUITouchMotion) + press tint (COUIMaskEffectDrawable).
@@ -161,7 +171,13 @@ fun Button(
     } else {
         containerColor
     }
-    // With a backdrop COUIButton swaps its flat fill for the TYPE_CONTENT_*_BUTTON material.
+    // With a backdrop COUIButton swaps its flat fill for the TYPE_CONTENT_*_BUTTON material. The
+    // flat fill resolves its outline once per size; the colour is read in the draw phase so the
+    // press tint does not rebuild the path every frame.
+    val fillColorState = rememberUpdatedState(fillColor)
+    val fillModifier = remember(buttonShape, fillColorState) {
+        Modifier.shapeFill(shape = buttonShape) { fillColorState.value }
+    }
     val surfaceModifier = if (backdrop != null && fillColor.alpha > 0f) {
         val scheme = COUITheme.colorScheme
         val isAccent = ButtonDefaults.isAccentFill(colors.color, scheme.primary)
@@ -173,20 +189,34 @@ fun Button(
             backdrop = backdrop,
             shape = buttonShape,
             containerColor = fillColor,
-            fallback = Modifier.squircleSurface(color = fillColor, cornerRadius = resolvedCornerRadius),
+            fallback = fillModifier,
             blurRadius = with(density) { (material.blurSigmaPx / TEXTURE_BLUR_SIGMA_SCALE).toDp().value } * blurScale(),
             blendColors = material.layers,
         )
     } else {
-        Modifier.squircleSurface(color = fillColor, cornerRadius = resolvedCornerRadius)
+        fillModifier
     }
     // The native rim paints over the capsule fill (COUIButton.draw: background → mask/stroke →
     // text → shadow edge), so it must be a later modifier than the surface, and an earlier one than
     // the label. materialShadowEdge draws through onDrawBehind, which lands between the two.
+    // COUIButton.updateStrokeCorner passes weight 2.0 for a square capsule and 1.0 otherwise, where
+    // the shader switches to its capsule distance field; a radius below the capsule radius keeps the
+    // squircle rim's weight. Only the draw phase knows the size, hence materialShadowEdgeBySize.
+    val rimCornerWeightFor: (Float, Float) -> Float = remember(resolvedCornerRadius, density) {
+        val radiusPx = with(density) { resolvedCornerRadius.toPx() }
+        val weightFor: (Float, Float) -> Float = { width, height ->
+            when {
+                radiusPx < minOf(width, height) / 2f - 0.5f -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
+                width == height -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
+                else -> MaterialShadowEdgeDefaults.CornerWeight
+            }
+        }
+        weightFor
+    }
     val rimModifier = if (edgeStroke != null && fillColor.alpha > 0f) {
-        Modifier.materialShadowEdge(
+        Modifier.materialShadowEdgeBySize(
             stroke = edgeStroke,
-            cornerWeight = MaterialShadowEdgeDefaults.CapsuleCornerWeight,
+            cornerWeightFor = rimCornerWeightFor,
             cornerRadius = resolvedCornerRadius,
             edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
             shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
