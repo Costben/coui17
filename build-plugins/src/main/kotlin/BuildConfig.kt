@@ -17,15 +17,21 @@ object BuildConfig {
 }
 
 fun org.gradle.api.Project.getGitVersionCode(): Int {
-    return providers.exec {
-        commandLine("git", "rev-list", "--count", "HEAD")
-    }.standardOutput.asText.get().trim().toInt()
+    return runCatching {
+        providers.exec {
+            workingDir(rootDir)
+            commandLine("git", "rev-list", "--count", "HEAD")
+        }.standardOutput.asText.get().trim().toInt()
+    }.getOrElse { 1 }
 }
 
 fun org.gradle.api.Project.getGitHashShort(): String {
-    return providers.exec {
-        commandLine("git", "rev-parse", "--short", "HEAD")
-    }.standardOutput.asText.get().trim()
+    return runCatching {
+        providers.exec {
+            workingDir(rootDir)
+            commandLine("git", "rev-parse", "--short", "HEAD")
+        }.standardOutput.asText.get().trim()
+    }.getOrElse { "dev" }
 }
 
 /**
