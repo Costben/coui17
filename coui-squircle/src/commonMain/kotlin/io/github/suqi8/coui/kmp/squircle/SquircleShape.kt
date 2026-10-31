@@ -30,6 +30,10 @@ import androidx.compose.ui.unit.LayoutDirection
  * read the radii off it; the glass rim highlight, for one, builds its rounded-rect SDF from the
  * [CornerBasedShape] corners and otherwise falls back to `min(width, height) / 2`, which turns the
  * rim into a stadium that no longer follows the surface.
+ *
+ * @property capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
+ *   (`true`) or keeps the continuous-curvature superellipse (`false`, the 28dp popup panel corner).
+ *   Button capsules do not use this shape; they trace the system capsule curve instead.
  */
 @Immutable
 class SquircleShape private constructor(
@@ -39,6 +43,7 @@ class SquircleShape private constructor(
     bottomStart: CornerSize,
     private val extension: Float,
     private val squircleEnabled: Boolean,
+    val capsuleCircleBlend: Boolean,
 ) : CornerBasedShape(
     topStart = topStart,
     topEnd = topEnd,
@@ -54,11 +59,14 @@ class SquircleShape private constructor(
      *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
      * @param squircleEnabled When `false` the outline is a plain rounded rectangle, matching the
      *   fallback the shader-backed modifiers use. Forward [isSquircleEnabled].
+     * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
+     *   (`true`) or keeps the continuous-curvature superellipse (`false`).
      */
     constructor(
         cornerRadius: Dp,
         extension: Float = SquircleDefaults.Extension,
         squircleEnabled: Boolean = true,
+        capsuleCircleBlend: Boolean = true,
     ) : this(
         topStart = CornerSize(cornerRadius),
         topEnd = CornerSize(cornerRadius),
@@ -66,6 +74,7 @@ class SquircleShape private constructor(
         bottomStart = CornerSize(cornerRadius),
         extension = extension,
         squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = capsuleCircleBlend,
     )
 
     /**
@@ -80,6 +89,8 @@ class SquircleShape private constructor(
      *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
      * @param squircleEnabled When `false` the outline is a plain rounded rectangle. Forward
      *   [isSquircleEnabled].
+     * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
+     *   (`true`) or keeps the continuous-curvature superellipse (`false`).
      */
     constructor(
         topStart: Dp,
@@ -88,6 +99,7 @@ class SquircleShape private constructor(
         bottomStart: Dp,
         extension: Float = SquircleDefaults.Extension,
         squircleEnabled: Boolean = true,
+        capsuleCircleBlend: Boolean = true,
     ) : this(
         topStart = CornerSize(topStart),
         topEnd = CornerSize(topEnd),
@@ -95,6 +107,7 @@ class SquircleShape private constructor(
         bottomStart = CornerSize(bottomStart),
         extension = extension,
         squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = capsuleCircleBlend,
     )
 
     /** Draws the smooth-corner outline from the px radii [CornerBasedShape] already resolved. */
@@ -136,6 +149,7 @@ class SquircleShape private constructor(
             bottomLeft = bottomLeft,
             extension = extension,
             squircleEnabled = true,
+            capsuleCircleBlend = capsuleCircleBlend,
         )
         return Outline.Generic(path)
     }
@@ -152,6 +166,7 @@ class SquircleShape private constructor(
         bottomStart = bottomStart,
         extension = extension,
         squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = capsuleCircleBlend,
     )
 
     override fun equals(other: Any?): Boolean {
@@ -162,7 +177,8 @@ class SquircleShape private constructor(
             bottomEnd == other.bottomEnd &&
             bottomStart == other.bottomStart &&
             extension == other.extension &&
-            squircleEnabled == other.squircleEnabled
+            squircleEnabled == other.squircleEnabled &&
+            capsuleCircleBlend == other.capsuleCircleBlend
     }
 
     override fun hashCode(): Int {
@@ -172,9 +188,11 @@ class SquircleShape private constructor(
         result = 31 * result + bottomStart.hashCode()
         result = 31 * result + extension.hashCode()
         result = 31 * result + squircleEnabled.hashCode()
+        result = 31 * result + capsuleCircleBlend.hashCode()
         return result
     }
 
     override fun toString(): String = "SquircleShape(topStart=$topStart, topEnd=$topEnd, bottomEnd=$bottomEnd, " +
-        "bottomStart=$bottomStart, extension=$extension, squircleEnabled=$squircleEnabled)"
+        "bottomStart=$bottomStart, extension=$extension, squircleEnabled=$squircleEnabled, " +
+        "capsuleCircleBlend=$capsuleCircleBlend)"
 }

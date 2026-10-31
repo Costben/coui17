@@ -29,21 +29,24 @@ public final class io/github/suqi8/coui/kmp/squircle/SquircleDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/squircle/SquirclePathKt {
-	public static final fun addSquircleRect (Landroidx/compose/ui/graphics/Path;FFFFZ)V
+	public static final synthetic fun addSquircleRect (Landroidx/compose/ui/graphics/Path;FFFFZ)V
+	public static final fun addSquircleRect (Landroidx/compose/ui/graphics/Path;FFFFZZ)V
 	public static synthetic fun addSquircleRect$default (Landroidx/compose/ui/graphics/Path;FFFFZILjava/lang/Object;)V
-	public static final fun addSquircleRoundRect (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZ)V
-	public static synthetic fun addSquircleRoundRect$default (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZILjava/lang/Object;)V
+	public static synthetic fun addSquircleRect$default (Landroidx/compose/ui/graphics/Path;FFFFZZILjava/lang/Object;)V
+	public static final fun addSquircleRoundRect (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZZ)V
+	public static synthetic fun addSquircleRoundRect$default (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZZILjava/lang/Object;)V
 }
 
 public final class io/github/suqi8/coui/kmp/squircle/SquircleShape : androidx/compose/foundation/shape/CornerBasedShape {
 	public static final field $stable I
-	public synthetic fun <init> (FFFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (FFFFFZLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (FFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (FFZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFZZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFZZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun copy (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;)Landroidx/compose/foundation/shape/CornerBasedShape;
 	public fun createOutline-LjSzlW0 (JFFFFLandroidx/compose/ui/unit/LayoutDirection;)Landroidx/compose/ui/graphics/Outline;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCapsuleCircleBlend ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

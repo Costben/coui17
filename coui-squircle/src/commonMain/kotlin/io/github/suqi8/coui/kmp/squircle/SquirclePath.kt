@@ -35,10 +35,10 @@ object SquircleDefaults {
  * pre-baked SDF was generated for (`coui-squircle/build.gradle.kts` `bakeSquircleSdf`) so
  * path-based and shader-backed silhouettes line up.
  *
- * Tuned to ColorOS 17's default corner weight 2.5 (`RoundCornerUtil.WEIGHT_16_1_NORMAL`), whose
- * corner curve is the hwui "G2" Lp superellipse `|x|^n + |y|^n = R^n` with `n = weight`. One cubic
- * cannot equal an Lp ball, so this matches its 45° inset instead: `n = 2.5` needs `h / T = 0.3123`,
- * i.e. `1 - 0.3123 = 0.6877`. The retired `0.643` matched `n ≈ 2.31` (5–7% flatter than target).
+ * Tuned to the `n = 2.5` Lp superellipse COUI draws for panels (hwui "G2",
+ * `|x|^n + |y|^n = R^n`). One cubic cannot equal an Lp ball, so this matches its 45° inset instead:
+ * `n = 2.5` needs `h / T = 0.3123`, i.e. `1 - 0.3123 = 0.6877`. The retired `0.643` matched
+ * `n ≈ 2.31` (5–7% flatter than target).
  */
 internal const val SQUIRCLE_CONTROL = 0.6877f
 
@@ -46,10 +46,11 @@ internal const val SQUIRCLE_CONTROL = 0.6877f
 private const val CIRCLE_CONTROL = 0.5522848f
 
 /**
- * Share of half the shorter side (π/4) above which a smooth corner starts to degrade into a circular
- * arc, reaching it when the corner spans the whole half side. ColorOS 17 draws capsules with round
- * ends — its pills and capsule buttons trace a circle, not the Lp superellipse — so a capsule here
- * must too. The shader-backed fill and the glass rim blend over the same range.
+ * Share of half the shorter side (π/4) above which a corner starts to blend toward a circular arc,
+ * reaching it when the corner spans the whole half side.
+ *
+ * The blend is opt-in per control through [circleBlendWeight]'s `capsuleCircleBlend`; the popup
+ * panel's 28dp superellipse passes `false` and keeps its curve to the capsule ends.
  */
 internal const val CIRCLE_BLEND_START = 0.7853982f
 
@@ -57,8 +58,14 @@ internal const val CIRCLE_BLEND_START = 0.7853982f
  * How far a corner of [tile] px has moved from the smooth corner toward a circular arc, `0..1`, on a
  * rect whose shorter side is `2 * halfMin`. [tile] is the unclamped corner tile, so any radius at or
  * past the capsule radius is fully circular.
+ *
+ * [capsuleCircleBlend] is the caller's choice: `true` lets the corner blend into an arc as it
+ * approaches the capsule radius, while `false` keeps the smooth superellipse all the way to the
+ * capsule ends. [SquircleShape] and [addSquircleRect] default to `true`; the popup panel's shape
+ * passes `false`.
  */
-internal fun circleBlendWeight(tile: Float, halfMin: Float): Float {
+internal fun circleBlendWeight(tile: Float, halfMin: Float, capsuleCircleBlend: Boolean = true): Float {
+    if (!capsuleCircleBlend) return 0f
     val threshold = halfMin * CIRCLE_BLEND_START
     val range = halfMin - threshold
     return if (range <= 0f) 1f else ((tile - threshold) / range).coerceIn(0f, 1f)
@@ -72,8 +79,9 @@ private fun cornerHandle(tile: Float, circleWeight: Float): Float = tile * (1f -
  * ride the shader pipeline (e.g. `clipPath` reveals rebuilt per frame); for static fills/clips
  * prefer the modifier APIs.
  *
- * A corner that approaches half the shorter side blends into a circular arc, so a capsule keeps
- * round ends the way ColorOS draws them.
+ * A corner that approaches half the shorter side blends into a circular arc while
+ * `capsuleCircleBlend` is `true`, so a capsule keeps round ends. Pass `false` to keep the
+ * superellipse all the way to the capsule ends instead, as the 28dp popup panel does.
  *
  * Pass `squircleEnabled = false` (typically forwarded from [isSquircleEnabled]) to append a
  * plain rounded rectangle of the same dimensions instead — useful when the surrounding visuals
@@ -86,6 +94,8 @@ private fun cornerHandle(tile: Float, circleWeight: Float): Float = tile * (1f -
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
  * @param squircleEnabled When `false`, appends a plain rounded rectangle instead of the squircle
  *   silhouette; typically forwarded from [isSquircleEnabled].
+ * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
+ *   (`true`) or keeps the continuous-curvature superellipse (`false`).
  */
 fun Path.addSquircleRect(
     width: Float,
@@ -93,6 +103,7 @@ fun Path.addSquircleRect(
     cornerRadius: Float,
     extension: Float = SquircleDefaults.Extension,
     squircleEnabled: Boolean = true,
+    capsuleCircleBlend: Boolean = true,
 ) {
     if (width <= 0f || height <= 0f) return
     if (!squircleEnabled) {
@@ -120,7 +131,7 @@ fun Path.addSquircleRect(
         addRect(Rect(0f, 0f, width, height))
         return
     }
-    val handle = cornerHandle(tile, circleBlendWeight(requestedTile, halfMin))
+    val handle = cornerHandle(tile, circleBlendWeight(requestedTile, halfMin, capsuleCircleBlend))
     moveTo(tile, 0f)
     lineTo(width - tile, 0f)
     cubicTo(width - handle, 0f, width, handle, width, tile)
@@ -131,6 +142,32 @@ fun Path.addSquircleRect(
     lineTo(0f, tile)
     cubicTo(0f, handle, handle, 0f, tile, 0f)
     close()
+}
+
+/**
+ * Binary-compatibility bridge for [addSquircleRect] callers compiled before `capsuleCircleBlend`
+ * existed; the published 1.1.0 bytecode links to this signature.
+ */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds capsuleCircleBlend.",
+    level = DeprecationLevel.HIDDEN,
+)
+fun Path.addSquircleRect(
+    width: Float,
+    height: Float,
+    cornerRadius: Float,
+    extension: Float = SquircleDefaults.Extension,
+    squircleEnabled: Boolean = true,
+) {
+    addSquircleRect(
+        width = width,
+        height = height,
+        cornerRadius = cornerRadius,
+        extension = extension,
+        squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = true,
+    )
 }
 
 /**
@@ -154,6 +191,8 @@ fun Path.addSquircleRect(
  * @param extension The corner-tile size as a multiple of the radius, clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
  * @param squircleEnabled When `false`, appends a plain rounded rectangle instead.
+ * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
+ *   (`true`) or keeps the continuous-curvature superellipse (`false`).
  */
 fun Path.addSquircleRoundRect(
     rect: Rect,
@@ -163,6 +202,7 @@ fun Path.addSquircleRoundRect(
     bottomLeft: Float,
     extension: Float = SquircleDefaults.Extension,
     squircleEnabled: Boolean = true,
+    capsuleCircleBlend: Boolean = true,
 ) {
     val width = rect.width
     val height = rect.height
@@ -205,10 +245,10 @@ fun Path.addSquircleRoundRect(
     val t = rect.top
     val r = rect.right
     val b = rect.bottom
-    val handleTl = cornerHandle(tl, circleBlendWeight(topLeft * extClamped, halfMin))
-    val handleTr = cornerHandle(tr, circleBlendWeight(topRight * extClamped, halfMin))
-    val handleBr = cornerHandle(br, circleBlendWeight(bottomRight * extClamped, halfMin))
-    val handleBl = cornerHandle(bl, circleBlendWeight(bottomLeft * extClamped, halfMin))
+    val handleTl = cornerHandle(tl, circleBlendWeight(topLeft * extClamped, halfMin, capsuleCircleBlend))
+    val handleTr = cornerHandle(tr, circleBlendWeight(topRight * extClamped, halfMin, capsuleCircleBlend))
+    val handleBr = cornerHandle(br, circleBlendWeight(bottomRight * extClamped, halfMin, capsuleCircleBlend))
+    val handleBl = cornerHandle(bl, circleBlendWeight(bottomLeft * extClamped, halfMin, capsuleCircleBlend))
     moveTo(l + tl, t)
     lineTo(r - tr, t)
     cubicTo(r - handleTr, t, r, t + handleTr, r, t + tr)
