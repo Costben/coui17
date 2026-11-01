@@ -18,3 +18,9 @@ io/github/suqi8/coui/kmp/shader/RuntimeShader
 io/github/suqi8/coui/kmp/theme/DynamicColors_skikoKt
 io/github/suqi8/coui/kmp/utils/CouiHaptic_desktopKt
 io/github/suqi8/coui/kmp/utils/WindowNavigationEventScope_skikoKt
+
+# `CouiPickerFeedback.kt` in `desktopMain` carries the same file name as the common `expect` file,
+# so the desktop actual lands in the merged `CouiPickerFeedbackKt` facade. The Android actual is
+# `CouiPickerFeedback_androidKt`, which leaves the common facade with only `expect` declarations and
+# therefore no class in the AAR. The API itself is present on both platforms.
+io/github/suqi8/coui/kmp/utils/CouiPickerFeedbackKt
