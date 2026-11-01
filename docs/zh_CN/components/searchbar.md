@@ -82,8 +82,10 @@ SearchBarDefaults 对象提供了 SearchBar 和 InputField 组件的默认值。
 | 常量名                      | 类型     | 说明                             | 默认值              |
 | --------------------------- | -------- | -------------------------------- | ------------------- |
 | InsideMargin                | DpSize   | SearchBar 的内部边距             | DpSize(16.dp, 6.dp) |
+| NATIVE_BLUR_SIGMA_PX        | Float    | 模糊预设（`FRAMEWORK_TOP_BAR_BLUR_PARAMS`）的模糊 sigma | 20f |
+| NATIVE_TOP_BAR_BLUR_SIGMA_PX | Float   | 默认预设（`FRAMEWORK_TOP_BAR_PARAMS`）的模糊 sigma：不模糊，胶囊只叠两层色 | 0f |
 | InputFieldMinHeight         | Dp       | InputField 背景的最小高度        | 40.dp               |
-| InputFieldFontSize          | TextUnit | InputField 文本与标签字号        | 16.sp               |
+| InputFieldFontSize          | TextUnit | InputField 文本与标签字号        | 15.sp               |
 | LeadingIconStartPadding     | Dp       | 默认前置图标的起始内边距         | 12.dp               |
 | LeadingIconEndPadding       | Dp       | 默认前置图标的结束内边距         | 8.dp                |
 | TrailingIconStartPadding    | Dp       | 默认清除按钮的起始内边距         | 4.dp                |

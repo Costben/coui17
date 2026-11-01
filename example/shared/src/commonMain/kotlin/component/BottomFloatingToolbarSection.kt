@@ -35,23 +35,21 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
-import io.github.suqi8.coui.kmp.icon.extended.Copy
-import io.github.suqi8.coui.kmp.icon.extended.Cut
-import io.github.suqi8.coui.kmp.icon.extended.Delete
-import io.github.suqi8.coui.kmp.icon.extended.SelectAll
-import io.github.suqi8.coui.kmp.icon.extended.Share
-import io.github.suqi8.coui.kmp.icon.extended.Translate
+import io.github.suqi8.coui.kmp.icon.extended.Add
+import io.github.suqi8.coui.kmp.icon.extended.Favorites
+import io.github.suqi8.coui.kmp.icon.extended.GridView
+import io.github.suqi8.coui.kmp.icon.extended.Layers
+import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
-import io.github.suqi8.coui.kmp.shared.generated.resources.note_toolbar_ai
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import org.jetbrains.compose.resources.painterResource
 import utils.WallpaperState
 import utils.rememberBlurBackdrop
 
-/** The Notes toolbar over a page of placeholder text, the icon-only capsule with its gradient AI glyph. */
+/** A toolbar of icon-only items over a page of placeholder text. */
 @Composable
-fun NoteToolbarDemo(
+fun IconToolbarDemo(
     modifier: Modifier = Modifier,
     visible: Boolean = true,
 ) {
@@ -88,26 +86,10 @@ fun NoteToolbarDemo(
                 visible = visible,
             ) {
                 BottomFloatingToolbarGroup {
-                    BottomFloatingToolbarItem(
-                        label = str("AI writing"),
-                        onClick = {},
-                        painter = painterResource(Res.drawable.note_toolbar_ai),
-                    )
-                    BottomFloatingToolbarItem(
-                        label = str("To-do"),
-                        icon = FloatingToolbarIcons.NoteTodo,
-                        onClick = {},
-                    )
-                    BottomFloatingToolbarItem(
-                        label = str("Voice input"),
-                        icon = FloatingToolbarIcons.NoteVoice,
-                        onClick = {},
-                    )
-                    BottomFloatingToolbarItem(
-                        label = str("Add"),
-                        icon = FloatingToolbarIcons.NoteAdd,
-                        onClick = {},
-                    )
+                    BottomFloatingToolbarItem(label = str("Item {}", 1), icon = COUIIcons.Favorites, onClick = {})
+                    BottomFloatingToolbarItem(label = str("Item {}", 2), icon = COUIIcons.Layers, onClick = {})
+                    BottomFloatingToolbarItem(label = str("Item {}", 3), icon = COUIIcons.GridView, onClick = {})
+                    BottomFloatingToolbarItem(label = str("Item {}", 4), icon = COUIIcons.Add, onClick = {})
                 }
             }
         }
@@ -120,7 +102,7 @@ fun BottomFloatingToolbarDemo() {
     var visible by remember { mutableStateOf(true) }
     val backdrop = rememberBlurBackdrop()
 
-    NoteToolbarDemo(visible = visible)
+    IconToolbarDemo(visible = visible)
     Spacer(Modifier.height(12.dp))
     Box(
         modifier = Modifier
@@ -157,19 +139,11 @@ fun BottomFloatingToolbarDemo() {
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 BottomFloatingToolbar(visible = visible) {
                     BottomFloatingToolbarGroup {
+                        BottomFloatingToolbarItem(label = str("Item {}", 1), icon = COUIIcons.Favorites, onClick = {})
+                        BottomFloatingToolbarItem(label = str("Item {}", 2), icon = COUIIcons.Layers, onClick = {})
                         BottomFloatingToolbarItem(
-                            label = str("Copy"),
-                            icon = COUIIcons.Copy,
-                            onClick = {},
-                        )
-                        BottomFloatingToolbarItem(
-                            label = str("Cut"),
-                            icon = COUIIcons.Cut,
-                            onClick = {},
-                        )
-                        BottomFloatingToolbarItem(
-                            label = str("Delete"),
-                            icon = COUIIcons.Delete,
+                            label = str("Item {}", 3),
+                            icon = COUIIcons.GridView,
                             onClick = {},
                             enabled = false,
                         )
@@ -177,22 +151,11 @@ fun BottomFloatingToolbarDemo() {
                 }
                 BottomFloatingToolbar(visible = visible) {
                     BottomFloatingToolbarGroup {
-                        BottomFloatingToolbarItem(
-                            label = str("Select all"),
-                            icon = COUIIcons.SelectAll,
-                            onClick = {},
-                        )
-                        BottomFloatingToolbarItem(
-                            label = str("Translate"),
-                            onClick = {},
-                        )
+                        BottomFloatingToolbarItem(label = str("Item {}", 1), icon = COUIIcons.Add, onClick = {})
+                        BottomFloatingToolbarItem(label = str("Item {}", 2), onClick = {})
                     }
                     BottomFloatingToolbarGroup {
-                        BottomFloatingToolbarItem(
-                            label = str("Share"),
-                            icon = COUIIcons.Share,
-                            onClick = {},
-                        )
+                        BottomFloatingToolbarItem(label = str("Item {}", 3), icon = COUIIcons.More, onClick = {})
                     }
                 }
             }

@@ -161,8 +161,13 @@ data class RecommendedItem(
 
 object RecommendedPreferenceDefaults {
 
-    /** The default corner radius of the card (COUI couiRoundCornerM, 12dp). */
-    val CornerRadius = 12.dp
+    /**
+     * The default corner radius of the card.
+     *
+     * `COUIRecommendedPreference` defaults `recommendedCardBgRadius` to `?attr/couiRoundCornerXL` →
+     * `coui_round_corner_xl` = 20dp, and `Preference.COUIRecommendedPreference` does not override it.
+     */
+    val CornerRadius = 20.dp
 
     /**
      * The default horizontal margin between the card edge and the texts

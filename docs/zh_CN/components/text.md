@@ -88,7 +88,7 @@ Text(
 | maxLines       | Int            | 最大行数                 | Int.MAX_VALUE              | 否       |
 | minLines       | Int            | 最小行数                 | 1                          | 否       |
 | onTextLayout   | ((TextLayoutResult) -> Unit)? | 文本布局完成后的回调 | null                       | 否       |
-| style          | TextStyle      | 文本样式                 | COUITheme.textStyles.main | 否       |
+| style          | TextStyle      | 文本样式                 | `textStyles.main` 取 15sp（`TextAppearance.COUI` 的字号） | 否       |
 
 ### Text（AnnotatedString）属性
 
@@ -112,7 +112,7 @@ Text(
 | minLines       | Int                            | 最小行数                       | 1                          | 否       |
 | inlineContent  | `Map<String, InlineTextContent>` | 内联可组合项的映射             | mapOf()                    | 否       |
 | onTextLayout   | (TextLayoutResult) -> Unit     | 文本布局完成后的回调           | {}                         | 否       |
-| style          | TextStyle                      | 文本样式                       | COUITheme.textStyles.main | 否       |
+| style          | TextStyle                      | 文本样式                       | `textStyles.main` 取 15sp | 否       |
 
 ## 进阶用法
 

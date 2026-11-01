@@ -111,8 +111,8 @@ OverlayProgressDialog(
 
 | 属性名                    | 类型 | 说明                                                                        |
 | ------------------------- | ---- | --------------------------------------------------------------------------- |
-| CardWidth                 | Dp   | 卡片宽度，沿用加载卡片的 COUI `coui_spinner_layout_width`（152.dp）          |
-| CardMinHeight             | Dp   | 卡片最小高度，COUI `coui_spinner_layout_min_height`（120.dp）                |
+| CardWidth                 | Dp   | 卡片宽度，COUI `coui_loading_dialog_progress_width`（200.dp）                |
+| CardMinHeight             | Dp   | 卡片最小高度；横向模板按内容包裹，没有最小高（0.dp）                         |
 | CornerRadius              | Dp   | 卡片圆角，COUI `coui_round_corner_m_radius`（9.dp）                          |
 | ContentHorizontalPadding  | Dp   | 卡片内水平内边距，避免进度条贴边（16.dp）                                    |
 | ProgressBarHeight         | Dp   | 进度条高度，COUI `coui_loading_dialog_progress_height`（4.dp）               |

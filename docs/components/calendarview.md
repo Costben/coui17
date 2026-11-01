@@ -61,6 +61,7 @@ CalendarView(
 | colors          | CalendarViewColors             | The palette of the grid                                                  | CalendarViewDefaults.colors() | No   |
 | title           | (year: Int, month: Int) -> String | Converts a year and a month (1..12) to the header title               | "September 2026"          | No       |
 | weekdayLabel    | (dayOfWeek: Int) -> String     | Converts an ISO day of week to a column header                           | "Mon" .. "Sun"            | No       |
+| dayDescription  | (year, month, day) -> String   | Accessibility label of a day cell                                        | "November 1, 2026"        | No       |
 
 ### CalendarViewColors
 

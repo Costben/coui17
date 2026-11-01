@@ -86,6 +86,10 @@ fun RowScope.DropdownArrowEndAction(
  *   carried through this parameter instead.
  * @param role The accessibility role. Use [Role.Button] for actions that navigate rather than
  *   select a persistent option; options retain [Role.RadioButton] by default.
+ * @param onLongClick The row's long-click action, invoked after
+ *   [DropdownDefaults.LongPressTimeoutMillis] of holding without leaving the row. The cascading
+ *   layer supplies its own action for a submenu trigger. Defaults to [DropdownItem.onLongClick];
+ *   `null` leaves the row without a long press, so its tap behaviour is unchanged.
  */
 @Composable
 fun DropdownImpl(
@@ -103,6 +107,7 @@ fun DropdownImpl(
     onSelectedIndexChange: (Int) -> Unit = {},
     groupKey: Any? = null,
     role: Role = if (hasSubmenu) Role.Button else Role.RadioButton,
+    onLongClick: (() -> Unit)? = item.onLongClick,
 ) {
     val additionalTopPadding =
         if (!dialogMode && isFirst) {
@@ -181,6 +186,7 @@ fun DropdownImpl(
                 enabled = enabled,
                 role = role,
                 onClick = { currentOnSelectedIndexChange(index) },
+                onLongClick = onLongClick,
                 groupKey = groupKey,
             )
             .then(containerModifier),
@@ -296,6 +302,48 @@ fun DropdownImpl(
         onSelectedIndexChange = onSelectedIndexChange,
         groupKey = null,
         role = if (hasSubmenu) Role.Button else Role.RadioButton,
+    )
+}
+
+/** Binary-compatibility bridge for the [DropdownImpl] overload that predates `onLongClick`. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds onLongClick.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun DropdownImpl(
+    item: DropdownItem,
+    optionSize: Int,
+    isSelected: Boolean,
+    index: Int,
+    modifier: Modifier = Modifier,
+    dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
+    enabled: Boolean = item.enabled,
+    dialogMode: Boolean = false,
+    hasSubmenu: Boolean = false,
+    isFirst: Boolean = index == 0,
+    isLast: Boolean = index == optionSize - 1,
+    onSelectedIndexChange: (Int) -> Unit = {},
+    groupKey: Any? = null,
+    role: Role = if (hasSubmenu) Role.Button else Role.RadioButton,
+) {
+    DropdownImpl(
+        item = item,
+        optionSize = optionSize,
+        isSelected = isSelected,
+        index = index,
+        modifier = modifier,
+        dropdownColors = dropdownColors,
+        enabled = enabled,
+        dialogMode = dialogMode,
+        hasSubmenu = hasSubmenu,
+        isFirst = isFirst,
+        isLast = isLast,
+        onSelectedIndexChange = onSelectedIndexChange,
+        groupKey = groupKey,
+        role = role,
+        onLongClick = item.onLongClick,
     )
 }
 
@@ -483,6 +531,11 @@ data class DropdownEntry(
  *   DefaultAdapter.setHint, hidden entirely while the row is disabled.
  * @param alert Whether this is an alert (destructive) item. Its title is tinted with
  *   [DropdownColors.alertContentColor] (COUI ITEM_TYPE_ALERT → couiColorError).
+ * @param onLongClick Callback invoked when the row is held for
+ *   [DropdownDefaults.LongPressTimeoutMillis] (COUI `COUIPopupListWindow` region-based long press).
+ *   A submenu trigger is expanded by the hold as well, exactly as `dispatchMainMenuMixedItemLongClick`
+ *   shows the submenu after the listener runs; a row without children and without this callback is
+ *   not a long-press target at all. Null keeps the plain tap behaviour.
  */
 @Stable
 data class DropdownItem(
@@ -495,7 +548,71 @@ data class DropdownItem(
     val children: List<DropdownItem>? = null,
     val hint: @Composable (() -> Unit)? = null,
     val alert: Boolean = false,
+    val onLongClick: (() -> Unit)? = null,
 ) {
+    /**
+     * The constructor that predates [onLongClick], kept for binary compatibility.
+     */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the constructor that also takes onLongClick.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    constructor(
+        text: String,
+        enabled: Boolean = true,
+        selected: Boolean = false,
+        onClick: (() -> Unit)? = null,
+        icon: @Composable ((Modifier) -> Unit)? = null,
+        summary: String? = null,
+        children: List<DropdownItem>? = null,
+        hint: @Composable (() -> Unit)? = null,
+        alert: Boolean = false,
+    ) : this(
+        text = text,
+        enabled = enabled,
+        selected = selected,
+        onClick = onClick,
+        icon = icon,
+        summary = summary,
+        children = children,
+        hint = hint,
+        alert = alert,
+        onLongClick = null,
+    )
+
+    /**
+     * The [copy] that predates [onLongClick], kept for binary compatibility; [onLongClick] is carried
+     * over unchanged.
+     */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes onLongClick.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        text: String = this.text,
+        enabled: Boolean = this.enabled,
+        selected: Boolean = this.selected,
+        onClick: (() -> Unit)? = this.onClick,
+        icon: @Composable ((Modifier) -> Unit)? = this.icon,
+        summary: String? = this.summary,
+        children: List<DropdownItem>? = this.children,
+        hint: @Composable (() -> Unit)? = this.hint,
+        alert: Boolean = this.alert,
+    ): DropdownItem = DropdownItem(
+        text = text,
+        enabled = enabled,
+        selected = selected,
+        onClick = onClick,
+        icon = icon,
+        summary = summary,
+        children = children,
+        hint = hint,
+        alert = alert,
+        onLongClick = onLongClick,
+    )
+
     /**
      * [SpinnerEntry] compatibility
      */
@@ -537,6 +654,12 @@ object DropdownDefaults {
     val PopupItemTitleFontSize: TextUnit = 15.sp
 
     /**
+     * How long a popup row must be held before its long click fires (COUI
+     * `COUIPopupListWindow.DEFAULT_REGION_BASED_LONG_PRESS_TIMEOUT_MS`, 650ms).
+     */
+    val LongPressTimeoutMillis: Long = 650L
+
+    /**
      * Size of the up-down arrow rendered by [DropdownArrowEndAction]
      * (native box of COUI coui_pop_up_next_normal.xml, a 14x24dp vector).
      */
@@ -567,8 +690,11 @@ object DropdownDefaults {
      */
     val InsideHorizontalPadding: Dp = 20.dp
 
-    /** Horizontal padding of each row in dialog mode. */
-    val DialogHorizontalPadding: Dp = 28.dp
+    /**
+     * Horizontal padding of each row in dialog mode. `coui_list_dialog_item`'s `main_layout` uses
+     * `alert_dialog_list_item_padding_left` / `_right` (20dp).
+     */
+    val DialogHorizontalPadding: Dp = 20.dp
 
     /**
      * Top/bottom padding applied to the first/last row in popup mode. ColorOS 17 pads every row

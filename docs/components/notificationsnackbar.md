@@ -120,6 +120,9 @@ NotificationSnackBar(
 | MinDurationMillis      | Long    | 4000    | `COUINotificationSnackBar.MIN_DURATION`                         |
 | MaxDurationMillis      | Long    | 10000   | `COUINotificationSnackBar.MAX_DURATION`                         |
 | ReturnSpring           | SpringSpec&lt;Float&gt; | response 0.35 / bounce 0 | `getViewSpringTranslationAnimator`     |
+| SWIPE_DISTANCE_DIVISOR | Int           | 8                        | `SLIDING_LIMIT_VALUE`, 1/8 of the measured width on both axes |
+| SWIPE_SLIDE_SPEED      | Float         | 1.75f                    | `SLIDING_SPEED`, slide duration = distance / 1.75 |
+| SwipeSlideEasing       | Easing        | `COUIMoveEase`           | `MOVE_EASE_INTERPOLATOR`               |
 
 #### Image Boxes
 
@@ -142,7 +145,14 @@ NotificationSnackBar(
 ## Not Ported / Deviations
 
 - The smooth-round corner of `OplusOutline.setSmoothRoundRect` (`couiRoundCornerLRadius` 13dp / `couiRoundCornerLWeight` 0.99), used when `RoundCornerUtil.isVersionSupport()` is true, is not ported; the component draws the `RoundedCornerShape` fallback the native uses otherwise (`outline.setRoundRect` with `couiRoundCornerL`).
-- The swipe-to-dismiss gesture of `onInterceptTouchEvent` / `onTouchEvent` (1/8 of the measured width along X or a downward Y swipe dismisses, the cancel returns on the response 0.35 / bounce 0 spring exposed as `NotificationSnackBarDefaults.ReturnSpring`) is not ported.
+- the "one snackbar at a time" bookkeeping only; the swipe gesture **is** ported:
+  `onInterceptTouchEvent` / `onTouchEvent` pick the axis on the first move (X when the horizontal
+  delta is larger, otherwise Y), a drag past 1/8 of the measured width dismisses — both axes use the
+  width, and the Y axis only counts a downward drag, capping an upward drag at `-width/8`. Releasing
+  short of it returns on `NotificationSnackBarDefaults.ReturnSpring`; releasing past it slides out
+  along the axis with `COUIMoveEase` over `(target - travelled) / 1.75` and then calls
+  `onSwipedDismiss`. Pass `onSwipedDismiss` to react to it — the gesture is enabled when it or
+  `onClose` is set, and the host routes it to a plain dismissal without running the close listener.
 - The `ShadowUtils.setElevationToView(..., 2, couiRoundCornerL, support_shadow_size_level_four, coui_snack_bar_background_shadow_color)` elevation is left to the caller's modifier rather than baked in.
 - The "one snackbar at a time" scan of `make()` is replaced by `NotificationSnackBarHostState`, which dismisses the previous entry with `NotificationSnackBarResult.Dismissed`.
 - The `ContextThemeWrapper(Theme.COUI_Main)` fallback of `make()` (used when the host theme does not resolve `couiColorBackgroundTop` / `couiColorPrimaryNeutral`) is not ported.

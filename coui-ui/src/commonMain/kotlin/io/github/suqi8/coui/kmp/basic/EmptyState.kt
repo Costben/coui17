@@ -337,12 +337,16 @@ object EmptyStateDefaults {
     /**
      * The default [EmptyStateColors]: title on couiColorLabelPrimary, subtitle on
      * couiColorLabelSecondary and action on couiColorPrimaryText.
+     *
+     * `couiColorPrimaryText` resolves to `coui_color_primary_text_blue`, `#0080ff` in the light theme
+     * and `#5c9dff` at night, which is exactly the theme's `primaryContainer` in both; the theme's
+     * `primary` is `#1a8cff` at night and would tint the action a shade too blue.
      */
     @Composable
     fun emptyStateColors(
         titleColor: Color = COUITheme.colorScheme.onSurface,
         subtitleColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
-        actionColor: Color = COUITheme.colorScheme.primary,
+        actionColor: Color = COUITheme.colorScheme.primaryContainer,
     ): EmptyStateColors = remember(titleColor, subtitleColor, actionColor) {
         EmptyStateColors(
             titleColor = titleColor,
@@ -355,10 +359,9 @@ object EmptyStateDefaults {
 /**
  * Colors used by an [EmptyState].
  *
- * `actionColor` follows the theme's primary. COUI resolves couiColorPrimaryText per accent theme:
- * `coui_color_primary_text_blue` is #0080FF, which the theme's light primary matches exactly, while
- * the theme's night primary is #1A8CFF against the token's #5C9DFF. The theme token wins so the
- * component follows the user's accent; only the night value is off.
+ * `actionColor` follows couiColorPrimaryText, which the theme carries as `primaryContainer`:
+ * `coui_color_primary_text_blue` is #0080FF and `#5c9dff` at night, the same pair as the theme's
+ * light and dark `primaryContainer`.
  *
  * @param titleColor The color of the title (couiColorLabelPrimary).
  * @param subtitleColor The color of the subtitle (couiColorLabelSecondary).

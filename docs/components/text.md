@@ -88,7 +88,7 @@ Text(
 | maxLines       | Int            | Maximum number of lines                 | Int.MAX_VALUE              | No       |
 | minLines       | Int            | Minimum number of lines                 | 1                          | No       |
 | onTextLayout   | ((TextLayoutResult) -> Unit)? | Callback after layout | null                       | No       |
-| style          | TextStyle      | Text style                              | COUITheme.textStyles.main | No       |
+| style          | TextStyle      | Text style                              | `textStyles.main` at 15sp (the size of `TextAppearance.COUI`) | No       |
 
 ### Text (AnnotatedString) Properties
 

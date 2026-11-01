@@ -48,6 +48,7 @@ TouchSearchView(keys = TouchSearchViewDefaults.SpecialKeys, onKeySelected = { })
 | enabled               | Boolean            | 是否响应触摸                              | true                             | 否   |
 | hapticFeedbackEnabled | Boolean            | 字母变化时是否触发触感反馈                | true                             | 否   |
 | colors                | TouchSearchViewColors | 颜色                                  | TouchSearchViewDefaults.colors() | 否   |
+| sectionNames          | Map&lt;String, List&lt;String&gt;&gt; | 按住某键时列在放大磁贴旁的条目,以索引字母为键 | emptyMap() | 否   |
 
 索引栏自身尺寸为 `BackgroundWidth` x(`PaddingTop` + `keys.size` * (`EachItemHeight` + `ItemSpacing`) + `PaddingBottom`)。把它放进有尺寸的父级即可让它短于内容——在 `NormalKeys` 与默认 16dp 步长下,尺寸为 39dp x 480dp。
 
@@ -65,6 +66,16 @@ TouchSearchView(keys = TouchSearchViewDefaults.SpecialKeys, onKeySelected = { })
 | PopupSize       | Dp                 | 48.dp                            | coui_touchsearch_popup_first_default_width / _height |
 | PopupTextSize   | TextUnit           | 20.sp                            | coui_touchsearch_popupwin_first_textsize             |
 | PopupEndMargin  | Dp                 | 0.5.dp                           | coui_touchsearch_popupwin_right_margin               |
+| SecondPopupWidth | Dp                | 112.dp                           | coui_touchsearch_popup_first_layout_width(couiPopupWinSecondWidth) |
+| SecondRowHeight | Dp                 | 48.dp                            | couiPopupWinSecondHeight,默认取首级磁贴高度 |
+| SecondPopupMaxHeight | Dp            | 304.dp                           | coui_touchsearch_popupname_max_height                |
+| SecondPopupMargin | Dp               | 8.dp                             | coui_touchsearch_popupwin_second_marginEnd           |
+| SecondPopupOffset | Dp               | 23.dp                            | coui_touchsearch_popupwin_default_offset             |
+| SecondTextSize  | TextUnit           | 18.sp                            | coui_touchsearch_popupwin_second_textsize            |
+| SecondPopupCornerRadius | Dp         | 6.dp                             | coui_touchsearch_second_name_bg 九宫格圆角         |
+| PopupAppearDurationMillis    | Int | 350 | `initPopupWindowAnimator` 的 `setDuration(350L)` |
+| PopupDisappearDurationMillis | Int | 300 | `initPopupWindowAnimator` 的 `setDuration(300L)` |
+| PopupScaleMin   | Float              | 0.8f                             | `SCALE_MIN`，弹窗淡出/淡入的缩放下限 |
 | CharOffset      | Dp                 | 0.dp                             | coui_touchsearch_char_offset                         |
 | TouchPadding    | Dp                 | 8.5.dp                           | coui_touchsearch_touch_padding_start / _end          |
 | TouchEndGap     | Dp                 | 8.dp                             | coui_touchsearch_touch_end_gap                       |
@@ -92,6 +103,8 @@ TouchSearchView(keys = TouchSearchViewDefaults.SpecialKeys, onKeySelected = { })
 | attr/couiColorPrimaryTextOnPopup → color/couiDefaultPrimaryR      | #ff347cff             | 按下的字母文本             | primary(#FF0080FF,最接近的槽位)   |
 | attr/couiColorBackgroundTop → color/coui_color_background_top     | #ffffffff / #ff333333 | 放大磁贴的填充             | 文件内常量,主题无对应槽位         |
 | color/coui_touchsearch_popup_text_color                           | #d9000000 / #d9ffffff | 放大磁贴的文字             | 文件内常量,主题无对应槽位         |
+| attr/couiColorSecondary → color/coui_color_secondary_blue         | #260080ff / #401a8cff | 条目列表填充               | tertiaryContainer                  |
+| color/coui_touchsearch_popupwin_sub_textcolor                     | selector              | 条目列表文字               | primary                            |
 | color/coui_touchsearchview_key_text_color_unpressed               | #8c000000 / #8cffffff | 未按下字母文本(样式)       | 被上面的选择器取代                |
 | color/coui_touchsearchview_popup_bg_color                         | #ffffffff             | 弹窗背景(样式)             | 被 couiColorBackgroundTop 取代    |
 | color/coui_touchsearchview_dot_color                              | selector              | 被折叠字母的点号           | 未移植,见下文                     |
@@ -106,6 +119,20 @@ TouchSearchView(keys = TouchSearchViewDefaults.SpecialKeys, onKeySelected = { })
 | 字母字体   | `sans-serif-medium`   | COUITouchSearchView.refresh()               |
 | 磁贴字母   | 20sp,medium           | coui_touchsearch_popupwin_first_textsize    |
 
+## 条目列表
+
+`COUITouchSearchView.setName(String[])` 会在放大磁贴旁再开一个弹窗,列出当前按住的字母下归档的条目。传入 `sectionNames` 即可复刻:
+
+```kotlin
+TouchSearchView(
+    keys = TouchSearchViewDefaults.NormalKeys,
+    onKeySelected = { },
+    sectionNames = mapOf("#" to listOf("12306", "淘宝", "微信")),
+)
+```
+
+面板宽 `SecondPopupWidth`(112dp),每个条目一行、行高 `SecondRowHeight`(48dp),总高不超过 `SecondPopupMaxHeight`(304dp)。它位于磁贴起点侧 `SecondPopupMargin`(8dp)处、与磁贴垂直居中,并被限制在索引栏上下各 `SecondPopupOffset`(23dp)的范围内。只在按住按键时绘制,对应原生 `closing()` 直接关闭二级窗口;它不跟随磁贴的淡入,因为两个窗口在原生里并不一起做动画。
+
 ## 行为
 
 - 几何来自原生 `updateKeys` + `onDraw`:每个字母占据 14dp 的格子外加 2dp 间距,步长为 16dp;索引栏宽 39dp,第一个字母之上与最后一个字母之下各有 16dp 内边距。文本在格子内水平与垂直居中,这也正是原生基线的落点(`key.top + (touchBottom - top) / 2 - (descent + ascent) / 2`)。
@@ -116,6 +143,6 @@ TouchSearchView(keys = TouchSearchViewDefaults.SpecialKeys, onKeySelected = { })
 
 - 点号折叠路径:`initHeightRangeSpec`、`getShowLettersSize`、`getLetterSizeFromDot`、`getLimitDotLevel` 与 `LetterLimitLevelInfo`,它们会在索引栏低于 `coui_touchsearch_limit1_height` 时把字母折叠成 `·`(`string/coui_touchsearch_dot`)。`TouchSearchViewDefaults.LimitHeights`、`MinHeight` 与 `Dot` 只记录了恢复出的 token,没有任何代码消费它们,因此短于内容的索引栏只会被裁剪。
 - 开头的收藏键图标(`mKeyCollectDrawable`,`drawable/coui_touchsearch_collect_normal` / `_popup`,尺寸由 `coui_touchsearch_collect_drawable_popup_width` / `_height` = 16dp 决定),它在 `attr/couiFirstIsCharacter` 为 false 时取代 `*` 键绘制。
-- 二级弹窗:`coui_touchsearch_popupwin_second_textsize`(18sp)、`coui_touchsearch_popupwin_second_marginEnd`(8dp)、`coui_touchsearch_popupname_max_height`(304dp)、`coui_touchsearch_popupwin_default_offset`(23dp)与 `coui_touchsearch_popup_second_text_height`(40dp)都属于列出某字母下条目的那个窗口,它位于索引栏之外。
+- 条目列表不滚动:超出 `SecondPopupMaxHeight` 的行会被裁掉,原生用的是 `ScrollView`;点击条目也不会触发 `onNameClick`。
 - `coui_touchsearch_right_margin`(5dp)、`coui_touchsearch_popupwin_margin`(4dp)与 `coui_touchsearch_popup_first_key_padding_bottom`(10dp),它们用于定位而非绘制原生弹窗。
 - 放大磁贴按不带圆角的矩形绘制在索引栏起始侧,而非放在独立的 `PopupWindow` 中,因此任何裁剪自身边界的祖先都会把它裁掉。请给索引栏一个不裁剪的父级,并在其起始侧留出至少 48.5dp 的空间。

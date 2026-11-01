@@ -35,7 +35,7 @@ import io.github.suqi8.coui.kmp.basic.CheckboxColors
 import io.github.suqi8.coui.kmp.basic.CheckboxDefaults
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
-import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
+import io.github.suqi8.coui.kmp.overlay.OverlayBottomAssignmentDialog
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -159,7 +159,7 @@ fun MultiSelectListPreference(
     )
 
     if (hasEntries) {
-        OverlayBottomSheet(
+        OverlayBottomAssignmentDialog(
             show = isSheetShown.value,
             title = dialogTitle,
             onDismissRequest = { setExpanded(false) },
@@ -171,6 +171,8 @@ fun MultiSelectListPreference(
                     modifier = Modifier
                         .weight(1f, fill = false)
                         .fillMaxWidth()
+                        // `coui_list_to_ex_bottom_padding`: the gap the list keeps to the button bar.
+                        .padding(bottom = ListPreferenceDefaults.ButtonBarTopPadding)
                         .verticalScroll(rememberScrollState()),
                 ) {
                     entries.forEachIndexed { index, entry ->
@@ -204,10 +206,7 @@ fun MultiSelectListPreference(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            top = ListPreferenceDefaults.ButtonBarTopPadding,
-                            bottom = ListPreferenceDefaults.ButtonBarBottomPadding,
-                        ),
+                        .padding(bottom = ListPreferenceDefaults.ButtonBarBottomPadding),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(

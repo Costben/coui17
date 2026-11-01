@@ -57,6 +57,7 @@ DatePicker(
 | textStyle        | TextStyle            | Text style for the wheel items                       | COUITheme.textStyles.title3      | No       |
 | itemHeight       | Dp                   | The height of each wheel item                        | NumberPickerDefaults.ItemHeight   | No       |
 | insideMargin     | PaddingValues        | Padding around the wheel columns                     | DatePickerDefaults.InsideMargin   | No       |
+| yearIgnorable    | Boolean              | Adds an ignore slot to the year wheel (`couiYearIgnorable`) | false                      | No       |
 
 ### DateValue Class
 

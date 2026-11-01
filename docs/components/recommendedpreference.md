@@ -57,7 +57,7 @@ RecommendedPreference(
 
 | Constant            | Type          | Default Value                       | Description                                                    |
 | ------------------- | ------------- | ----------------------------------- | -------------------------------------------------------------- |
-| CornerRadius        | Dp            | 12.dp                               | COUI couiRoundCornerM                                          |
+| CornerRadius        | Dp            | 20.dp                               | COUI couiRoundCornerXL                                         |
 | InsideMargin        | PaddingValues | PaddingValues(horizontal = 16.dp)   | In-card text inset (COUI 32dp minus the 16dp card margin)      |
 | HeaderTopPadding    | Dp            | 16.dp                               | COUI recommended_recyclerView_padding_top                      |
 | HeaderBottomSpacing | Dp            | 8.dp                                | COUI recommended_preference_list_item_head_bottom_margin       |

@@ -392,9 +392,10 @@ internal fun AppBarMaterial(
             Modifier.progressiveTextureBlur(
                 backdrop = backdrop,
                 shape = RectangleShape,
-                // The native radius is a sigma in pixels; textureBlur derives sigma as 0.45 x its radius.
+                // `AppBarBlurParams.startBlurRadius` is an HWUI radius; the engine derives its sigma
+                // as 0.45 x the radius it is given, so the platform's value is converted first.
                 blurRadius = with(density) {
-                    (AppBarGlassDefaults.GradientBlurRadiusPx / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+                    appBarEngineBlurRadiusPx(AppBarGlassDefaults.GradientBlurRadiusPx).toDp().value
                 },
                 gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
                 colors = BlurDefaults.blurColors(),
@@ -415,6 +416,22 @@ internal fun AppBarMaterial(
             .then(effect),
     )
 }
+
+/**
+ * The engine radius that reproduces an HWUI blur radius.
+ *
+ * HWUI's radius is not a sigma: `RenderEffect.createBlurEffect` — which
+ * `OplusRenderEffect.createGradientBlurEffect` is built on — converts the radius it is given with
+ * `SkBlurMask::ConvertRadiusToSigma`, a `0.57735` slope. COUI's engine takes a radius of its own and
+ * derives the sigma with `0.45` ([TEXTURE_BLUR_SIGMA_SCALE]). Converting on the way in keeps the
+ * engine's blur at the platform's strength, so the gradient silhouette matches the native one and the
+ * downscale exponent (`downScaleExpFor`) stays on the level the platform's radius selects instead of
+ * coarsening the sampling grid.
+ */
+private const val HWUI_BLUR_RADIUS_TO_SIGMA = 0.57735f
+
+/** [hwuiRadiusPx] in pixels, as the radius COUI's engine takes for the same sigma. */
+internal fun appBarEngineBlurRadiusPx(hwuiRadiusPx: Float): Float = hwuiRadiusPx * HWUI_BLUR_RADIUS_TO_SIGMA / TEXTURE_BLUR_SIGMA_SCALE
 
 /**
  * The overlay's alpha ramp, stretched over the node's full height.

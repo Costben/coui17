@@ -76,7 +76,7 @@ Give the component a fixed height (`fillMaxSize`, `height`, a `weight`, …) to 
 | ------------- | ----- | ----------------------------------------- | ------------------------- |
 | titleColor    | Color | COUITheme.colorScheme.onSurface           | couiColorLabelPrimary     |
 | subtitleColor | Color | COUITheme.colorScheme.onSurfaceSecondary  | couiColorLabelSecondary   |
-| actionColor   | Color | COUITheme.colorScheme.primary             | couiColorPrimaryText      |
+| actionColor   | Color | COUITheme.colorScheme.primaryContainer    | couiColorPrimaryText      |
 
 ### EmptyStateColors Class
 
@@ -121,4 +121,4 @@ EmptyState(
 )
 ```
 
-`actionColor` follows the theme's primary. COUI resolves couiColorPrimaryText per accent theme: `coui_color_primary_text_blue` is #0080FF, which the theme's light primary matches exactly, while the theme's night primary is #1A8CFF against the token's #5C9DFF. Only the night value is off.
+`actionColor` follows couiColorPrimaryText, which the theme carries as `primaryContainer`: `coui_color_primary_text_blue` is #0080FF and #5C9DFF at night, the same pair as the theme's light and dark `primaryContainer`. The theme's `primary` is #1A8CFF at night and would tint the action a shade too blue.

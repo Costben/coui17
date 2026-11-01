@@ -71,6 +71,8 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.Velocity
@@ -83,7 +85,6 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
 import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
-import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
@@ -93,6 +94,7 @@ import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
@@ -401,12 +403,18 @@ internal fun BottomSheetContent(
         maxOf(statusBars, captionBar, displayCutout)
     }
 
-    val calculateNewOffset = remember(allowDismiss) {
+    val calculateNewOffset = remember(allowDismiss, sheetHeightPx.intValue, currentWindowHeight, density) {
         { current: Float, delta: Float ->
+            val upLimitPx = pullUpLimitPx(
+                windowHeightPx = with(density) { currentWindowHeight.toPx() },
+                sheetHeightPx = sheetHeightPx.intValue.toFloat(),
+                density = density,
+            )
             val newOffset = current + delta
             if (newOffset < 0) {
-                val dampingFactor = 0.1f
-                (current + delta * dampingFactor).coerceAtMost(0f)
+                // COUIBottomSheetDialog's pull-up listener drags the parent padding by 0.2 of the
+                // pull, clamped to `coui_panel_pull_up_max_offset` and to the panel top.
+                (current + delta * PULL_UP_FRICTION).coerceIn(-upLimitPx, 0f)
             } else if (newOffset >= 0 && !allowDismiss) {
                 val dampingFactor = 0.1f
                 val dampedAmount = if (delta > 0) delta * dampingFactor else delta
@@ -436,18 +444,20 @@ internal fun BottomSheetContent(
             isSettling.value = true
             settlingJob.value = coroutineScope.launch {
                 val currentOffset = dragOffsetY.value
-                val dismissThresholdPx = with(density) { 150.dp.toPx() }
-                // Velocity comes from gesture pipeline as px/s; the threshold is intentionally
-                // expressed as a dp value converted to px so the trigger feels equivalent across
-                // densities (higher-density screens both demand and produce proportionally larger
-                // px/s values, which roughly cancels out).
-                val velocityThresholdPx = with(density) { 800.dp.toPx() }
                 val windowHeightPx = with(density) { currentWindowHeight.toPx() }
-
-                val shouldDismiss = allowDismiss && (
-                    (velocity > velocityThresholdPx) ||
-                        (currentOffset > dismissThresholdPx && velocity > -velocityThresholdPx)
-                    )
+                val peekPx = with(density) { PanelPeekHeight.toPx() }
+                val sheetPx = sheetHeightPx.intValue.toFloat()
+                // COUIBottomSheetBehavior.shouldHide: the sheet has to sit below the collapsed
+                // (peek) offset, and its 0.1s velocity projection has to travel more than half a
+                // peek height past it.
+                val collapsedOffset = (sheetPx - peekPx).coerceAtLeast(0f)
+                val projected = currentOffset + velocity * VELOCITY_PROJECTION_SECONDS
+                val shouldHide = sheetPx > 0f && currentOffset >= collapsedOffset &&
+                    (projected - collapsedOffset) / peekPx > HIDE_THRESHOLD
+                // onViewReleased only hides on a mostly vertical fling above 500px/s, or once the
+                // sheet has been dragged past the middle of the screen (`releasedLow`).
+                val shouldDismiss = allowDismiss && shouldHide &&
+                    (velocity > SIGNIFICANT_VELOCITY_PX || currentOffset > sheetPx / 2f)
 
                 try {
                     if (shouldDismiss) {
@@ -469,7 +479,7 @@ internal fun BottomSheetContent(
                         val effectiveVelocity = if (!allowDismiss && velocity > 0) 0f else velocity
                         dragOffsetY.animateTo(
                             targetValue = 0f,
-                            animationSpec = folmeSpring(damping = 0.85f, response = 0.4f),
+                            animationSpec = folmeSpring(damping = 1f, response = 0.4f),
                             initialVelocity = effectiveVelocity,
                         ) {
                             updateDimAlpha(value)
@@ -637,6 +647,7 @@ private fun BottomSheetColumn(
         bottomEnd = 0.dp,
         bottomStart = 0.dp,
         squircleEnabled = isSquircleEnabled(),
+        weight = BottomSheetDefaults.CornerWeight,
     )
     val panelSurface = Modifier.couiGlassSurface(
         backdrop = LocalBackdrop.current,
@@ -648,6 +659,7 @@ private fun BottomSheetColumn(
             topEnd = cornerRadius,
             bottomEnd = 0.dp,
             bottomStart = 0.dp,
+            weight = BottomSheetDefaults.CornerWeight,
         ),
         blurRadius = BottomSheetDefaults.blurRadius(),
         blendColors = BottomSheetDefaults.blurColors(),
@@ -697,12 +709,17 @@ private fun BottomSheetColumn(
                     shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
                 )
                 .padding(horizontal = insideMargin.width)
-                .padding(bottom = insideMargin.height),
+                .padding(bottom = insideMargin.height + BottomSheetDefaults.PanelPaddingBottom),
         ) {
             DragHandleArea(
                 dragHandleColor = dragHandleColor,
                 showDragHandle = showDragHandle,
                 allowDismiss = allowDismiss,
+                pullUpLimitPx = pullUpLimitPx(
+                    windowHeightPx = with(density) { windowHeight.toPx() },
+                    sheetHeightPx = sheetHeightPx.intValue.toFloat(),
+                    density = density,
+                ),
                 dragOffsetY = dragOffsetY,
                 coroutineScope = coroutineScope,
                 dragSnapChannel = dragSnapChannel,
@@ -759,9 +776,34 @@ private val CouiEaseEasing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f)
  */
 private val PanelPeekHeight = 82.dp
 
+/** `coui_panel_pull_up_max_offset`: the furthest the panel can be pulled above its top edge. */
+private val PanelPullUpMaxOffset = 28.dp
+
+/** `COUIBottomSheetDialog`'s pull-up listener moves the parent padding by 0.2 of the drag. */
+private const val PULL_UP_FRICTION = 0.2f
+
+/** `COUIBottomSheetBehavior.HIDE_THRESHOLD`: dismissal is measured in peek heights. */
+private const val HIDE_THRESHOLD = 0.5f
+
+/** `COUIBottomSheetBehavior` projects the release velocity 0.1s ahead before comparing. */
+private const val VELOCITY_PROJECTION_SECONDS = 0.1f
+
+/** `COUIBottomSheetBehavior.onViewReleased`'s `f4 > 500.0f` downward-fling threshold, in px/s. */
+private const val SIGNIFICANT_VELOCITY_PX = 500f
+
 /**
- * Spring spec of the COUI panel slide: damping ratio 1, response interpolated between 0.25s
- * and 0.45s (enter) / 0.4s (exit) by the travel fraction `(travel - peek) / (container - peek)`.
+ * `COUIBottomSheetDialog.getPanelPullUpListener().onDragging` clamps the pull to
+ * `min(coui_panel_pull_up_max_offset, panel top)`.
+ */
+private fun pullUpLimitPx(windowHeightPx: Float, sheetHeightPx: Float, density: Density): Float {
+    val panelTopPx = (windowHeightPx - sheetHeightPx).coerceAtLeast(0f)
+    return minOf(with(density) { PanelPullUpMaxOffset.toPx() }, panelTopPx)
+}
+
+/**
+ * Spring spec of the COUI panel slide, `COUIBottomSheetDialog.getTranslationResponse`: damping
+ * ratio 1 and a response interpolated by the travel fraction `(travel - peek) / (container - peek)`
+ * between 0.25 and 0.45 when showing, between 0.18 and 0.37 when hiding.
  */
 private fun <T> couiPanelSlideSpring(
     entering: Boolean,
@@ -769,10 +811,11 @@ private fun <T> couiPanelSlideSpring(
     containerPx: Float,
     peekPx: Float,
 ): SpringSpec<T> {
-    val base = if (entering) 0.45f else 0.4f
+    val small = if (entering) 0.25f else 0.18f
+    val large = if (entering) 0.45f else 0.37f
     val denominator = containerPx - peekPx
     val fraction = if (denominator > 0f) ((travelPx - peekPx) / denominator).coerceIn(0f, 1f) else 1f
-    return folmeSpring(damping = 1f, response = 0.25f + (base - 0.25f) * fraction)
+    return folmeSpring(damping = 1f, response = small + (large - small) * fraction)
 }
 
 /**
@@ -823,6 +866,7 @@ private fun DragHandleArea(
     dragHandleColor: Color,
     showDragHandle: Boolean,
     allowDismiss: Boolean,
+    pullUpLimitPx: Float,
     dragOffsetY: Animatable<Float, *>,
     coroutineScope: CoroutineScope,
     dragSnapChannel: Channel<Float>,
@@ -861,8 +905,9 @@ private fun DragHandleArea(
                 state = rememberDraggableState { dragAmount ->
                     val newOffset = dragOffsetY.value + dragAmount
                     val finalOffset = if (newOffset < 0) {
-                        // Damping up
-                        (dragOffsetY.value + dragAmount * 0.1f).coerceAtMost(0f)
+                        // COUIBottomSheetDialog's pull-up listener drags the parent padding by 0.2
+                        // of the pull, clamped to `coui_panel_pull_up_max_offset` and the panel top.
+                        (dragOffsetY.value + dragAmount * PULL_UP_FRICTION).coerceIn(-pullUpLimitPx, 0f)
                     } else if (newOffset >= 0 && !allowDismiss) {
                         // Damping down if not dismissible
                         val dampedAmount = if (dragAmount > 0) dragAmount * 0.1f else dragAmount
@@ -937,10 +982,14 @@ private fun TitleAndActionsRow(
             Text(
                 text = it,
                 modifier = Modifier.align(Alignment.Center),
+                // TextAppearance.COUI.AppCompatSupport.Toolbar.Title.Panel: sans-serif-medium
+                // with `android:textFontWeight` 550, capped at two lines.
                 fontSize = COUITheme.textStyles.title4.fontSize,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight(550),
                 textAlign = TextAlign.Center,
                 color = COUITheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
@@ -986,6 +1035,12 @@ private suspend fun CoroutineScope.animateDismissOffScreen(
     onDismiss()
 }
 
+/** `color/coui_color_controls_light` (`#29000000`), the light-mode drag handle tint. */
+private val DragHandleColorLight = Color(0x29000000)
+
+/** `color/coui_color_controls_dark` (`#40ffffff`), the dark-mode drag handle tint. */
+private val DragHandleColorDark = Color(0x40FFFFFF)
+
 object BottomSheetDefaults {
 
     /**
@@ -997,6 +1052,18 @@ object BottomSheetDefaults {
      */
     @Composable
     fun backgroundColor() = COUITheme.colorScheme.background
+
+    /**
+     * The spring `COUIBottomSheetDialog.createContentChangeSpringAnimation()` builds for a panel
+     * whose content changes height: `SPRING_ANIM_CONTENT_CHANGE_RESPONSE` (0.4s), bounce 0 and
+     * `SPRING_ANIM_CONTENT_CHANGE_MINIMUM_VISIBLE_CHANGE` (95). The native dialog only exposes it
+     * as a factory for callers that animate their own content, so it is not applied to the sheet.
+     */
+    val ContentChangeSpring: SpringSpec<Float> = folmeSpring(
+        damping = 1f,
+        response = 0.4f,
+        visibilityThreshold = 95f,
+    )
 
     /**
      * The panel blur radius, in px as the platform declares it.
@@ -1071,12 +1138,11 @@ object BottomSheetDefaults {
     /**
      * The `u_commonArray[10]` corner weight of a panel.
      *
-     * `COUIBottomSheetDialog` feeds the shadow-edge shader `R.dimen.weight_16_1_large` = 3.0, while
-     * [`squircleSurface`] bakes its corner control point for weight 2.5 and cannot be
-     * parameterized. The rim therefore uses 2.5 as well, so the shader's corner geometry agrees
-     * with the drawn outline; passing 3.0 makes the rim fade out along the whole corner arc.
+     * `COUIBottomSheetDialog` feeds the shadow-edge shader `R.dimen.weight_16_1_large` = 3.0, and
+     * the panel silhouette is drawn at the same weight, so the shader's corner geometry agrees with
+     * the drawn outline.
      */
-    val CornerWeight = MaterialShadowEdgeDefaults.SquircleCornerWeight
+    val CornerWeight = SquircleDefaults.WeightLarge
 
     /**
      * The default material edge of the panel.
@@ -1102,9 +1168,17 @@ object BottomSheetDefaults {
 
     /**
      * The default color of the drag handle.
+     *
+     * `coui_panel_view_layout` tints `drag_img` with `panelDragViewTintColor`, which resolves to
+     * `?attr/couiColorControls`: `#29000000` in light mode and `#40ffffff` in dark mode. The
+     * `coui_panel_bar_view_color` of `COUIPanelBarView` (`#ccbdbdbd` at night) belongs to the
+     * tiny-screen layout, which hosts that view instead of the image.
      */
     @Composable
-    fun dragHandleColor() = COUITheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.2f)
+    fun dragHandleColor(): Color {
+        val dark = COUITheme.colorScheme.background.luminance() < 0.5f
+        return if (dark) DragHandleColorDark else DragHandleColorLight
+    }
 
     /**
      * The default corner radius of the top corners of the bottom sheet.
@@ -1114,13 +1188,11 @@ object BottomSheetDefaults {
      * `R.dimen.coui_round_corner_xxxxl_radius_large_16_1` = 45dp, otherwise the 16-era
      * `R.dimen.coui_round_corner_xxxxl` = 32dp, and feeds the same value to
      * `COUIShadowEdgeDrawable.setWeight(R.dimen.weight_16_1_large)` = 3.0 plus
-     * `setCornerType(2)`. The value is therefore identical to the dialog panel's.
-     *
-     * 38dp is the weight-2.5 equivalent of native's 45dp at weight 3.0, for the reason documented
-     * on [DialogDefaults.CornerRadius]: `squircleSurface` bakes the 2.5 control points. The bottom
-     * corners stay square, matching the outline COUI extends off-screen.
+     * `setCornerType(2)`. The value is therefore identical to the dialog panel's, and so is
+     * [CornerWeight]. The bottom corners stay square, matching the outline COUI extends
+     * off-screen.
      */
-    val cornerRadius = 38.dp
+    val cornerRadius = 45.dp
 
     /**
      * The default maximum width cap of the bottom sheet. Unbounded by default: the effective
@@ -1138,6 +1210,13 @@ object BottomSheetDefaults {
      * The default margin inside the bottom sheet.
      */
     val insideMargin = DpSize(24.dp, 0.dp)
+
+    /**
+     * `dimen/coui_panel_padding_bottom` = 60dp: the padding `COUIBottomSheetDialog.updatePaddingBottom()`
+     * puts under the panel's content, on top of [insideMargin]. A panel that fills the height
+     * (`getRatio() == 2.0`) drops it.
+     */
+    val PanelPaddingBottom = 60.dp
 
     /**
      * The height of the title row, `coui_list_dialog_toolbar_height` = 50dp.

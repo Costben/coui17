@@ -209,7 +209,15 @@ private class OverscrollNode(
         }
     }
 
-    private fun startSpringAnimation(initialVelocity: Float = 0f) {
+    /**
+     * @param params [SpringMath.SPRING_BACK] when the finger lets go, [SpringMath.FLING_REBOUND] when
+     *   a fling runs into the boundary: `COUINestedScrollView` springs back on `ACTION_UP` with
+     *   `ReboundOverScroller.springBack`, while a fling decelerates on `COUISpringInterpolator(40, 1.15)`.
+     */
+    private fun startSpringAnimation(
+        initialVelocity: Float = 0f,
+        params: SpringParams = SpringMath.FLING_REBOUND,
+    ) {
         if (abs(offset) <= offsetThreshold && initialVelocity == 0f) {
             resetState()
             return
@@ -220,6 +228,7 @@ private class OverscrollNode(
             springEngine.runSettleAnimation(
                 startValue = offset,
                 initialVelocity = initialVelocity,
+                params = params,
                 onFrame = { currentPos ->
                     offset = currentPos
                 },
@@ -384,7 +393,7 @@ private class OverscrollNode(
 
         if (abs(offset) > offsetThreshold) {
             if (sign(velocity) != sign(offset)) {
-                startSpringAnimation(velocity)
+                startSpringAnimation(velocity, SpringMath.SPRING_BACK)
                 // Optimize speed and feel to prevent violent throwing
                 return parentConsumed + if (isVertical) {
                     Velocity(
@@ -395,7 +404,7 @@ private class OverscrollNode(
                     Velocity(realAvailable.x / 2.13333f, 0f)
                 }
             } else {
-                startSpringAnimation(velocity)
+                startSpringAnimation(velocity, SpringMath.SPRING_BACK)
                 return parentConsumed + if (isVertical) Velocity(0f, realAvailable.y) else Velocity(realAvailable.x, 0f)
             }
         }
@@ -424,7 +433,8 @@ private class OverscrollNode(
 
         val realAvailable = available - parentConsumed
         val velocity = (if (isVertical) realAvailable.y else realAvailable.x) / 1.53333f // attenuation speed
-        startSpringAnimation(velocity)
+        // The fling has run into the boundary: decelerate on `COUISpringInterpolator(40, 1.15)`.
+        startSpringAnimation(velocity, SpringMath.FLING_REBOUND)
 
         return parentConsumed + if (isVertical) Velocity(0f, velocity) else Velocity(velocity, 0f)
     }

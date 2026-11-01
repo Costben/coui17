@@ -74,6 +74,7 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -368,8 +369,9 @@ fun InputField(
                     shape = capsuleShape,
                     containerColor = colors.backgroundColor,
                     fallback = Modifier.background(color = colors.backgroundColor, shape = capsuleShape),
-                    blurRadius = with(density) { (SearchBarDefaults.NATIVE_BLUR_SIGMA_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value } * blurScale(),
-                    blendColors = listOf(BlendColorEntry(color = colors.backgroundColor)),
+                    blurRadius = with(density) { (SearchBarDefaults.NATIVE_TOP_BAR_BLUR_SIGMA_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value } * blurScale(),
+                    // `FRAMEWORK_TOP_BAR_PARAMS_*`: two tint layers over the backdrop, no blur.
+                    blendColors = materialBarBlendColors(),
                 )
             } else {
                 Modifier.background(color = colors.backgroundColor, shape = capsuleShape)
@@ -525,23 +527,48 @@ internal fun SearchBarCausticGlow(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** COUIMaterialBlurEffect `FRAMEWORK_TOP_BAR_PARAMS_DARK` layer 1, `#CC262626`. */
+/**
+ * `COUIMaterialBlurEffect` `FRAMEWORK_TOP_BAR_PARAMS_DARK`, the preset `COUISearchBar` resolves for
+ * the toolbar material: layer 1 `#CC262626` over the backdrop and layer 2 `#B37F7F7F` blended with
+ * `OVERLAY`. `FRAMEWORK_TOP_BAR_PARAMS_LIGHT` is `#66333333` / `COLOR_DODGE` and `#99F5F5F5` /
+ * `LUMINOSITY`.
+ *
+ * Both presets carry a `blurRadius` of 0 (`ToolbarMaterialEffectResolver` maps preset 0 to
+ * `TYPE_FRAMEWORK_TOP_BAR`) — the capsule is a two-layer tint over the sharp backdrop, not a blurred
+ * surface. `FRAMEWORK_TOP_BAR_BLUR_PARAMS` (radius 20) is only used when the bar is set to blur.
+ */
 private val MaterialBarDark = Color(0xCC262626)
+private val MaterialBarDarkHighlight = Color(0xB37F7F7F)
+private val MaterialBarLight = Color(0x66333333)
+private val MaterialBarLightHighlight = Color(0x99F5F5F5)
 
-/** COUIMaterialBlurEffect `FRAMEWORK_TOP_BAR_PARAMS_LIGHT` layer 1, `#64FFFFFF`. */
-private val MaterialBarLight = Color(0x64FFFFFF)
+/** The two top-bar tint layers of the search capsule, blended the way the framework blends them. */
+@Composable
+private fun materialBarBlendColors(): List<BlendColorEntry> = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+    listOf(
+        BlendColorEntry(color = MaterialBarDark, mode = BlurBlendMode.SrcOver),
+        BlendColorEntry(color = MaterialBarDarkHighlight, mode = BlurBlendMode.Overlay),
+    )
+} else {
+    listOf(
+        BlendColorEntry(color = MaterialBarLight, mode = BlurBlendMode.ColorDodge),
+        BlendColorEntry(color = MaterialBarLightHighlight, mode = BlurBlendMode.Luminosity),
+    )
+}
 
 /**
- * The search bar capsule fill on the material path: `COUISearchBar` asks
- * `ToolbarMaterialEffectResolver` for the toolbar background and the resolver returns the
- * `COUIMaterialBlurEffect` top-bar layer, not `coui_search_bar_no_blur_solid`.
+ * The single fill the capsule keeps when the material cannot be applied:
+ * `coui_search_bar_no_blur_solid`, `#64FFFFFF` by day and `#28767676` at night.
  *
- * At night `#262626` at 80% over the page (#303030) lands on 40, which is the value the settings
- * search capsule measures; the blur-off fallback (`#28767676`) reads 59 and is the reason the
- * capsule used to look brighter than the toolbar icons beside it.
+ * `COUISearchBar` asks `ToolbarMaterialEffectResolver` for the toolbar background instead, which
+ * returns the `COUIMaterialBlurEffect` top-bar layers (see [materialBarBlendColors]), not this solid.
  */
 @Composable
-private fun materialBarColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) MaterialBarDark else MaterialBarLight
+private fun materialBarColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+    Color(0x28767676)
+} else {
+    Color(0x64FFFFFF)
+}
 
 /** Contains default values used by [SearchBar] and [InputField]. */
 object SearchBarDefaults {
@@ -550,6 +577,15 @@ object SearchBarDefaults {
      * when it is set to blur (material type 2). Its default preset blurs nothing.
      */
     const val NATIVE_BLUR_SIGMA_PX = 20f
+
+    /**
+     * The blur sigma of `FRAMEWORK_TOP_BAR_PARAMS`, the preset `COUISearchBar` resolves by default
+     * (`ToolbarMaterialEffectResolver` maps preset 0 to `TYPE_FRAMEWORK_TOP_BAR`).
+     *
+     * The preset's `blurRadius` is 0: the capsule is the preset's two colour layers over a sharp
+     * backdrop, which is why a `SearchBar` with a backdrop shows the content behind it unblurred.
+     */
+    const val NATIVE_TOP_BAR_BLUR_SIGMA_PX = 0f
 
     /**
      * The default inside margin of the [SearchBar].

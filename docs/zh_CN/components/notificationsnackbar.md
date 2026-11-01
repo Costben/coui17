@@ -120,6 +120,9 @@ NotificationSnackBar(
 | MinDurationMillis      | Long    | 4000    | `COUINotificationSnackBar.MIN_DURATION`                         |
 | MaxDurationMillis      | Long    | 10000   | `COUINotificationSnackBar.MAX_DURATION`                         |
 | ReturnSpring           | SpringSpec&lt;Float&gt; | response 0.35 / bounce 0 | `getViewSpringTranslationAnimator`       |
+| SWIPE_DISTANCE_DIVISOR | Int           | 8                        | `SLIDING_LIMIT_VALUE`，两轴都按测量宽度的 1/8 判定 |
+| SWIPE_SLIDE_SPEED      | Float         | 1.75f                    | `SLIDING_SPEED`，甩出时长 = 位移 / 1.75 |
+| SwipeSlideEasing       | Easing        | `COUIMoveEase`           | `MOVE_EASE_INTERPOLATOR`                 |
 
 #### 图片框
 
@@ -142,7 +145,7 @@ NotificationSnackBar(
 ## 未移植
 
 - 未移植 `RoundCornerUtil.isVersionSupport()` 为真时 `OplusOutline.setSmoothRoundRect`(`couiRoundCornerLRadius` 13dp / `couiRoundCornerLWeight` 0.99)绘制的平滑圆角;组件绘制的是原生在其余情况下使用的 `RoundedCornerShape` 回退(`outline.setRoundRect` + `couiRoundCornerL`)。
-- 未移植 `onInterceptTouchEvent` / `onTouchEvent` 的滑动关闭(沿 X 或向下沿 Y 超过测量宽度的 1/8 即关闭,取消时按 response 0.35 / bounce 0 弹回,该弹簧以 `NotificationSnackBarDefaults.ReturnSpring` 暴露)。
+- 只有"同一时刻只显示一条"的登记逻辑未移植；滑动手势**已经移植**：`onInterceptTouchEvent` / `onTouchEvent` 在第一次移动时判定轴向（水平位移更大走 X，否则走 Y），位移超过测量宽度的 1/8 即关闭——两轴都用宽度，Y 轴只认向下，向上拖动钳在 `-width/8`。不到阈值按 `NotificationSnackBarDefaults.ReturnSpring` 弹回；超过阈值沿该轴以 `COUIMoveEase` 甩出，时长为 `(目标位移 - 已位移) / 1.75`，随后调用 `onSwipedDismiss`。需要响应时传入 `onSwipedDismiss`——它与 `onClose` 任一存在即启用手势，Host 会把滑动转成纯关闭、不触发关闭回调。
 - `ShadowUtils.setElevationToView(..., 2, couiRoundCornerL, support_shadow_size_level_four, coui_snack_bar_background_shadow_color)` 的阴影交由调用方的修饰符,而不是内置。
 - `make()` 中「同一时刻只有一个」的父容器扫描由 `NotificationSnackBarHostState` 替代:显示新的会以 `NotificationSnackBarResult.Dismissed` 关闭上一个。
 - 未移植 `make()` 在宿主主题解析不到 `couiColorBackgroundTop` / `couiColorPrimaryNeutral` 时的 `ContextThemeWrapper(Theme.COUI_Main)` 回退。

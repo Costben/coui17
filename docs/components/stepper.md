@@ -31,7 +31,7 @@ Stepper(
 | value         | Int             | Current value                                 | -                            | Yes      |
 | onValueChange | (Int) -> Unit   | Callback with the new value on step           | -                            | Yes      |
 | modifier      | Modifier        | Modifier applied to the stepper               | Modifier                     | No       |
-| minValue      | Int             | Minimum reachable value                       | Int.MIN_VALUE                | No       |
+| minValue      | Int             | Minimum reachable value                       | -999                         | No       |
 | maxValue      | Int             | Maximum reachable value                       | Int.MAX_VALUE                | No       |
 | step          | Int             | Increment/decrement per press                 | 1                            | No       |
 | enabled       | Boolean         | Whether the stepper is enabled                | true                         | No       |

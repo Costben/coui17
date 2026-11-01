@@ -3,7 +3,6 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,6 +46,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.COUIOutEase
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.FoldPane
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -276,7 +276,7 @@ fun SidePaneLayout(
                 targetValue = target,
                 animationSpec = tween(
                     durationMillis = SidePaneDefaults.DURATION_MILLIS,
-                    easing = MoveEaseEasing,
+                    easing = COUIOutEase,
                 ),
             )
         } catch (cancellation: CancellationException) {
@@ -392,9 +392,6 @@ private fun paneDragFraction(current: Float, delta: Float, paneWidthPx: Float): 
     }
     return damped / paneWidthPx
 }
-
-/** `COUIMoveEaseInterpolator`, a `PathInterpolator(0.3f, 0.0f, 0.1f, 1.0f)`. */
-private val MoveEaseEasing = CubicBezierEasing(0.3f, 0.0f, 0.1f, 1.0f)
 
 /**
  * Helpers of [SidePaneLayout].

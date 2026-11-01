@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.Dp
  * @param cornerRadius The radius applied uniformly to all four corners.
  * @param extension The corner-tile size as a multiple of [cornerRadius], clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge]. Keep it
+ *   equal to the fill's so the stroke does not part from the surface it traces.
  */
 @Composable
 fun Modifier.squircleBorder(
@@ -31,6 +33,7 @@ fun Modifier.squircleBorder(
     color: Color,
     cornerRadius: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
     if (!isSquircleEnabled()) {
         return this.border(width, color, RoundedCornerShape(cornerRadius))
@@ -50,6 +53,7 @@ fun Modifier.squircleBorder(
                 height = innerH,
                 cornerRadius = innerCornerRadius,
                 extension = extension,
+                weight = weight,
             )
         }
         val stroke = Stroke(width = widthPx)
@@ -74,6 +78,7 @@ fun Modifier.squircleBorder(
  * @param cornerRadius The radius applied uniformly to all four corners.
  * @param extension The corner-tile size as a multiple of [cornerRadius], clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.squircleBorder(
@@ -81,6 +86,7 @@ fun Modifier.squircleBorder(
     color: () -> Color,
     cornerRadius: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
     val squircleEnabled = isSquircleEnabled()
     return this.drawWithCache {
@@ -101,6 +107,7 @@ fun Modifier.squircleBorder(
                 cornerRadius = innerCornerRadius,
                 extension = extension,
                 squircleEnabled = squircleEnabled,
+                weight = weight,
             )
             translate(halfStroke, halfStroke) {
                 drawPath(path = path, color = color(), style = Stroke(width = widthPx))
@@ -108,3 +115,45 @@ fun Modifier.squircleBorder(
         }
     }
 }
+
+// Binary-compatibility bridges for the 1.1.0 signatures, which carried no `weight`.
+
+/** Binary-compatibility bridge for [squircleBorder] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleBorder(
+    width: Dp,
+    color: Color,
+    cornerRadius: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleBorder(
+    width = width,
+    color = color,
+    cornerRadius = cornerRadius,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [squircleBorder] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleBorder(
+    width: () -> Dp,
+    color: () -> Color,
+    cornerRadius: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleBorder(
+    width = width,
+    color = color,
+    cornerRadius = cornerRadius,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)

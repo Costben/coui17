@@ -131,6 +131,7 @@ The TabRowDefaults object provides default configurations for the TabRow compone
 
 | Constant Name                     | Type | Value       | Description                                                       |
 | --------------------------------- | ---- | ----------- | ----------------------------------------------------------------- |
+| TabRowMinHeight                   | Dp   | 28.dp       | Floor for a caller-supplied height (`coui_segment_min_height`)     |
 | TabRowHeight                      | Dp   | 40.dp       | Default height of tab row for standard style                      |
 | TabRowWithContourHeight           | Dp   | 40.dp       | Default height of tab row for contour style                       |
 | TabRowWithContourTinyHeight       | Dp   | 32.dp       | Height of the COUI `SegmentButton.Tiny` style                     |

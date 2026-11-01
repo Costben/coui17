@@ -1,6 +1,6 @@
 # EditTextPreference
 
-`EditTextPreference` is a preference row that shows its value as trailing text and edits it in a bottom sheet, mirroring ColorOS's `COUIEditTextPreference`. On the device the row is the standard `coui_preference` layout with an `app:couiAssignment` value, and the editor is `COUIEditTextPreferenceDialogFragment`, built on `coui_preference_dialog_edittext.xml`. Because this port keeps the editor in the same visual language as the other choice preferences, it renders it through `OverlayBottomSheet` (like `ListPreference`) rather than an alert dialog — which also means the screen must be wrapped in a `Scaffold`.
+`EditTextPreference` is a preference row that shows its value as trailing text and edits it in a bottom sheet, mirroring ColorOS's `COUIEditTextPreference`. On the device the row is the standard `coui_preference` layout with an `app:couiAssignment` value, and the editor is `COUIEditTextPreferenceDialogFragment`, built on `coui_preference_dialog_edittext.xml`. The dialog is `COUIAlertDialog_BottomAssignment`: the alert-dialog panel pinned to the bottom edge, not a bottom sheet. This port renders it through `OverlayBottomAssignmentDialog` (the same host `ListPreference` and `MultiSelectListPreference` use), which also means the screen must be wrapped in a `Scaffold`. COUI also anchors the window to the row that opened it; a scaffold-hosted dialog is one full-screen layer, so that anchor is not modelled.
 
 ## Import
 
@@ -88,5 +88,6 @@ EditTextPreference(
 | Property               | Type | Description                                                                   | Value |
 | ---------------------- | ---- | ----------------------------------------------------------------------------- | ----- |
 | SheetHorizontalPadding | Dp   | Horizontal inset of the editor field, from `support_preference_dialog_edittext_margin_horizontal` | 24dp |
-| ButtonBarTopPadding    | Dp   | Gap above the cancel/confirm row, from `coui_edittextdialog_marginbottom`     | 14dp  |
-| ButtonBarBottomPadding | Dp   | Bottom padding below the cancel/confirm row                                   | 12dp  |
+| ButtonBarTopPadding    | Dp   | Bottom margin of the editor field, from `coui_edittextdialog_marginbottom`     | 14dp  |
+| DialogFieldMinHeight   | Dp   | Minimum height of the editor field, from `support_preference_dialog_edittext_min_height` | 34dp |
+| ButtonBarBottomPadding | Dp   | Retained for compatibility and unused: the dialog's button bar carries its own bottom inset | 12dp |

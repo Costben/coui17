@@ -38,7 +38,11 @@ TagView(
 | modifier     | Modifier     | Modifier applied to the badge            | Modifier                   | No       |
 | leadingIcon  | ImageVector? | Optional 5dp x 10dp leading image        | null                       | No       |
 | trailingIcon | ImageVector? | Optional trailing image (`wrap_content`) | null                       | No       |
-| cornerRadius | Dp           | Uniform corner radius                    | TagViewDefaults.CornerRadius | No     |
+| cornerRadius | Dp           | Corner radius every corner below falls back to | TagViewDefaults.CornerRadius | No     |
+| topStartCornerRadius | Dp    | Top-start corner (`couiTagTLCornerRadius`) | cornerRadius | No     |
+| topEndCornerRadius | Dp      | Top-end corner (`couiTagTRCornerRadius`)   | cornerRadius | No     |
+| bottomEndCornerRadius | Dp    | Bottom-end corner (`couiTagBLCornerRadius`) | cornerRadius | No     |
+| bottomStartCornerRadius | Dp  | Bottom-start corner (`couiTagBRCornerRadius`) | cornerRadius | No     |
 | strokeWidth  | Dp           | Width of the outline                     | TagViewDefaults.StrokeWidth  | No     |
 | colors       | TagViewColors | Badge colors                            | TagViewDefaults.tagViewColors() | No  |
 
@@ -85,7 +89,7 @@ TagView(
 
 ## Not Ported / Deviations
 
-- The four per-corner radii (`couiTagTLCornerRadius`, `couiTagTRCornerRadius`, `couiTagBLCornerRadius`, `couiTagBRCornerRadius`) are collapsed into the single `cornerRadius`; every observed consumer uses the uniform `couiTagCornerRadius`.
+- The native corners are physical (`TL` / `TR` / `BL` / `BR`); the port exposes them as start/end corners so a badge flips with the layout direction, as the rest of the library does.
 - `couiColorBackgroundWithTag`, the theme value behind the default `couiTagBackgroundColor`, is not resolvable: the attribute is declared in `attrs.xml` but no `Theme.COUI` assignment and no `coui_color_background_with_tag` colour exists in the ColorOS 17 resources. The port therefore adopts the concrete pair the one observed consumer passes — `app:couiTagBackgroundColor="?attr/couiColorContainer8"`, `app:couiTagCornerRadius="4dp"` and `app:couiTagViewTextColor="@color/coui_color_label_secondary"`. White text on the light fill would have been invisible, so this is a deliberate substitution, not a framework default.
 - `couiTagViewTextSize` is applied by the native through `setTextSize(0, px)` with a 10dp dimension, while the `couiTextTag` style the layout gives the label declares 10sp; the port uses 10sp.
 - The native call that sets the parent's `clipChildren = false` on attach, and the `Path` clip in its draw pass, are not needed because a Compose parent does not clip its children by default.

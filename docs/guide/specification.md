@@ -124,6 +124,8 @@ ColorOS 17 screens use a strict **two-level surface hierarchy**: the page backgr
 
 A single outer `Scaffold` hosts a `HorizontalPager`. The floating bottom bar sits above the pager and samples `barBackdrop`; each tab page manages its own toolbar and per-page backdrop.
 
+Pages switch in two ways: a swipe drags the pager with the finger; a tap on the bottom bar does not scroll it. The pager jumps straight to the target page while the page leaving and the page arriving fade together (response 0.15s and 0.2s), pages in between stay hidden, and swiping is disabled during the fade. System apps with a bottom bar never slide sideways on a tap, even when their pages can be swiped.
+
 ```kotlin
 @Composable
 fun MainShell(pages: List<Tab>) {

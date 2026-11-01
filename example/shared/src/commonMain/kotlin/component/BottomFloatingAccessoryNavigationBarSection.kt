@@ -33,8 +33,8 @@ import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Add
-import io.github.suqi8.coui.kmp.icon.extended.Home
-import io.github.suqi8.coui.kmp.icon.extended.Messages
+import io.github.suqi8.coui.kmp.icon.extended.Favorites
+import io.github.suqi8.coui.kmp.icon.extended.Layers
 import io.github.suqi8.coui.kmp.icon.extended.Search
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
@@ -48,12 +48,11 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
     var selectedIndex by remember { mutableIntStateOf(0) }
     var startVisible by remember { mutableStateOf(true) }
     var endVisible by remember { mutableStateOf(true) }
-    val homeLabel = str("Home")
-    val messagesLabel = str("Messages")
-    val items = remember(homeLabel, messagesLabel) {
+    val itemLabels = listOf(str("Item {}", 1), str("Item {}", 2))
+    val items = remember(itemLabels) {
         listOf(
-            homeLabel to COUIIcons.Home,
-            messagesLabel to COUIIcons.Messages,
+            itemLabels[0] to COUIIcons.Favorites,
+            itemLabels[1] to COUIIcons.Layers,
         )
     }
     val backdrop = rememberBlurBackdrop()

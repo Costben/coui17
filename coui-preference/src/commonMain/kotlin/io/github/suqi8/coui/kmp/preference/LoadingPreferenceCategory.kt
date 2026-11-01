@@ -66,7 +66,12 @@ fun LoadingPreferenceCategory(
         titleColor = titleColor,
         trailing = if (loading) {
             {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.padding(
+                        end = LoadingPreferenceCategoryDefaults.WidgetPaddingEnd,
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     if (loadingText != null) {
                         Text(
                             text = loadingText,
@@ -105,4 +110,10 @@ object LoadingPreferenceCategoryDefaults {
      * `coui_preference_category_widget_layout_loading.xml` (4dp).
      */
     val TextMarginEnd = 4.dp
+
+    /**
+     * `coui_preference_category_widget_layout_padding_end` (16dp), the end inset the category's
+     * `widget_frame` widget wears instead of a margin on the frame.
+     */
+    val WidgetPaddingEnd = 16.dp
 }

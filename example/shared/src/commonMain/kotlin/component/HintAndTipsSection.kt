@@ -84,6 +84,9 @@ private fun HintAnimationDemo() {
         HintAnimationLayout(
             hints = hints,
             query = query,
+            // `COUIHintAnimationLayout.setTextSize((int) editText.getTextSize())`: the hint copies
+            // the search field's own text size, which is the input field's 15sp here.
+            textSize = SearchBarDefaults.InputFieldFontSize,
             hintStartPadding = SearchBarDefaults.LeadingIconStartPadding +
                 24.dp +
                 SearchBarDefaults.LeadingIconEndPadding,

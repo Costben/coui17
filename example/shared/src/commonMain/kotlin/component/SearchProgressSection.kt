@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -27,11 +26,7 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.ChipTabData
 import io.github.suqi8.coui.kmp.basic.ChipTabGroup
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
-import io.github.suqi8.coui.kmp.basic.LoadProgressButton
-import io.github.suqi8.coui.kmp.basic.LoadProgressButtonSize
-import io.github.suqi8.coui.kmp.basic.LoadProgressState
 import io.github.suqi8.coui.kmp.basic.PopupMenuRotation
 import io.github.suqi8.coui.kmp.basic.SearchViewAnimate
 import io.github.suqi8.coui.kmp.basic.SearchViewAnimateType
@@ -44,7 +39,6 @@ import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
-import kotlinx.coroutines.delay
 
 /** Renders the "SearchViewAnimate" gallery section content (a search bar with a collapse slider and query readout). */
 @Composable
@@ -55,20 +49,6 @@ fun SearchViewAnimateDemo() {
             .padding(bottom = 16.dp),
     ) {
         MagneticSearchBarDemo()
-    }
-}
-
-/** Renders the "LoadProgressButton" gallery section content (state buttons and a pill button with progress). */
-@Composable
-fun LoadProgressButtonDemo() {
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
-        LoadProgressStatesDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        LoadProgressPillDemo()
     }
 }
 
@@ -132,70 +112,6 @@ private fun MagneticSearchBarDemo() {
         }
         Text(
             text = str("query: \"{}\"", query),
-            style = COUITheme.textStyles.footnote1,
-        )
-    }
-}
-
-@Composable
-private fun LoadProgressStatesDemo() {
-    // performClick() calls toggle(): 0 -> 1, 1 -> 2, 2 -> 1, 3 -> 1.
-    var state by remember { mutableStateOf(LoadProgressState.Default) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            LoadProgressState.entries.forEach { entry ->
-                Box(contentAlignment = Alignment.Center) {
-                    LoadProgressButton(
-                        onClick = { state = entry.toggled() },
-                        state = entry,
-                        size = LoadProgressButtonSize.Circle,
-                    )
-                }
-            }
-        }
-        Text(
-            text = str("state: {} ({})", state.name, state.value),
-            style = COUITheme.textStyles.footnote1,
-        )
-    }
-}
-
-@Composable
-private fun LoadProgressPillDemo() {
-    var state by remember { mutableStateOf(LoadProgressState.Default) }
-    var progress by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(state) {
-        if (state == LoadProgressState.Loading) {
-            progress = 0
-            while (progress < 100) {
-                delay(120)
-                progress += 5
-            }
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        LoadProgressButton(
-            onClick = { state = state.toggled() },
-            state = state,
-            progress = progress,
-            text = if (state == LoadProgressState.Loading) "$progress%" else str("Download"),
-            size = LoadProgressButtonSize.Large,
-        )
-        Text(
-            text = str("state: {}, progress: {} / 100", state.name, progress),
             style = COUITheme.textStyles.footnote1,
         )
     }

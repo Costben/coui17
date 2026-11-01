@@ -7,9 +7,10 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.BasicComponent
-import io.github.suqi8.coui.kmp.basic.BasicComponentDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.TextField
 import io.github.suqi8.coui.kmp.basic.TextFieldMode
@@ -51,16 +52,22 @@ fun InputPreference(
     startAction: @Composable (() -> Unit)? = null,
     endActions: @Composable (RowScope.() -> Unit)? = null,
     bottomAction: (@Composable () -> Unit)? = null,
-    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    insideMargin: PaddingValues = InputPreferenceDefaults.InsideMargin,
     cardListPosition: CardListPosition = CardListPosition.None,
     enabled: Boolean = true,
     readOnly: Boolean = false,
     maxCount: Int? = null,
     showClearButton: Boolean = false,
 ) {
+    // COUIInputPreference.getTitlePaddingTop() switches on `mTitle`: an empty title gets
+    // coui_input_edit_text_no_title_padding_*_inPreference, otherwise the field's own label
+    // supplies the top inset and only the bottom one is left to the row.
+    val resolvedInsideMargin = remember(title, insideMargin) {
+        if (title.isEmpty()) InputPreferenceDefaults.NoTitleInsideMargin else insideMargin
+    }
     BasicComponent(
         modifier = modifier,
-        insideMargin = insideMargin,
+        insideMargin = resolvedInsideMargin,
         cardListPosition = cardListPosition,
         startAction = startAction,
         endActions = endActions,
@@ -81,4 +88,22 @@ fun InputPreference(
             showClearButton = showClearButton,
         )
     }
+}
+
+object InputPreferenceDefaults {
+
+    /**
+     * The row inset when the field carries its own label.
+     *
+     * `COUIInputPreference` reads `coui_input_edit_text_has_title_padding_top` (0dp) and
+     * `coui_input_edit_text_has_title_preference_padding_bottom` (7dp) for a titled field.
+     */
+    val InsideMargin = PaddingValues(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 7.dp)
+
+    /**
+     * The row inset for a field without a label
+     * (`coui_input_edit_text_no_title_padding_top_inPreference` /
+     * `..._bottom_inPreference`, 13dp each).
+     */
+    val NoTitleInsideMargin = PaddingValues(horizontal = 16.dp, vertical = 13.dp)
 }

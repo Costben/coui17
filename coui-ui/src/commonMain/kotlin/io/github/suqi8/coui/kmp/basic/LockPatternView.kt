@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -41,14 +42,23 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
+import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * The ColorOS 17 pattern-unlock grid.
@@ -154,6 +164,7 @@ fun LockPatternView(
     val currentOnPatternCleared by rememberUpdatedState(onPatternCleared)
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
+    val haptic = rememberCouiHaptic()
 
     val horizontalPaddingPx = with(density) { LockPatternViewDefaults.HorizontalPadding.toPx() }
     val verticalPaddingPx = with(density) { LockPatternViewDefaults.VerticalPadding.toPx() }
@@ -181,6 +192,13 @@ fun LockPatternView(
         flashJob?.cancel()
         flashJob = null
         flashProgress = null
+    }
+
+    // COUILockPatternView.performWrongModeFeedback: SHORT_TRIPLE_VIBRATE on a rejected pattern.
+    LaunchedEffect(mode) {
+        if (mode == LockPatternDisplayMode.Wrong || mode == LockPatternDisplayMode.FingerprintNoMatch) {
+            haptic(CouiHapticEffect.ShortTriple)
+        }
     }
 
     fun startCellActivation(index: Int) {
@@ -232,6 +250,8 @@ fun LockPatternView(
         if (lookup[index]) return
         lookup[index] = true
         drawn.add(index)
+        // COUILockPatternView.performHitFeedback: 302 on a linear motor, LONG_PRESS on a rotor.
+        haptic(CouiHapticEffect.Switch)
         if (!stealthMode) startCellActivation(index)
         currentOnPatternCellAdded(drawn.toList())
     }
@@ -545,6 +565,35 @@ fun LockPatternView(
                         center = shifted,
                     )
                 }
+            }
+        }
+        // One accessibility node per dot, the equivalent of PatternExploreByTouchHelper's nine
+        // virtual views: each carries its number and whether the pattern has reached it.
+        val geo = geometry
+        if (geo != null) {
+            for (index in 0 until LockPatternViewDefaults.CellCount) {
+                val center = geo.center(index)
+                val width = geo.cellWidth
+                val height = geo.cellHeight
+                if (width <= 0f || height <= 0f) continue
+                Box(
+                    Modifier
+                        .offset {
+                            IntOffset(
+                                x = (center.x - width / 2f).roundToInt(),
+                                y = (center.y - height / 2f).roundToInt(),
+                            )
+                        }
+                        .size(
+                            width = with(density) { width.toDp() },
+                            height = with(density) { height.toDp() },
+                        )
+                        .semantics {
+                            contentDescription = (index + 1).toString()
+                            selected = lookup[index]
+                            role = Role.Button
+                        },
+                )
             }
         }
     }
@@ -875,6 +924,12 @@ private class LockPatternGeometry(
 ) {
     private val squareWidth = ((size.width - paddingLeft * 2f) / 3f).coerceAtLeast(0f)
     private val squareHeight = ((size.height - paddingTop * 2f) / 3f).coerceAtLeast(0f)
+
+    /** The width of one dot's cell, `mSquareWidth`. */
+    val cellWidth: Float get() = squareWidth
+
+    /** The height of one dot's cell, `mSquareHeight`. */
+    val cellHeight: Float get() = squareHeight
 
     fun centerX(column: Int): Float = paddingLeft + column * squareWidth + squareWidth / 2f
 

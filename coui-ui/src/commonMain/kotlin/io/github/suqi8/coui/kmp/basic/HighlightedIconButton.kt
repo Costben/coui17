@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -19,15 +20,24 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
@@ -127,15 +137,25 @@ fun HighlightedIconButton(
         Modifier
     }
 
+    val lightShape = remember(size) { CenteredDiscShape(size) }
+
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         Box(
             modifier = modifier
-                .size(size)
+                // COUIActionMenuItemView sets minWidth coui_action_menu_item_min_width (48dp) and
+                // minHeight coui_action_menu_item_min_height (40dp), so the touch target is wider
+                // than the 40dp disc it draws.
+                .defaultMinSize(
+                    minWidth = HighlightedIconButtonDefaults.IconMenuMinWidth,
+                    minHeight = HighlightedIconButtonDefaults.IconMenuMinHeight,
+                )
                 .couiTouchMotion(
                     enabled = enabled,
                     motionState = touchMotion,
                     pressScaleEnabled = false,
-                    shape = CircleShape,
+                    // The light belongs to the disc; a plain circle clip on the wider touch target
+                    // would light a pill around it.
+                    shape = lightShape,
                     lightParams = SpotLightDefaults.circleParams1(isDark),
                     lightEnabled = spotLightEnabled,
                     extraTransform = {
@@ -147,65 +167,82 @@ fun HighlightedIconButton(
                 .then(clickableModifier),
             contentAlignment = Alignment.Center,
         ) {
-            if (isDark) {
-                MaterialCausticShadow(
-                    particles = listOf(
-                        CausticShadowParticle(
-                            MetaBallParticle.circle(size / 2, size / 2, size),
-                            CausticShadowProfile.Toolbar,
-                        ),
-                    ),
-                    color = HighlightedIconButtonDefaults.DarkHaloColor.copy(
-                        alpha = HighlightedIconButtonDefaults.DarkHaloColor.alpha * (1f - pressProgress).coerceIn(0f, 1f),
-                    ),
-                    modifier = Modifier.matchParentSize(),
-                )
-            }
             Box(
-                modifier = Modifier.matchParentSize()
-                    .drawWithContent {
-                        if (!isDark && pressProgress < 1f) drawSoftDropHalo(center, this.size.minDimension / 2f, 1f - pressProgress)
-                        drawContent()
-                    }
-                    .then(glassDiscModifier)
-                    .nativeMaterialEdge(
-                        particles = listOf(MetaBallParticle.circle(size / 2, size / 2, size)),
-                        rim = Color.White.copy(alpha = HighlightedIconButtonDefaults.stroke(isDark).edgeAlpha * (1f - pressProgress).coerceIn(0f, 1f)),
-                        edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
-                        lineWidth = HighlightedIconButtonDefaults.StrokeWidth,
-                        extension = 0.dp,
-                    )
-                    .drawWithContent {
-                        val radius = this.size.minDimension / 2f
-                        val center = this.center
-                        val brighten = HighlightedIconButtonDefaults.PressedFillBrighten * pressProgress
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colorStops = arrayOf(
-                                    0f to lerp(
-                                        HighlightedIconButtonDefaults.fillCenter(isDark),
-                                        Color.White,
-                                        brighten,
-                                    ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
-                                    HighlightedIconButtonDefaults.FillEdgeStop to lerp(
-                                        HighlightedIconButtonDefaults.fillEdge(isDark),
-                                        Color.White,
-                                        brighten,
-                                    ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
-                                ),
-                                center = center,
-                                radius = radius,
+                modifier = Modifier.size(size),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (isDark) {
+                    MaterialCausticShadow(
+                        particles = listOf(
+                            CausticShadowParticle(
+                                MetaBallParticle.circle(size / 2, size / 2, size),
+                                CausticShadowProfile.Toolbar,
                             ),
-                            radius = radius,
-                            center = center,
+                        ),
+                        color = HighlightedIconButtonDefaults.DarkHaloColor.copy(
+                            alpha = HighlightedIconButtonDefaults.DarkHaloColor.alpha * (1f - pressProgress).coerceIn(0f, 1f),
+                        ),
+                        modifier = Modifier.matchParentSize(),
+                    )
+                }
+                Box(
+                    modifier = Modifier.matchParentSize()
+                        .drawWithContent {
+                            if (!isDark && pressProgress < 1f) drawSoftDropHalo(center, this.size.minDimension / 2f, 1f - pressProgress)
+                            drawContent()
+                        }
+                        .then(glassDiscModifier)
+                        .nativeMaterialEdge(
+                            particles = listOf(MetaBallParticle.circle(size / 2, size / 2, size)),
+                            rim = Color.White.copy(alpha = HighlightedIconButtonDefaults.stroke(isDark).edgeAlpha * (1f - pressProgress).coerceIn(0f, 1f)),
+                            edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
+                            lineWidth = HighlightedIconButtonDefaults.StrokeWidth,
+                            extension = 0.dp,
                         )
-                        drawContent()
-                    },
-            )
-            // Keep the icon out of the material RGB effect.
-            Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.Center, content = content)
+                        .drawWithContent {
+                            val radius = this.size.minDimension / 2f
+                            val center = this.center
+                            val brighten = HighlightedIconButtonDefaults.PressedFillBrighten * pressProgress
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    colorStops = arrayOf(
+                                        0f to lerp(
+                                            HighlightedIconButtonDefaults.fillCenter(isDark),
+                                            Color.White,
+                                            brighten,
+                                        ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
+                                        HighlightedIconButtonDefaults.FillEdgeStop to lerp(
+                                            HighlightedIconButtonDefaults.fillEdge(isDark),
+                                            Color.White,
+                                            brighten,
+                                        ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
+                                    ),
+                                    center = center,
+                                    radius = radius,
+                                ),
+                                radius = radius,
+                                center = center,
+                            )
+                            drawContent()
+                        },
+                )
+                // Keep the icon out of the material RGB effect.
+                Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.Center, content = content)
+            }
         }
     }
+}
+
+/** A disc of [diameter] in the middle of whatever box it outlines. */
+private class CenteredDiscShape(private val diameter: Dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val radius = with(density) { diameter.toPx() } / 2f
+        return Outline.Rounded(RoundRect(Rect(size.center, radius), CornerRadius(radius)))
+    }
+
+    override fun equals(other: Any?): Boolean = other is CenteredDiscShape && other.diameter == diameter
+
+    override fun hashCode(): Int = diameter.hashCode()
 }
 
 /** Binary-compatibility bridge for [HighlightedIconButton] callers compiled before backdrop/spotLight args. */
@@ -265,6 +302,20 @@ object HighlightedIconButtonDefaults {
 
     /** The diameter of the button. Measurement: a true circle, 155px at 1dp = 3.875px, i.e. 40dp. */
     val Size = 40.dp
+
+    /**
+     * `dimen/coui_action_menu_item_min_width` = 48dp: `COUIActionMenuItemView` gives the 40dp disc
+     * a touch target 8dp wider than it draws.
+     */
+    val IconMenuMinWidth = 48.dp
+
+    /** `dimen/coui_action_menu_item_min_height` = 40dp. */
+    val IconMenuMinHeight = 40.dp
+
+    /**
+     * The blur sigma of `TYPE_FRAMEWORK_TOP_BAR_BLUR` (COUIMaterialBlurEffect preset 2), in pixels.
+     */
+    const val TOP_BAR_BLUR_SIGMA_PX = 20f
 
     /**
      * The blur sigma of `FRAMEWORK_TOP_BAR_BLUR_PARAMS`, in pixels, used when a backdrop is passed.

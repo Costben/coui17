@@ -81,7 +81,7 @@ TooltipBox(
 @Composable
 fun TooltipScope.PlainTooltip(
     modifier: Modifier = Modifier,
-    caretShape: Shape? = null,
+    caretShape: Shape? = TooltipDefaults.caretShape(),
     maxWidth: Dp = TooltipDefaults.PlainTooltipMaxWidth,
     cornerRadius: Dp = TooltipDefaults.PlainTooltipCornerRadius,
     containerColor: Color = TooltipDefaults.plainTooltipContainerColor,
@@ -91,7 +91,7 @@ fun TooltipScope.PlainTooltip(
 )
 ```
 
-默认情况下 plain tooltip 为蓝底白字气泡，与 ColorOS `COUIToolTips` 一致（`couiColorTips` 底、`coui_color_white` 字）。传入 `caretShape = TooltipDefaults.caretShape()` 可绘制指向锚点的箭头；默认无箭头。
+默认情况下 plain tooltip 为蓝底白字气泡，与 ColorOS `COUIToolTips` 一致（`couiColorTips` 底、`coui_color_white` 字）。气泡默认带指向锚点的箭头——`COUIToolTips.show()` / `showWithDirection()` 的 `hasIndicator` 默认为 true；传 `caretShape = null` 可保留无箭头的 Miuix 气泡。
 
 ## RichTooltip
 
@@ -103,7 +103,7 @@ fun TooltipScope.RichTooltip(
     modifier: Modifier = Modifier,
     title: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
-    caretShape: Shape? = null,
+    caretShape: Shape? = TooltipDefaults.caretShape(),
     maxWidth: Dp = TooltipDefaults.RichTooltipMaxWidth,
     cornerRadius: Dp = TooltipDefaults.RichTooltipCornerRadius,
     colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
@@ -211,7 +211,7 @@ fun TooltipDefaults.caretShape(): Shape
 val TooltipDefaults.caretSize: DpSize // 16 x 8 dp
 ```
 
-向 `PlainTooltip` / `RichTooltip` 传入 `caretShape = TooltipDefaults.caretShape()` 即可绘制指向锚点的箭头（针对 `Above` / `Below` 方位）。默认无箭头，与 COUI 其余浮层保持一致。
+气泡箭头默认开启。形状取自 `COUIToolTips` 的 `_sharp_` 箭头：锚点离气泡两角足够远时用居中的 20×10.1dp `coui_*_sharp_middle_arrow_up`，靠近端部时换成 16.27×10.29dp 的 `coui_*_sharp_edges_arrow_up_right`。箭尾的 5.19dp / 7.92dp 圆弧顺着 17dp 气泡圆角，箭尖是 2dp 圆角，箭头与气泡边重叠 `CaretEmbedDistance`（0.33dp）让两者轮廓融合。它会按锚点方位（`Above` / `Below` / `Left` / `Right`）旋转，并向更近的一端镜像。传 `caretShape = null` 保留无箭头的 Miuix 气泡。
 
 ### 常量
 
@@ -220,10 +220,17 @@ val TooltipDefaults.caretSize: DpSize // 16 x 8 dp
 | SpacingBetweenTooltipAndAnchor | Dp            | tooltip 与锚点之间的间距 | 8.dp                                               |
 | HorizontalEdgeMargin           | Dp            | 与窗口左右边缘的最小间距 | 16.dp                                              |
 | PlainTooltipMaxWidth           | Dp            | plain tooltip 的最大宽度 | 200.dp                                             |
-| PlainTooltipCornerRadius       | Dp            | plain tooltip 的圆角半径 | 12.dp                                              |
-| PlainTooltipInsideMargin       | PaddingValues | plain tooltip 的内边距   | PaddingValues(horizontal = 12.dp, vertical = 8.dp) |
+| PlainTooltipCornerRadius       | Dp            | plain tooltip 的圆角半径 | 17.dp                                              |
+| PlainTooltipInsideMargin       | PaddingValues | plain tooltip 的内边距   | PaddingValues(all = 12.dp)                         |
+| CaretWidth                     | Dp            | 居中箭头的宽度           | 20.dp                                              |
+| CaretHeight                    | Dp            | 居中箭头的高度           | 10.1.dp                                            |
+| CaretEdgeWidth                 | Dp            | 端部箭头的宽度           | 16.27.dp                                           |
+| CaretEdgeHeight                | Dp            | 端部箭头的高度           | 10.29.dp                                           |
+| CaretEmbedDistance             | Dp            | 箭头与气泡边的重叠量     | 0.33.dp                                            |
+| CaretEdgeExtraDistance         | Dp            | 端部箭头与气泡端的余量   | 2.dp                                               |
+| CaretPadding                   | Dp            | 气泡为箭头让出的空间     | 9.96.dp                                            |
 | RichTooltipMaxWidth            | Dp            | rich tooltip 的最大宽度  | 320.dp                                             |
-| RichTooltipCornerRadius        | Dp            | rich tooltip 的圆角半径  | 16.dp                                              |
+| RichTooltipCornerRadius        | Dp            | rich tooltip 的圆角半径  | 17.dp                                              |
 | RichTooltipInsideMargin        | PaddingValues | rich tooltip 的内边距    | PaddingValues(all = 16.dp)                         |
 | RichTooltipActionCornerRadius  | Dp            | rich tooltip 操作按钮的圆角半径 | 8.dp                                          |
 | RichTooltipActionInsideMargin  | PaddingValues | rich tooltip 操作按钮的内边距   | PaddingValues(horizontal = 12.dp, vertical = 6.dp) |

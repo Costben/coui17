@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -65,15 +66,15 @@ import kotlin.math.roundToInt
  *   `onInitializeAccessibilityEvent` and the `onInitializeAccessibilityNodeInfo` override that
  *   reports `mOriginText` instead of the repeated string; the port always reports the original
  *   [text] because it never replaces the laid-out string.
- * - `checkAllCharactersDirections` and the `isAllCharactersLtR` mirroring of the scroll direction;
- *   the port leaves direction handling to Compose's `LayoutDirection`.
+ * - the `StaticLayout.isRtlCharAt` scan itself; the port reads the code points directly
+ *   ([containsRtlChar]) and mirrors the whole marquee, which is what `isAllCharactersLtR` flips.
  *
  * @param text The text to display.
  * @param modifier The modifier to be applied to the text.
  * @param color The color of the text. [Color.Unspecified] keeps the style's colour.
  * @param style The text style. `COUIMarqueeTextView` declares no text appearance of its own — it is
  *   an `AppCompatTextView` whose style comes from the app — so the port defaults to the theme's
- *   `COUITheme.textStyles.main`, the same default as [Text].
+ *   `COUITheme.textStyles.main` at the 15sp of `TextAppearance.COUI`, the same default as [Text].
  * @param marqueeEnabled Whether the text may scroll. Mirrors `COUIMarqueeTextView.setMarqueeEnable`,
  *   which the native keeps `false` until the app enables it.
  * @param speed The scroll speed. COUI `coui_top_tips_scroll_speed`
@@ -127,6 +128,9 @@ fun MarqueeText(
         val speedPxPerSecond = with(density) { speed.toPx() }
         val durationMillis = ((distancePx / speedPxPerSecond) * 1000f).roundToInt().coerceAtLeast(1)
         val fadeWidthPx = with(density) { fadingEdgeWidth.toPx() }
+        // COUIMarqueeTextView.checkAllCharactersDirections(): a line with any right-to-left character
+        // scrolls the other way. Mirroring the whole marquee keeps the glyphs upright.
+        val mirrored = remember(text) { containsRtlChar(text) }
 
         val progress = remember { Animatable(0f) }
         LaunchedEffect(durationMillis) {
@@ -145,7 +149,10 @@ fun MarqueeText(
             modifier = Modifier
                 // The fading edges are a DST_OUT mask, which can only erase what it is composited
                 // against, so the marquee gets an offscreen layer of its own.
-                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                .graphicsLayer {
+                    compositingStrategy = CompositingStrategy.Offscreen
+                    scaleX = if (mirrored) -1f else 1f
+                }
                 .clipToBounds()
                 .drawWithContent {
                     drawContent()
@@ -181,9 +188,9 @@ fun MarqueeText(
                     .offset { IntOffset((startPx - progress.value * distancePx).roundToInt(), 0) },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                MarqueeLine(text = text, color = color, style = style)
+                MarqueeLine(text = text, color = color, style = style, mirrored = mirrored)
                 Spacer(modifier = Modifier.width(textInterval))
-                MarqueeLine(text = text, color = color, style = style)
+                MarqueeLine(text = text, color = color, style = style, mirrored = mirrored)
             }
         }
     }
@@ -195,6 +202,7 @@ private fun MarqueeLine(
     text: String,
     color: Color,
     style: TextStyle,
+    mirrored: Boolean,
 ) {
     Text(
         text = text,
@@ -202,6 +210,7 @@ private fun MarqueeLine(
         style = style,
         maxLines = 1,
         softWrap = false,
+        modifier = Modifier.graphicsLayer { scaleX = if (mirrored) -1f else 1f },
     )
 }
 
@@ -241,8 +250,15 @@ object MarqueeTextDefaults {
 
     /**
      * The default text style. `COUIMarqueeTextView` is an `AppCompatTextView` and declares no text
-     * appearance, so the port uses the theme's `COUITheme.textStyles.main` like [Text].
+     * appearance, so it draws at the theme's `android:textAppearance`, `TextAppearance.COUI`
+     * (`coui_textview_text_size` 15sp); the port takes the theme's `COUITheme.textStyles.main` at
+     * that size, the same default as [Text].
      */
     @Composable
-    fun textStyle(): TextStyle = COUITheme.textStyles.main
+    fun textStyle(): TextStyle = COUITheme.textStyles.main.copy(fontSize = 15.sp)
+}
+
+/** Whether the line holds a right-to-left character, `StaticLayout.isRtlCharAt` over every char. */
+internal fun containsRtlChar(text: String): Boolean = text.any { char ->
+    char.code in 0x0590..0x08FF || char.code in 0xFB1D..0xFDFF || char.code in 0xFE70..0xFEFF
 }

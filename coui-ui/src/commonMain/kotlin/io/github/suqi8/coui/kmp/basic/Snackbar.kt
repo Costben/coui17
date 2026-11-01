@@ -18,6 +18,7 @@ import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -420,16 +422,7 @@ fun Snackbar(
             .semantics { liveRegion = LiveRegionMode.Polite }
             // COUI card margins: grid_guide_column_card_margin_start (16dp) on each side.
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            // COUI ShadowUtils level 3 shadow: blur 26.66dp, black at 35/255 alpha.
-            .dropShadow(
-                shape = shape,
-                shadow = Shadow(
-                    radius = 26.dp,
-                    color = Color.Black,
-                    alpha = 0.14f,
-                    offset = DpOffset(x = 0.dp, y = 4.dp),
-                ),
-            )
+            .dropShadow(shape = shape, shadow = SnackbarShadow)
             .pointerInput(Unit) {
                 detectTapGestures { /* Consume click */ }
             },
@@ -438,69 +431,129 @@ fun Snackbar(
         contentColor = colors.contentColor,
     ) {
         val actionIsTrailing = !visuals.actionLabel.isNullOrEmpty() && !visuals.withDismissAction
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(
-                start = insideMargin.calculateStartPadding(layoutDirection),
-                top = insideMargin.calculateTopPadding(),
-                end = if (actionIsTrailing) SnackbarActionEndMargin else insideMargin.calculateEndPadding(layoutDirection),
-                bottom = insideMargin.calculateBottomPadding(),
-            ),
-        ) {
-            if (icon != null) {
-                // COUISnackBar iv_snack_bar_icon: a 30dp icon with 16dp top/bottom margins; the row
-                // already carries the 10dp child vertical margin, the padding tops it up to 16dp.
-                Box(
-                    modifier = Modifier
-                        .padding(
-                            top = (SnackbarIconVerticalMargin - insideMargin.calculateTopPadding()).coerceAtLeast(0.dp),
-                            bottom = (SnackbarIconVerticalMargin - insideMargin.calculateBottomPadding()).coerceAtLeast(0.dp),
-                            end = SnackbarIconSpacing,
-                        )
-                        .size(SnackbarDefaults.IconSize),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    icon()
-                }
-            }
+        // COUISnackBar.POINT_EIGHT: a one-line snackbar compresses the vertical content margins to
+        // 0.8 of `coui_snack_bar_child_margin_vertical`.
+        val lineMarginScale = if (isSingleLine) SNACKBAR_SINGLE_LINE_MARGIN_SCALE else 1f
+        val insideTop = insideMargin.calculateTopPadding() * lineMarginScale
+        val insideBottom = insideMargin.calculateBottomPadding() * lineMarginScale
 
+        // `COUISnackBar.isVertical` sends a snackbar whose content wraps to `layoutVertically`, which
+        // moves the action under the text block instead of beside it.
+        val stacked = !isSingleLine && actionIsTrailing
+
+        @Composable
+        fun SnackbarIcon(innerTop: Dp, innerBottom: Dp) {
+            if (icon == null) return
+            // COUISnackBar iv_snack_bar_icon: a 30dp icon with 16dp top/bottom margins; the row
+            // already carries the 10dp child vertical margin, the padding tops it up to 16dp.
+            Box(
+                modifier = Modifier
+                    .padding(
+                        top = innerTop,
+                        bottom = innerBottom,
+                        end = SnackbarIconSpacing,
+                    )
+                    .size(SnackbarDefaults.IconSize),
+                contentAlignment = Alignment.Center,
+            ) {
+                icon()
+            }
+        }
+
+        @Composable
+        fun SnackbarMessage(modifier: Modifier = Modifier) {
             Text(
                 text = visuals.message,
                 color = colors.contentColor,
                 style = SnackbarDefaults.textStyle(),
                 onTextLayout = { isSingleLine = it.lineCount <= 1 },
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = modifier,
             )
+        }
 
-            if (!visuals.actionLabel.isNullOrEmpty()) {
-                val onAction by rememberUpdatedState(data::performAction)
-                Text(
-                    text = visuals.actionLabel,
-                    color = colors.actionContentColor,
-                    style = SnackbarDefaults.textStyle(),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .padding(start = SnackbarActionSpacing)
-                        // COUIMaskRippleDrawable custom ripple mask: a capsule around the label.
-                        .clip(CircleShape)
-                        .clickable { scope.launch { onAction() } }
-                        .padding(SnackbarActionPadding),
+        @Composable
+        fun SnackbarActionLabel(modifier: Modifier = Modifier) {
+            if (visuals.actionLabel.isNullOrEmpty()) return
+            val onAction by rememberUpdatedState(data::performAction)
+            Text(
+                text = visuals.actionLabel,
+                color = colors.actionContentColor,
+                style = SnackbarDefaults.textStyle(),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    // COUI coui_snack_bar_action_max_width.
+                    .widthIn(max = SnackbarActionMaxWidth)
+                    .then(modifier)
+                    // COUIMaskRippleDrawable custom ripple mask: a capsule around the label.
+                    .clip(CircleShape)
+                    .clickable { scope.launch { onAction() } }
+                    .padding(SnackbarActionPadding),
+            )
+        }
+
+        if (stacked) {
+            // `layoutVertically`: `coui_snack_bar_child_margin_vertical_multi_lines` over the content,
+            // `coui_snack_bar_action_margin_top_horizontal` between the content and the action, and
+            // `coui_snack_bar_action_margin_bottom_multi_lines` under the action.
+            Column(
+                modifier = Modifier.padding(
+                    start = insideMargin.calculateStartPadding(layoutDirection),
+                    top = SnackbarStackedContentTopMargin,
+                    end = SnackbarActionEndMargin,
+                    bottom = SnackbarStackedActionBottomMargin,
+                ),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SnackbarIcon(innerTop = 0.dp, innerBottom = 0.dp)
+                    SnackbarMessage(modifier = Modifier.weight(1f, fill = false))
+                }
+                SnackbarActionLabel(
+                    Modifier
+                        .align(Alignment.End)
+                        .padding(top = SnackbarStackedActionGap),
                 )
             }
-
-            if (visuals.withDismissAction) {
-                val onDismiss by rememberUpdatedState(data::dismiss)
-                Icon(
-                    imageVector = COUIIcons.Basic.SearchCleanup,
-                    contentDescription = "Dismiss",
-                    tint = colors.dismissActionContentColor,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .clickable { scope.launch { onDismiss() } },
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(
+                    start = insideMargin.calculateStartPadding(layoutDirection),
+                    top = insideTop,
+                    end = if (actionIsTrailing) SnackbarActionEndMargin else insideMargin.calculateEndPadding(layoutDirection),
+                    bottom = insideBottom,
+                ),
+            ) {
+                SnackbarIcon(
+                    innerTop = (SnackbarIconVerticalMargin - insideTop).coerceAtLeast(0.dp),
+                    innerBottom = (SnackbarIconVerticalMargin - insideBottom).coerceAtLeast(0.dp),
                 )
+
+                SnackbarMessage(modifier = Modifier.weight(1f, fill = false))
+
+                // COUI coui_snack_bar_action_margin_vertical: the 10dp clearance sits outside the
+                // press area, which keeps its own 4dp padding.
+                SnackbarActionLabel(
+                    Modifier.padding(
+                        start = SnackbarActionSpacing,
+                        top = SnackbarActionVerticalMargin,
+                        bottom = SnackbarActionVerticalMargin,
+                    ),
+                )
+
+                if (visuals.withDismissAction) {
+                    val onDismiss by rememberUpdatedState(data::dismiss)
+                    Icon(
+                        imageVector = COUIIcons.Basic.SearchCleanup,
+                        contentDescription = "Dismiss",
+                        tint = colors.dismissActionContentColor,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .clickable { scope.launch { onDismiss() } },
+                    )
+                }
             }
         }
     }
@@ -618,8 +671,60 @@ private val SnackbarIconSpacing = 16.dp
 /** The minimum gap between the message and the action press area (COUI coui_snack_bar_child_margin_horizontal_end). */
 private val SnackbarActionSpacing = 16.dp
 
+/** `COUISnackBar.POINT_EIGHT`: the single-line vertical margin factor. */
+private const val SNACKBAR_SINGLE_LINE_MARGIN_SCALE = 0.8f
+
+/** The widest the action label may be (COUI coui_snack_bar_action_max_width). */
+private val SnackbarActionMaxWidth = 110.dp
+
+/** The outside margin of the action press area (COUI coui_snack_bar_action_margin_vertical). */
+private val SnackbarActionVerticalMargin = 10.dp
+
+/**
+ * `coui_snack_bar_child_margin_vertical_multi_lines`, the content's top margin once
+ * `COUISnackBar.layoutVertically` stacks the action under the text block.
+ */
+private val SnackbarStackedContentTopMargin = 12.dp
+
+/**
+ * `coui_snack_bar_action_margin_top_horizontal`, the gap between a stacked content block and the
+ * action below it.
+ */
+private val SnackbarStackedActionGap = 10.dp
+
+/** `coui_snack_bar_action_margin_bottom_multi_lines`, the bottom margin under a stacked action. */
+private val SnackbarStackedActionBottomMargin = 9.dp
+
 /** The padding of the action press area (COUI text_ripple_bg_padding_horizontal/vertical). */
 private val SnackbarActionPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+
+/**
+ * Drop shadow of the snackbar card, derived from COUI `SHADOW_LV3_B`.
+ *
+ * `COUISnackBar.init()` calls `ShadowUtils.setElevationToView(layout, 2, ...)`; on an OPlus-view
+ * elevation SDK (`checkOPlusViewSubSDK(34, 2)`) level `2` resolves `SHADOW_LV3_B` and hands these
+ * values to `OplusView.setOverrideLightSourceGeometry`:
+ *
+ * | source parameter | value | COUI token |
+ * | :-- | :-- | :-- |
+ * | occluder height (elevation) | 350dp | `coui_shadow_elevation_level3b` |
+ * | spot + ambient colour | `argb(40, 0, 0, 0)` | `coui_shadow_color_lv3b` = 40 |
+ * | lightX / lightY | -1 / -160dp | `coui_shadow_light_y_level3b` |
+ * | lightZ | 10000dp | `coui_shadow_light_z_level3b` |
+ * | light radius | 2000dp | `coui_shadow_light_r_level3b` |
+ * | extra blur radius | 0dp | `coui_shadow_blur_r_level3b` |
+ *
+ * Through the same `SkDrawShadowMetrics::GetSpotParams` model as [PopupShadow]:
+ * `zRatio = 350 / (10000 - 350) = 0.03627`, blur `2000 * zRatio = 72.53dp`, light source below the
+ * card so the cast runs down by `0.03627 * 160 = 5.80dp`. The extra `support_shadow_size_level_four`
+ * and `coui_snack_bar_background_shadow_color` arguments only reach the pre-OPlus fallback, so they
+ * do not change the ColorOS 17 result.
+ */
+private val SnackbarShadow = Shadow(
+    radius = 72.53.dp,
+    color = Color.Black.copy(alpha = 40f / 255f),
+    offset = DpOffset(x = 0.dp, y = 5.8.dp),
+)
 
 /** COUISnackBar.animateSpring show spring: COUISpringForce(response = 0.3f, bounce = 0f). */
 private val SnackbarShowAnimationSpec = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)

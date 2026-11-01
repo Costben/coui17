@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
@@ -36,23 +37,26 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.liveRegion
@@ -72,6 +76,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleBackground
@@ -84,8 +89,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlin.jvm.JvmInline
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sin
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -444,8 +452,8 @@ private fun Modifier.tooltipAnchorSemantics(
  * surface style.
  *
  * @param modifier the modifier applied to the tooltip.
- * @param caretShape when non-null, draws a caret pointing at the anchor; null (default) keeps the
- *   Miuix caret-less style.
+ * @param caretShape the bubble indicator drawn on the side facing the anchor; defaults to the COUI
+ *   arrow, `null` keeps the caret-less Miuix bubble.
  * @param maxWidth the maximum width of the tooltip.
  * @param cornerRadius the corner radius of the tooltip.
  * @param containerColor the container color of the tooltip.
@@ -456,7 +464,7 @@ private fun Modifier.tooltipAnchorSemantics(
 @Composable
 fun TooltipScope.PlainTooltip(
     modifier: Modifier = Modifier,
-    caretShape: Shape? = null,
+    caretShape: Shape? = TooltipDefaults.caretShape(),
     maxWidth: Dp = TooltipDefaults.PlainTooltipMaxWidth,
     cornerRadius: Dp = TooltipDefaults.PlainTooltipCornerRadius,
     containerColor: Color = TooltipDefaults.plainTooltipContainerColor,
@@ -488,8 +496,8 @@ fun TooltipScope.PlainTooltip(
  * @param modifier the modifier applied to the tooltip.
  * @param title the optional title shown above the body.
  * @param action the optional action shown below the body.
- * @param caretShape when non-null, draws a caret pointing at the anchor; null (default) keeps the
- *   Miuix caret-less style.
+ * @param caretShape the bubble indicator drawn on the side facing the anchor; defaults to the COUI
+ *   arrow, `null` keeps the caret-less Miuix bubble.
  * @param maxWidth the maximum width of the tooltip.
  * @param cornerRadius the corner radius of the tooltip.
  * @param colors the [RichTooltipColors] of the tooltip.
@@ -501,7 +509,7 @@ fun TooltipScope.RichTooltip(
     modifier: Modifier = Modifier,
     title: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
-    caretShape: Shape? = null,
+    caretShape: Shape? = TooltipDefaults.caretShape(),
     maxWidth: Dp = TooltipDefaults.RichTooltipMaxWidth,
     cornerRadius: Dp = TooltipDefaults.RichTooltipCornerRadius,
     colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
@@ -548,41 +556,50 @@ private fun TooltipScope.TooltipSurface(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val drawCaret = caretShape != null &&
-        (positioning == TooltipAnchorPosition.Above || positioning == TooltipAnchorPosition.Below)
-    val caretOnTop = positioning == TooltipAnchorPosition.Below
-    val caretSize = TooltipDefaults.caretSize
+    val layoutDirection = LocalLayoutDirection.current
+    val caretSide = if (caretShape != null) {
+        positioning.resolve(layoutDirection).caretSide
+    } else {
+        null
+    }
+    val caretPadding = TooltipDefaults.CaretPadding
     var selfBounds by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
     Box(
         modifier = modifier
+            .layout { measurable, constraints ->
+                // COUIToolTips never lets the bubble reach mBubbleHorizontalPadding from the
+                // viewport, so a narrow window caps it before maxWidth does.
+                val inset = TooltipDefaults.HorizontalEdgeMargin.roundToPx() * 2
+                val placeable = measurable.measure(
+                    if (constraints.hasBoundedWidth) {
+                        constraints.copy(maxWidth = (constraints.maxWidth - inset).coerceAtLeast(constraints.minWidth))
+                    } else {
+                        constraints
+                    },
+                )
+                layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+            }
             .widthIn(max = maxWidth)
             .onGloballyPositioned { selfBounds = it }
             .then(
-                if (drawCaret) {
-                    Modifier.drawBehind {
-                        val anchor = obtainAnchorBounds() ?: return@drawBehind
-                        val self = selfBounds ?: return@drawBehind
-                        if (!anchor.isAttached || !self.isAttached) return@drawBehind
-                        val anchorCenterX = anchor.positionInWindow().x + anchor.size.width / 2f
-                        val selfX = self.positionInWindow().x
-                        val caretHalf = caretSize.width.toPx() / 2f
-                        val cr = cornerRadius.toPx()
-                        val centerX = (anchorCenterX - selfX)
-                            .coerceIn(cr + caretHalf, size.width - cr - caretHalf)
-                        val caretHeight = caretSize.height.toPx()
-                        val path = Path()
-                        if (caretOnTop) {
-                            path.moveTo(centerX, 0f)
-                            path.lineTo(centerX - caretHalf, caretHeight)
-                            path.lineTo(centerX + caretHalf, caretHeight)
-                        } else {
-                            path.moveTo(centerX, size.height)
-                            path.lineTo(centerX - caretHalf, size.height - caretHeight)
-                            path.lineTo(centerX + caretHalf, size.height - caretHeight)
-                        }
-                        path.close()
-                        drawPath(path, color = containerColor)
+                if (caretSide != null) {
+                    // Painted over the content: under it, the bubble's drop shadow greys the arrow
+                    // out until it no longer reads against the page.
+                    Modifier.drawWithContent {
+                        drawContent()
+                        val anchor = obtainAnchorBounds() ?: return@drawWithContent
+                        val self = selfBounds ?: return@drawWithContent
+                        if (!anchor.isAttached || !self.isAttached) return@drawWithContent
+                        val anchorOnWindow = anchor.positionInWindow()
+                        val selfOnWindow = self.positionInWindow()
+                        drawTooltipCaret(
+                            side = caretSide,
+                            anchorX = anchorOnWindow.x - selfOnWindow.x + anchor.size.width / 2f,
+                            anchorY = anchorOnWindow.y - selfOnWindow.y + anchor.size.height / 2f,
+                            cornerRadiusPx = cornerRadius.toPx(),
+                            color = containerColor,
+                        )
                     }
                 } else {
                     Modifier
@@ -591,15 +608,25 @@ private fun TooltipScope.TooltipSurface(
     ) {
         Box(
             modifier = Modifier
-                .padding(
-                    top = if (drawCaret && caretOnTop) caretSize.height else 0.dp,
-                    bottom = if (drawCaret && !caretOnTop) caretSize.height else 0.dp,
+                .absolutePadding(
+                    left = if (caretSide == TooltipCaretSide.Left) caretPadding else 0.dp,
+                    top = if (caretSide == TooltipCaretSide.Top) caretPadding else 0.dp,
+                    right = if (caretSide == TooltipCaretSide.Right) caretPadding else 0.dp,
+                    bottom = if (caretSide == TooltipCaretSide.Bottom) caretPadding else 0.dp,
                 )
                 .dropShadow(
-                    shape = SquircleShape(cornerRadius = cornerRadius, squircleEnabled = isSquircleEnabled()),
-                    shadow = Shadow(radius = 10.dp, color = Color.Black, alpha = 0.1f),
+                    shape = SquircleShape(
+                        cornerRadius = cornerRadius,
+                        squircleEnabled = isSquircleEnabled(),
+                        weight = SquircleDefaults.WeightLarge,
+                    ),
+                    shadow = PopupShadow,
                 )
-                .squircleBackground(color = containerColor, cornerRadius = cornerRadius)
+                .squircleBackground(
+                    color = containerColor,
+                    cornerRadius = cornerRadius,
+                    weight = SquircleDefaults.WeightLarge,
+                )
                 .padding(insideMargin),
         ) {
             content()
@@ -637,7 +664,9 @@ fun TooltipBox(
                 Text(
                     text = text,
                     color = contentColor,
-                    style = COUITheme.textStyles.body2,
+                    // COUIDefaultBubbleStyleImpl sizes the label with
+                    // `tool_tips_content_text_size` (13sp) over `couiTextBodyS`.
+                    style = COUITheme.textStyles.footnote1,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -693,7 +722,8 @@ fun RichTooltipBox(
                         Text(
                             text = it,
                             color = colors.titleContentColor,
-                            style = COUITheme.textStyles.subtitle,
+                            // `tv_title` in coui_tool_tips_icon_style_layout is couiTextHeadlineXS.
+                            style = COUITheme.textStyles.headline1,
                         )
                     }
                 },
@@ -721,7 +751,7 @@ fun RichTooltipBox(
                 Text(
                     text = text,
                     color = colors.contentColor,
-                    style = COUITheme.textStyles.body2,
+                    style = COUITheme.textStyles.footnote1,
                 )
             }
         },
@@ -832,17 +862,73 @@ object TooltipDefaults {
      */
     val HorizontalEdgeMargin = 16.dp
 
-    /** The default size of the caret. */
+    /**
+     * The size of the Miuix triangle caret. COUI's own bubble indicator is the `_sharp_` arrow
+     * drawable described by [CaretWidth] / [CaretHeight], so this value is only kept for callers
+     * that draw the legacy triangle themselves.
+     */
     val caretSize = DpSize(16.dp, 8.dp)
+
+    /**
+     * The width of `coui_white_sharp_middle_arrow_up`, the centred bubble indicator.
+     *
+     * `COUIToolTips` inflates the drawable into an `ImageView` placed on the side of the bubble
+     * facing the anchor, so the arrow is 20dp wide and the bubble's own edge is [CaretEmbedDistance]
+     * inside it.
+     */
+    val CaretWidth = 20.dp
+
+    /** The height of `coui_white_sharp_middle_arrow_up`. */
+    val CaretHeight = 10.1.dp
+
+    /**
+     * The width of `coui_white_sharp_edges_arrow_up_right`, the indicator used when the anchor is
+     * too close to the end of the bubble for the centred arrow to fit.
+     */
+    val CaretEdgeWidth = 16.27.dp
+
+    /** The height of `coui_white_sharp_edges_arrow_up_right`. */
+    val CaretEdgeHeight = 10.29.dp
+
+    /**
+     * How far the indicator is pushed back into the bubble, `coui_tooltips_indicator_embed_distance`.
+     * The arrow is drawn on top of the bubble edge so the two silhouettes merge without a seam.
+     */
+    val CaretEmbedDistance = 0.33.dp
+
+    /** How far the bubble is inset from the indicator, i.e. the tallest arrow minus the overlap. */
+    val CaretPadding = maxOf(CaretHeight, CaretEdgeHeight) - CaretEmbedDistance
+
+    /**
+     * `coui_tooltips_edge_extra_distance`: when the edge drawable is pushed to the end of the
+     * bubble it keeps this much clearance from the silhouette.
+     */
+    val CaretEdgeExtraDistance = 2.dp
 
     /** The default maximum width of a plain tooltip. */
     val PlainTooltipMaxWidth = 200.dp
 
-    /** The default corner radius of a plain tooltip. */
-    val PlainTooltipCornerRadius = 12.dp
+    /**
+     * The default corner radius of a plain tooltip.
+     *
+     * `COUIToolTips` draws the bubble with
+     * `OplusOutlineAdapter.setSmoothRoundRect(rect, coui_tooltips_os_16_1_radius_17_dp, 3.0f)` on
+     * ColorOS 17, i.e. 17dp on the Lp(3.0) smooth curve. The system has one bubble radius, which
+     * [RichTooltipCornerRadius] shares.
+     */
+    val PlainTooltipCornerRadius = 17.dp
 
-    /** The default margin inside a plain tooltip. */
-    val PlainTooltipInsideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+    /**
+     * The default margin inside a plain tooltip.
+     *
+     * `COUIDefaultBubbleStyleImpl` insets the content `ScrollView` from the bubble by
+     * `couiToolTipsContainerLayoutMarginStart` / `_MarginTop` / `_MarginBottom` (12dp each), so the
+     * label sits 12dp from every edge the dismiss icon leaves free. The 13dp
+     * `coui_tooltips_default_background_padding_*` values are the `<inset>` of
+     * `drawable/coui_tool_tips_background`, i.e. the bubble's own outset from the panel, not content
+     * padding.
+     */
+    val PlainTooltipInsideMargin = PaddingValues(all = 12.dp)
 
     /**
      * The default container color of a plain tooltip. `style/COUIToolTips` fills the bubble with
@@ -859,8 +945,11 @@ object TooltipDefaults {
     /** The default maximum width of a rich tooltip. */
     val RichTooltipMaxWidth = 320.dp
 
-    /** The default corner radius of a rich tooltip. */
-    val RichTooltipCornerRadius = 16.dp
+    /**
+     * The default corner radius of a rich tooltip. `COUIToolTips` has a single bubble radius, so
+     * this is the same 17dp / weight 3.0 as [PlainTooltipCornerRadius].
+     */
+    val RichTooltipCornerRadius = 17.dp
 
     /** The default margin inside a rich tooltip. */
     val RichTooltipInsideMargin = PaddingValues(all = 16.dp)
@@ -871,7 +960,11 @@ object TooltipDefaults {
     /** The default margin inside a rich tooltip action button. */
     val RichTooltipActionInsideMargin = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
 
-    /** Returns a [Shape] that, when passed as `caretShape`, enables the Miuix tooltip caret. */
+    /**
+     * Returns the bubble indicator shape. `COUIToolTips` always draws an arrow on the side facing
+     * the anchor (`show` / `showWithDirection` default `hasIndicator` to true), so this is the
+     * default for `caretShape`. Passing `null` keeps the caret-less Miuix bubble.
+     */
     fun caretShape(): Shape = TooltipCaretShape
 
     @Composable
@@ -916,12 +1009,143 @@ private object TooltipCaretShape : Shape {
         layoutDirection: LayoutDirection,
         density: Density,
     ): Outline {
-        val path = Path().apply {
-            moveTo(size.width / 2f, 0f)
-            lineTo(0f, size.height)
-            lineTo(size.width, size.height)
-            close()
+        val path = Path()
+        val points = TooltipCaretGeometry.outline(edge = false, mirror = false)
+        val sx = size.width / TooltipCaretGeometry.MIDDLE_WIDTH
+        val sy = size.height / TooltipCaretGeometry.MIDDLE_HEIGHT
+        points.forEachIndexed { index, point ->
+            val x = point.x * sx
+            val y = point.y * sy
+            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
+        path.close()
         return Outline.Generic(path)
     }
+}
+
+/** Which side of the bubble the indicator protrudes from. */
+private enum class TooltipCaretSide { Top, Right, Bottom, Left }
+
+private val TooltipAnchorPosition.caretSide: TooltipCaretSide
+    get() = when (this) {
+        TooltipAnchorPosition.Above -> TooltipCaretSide.Bottom
+        TooltipAnchorPosition.Below -> TooltipCaretSide.Top
+        TooltipAnchorPosition.Left -> TooltipCaretSide.Right
+        else -> TooltipCaretSide.Left
+    }
+
+/**
+ * Outline of the `COUIToolTips` bubble indicator, in dp, pointing up with its base on
+ * `y = thickness`.
+ *
+ * The two system drawables are `coui_*_sharp_middle_arrow_up` (20 × 10.1dp) and
+ * `coui_*_sharp_edges_arrow_up_right` (16.27 × 10.29dp). Both start with a shallow arc that lifts
+ * the foot of the arrow off the bubble edge so it follows the 17dp bubble corner instead of
+ * crossing it, then run a straight flank into a 2dp rounded tip. Mirroring is applied to `x` only;
+ * the arcs are traced in the same parameter order, which reproduces the reflected sweep.
+ */
+internal object TooltipCaretGeometry {
+    const val MIDDLE_WIDTH = 20f
+    const val MIDDLE_HEIGHT = 10.1f
+    const val EDGE_WIDTH = 16.27f
+    const val EDGE_HEIGHT = 10.29f
+
+    /** The apex of the centred arrow, measured from its left edge. */
+    const val MIDDLE_APEX = 10f
+
+    /** The apex of the edge arrow, measured from its left (walled) edge. */
+    const val EDGE_APEX = 14.27f
+
+    fun outline(edge: Boolean, mirror: Boolean): List<Offset> {
+        val width = if (edge) EDGE_WIDTH else MIDDLE_WIDTH
+        fun x(value: Float) = if (mirror) width - value else value
+        val points = ArrayList<Offset>(80)
+        fun arc(cx: Float, cy: Float, radius: Float, start: Float, sweep: Float, steps: Int) {
+            for (step in 0..steps) {
+                val degrees = start + sweep * step / steps
+                val radians = degrees * PI / 180.0
+                points += Offset(
+                    x(cx + radius * cos(radians).toFloat()),
+                    cy + radius * sin(radians).toFloat(),
+                )
+            }
+        }
+        if (edge) {
+            arc(-1.775f, 2.570f, 7.92f, 77.05f, -27.37f, 10)
+            points += Offset(x(13f), 0.48f)
+            arc(14.270f, 2.024f, 2f, 230.56f, 128.75f, 12)
+            points += Offset(x(EDGE_WIDTH), EDGE_HEIGHT)
+        } else {
+            arc(0.003f, 4.910f, 5.19f, 90.033f, -60.09f, 12)
+            points += Offset(x(8.27f), 1f)
+            arc(10f, 2f, 2f, 210f, 120f, 12)
+            points += Offset(x(15.5f), 7.5f)
+            arc(19.997f, 4.910f, 5.19f, 150.06f, -60.09f, 12)
+        }
+        return points
+    }
+}
+
+/**
+ * Draws the `COUIToolTips` bubble indicator.
+ *
+ * `COUIToolTips.addIndicator` always keeps the indicator on the bubble, projecting the anchor on
+ * the facing edge and pushing it clear of the rounded corner; when the centred drawable no longer
+ * fits it swaps in the `_sharp_edges_` drawable, whose flat side sits against the bubble edge.
+ */
+private fun DrawScope.drawTooltipCaret(
+    side: TooltipCaretSide,
+    anchorX: Float,
+    anchorY: Float,
+    cornerRadiusPx: Float,
+    color: Color,
+) {
+    val vertical = side == TooltipCaretSide.Top || side == TooltipCaretSide.Bottom
+    val span = if (vertical) size.width else size.height
+    val anchor = if (vertical) anchorX else anchorY
+
+    val middleWidth = TooltipDefaults.CaretWidth.toPx()
+    val edgeWidth = TooltipDefaults.CaretEdgeWidth.toPx()
+
+    val startLimit = cornerRadiusPx + middleWidth / 2f
+    val endLimit = span - cornerRadiusPx - middleWidth / 2f
+    val edge = startLimit > endLimit || anchor < startLimit || anchor > endLimit
+    val mirror = edge && anchor < span / 2f
+    val length = if (edge) edgeWidth else middleWidth
+
+    val apex = if (edge) {
+        if (mirror) {
+            (TooltipCaretGeometry.EDGE_WIDTH - TooltipCaretGeometry.EDGE_APEX) * density
+        } else {
+            TooltipCaretGeometry.EDGE_APEX * density
+        }
+    } else {
+        TooltipCaretGeometry.MIDDLE_APEX * density
+    }
+    val edgeExtra = TooltipDefaults.CaretEdgeExtraDistance.toPx()
+    val origin = if (edge) {
+        // `coui_tooltips_edge_extra_distance`: the edge drawable keeps 2dp from the bubble end.
+        val min = edgeExtra.coerceAtMost((span - length).coerceAtLeast(0f))
+        (anchor - apex).coerceIn(min, (span - length - edgeExtra).coerceAtLeast(min))
+    } else {
+        (anchor.coerceIn(startLimit, endLimit) - apex).coerceIn(
+            cornerRadiusPx,
+            (span - cornerRadiusPx - length).coerceAtLeast(cornerRadiusPx),
+        )
+    }
+
+    fun map(localX: Float, localY: Float): Offset = when (side) {
+        TooltipCaretSide.Top -> Offset(origin + localX, localY)
+        TooltipCaretSide.Bottom -> Offset(origin + length - localX, size.height - localY)
+        TooltipCaretSide.Right -> Offset(size.width - localY, origin + localX)
+        TooltipCaretSide.Left -> Offset(localY, origin + length - localX)
+    }
+
+    val path = Path()
+    TooltipCaretGeometry.outline(edge = edge, mirror = mirror).forEachIndexed { index, point ->
+        val mapped = map(point.x * density, point.y * density)
+        if (index == 0) path.moveTo(mapped.x, mapped.y) else path.lineTo(mapped.x, mapped.y)
+    }
+    path.close()
+    drawPath(path, color = color)
 }

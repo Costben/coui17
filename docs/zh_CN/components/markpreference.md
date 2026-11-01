@@ -74,6 +74,7 @@ MarkPreference(
 | cardListPosition | CardListPosition | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None | 否 |
 | holdDownState | Boolean                            | 组件是否处于按下状态                                   | false                                   | 否       |
 | enabled       | Boolean                            | 组件是否可交互                                         | true                                    | 否       |
+| onMainLayoutClick | (() -> Unit)?                  | 替代整行点击,并让标记成为独立的选择热区(对应 COUI `main_layout` / `radio_layout` 拆分) | null | 否 |
 
 ### MarkLocation 选项
 

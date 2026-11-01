@@ -131,38 +131,44 @@ fun Button(
     // 1.5-radius easing tail); a caller-supplied radius below half the shorter side keeps the
     // squircle. CapsuleOutlineShape picks the family in createOutline, where the size is known, so
     // composition never reads the measured size.
+    //
+    // The COUIButton styles set drawableRadius to -1dp, which derives the radius from the height, so
+    // the capsule radius of a tier is not a constant: a label that wraps grows the radius with it.
+    // Fill and rim both read this value, or the rim keeps the single-line corner over a taller fill.
+    val capsuleCornerRadius: Dp? = resolvedCornerRadius.takeUnless { it >= resolvedMinHeight / 2 }
     val squircleEnabled = isSquircleEnabled()
-    val buttonShape = remember(resolvedCornerRadius, squircleEnabled) {
-        CapsuleOutlineShape(cornerRadius = resolvedCornerRadius, squircleEnabled = squircleEnabled)
+    val buttonShape = remember(capsuleCornerRadius, squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = capsuleCornerRadius, squircleEnabled = squircleEnabled)
     }
     val touchMotionState = rememberCOUITouchMotionState()
 
     // COUI press feedback: scale/deformation (COUITouchMotion) + press tint (COUIMaskEffectDrawable).
     val isPressedFromInteraction by interactionSource.collectIsPressedAsState()
     val isPressed = isPressedFromInteraction || (touchMotionEnabled && touchMotionState.values.value.pressed)
+    val pressingDown = enabled && isPressed && pressScaleEnabled && !touchMotionEnabled
     val scaleProgress by animateFloatAsState(
-        targetValue = if (enabled && isPressed && pressScaleEnabled && !touchMotionEnabled) 1f else 0f,
-        animationSpec = PressFeedbackSpring,
+        targetValue = if (pressingDown) 1f else 0f,
+        animationSpec = if (pressingDown) PressDownSpring else PressReleaseSpring,
         label = "buttonPressScale",
     )
     val tintProgress = remember { Animatable(0f) }
     LaunchedEffect(enabled, isPressed) {
         if (enabled && isPressed) {
-            tintProgress.animateTo(1f, PressFeedbackSpring)
+            tintProgress.animateTo(1f, PressDownSpring)
         } else if (!enabled) {
             tintProgress.snapTo(0f)
         } else if (tintProgress.value > 0f) {
             if (tintProgress.value < PressedTintMinVisibleProgress) {
                 // Keep the press-in animation running until the tint is clearly visible.
                 try {
-                    tintProgress.animateTo(1f, PressFeedbackSpring) {
+                    tintProgress.animateTo(1f, PressDownSpring) {
                         if (value >= PressedTintMinVisibleProgress) throw PressTintThresholdReached()
                     }
                 } catch (_: PressTintThresholdReached) {
                     // Minimum visible progress reached; fall through to the fade-out.
                 }
             }
-            tintProgress.animateTo(0f, PressFeedbackSpring)
+            tintProgress.animateTo(0f, PressReleaseSpring)
         }
     }
     val pressTint = if (isDark) PressedTintDark else PressedTintLight
@@ -180,7 +186,7 @@ fun Button(
     }
     val surfaceModifier = if (backdrop != null && fillColor.alpha > 0f) {
         val scheme = COUITheme.colorScheme
-        val isAccent = ButtonDefaults.isAccentFill(colors.color, scheme.primary)
+        val isAccent = ButtonDefaults.isAccentFill(colors.color, scheme.containerTheme)
         val isDefaultSecondary = colors.color == scheme.secondaryVariant
         val material = remember(fillColor, isAccent, isDefaultSecondary, isDark, enabled) {
             ButtonDefaults.glassMaterial(fillColor, isAccent, isDefaultSecondary, isDark, enabled)
@@ -202,8 +208,8 @@ fun Button(
     // COUIButton.updateStrokeCorner passes weight 2.0 for a square capsule and 1.0 otherwise, where
     // the shader switches to its capsule distance field; a radius below the capsule radius keeps the
     // squircle rim's weight. Only the draw phase knows the size, hence materialShadowEdgeBySize.
-    val rimCornerWeightFor: (Float, Float) -> Float = remember(resolvedCornerRadius, density) {
-        val radiusPx = with(density) { resolvedCornerRadius.toPx() }
+    val rimCornerWeightFor: (Float, Float) -> Float = remember(capsuleCornerRadius, density) {
+        val radiusPx = capsuleCornerRadius?.let { with(density) { it.toPx() } } ?: Float.MAX_VALUE
         val weightFor: (Float, Float) -> Float = { width, height ->
             when {
                 radiusPx < minOf(width, height) / 2f - 0.5f -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
@@ -217,7 +223,7 @@ fun Button(
         Modifier.materialShadowEdgeBySize(
             stroke = edgeStroke,
             cornerWeightFor = rimCornerWeightFor,
-            cornerRadius = resolvedCornerRadius,
+            cornerRadius = capsuleCornerRadius,
             edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
             shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
         )
@@ -661,9 +667,9 @@ object ButtonDefaults {
 
     /**
      * The smallest scale a button shrinks to while pressed (COUIPressFeedbackHelper end ratio
-     * for surfaces up to 48 x 48dp).
+     * for surfaces up to 48 x 48dp, COUIPressAnimatorUnit `PressEngineConfig.minScale`).
      */
-    val PressedScale = 0.92f
+    val PressedScale = 0.88f
 
     /**
      * The legacy COUIButton `brightness` attribute value. Retained for source compatibility only
@@ -692,7 +698,7 @@ object ButtonDefaults {
     /**
      * The default inside margin applied for all buttons.
      */
-    val InsideMargin = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+    val InsideMargin = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
 
     /**
      * The min width of the small size tier (COUI coui_btn_small_width_min).
@@ -772,7 +778,8 @@ object ButtonDefaults {
      */
     @Composable
     fun buttonColorsPrimary(
-        color: Color = COUITheme.colorScheme.primary,
+        // COUI fills an accent button with ?attr/couiColorContainerTheme, not the primary slot.
+        color: Color = COUITheme.colorScheme.containerTheme,
         disabledColor: Color = COUITheme.colorScheme.disabledPrimaryButton,
         contentColor: Color = COUITheme.colorScheme.onPrimary,
         disabledContentColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
@@ -867,16 +874,17 @@ object ButtonDefaults {
     private fun edgeStrokeFor(fill: Color): MaterialStrokeParams? {
         if (fill.alpha == 0f) return null
         val scheme = COUITheme.colorScheme
+        val isDark = scheme.background.luminance() < 0.5f
         return when {
-            isAccentFill(fill, scheme.primary) -> MaterialStrokeParams.ContentCapsule4
-            else -> MaterialStrokeParams.contentCapsule5(scheme.background.luminance() < 0.5f)
+            isAccentFill(fill, scheme.containerTheme) -> MaterialStrokeParams.contentCapsule4(isDark)
+            else -> MaterialStrokeParams.contentCapsule5(isDark)
         }
     }
 
     @Composable
     private fun spotLightFor(fill: Color): SpotLightParams? {
         val scheme = COUITheme.colorScheme
-        return if (fill.alpha > 0f && isAccentFill(fill, scheme.primary)) {
+        return if (fill.alpha > 0f && isAccentFill(fill, scheme.containerTheme)) {
             SpotLightDefaults.capsuleParams1(scheme.background.luminance() < 0.5f)
         } else {
             null
@@ -884,7 +892,7 @@ object ButtonDefaults {
     }
 
     /** Whether [fill] is the theme accent, i.e. the button is `ButtonType.PRIMARY`. */
-    internal fun isAccentFill(fill: Color, primary: Color): Boolean = fill.copy(alpha = 1f) == primary.copy(alpha = 1f)
+    internal fun isAccentFill(fill: Color, accent: Color): Boolean = fill.copy(alpha = 1f) == accent.copy(alpha = 1f)
 
     /**
      * The material `COUIButton.applyBlurEffect` lays over the blurred backdrop.
@@ -954,8 +962,17 @@ data class TextButtonColors(
     val disabledTextColor: Color,
 )
 
-/** The COUI press feedback spring (COUISpringForce response 0.3f / bounce 0f). */
-private val PressFeedbackSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
+/**
+ * The COUI press spring (COUIPressAnimatorUnit → PressEngineConfig responsePress 0.13 / bouncePress
+ * 0.18, so dampingRatio = 1 - bounce and stiffness = (2π / response)²).
+ */
+private val PressDownSpring = spring<Float>(dampingRatio = 0.82f, stiffness = 2336f)
+
+/**
+ * The COUI release spring (PressEngineConfig responseRelease 0.35 / bounceRelease 0.62). The press
+ * engine uses a separate, much bouncier curve for the hand-up.
+ */
+private val PressReleaseSpring = spring<Float>(dampingRatio = 0.38f, stiffness = 322.3f)
 
 /** couiColorPress in light themes (coui_color_press #1F000000). */
 private val PressedTintLight = Color(0x1F000000)
@@ -978,8 +995,8 @@ private val PressedScaleMinAreaDp2 = 48f * 48f
 /** COUIPressFeedbackHelper area bounds: coui_max_end_value_width x height (328dp x 220dp). */
 private val PressedScaleMaxAreaDp2 = 328f * 220f
 
-/** The pressed end scale of the largest surfaces (COUIPressFeedbackHelper MAX_SCALE_END_RATIO). */
-private val PressedScaleMax = 0.98f
+/** The pressed end scale of the largest surfaces (PressEngineConfig.maxScale). */
+private val PressedScaleMax = 0.97f
 
 /** The scale a surface of [size] shrinks to when fully pressed (COUIPressFeedbackHelper.getCardScaleRatio). */
 private fun Density.pressedScaleEndRatio(size: Size): Float {

@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Path
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 
 /** Shared default constants for every squircle API in this module. */
 object SquircleDefaults {
@@ -28,19 +29,77 @@ object SquircleDefaults {
 
     /** Inclusive upper bound for [Extension]. */
     val ExtensionMax = 2f
+
+    /**
+     * The Lp exponent of COUI's `16_1 normal` corner tokens (`RoundCornerUtil.WEIGHT_16_1_NORMAL`
+     * = 2.5), which is the curve the default path geometry and the original baked SDF are fitted to.
+     *
+     * Kept as the default so every surface that does not ask for another weight renders exactly as
+     * it did in 1.1.0.
+     */
+    val WeightNormal = 2.5f
+
+    /**
+     * The Lp exponent of COUI's `16_1 large` corner tokens (`RoundCornerUtil.WEIGHT_16_1_LARGE`,
+     * `dimen/weight_16_1_large` = 3.0), which ColorOS 17 draws cards, dialog and sheet panels,
+     * multi-line top tips and tooltip bubbles with.
+     *
+     * A larger exponent hugs the corner tighter: the 45° inset is `0.2063R` against `0.2421R` at
+     * [WeightNormal], so a surface that switches to it needs the larger radius the matching token
+     * carries as well.
+     */
+    val WeightLarge = 3.0f
+
+    /**
+     * The corner weight every API uses when the caller does not pass one: [WeightNormal].
+     *
+     * The shader path only has a baked field for [WeightNormal] and [WeightLarge]; it binds the
+     * nearer of the two for any other value. The path API evaluates the Lp curve for the exact
+     * weight it is given.
+     */
+    val Weight = WeightNormal
 }
 
 /**
- * Cubic Bézier handle ratio used by [addSquircleRect]. Must stay in lock-step with the value the
- * pre-baked SDF was generated for (`coui-squircle/build.gradle.kts` `bakeSquircleSdf`) so
+ * Cubic Bézier handle ratio for [SquircleDefaults.WeightNormal]. Must stay in lock-step with the
+ * value the baked SDF was generated with (`coui-squircle/build.gradle.kts` `bakeSquircleSdf`) so
  * path-based and shader-backed silhouettes line up.
  *
  * Tuned to the `n = 2.5` Lp superellipse COUI draws for panels (hwui "G2",
  * `|x|^n + |y|^n = R^n`). One cubic cannot equal an Lp ball, so this matches its 45° inset instead:
  * `n = 2.5` needs `h / T = 0.3123`, i.e. `1 - 0.3123 = 0.6877`. The retired `0.643` matched
- * `n ≈ 2.31` (5–7% flatter than target).
+ * `n ≈ 2.31` (5–7% flatter than target). See [squircleControl] for the general formula.
  */
 internal const val SQUIRCLE_CONTROL = 0.6877f
+
+/**
+ * [SQUIRCLE_CONTROL]'s counterpart for [SquircleDefaults.WeightLarge]: `n = 3` needs
+ * `h / T = 0.2168`, i.e. `1 - 0.2168 = 0.7832`. Likewise locked to `bakeSquircleSdfLarge`.
+ */
+internal const val SQUIRCLE_CONTROL_LARGE = 0.7832f
+
+/**
+ * Handle ratio for a corner weight: the diagonal point of the single cubic sits
+ * `(1 + 3·(1 - c)) / 8` of the tile from the corner, and the Lp superellipse `|x|^n + |y|^n = R^n`
+ * puts its own at `1 - 2^(-1/n)`, so
+ *
+ *     c = 1 - (8·(1 - 2^(-1/n)) - 1) / 3
+ *
+ * The two weights with a baked SDF return their exact constants rather than the formula's rounding
+ * ([SQUIRCLE_CONTROL] is `0.6877` where the formula gives `0.68762`), which keeps the path and the
+ * shader on one silhouette and leaves 1.1.0 surfaces pixel-identical. Any other weight evaluates the
+ * formula, clamped to `n >= 2` the way the hwui SDF clamps it.
+ */
+internal fun squircleControl(weight: Float): Float = when (weight) {
+    SquircleDefaults.WeightNormal -> SQUIRCLE_CONTROL
+
+    SquircleDefaults.WeightLarge -> SQUIRCLE_CONTROL_LARGE
+
+    else -> {
+        val exponent = max(2f, weight)
+        1f - (8f * (1f - 2f.pow(-1f / exponent)) - 1f) / 3f
+    }
+}
 
 /** The [SQUIRCLE_CONTROL] counterpart for a circular arc: the cubic quarter-circle constant. */
 private const val CIRCLE_CONTROL = 0.5522848f
@@ -72,7 +131,7 @@ internal fun circleBlendWeight(tile: Float, halfMin: Float, capsuleCircleBlend: 
 }
 
 // Distance from the corner point to each Bézier handle of a corner [tile] px wide.
-private fun cornerHandle(tile: Float, circleWeight: Float): Float = tile * (1f - (SQUIRCLE_CONTROL + (CIRCLE_CONTROL - SQUIRCLE_CONTROL) * circleWeight))
+private fun cornerHandle(tile: Float, control: Float, circleWeight: Float): Float = tile * (1f - (control + (CIRCLE_CONTROL - control) * circleWeight))
 
 /**
  * Appends a squircle-shaped rounded rectangle path. Use this for path-based effects that can't
@@ -96,6 +155,9 @@ private fun cornerHandle(tile: Float, circleWeight: Float): Float = tile * (1f -
  *   silhouette; typically forwarded from [isSquircleEnabled].
  * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
  *   (`true`) or keeps the continuous-curvature superellipse (`false`).
+ * @param weight The Lp exponent of the corner curve, `2.5` ([SquircleDefaults.WeightNormal]) or
+ *   `3.0` ([SquircleDefaults.WeightLarge]) for the surfaces ColorOS 17 draws that way. Any other
+ *   value evaluates the same formula, so the path always honours it exactly.
  */
 fun Path.addSquircleRect(
     width: Float,
@@ -104,6 +166,7 @@ fun Path.addSquircleRect(
     extension: Float = SquircleDefaults.Extension,
     squircleEnabled: Boolean = true,
     capsuleCircleBlend: Boolean = true,
+    weight: Float = SquircleDefaults.Weight,
 ) {
     if (width <= 0f || height <= 0f) return
     if (!squircleEnabled) {
@@ -131,7 +194,7 @@ fun Path.addSquircleRect(
         addRect(Rect(0f, 0f, width, height))
         return
     }
-    val handle = cornerHandle(tile, circleBlendWeight(requestedTile, halfMin, capsuleCircleBlend))
+    val handle = cornerHandle(tile, squircleControl(weight), circleBlendWeight(requestedTile, halfMin, capsuleCircleBlend))
     moveTo(tile, 0f)
     lineTo(width - tile, 0f)
     cubicTo(width - handle, 0f, width, handle, width, tile)
@@ -142,6 +205,34 @@ fun Path.addSquircleRect(
     lineTo(0f, tile)
     cubicTo(0f, handle, handle, 0f, tile, 0f)
     close()
+}
+
+/**
+ * Binary-compatibility bridge for [addSquircleRect] callers compiled before `weight` existed; the
+ * 1.1.0-era bytecode links to this signature.
+ */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+fun Path.addSquircleRect(
+    width: Float,
+    height: Float,
+    cornerRadius: Float,
+    extension: Float = SquircleDefaults.Extension,
+    squircleEnabled: Boolean = true,
+    capsuleCircleBlend: Boolean = true,
+) {
+    addSquircleRect(
+        width = width,
+        height = height,
+        cornerRadius = cornerRadius,
+        extension = extension,
+        squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = capsuleCircleBlend,
+        weight = SquircleDefaults.Weight,
+    )
 }
 
 /**
@@ -167,6 +258,7 @@ fun Path.addSquircleRect(
         extension = extension,
         squircleEnabled = squircleEnabled,
         capsuleCircleBlend = true,
+        weight = SquircleDefaults.Weight,
     )
 }
 
@@ -193,6 +285,7 @@ fun Path.addSquircleRect(
  * @param squircleEnabled When `false`, appends a plain rounded rectangle instead.
  * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
  *   (`true`) or keeps the continuous-curvature superellipse (`false`).
+ * @param weight The Lp exponent of the corner curve; see [addSquircleRect].
  */
 fun Path.addSquircleRoundRect(
     rect: Rect,
@@ -203,6 +296,7 @@ fun Path.addSquircleRoundRect(
     extension: Float = SquircleDefaults.Extension,
     squircleEnabled: Boolean = true,
     capsuleCircleBlend: Boolean = true,
+    weight: Float = SquircleDefaults.Weight,
 ) {
     val width = rect.width
     val height = rect.height
@@ -245,10 +339,11 @@ fun Path.addSquircleRoundRect(
     val t = rect.top
     val r = rect.right
     val b = rect.bottom
-    val handleTl = cornerHandle(tl, circleBlendWeight(topLeft * extClamped, halfMin, capsuleCircleBlend))
-    val handleTr = cornerHandle(tr, circleBlendWeight(topRight * extClamped, halfMin, capsuleCircleBlend))
-    val handleBr = cornerHandle(br, circleBlendWeight(bottomRight * extClamped, halfMin, capsuleCircleBlend))
-    val handleBl = cornerHandle(bl, circleBlendWeight(bottomLeft * extClamped, halfMin, capsuleCircleBlend))
+    val control = squircleControl(weight)
+    val handleTl = cornerHandle(tl, control, circleBlendWeight(topLeft * extClamped, halfMin, capsuleCircleBlend))
+    val handleTr = cornerHandle(tr, control, circleBlendWeight(topRight * extClamped, halfMin, capsuleCircleBlend))
+    val handleBr = cornerHandle(br, control, circleBlendWeight(bottomRight * extClamped, halfMin, capsuleCircleBlend))
+    val handleBl = cornerHandle(bl, control, circleBlendWeight(bottomLeft * extClamped, halfMin, capsuleCircleBlend))
     moveTo(l + tl, t)
     lineTo(r - tr, t)
     cubicTo(r - handleTr, t, r, t + handleTr, r, t + tr)
@@ -259,4 +354,35 @@ fun Path.addSquircleRoundRect(
     lineTo(l, t + tl)
     cubicTo(l, t + handleTl, l + handleTl, t, l + tl, t)
     close()
+}
+
+/**
+ * Binary-compatibility bridge for [addSquircleRoundRect] callers compiled before `weight` existed.
+ */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+fun Path.addSquircleRoundRect(
+    rect: Rect,
+    topLeft: Float,
+    topRight: Float,
+    bottomRight: Float,
+    bottomLeft: Float,
+    extension: Float = SquircleDefaults.Extension,
+    squircleEnabled: Boolean = true,
+    capsuleCircleBlend: Boolean = true,
+) {
+    addSquircleRoundRect(
+        rect = rect,
+        topLeft = topLeft,
+        topRight = topRight,
+        bottomRight = bottomRight,
+        bottomLeft = bottomLeft,
+        extension = extension,
+        squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = capsuleCircleBlend,
+        weight = SquircleDefaults.Weight,
+    )
 }

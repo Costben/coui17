@@ -281,6 +281,7 @@ TextFieldDefaults 对象提供了 TextField 组件的默认值。
 | 常量名           | 类型     | 说明                       | 默认值                |
 | ---------------- | -------- | -------------------------- | --------------------- |
 | CornerRadius     | Dp       | 输入框圆角半径             | 10.dp                 |
+| MinHeight        | Dp       | 输入框最小高度（COUI `coui_edit_text_height_min`） | 62.dp |
 | InsideMargin     | DpSize   | Rectangle 模式内部边距     | DpSize(16.dp, 12.dp)  |
 | LineInsideMargin | DpSize   | Line 模式内部边距          | DpSize(0.dp, 15.dp)   |
 | NoneInsideMargin | DpSize   | None 模式内部边距          | DpSize(0.dp, 9.dp)    |

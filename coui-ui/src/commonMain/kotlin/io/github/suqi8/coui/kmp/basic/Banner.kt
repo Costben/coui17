@@ -5,6 +5,7 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -114,6 +116,11 @@ fun Banner(
                 .weight(1f),
             contentPadding = PaddingValues(horizontal = contentPadding),
             pageSpacing = itemSpacing,
+            // COUIBannerRecyclerView applies a 2.5x scroll friction to the fling.
+            flingBehavior = PagerDefaults.flingBehavior(
+                state = state,
+                decayAnimationSpec = exponentialDecay(frictionMultiplier = BANNER_FLING_FRICTION_MULTIPLIER),
+            ),
         ) { page ->
             Box(
                 modifier = Modifier
@@ -352,3 +359,6 @@ object BannerDefaults {
         BannerIndicatorColors(dotColor = dotColor, traceColor = traceColor)
     }
 }
+
+/** COUIBannerRecyclerView: the 2.5x fling friction multiplier. */
+private const val BANNER_FLING_FRICTION_MULTIPLIER = 2.5f

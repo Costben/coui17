@@ -76,7 +76,7 @@ EmptyState(
 | ------------- | ----- | ---------------------------------------- | ----------------------- |
 | titleColor    | Color | COUITheme.colorScheme.onSurface          | couiColorLabelPrimary   |
 | subtitleColor | Color | COUITheme.colorScheme.onSurfaceSecondary | couiColorLabelSecondary |
-| actionColor   | Color | COUITheme.colorScheme.primary            | couiColorPrimaryText    |
+| actionColor   | Color | COUITheme.colorScheme.primaryContainer   | couiColorPrimaryText    |
 
 ### EmptyStateColors 类
 

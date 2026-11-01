@@ -74,6 +74,7 @@ MarkPreference(
 | cardListPosition | CardListPosition | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None | No |
 | holdDownState | Boolean                          | Whether the component is held down                                 | false                                  | No       |
 | enabled       | Boolean                          | Component interactive state                                        | true                                   | No       |
+| onMainLayoutClick | (() -> Unit)?                | Replaces the row click and makes the mark its own select target (COUI `main_layout` / `radio_layout` split) | null | No |
 
 ### MarkLocation Options
 

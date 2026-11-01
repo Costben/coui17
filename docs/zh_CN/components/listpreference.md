@@ -1,6 +1,6 @@
 # ListPreference
 
-`ListPreference` 是点击后弹出底部单选面板的偏好行,对应 ColorOS 的 COUIListPreference(COUIAlertDialog_BottomAssignment + coui_select_dialog_singlechoice 行)。偏好行行末显示当前选中项文字与 COUI 弹出指示箭头;面板中选中行行末显示主题色对勾。点击面板条目立即提交选择并收起面板。
+`ListPreference` 是点击后弹出贴底对话框单选列表的偏好行,对应 ColorOS 的 COUIListPreference(COUIAlertDialog_BottomAssignment + coui_select_dialog_singlechoice 行)。偏好行行末显示当前选中项文字与 COUI 弹出指示箭头;面板中选中行行末显示主题色对勾。点击面板条目立即提交选择并收起面板。
 
 `MultiSelectListPreference` 是多选变体,对应 COUIMultiSelectListPreference:面板行行末为复选框,仅在点击确定按钮时提交选择。
 
@@ -103,8 +103,12 @@ MultiSelectListPreference(
 | PanelItemIndicatorSpacing | Dp  | 16.dp  | coui_dialog_layout_margin_horizontal           |
 | PanelItemSummarySpacing  | Dp   | 2.dp   | coui_alert_dialog_content_panel_padding_top    |
 | CheckIconSize            | Dp   | 24.dp  | COUI 24dp 选择控件                             |
-| ButtonBarTopPadding      | Dp   | 6.dp   | alert_dialog_single_list_last_item_padding_bottom |
-| ButtonBarBottomPadding   | Dp   | 12.dp  | 库内约定                                       |
+| ButtonBarTopPadding      | Dp   | 4.dp   | coui_alert_dialog_button_parent_padding_vertical |
+| PanelItemHorizontalPadding | Dp | 24.dp | alert_dialog_single_list_padding_left / _right |
+| PanelItemTitleMinHeight  | Dp   | 22.dp  | alert_dialog_title_min_height                  |
+| PanelItemSummaryMinHeight | Dp  | 20.dp  | alert_dialog_summary_min_height                |
+| PanelItemDividerThickness | Dp  | 0.33.dp | coui_list_divider_height                      |
+| ButtonBarBottomPadding   | Dp   | 16.dp  | coui_alert_dialog_button_parent_padding_bottom |
 
 ### `listPreferenceColors()` 工厂
 
@@ -119,7 +123,7 @@ MultiSelectListPreference(
 
 ## 行为
 
-- 点击偏好行会弹出以 `dialogTitle` 为标题的 `OverlayBottomSheet` 面板,面板存续期间偏好行保持按压态,弹出时触发 context-click 震动。
+- 点击偏好行会弹出以 `dialogTitle` 为标题的 `OverlayBottomAssignmentDialog`,面板存续期间偏好行保持按压态,弹出时触发 context-click 震动。
 - 单选:点击条目立即回调 `onSelectedIndexChange` 并收起面板;取消按钮或点击外部收起且不做修改(对应 COUIListPreferenceDialogFragment)。
 - 多选:切换条目只更新暂存选择;点击确定按钮才通过 `onSelectedIndicesChange` 提交,取消 / 点击外部会丢弃修改(对应 COUIMultiSelectListPreferenceDialogFragment)。
 - 相邻面板行之间绘制发丝线分割线(0.33dp,couiColorDivider),最后一行之后不绘制。

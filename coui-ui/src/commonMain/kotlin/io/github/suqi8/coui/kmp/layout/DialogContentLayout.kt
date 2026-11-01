@@ -62,7 +62,6 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
 import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
-import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
@@ -73,6 +72,7 @@ import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -107,6 +107,9 @@ import kotlinx.coroutines.launch
  * @param largeScreen Optional override for the large-screen presentation (centered scale/fade
  *   instead of bottom slide-in). If null, detected from the window size.
  * @param cornerRadius Optional corner radius override. If null, [DialogDefaults.CornerRadius].
+ * @param cornerWeight The smooth corner weight the panel silhouette is drawn at. Defaults to the
+ *   alert panel's weight; a dialog that keeps a `*_radius_normal_16_1` radius passes
+ *   [SquircleDefaults.WeightNormal] instead.
  * @param topInset Optional top inset override. If null, calculated from window insets.
  * @param content The content of the dialog.
  */
@@ -132,6 +135,7 @@ internal fun DialogContentLayout(
     maxWidth: Dp = DialogDefaults.MaxWidth,
     largeScreen: Boolean? = null,
     cornerRadius: Dp? = null,
+    cornerWeight: Float = DialogDefaults.CornerWeight,
     topInset: Dp? = null,
     content: @Composable () -> Unit,
 ) {
@@ -239,12 +243,13 @@ internal fun DialogContentLayout(
         }
 
         // Off-screen distance below the dialog so the enter slide starts at the bottom screen edge.
+        val bottomOutsideMargin = dialogBottomOutsideMargin(outsideMargin)
         val slideBottomPadding = if (isCentered) {
             0.dp
         } else {
             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
                 WindowInsets.captionBar.asPaddingValues().calculateBottomPadding() +
-                outsideMargin.height
+                bottomOutsideMargin
         }
         val contentModifier = modifier.graphicsLayer {
             val progress = animationProgress.value
@@ -285,6 +290,7 @@ internal fun DialogContentLayout(
             maxWidth = maxWidth,
             largeScreen = largeScreen,
             cornerRadius = cornerRadius,
+            cornerWeight = cornerWeight,
             topInset = topInset,
             content = {
                 CompositionLocalProvider(LocalDismissState provides requestDismiss) {
@@ -315,6 +321,7 @@ internal fun DialogContent(
     maxWidth: Dp = DialogDefaults.MaxWidth,
     largeScreen: Boolean? = null,
     cornerRadius: Dp? = null,
+    cornerWeight: Float = DialogDefaults.CornerWeight,
     topInset: Dp? = null,
     content: @Composable () -> Unit,
 ) {
@@ -346,16 +353,23 @@ internal fun DialogContent(
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
             WindowInsets.captionBar.asPaddingValues().calculateBottomPadding()
     }
-    val extraBottomPaddingPx = remember(density, bottomPadding, outsideMargin.height, isCentered) {
-        if (isCentered) 0f else with(density) { (bottomPadding + outsideMargin.height).toPx() }
+    val bottomOutsideMargin = dialogBottomOutsideMargin(outsideMargin)
+    val extraBottomPaddingPx = remember(density, bottomPadding, bottomOutsideMargin, isCentered) {
+        if (isCentered) 0f else with(density) { (bottomPadding + bottomOutsideMargin).toPx() }
     }
 
-    val dialogShape = remember(resolvedCornerRadius) { SquircleShape(resolvedCornerRadius) }
+    val dialogShape = remember(resolvedCornerRadius, cornerWeight) {
+        SquircleShape(resolvedCornerRadius, weight = cornerWeight)
+    }
     val dialogSurface = Modifier.couiGlassSurface(
         backdrop = LocalBackdrop.current,
         shape = dialogShape,
         containerColor = backgroundColor,
-        fallback = Modifier.squircleSurface(color = backgroundColor, cornerRadius = resolvedCornerRadius),
+        fallback = Modifier.squircleSurface(
+            color = backgroundColor,
+            cornerRadius = resolvedCornerRadius,
+            weight = cornerWeight,
+        ),
         blurRadius = DialogDefaults.blurRadius(),
         blendColors = DialogDefaults.blurColors(),
     )
@@ -397,7 +411,7 @@ internal fun DialogContent(
         // `edgeModifier` stays as the per-call extension point.
         .materialShadowEdge(
             stroke = DialogDefaults.stroke(),
-            cornerWeight = DialogDefaults.CornerWeight,
+            cornerWeight = cornerWeight,
             cornerRadius = resolvedCornerRadius,
             edgeStyle = GradientStrokeStyle.EDGE_STYLE_2,
             shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
@@ -429,10 +443,12 @@ internal fun DialogContent(
                 }
             }
             .padding(horizontal = outsideMargin.width)
-            .padding(top = calculatedTopInset, bottom = outsideMargin.height),
+            .padding(top = calculatedTopInset, bottom = bottomOutsideMargin),
     ) {
         Column(
-            modifier = contentModifier.align(contentAlignment),
+            modifier = contentModifier
+                .heightIn(max = DialogDefaults.MaxHeight)
+                .align(contentAlignment),
         ) {
             val titleMultiline = remember { mutableStateOf(false) }
             val summaryMultiline = remember { mutableStateOf(false) }
@@ -451,7 +467,9 @@ internal fun DialogContent(
                         .padding(top = insideMargin.height, bottom = TitleMarginBottom),
                     text = it,
                     fontSize = COUITheme.textStyles.title4.fontSize,
-                    fontWeight = FontWeight.Medium,
+                    // COUIDialogTextAppearance.Title overrides couiTextHeadlineS with
+                    // sans-serif-semibold.
+                    fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     lineHeight = DialogLineHeight,
                     color = titleColor,
@@ -465,7 +483,8 @@ internal fun DialogContent(
                         .padding(horizontal = insideMargin.width)
                         .padding(top = messageTopPadding, bottom = messageBottomPadding),
                     text = it,
-                    fontSize = COUITheme.textStyles.body2.fontSize,
+                    // COUIAlertDialogMessageStyle inherits `couiTextBodyS` (13sp).
+                    fontSize = COUITheme.textStyles.footnote1.fontSize,
                     // COUI centers a single-line message and start-aligns once it wraps.
                     textAlign = if (summaryMultiline.value) TextAlign.Start else TextAlign.Center,
                     lineHeight = DialogLineHeight,
@@ -475,6 +494,21 @@ internal fun DialogContent(
             }
             PopupBarrierBoundary(content)
         }
+    }
+}
+
+/**
+ * The margin under a dialog: [DialogDefaults.OutsideMarginWithNavigationBar] less the navigation
+ * bar inset COUI already skips over, or [DialogDefaults.outsideMargin]'s height when the dialog sits
+ * above the screen edge on its own.
+ */
+@Composable
+private fun dialogBottomOutsideMargin(outsideMargin: DpSize): Dp {
+    val navigationBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    return if (navigationBarInset > 0.dp) {
+        (DialogDefaults.OutsideMarginWithNavigationBar - navigationBarInset).coerceAtLeast(0.dp)
+    } else {
+        outsideMargin.height
     }
 }
 
@@ -596,28 +630,19 @@ object DialogDefaults {
      * `OplusOutlineAdapter.setSmoothRoundRect(..., 45dp, R.dimen.weight_16_1_large)`, i.e. a smooth
      * round rect at weight 3.0. The 16-era branch used `attr/couiRoundCornerXXXXL` = 25dp at
      * weight 2.5. `COUIAlertDialogBuilder` and `COUIBottomSheetDialog` resolve the same 45dp / 3.0
-     * pair for the blur backdrop layer.
-     *
-     * This library cannot reproduce 45dp at weight 3.0: `squircleSurface` bakes
-     * `SquirclePath.SQUIRCLE_CONTROL` for weight 2.5 and exposes no weight parameter (see
-     * `basic/Card.kt`). A heavier weight stretches the corner further along the edges, so the same
-     * outline needs a *smaller* radius at 2.5 — measured against a live ColorOS 17 settings dialog,
-     * 38dp on the baked squircle reproduces the native corner path to within 3px over the whole
-     * arc. 45dp at weight 2.5 overshoots by 15px at the tangent point.
+     * pair for the blur backdrop layer; the panel silhouette is drawn at [CornerWeight] as well, so
+     * the radius and the weight have to be changed together.
      */
-    val CornerRadius = 38.dp
+    val CornerRadius = 45.dp
 
     /**
      * The `u_commonArray[10]` corner weight of a dialog panel.
      *
      * ColorOS 17 feeds the dialog's shadow-edge shader `R.dimen.weight_16_1_large` = 3.0, and the
-     * native panel *silhouette* is generated with that same weight, so the rim's SDF and the drawn
-     * shape agree. [`squircleSurface`] bakes `SquirclePath.SQUIRCLE_CONTROL` for weight 2.5 and
-     * cannot be parameterized (see `basic/Card.kt`), so the rim has to use 2.5 as well: passing 3.0
-     * here makes the shader's corner geometry disagree with the drawn outline and the rim fades out
-     * along the whole corner arc (measured: 0 luminance over body on the arc, against +36 native).
+     * native panel silhouette is generated with that same weight, so the rim's SDF and the drawn
+     * shape agree.
      */
-    val CornerWeight = MaterialShadowEdgeDefaults.SquircleCornerWeight
+    val CornerWeight = SquircleDefaults.WeightLarge
 
     /**
      * The default material edge of the dialog panel.
@@ -655,6 +680,19 @@ object DialogDefaults {
      * (32dp).
      */
     val outsideMargin = DpSize(16.dp, 32.dp)
+
+    /**
+     * `dimen/coui_dialog_layout_margin_bottom_with_navigation_bar` = 60dp: the bottom margin COUI
+     * targets once a three-key navigation bar sits under the dialog. `updateDialogBottomMargin()`
+     * insets by `60dp - navigationBarHeight`, so the gap from the dialog to the screen edge is 60dp
+     * rather than the 32dp of [outsideMargin].
+     */
+    val OutsideMarginWithNavigationBar = 60.dp
+
+    /**
+     * `dimen/coui_dialog_max_height` = 632dp, the `maxHeight` of `style/COUIAlertDialogLayoutStyle`.
+     */
+    val MaxHeight = 632.dp
 
     /**
      * The default margin for the built-in title and summary texts: width is their horizontal

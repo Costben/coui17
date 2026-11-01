@@ -156,7 +156,7 @@ class DialogButtonBarPaintTest {
                             onCancel = {},
                             title = "要删除车辆吗?",
                             summary = "删除后，该车辆的记录将无法恢复。",
-                            confirmText = "删除车辆",
+                            confirmText = "DELETE",
                             cancelText = "取消",
                             colors = AlertDialogDefaults.alertDialogColors(
                                 backgroundColor = Color(0xFFE5E5E5),

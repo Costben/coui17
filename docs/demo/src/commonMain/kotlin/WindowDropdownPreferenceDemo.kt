@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.preference.WindowDropdownPreference
@@ -113,7 +114,10 @@ fun WindowDropdownPreferenceDemo() {
                 ),
             )
 
-            Card {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
                 WindowDropdownPreference(
                     title = "Language Settings",
                     summary = if (expanded) "Expanded" else "Choose your preferred language",

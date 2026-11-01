@@ -1,6 +1,6 @@
 # EditTextPreference
 
-`EditTextPreference` 是把当前值显示在行尾、并在底部面板中编辑的偏好设置行，对应 ColorOS 的 `COUIEditTextPreference`。设备端整行使用标准 `coui_preference` 布局并靠 `app:couiAssignment` 显示取值，编辑界面是 `COUIEditTextPreferenceDialogFragment`（基于 `coui_preference_dialog_edittext.xml`）。本移植为了与其他选择类偏好保持一致，改用 `OverlayBottomSheet` 承载编辑面板（与 `ListPreference` 相同），因此页面同样需要包裹在 `Scaffold` 中。
+`EditTextPreference` 是把当前值显示在行尾、并在底部面板中编辑的偏好设置行，对应 ColorOS 的 `COUIEditTextPreference`。设备端整行使用标准 `coui_preference` 布局并靠 `app:couiAssignment` 显示取值，编辑界面是 `COUIEditTextPreferenceDialogFragment`（基于 `coui_preference_dialog_edittext.xml`）。面板形态是 `COUIAlertDialog_BottomAssignment`：贴底的对话框面板，不是底部面板。本移植改用 `OverlayBottomAssignmentDialog` 承载（与 `ListPreference`、`MultiSelectListPreference` 同一宿主），因此页面同样需要包裹在 `Scaffold` 中。COUI 还会把窗口锚定到打开它的那一行；Scaffold 承载的对话框是整屏一层，这一层锚定未复刻。
 
 ## 引入
 
@@ -88,5 +88,6 @@ EditTextPreference(
 | 属性                   | 类型 | 说明                                                                        | 值   |
 | ---------------------- | ---- | --------------------------------------------------------------------------- | ---- |
 | SheetHorizontalPadding | Dp   | 编辑输入框的水平内边距，取自 `support_preference_dialog_edittext_margin_horizontal` | 24dp |
-| ButtonBarTopPadding    | Dp   | 输入框与按钮行之间的间距，取自 `coui_edittextdialog_marginbottom`            | 14dp |
-| ButtonBarBottomPadding | Dp   | 按钮行下方的内边距                                                          | 12dp |
+| ButtonBarTopPadding    | Dp   | 输入框的下边距，取自 `coui_edittextdialog_marginbottom`                     | 14dp |
+| DialogFieldMinHeight   | Dp   | 输入框最小高度，取自 `support_preference_dialog_edittext_min_height`         | 34dp |
+| ButtonBarBottomPadding | Dp   | 仅为源码兼容保留、已不使用：对话框按钮栏自带下内边距                        | 12dp |

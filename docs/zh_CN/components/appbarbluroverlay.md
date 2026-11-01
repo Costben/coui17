@@ -174,7 +174,7 @@ producer 重载的参数相同，只是第一个且必填的参数 `scrollFracti
 | 深色档位位置 | `[0.0, 1.0]` | `gradientPos0` / `gradientPos2` |
 | 深色档位 alpha | `[0.0, 0.4]` | `gradientAlpha0` / `AppBarBlurHelper.GRADIENT_DARK_ALPHA` |
 
-深色只有两档：`0.4` 这个上边缘 alpha 是硬编码的 `GRADIENT_DARK_ALPHA`，不是第三个 `gradientAlpha`。模糊半径与混合指数由 `TopAppBar.kt` 的 `AppBarGlassDefaults` 承载（`GradientBlurRadiusPx`、`GradientEndBlurRadiusPx`、`GradientBlurSpeed`），导航栏自身的 `gradientGlass` 材质也从同一处取值；`endBlurRadius` 为 0，是因为渐变形状按 `max(start, end)` 模糊、由混合曲线负责渐变。
+深色只有两档：`0.4` 这个上边缘 alpha 是硬编码的 `GRADIENT_DARK_ALPHA`，不是第三个 `gradientAlpha`。模糊半径与混合指数由 `TopAppBar.kt` 的 `AppBarGlassDefaults` 承载（`GradientBlurRadiusPx`、`GradientEndBlurRadiusPx`、`GradientBlurSpeed`），导航栏自身的 `gradientGlass` 材质也从同一处取值；`endBlurRadius` 为 0，是因为渐变形状按 `max(start, end)` 模糊、由混合曲线负责渐变。`GradientBlurRadiusPx` 保持框架原值 —— 30，是 HWUI radius 而不是 sigma —— 由 `appBarEngineBlurRadiusPx`（× 0.57735，再 ÷ 0.45）换算成 COUI 引擎使用的半径，自绘路径与原生路径因此强度一致、降采样档位也一致。
 
 走哪条剖面是**主题属性、不是基色亮度**：本移植在 `COUITheme.colorScheme.background.luminance() < 0.5f`（即框架的 `isCOUIDarkThemeOrNightMode`）时选深色两档，因此浅色主题下调暗 `containerColor` 也不会把剖面切到另一分支。
 

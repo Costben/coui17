@@ -60,7 +60,9 @@ fun CheckBoxPreferenceCategory(
                 state = state,
                 onClick = onClick,
                 modifier = Modifier.padding(
-                    vertical = CheckBoxPreferenceCategoryDefaults.WidgetMarginVertical,
+                    end = CheckBoxPreferenceCategoryDefaults.WidgetPaddingEnd,
+                    top = CheckBoxPreferenceCategoryDefaults.WidgetMarginVertical,
+                    bottom = CheckBoxPreferenceCategoryDefaults.WidgetMarginVertical,
                 ),
                 colors = checkboxColors,
                 enabled = enabled,
@@ -76,4 +78,10 @@ object CheckBoxPreferenceCategoryDefaults {
      * of the checkbox in `coui_preference_category_widget_layout_checkbox.xml`.
      */
     val WidgetMarginVertical = 4.dp
+
+    /**
+     * `coui_preference_category_widget_layout_padding_end` (16dp), the checkbox's `paddingEnd` in
+     * `coui_preference_category_widget_layout_checkbox.xml`.
+     */
+    val WidgetPaddingEnd = 16.dp
 }

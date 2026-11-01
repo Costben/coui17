@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.PixelMap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -71,6 +72,30 @@ class ButtonCapsuleShapeTest {
         println("BUTTON TRANSITION MEAN actual=$band segment=$segmentBand")
         assertTrue(band > 0.03f, "the tail must leave the straight edge, mean dip $band")
         assertTrue(abs(band - segmentBand) < 0.02f, "actual=$band segment=$segmentBand")
+    }
+
+    @Test
+    fun aDefaultButtonGrownByItsLabelStaysACapsule() {
+        var pixels: PixelMap? = null
+        runSkikoComposeUiTest(size = Size(240f, 120f), density = Density(1f)) {
+            setContent {
+                COUITheme {
+                    Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.TopStart) {
+                        Button(
+                            onClick = {},
+                            modifier = Modifier.size(width = 200.dp, height = 88.dp),
+                            colors = ButtonDefaults.buttonColors(color = Color.Black),
+                        ) {}
+                    }
+                }
+            }
+            waitForIdle()
+            pixels = onRoot().captureToImage().toPixelMap()
+        }
+        // 28dp above the centre line a 44dp end is inset by 10dp; the single-line 22dp corner would
+        // have left the edge straight there.
+        assertTrue(pixels!![5, 16].red > 0.9f, "the end must round over the full height")
+        assertTrue(pixels!![14, 16].red < 0.1f, "the fill must start just past the capsule end")
     }
 
     @Test

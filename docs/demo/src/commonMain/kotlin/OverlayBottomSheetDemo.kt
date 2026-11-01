@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.IconButton
 import io.github.suqi8.coui.kmp.basic.Scaffold
@@ -77,7 +78,11 @@ fun OverlayBottomSheetDemo() {
                         },
                         onDismissRequest = { showBottomSheet = false },
                     ) {
-                        Card(modifier = Modifier.padding(bottom = 16.dp)) {
+                        Card(
+                            cornerRadius = CardDefaults.GroupCornerRadius,
+                            weight = CardDefaults.GroupWeight,
+                            modifier = Modifier.padding(bottom = 16.dp),
+                        ) {
                             SwitchPreference(
                                 title = "Notifications",
                                 summary = "Receive push notifications",

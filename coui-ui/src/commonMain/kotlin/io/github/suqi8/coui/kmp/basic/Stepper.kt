@@ -3,6 +3,8 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -19,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
+import kotlinx.coroutines.delay
 
 /**
  * A [Stepper] component with COUI style.
@@ -47,7 +52,7 @@ fun Stepper(
     value: Int,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    minValue: Int = Int.MIN_VALUE,
+    minValue: Int = -999,
     maxValue: Int = Int.MAX_VALUE,
     step: Int = 1,
     enabled: Boolean = true,
@@ -70,6 +75,9 @@ fun Stepper(
             enabled = canDecrease,
             buttonColor = colors.buttonColor,
             contentColor = colors.contentColor(canDecrease),
+            onRepeat = {
+                currentOnValueChange((value - step).coerceAtLeast(minValue))
+            },
             onClick = {
                 val next = (value - step).coerceAtLeast(minValue)
                 if (next != value) {
@@ -94,6 +102,9 @@ fun Stepper(
             enabled = canIncrease,
             buttonColor = colors.buttonColor,
             contentColor = colors.contentColor(canIncrease),
+            onRepeat = {
+                currentOnValueChange((value + step).coerceAtMost(maxValue))
+            },
             onClick = {
                 val next = (value + step).coerceAtMost(maxValue)
                 if (next != value) {
@@ -105,6 +116,12 @@ fun Stepper(
     }
 }
 
+/** COUIStepperView LongPressProxy: the press-to-repeat delay before the first repeat. */
+private const val LONG_PRESS_TIMEOUT_MILLIS = 500L
+
+/** COUIStepperView LongPressProxy: the repeat interval while the button is held (sendEmptyMessageDelayed(2, 100L)). */
+private const val REPEAT_INTERVAL_MILLIS = 100L
+
 private enum class StepperSymbol { Minus, Plus }
 
 @Composable
@@ -113,10 +130,25 @@ private fun StepperButton(
     enabled: Boolean,
     buttonColor: Color,
     contentColor: Color,
+    onRepeat: () -> Unit,
     onClick: () -> Unit,
 ) {
+    // COUIStepperView drives the buttons through LongPressProxy: the click fires immediately, then a
+    // long press repeats every REPEAT_INTERVAL_MS until the finger lifts.
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val currentOnRepeat by rememberUpdatedState(onRepeat)
+    LaunchedEffect(isPressed, enabled) {
+        if (!enabled || !isPressed) return@LaunchedEffect
+        delay(LONG_PRESS_TIMEOUT_MILLIS)
+        while (true) {
+            currentOnRepeat()
+            delay(REPEAT_INTERVAL_MILLIS)
+        }
+    }
     IconButton(
         onClick = onClick,
+        interactionSource = interactionSource,
         enabled = enabled,
         backgroundColor = buttonColor,
         cornerRadius = StepperDefaults.ButtonSize / 2,
@@ -155,6 +187,16 @@ private fun StepperButton(
     }
 }
 
+/** couiColorContainer8 in light themes (#14000000). */
+private val StepperContainer8Light = Color(0x14000000)
+
+/** couiColorContainer8 in dark themes (#1AFFFFFF). */
+private val StepperContainer8Dark = Color(0x1AFFFFFF)
+
+/** The COUI container8 fill used by the stepper buttons. */
+@Composable
+private fun stepperContainer8(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) StepperContainer8Dark else StepperContainer8Light
+
 /** Contains default values used by [Stepper]. */
 object StepperDefaults {
     /** The diameter of each stepper button (COUI stepper_button_size). */
@@ -179,7 +221,9 @@ object StepperDefaults {
     /** The default colors for the [Stepper]. */
     @Composable
     fun stepperColors(
-        buttonColor: Color = COUITheme.colorScheme.secondaryContainer,
+        // COUIStepperView paints its buttons with couiColorContainer8 (#14000000 light /
+        // #1AFFFFFF dark), which is not the same as secondaryContainer in dark themes.
+        buttonColor: Color = stepperContainer8(),
         contentColor: Color = COUITheme.colorScheme.onSurface,
         disabledContentColor: Color = COUITheme.colorScheme.disabledOnSurface,
     ): StepperColors = remember(buttonColor, contentColor, disabledContentColor) {

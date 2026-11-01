@@ -31,11 +31,13 @@ Card {
 | ----------------- | ---------------------------------- | ----------------------------------------- | ---------------------------- | -------- | ----------- |
 | modifier          | Modifier                           | Modifier applied to the card              | Modifier                     | No       | All         |
 | cornerRadius      | Dp                                 | Card corner radius                        | CardDefaults.CornerRadius    | No       | All         |
+| weight            | Float                              | Corner curve weight (Lp exponent)         | CardDefaults.Weight          | No       | All         |
 | insideMargin      | PaddingValues                      | Card inner padding                        | CardDefaults.InsideMargin    | No       | All         |
 | colors            | CardColors                         | Card color configuration                  | CardDefaults.defaultColors() | No       | All         |
 | pressFeedbackType | PressFeedbackType                  | Feedback type when pressed                | PressFeedbackType.Tint       | No       | Interactive |
 | showIndication    | Boolean                            | Show indication on interaction            | false                        | No       | Interactive |
 | holdDownState     | Boolean                            | Whether the card is in the pressed state  | false                        | No       | Interactive |
+| selected              | Boolean                                     | Locked selected state (`COUICardListSelectedItemLayout.setIsSelected`); the fill stays at the press colour | false | No |
 | onClick           | (() -> Unit)?                      | Callback when clicked                     | null                         | No       | Interactive |
 | onLongPress       | (() -> Unit)?                      | Callback when long pressed                | null                         | No       | Interactive |
 | content           | @Composable ColumnScope.() -> Unit | Composable function for card content area | -                            | Yes      | All         |
@@ -52,7 +54,10 @@ The CardDefaults object provides default values and color configurations for the
 
 | Constant Name | Type          | Description        | Default Value       |
 | ------------- | ------------- | ------------------ | ------------------- |
-| CornerRadius  | Dp            | Card corner radius | 17.dp               |
+| CornerRadius      | Dp    | Corner radius of a standalone card (`COUICardView`), drawn at Lp 3.0 | 17.dp |
+| Weight            | Float | Corner weight of a standalone card                                   | SquircleDefaults.WeightLarge (3.0) |
+| GroupCornerRadius | Dp    | Corner radius of the card that holds a preference group (`couiRoundCornerXL`), drawn at Lp 2.5 | 20.dp |
+| GroupWeight       | Float | Corner weight of the card that holds a preference group              | SquircleDefaults.WeightNormal (2.5) |
 | InsideMargin  | PaddingValues | Card inner padding | PaddingValues(0.dp) |
 
 #### Methods
@@ -67,14 +72,14 @@ The CardDefaults object provides default values and color configurations for the
 | ------------- | ----- | -------------------------------------------------------------------- |
 | color         | Color | Default background color of card                                     |
 | contentColor  | Color | Default content color of card                                        |
-| pressedColor  | Color | Fill color the card animates towards while pressed (Tint feedback)   |
+| pressedColor  | Color | Mask stacked over the card while pressed (Tint feedback)              |
 
 ### PressFeedbackType Options
 
 | Option | Description                                                                                        |
 | ------ | -------------------------------------------------------------------------------------------------- |
 | None   | No press feedback                                                                                  |
-| Tint   | Animates the fill towards `pressedColor` while pressed or held down (COUI card feedback, default)  |
+| Tint   | Stacks `pressedColor` over the card while pressed or held down, inside its squircle (COUI card feedback, default) |
 | Sink   | Sinks (scales down) slightly when pressed                                                          |
 | Tilt   | Tilts based on the touch position when pressed                                                     |
 
@@ -151,8 +156,8 @@ LazyColumn {
 ```kotlin
 Card(
     modifier = Modifier.padding(16.dp),
-    // pressFeedbackType defaults to PressFeedbackType.Tint: the fill animates
-    // towards CardColors.pressedColor while pressed (COUI card press feedback)
+    // pressFeedbackType defaults to PressFeedbackType.Tint: CardColors.pressedColor
+    // is stacked over the card while pressed (COUI card press feedback)
     onClick = {/* Handle click event */ },
     onLongPress = {/* Handle long press event */ }
 ) {

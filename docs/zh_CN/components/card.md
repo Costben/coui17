@@ -32,11 +32,13 @@ Card {
 | ----------------- | ---------------------------------- | ------------------------ | ---------------------------- | -------- | -------- |
 | modifier          | Modifier                           | 应用于卡片的修饰符       | Modifier                     | 否       | 所有     |
 | cornerRadius      | Dp                                 | 卡片圆角半径             | CardDefaults.CornerRadius    | 否       | 所有     |
+| weight            | Float                              | 圆角曲线权重(Lp 指数)    | CardDefaults.Weight          | 否       | 所有     |
 | insideMargin      | PaddingValues                      | 卡片内部边距             | CardDefaults.InsideMargin    | 否       | 所有     |
 | colors            | CardColors                         | 卡片颜色配置             | CardDefaults.defaultColors() | 否       | 所有     |
 | pressFeedbackType | PressFeedbackType                  | 按压反馈类型             | PressFeedbackType.Tint       | 否       | 交互式   |
 | showIndication    | Boolean                            | 显示点击指示效果         | false                        | 否       | 交互式   |
 | holdDownState     | Boolean                            | 卡片是否处于按下状态     | false                        | 否       | 交互式   |
+| selected              | Boolean                                     | 常亮选中态（`COUICardListSelectedItemLayout.setIsSelected`），底色停在按压色 | false | 否 |
 | onClick           | (() -> Unit)?                      | 点击事件回调             | null                         | 否       | 交互式   |
 | onLongPress       | (() -> Unit)?                      | 长按事件回调             | null                         | 否       | 交互式   |
 | content           | @Composable ColumnScope.() -> Unit | 卡片内容区域的可组合函数 | -                            | 是       | 所有     |
@@ -53,7 +55,10 @@ CardDefaults 对象提供了卡片组件的默认值和颜色配置。
 
 | 常量名       | 类型          | 说明           | 默认值              |
 | ------------ | ------------- | -------------- | ------------------- |
-| CornerRadius | Dp            | 卡片的圆角半径 | 17.dp               |
+| CornerRadius      | Dp    | 独立卡片(`COUICardView`)的圆角半径,按 Lp 3.0 绘制 | 17.dp |
+| Weight            | Float | 独立卡片的圆角权重                                | SquircleDefaults.WeightLarge (3.0) |
+| GroupCornerRadius | Dp    | 承载偏好分组的卡片圆角(`couiRoundCornerXL`),按 Lp 2.5 绘制 | 20.dp |
+| GroupWeight       | Float | 承载偏好分组的卡片圆角权重                        | SquircleDefaults.WeightNormal (2.5) |
 | InsideMargin | PaddingValues | 卡片的内部边距 | PaddingValues(0.dp) |
 
 #### 方法
@@ -67,14 +72,14 @@ CardDefaults 对象提供了卡片组件的默认值和颜色配置。
 | ------------ | ----- | ---------------------------------------- |
 | color        | Color | 卡片的背景颜色                           |
 | contentColor | Color | 卡片的内容颜色                           |
-| pressedColor | Color | 按压时背景过渡到的颜色（Tint 反馈使用）  |
+| pressedColor | Color | 按压时叠在卡片上的遮罩色（Tint 反馈使用） |
 
 ### PressFeedbackType 选项
 
 | 选项 | 说明                                                                  |
 | ---- | --------------------------------------------------------------------- |
 | None | 无按压反馈                                                            |
-| Tint | 按压或保持按下时背景过渡到 `pressedColor`（COUI 卡片按压反馈，默认）  |
+| Tint | 按压或保持按下时把 `pressedColor` 叠在卡片上，并裁在圆角内（COUI 卡片按压反馈，默认） |
 | Sink | 按压时轻微下沉（缩小）                                                |
 | Tilt | 按压时根据触摸位置倾斜                                                |
 
@@ -150,8 +155,8 @@ LazyColumn {
 ```kotlin
 Card(
     modifier = Modifier.padding(16.dp),
-    // pressFeedbackType 默认为 PressFeedbackType.Tint：按压时背景过渡到
-    // CardColors.pressedColor（COUI 卡片按压反馈）
+    // pressFeedbackType 默认为 PressFeedbackType.Tint：按压时把
+    // CardColors.pressedColor 叠在卡片上（COUI 卡片按压反馈）
     onClick = { /* 处理点击事件 */ },
     onLongPress = { /* 处理长按事件 */ }
 ) {

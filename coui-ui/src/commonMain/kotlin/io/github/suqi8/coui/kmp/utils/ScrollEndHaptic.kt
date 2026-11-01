@@ -4,7 +4,6 @@ package io.github.suqi8.coui.kmp.utils
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -14,13 +13,10 @@ import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.InspectorInfo
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Velocity
-import kotlin.math.abs
 
 private const val PRE_SCROLL_RESET_THRESHOLD = 1.0f
 private const val POST_FLING_AVAILABLE_VELOCITY_THRESHOLD = 1.0f
-private const val POST_FLING_CONSUMED_VELOCITY_THRESHOLD = 25.0f
 
 /**
  * A [NestedScrollConnection] that provides haptic feedback when a scrollable container
@@ -35,9 +31,6 @@ private class ScrollEndHapticNode(
     CompositionLocalConsumerModifierNode,
     NestedScrollConnection {
 
-    private val hapticFeedback: HapticFeedback
-        get() = currentValueOf(LocalHapticFeedback)
-
     private enum class ScrollEndHapticState {
         /** Not scrolled to the boundary. */
         Idle,
@@ -51,7 +44,14 @@ private class ScrollEndHapticNode(
 
     private var scrollEndHapticState = ScrollEndHapticState.Idle
 
-    private fun Float.filter(tolerance: Float): Boolean = abs(this) < tolerance
+    /** Fires once per boundary hit, the way `COUINestedScrollView.onOverScrolled` calls it. */
+    private fun boundaryHit(top: Boolean) {
+        val state = if (top) ScrollEndHapticState.TopBoundaryHit else ScrollEndHapticState.BottomBoundaryHit
+        if (scrollEndHapticState != state) {
+            performScrollEndHaptic(hapticFeedbackType)
+            scrollEndHapticState = state
+        }
+    }
 
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         if (!isAttached) return Offset.Zero
@@ -64,24 +64,26 @@ private class ScrollEndHapticNode(
         return Offset.Zero
     }
 
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+        if (!isAttached) return Offset.Zero
+        // `COUINestedScrollView.onOverScrolled` fires the boundary feedback on the frame the content
+        // stops moving, so a slow drag to the edge buzzes just like a fling does. `available` is what
+        // no scrollable consumed, which is exactly the overscroll at the boundary.
+        if (available.y > 0f) {
+            boundaryHit(top = true)
+        } else if (available.y < 0f) {
+            boundaryHit(top = false)
+        }
+        return Offset.Zero
+    }
+
     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
         if (!isAttached) return Velocity.Zero
-        // Flinging beyond the top boundary.
-        if (available.y > POST_FLING_AVAILABLE_VELOCITY_THRESHOLD && !consumed.y.filter(POST_FLING_CONSUMED_VELOCITY_THRESHOLD)) {
-            if (scrollEndHapticState != ScrollEndHapticState.TopBoundaryHit) {
-                hapticFeedback.performHapticFeedback(hapticFeedbackType)
-                scrollEndHapticState = ScrollEndHapticState.TopBoundaryHit
-            }
-        }
-        // Flinging beyond the bottom boundary.
-        else if (available.y < -POST_FLING_AVAILABLE_VELOCITY_THRESHOLD && !consumed.y.filter(
-                POST_FLING_CONSUMED_VELOCITY_THRESHOLD,
-            )
-        ) {
-            if (scrollEndHapticState != ScrollEndHapticState.BottomBoundaryHit) {
-                hapticFeedback.performHapticFeedback(hapticFeedbackType)
-                scrollEndHapticState = ScrollEndHapticState.BottomBoundaryHit
-            }
+        // A fling that arrives with unhandled velocity in the boundary direction is overscrolling.
+        if (available.y > POST_FLING_AVAILABLE_VELOCITY_THRESHOLD) {
+            boundaryHit(top = true)
+        } else if (available.y < -POST_FLING_AVAILABLE_VELOCITY_THRESHOLD) {
+            boundaryHit(top = false)
         }
         return Velocity.Zero
     }
@@ -118,8 +120,22 @@ private data class ScrollEndHapticElement(
 /**
  * Applies a haptic feedback effect when a scrollable container is flung to its boundaries.
  *
- * @param hapticFeedbackType The type of haptic feedback to perform.
+ * `COUINestedScrollView.onOverScrolled` performs
+ * `COUIHapticFeedbackConstants.EDGE_LIST_VIBRATE` (OPLUS 307) on every boundary hit; on Android the
+ * port asks the view for that waveform first. [hapticFeedbackType] is the Compose type performed
+ * when the device does not recognise the OEM constant, and the only type performed off Android.
+ *
+ * @param hapticFeedbackType The type of haptic feedback to perform where the COUI waveform is
+ *   unavailable.
  */
 fun Modifier.scrollEndHaptic(
     hapticFeedbackType: HapticFeedbackType = HapticFeedbackType.TextHandleMove,
 ): Modifier = this.then(ScrollEndHapticElement(hapticFeedbackType))
+
+/**
+ * Performs the boundary feedback of a scroll view.
+ *
+ * Android tries the ColorOS edge-list waveform through `View.performHapticFeedback`, which takes a
+ * raw OEM constant that [HapticFeedbackType] cannot carry; every other target performs [type].
+ */
+internal expect fun CompositionLocalConsumerModifierNode.performScrollEndHaptic(type: HapticFeedbackType)

@@ -3,6 +3,8 @@
 package io.github.suqi8.coui.kmp.layout
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlendModeColorFilter
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -31,12 +36,16 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.ExpandableIndicator
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
+import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
+import kotlinx.coroutines.withTimeout
 
 /**
  * First row of a cascading secondary popup: the trigger item re-rendered as COUI's expanded group
  * header (`PopupListItem` group state 2 — medium typeface, expandable indicator at the trailing
  * edge). It is a normal popup row; the secondary panel's band clip is what makes it appear to grow
- * out of the tapped row. Tapping it collapses the secondary.
+ * out of the tapped row. Tapping it collapses the secondary; holding it does the same, as
+ * `COUIPopupMenuRootView.hideSubMenuFromLongPress` does for the submenu header.
  */
 @Composable
 internal fun MorphHeaderRow(
@@ -54,6 +63,8 @@ internal fun MorphHeaderRow(
         BlendModeColorFilter(chevronColor, BlendMode.SrcIn)
     }
     val currentOnClick by rememberUpdatedState(onClick)
+    val performHaptic = rememberCouiHaptic()
+    val currentOnLongClick by rememberUpdatedState(onClick)
 
     Layout(
         content = {
@@ -119,7 +130,11 @@ internal fun MorphHeaderRow(
                 enabled = true,
                 role = Role.Button,
                 onClick = { currentOnClick() },
-            ),
+            )
+            .popupHeaderLongPress {
+                performHaptic(CouiHapticEffect.Long)
+                currentOnLongClick()
+            },
     ) { measurables, constraints ->
         val padTop = DropdownDefaults.FirstLastVerticalPadding.roundToPx()
         val padBottom = DropdownDefaults.MiddleVerticalPadding.roundToPx()
@@ -134,6 +149,35 @@ internal fun MorphHeaderRow(
 
         layout(width, placeable.height + padTop + padBottom) {
             placeable.place(0, padTop)
+        }
+    }
+}
+
+/**
+ * `COUIPopupListWindow`'s submenu header is a long-press target of the region-based detector: holding
+ * it delivers `dispatchSubMenuMixedItemLongClick` with `position < 0`, i.e.
+ * `hideSubMenuFromLongPress`. The header is not a registered row of [io.github.suqi8.coui.kmp.basic.ListPopupColumn]
+ * (it carries no press mask), so the timer lives here. The hold is cancelled by lifting or by
+ * leaving the row, matching the detector's `isPointInTargetView` check.
+ */
+private fun Modifier.popupHeaderLongPress(onLongClick: () -> Unit): Modifier = pointerInput(onLongClick) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        try {
+            withTimeout(DropdownDefaults.LongPressTimeoutMillis) {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = event.changes.firstOrNull() ?: return@withTimeout
+                    if (!change.pressed) return@withTimeout
+                    if (change.position.x < 0f || change.position.x > size.width ||
+                        change.position.y < 0f || change.position.y > size.height
+                    ) {
+                        return@withTimeout
+                    }
+                }
+            }
+        } catch (_: PointerEventTimeoutCancellationException) {
+            onLongClick()
         }
     }
 }

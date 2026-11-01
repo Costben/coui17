@@ -172,7 +172,7 @@ Every value below is taken from the ColorOS 17 material's defaults or its resour
 | Dark stop positions | `[0.0, 1.0]` | ColorOS 17 dark ramp |
 | Dark stop alphas | `[0.0, 0.4]` | ColorOS 17 dark ramp |
 
-The dark theme has only two stops: the `0.4` top-edge alpha is a hard-coded value, not a third `gradientAlpha` value. The blur radius and the blend exponent are carried by `AppBarGlassDefaults` in `TopAppBar.kt` (`GradientBlurRadiusPx`, `GradientEndBlurRadiusPx`, `GradientBlurSpeed`), which is also where the app bar's own `gradientGlass` material reads them from; `endBlurRadius` is 0 because the gradient shape blurs at `max(start, end)` and lets the blend curve do the ramping.
+The dark theme has only two stops: the `0.4` top-edge alpha is a hard-coded value, not a third `gradientAlpha` value. The blur radius and the blend exponent are carried by `AppBarGlassDefaults` in `TopAppBar.kt` (`GradientBlurRadiusPx`, `GradientEndBlurRadiusPx`, `GradientBlurSpeed`), which is also where the app bar's own `gradientGlass` material reads them from; `endBlurRadius` is 0 because the gradient shape blurs at `max(start, end)` and lets the blend curve do the ramping. `GradientBlurRadiusPx` keeps the framework's own value — 30, an HWUI radius, not a sigma — and `appBarEngineBlurRadiusPx` converts it (× 0.57735, then ÷ 0.45) on the way into COUI's engine, so the self-drawn path and the native path blur at the same strength and pick the same downscale level.
 
 Which of the two ramps is drawn is a property of the theme, not of the base colour: the port selects the dark ramp when `COUITheme.colorScheme.background.luminance() < 0.5f`, so passing a dark `containerColor` on a light theme cannot move the ramp to the other branch.
 

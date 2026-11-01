@@ -23,6 +23,7 @@ import io.github.suqi8.coui.kmp.basic.ProgressIndicatorColors
 import io.github.suqi8.coui.kmp.basic.ProgressIndicatorDefaults
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -81,13 +82,18 @@ internal fun ProgressDialogContentLayout(
         // COUI progress dialogs are always centered with the center-dialog transitions.
         forceCentered = true,
         cornerRadius = ProgressDialogDefaults.CornerRadius,
+        // 15dp is a `*_radius_normal_16_1` token, so this card stays on the normal weight.
+        cornerWeight = SquircleDefaults.WeightNormal,
         topInset = topInset,
     ) {
         Column(
             modifier = Modifier
                 .width(ProgressDialogDefaults.CardWidth)
                 .heightIn(min = ProgressDialogDefaults.CardMinHeight)
-                .padding(horizontal = ProgressDialogDefaults.ContentHorizontalPadding),
+                .padding(
+                    horizontal = ProgressDialogDefaults.ContentHorizontalPadding,
+                    vertical = ProgressDialogDefaults.ContentVerticalPadding,
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -116,17 +122,19 @@ internal fun ProgressDialogContentLayout(
 object ProgressDialogDefaults {
 
     /**
-     * The width of the progress card. COUI has no separate token for the horizontal card; the port
-     * reuses the rotating card width `coui_spinner_layout_width` (152dp) of
-     * [LoadingDialogDefaults.CardWidth].
+     * The width of the progress card.
+     *
+     * `coui_progress_dialog_horizontal` sizes `COUIHorizontalProgressBar` with
+     * `coui_loading_dialog_progress_width` (200dp) and lets the dialog wrap its content, so the
+     * card is exactly as wide as the bar.
      */
-    val CardWidth = LoadingDialogDefaults.CardWidth
+    val CardWidth = 200.dp
 
     /**
-     * The minimum height of the progress card. COUI
-     * `coui_spinner_layout_min_height` (120dp), shared with [LoadingDialogDefaults.CardMinHeight].
+     * The minimum height of the progress card. The horizontal template wraps its content, so unlike
+     * the rotating dialog it has no `coui_spinner_layout_min_height`.
      */
-    val CardMinHeight = LoadingDialogDefaults.CardMinHeight
+    val CardMinHeight = 0.dp
 
     /**
      * The corner radius of the progress card. COUI `coui_round_corner_m_radius`, ColorOS 17's
@@ -136,10 +144,16 @@ object ProgressDialogDefaults {
     val CornerRadius = LoadingDialogDefaults.CornerRadius
 
     /**
-     * The horizontal padding inside the card, so the bar does not touch the card edge. Port choice;
-     * the native template is a plain `LinearProgressIndicator` inside the rotating card frame.
+     * The horizontal padding inside the card. `coui_progress_dialog_horizontal` gives the `body`
+     * column no horizontal padding, so the bar spans the full card width.
      */
-    val ContentHorizontalPadding = 16.dp
+    val ContentHorizontalPadding = 0.dp
+
+    /**
+     * The vertical padding inside the card. `coui_progress_dialog_padding_top` and
+     * `coui_progress_cancelable_dialog_padding_bottom` are both 16dp.
+     */
+    val ContentVerticalPadding = 16.dp
 
     /**
      * The height of the horizontal bar. COUI `coui_loading_dialog_progress_height` (4dp), the

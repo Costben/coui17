@@ -89,7 +89,7 @@ LoadingPreferenceCategory(
 
 ### Why It Reuses SmallTitle
 
-The category title is `Widget.COUI.List.Category.Title`: `couiTextAppearanceSmallButton` (12sp medium) in `?couiColorSecondNeutral`, inset 32dp horizontally and 8dp vertically with a 16dp minimum height. The repo's `SmallTitle` already ports exactly that, so the header reuses it and mirrors its inset for the trailing widget instead of restating the text style.
+The category title is `Widget.COUI.List.Category.Title`: `couiTextAppearanceSmallButton` (12sp medium) in `?couiColorSecondNeutral`, inset 16dp from the card's content edge and 8dp vertically with a 16dp minimum height (`support_preference_category_layout_title_margin_start_small`). The repo's `SmallTitle` ports the text style, so the header reuses it with that 16dp inset and gives the trailing `widget_frame` no end margin, so it stops at the card's end edge.
 
 ### Deliberate Omissions
 

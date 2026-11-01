@@ -69,7 +69,7 @@ InputPreference(
 | startAction      | @Composable (() -> Unit)?       | Custom start side content                                         | null                                  | No       |
 | endActions       | @Composable (RowScope.() -> Unit)? | Custom end side content                                        | null                                  | No       |
 | bottomAction     | @Composable (() -> Unit)?       | Custom bottom side content                                        | null                                  | No       |
-| insideMargin     | PaddingValues                   | Component internal content padding                                | BasicComponentDefaults.InsideMargin   | No       |
+| insideMargin     | PaddingValues                   | Component internal content padding (0dp top / 7dp bottom for a titled field) | InputPreferenceDefaults.InsideMargin | No |
 | cardListPosition | CardListPosition                | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None           | No       |
 | enabled          | Boolean                         | Whether the field is editable                                     | true                                  | No       |
 | readOnly         | Boolean                         | Whether the field rejects edits                                   | false                                 | No       |

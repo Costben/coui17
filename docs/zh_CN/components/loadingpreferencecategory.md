@@ -89,7 +89,7 @@ LoadingPreferenceCategory(
 
 ### 为什么复用 SmallTitle
 
-分组标题使用 `Widget.COUI.List.Category.Title`：`couiTextAppearanceSmallButton`（12sp medium）、`?couiColorSecondNeutral`，水平内边距 32dp、垂直 8dp，最小高度 16dp。仓库的 `SmallTitle` 已经逐项移植了这些值，因此表头复用它，并为右侧挂件对齐同样的内边距，而不是重述一遍文字样式。
+分组标题使用 `Widget.COUI.List.Category.Title`：`couiTextAppearanceSmallButton`（12sp medium）、`?couiColorSecondNeutral`，相对卡片内容边缘水平内缩 16dp（`support_preference_category_layout_title_margin_start_small`）、垂直 8dp，最小高度 16dp。仓库的 `SmallTitle` 已移植文字样式，表头带这 16dp 复用它；右侧 `widget_frame` 不带末尾边距，因此贴到卡片右缘。
 
 ### 有意省略
 

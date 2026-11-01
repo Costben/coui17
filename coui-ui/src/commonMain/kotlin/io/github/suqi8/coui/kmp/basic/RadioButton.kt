@@ -40,7 +40,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.SinkFeedback
-import io.github.suqi8.coui.kmp.utils.pressable
 
 /**
  * A [RadioButton] component with COUI style.
@@ -143,8 +142,6 @@ fun RadioButton(
     }
 
     val capsuleShape = CircleShape
-    val sinkFeedback = remember { SinkFeedback(sinkAmount = 0.85f, animationSpec = spring(0.99f, 986.96f)) }
-
     val finalModifier = if (onClick != null) {
         Modifier.selectable(
             selected = selected,
@@ -171,12 +168,6 @@ fun RadioButton(
         modifier = modifier
             .wrapContentSize(Alignment.Center)
             .requiredSize(24.dp)
-            .pressable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = sinkFeedback,
-                enabled = enabled,
-                delay = null,
-            )
             .clip(capsuleShape)
             .drawWithCache {
                 // COUI radio geometry in a 24dp viewport (coui_btn_radio_off/on.xml).

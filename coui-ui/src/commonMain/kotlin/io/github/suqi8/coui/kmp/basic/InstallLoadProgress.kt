@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -637,9 +638,14 @@ private fun Color.withBrightness(brightness: Float): Color {
 }
 
 /**
- * Clips drawing to the first [fraction] of the width, the `canvas.clipRect(f, f2, mSpace, ...)` of
- * the native fill and label-over-fill passes.
+ * Clips drawing to the first [fraction] of the width from the start edge, the `canvas.clipRect` of
+ * the native fill and label-over-fill passes, which take the `ViewUtils.isLayoutRtl` branch.
  */
 private fun Modifier.clipToProgressFraction(fraction: Float): Modifier = drawWithContent {
-    clipRect(right = size.width * fraction) { this@drawWithContent.drawContent() }
+    val fill = size.width * fraction
+    val isRtl = layoutDirection == LayoutDirection.Rtl
+    clipRect(
+        left = if (isRtl) size.width - fill else 0f,
+        right = if (isRtl) size.width else fill,
+    ) { this@drawWithContent.drawContent() }
 }

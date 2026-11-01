@@ -40,10 +40,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -143,10 +145,18 @@ fun SearchViewAnimate(
         ),
         label = "searchViewAnimateButtonAlpha",
     )
+    // `startSearchIconExitAnimator` / `startSearchIconEnterAnimator`: the glyph flips to 80 degrees
+    // around its start edge as the bar goes into edit mode and back to 0 when it leaves.
+    val iconRotationY by animateFloatAsState(
+        targetValue = if (expanded) SearchViewAnimateDefaults.ICON_ROTATION_Y else 0f,
+        animationSpec = tween(durationMillis = SearchViewAnimateDefaults.ICON_ROTATION_DURATION_MILLIS),
+        label = "searchViewAnimateIconRotation",
+    )
 
     // setSearchViewAnimateHeightPercent: the bar's own collapse geometry.
+    val density = LocalDensity.current
     val height = (SearchViewAnimateDefaults.WrapperHeight * collapseHeightScale(collapsePercent))
-        .coerceAtLeast(SearchViewAnimateDefaults.CollapsedMinHeight)
+        .coerceAtLeast(with(density) { SearchViewAnimateDefaults.CollapsedMinHeightPx.toDp() })
     val translationY = (SearchViewAnimateDefaults.AnimateHeight / 2) * (1f - collapsePercent)
     val contentAlpha = (collapsePercent - 0.5f) * 2f
 
@@ -201,7 +211,12 @@ fun SearchViewAnimate(
             Box(
                 modifier = Modifier
                     .padding(start = SearchViewAnimateDefaults.SearchIconMargin)
-                    .size(SearchViewAnimateDefaults.IconSize),
+                    .size(SearchViewAnimateDefaults.IconSize)
+                    .graphicsLayer {
+                        rotationY = iconRotationY
+                        // `setPivotX(mSearchIcon.getLeft())`: the flip pivots on the glyph's start edge.
+                        transformOrigin = TransformOrigin(0f, 0.5f)
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -381,11 +396,26 @@ object SearchViewAnimateDefaults {
     val AnimateHeight = 50.dp
 
     /**
-     * The floor of the collapsed wrapper height (COUI `dimen/coui_search_view_collapsed_min_height`).
-     * COUI declares it as `1px` — a single device pixel, enough to keep the collapsing wrapper
-     * measurable — and this port expresses that floor as 1dp.
+     * The floor of the collapsed wrapper height (COUI `dimen/coui_search_view_collapsed_min_height`,
+     * `1px`). The floor only has to keep the collapsing wrapper measurable, so it is taken in device
+     * pixels via [CollapsedMinHeightPx] rather than rounded up to a dp.
+     *
+     * Kept as the dp form for callers that lay the bar out in dp.
      */
     val CollapsedMinHeight = 1.dp
+
+    /** [CollapsedMinHeight] as the token declares it, a single device pixel. */
+    val CollapsedMinHeightPx = 1f
+
+    /**
+     * The search glyph's flip when the bar goes into edit mode:
+     * `COUISearchViewAnimate.AnimatorHelper` runs `mSearchIcon.animate().setDuration(150L).rotationY(80.0f)`
+     * around the glyph's start edge, and back to `0` when it leaves edit mode.
+     */
+    const val ICON_ROTATION_Y = 80f
+
+    /** The duration of the glyph flip, from the same `setDuration(150L)` call. */
+    const val ICON_ROTATION_DURATION_MILLIS = 150
 
     /**
      * The size of the leading search glyph, the `coui_search_view_icon` ImageView in

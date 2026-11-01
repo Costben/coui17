@@ -118,10 +118,11 @@ enum class Coui17PanelPage(val title: String) {
 private enum class Coui17PanelAnchor { TopBar, BottomBar }
 
 /**
- * The cross-fade a capsule tap runs instead of scrolling while page swiping is off, after Gallery's
- * `PageClickSwitchAlphaAnimator`: the pager jumps straight to [to], both pages are pinned in place,
- * [from] fades out while [to] fades in, and every page in between stays at zero alpha, so neither
- * the content nor the capsule ever shows the tabs the jump skips over.
+ * The cross-fade a capsule tap runs instead of scrolling, after Gallery's
+ * `PageClickSwitchAlphaAnimator`. Swiping still drags the pages as a strip; only a tap fades: the
+ * pager jumps straight to [to], both pages are pinned in place, [from] fades out while [to] fades
+ * in, and every page in between stays at zero alpha, so neither the content nor the capsule ever
+ * shows the tabs the jump skips over.
  */
 @Stable
 private class Coui17PageFade(val from: Int, val to: Int) {
@@ -243,24 +244,10 @@ private fun Coui17Root() {
     LaunchedEffect(currentPage) { panelOpen = false }
     val pageUserScroll = LocalAppState.current.enablePageUserScroll
     var pageFade by remember { mutableStateOf<Coui17PageFade?>(null) }
-    // The page a capsule tap is scrolling to. The capsule shows it from the tap on, so a slide from
-    // the first page to the third never lights up the tab it passes.
-    var tappedPage by remember { mutableStateOf<Int?>(null) }
     var pageSwitchJob by remember { mutableStateOf<Job?>(null) }
     val onSelectPage = { page: Int ->
         val from = pagerState.currentPage
-        if (pageUserScroll) {
-            // With swiping on the pages stay a strip, so a tap slides along it as before.
-            pageSwitchJob?.cancel()
-            tappedPage = page
-            pageSwitchJob = coroutineScope.launch {
-                try {
-                    pagerState.animateScrollToPage(page)
-                } finally {
-                    if (tappedPage == page) tappedPage = null
-                }
-            }
-        } else if (page != from) {
+        if (page != from) {
             pageSwitchJob?.cancel()
             val fade = Coui17PageFade(from = from, to = page)
             pageFade = fade
@@ -354,7 +341,7 @@ private fun Coui17Root() {
                 searchPillVisible = searchStatus.isCollapsed(),
             )
             Coui17AccessoryBar(
-                currentPage = tappedPage ?: pagerState.currentPage,
+                currentPage = pagerState.currentPage,
                 panelOpen = panelOpen && panelAnchor == Coui17PanelAnchor.BottomBar,
                 onSelectPage = onSelectPage,
                 onSearch = onSearch,

@@ -242,7 +242,7 @@ private val StatementFontSize = 12.sp
 private val CheckboxFontSize = 12.sp
 
 /** COUI statement lineSpacingMultiplier 1.2, resolved against sans-serif font metrics. */
-private val StatementLineHeight = 1.41f.em
+private val StatementLineHeight = 1.2f.em
 
 /** COUI statement android:layout_marginTop. */
 private val StatementMarginTop = 10.dp

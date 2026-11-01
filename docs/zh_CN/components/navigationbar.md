@@ -115,7 +115,7 @@ BottomFloatingNavigationBar {
 | modifier                   | Modifier                | 应用于导航栏的修饰符       | Modifier                              | 否       |
 | color                      | Color                   | 导航栏背景颜色             | COUITheme.colorScheme.background     | 否       |
 | showDivider                | Boolean                 | 是否显示顶部分割线         | true                                  | 否       |
-| defaultWindowInsetsPadding | Boolean                 | 是否应用默认窗口嵌入边距   | true                                  | 否       |
+| defaultWindowInsetsPadding | Boolean                 | 是否在导航项下方预留 caption bar 底部内边距（默认关闭：底部避让由宿主负责） | false | 否 |
 | mode                       | NavigationBarDisplayMode   | 导航项的显示模式           | NavigationBarDisplayMode.IconAndText     | 否       |
 | content                    | @Composable RowScope.() | 导航栏的内容               | -                                     | 是       |
 

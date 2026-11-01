@@ -58,28 +58,28 @@ CheckboxPreference(
 
 CheckboxPreference 支持将复选框放置在起始端或结束端：
 
-### 起始端复选框（默认）
+### 起始端复选框
 
 ```kotlin
 var startChecked by remember { mutableStateOf(false) }
 
 CheckboxPreference(
     title = "起始端复选框",
-    summary = "复选框位于起始端（默认）",
+    summary = "复选框位于起始端",
     checked = startChecked,
     onCheckedChange = { startChecked = it },
-    checkboxLocation = CheckboxLocation.Start // 默认值
+    checkboxLocation = CheckboxLocation.Start
 )
 ```
 
-### 结束端复选框
+### 结束端复选框（默认）
 
 ```kotlin
 var endChecked by remember { mutableStateOf(false) }
 
 CheckboxPreference(
     title = "结束端复选框",
-    summary = "复选框位于结束端",
+    summary = "复选框位于结束端（默认）",
     checked = endChecked,
     onCheckedChange = { endChecked = it },
     checkboxLocation = CheckboxLocation.End
@@ -102,7 +102,7 @@ CheckboxPreference(
 | checkboxColors   | CheckboxColors                     | 复选框控件的颜色配置  | CheckboxDefaults.checkboxColors()     | 否    |
 | startAction      | @Composable (() -> Unit)?          | 复选框后的自定义内容  | null                                  | 否    |
 | endActions       | @Composable (RowScope.() -> Unit)? | 复选框前的自定义内容  | null                                  | 否    |
-| checkboxLocation | CheckboxLocation                   | 复选框的位置      | CheckboxLocation.Start                | 否    |
+| checkboxLocation | CheckboxLocation                   | 复选框的位置      | CheckboxLocation.End                  | 否    |
 | bottomAction     | @Composable (() -> Unit)?          | 底部自定义内容     | null                                  | 否    |
 | insideMargin     | PaddingValues                      | 组件内部内容的边距   | BasicComponentDefaults.InsideMargin   | 否    |
 | cardListPosition | CardListPosition | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None | 否 |
@@ -280,3 +280,10 @@ Scaffold {
     }
 }
 ```
+
+### CheckboxPreferenceDefaults 常量
+
+| 常量名            | 类型   | 说明                                         | 默认值   |
+| ----------------- | ------ | -------------------------------------------- | -------- |
+| SwitchActionLabel | String | 行向读屏上报的点击动作文案                   | "Switch" |
+| CheckboxEndMargin | Dp     | 尾部复选在行尾内边距之外额外保留的间距       | 6.dp     |

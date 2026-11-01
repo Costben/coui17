@@ -18,6 +18,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -61,6 +62,7 @@ import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -83,6 +85,7 @@ import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.squircle.squircleBorder
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 /**
@@ -605,12 +608,26 @@ object TextFieldDefaults {
     val CornerRadius = 10.dp
 
     /**
+     * The minimum height of the field (Widget.COUI.EditText `android:minHeight`, COUI
+     * `coui_edit_text_height_min` 62dp). Without it a single-line field only grows to the sum of
+     * its 9dp paddings and the text line and ends up ~16dp shorter than the system one.
+     */
+    val MinHeight = 62.dp
+
+    /**
      * The default inside margin of the [TextField] in [TextFieldMode.Rectangle].
      * From COUI Widget.COUI.EditText.HintAnim.Rectangle: paddingLeft 16dp / rectModePaddingTop 12dp /
-     * paddingBottom 12dp (COUI paddingRight is 10dp to leave room for the trailing delete icon;
-     * the symmetric [DpSize] API keeps 16dp on both sides).
+     * paddingBottom 12dp; the 10dp paddingRight
+     * ([rectangleEndInsideMargin]) is applied to the end edge by the field itself.
      */
     val InsideMargin = DpSize(16.dp, 12.dp)
+
+    /**
+     * The end padding of [TextFieldMode.Rectangle]
+     * (COUI Widget.COUI.EditText.HintAnim.Rectangle `android:paddingRight` 10dp), which leaves room
+     * for the trailing delete icon and makes the horizontal padding asymmetric.
+     */
+    val RectangleEndInsideMargin = 10.dp
 
     /**
      * The default inside margin of the [TextField] in [TextFieldMode.Line].
@@ -664,6 +681,12 @@ object TextFieldDefaults {
     internal val PasswordIconSize = 28.dp
 
     /**
+     * The padding around the floating label inside the outline cutout
+     * (COUI `coui_textinput_label_cutout_padding`).
+     */
+    internal val LabelCutoutPadding = 4.dp
+
+    /**
      * The default input text style for the given [mode]: 16sp regular
      * (COUI couiEditTextTextAppearance / couiTextBodyL — couiTextAppearanceHeadline6 16sp
      * with fontFamily reset to sans-serif-regular), bold in [TextFieldMode.Rectangle]
@@ -696,6 +719,11 @@ object TextFieldDefaults {
      * @param iconColor The tint of the built-in clear / password buttons (COUI couiColorLabelSecondary).
      * @param disabledTextColor The input text / label color when the [TextField] is disabled
      *   (COUI coui_edit_text_color state_enabled=false -> couiColorDisabledNeutral).
+     * @param disabledBorderColor The border / underline color when the [TextField] is disabled
+     *   (COUI couiDisabledStrokeColor = `coui_textinput_stroke_color_disabled`,
+     *   #19000000 light / #19FFFFFF dark).
+     * @param labelCutoutColor The color painted behind the floating label to break the
+     *   [TextFieldMode.Rectangle] outline; see [TextFieldColors.labelCutoutColor]. New in 1.2.0.
      */
     @Composable
     fun textFieldColors(
@@ -707,6 +735,8 @@ object TextFieldDefaults {
         counterColor: Color = COUITheme.colorScheme.onSurfaceContainerHigh,
         iconColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
         disabledTextColor: Color = COUITheme.colorScheme.disabledOnSurface,
+        disabledBorderColor: Color = disabledStrokeColor(),
+        labelCutoutColor: Color = Color.Unspecified,
     ): TextFieldColors = remember(
         backgroundColor,
         labelColor,
@@ -716,6 +746,8 @@ object TextFieldDefaults {
         counterColor,
         iconColor,
         disabledTextColor,
+        disabledBorderColor,
+        labelCutoutColor,
     ) {
         TextFieldColors(
             backgroundColor = backgroundColor,
@@ -726,8 +758,36 @@ object TextFieldDefaults {
             counterColor = counterColor,
             iconColor = iconColor,
             disabledTextColor = disabledTextColor,
+            disabledBorderColor = disabledBorderColor,
+            labelCutoutColor = labelCutoutColor,
         )
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the overload that adds disabledBorderColor and labelCutoutColor.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    @Composable
+    fun textFieldColors(
+        backgroundColor: Color = Color.Transparent,
+        labelColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
+        borderColor: Color = COUITheme.colorScheme.primary,
+        unfocusedBorderColor: Color = COUITheme.colorScheme.dividerLine,
+        errorColor: Color = COUITheme.colorScheme.error,
+        counterColor: Color = COUITheme.colorScheme.onSurfaceContainerHigh,
+        iconColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
+        disabledTextColor: Color = COUITheme.colorScheme.disabledOnSurface,
+    ): TextFieldColors = textFieldColors(
+        backgroundColor = backgroundColor,
+        labelColor = labelColor,
+        borderColor = borderColor,
+        unfocusedBorderColor = unfocusedBorderColor,
+        errorColor = errorColor,
+        counterColor = counterColor,
+        iconColor = iconColor,
+        disabledTextColor = disabledTextColor,
+    )
 }
 
 /**
@@ -742,6 +802,12 @@ object TextFieldDefaults {
  * @param counterColor The color of the character counter.
  * @param iconColor The tint of the built-in clear / password buttons.
  * @param disabledTextColor The input text / label color when the [TextField] is disabled.
+ * @param disabledBorderColor The border / underline color when the [TextField] is disabled
+ *   (COUI couiDisabledStrokeColor = `coui_textinput_stroke_color_disabled`).
+ * @param labelCutoutColor The color painted behind the floating label to break the
+ *   [TextFieldMode.Rectangle] outline (COUI COUICutoutDrawable, 4dp
+ *   `coui_textinput_label_cutout_padding` around the label). Set it to the surface the field sits
+ *   on; the default [Color.Unspecified] keeps the outline continuous. New in 1.2.0.
  */
 @Immutable
 data class TextFieldColors(
@@ -753,7 +819,60 @@ data class TextFieldColors(
     val counterColor: Color,
     val iconColor: Color,
     val disabledTextColor: Color,
-)
+    val disabledBorderColor: Color = Color.Unspecified,
+    val labelCutoutColor: Color = Color.Unspecified,
+) {
+    /**
+     * Kept for binary compatibility with 1.1.0, which had no disabled stroke or label cutout color.
+     */
+    constructor(
+        backgroundColor: Color,
+        labelColor: Color,
+        borderColor: Color,
+        unfocusedBorderColor: Color,
+        errorColor: Color,
+        counterColor: Color,
+        iconColor: Color,
+        disabledTextColor: Color,
+    ) : this(
+        backgroundColor = backgroundColor,
+        labelColor = labelColor,
+        borderColor = borderColor,
+        unfocusedBorderColor = unfocusedBorderColor,
+        errorColor = errorColor,
+        counterColor = counterColor,
+        iconColor = iconColor,
+        disabledTextColor = disabledTextColor,
+        disabledBorderColor = Color.Unspecified,
+    )
+
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes disabledBorderColor and labelCutoutColor.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        backgroundColor: Color = this.backgroundColor,
+        labelColor: Color = this.labelColor,
+        borderColor: Color = this.borderColor,
+        unfocusedBorderColor: Color = this.unfocusedBorderColor,
+        errorColor: Color = this.errorColor,
+        counterColor: Color = this.counterColor,
+        iconColor: Color = this.iconColor,
+        disabledTextColor: Color = this.disabledTextColor,
+    ): TextFieldColors = TextFieldColors(
+        backgroundColor = backgroundColor,
+        labelColor = labelColor,
+        borderColor = borderColor,
+        unfocusedBorderColor = unfocusedBorderColor,
+        errorColor = errorColor,
+        counterColor = counterColor,
+        iconColor = iconColor,
+        disabledTextColor = disabledTextColor,
+        disabledBorderColor = disabledBorderColor,
+        labelCutoutColor = labelCutoutColor,
+    )
+}
 
 /** Fallback label font size (COUI input text: 16sp) when [TextStyle.fontSize] is not in sp. */
 private val DefaultLabelFontSize = 16f
@@ -781,6 +900,25 @@ private val CounterColorAnimDuration = 250
 
 /** Total duration of the error shake animation (COUIErrorEditTextHelper ShakeInterpolator TOTAL_DURATION). */
 private val ShakeDuration = 450
+
+/** Duration of the error selection mask fade (COUIErrorEditTextHelper DURATION_MASK_ANIMATOR). */
+private val SelectionMaskDuration = 133
+
+/** Delay before the error selection mask fades in (COUIErrorEditTextHelper DELAY_MASK_ANIMATOR). */
+private val SelectionMaskDelay = 80L
+
+/** The final alpha of the error selection mask (COUIErrorEditTextHelper SELECTION_MASK_ALPHA_MAX). */
+private val SelectionMaskMaxAlpha = 0.3f
+
+/** `coui_textinput_stroke_color_disabled` in light themes (#19000000). */
+private val DisabledStrokeLight = Color(0x19000000)
+
+/** `coui_textinput_stroke_color_disabled` in dark themes (#19FFFFFF). */
+private val DisabledStrokeDark = Color(0x19FFFFFF)
+
+/** The disabled stroke color of a [TextField], COUI `couiDisabledStrokeColor`. */
+@Composable
+private fun disabledStrokeColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) DisabledStrokeDark else DisabledStrokeLight
 
 /** Masks every character with a bullet, used while the password toggle hides the text. */
 private object PasswordMaskOutputTransformation : OutputTransformation {
@@ -825,9 +963,16 @@ private fun TextFieldChrome(
     val borderWidthState = animateDpAsState(
         if (enabled && (isFocused || isError)) TextFieldDefaults.BorderWidth else TextFieldDefaults.UnfocusedBorderWidth,
     )
+    // COUI couiDisabledStrokeColor: a disabled field keeps a thin stroke but in
+    // coui_textinput_stroke_color_disabled instead of the resting divider color.
+    val restingStrokeColor = if (enabled) {
+        colors.unfocusedBorderColor
+    } else {
+        colors.disabledBorderColor.takeOrElse { colors.unfocusedBorderColor }
+    }
     val borderColorState = animateColorAsState(
         when {
-            !enabled -> colors.unfocusedBorderColor
+            !enabled -> restingStrokeColor
             isError -> colors.errorColor
             isFocused -> colors.borderColor
             else -> colors.unfocusedBorderColor
@@ -838,7 +983,7 @@ private fun TextFieldChrome(
     // plus a focused overlay expanding from the start edge. With justShowFocusLine
     // (COUIInputPreference couiJustShowFocusLine) the resting underline is not drawn.
     val underlineBaseColor = animateColorAsState(
-        if (isError && enabled) colors.errorColor else colors.unfocusedBorderColor,
+        if (isError && enabled) colors.errorColor else restingStrokeColor,
         animationSpec = tween(ErrorColorAnimDuration, easing = CouiEaseEasing),
     )
     val underlineBaseWidth = animateDpAsState(
@@ -889,6 +1034,23 @@ private fun TextFieldChrome(
             )
         } else {
             shakeOffset.snapTo(0f)
+        }
+    }
+
+    // Error selection mask: COUIErrorEditTextHelper fades a rect coloured with the error color in
+    // from alpha 0 to 0.3 over 133ms after an 80ms delay (COUIEaseInterpolator), and drops it
+    // without animation when the error clears.
+    val errorMaskAlpha = remember { Animatable(0f) }
+    LaunchedEffect(isError) {
+        if (isError) {
+            errorMaskAlpha.snapTo(0f)
+            delay(SelectionMaskDelay)
+            errorMaskAlpha.animateTo(
+                targetValue = SelectionMaskMaxAlpha,
+                animationSpec = tween(SelectionMaskDuration, easing = CouiEaseEasing),
+            )
+        } else {
+            errorMaskAlpha.snapTo(0f)
         }
     }
 
@@ -1001,11 +1163,26 @@ private fun TextFieldChrome(
 
     val hasLeadingIcon = leadingIcon != null
     val hasTrailingContent = trailingIcon != null || hasBuiltinTrailing
-    val paddingModifier = remember(hasLeadingIcon, hasTrailingContent, insideMargin) {
+    // Widget.COUI.EditText.HintAnim.Rectangle pads 16dp on the left but only 10dp on the right,
+    // leaving room for the trailing delete icon. DpSize cannot express the asymmetry, so the
+    // default margin is split here; an explicitly passed margin still applies to both sides.
+    val defaultMargin = COUITheme.dimens.textField.insideMargin(backgroundMode)
+    val usesDefaultMargin = insideMargin == defaultMargin
+    val paddingModifier = remember(hasLeadingIcon, hasTrailingContent, insideMargin, backgroundMode, usesDefaultMargin) {
+        val startPadding = insideMargin.width
+        val endPadding = if (backgroundMode == TextFieldMode.Rectangle && usesDefaultMargin) {
+            TextFieldDefaults.RectangleEndInsideMargin
+        } else {
+            insideMargin.width
+        }
         when {
-            !hasLeadingIcon && !hasTrailingContent -> Modifier.padding(insideMargin.width, vertical = insideMargin.height)
-            !hasLeadingIcon -> Modifier.padding(start = insideMargin.width).padding(vertical = insideMargin.height)
-            !hasTrailingContent -> Modifier.padding(end = insideMargin.width).padding(vertical = insideMargin.height)
+            !hasLeadingIcon && !hasTrailingContent ->
+                Modifier.padding(start = startPadding, end = endPadding, top = insideMargin.height, bottom = insideMargin.height)
+
+            !hasLeadingIcon -> Modifier.padding(start = startPadding).padding(vertical = insideMargin.height)
+
+            !hasTrailingContent -> Modifier.padding(end = endPadding).padding(vertical = insideMargin.height)
+
             else -> Modifier.padding(vertical = insideMargin.height)
         }
     }
@@ -1024,6 +1201,9 @@ private fun TextFieldChrome(
         leadingIcon = leadingIcon,
         builtinTrailing = builtinTrailing,
         trailingIcon = trailingIcon,
+        errorMaskAlpha = { errorMaskAlpha.value },
+        errorMaskColor = colors.errorColor,
+        labelCutoutColor = colors.labelCutoutColor,
         innerTextField = innerTextField,
     )
 }
@@ -1043,10 +1223,13 @@ private fun TextFieldDecorationBox(
     trailingIcon: @Composable (() -> Unit)?,
     backgroundModifier: Modifier = Modifier,
     paddingModifier: Modifier = Modifier,
+    errorMaskAlpha: () -> Float = { 0f },
+    errorMaskColor: Color = Color.Unspecified,
+    labelCutoutColor: Color = Color.Unspecified,
     innerTextField: @Composable () -> Unit,
 ) {
     Box(
-        modifier = backgroundModifier,
+        modifier = backgroundModifier.defaultMinSize(minHeight = TextFieldDefaults.MinHeight),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
@@ -1059,12 +1242,27 @@ private fun TextFieldDecorationBox(
                 contentAlignment = Alignment.TopStart,
             ) {
                 if (labelState != LabelAnimState.Hidden && labelState != LabelAnimState.Placeholder) {
+                    // COUICutoutDrawable: the floating label is painted on a labelCutoutColor patch
+                    // grown by coui_textinput_label_cutout_padding, which breaks the outline.
+                    val cutoutModifier = if (labelState == LabelAnimState.Floating && labelCutoutColor != Color.Unspecified) {
+                        Modifier.drawBehind {
+                            val pad = TextFieldDefaults.LabelCutoutPadding.toPx()
+                            drawRect(
+                                color = labelCutoutColor,
+                                topLeft = Offset(-pad, -pad),
+                                size = Size(size.width + pad * 2, size.height + pad * 2),
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
                     Text(
                         text = label,
                         fontSize = labelFontSize.value.sp,
                         color = labelColor,
                         fontWeight = labelFontWeight,
-                        modifier = Modifier.offset { IntOffset(0, labelAnim().roundToPx()) },
+                        modifier = cutoutModifier
+                            .offset { IntOffset(0, labelAnim().roundToPx()) },
                         textAlign = TextAlign.Start,
                     )
                 }
@@ -1074,6 +1272,14 @@ private fun TextFieldDecorationBox(
                         .offset {
                             // COUIErrorEditTextHelper only shakes the text canvas, not the box.
                             IntOffset((shakeOffset() * TextFieldDefaults.ShakeAmplitude.toPx()).roundToInt(), 0)
+                        }
+                        .drawBehind {
+                            // COUIErrorEditTextHelper.drawSelectionMask: a rect over the text line
+                            // filled with the error colour at the animated alpha.
+                            val alpha = errorMaskAlpha()
+                            if (alpha > 0f && errorMaskColor != Color.Unspecified) {
+                                drawRect(color = errorMaskColor.copy(alpha = alpha), size = size)
+                            }
                         },
                     contentAlignment = Alignment.CenterStart,
                 ) {

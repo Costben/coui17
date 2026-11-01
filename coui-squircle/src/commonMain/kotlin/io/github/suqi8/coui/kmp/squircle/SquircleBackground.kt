@@ -29,9 +29,11 @@ import androidx.compose.ui.unit.Dp
 import io.github.suqi8.coui.kmp.shader.RuntimeShader
 import io.github.suqi8.coui.kmp.shader.asComposeShader
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
+import io.github.suqi8.coui.kmp.squircle.internal.BakedSquircle30Sdf
 import io.github.suqi8.coui.kmp.squircle.internal.BakedSquircleSdf
 import io.github.suqi8.coui.kmp.squircle.internal.makeAlphaImageBitmap
 import io.github.suqi8.coui.kmp.squircle.internal.makeLinearShader
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -45,13 +47,24 @@ import kotlin.math.floor
  * @param cornerRadius The radius applied uniformly to all four corners.
  * @param extension The corner-tile size as a multiple of [cornerRadius]: 1.0 matches a circular
  *   arc, 1.1 is the default continuous-corner look. Clamped to [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; pass [SquircleDefaults.WeightLarge] for the
+ *   panels ColorOS 17 draws that way. The shader binds the baked field nearest to the value.
  */
 @Composable
 fun Modifier.squircleBackground(
     color: Color,
     cornerRadius: Dp,
     extension: Float = SquircleDefaults.Extension,
-): Modifier = squircleBackground(color, cornerRadius, cornerRadius, cornerRadius, cornerRadius, extension)
+    weight: Float = SquircleDefaults.Weight,
+): Modifier = squircleBackground(
+    color = color,
+    topStart = cornerRadius,
+    topEnd = cornerRadius,
+    bottomEnd = cornerRadius,
+    bottomStart = cornerRadius,
+    extension = extension,
+    weight = weight,
+)
 
 /**
  * Per-corner variant of [squircleBackground]. Ordering matches [RoundedCornerShape].
@@ -63,6 +76,7 @@ fun Modifier.squircleBackground(
  * @param bottomStart The corner radius of the bottom-start corner (flipped by `LocalLayoutDirection`).
  * @param extension The corner-tile size as a multiple of each corner radius, clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.squircleBackground(
@@ -72,8 +86,9 @@ fun Modifier.squircleBackground(
     bottomEnd: Dp,
     bottomStart: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
-    val brush = rememberSquircleBrush(color, topStart, topEnd, bottomEnd, bottomStart, extension)
+    val brush = rememberSquircleBrush(color, topStart, topEnd, bottomEnd, bottomStart, extension, weight)
         ?: return this.background(
             color = color,
             shape = RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart),
@@ -90,12 +105,14 @@ fun Modifier.squircleBackground(
  * @param cornerRadius The radius applied uniformly to all four corners.
  * @param extension The corner-tile size as a multiple of [cornerRadius], clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.squircleClip(
     cornerRadius: Dp,
     extension: Float = SquircleDefaults.Extension,
-): Modifier = squircleClip(cornerRadius, cornerRadius, cornerRadius, cornerRadius, extension)
+    weight: Float = SquircleDefaults.Weight,
+): Modifier = squircleClip(cornerRadius, cornerRadius, cornerRadius, cornerRadius, extension, weight)
 
 /**
  * Per-corner variant of [squircleClip].
@@ -106,6 +123,7 @@ fun Modifier.squircleClip(
  * @param bottomStart The corner radius of the bottom-start corner (flipped by `LocalLayoutDirection`).
  * @param extension The corner-tile size as a multiple of each corner radius, clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.squircleClip(
@@ -114,8 +132,9 @@ fun Modifier.squircleClip(
     bottomEnd: Dp,
     bottomStart: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
-    val brush = rememberSquircleBrush(Color.White, topStart, topEnd, bottomEnd, bottomStart, extension)
+    val brush = rememberSquircleBrush(Color.White, topStart, topEnd, bottomEnd, bottomStart, extension, weight)
         ?: return this.clip(RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart))
     return this.squircleShaderMask(brush, fillColor = null)
 }
@@ -128,13 +147,15 @@ fun Modifier.squircleClip(
  * @param cornerRadius The radius applied uniformly to all four corners.
  * @param extension The corner-tile size as a multiple of [cornerRadius], clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.squircleSurface(
     color: Color,
     cornerRadius: Dp,
     extension: Float = SquircleDefaults.Extension,
-): Modifier = squircleSurface(color, cornerRadius, cornerRadius, cornerRadius, cornerRadius, extension)
+    weight: Float = SquircleDefaults.Weight,
+): Modifier = squircleSurface(color, cornerRadius, cornerRadius, cornerRadius, cornerRadius, extension, weight)
 
 /**
  * Per-corner variant of [squircleSurface].
@@ -146,6 +167,7 @@ fun Modifier.squircleSurface(
  * @param bottomStart The corner radius of the bottom-start corner (flipped by `LocalLayoutDirection`).
  * @param extension The corner-tile size as a multiple of each corner radius, clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.squircleSurface(
@@ -155,8 +177,9 @@ fun Modifier.squircleSurface(
     bottomEnd: Dp,
     bottomStart: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
-    val brush = rememberSquircleBrush(Color.White, topStart, topEnd, bottomEnd, bottomStart, extension)
+    val brush = rememberSquircleBrush(Color.White, topStart, topEnd, bottomEnd, bottomStart, extension, weight)
         ?: return this
             .clip(RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart))
             .background(color)
@@ -176,6 +199,7 @@ fun Modifier.squircleSurface(
  * @param bottomLeft The physical bottom-left corner radius, never flipped by `LocalLayoutDirection`.
  * @param extension The corner-tile size as a multiple of each corner radius, clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.absoluteSquircleBackground(
@@ -185,8 +209,9 @@ fun Modifier.absoluteSquircleBackground(
     bottomRight: Dp,
     bottomLeft: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
-    val brush = rememberSquircleBrush(color, topLeft, topRight, bottomRight, bottomLeft, extension)
+    val brush = rememberSquircleBrush(color, topLeft, topRight, bottomRight, bottomLeft, extension, weight)
         ?: return this.background(
             color = color,
             shape = AbsoluteRoundedCornerShape(topLeft, topRight, bottomRight, bottomLeft),
@@ -203,6 +228,7 @@ fun Modifier.absoluteSquircleBackground(
  * @param bottomLeft The physical bottom-left corner radius, never flipped by `LocalLayoutDirection`.
  * @param extension The corner-tile size as a multiple of each corner radius, clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.absoluteSquircleClip(
@@ -211,8 +237,9 @@ fun Modifier.absoluteSquircleClip(
     bottomRight: Dp,
     bottomLeft: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
-    val brush = rememberSquircleBrush(Color.White, topLeft, topRight, bottomRight, bottomLeft, extension)
+    val brush = rememberSquircleBrush(Color.White, topLeft, topRight, bottomRight, bottomLeft, extension, weight)
         ?: return this.clip(AbsoluteRoundedCornerShape(topLeft, topRight, bottomRight, bottomLeft))
     return this.squircleShaderMask(brush, fillColor = null)
 }
@@ -227,6 +254,7 @@ fun Modifier.absoluteSquircleClip(
  * @param bottomLeft The physical bottom-left corner radius, never flipped by `LocalLayoutDirection`.
  * @param extension The corner-tile size as a multiple of each corner radius, clamped to
  *   [SquircleDefaults.ExtensionMin]..[SquircleDefaults.ExtensionMax].
+ * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
  */
 @Composable
 fun Modifier.absoluteSquircleSurface(
@@ -236,8 +264,9 @@ fun Modifier.absoluteSquircleSurface(
     bottomRight: Dp,
     bottomLeft: Dp,
     extension: Float = SquircleDefaults.Extension,
+    weight: Float = SquircleDefaults.Weight,
 ): Modifier {
-    val brush = rememberSquircleBrush(Color.White, topLeft, topRight, bottomRight, bottomLeft, extension)
+    val brush = rememberSquircleBrush(Color.White, topLeft, topRight, bottomRight, bottomLeft, extension, weight)
         ?: return this
             .clip(AbsoluteRoundedCornerShape(topLeft, topRight, bottomRight, bottomLeft))
             .background(color)
@@ -365,10 +394,12 @@ private fun rememberSquircleBrush(
     bottomEnd: Dp,
     bottomStart: Dp,
     extension: Float,
+    weight: Float,
 ): SquircleShaderBrush? {
     if (!LocalSquircleEnabled.current || !isRuntimeShaderSupported()) return null
     val density = LocalDensity.current
     val extClamped = extension.coerceIn(SquircleDefaults.ExtensionMin, SquircleDefaults.ExtensionMax)
+    val sdfWeight = squircleSdfWeight(weight)
     val tiles = remember(topStart, topEnd, bottomEnd, bottomStart, extClamped, density) {
         with(density) {
             floatArrayOf(
@@ -379,14 +410,15 @@ private fun rememberSquircleBrush(
             )
         }
     }
-    return remember(color, tiles) {
-        SquircleShaderBrush(color, tiles)
+    return remember(color, tiles, sdfWeight) {
+        SquircleShaderBrush(color, tiles, sdfWeight)
     }
 }
 
 private class SquircleShaderBrush(
     private val color: Color,
     private val cornerTilesPx: FloatArray,
+    private val sdfWeight: Float,
 ) : ShaderBrush() {
     private val runtimeShader = RuntimeShader(SQUIRCLE_SHADER)
     private val effectiveSizes = FloatArray(4)
@@ -407,8 +439,14 @@ private class SquircleShaderBrush(
         runtimeShader.setFloatUniform("cornerSizes", effectiveSizes)
         runtimeShader.setFloatUniform("halfRangesPx", halfRanges)
         runtimeShader.setFloatUniform("blendWeights", weights)
-        runtimeShader.setFloatUniform("bitmapSize", BakedSquircleSdf.SIZE.toFloat())
-        runtimeShader.setInputShader("cornerSdf", bakedSdfShader)
+        // One distance field, chosen per corner weight at bind time: the shader samples a single
+        // field whatever the weight, so the per-surface cost does not grow with the number of bakes.
+        val large = sdfWeight == SquircleDefaults.WeightLarge
+        runtimeShader.setInputShader("cornerSdf", if (large) bakedSdfShaderLarge else bakedSdfShaderNormal)
+        runtimeShader.setFloatUniform(
+            "bitmapSize",
+            (if (large) BakedSquircle30Sdf.SIZE else BakedSquircleSdf.SIZE).toFloat(),
+        )
         return runtimeShader.asComposeShader()
     }
 
@@ -428,9 +466,25 @@ private class SquircleShaderBrush(
 // by GL ES 3.0 / WebGL2 / Metal, so it never overflows the GPU max texture; larger nodes go banded.
 private const val MAX_OFFSCREEN_PX = 2048f
 
-// Decoded once per process; LINEAR-sampled so the corner branch does one bilinear tap (see [makeLinearShader]).
-private val bakedSdfShader: Shader by lazy {
+// Decoded once per process, one field per baked weight; the shader binds whichever the surface
+// asked for. LINEAR-sampled so the corner branch does one bilinear tap (see [makeLinearShader]).
+private val bakedSdfShaderNormal: Shader by lazy {
     makeLinearShader(makeAlphaImageBitmap(BakedSquircleSdf.SIZE, BakedSquircleSdf.bytes))
+}
+
+private val bakedSdfShaderLarge: Shader by lazy {
+    makeLinearShader(makeAlphaImageBitmap(BakedSquircle30Sdf.SIZE, BakedSquircle30Sdf.bytes))
+}
+
+/**
+ * The baked field the shader binds for [weight]: the nearer of the two weights this module bakes,
+ * so a weight never costs a second texture tap or a mix. Exactly halfway (2.75) picks
+ * [SquircleDefaults.WeightNormal].
+ */
+internal fun squircleSdfWeight(weight: Float): Float = if (abs(weight - SquircleDefaults.WeightLarge) < abs(weight - SquircleDefaults.WeightNormal)) {
+    SquircleDefaults.WeightLarge
+} else {
+    SquircleDefaults.WeightNormal
 }
 
 private const val SQUIRCLE_SHADER = """
@@ -475,3 +529,198 @@ half4 main(float2 coord) {
     return color * half(smoothstep(0.5, -0.5, dist));
 }
 """
+
+// Binary-compatibility bridges for the 1.1.0 signatures, which carried no `weight`. They forward to
+// the weight-aware overloads with the default so old bytecode keeps its silhouette.
+
+/** Binary-compatibility bridge for [squircleBackground] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleBackground(
+    color: Color,
+    cornerRadius: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleBackground(
+    color = color,
+    cornerRadius = cornerRadius,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [squircleBackground] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleBackground(
+    color: Color,
+    topStart: Dp,
+    topEnd: Dp,
+    bottomEnd: Dp,
+    bottomStart: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleBackground(
+    color = color,
+    topStart = topStart,
+    topEnd = topEnd,
+    bottomEnd = bottomEnd,
+    bottomStart = bottomStart,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [squircleClip] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleClip(
+    cornerRadius: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleClip(
+    cornerRadius = cornerRadius,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [squircleClip] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleClip(
+    topStart: Dp,
+    topEnd: Dp,
+    bottomEnd: Dp,
+    bottomStart: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleClip(
+    topStart = topStart,
+    topEnd = topEnd,
+    bottomEnd = bottomEnd,
+    bottomStart = bottomStart,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [squircleSurface] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleSurface(
+    color: Color,
+    cornerRadius: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleSurface(
+    color = color,
+    cornerRadius = cornerRadius,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [squircleSurface] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.squircleSurface(
+    color: Color,
+    topStart: Dp,
+    topEnd: Dp,
+    bottomEnd: Dp,
+    bottomStart: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = squircleSurface(
+    color = color,
+    topStart = topStart,
+    topEnd = topEnd,
+    bottomEnd = bottomEnd,
+    bottomStart = bottomStart,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [absoluteSquircleBackground] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.absoluteSquircleBackground(
+    color: Color,
+    topLeft: Dp,
+    topRight: Dp,
+    bottomRight: Dp,
+    bottomLeft: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = absoluteSquircleBackground(
+    color = color,
+    topLeft = topLeft,
+    topRight = topRight,
+    bottomRight = bottomRight,
+    bottomLeft = bottomLeft,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [absoluteSquircleClip] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.absoluteSquircleClip(
+    topLeft: Dp,
+    topRight: Dp,
+    bottomRight: Dp,
+    bottomLeft: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = absoluteSquircleClip(
+    topLeft = topLeft,
+    topRight = topRight,
+    bottomRight = bottomRight,
+    bottomLeft = bottomLeft,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)
+
+/** Binary-compatibility bridge for [absoluteSquircleSurface] from before `weight` existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds weight.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Modifier.absoluteSquircleSurface(
+    color: Color,
+    topLeft: Dp,
+    topRight: Dp,
+    bottomRight: Dp,
+    bottomLeft: Dp,
+    extension: Float = SquircleDefaults.Extension,
+): Modifier = absoluteSquircleSurface(
+    color = color,
+    topLeft = topLeft,
+    topRight = topRight,
+    bottomRight = bottomRight,
+    bottomLeft = bottomLeft,
+    extension = extension,
+    weight = SquircleDefaults.Weight,
+)

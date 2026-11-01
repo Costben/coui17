@@ -10,6 +10,13 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+/**
+ * Lays out the leading content of a preference row.
+ *
+ * The slot sizes itself to its content; the vertical margin COUI gives a leading icon
+ * (`COUICustomListSelectedLinearLayout.setIconCenterInParent` and `setIconTopInParent`) depends on
+ * how many lines the row's text block wrapped to, so the row applies it around this slot instead.
+ */
 @Composable
 @NonRestartableComposable
 internal fun StartActionSlot(

@@ -33,7 +33,7 @@ import kotlin.test.assertTrue
 
 private const val SWITCH_TAG = "switch"
 
-/** The ColorOS reference density: the track is 133px wide and the thumb travels 49px. */
+/** The ColorOS reference density: the track is 154px wide (44dp) and the thumb travels 70px (20dp). */
 private val TestDensity = Density(3.5f)
 
 /** Well under half the travel, so that a drag can start and still be nearer to where it began. */
@@ -45,6 +45,13 @@ private const val SLOW_STEP_MILLIS = 500L
 class SwitchThumbDragTest {
 
     private val trackY = 42f
+
+    @Test
+    fun trackWidthAndTravelFollowTheSystemBarWidth() {
+        // COUISwitch: switchMinWidth = @dimen/bar_width 44dp, mDefaultTranslation = 44 - 2*3 - 18.
+        assertEquals(44.dp, SwitchDefaults.TrackWidth)
+        assertEquals(20.dp, SwitchDefaults.Travel)
+    }
 
     @Test
     fun releasedThumbLandsOnTheNearerSide() {

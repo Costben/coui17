@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -9,16 +11,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -31,7 +38,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.anim.COUIMoveEase
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.launch
 
 /**
  * The ColorOS 17 A–Z index rail (`COUITouchSearchView`,
@@ -73,6 +82,10 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  *   (`couiAdaptiveVibrator`, `attr/couiTouchSearchVibrateLevel` = 0), fired through
  *   `VibrateUtils`.
  * @param colors The [TouchSearchViewColors].
+ * @param sectionNames The names listed beside the magnified tile while a key is held, the
+ *   `COUITouchSearchView.setName(String[])` second popup: keyed by rail key, for example `#` to the
+ *   contacts whose name starts with a non-letter. An empty map (the default) leaves the second
+ *   popup out, as the native view does until the caller supplies names.
  */
 @Composable
 fun TouchSearchView(
@@ -82,6 +95,7 @@ fun TouchSearchView(
     enabled: Boolean = true,
     hapticFeedbackEnabled: Boolean = true,
     colors: TouchSearchViewColors = TouchSearchViewDefaults.colors(),
+    sectionNames: Map<String, List<String>> = emptyMap(),
 ) {
     if (keys.isEmpty()) return
 
@@ -95,6 +109,12 @@ fun TouchSearchView(
     val paddingTopPx = with(density) { TouchSearchViewDefaults.PaddingTop.toPx() }
     val popupSizePx = with(density) { TouchSearchViewDefaults.PopupSize.toPx() }
     val popupEndMarginPx = with(density) { TouchSearchViewDefaults.PopupEndMargin.toPx() }
+    val sectionPopupWidthPx = with(density) { TouchSearchViewDefaults.SecondPopupWidth.toPx() }
+    val sectionRowHeightPx = with(density) { TouchSearchViewDefaults.SecondRowHeight.toPx() }
+    val sectionMaxHeightPx = with(density) { TouchSearchViewDefaults.SecondPopupMaxHeight.toPx() }
+    val sectionMarginPx = with(density) { TouchSearchViewDefaults.SecondPopupMargin.toPx() }
+    val sectionOffsetPx = with(density) { TouchSearchViewDefaults.SecondPopupOffset.toPx() }
+    val sectionCornerPx = with(density) { TouchSearchViewDefaults.SecondPopupCornerRadius.toPx() }
 
     val keyStyle = remember(colors.textColor) {
         TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium, color = colors.textColor)
@@ -105,20 +125,54 @@ fun TouchSearchView(
     val popupStyle = remember(colors.popupTextColor) {
         TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium, color = colors.popupTextColor)
     }
+    val sectionNameStyle = remember(colors.secondPopupTextColor) {
+        TextStyle(fontSize = TouchSearchViewDefaults.SecondTextSize, color = colors.secondPopupTextColor)
+    }
 
     val keyLayouts = remember(textMeasurer, keys, keyStyle) { keys.map { textMeasurer.measure(it, keyStyle) } }
     val pressedKeyLayouts = remember(textMeasurer, keys, pressedKeyStyle) {
         keys.map { textMeasurer.measure(it, pressedKeyStyle) }
     }
     val popupLayouts = remember(textMeasurer, keys, popupStyle) { keys.map { textMeasurer.measure(it, popupStyle) } }
+    val sectionNameLayouts = remember(textMeasurer, sectionNames, sectionNameStyle) {
+        sectionNames.mapValues { (_, names) -> names.map { textMeasurer.measure(it, sectionNameStyle) } }
+    }
 
     var pressedIndex by remember(keys) { mutableStateOf(-1) }
+    // The popup keeps its letter while it fades out, the way the native popup window stays on screen
+    // until its disappear animation has run to the end (`onAnimationEnd` dismisses it).
+    var popupIndex by remember(keys) { mutableIntStateOf(-1) }
     val onKeySelectedState by rememberUpdatedState(onKeySelected)
+
+    // `initPopupWindowAnimator`: appear runs alpha 0 -> 1 and scale 0.8 -> 1 over 350ms, disappear
+    // runs the same pair back over 300ms, both on `COUIMoveEaseInterpolator`. The native starts the
+    // appear animation once per popup and only re-reads the letter while it is running, and it
+    // cancels an in-flight animation when the finger goes the other way; both fall out of keying the
+    // effect on visibility instead of on the letter.
+    val popupAlpha = remember { Animatable(0f) }
+    val popupScale = remember { Animatable(TouchSearchViewDefaults.PopupScaleMin) }
+    val popupVisible = pressedIndex >= 0
+    LaunchedEffect(popupVisible) {
+        val spec = tween<Float>(
+            durationMillis = if (popupVisible) {
+                TouchSearchViewDefaults.PopupAppearDurationMillis
+            } else {
+                TouchSearchViewDefaults.PopupDisappearDurationMillis
+            },
+            easing = COUIMoveEase,
+        )
+        launch { popupAlpha.animateTo(if (popupVisible) 1f else 0f, spec) }
+        popupScale.animateTo(
+            if (popupVisible) 1f else TouchSearchViewDefaults.PopupScaleMin,
+            spec,
+        )
+    }
 
     fun selectAt(y: Float) {
         val index = ((y - paddingTopPx) / stridePx).toInt().coerceIn(0, keys.lastIndex)
         if (index == pressedIndex) return
         pressedIndex = index
+        popupIndex = index
         onKeySelectedState(keys[index])
         if (hapticFeedbackEnabled) {
             hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -160,17 +214,62 @@ fun TouchSearchView(
             drawCenteredText(layout, cellCenterY)
         }
 
-        if (pressedIndex in keys.indices) {
+        val popupAlphaValue = popupAlpha.value
+        if (popupAlphaValue > 0f && popupIndex in keys.indices) {
+            val centerY = paddingTopPx + popupIndex * stridePx + stridePx / 2f
+            val tileLeft = -popupEndMarginPx - popupSizePx
             drawMagnifiedKey(
-                layout = popupLayouts[pressedIndex],
+                layout = popupLayouts[popupIndex],
                 backgroundColor = colors.popupBackgroundColor,
-                centerY = paddingTopPx + pressedIndex * stridePx + stridePx / 2f,
+                centerY = centerY,
                 tileSizePx = popupSizePx,
                 gapPx = popupEndMarginPx,
+                alpha = popupAlphaValue,
+                scale = popupScale.value,
             )
+            // `COUITouchSearchView.setName` opens its second popup window beside the tile and
+            // `closing()` dismisses it outright, so it is drawn only while a key is held.
+            val names = sectionNameLayouts[keys[popupIndex]]
+            if (pressedIndex >= 0 && !names.isNullOrEmpty()) {
+                drawSectionNames(
+                    layouts = names,
+                    backgroundColor = colors.secondPopupBackgroundColor,
+                    rightPx = tileLeft - sectionMarginPx,
+                    centerY = centerY,
+                    widthPx = sectionPopupWidthPx,
+                    rowHeightPx = sectionRowHeightPx,
+                    maxHeightPx = sectionMaxHeightPx,
+                    offsetPx = sectionOffsetPx,
+                    railHeightPx = size.height,
+                    cornerRadiusPx = sectionCornerPx,
+                )
+            }
         }
     }
 }
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the sectionNames parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun TouchSearchView(
+    keys: List<String>,
+    onKeySelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    hapticFeedbackEnabled: Boolean = true,
+    colors: TouchSearchViewColors = TouchSearchViewDefaults.colors(),
+): Unit = TouchSearchView(
+    keys = keys,
+    onKeySelected = onKeySelected,
+    modifier = modifier,
+    enabled = enabled,
+    hapticFeedbackEnabled = hapticFeedbackEnabled,
+    colors = colors,
+    sectionNames = emptyMap(),
+)
 
 private fun DrawScope.drawCenteredText(layout: TextLayoutResult, centerY: Float) {
     drawText(
@@ -185,6 +284,9 @@ private fun DrawScope.drawCenteredText(layout: TextLayoutResult, centerY: Float)
 /**
  * Draws the magnified tile to the start of the rail, vertically centred on [centerY]. The tile is
  * drawn outside the rail's own bounds because the native popup is a separate window.
+ *
+ * [scale] is applied around the tile's own centre, which is what the native popup's
+ * `setScaleX`/`setScaleY` on the popup window's content view do.
  */
 private fun DrawScope.drawMagnifiedKey(
     layout: TextLayoutResult,
@@ -192,20 +294,75 @@ private fun DrawScope.drawMagnifiedKey(
     centerY: Float,
     tileSizePx: Float,
     gapPx: Float,
+    alpha: Float,
+    scale: Float,
 ) {
     val left = -gapPx - tileSizePx
-    drawRect(
+    withTransform({
+        scale(scale, scale, pivot = Offset(left + tileSizePx / 2f, centerY))
+    }) {
+        drawRect(
+            color = backgroundColor,
+            topLeft = Offset(left, centerY - tileSizePx / 2f),
+            size = Size(tileSizePx, tileSizePx),
+            alpha = alpha,
+        )
+        drawText(
+            textLayoutResult = layout,
+            topLeft = Offset(
+                x = left + (tileSizePx - layout.size.width) / 2f,
+                y = centerY - layout.size.height / 2f,
+            ),
+            alpha = alpha,
+        )
+    }
+}
+
+/**
+ * Draws the `setName` popup: the names listed beside the magnified tile, on the start side of it.
+ *
+ * The native second popup is a `ScrollView` of `COUITouchSearchPopupContentItem` rows, `112dp` wide
+ * (`couiPopupWinSecondWidth`) and `min(rows * rowHeight, coui_touchsearch_popupname_max_height)`
+ * tall, filled with `coui_touchsearch_second_name_background` — a nine-patch tinted
+ * `?attr/couiColorSecondary`. It is centred on the first tile and then kept inside the rail's own
+ * span plus `coui_touchsearch_popupwin_default_offset` above and below, which is what the clamping
+ * below reproduces.
+ */
+private fun DrawScope.drawSectionNames(
+    layouts: List<TextLayoutResult>,
+    backgroundColor: Color,
+    rightPx: Float,
+    centerY: Float,
+    widthPx: Float,
+    rowHeightPx: Float,
+    maxHeightPx: Float,
+    offsetPx: Float,
+    railHeightPx: Float,
+    cornerRadiusPx: Float,
+) {
+    val heightPx = (layouts.size * rowHeightPx).coerceAtMost(maxHeightPx)
+    val left = rightPx - widthPx
+    val top = (centerY - heightPx / 2f)
+        .coerceIn(-offsetPx, (railHeightPx + offsetPx - heightPx).coerceAtLeast(-offsetPx))
+    drawRoundRect(
         color = backgroundColor,
-        topLeft = Offset(left, centerY - tileSizePx / 2f),
-        size = Size(tileSizePx, tileSizePx),
+        topLeft = Offset(left, top),
+        size = Size(widthPx, heightPx),
+        cornerRadius = CornerRadius(cornerRadiusPx),
     )
-    drawText(
-        textLayoutResult = layout,
-        topLeft = Offset(
-            x = left + (tileSizePx - layout.size.width) / 2f,
-            y = centerY - layout.size.height / 2f,
-        ),
-    )
+    // The panel is a scroll view on the device; rows past the maximum height are clipped here.
+    clipRect(left, top, left + widthPx, top + heightPx) {
+        layouts.forEachIndexed { index, layout ->
+            val rowCenterY = top + rowHeightPx * index + rowHeightPx / 2f
+            drawText(
+                textLayoutResult = layout,
+                topLeft = Offset(
+                    x = left + (widthPx - layout.size.width) / 2f,
+                    y = rowCenterY - layout.size.height / 2f,
+                ),
+            )
+        }
+    }
 }
 
 /** Contains the default values used by [TouchSearchView]. */
@@ -239,6 +396,54 @@ object TouchSearchViewDefaults {
 
     /** `dimen/coui_touchsearch_popupwin_right_margin` = 0.5dp. */
     val PopupEndMargin = 0.5.dp
+
+    /**
+     * The `setName` popup's width, `attr/couiPopupWinSecondWidth` defaulting to
+     * `coui_touchsearch_popup_first_layout_width` (112dp).
+     */
+    val SecondPopupWidth = 112.dp
+
+    /**
+     * One name row's height: `couiPopupWinSecondHeight` defaults to the first tile's height
+     * (`coui_touchsearch_popup_first_default_height`, 48dp), and `setName` adds each row with that
+     * height as its layout params. `coui_touchsearch_popup_second_text_height` (40dp) is what the
+     * row style declares, but the layout params override it.
+     */
+    val SecondRowHeight = 48.dp
+
+    /**
+     * `dimen/coui_touchsearch_popupname_max_height` = 304dp, the tallest the name list gets before
+     * it scrolls.
+     */
+    val SecondPopupMaxHeight = 304.dp
+
+    /** `dimen/coui_touchsearch_popupwin_second_marginEnd` = 8dp, the gap to the first tile. */
+    val SecondPopupMargin = 8.dp
+
+    /**
+     * `dimen/coui_touchsearch_popupwin_default_offset` = 23dp, how far the name list may reach above
+     * and below the rail before it is pushed back inside.
+     */
+    val SecondPopupOffset = 23.dp
+
+    /** `dimen/coui_touchsearch_popupwin_second_textsize` = 18sp. */
+    val SecondTextSize = 18.sp
+
+    /**
+     * The corner of `coui_touchsearch_second_name_bg`: the nine-patch is a 60px square at 1.5x with
+     * a 9px corner, i.e. 6dp.
+     */
+    val SecondPopupCornerRadius = 6.dp
+
+    /**
+     * The popup's appear / disappear durations, `initPopupWindowAnimator`'s inline
+     * `setDuration(350L)` and `setDuration(300L)` (`COUIMoveEaseInterpolator`).
+     */
+    val PopupAppearDurationMillis = 350
+    val PopupDisappearDurationMillis = 300
+
+    /** `COUITouchSearchView.SCALE_MIN`, the scale the popup fades out from / in to. */
+    val PopupScaleMin = 0.8f
 
     /** `dimen/coui_touchsearch_char_offset` = 0dp. */
     val CharOffset = 0.dp
@@ -312,8 +517,24 @@ object TouchSearchViewDefaults {
         pressedTextColor: Color = COUITheme.colorScheme.primary,
         popupBackgroundColor: Color = if (isDarkTheme()) Color(0xFF333333) else Color(0xFFFFFFFF),
         popupTextColor: Color = if (isDarkTheme()) Color(0xD9FFFFFF) else Color(0xD9000000),
-    ): TouchSearchViewColors = remember(textColor, pressedTextColor, popupBackgroundColor, popupTextColor) {
-        TouchSearchViewColors(textColor, pressedTextColor, popupBackgroundColor, popupTextColor)
+        secondPopupBackgroundColor: Color = COUITheme.colorScheme.tertiaryContainer,
+        secondPopupTextColor: Color = COUITheme.colorScheme.primary,
+    ): TouchSearchViewColors = remember(
+        textColor,
+        pressedTextColor,
+        popupBackgroundColor,
+        popupTextColor,
+        secondPopupBackgroundColor,
+        secondPopupTextColor,
+    ) {
+        TouchSearchViewColors(
+            textColor,
+            pressedTextColor,
+            popupBackgroundColor,
+            popupTextColor,
+            secondPopupBackgroundColor,
+            secondPopupTextColor,
+        )
     }
 }
 
@@ -330,6 +551,10 @@ private fun isDarkTheme(): Boolean = COUITheme.colorScheme.background.luminance(
  * @property popupBackgroundColor `drawable/coui_touch_search_popup_bg` solid, i.e.
  *   `?attr/couiColorBackgroundTop`.
  * @property popupTextColor `color/coui_touchsearch_popup_text_color`.
+ * @property secondPopupBackgroundColor The `setName` list's fill, `coui_touchsearch_second_name_bg`
+ *   tinted `?attr/couiColorSecondary` (`coui_color_secondary_blue`, `#260080FF` / `#401A8CFF`).
+ * @property secondPopupTextColor `color/coui_touchsearch_popupwin_sub_textcolor`, i.e.
+ *   `?attr/couiColorPrimaryTextOnPopup`.
  */
 @Immutable
 data class TouchSearchViewColors(
@@ -337,4 +562,44 @@ data class TouchSearchViewColors(
     val pressedTextColor: Color,
     val popupBackgroundColor: Color,
     val popupTextColor: Color,
-)
+    val secondPopupBackgroundColor: Color = Color(0x260080FF),
+    val secondPopupTextColor: Color = Color(0xFF0080FF),
+) {
+    /**
+     * The four-color form, kept so callers written before the `setName` popup existed still
+     * compile; the name list falls back to the light `couiColorSecondary` and the theme accent.
+     */
+    constructor(
+        textColor: Color,
+        pressedTextColor: Color,
+        popupBackgroundColor: Color,
+        popupTextColor: Color,
+    ) : this(
+        textColor = textColor,
+        pressedTextColor = pressedTextColor,
+        popupBackgroundColor = popupBackgroundColor,
+        popupTextColor = popupTextColor,
+        secondPopupBackgroundColor = Color(0x260080FF),
+        secondPopupTextColor = Color(0xFF0080FF),
+    )
+
+    /** The four-color [copy], kept for binary compatibility with callers built before 1.3.0. */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes the setName popup colors.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        textColor: Color = this.textColor,
+        pressedTextColor: Color = this.pressedTextColor,
+        popupBackgroundColor: Color = this.popupBackgroundColor,
+        popupTextColor: Color = this.popupTextColor,
+    ): TouchSearchViewColors = copy(
+        textColor = textColor,
+        pressedTextColor = pressedTextColor,
+        popupBackgroundColor = popupBackgroundColor,
+        popupTextColor = popupTextColor,
+        secondPopupBackgroundColor = secondPopupBackgroundColor,
+        secondPopupTextColor = secondPopupTextColor,
+    )
+}

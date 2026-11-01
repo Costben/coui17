@@ -111,8 +111,8 @@ OverlayProgressDialog(
 
 | Property Name             | Type | Description                                                                                     |
 | ------------------------- | ---- | ----------------------------------------------------------------------------------------------- |
-| CardWidth                 | Dp   | Card width, the loading card's COUI `coui_spinner_layout_width` (152.dp)                        |
-| CardMinHeight             | Dp   | Minimum card height, COUI `coui_spinner_layout_min_height` (120.dp)                             |
+| CardWidth                 | Dp   | Card width, COUI `coui_loading_dialog_progress_width` (200.dp)                                  |
+| CardMinHeight             | Dp   | Minimum card height; the horizontal template wraps its content (0.dp)                          |
 | CornerRadius              | Dp   | Card corner radius, COUI `coui_round_corner_m_radius` (9.dp)                                    |
 | ContentHorizontalPadding  | Dp   | Horizontal padding inside the card so the bar does not touch the card edge (16.dp)              |
 | ProgressBarHeight         | Dp   | Bar height, COUI `coui_loading_dialog_progress_height` (4.dp)                                   |

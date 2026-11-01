@@ -4,6 +4,10 @@
 
 It is aligned with the ColorOS 17 install-progress button, under the `InstallDownload` / `InstallDownloadSmall` style variants.
 
+::: tip Drawn by InstallLoadProgress
+`LoadProgressButton` now draws through [InstallLoadProgress](../components/installloadprogress): pills follow the system capsule curve, only `Large` is accent filled at rest, `Small` is a tinted pill with an accent label, and `Circle` is the 30dp smooth-corner disk. New code can use `InstallLoadProgress` directly; this overload remains for its `LoadProgressButtonColors` parameter.
+:::
+
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=loadProgressButton" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </div>

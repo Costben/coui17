@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
@@ -18,9 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,16 +36,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.COUIMoveEase
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.ChevronEnd
 import io.github.suqi8.coui.kmp.icon.basic.ChevronStart
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import kotlin.time.Clock
 
 /**
@@ -118,12 +131,20 @@ fun CalendarView(
     colors: CalendarViewColors = CalendarViewDefaults.colors(),
     title: (year: Int, month: Int) -> String = CalendarViewDefaults.Title,
     weekdayLabel: (dayOfWeek: Int) -> String = CalendarViewDefaults.WeekdayLabel,
+    dayDescription: (year: Int, month: Int, day: Int) -> String = CalendarViewDefaults.DayDescription,
 ) {
     require(yearRange.first <= yearRange.last) { "yearRange must not be empty" }
     require(firstDayOfWeek in 1..7) { "firstDayOfWeek must be in 1..7 (ISO-8601)" }
 
     val selected = value.coercedTo(yearRange)
     val todayDate = today ?: rememberCurrentDate()
+    val scope = rememberCoroutineScope()
+
+    // COUIDateMonthView lives inside COUICalendarDayViewPager; a horizontal throw turns the page
+    // over 300ms on COUIMoveEase (COUICalendarViewPagerScroller).
+    var gridLiveDrag by remember { mutableFloatStateOf(0f) }
+    val gridSettle = remember { Animatable(0f) }
+    val gridOffsetPx = gridLiveDrag + gridSettle.value
 
     // The native pager follows setDate(); browsing with the header buttons only moves the page.
     var displayedMonthIndex by remember(selected.year, selected.month) {
@@ -205,9 +226,53 @@ fun CalendarView(
                 }
             }
             Column(
-                modifier = Modifier.height(
-                    CalendarViewDefaults.DayHeight * CalendarViewDefaults.ROW_COUNT,
-                ),
+                modifier = Modifier
+                    .height(
+                        CalendarViewDefaults.DayHeight * CalendarViewDefaults.ROW_COUNT,
+                    )
+                    .offset { IntOffset(gridOffsetPx.roundToInt(), 0) }
+                    .pointerInput(enabled, displayedMonthIndex, yearRange) {
+                        if (!enabled) return@pointerInput
+                        detectHorizontalDragGestures(
+                            onDragStart = {
+                                scope.launch { gridSettle.stop() }
+                                gridLiveDrag = 0f
+                            },
+                            onDragEnd = {
+                                val width = size.width.toFloat()
+                                val from = gridLiveDrag + gridSettle.value
+                                gridLiveDrag = 0f
+                                scope.launch {
+                                    gridSettle.snapTo(from)
+                                    val move = when {
+                                        from <= -width / CalendarViewDefaults.SwipeThresholdRatio ->
+                                            if (displayedMonthIndex < yearRange.last * 12 + 11) 1 else 0
+
+                                        from >= width / CalendarViewDefaults.SwipeThresholdRatio ->
+                                            if (displayedMonthIndex > yearRange.first * 12) -1 else 0
+
+                                        else -> 0
+                                    }
+                                    if (move != 0) {
+                                        // The new month enters from the side the finger came from.
+                                        displayedMonthIndex += move
+                                        gridSettle.snapTo(if (move > 0) from + width else from - width)
+                                    }
+                                    gridSettle.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = tween(
+                                            CalendarViewDefaults.SwipeDurationMillis,
+                                            easing = COUIMoveEase,
+                                        ),
+                                    )
+                                }
+                            },
+                            onHorizontalDrag = { change, delta ->
+                                change.consume()
+                                gridLiveDrag += delta
+                            },
+                        )
+                    },
             ) {
                 val firstCell = DateValue(displayedYear, displayedMonth, 1).plusDays(-leading)
                 for (row in 0 until rowCount) {
@@ -227,6 +292,7 @@ fun CalendarView(
                                 enabled = enabled && cell.year in yearRange,
                                 colors = colors,
                                 onClick = { onValueChange(cell) },
+                                description = dayDescription(cell.year, cell.month, cell.day),
                                 modifier = Modifier.weight(1f),
                             )
                         }
@@ -235,6 +301,39 @@ fun CalendarView(
             }
         }
     }
+}
+
+/** Binary-compatibility bridge for the [CalendarView] overload that predates `dayDescription`. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the per-day accessibility description.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun CalendarView(
+    value: DateValue,
+    onValueChange: (DateValue) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    yearRange: IntRange = CalendarViewDefaults.YearRange,
+    firstDayOfWeek: Int = CalendarViewDefaults.FIRST_DAY_OF_WEEK,
+    today: DateValue? = null,
+    colors: CalendarViewColors = CalendarViewDefaults.colors(),
+    title: (year: Int, month: Int) -> String = CalendarViewDefaults.Title,
+    weekdayLabel: (dayOfWeek: Int) -> String = CalendarViewDefaults.WeekdayLabel,
+) {
+    CalendarView(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        yearRange = yearRange,
+        firstDayOfWeek = firstDayOfWeek,
+        today = today,
+        colors = colors,
+        title = title,
+        weekdayLabel = weekdayLabel,
+    )
 }
 
 /**
@@ -338,6 +437,30 @@ object CalendarViewDefaults {
     val TodayRingWidth = 1.8.dp
 
     /**
+     * The duration of the selected-circle grow-and-fade. `COUIDateMonthView.q()`'s `S` animator,
+     * 280ms, driven linearly from 0.8R to 1.0R.
+     */
+    val SelectionAnimationMillis = 280
+
+    /**
+     * The duration of the press-highlight fade-out on release. `COUIDateMonthView.q()`'s `T`
+     * animator, 150ms, taking the highlight paint from full alpha to zero.
+     */
+    val PressFadeMillis = 150
+
+    /**
+     * The duration of a page turn. `COUICalendarViewPagerScroller.mDuration`, 300ms, on
+     * `COUIMoveEaseInterpolator`.
+     */
+    val SwipeDurationMillis = 300
+
+    /**
+     * How far a horizontal drag has to travel, as a fraction of the grid width, before it turns the
+     * page instead of springing back.
+     */
+    val SwipeThresholdRatio = 4f
+
+    /**
      * The number of day rows the grid reserves, whatever the month needs.
      * `COUIDateMonthView.onMeasure` adds `coui_calendar_picker_day_height * 6`.
      */
@@ -424,6 +547,14 @@ object CalendarViewDefaults {
      */
     val WeekdayLabel: (dayOfWeek: Int) -> String = { dayOfWeek -> WeekdayNames[dayOfWeek - 1] }
 
+    /**
+     * The default accessibility label of a day cell: the full date, which is what
+     * `COUIDateMonthView`'s per-day virtual node reports through its `DateFormat`.
+     */
+    val DayDescription: (year: Int, month: Int, day: Int) -> String = { year, month, day ->
+        "${MonthNames[month - 1]} $day, $year"
+    }
+
     private val MonthNames = listOf(
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December",
@@ -460,10 +591,29 @@ private fun DayCell(
     enabled: Boolean,
     colors: CalendarViewColors,
     onClick: () -> Unit,
+    description: String,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    // COUIDateMonthView.q(): the selected circle fades in while it grows from 0.8R to 1.0R over
+    // 280ms, and the press highlight fades back out over 150ms.
+    val selectProgress = remember { Animatable(if (isSelected) 1f else 0f) }
+    LaunchedEffect(isSelected) {
+        if (isSelected) {
+            selectProgress.animateTo(1f, tween(CalendarViewDefaults.SelectionAnimationMillis))
+        } else {
+            selectProgress.snapTo(0f)
+        }
+    }
+    val pressProgress = remember { Animatable(0f) }
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            pressProgress.snapTo(1f)
+        } else {
+            pressProgress.animateTo(0f, tween(CalendarViewDefaults.PressFadeMillis))
+        }
+    }
     val contentColor = when {
         !inMonth -> colors.otherMonthDayColor
         !enabled -> colors.disabledDayColor
@@ -479,14 +629,23 @@ private fun DayCell(
             .drawBehind {
                 val radius = CalendarViewDefaults.SelectedCircleRadius.toPx()
                 if (isSelected) {
+                    val progress = selectProgress.value
                     drawCircle(
-                        color = colors.selectedDayContainerColor,
-                        radius = radius,
+                        color = colors.selectedDayContainerColor.copy(
+                            alpha = colors.selectedDayContainerColor.alpha * progress,
+                        ),
+                        radius = radius * (0.8f + 0.2f * progress),
                         center = center,
                     )
                 } else {
-                    if (isPressed && enabled) {
-                        drawCircle(color = colors.highlightColor, radius = radius, center = center)
+                    if (pressProgress.value > 0f) {
+                        drawCircle(
+                            color = colors.highlightColor.copy(
+                                alpha = colors.highlightColor.alpha * pressProgress.value,
+                            ),
+                            radius = radius,
+                            center = center,
+                        )
                     }
                     if (isToday) {
                         drawCircle(
@@ -498,6 +657,7 @@ private fun DayCell(
                     }
                 }
             }
+            .semantics { contentDescription = description }
             .selectable(
                 selected = isSelected,
                 interactionSource = interactionSource,

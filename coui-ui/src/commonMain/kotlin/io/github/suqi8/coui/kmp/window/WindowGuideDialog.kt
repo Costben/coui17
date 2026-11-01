@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.window
 
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,6 +28,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -56,11 +61,14 @@ import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.layout.DialogContentLayout
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.exp
 
 /**
  * One page of a [WindowGuideDialog].
@@ -124,9 +132,9 @@ data class GuidePage(
  * - `COUIGuideBehavior`, a renamed Material `BottomSheetBehavior` with the OPlus pull-up extensions;
  *   the report shows it references no guide-dialog resource and is not used by
  *   `COUIGuideDialogBuilder`;
- * - the ViewPager2 fling tuning of `createGuideDialogConfig` (650ms program scroll, 500-1000ms fling,
- *   velocity threshold 2500, max 6000, decay 2.0, `COUISpringInterpolator(0.6, 0.0)`); Compose's pager
- *   carries its own fling model;
+ * - the ViewPager2 fling duration window of `createGuideDialogConfig` (500-1000ms, max 6000) and its
+ *   `COUISpringInterpolator(0.6, 0.0)`; the pager flings on an exponential decay tuned to the
+ *   native `FLING_VELOCITY_THRESHOLD` 2500 px/s and `FLING_VELOCITY_DECAY_FACTOR` 2.0, then snaps;
  * - the dual-`TextPaint` drawing of `COUITwoTextButton`; the cross-fade here is two overlaid texts
  *   with the recovered alphas;
  * - the 32dp vertical fading edge of the native page root (`COUINestedScrollView` with
@@ -196,6 +204,9 @@ fun WindowGuideDialog(
         onDismissFinished = onDismissFinished,
         topInset = safeTopInset,
         cornerRadius = GuideDialogDefaults.CornerRadius,
+        // The native call site for `coui_dialog_guide_clip_radius_root` is not located, so the guide
+        // panel keeps the default weight instead of claiming the alert panel's 3.0.
+        cornerWeight = SquircleDefaults.WeightNormal,
         content = {
             GuideDialogContent(
                 pages = pages,
@@ -262,6 +273,15 @@ private fun GuideDialogContent(
     ) {
         HorizontalPager(
             state = pagerState,
+            // COUIGuideLayoutContentView.createGuideDialogConfig: a fling stops at
+            // FLING_VELOCITY_THRESHOLD 2500 px/s and decays at FLING_VELOCITY_DECAY_FACTOR 2.0.
+            flingBehavior = PagerDefaults.flingBehavior(
+                state = pagerState,
+                decayAnimationSpec = exponentialDecay(
+                    frictionMultiplier = GUIDE_FLING_VELOCITY_DECAY_FACTOR,
+                    absVelocityThreshold = GUIDE_FLING_VELOCITY_THRESHOLD,
+                ),
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -300,7 +320,10 @@ private fun GuideDialogContent(
                     currentOnDismissRequest()
                 } else {
                     coroutineScope.launch {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        pagerState.animateScrollToPage(
+                            page = pagerState.currentPage + 1,
+                            animationSpec = GuidePageProgramScrollSpec,
+                        )
                     }
                 }
             },
@@ -567,6 +590,24 @@ object GuideDialogDefaults {
 private val GuidePageScrollEasing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f)
 
 /**
+ * `COUIGuideLayoutContentView`'s `ProgramScrollConfig`: the page turns over 650ms through
+ * `COUISpringInterpolator(0.6, 0)`, i.e. stiffness `(2π / 0.6)²` at damping ratio 1.
+ *
+ * The interpolator evaluates the critically damped step response `1 - (1 + ωt)e^{-ωt}` at the
+ * elapsed fraction of a second; normalising by its value at `t = 1` makes it land exactly on 1 at
+ * the end of the 650ms tween, which is what the pager needs from an [Easing].
+ */
+private val GuidePageProgramScrollSpec: AnimationSpec<Float> = tween(
+    durationMillis = 650,
+    easing = Easing { fraction ->
+        val omega = (2.0 * PI / 0.6).toFloat()
+        val t = fraction.coerceIn(0f, 1f)
+        val end = 1f - (1f + omega) * exp(-omega)
+        (1f - (1f + omega * t) * exp(-omega * t)) / end
+    },
+)
+
+/**
  * The progress at which the Skip button has fully faded out. COUI
  * `COUIGuideDialogButtonLayout.SECONDARY_BUTTON_ALPHA_END_PROGRESS`, 0.6f.
  */
@@ -577,6 +618,12 @@ private val GuideSkipFadeEndProgress = 0.6f
  * `COUIGuideDialogButtonLayout.WIDTH_CHANGE_START_PROGRESS`, 0.2f.
  */
 private val GuideWidthChangeStartProgress = 0.2f
+
+/** `COUIGuideLayoutContentView.FLING_VELOCITY_THRESHOLD` = 2500 px/s. */
+private const val GUIDE_FLING_VELOCITY_THRESHOLD = 2500f
+
+/** `COUIGuideLayoutContentView.FLING_VELOCITY_DECAY_FACTOR` = 2.0. */
+private const val GUIDE_FLING_VELOCITY_DECAY_FACTOR = 2f
 
 /**
  * The width spring of `COUIGuideDialogButtonLayout.initAnimation`: `COUISpringForce` response 0.15f

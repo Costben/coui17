@@ -145,7 +145,9 @@ fun defaultTextStyles(
 
 /**
  * Miuix's 17sp main text style, line height 1.158em. COUI has no 17sp text appearance, so the
- * size stays as inherited; couiTextAppearanceBodyL and couiTextAppearanceHeadline6 are 16sp.
+ * role keeps the inherited size; the components that draw as a bare `TextView` override it with
+ * the 15sp of `TextAppearance.COUI` (`coui_textview_text_size`), and the COUI body and headline
+ * tiers are 16sp.
  */
 private val Main: TextStyle
     get() =
@@ -156,8 +158,9 @@ private val Main: TextStyle
         )
 
 /**
- * Miuix's 17sp paragraph text style, line height 1.158em. COUI has no 17sp text appearance, so
- * the size stays as inherited; couiTextAppearanceBodyL and couiTextAppearanceHeadline6 are 16sp.
+ * Miuix's 17sp paragraph text style, line height 1.158em. The role keeps the inherited size for
+ * the same reason as `main`, but no library component draws at `paragraph`: only the style gallery
+ * uses it, and a COUI paragraph body is `couiTextAppearanceBodyL` 16sp.
  */
 private val Paragraph: TextStyle
     get() =
@@ -205,35 +208,38 @@ private val Footnote1: TextStyle
         )
 
 /**
- * Miuix's 11sp footnote text style, line height 1.143em. COUI has no 11sp text appearance, so
- * the size stays as inherited; the nearest tier, couiTextAppearanceDescription, is 12sp.
+ * COUI couiTextAppearanceDescription 12sp, the appearance behind a dropdown caption and a snack
+ * bar's subtitle. The line height stays as inherited from Miuix until the line spacing multipliers
+ * are compared.
  */
 private val Footnote2: TextStyle
     get() =
         TextStyle(
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             lineHeight = 1.143f.em,
             lineHeightStyle = COUILineHeightStyle,
         )
 
 /**
- * COUI couiTextAppearanceHeadline6 16sp, line height 1.158em, the appearance behind
- * TextAppearance.COUI.List.Title. Confirmed on device: a ColorOS 16 preference title node
- * measures 21.71dp at 560 dpi, which is 16sp rather than the 17sp inherited from Miuix.
+ * COUI couiTextAppearanceHeadline6 16sp, sans-serif-medium (500), line height 1.158em, the
+ * appearance behind TextAppearance.COUI.List.Title. Confirmed on device: a ColorOS 16 preference
+ * title node measures 21.71dp at 560 dpi, which is 16sp rather than the 17sp inherited from Miuix.
  */
 private val Headline1: TextStyle
     get() =
         TextStyle(
             fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
             lineHeight = 1.158f.em,
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline6 16sp, line height 1.158em. */
+/** COUI couiTextAppearanceHeadline6 16sp, sans-serif-medium (500), line height 1.158em. */
 private val Headline2: TextStyle
     get() =
         TextStyle(
             fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
             lineHeight = 1.158f.em,
             lineHeightStyle = COUILineHeightStyle,
         )
@@ -248,38 +254,42 @@ private val Subtitle: TextStyle
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline1 32sp, line height 1.2322em. */
+/** COUI couiTextAppearanceHeadline1 32sp, textFontWeight 600, line height 1.2322em. */
 private val Title1: TextStyle
     get() =
         TextStyle(
             fontSize = 32.sp,
+            fontWeight = FontWeight.SemiBold,
             lineHeight = 1.2322f.em,
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline3 24sp, line height 1.2em. */
+/** COUI couiTextAppearanceHeadline3 24sp, textFontWeight 600, line height 1.2em. */
 private val Title2: TextStyle
     get() =
         TextStyle(
             fontSize = 24.sp,
+            fontWeight = FontWeight.SemiBold,
             lineHeight = 1.2f.em,
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline4 20sp, line height 1.1831em. */
+/** COUI couiTextAppearanceHeadline4 20sp, sans-serif-medium (500), line height 1.1831em. */
 private val Title3: TextStyle
     get() =
         TextStyle(
             fontSize = 20.sp,
+            fontWeight = FontWeight.Medium,
             lineHeight = 1.1831f.em,
             lineHeightStyle = COUILineHeightStyle,
         )
 
-/** COUI couiTextAppearanceHeadline5 18sp, line height 1.2381em. */
+/** COUI couiTextAppearanceHeadline5 18sp, sans-serif-medium (500), line height 1.2381em. */
 private val Title4: TextStyle
     get() =
         TextStyle(
             fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
             lineHeight = 1.2381f.em,
             lineHeightStyle = COUILineHeightStyle,
         )

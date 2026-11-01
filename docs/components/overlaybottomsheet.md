@@ -85,7 +85,7 @@ The BottomSheetDefaults object provides default settings for the OverlayBottomSh
 
 | Property Name | Type   | Description                          |
 | ------------- | ------ | ------------------------------------ |
-| cornerRadius  | Dp     | Default corner radius (20.dp, COUI couiRoundCornerXL) |
+| cornerRadius  | Dp     | Default corner radius (45.dp, COUI coui_round_corner_xxxxl_radius_large_16_1) |
 | maxWidth      | Dp     | Default width cap (Dp.Infinity; width follows the COUI responsive grid) |
 | outsideMargin | DpSize | Default bottom sheet external margin (DpSize(0.dp, 0.dp)) |
 | insideMargin  | DpSize | Default bottom sheet internal margin (DpSize(24.dp, 0.dp); width = horizontal padding, height = bottom padding) |

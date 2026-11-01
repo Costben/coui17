@@ -83,7 +83,7 @@ Scaffold {
 
 | 属性名        | 类型   | 说明                  |
 | ------------- | ------ | --------------------- |
-| cornerRadius  | Dp     | 默认圆角半径 (20.dp，COUI couiRoundCornerXL) |
+| cornerRadius  | Dp     | 默认圆角半径 (45.dp，COUI coui_round_corner_xxxxl_radius_large_16_1) |
 | maxWidth      | Dp     | 默认宽度上限 (Dp.Infinity，实际宽度由 COUI 响应式栅格决定) |
 | outsideMargin | DpSize | 底部抽屉外部默认边距 (DpSize(0.dp, 0.dp)) |
 | insideMargin  | DpSize | 底部抽屉内部默认边距 (DpSize(24.dp, 0.dp)；宽 = 水平内边距，高 = 底部内边距) |

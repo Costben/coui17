@@ -7,9 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -70,6 +74,14 @@ fun SwitchLoadingPreference(
     enabled: Boolean = true,
 ) {
     val currentOnCheckedChange by rememberUpdatedState(onCheckedChange)
+    // `COUISwitchLoadingPreference.onClick` calls `COUISwitch.startLoading()` right away, before the
+    // caller has had time to flip its own state, so the spinner starts on the tap itself and hands
+    // over as soon as the caller reports [isLoading] or a new [checked].
+    var pendingLoading by remember { mutableStateOf(false) }
+    LaunchedEffect(isLoading, checked) {
+        pendingLoading = false
+    }
+    val loading = isLoading || pendingLoading
     BasicComponent(
         modifier = modifier,
         insideMargin = insideMargin,
@@ -92,13 +104,16 @@ fun SwitchLoadingPreference(
                 checked = checked,
                 onCheckedChange = currentOnCheckedChange,
                 enabled = enabled,
-                isLoading = isLoading,
+                isLoading = loading,
                 switchColors = switchColors,
             )
         },
         bottomAction = bottomAction,
         onClick = {
-            currentOnCheckedChange.takeIf { enabled && !isLoading }?.invoke(!checked)
+            if (enabled && !loading) {
+                pendingLoading = true
+                currentOnCheckedChange(!checked)
+            }
         },
         role = Role.Switch,
         holdDownState = holdDownState,

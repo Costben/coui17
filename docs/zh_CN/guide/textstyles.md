@@ -19,17 +19,17 @@
 | `body2`      | 14sp  | Normal | 1.2245em  | couiTextAppearanceBody |
 | `button`     | 16sp  | Medium | 1.263em   | couiTextAppearanceButtonL |
 | `footnote1`  | 13sp  | Normal | 1.2245em  | couiTextAppearanceArticleBody |
-| `footnote2`  | 11sp  | Normal | 1.143em   | Miuix（COUI 无 11sp 档） |
-| `headline1`  | 16sp  | Normal | 1.158em   | couiTextAppearanceHeadline6 |
-| `headline2`  | 16sp  | Normal | 1.158em   | couiTextAppearanceHeadline6 |
+| `footnote2`  | 12sp  | Normal | 1.143em   | couiTextAppearanceDescription |
+| `headline1`  | 16sp  | Medium | 1.158em   | couiTextAppearanceHeadline6 |
+| `headline2`  | 16sp  | Medium | 1.158em   | couiTextAppearanceHeadline6 |
 | `subtitle`   | 14sp  | Bold   | 1.2245em  | couiTextAppearanceBody |
-| `title1`     | 32sp  | Normal | 1.2322em  | couiTextAppearanceHeadline1 |
-| `title2`     | 24sp  | Normal | 1.2em     | couiTextAppearanceHeadline3 |
-| `title3`     | 20sp  | Normal | 1.1831em  | couiTextAppearanceHeadline4 |
-| `title4`     | 18sp  | Normal | 1.2381em  | couiTextAppearanceHeadline5 |
+| `title1`     | 32sp  | SemiBold | 1.2322em | couiTextAppearanceHeadline1 |
+| `title2`     | 24sp  | SemiBold | 1.2em    | couiTextAppearanceHeadline3 |
+| `title3`     | 20sp  | Medium | 1.1831em  | couiTextAppearanceHeadline4 |
+| `title4`     | 18sp  | Medium | 1.2381em  | couiTextAppearanceHeadline5 |
 
 ::: tip 提示
-COUI 没有 11sp / 17sp 这两档 text appearance，这几个样式保留从 Miuix 继承的字号，取字号最接近的那一档的行高倍数。`headline1` 是唯一靠实测而非推断得出的：ColorOS 16 在 560dpi 下的偏好标题节点高 21.71dp，对应 16sp，而不是从 Miuix 继承的 17sp。
+COUI 没有 17sp 这一档 text appearance，`main` / `paragraph` 保留从 Miuix 继承的字号，取字号最接近的那一档的行高倍数。`headline1` 靠实测而非推断得出：ColorOS 16 在 560dpi 下的偏好标题节点高 21.71dp，对应 16sp，而不是从 Miuix 继承的 17sp。字重跟随对应的 text appearance：最大的两级标题用 `textFontWeight` 600，`title3` / `title4` 与两级 headline 用 `sans-serif-medium`（500）。
 
 所有样式都带 `LineHeightStyle(alignment = Top, trim = None)`，以对应 Android `lineSpacingMultiplier` 的行为：额外行距落在文字下方且不被裁剪。Compose 默认会把行距居中并在首尾行裁掉，那样单行文本上的行高设置会完全失效。
 :::

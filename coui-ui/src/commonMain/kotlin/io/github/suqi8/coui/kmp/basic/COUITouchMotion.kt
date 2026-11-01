@@ -60,7 +60,7 @@ data class COUITouchMotionSpec(
     val maxScale: Float = 1.2f,
     val k1: Int = 350000,
     val k2: Int = 15,
-    val pressScaleMin: Float = 0.85f,
+    val pressScaleMin: Float = 0.88f,
     val pressScaleMax: Float = 0.97f,
     val pressMinAreaWidthDp: Float = 20f,
     val pressMaxAreaWidthDp: Float = 150f,
@@ -71,8 +71,10 @@ data class COUITouchMotionSpec(
     val dragSpring: SpringSpec<Float> = folmeSpring(damping = 0.85f, response = 0.15f),
     // COUISpringForce maps bounce to dampingRatio = 1 - bounce.
     val handUpSpring: SpringSpec<Float> = folmeSpring(damping = 0.35f, response = 0.42f),
-    val pressSpring: SpringSpec<Float> = folmeSpring(damping = 1f, response = 0.25f),
-    val releaseSpring: SpringSpec<Float> = folmeSpring(damping = 0.4f, response = 0.5f),
+    // PressEngineConfig.DEFAULT_RESPONSE/BOUNCE_PRESS (0.13 / 0.18) and _RELEASE (0.35 / 0.62);
+    // COUISpringForce maps bounce to dampingRatio = 1 - bounce.
+    val pressSpring: SpringSpec<Float> = folmeSpring(damping = 0.82f, response = 0.13f),
+    val releaseSpring: SpringSpec<Float> = folmeSpring(damping = 0.38f, response = 0.35f),
     val candyPressSpring: SpringSpec<Float> = folmeSpring(damping = 1f, response = 0.3f),
     val candyReleaseSpring: SpringSpec<Float> = folmeSpring(damping = 0.5f, response = 0.5f),
     // Additional COS17 PressCalc and hand-up resolver inputs follow the stable legacy fields.

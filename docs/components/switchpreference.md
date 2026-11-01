@@ -74,6 +74,8 @@ SwitchPreference(
 | cardListPosition | CardListPosition | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None | No |
 | holdDownState   | Boolean                         | Whether the component is held down      | false                                 | No       |
 | enabled         | Boolean                         | Component interactive state             | true                                  | No       |
+| showRedDot      | Boolean                         | Draw the `jump_icon_red_dot` dot before the switch (`hasTitleRedDot`) | false | No |
+| onClick         | (() -> Unit)?                   | Preference click listener, also dispatched on a direct switch toggle | null | No |
 
 ## Advanced Usage
 

@@ -69,9 +69,10 @@ MarkWithDividerPreference(
 | cardListPosition | CardListPosition                | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None           | No       |
 | holdDownState    | Boolean                         | Whether the component is held down                                | false                                 | No       |
 | enabled          | Boolean                         | Component interactive state                                       | true                                  | No       |
+| onMainLayoutClick | (() -> Unit)?                  | Callback of the row's main area, separate from the mark; `null` keeps one row-wide target | null | No |
 
 ## Notes
 
 ### Deliberate Omissions
 
-- **The split click target.** `COUIMarkWithDividerPreference` divides the row into two hit areas — `main_layout` fires `OnMainLayoutClickListener` and `radio_layout` toggles the mark. Neither the repo's `MarkPreference` nor this wrapper models that split; the whole row keeps a single click target.
+- **The split click target** is modelled through `onMainLayoutClick`: the main area reports to it while the mark keeps `onClick` (`radio_layout` runs the preference click). Leave it `null` and the whole row is one click target, as before.

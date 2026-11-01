@@ -27,10 +27,14 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
+import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
@@ -119,6 +123,7 @@ fun SimpleLockView(
     val dotCount = type.dotCount
     val dots = remember(dotCount) { List(dotCount) { SimpleLockDot() } }
     val density = LocalDensity.current
+    val haptic = rememberCouiHaptic()
 
     val dotSizePx = with(density) { SimpleLockViewDefaults.DotSize.toPx() }
     val paddingPx = with(density) { SimpleLockViewDefaults.RectanglePadding.toPx() }
@@ -155,6 +160,8 @@ fun SimpleLockView(
 
     LaunchedEffect(failed) {
         if (!failed) return@LaunchedEffect
+        // COUISimpleLock.performFeedback: SHORT_TRIPLE_VIBRATE when the code is rejected.
+        haptic(CouiHapticEffect.ShortTriple)
         falling = 1f
         animate(
             initialValue = 0f,
@@ -176,7 +183,15 @@ fun SimpleLockView(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(SimpleLockViewDefaults.DotSize + fallHeightDp),
+            .height(SimpleLockViewDefaults.DotSize + fallHeightDp)
+            // SimpleLockTouchHelper reports the same template the native fills in with the number of
+            // digits entered and the total the row expects.
+            .semantics {
+                contentDescription = SimpleLockViewDefaults.AccessDescription(
+                    count.coerceIn(0, dotCount),
+                    dotCount,
+                )
+            },
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val rowWidth = dotCount * dotSizePx + (dotCount - 1) * paddingPx
@@ -242,6 +257,15 @@ object SimpleLockViewDefaults {
      * into `mDrawableWidth` / `mDrawableHeight`, 10dp.
      */
     val DotSize = 10.dp
+
+    /**
+     * The accessibility description of the row, `string/coui_simple_lock_access_description`:
+     * "Password input area. You have entered x digits. You need to enter y digits in total."
+     */
+    val AccessDescription: (entered: Int, total: Int) -> String = { entered, total ->
+        "Password input area. You have entered $entered digits. " +
+            "You need to enter $total digits in total."
+    }
 
     /**
      * The corner radius of a square, the `<corners android:radius>` of

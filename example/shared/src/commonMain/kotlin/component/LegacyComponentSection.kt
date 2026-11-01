@@ -27,12 +27,14 @@ import io.github.suqi8.coui.kmp.basic.NotificationSnackBarHost
 import io.github.suqi8.coui.kmp.basic.NotificationSnackBarHostState
 import io.github.suqi8.coui.kmp.basic.NotificationSnackBarImageType
 import io.github.suqi8.coui.kmp.basic.TagView
+import io.github.suqi8.coui.kmp.basic.TagViewDefaults
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Email
 import io.github.suqi8.coui.kmp.icon.extended.Photos
 import io.github.suqi8.coui.kmp.icon.extended.WorldClock
+import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 
 /** Renders the "TagView" gallery section content: three tag chips in a row. */
@@ -50,9 +52,30 @@ fun TagViewDemo() {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TagView(text = str("NEW"), cornerRadius = 4.dp)
-            TagView(text = str("BETA"), cornerRadius = 4.dp)
-            TagView(text = "9.9.9", cornerRadius = 4.dp)
+            TagView(
+                text = str("NEW"),
+                cornerRadius = 4.dp,
+                colors = TagViewDefaults.tagViewColors(
+                    containerColor = COUITheme.colorScheme.primary,
+                    contentColor = COUITheme.colorScheme.onPrimary,
+                ),
+            )
+            TagView(
+                text = str("BETA"),
+                cornerRadius = 4.dp,
+                colors = TagViewDefaults.tagViewColors(
+                    containerColor = COUITheme.colorScheme.primaryContainer,
+                    contentColor = COUITheme.colorScheme.onSurface,
+                ),
+            )
+            TagView(
+                text = "9.9.9",
+                cornerRadius = 4.dp,
+                colors = TagViewDefaults.tagViewColors(
+                    containerColor = COUITheme.colorScheme.secondaryVariant,
+                    contentColor = COUITheme.colorScheme.onSurface,
+                ),
+            )
         }
     }
 }

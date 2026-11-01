@@ -61,7 +61,7 @@ MarqueeText(
 
 | Method Name | Type      | Description                                                     |
 | ----------- | --------- | --------------------------------------------------------------- |
-| textStyle() | TextStyle | Default text style (`COUITheme.textStyles.main`, as in `Text`)  |
+| textStyle() | TextStyle | Default text style (`COUITheme.textStyles.main` at 15sp, as in `Text`) |
 
 ## Behavior
 

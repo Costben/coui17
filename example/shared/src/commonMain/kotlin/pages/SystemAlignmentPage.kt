@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import component.BottomFloatingScrollToolbarDemo
-import component.NoteToolbarDemo
+import component.IconToolbarDemo
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
@@ -200,9 +200,9 @@ private fun BatteryModeItem(
 
 @Composable
 private fun FloatingToolbarStage() {
-    SmallTitle(text = str("Notes toolbar"))
-    NoteToolbarDemo()
-    SmallTitle(text = str("Photos editor bar"))
+    SmallTitle(text = str("Icon toolbar"))
+    IconToolbarDemo()
+    SmallTitle(text = str("Scrolling toolbar"))
     BottomFloatingScrollToolbarDemo()
 }
 

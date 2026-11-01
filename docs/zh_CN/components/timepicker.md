@@ -70,6 +70,7 @@ TimePicker(
 | textStyle         | TextStyle           | 滚轮项目的文本样式                           | COUITheme.textStyles.title3         | 否       |
 | itemHeight        | Dp                  | 每个滚轮项目的高度                           | NumberPickerDefaults.ItemHeight      | 否       |
 | insideMargin      | PaddingValues       | 滚轮列周围的内边距                           | TimePickerDefaults.InsideMargin      | 否       |
+| amPmFirst（默认值） | Boolean           | 默认改为跟随当前语言：中文/日文/韩文上下午列前置，其余后置 | TimePickerDefaults.AmPmFirst | 否 |
 
 ### TimeValue 类
 

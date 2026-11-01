@@ -81,7 +81,7 @@ RadioButtonPreference(
 | radioButtonColors | RadioButtonColors               | RadioButton control color configuration | RadioButtonDefaults.radioButtonColors()   | No       |
 | startAction         | @Composable (() -> Unit)?         | Custom start content                    | null                                      | No       |
 | endActions          | @Composable (RowScope.() -> Unit)? | Custom end content                     | null                                      | No       |
-| radioButtonLocation | RadioButtonLocation               | Location of the radio button control    | RadioButtonLocation.Start                 | No       |
+| radioButtonLocation | RadioButtonLocation               | Location of the radio button control    | RadioButtonLocation.End                   | No       |
 | bottomAction      | @Composable (() -> Unit)?       | Custom bottom content                   | null                                      | No       |
 | insideMargin      | PaddingValues                   | Internal content padding                | BasicComponentDefaults.InsideMargin       | No       |
 | cardListPosition | CardListPosition | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None | No |
@@ -92,8 +92,8 @@ RadioButtonPreference(
 
 | Option | Description                                        |
 | ------ | -------------------------------------------------- |
-| Start  | The radio button is placed at the start (default)  |
-| End    | The radio button is placed at the end              |
+| Start  | The radio button is placed at the start            |
+| End    | The radio button is placed at the end (default)    |
 
 ## Advanced Usage
 
@@ -181,3 +181,11 @@ Scaffold {
     }
 }
 ```
+
+### RadioButtonPreferenceDefaults Constants
+
+| Constant Name     | Type   | Description                                                  | Default Value |
+| ----------------- | ------ | ------------------------------------------------------------ | ------------- |
+| SelectActionLabel | String | Click action label the row reports to accessibility services  | "Select"      |
+
+The row also reports its selection through `Modifier.semantics { selected }`, so a reader announces whether the row is already selected.

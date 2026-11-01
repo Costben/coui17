@@ -1,6 +1,6 @@
 # ListPreference
 
-`ListPreference` is a preference row that opens a bottom sheet single-choice panel, mirroring ColorOS's COUIListPreference (COUIAlertDialog_BottomAssignment with coui_select_dialog_singlechoice rows). The row shows the selected entry as trailing assignment text plus the COUI popup indicator; the selected panel row ends with a primary-tinted check mark. Tapping an entry commits the selection and dismisses the panel.
+`ListPreference` is a preference row that opens a bottom-assignment dialog single-choice panel, mirroring ColorOS's COUIListPreference (COUIAlertDialog_BottomAssignment with coui_select_dialog_singlechoice rows). The row shows the selected entry as trailing assignment text plus the COUI popup indicator; the selected panel row ends with a primary-tinted check mark. Tapping an entry commits the selection and dismisses the panel.
 
 `MultiSelectListPreference` is the multi-choice variant, mirroring COUIMultiSelectListPreference: panel rows end with a checkbox, and the selection is only committed when the confirm button is clicked.
 
@@ -103,8 +103,12 @@ Additional / differing properties compared to `ListPreference`:
 | PanelItemIndicatorSpacing | Dp  | 16.dp         | coui_dialog_layout_margin_horizontal           |
 | PanelItemSummarySpacing  | Dp   | 2.dp          | coui_alert_dialog_content_panel_padding_top    |
 | CheckIconSize            | Dp   | 24.dp         | COUI 24dp selection widgets                    |
-| ButtonBarTopPadding      | Dp   | 6.dp          | alert_dialog_single_list_last_item_padding_bottom |
-| ButtonBarBottomPadding   | Dp   | 12.dp         | library convention                             |
+| ButtonBarTopPadding      | Dp   | 4.dp          | coui_alert_dialog_button_parent_padding_vertical |
+| PanelItemHorizontalPadding | Dp | 24.dp        | alert_dialog_single_list_padding_left / _right |
+| PanelItemTitleMinHeight  | Dp   | 22.dp         | alert_dialog_title_min_height                  |
+| PanelItemSummaryMinHeight | Dp  | 20.dp         | alert_dialog_summary_min_height                |
+| PanelItemDividerThickness | Dp  | 0.33.dp       | coui_list_divider_height                       |
+| ButtonBarBottomPadding   | Dp   | 16.dp         | coui_alert_dialog_button_parent_padding_bottom |
 
 ### `listPreferenceColors()` factory
 
@@ -119,8 +123,8 @@ Additional / differing properties compared to `ListPreference`:
 
 ## Behavior
 
-- Clicking the row opens an `OverlayBottomSheet` panel titled `dialogTitle` and keeps the row in the hold-down state until the panel is dismissed, with a context-click haptic on open.
+- Clicking the row opens an `OverlayBottomAssignmentDialog` titled `dialogTitle` and keeps the row in the hold-down state until the panel is dismissed, with a context-click haptic on open.
 - Single choice: tapping an entry invokes `onSelectedIndexChange` and dismisses the panel immediately; the cancel button or an outside tap dismisses without changes (COUIListPreferenceDialogFragment).
 - Multi choice: toggling rows only updates a pending selection; the confirm button commits it via `onSelectedIndicesChange`, while cancel / outside tap discards it (COUIMultiSelectListPreferenceDialogFragment).
-- A hairline divider (0.33dp, couiColorDivider) is drawn between adjacent panel rows only, never after the last row.
+- A hairline divider (0.33dp `coui_list_divider_height`, couiColorDivider, spanning the row's 24dp content inset) is drawn between adjacent panel rows only, never after the last row (`item_divider` is a `match_parent` child of the row; both fragments hide it on the last row and for a single-entry list).
 - Entries with `enabled = false` are shown but cannot be selected, using disabled text colors.

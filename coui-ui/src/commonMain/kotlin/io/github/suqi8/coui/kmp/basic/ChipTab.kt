@@ -48,6 +48,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -424,10 +425,10 @@ object ChipTabDefaults {
     /**
      * The label style of a tab. COUI `Widget.COUI.Chip.ChipTab` sets
      * `android:textAppearance = ?attr/couiTextButtonM`, 14sp in `sans-serif-medium`; the port keeps
-     * the theme's 14sp body tier, like [ChipDefaults.textStyle].
+     * the theme's 14sp body tier with the system's medium weight.
      */
     @Composable
-    fun textStyle(): TextStyle = COUITheme.textStyles.body2
+    fun textStyle(): TextStyle = COUITheme.textStyles.body2.copy(fontWeight = FontWeight.Medium)
 
     /**
      * The count style of a tab. COUI `countTextAppearance = ?attr/couiTextBodyS`, 13sp, which is the

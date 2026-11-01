@@ -2,7 +2,7 @@
 
 `HighlightedIconButton` is the ColorOS 17 toolbar icon button with its light halo, the port of the effect ColorOS puts on the toolbar's back key and overflow key.
 
-ColorOS gives both keys the same treatment: a **true 40dp circle** — not a squircle — carrying a radial fill that is darker in the middle and brighter at the rim, an angle-distributed white perimeter stroke, and a theme-dependent halo outside the edge. While pressed the whole control springs to `HighlightedIconButtonDefaults.PressedScale`, the rim and the halo disappear, and the fill and the icon brighten. Both themes behave identically.
+ColorOS gives both keys the same treatment: a **true 40dp circle** — not a squircle — carrying a radial fill that is darker in the middle and brighter at the rim, an angle-distributed white perimeter stroke, and a theme-dependent halo outside the edge. While pressed the whole control springs to `HighlightedIconButtonDefaults.PressedScale`, the rim and the halo disappear, and the fill and the icon brighten. Both themes behave identically. The 40dp disc sits in a `48dp x 40dp` touch target, the `minWidth` / `minHeight` `COUIActionMenuItemView` gives its icon menu item.
 
 The dark lower halo uses the ColorOS caustic-shadow API with the level-2 offset-rectangle SDF and vertical power falloff. Other platforms render the recovered shader formula without an angular mask. The halo shares the button transform and fades while pressed. Dragging adds the native TouchMotion rubber-band translation and area-preserving deformation, then springs back on release. Fill, icon, rim, and outer light share one transform.
 
@@ -69,6 +69,8 @@ The click carries no ripple: the highlight itself is the press feedback, exactly
 | Constant Name         | Type                   | Description                                                             | Value |
 | --------------------- | ---------------------- | ----------------------------------------------------------------------- | ----- |
 | Size                  | Dp                     | The diameter of the button                                              | 40.dp |
+| IconMenuMinWidth      | Dp                     | The touch target's minimum width, `coui_action_menu_item_min_width`     | 48.dp |
+| IconMenuMinHeight     | Dp                     | The touch target's minimum height, `coui_action_menu_item_min_height`   | 40.dp |
 | PressedScale          | Float                  | The scale the whole control springs to while pressed                    | 0.89f |
 | PressSpring           | SpringSpec\<Float\>    | The press spring                                                        | response 0.3 / damping 1.0 |
 | FillAlpha             | Float                  | The alpha the radial fill is painted at                                 | 0.78f |

@@ -388,8 +388,10 @@ private fun SegmentButtonRow(
         enabled = indicatorMaterial != null && isRuntimeShaderSupported(),
     )
     val containerRadiusDp = cornerRadius + contourPadding
-    val containerShape = remember(containerRadiusDp, height) {
-        if (containerRadiusDp * 2 >= height) SegmentCapsuleShape else RoundedCornerShape(containerRadiusDp)
+    // `COUISegmentButtonLayout.onMeasure`: a custom height is `max(customHeight, coui_segment_min_height)`.
+    val resolvedHeight = resolvedTabRowHeight(height)
+    val containerShape = remember(containerRadiusDp, resolvedHeight) {
+        if (containerRadiusDp * 2 >= resolvedHeight) SegmentCapsuleShape else RoundedCornerShape(containerRadiusDp)
     }
     val hasContainerSurface = contourPadding > 0.dp && containerColor.alpha > 0f
     val blurScale = rememberToolbarAttenuatedBlurScale()
@@ -411,7 +413,7 @@ private fun SegmentButtonRow(
         modifier = Modifier
             .fillMaxWidth()
             .then(modifier)
-            .height(height)
+            .height(resolvedHeight)
             .couiTouchMotion(
                 surface = containerGlassModifier,
                 enabled = touchMotionEnabled && hasContainerSurface,
@@ -717,7 +719,9 @@ private fun SegmentButtonRow(
                                 height = rect.height,
                                 radius = radius,
                                 stroke = material,
-                                cornerWeight = MaterialShadowEdgeDefaults.CornerWeight,
+                                // `COUISegmentButtonLayout.initShadowEdgeDrawable`:
+                                // `setCornerType(2).setWeight(2.0f)` for the indicator's edge drawable.
+                                cornerWeight = MaterialShadowEdgeDefaults.CapsuleCornerWeight,
                                 antiAliasing = MaterialShadowEdgeDefaults.AntiAliasing,
                                 edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
                                 shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
@@ -772,6 +776,13 @@ private fun SegmentButtonRow(
         }
     }
 }
+
+/**
+ * The height a segment row measures at: `COUISegmentButtonLayout.onMeasure` takes
+ * `max(mCustomHeightPx, mMinHeightPx)` for a custom height, so a row can be shorter than the 40dp
+ * style height but never below `coui_segment_min_height`.
+ */
+internal fun resolvedTabRowHeight(height: Dp): Dp = height.coerceAtLeast(TabRowDefaults.TabRowMinHeight)
 
 /** `COUISegmentButtonLayout.isTouchInIndicator`: a press this close to the indicator still grabs it. */
 private const val SEGMENT_INDICATOR_TOUCH_SLOP_PX = 10f
@@ -962,6 +973,13 @@ object TabRowDefaults {
         BlendColorEntry(color = Color(0x7F7F7F7F), mode = BlurBlendMode.Overlay),
         BlendColorEntry(color = Color(0x99262626), mode = BlurBlendMode.Luminosity),
     )
+
+    /**
+     * The minimum height of the [TabRow]. `COUISegmentButtonLayout` measures a custom height as
+     * `max(customHeight, mMinHeightPx)` with `coui_segment_min_height` (28dp), so a row can be made
+     * shorter than the 40dp style height but never below this.
+     */
+    val TabRowMinHeight = 28.dp
 
     /**
      * The default height of the [TabRow]. COUI `SegmentButton` style height (40dp).

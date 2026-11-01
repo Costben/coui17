@@ -60,31 +60,31 @@ CheckboxPreference(
 
 CheckboxPreference supports placing the checkbox on the start or end side:
 
-### Start Checkbox (Default)
+### Start Checkbox
 
 ```kotlin
 var startChecked by remember { mutableStateOf(false) }
 
 CheckboxPreference(
     title = "Start Checkbox",
-    summary = "Checkbox is on the start side (default)",
+    summary = "Checkbox is on the start side",
     checked = startChecked,
     onCheckedChange = { startChecked = it },
-    checkboxLocation = CheckboxLocation.Start // Default value
+    checkboxLocation = CheckboxLocation.Start
 )
 ```
 
-### End Checkbox
+### End Checkbox (Default)
 
 ```kotlin
 var endChecked by remember { mutableStateOf(false) }
 
 CheckboxPreference(
     title = "End Checkbox",
-    summary = "Checkbox is on the end side",
+    summary = "Checkbox is on the end side (default)",
     checked = endChecked,
     onCheckedChange = { endChecked = it },
-    checkboxLocation = CheckboxLocation.End
+    checkboxLocation = CheckboxLocation.End // Default value
 )
 ```
 
@@ -104,7 +104,7 @@ CheckboxPreference(
 | checkboxColors   | CheckboxColors                     | Checkbox control color configuration | CheckboxDefaults.checkboxColors()     | No       |
 | startAction      | @Composable (() -> Unit)?          | Custom content after checkbox        | null                                  | No       |
 | endActions       | @Composable (RowScope.() -> Unit)? | Custom content before checkbox       | null                                  | No       |
-| checkboxLocation | CheckboxLocation                   | Checkbox position                    | CheckboxLocation.Start                | No       |
+| checkboxLocation | CheckboxLocation                   | Checkbox position                    | CheckboxLocation.End                  | No       |
 | bottomAction     | @Composable (() -> Unit)?          | Custom bottom content                | null                                  | No       |
 | insideMargin     | PaddingValues                      | Internal content padding             | BasicComponentDefaults.InsideMargin   | No       |
 | cardListPosition | CardListPosition | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None | No |
@@ -282,3 +282,10 @@ Scaffold {
     }
 }
 ```
+
+### CheckboxPreferenceDefaults Constants
+
+| Constant Name     | Type   | Description                                                     | Default Value |
+| ----------------- | ------ | --------------------------------------------------------------- | ------------- |
+| SwitchActionLabel | String | Click action label the row reports to accessibility services     | "Switch"      |
+| CheckboxEndMargin | Dp     | Gap the trailing box keeps inside the row's end inside margin    | 6.dp          |

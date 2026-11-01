@@ -11,14 +11,68 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sign
+import kotlin.math.sqrt
+
+/**
+ * One rebound parameter set of `SpringOverScroller`, whose RK4 integration solves
+ *
+ * `x'' = tension * (target - x) - friction * x'`
+ *
+ * (the Origami form; `ReboundConfig` converts the two configured values through
+ * `tensionFromOrigamiValue` and `frictionFromOrigamiValue`).
+ *
+ * @param tension The spring constant, 1/s². [angularFrequency] is its square root.
+ * @param friction The velocity damping, 1/s. [dampingRatio] is `friction / (2 * angularFrequency)`.
+ * @param restDisplacement How close to the target, in px, counts as back in place.
+ * @param restSpeed The speed, in px/s, under which the settle ends as a lost velocity
+ *   (`lostVelocity`); `0` drops that condition and leaves [restDisplacement] alone.
+ */
+internal class SpringParams(
+    val tension: Double,
+    val friction: Double,
+    val restDisplacement: Double,
+    val restSpeed: Double,
+) {
+    /** `sqrt(tension)`, rad/s. */
+    val angularFrequency: Double = sqrt(tension)
+
+    /** `2 * PI / angularFrequency`, seconds. */
+    val naturalPeriod: Double = 2.0 * PI / angularFrequency
+
+    /** `friction / (2 * angularFrequency)`. */
+    val dampingRatio: Double = friction / (2.0 * angularFrequency)
+}
 
 internal object SpringMath {
     const val MAX_FRAME_DELTA_SECONDS = 0.016f
     const val MIN_FRAME_DELTA_SECONDS = 0.001f
-    const val HIGH_VELOCITY_THRESHOLD = 5000.0
-    const val CRITICAL_DAMPING_RATIO = 1.0f
-    const val STANDARD_SPRING_PERIOD = 0.4f
-    const val SLOWER_SPRING_PERIOD_FOR_HIGH_VELOCITY = 0.55f
+
+    /**
+     * The rebound after the finger lets go, i.e. `ReboundOverScroller.springBack`.
+     *
+     * The scroller starts from `ReboundConfig(12.19, 16.0)`, but every vertical host
+     * (`COUINestedScrollView`, `COUIScrollView`) then calls `setSpringBackTensionMultiple(2.15)`, so
+     * the pair that actually runs is `friction = (12.19 - 8) * 3 + 25 = 37.57` and
+     * `tension = (2.15 * 16 - 30) * 3.62 + 194 = 209.93`. That is an angular frequency of 14.49
+     * rad/s (a 0.434s natural period) with a damping ratio of 1.30, and it stops on displacement
+     * alone: `SPRING_BACK_STOP_THRESHOLD` 0.25px.
+     */
+    val SPRING_BACK = SpringParams(tension = 209.93, friction = 37.57, restDisplacement = 0.25, restSpeed = 0.0)
+
+    /**
+     * The deceleration of a fling that runs into the boundary:
+     * `COUISpringInterpolator(DEFAULT_STIFFNESS 40.0, DEFAULT_DAMPINGRATIO 1.15, …)`.
+     *
+     * An angular frequency of `sqrt(40) = 6.3246` rad/s (a 0.9935s natural period) with a damping
+     * ratio of 1.15. The fling ends when it loses the velocity `getSplineMinVelocity()` asks for
+     * (`REST_SPEED_THRESHOLD` 5px/s), or when it is within `mDisplacementFromRestThreshold` 0.05px.
+     */
+    val FLING_REBOUND = SpringParams(
+        tension = 40.0,
+        friction = 2.0 * 1.15 * sqrt(40.0),
+        restDisplacement = 0.05,
+        restSpeed = 5.0,
+    )
 
     /**
      * Obtain the movable distance after converting damping
@@ -78,37 +132,39 @@ private class SpringOperator(dampingRatio: Float, naturalPeriod: Float) {
 
 internal class SpringEngine {
     private var springOperator: SpringOperator? = null
+    private var params: SpringParams = SpringMath.FLING_REBOUND
     var velocity: Double = 0.0
     var currentPos: Double = 0.0
     private var targetPos: Double = 0.0
-    private var initialPos: Double = 0.0
-    private var initialVelocity: Double = 0.0
 
+    /**
+     * The two end conditions of the parameter set, either of which finishes the settle:
+     * `lostVelocity()` for a fling (`|v|` under [SpringParams.restSpeed]), or the spring coming
+     * within [SpringParams.restDisplacement] of the target (`SPRING_BACK_STOP_THRESHOLD` for a
+     * spring back). A fast pass through the target is therefore never mistaken for the end.
+     */
     private fun isAtEquilibrium(): Boolean {
-        if (initialPos < targetPos && currentPos > targetPos) {
-            return true
-        }
-        if (initialPos <= targetPos || currentPos >= targetPos) {
-            return (initialPos == targetPos && sign(initialVelocity) != sign(currentPos)) || abs(currentPos - targetPos) < 1.0
-        }
-        return true
+        if (params.restSpeed > 0.0 && abs(velocity) < params.restSpeed) return true
+        return abs(currentPos - targetPos) < params.restDisplacement
     }
 
-    fun start(startValue: Float, targetValue: Float, initialVel: Float) {
+    /**
+     * @param params Which of `SpringOverScroller`'s two rebound curves drives this settle:
+     *   [SpringMath.SPRING_BACK] after the finger lets go, [SpringMath.FLING_REBOUND] when a fling
+     *   runs into the boundary.
+     */
+    fun start(
+        startValue: Float,
+        targetValue: Float,
+        initialVel: Float,
+        params: SpringParams = SpringMath.FLING_REBOUND,
+    ) {
         currentPos = startValue.toDouble()
-        initialPos = startValue.toDouble()
         targetPos = targetValue.toDouble()
         velocity = initialVel.toDouble()
-        initialVelocity = initialVel.toDouble()
+        this.params = params
 
-        springOperator = SpringOperator(
-            SpringMath.CRITICAL_DAMPING_RATIO,
-            if (abs(initialVel) > SpringMath.HIGH_VELOCITY_THRESHOLD) {
-                SpringMath.SLOWER_SPRING_PERIOD_FOR_HIGH_VELOCITY
-            } else {
-                SpringMath.STANDARD_SPRING_PERIOD
-            },
-        )
+        springOperator = SpringOperator(params.dampingRatio.toFloat(), params.naturalPeriod.toFloat())
     }
 
     fun step(deltaTime: Float): Boolean {
@@ -130,15 +186,18 @@ internal class SpringEngine {
 /**
  * Drive this spring from [startValue] to [targetValue] with [initialVelocity], calling [onFrame] each
  * frame until it settles (or is cancelled), then [onSettle]. Shared by both overscroll implementations.
+ *
+ * @param params The rebound curve to settle on; see [SpringEngine.start].
  */
 internal suspend fun SpringEngine.runSettleAnimation(
     startValue: Float,
     targetValue: Float = 0f,
     initialVelocity: Float,
+    params: SpringParams = SpringMath.FLING_REBOUND,
     onFrame: (currentPos: Float) -> Unit,
     onSettle: () -> Unit,
 ) {
-    start(startValue = startValue, targetValue = targetValue, initialVel = initialVelocity)
+    start(startValue = startValue, targetValue = targetValue, initialVel = initialVelocity, params = params)
     var lastFrameTimeNanos = -1L
     var isFinished = false
     try {

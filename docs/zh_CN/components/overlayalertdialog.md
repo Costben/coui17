@@ -102,7 +102,7 @@ OverlayAlertDialog(
 | ------------------ | ------ | -------------------------------------------------------------------------------- |
 | ConfirmText        | String | 确认按钮默认文案（`OK`）                                                          |
 | CancelText         | String | 取消按钮默认文案（`Cancel`）                                                      |
-| CornerRadius       | Dp     | 面板圆角（19.dp），与 `DialogDefaults.CornerRadius` 相同                          |
+| CornerRadius       | Dp     | 面板圆角（45.dp），与 `DialogDefaults.CornerRadius` 相同                          |
 | MaxWidth           | Dp     | 面板最大宽度（392.dp），与 `DialogDefaults.MaxWidth` 相同                         |
 | ButtonBarMarginTop | Dp     | 面板内容与按钮行之间的间距（8.dp，COUI `coui_alert_dialog_customer_layout_padding_bottom`） |
 

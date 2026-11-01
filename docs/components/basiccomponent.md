@@ -128,6 +128,7 @@ BasicComponent(
 | bottomAction      | @Composable (() -> Unit)?          | Composable content at the bottom of the component     | null                                  | No       |
 | insideMargin      | PaddingValues                      | Internal padding of the component                     | BasicComponentDefaults.InsideMargin   | No       |
 | cardListPosition  | CardListPosition                   | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None | No       |
+| showDivider       | Boolean                            | Draw the hairline between this row and the next one (`couiShowDivider`); only a head or middle row of a card group draws one | true | No       |
 | onClick           | (() -> Unit)?                      | Callback triggered when the component is clicked      | null                                  | No       |
 | onClickLabel      | String?                            | Accessibility label describing the click action       | null                                  | No       |
 | role              | Role?                              | Semantic role for accessibility services              | null                                  | No       |
@@ -145,6 +146,7 @@ BasicComponent(
 | bottomAction      | @Composable (() -> Unit)?          | Composable content at the bottom of the component     | null                                | No       |
 | insideMargin      | PaddingValues                      | Internal padding of the component                     | BasicComponentDefaults.InsideMargin | No       |
 | cardListPosition  | CardListPosition                   | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None | No       |
+| showDivider       | Boolean                            | Draw the hairline between this row and the next one (`couiShowDivider`); only a head or middle row of a card group draws one | true | No       |
 | onClick           | (() -> Unit)?                      | Callback triggered when the component is clicked      | null                                | No       |
 | onClickLabel      | String?                            | Accessibility label describing the click action       | null                                | No       |
 | role              | Role?                              | Semantic role for accessibility services              | null                                | No       |
@@ -163,6 +165,7 @@ The BasicComponentDefaults object provides default values and color configuratio
 | ------------- | ------------- | --------------------------------- | -------------------- |
 | MinHeight     | Dp            | Minimum row height, before card-group position padding | 48.dp |
 | InsideMargin  | PaddingValues | Internal padding of the component | PaddingValues(horizontal = 16.dp, vertical = 10.dp) |
+| MarginBetweenLine | Dp | Gap COUI counts between the title and the summary while placing a leading icon | 2.dp |
 
 #### BasicComponentDefaults Methods
 
@@ -249,3 +252,11 @@ Column {
     }
 }
 ```
+
+## Preference Row Geometry
+
+A row with a leading action places it the way `COUICustomListSelectedLinearLayout` does:
+
+- The icon takes `coui_preference_icon_margin_top` 14dp above and below, or 12dp / 10dp / 12dp / 8dp for a 24dp / 32dp / 36dp / 50dp icon, and switches to the 20dp / 16dp / 14dp multiline pair once the text wraps to two lines.
+- Past two lines the icon stops being centred: its centre sits on the centre of the block's first two lines, never above the block.
+- The trailing content keeps its own width and the text block takes the remainder, the `layout_weight="1"` rule of `coui_preference.xml`; the row does not cap the trailing content at a share of the remaining width.

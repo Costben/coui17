@@ -78,6 +78,7 @@ IntentSeekBar(
 | showThumb             | Boolean                                 | 是否绘制滑块                                  | false                               | 否   |
 | size                  | IntentSeekBarSize                       | 轨道 / 滑块尺寸组                             | IntentSeekBarSize.Default           | 否   |
 | colors                | IntentSeekBarColors                     | 颜色                                          | IntentSeekBarDefaults.colors()      | 否   |
+| playbackState         | IntentSeekBarPlaybackState              | 决定 `COUIIntentSeekBar.VisualState` 五态：静态、锥光、全量 / 局部加载 | `Idle` | 否 |
 
 ### IntentSeekBarSize
 

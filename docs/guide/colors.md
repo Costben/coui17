@@ -63,4 +63,11 @@ This page lists all colors in the COUI color scheme with their default light and
 | `windowDimming` | Window dimming (dialogs/dropdowns) | `#4D000000` | `#99000000` |
 | `sliderKeyPoint` | Slider key point | `#4DA3B3CD` | `#4D7A8AA6` |
 | `sliderKeyPointForeground` | Slider key point foreground | `#FF6EB5FF` | `#FF5DAAFF` |
-| `sliderBackground` | Slider background | `#0F000000` | `#26FFFFFF` |
+| `sliderBackground` | Slider background | `#1F000000` | `#33FFFFFF` |
+| `controls` | Resting switch track (`couiColorControls`) | `#29000000` | `#40FFFFFF` |
+| `labelTertiary` | Low-emphasis label, unchecked checkbox outline (`couiColorLabelTertiary`) | `#42000000` | `#4DFFFFFF` |
+| `pressBackground` | Neutral fill of controls that cannot be interacted with (`couiColorPressBackground`) | `#14000000` | `#26FFFFFF` |
+| `quarternaryNeutral` | Faintest neutral (`couiColorQuarternaryNeutral`) | `#14000000` | `#26FFFFFF` |
+| `containerTheme` | Accent button fill (`couiColorContainerTheme`) | `#0080FF` | `#1A8CFF` |
+| `focus` | Focus mask (`couiColorFocus`), the container theme at 12% / 20% | `#1F0080FF` | `#331A8CFF` |
+| `focusOutline` | Focus ring (`couiColorFocusOutline`), the container theme at 40% (`#5C9DFF` in the dark scheme) | `#660080FF` | `#665C9DFF` |

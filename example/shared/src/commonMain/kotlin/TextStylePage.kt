@@ -68,10 +68,10 @@ fun TextStylePage(
 
     val styleEntries = remember(textStyles) {
         listOf(
-            TextStyleEntry("title1", textStyles.title1, "32sp"),
-            TextStyleEntry("title2", textStyles.title2, "24sp"),
-            TextStyleEntry("title3", textStyles.title3, "20sp"),
-            TextStyleEntry("title4", textStyles.title4, "18sp"),
+            TextStyleEntry("title1", textStyles.title1, "32sp / SemiBold"),
+            TextStyleEntry("title2", textStyles.title2, "24sp / SemiBold"),
+            TextStyleEntry("title3", textStyles.title3, "20sp / Medium"),
+            TextStyleEntry("title4", textStyles.title4, "18sp / Medium"),
             TextStyleEntry("headline1", textStyles.headline1, "17sp"),
             TextStyleEntry("headline2", textStyles.headline2, "16sp"),
             TextStyleEntry("subtitle", textStyles.subtitle, "14sp / Bold"),
@@ -81,7 +81,7 @@ fun TextStylePage(
             TextStyleEntry("body2", textStyles.body2, "14sp"),
             TextStyleEntry("button", textStyles.button, "16sp / Medium"),
             TextStyleEntry("footnote1", textStyles.footnote1, "13sp"),
-            TextStyleEntry("footnote2", textStyles.footnote2, "11sp"),
+            TextStyleEntry("footnote2", textStyles.footnote2, "12sp"),
         )
     }
 

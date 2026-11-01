@@ -46,6 +46,10 @@ import io.github.suqi8.coui.kmp.preference.internal.StartActionSlot
  * @param cardListPosition The row's position inside its card group. Rounded outer edges receive extra padding.
  * @param holdDownState Used to determine whether it is in the pressed state.
  * @param enabled Whether the [MarkPreference] is clickable.
+ * @param onMainLayoutClick Replaces the row click, and makes the mark itself clickable so the row
+ *   keeps a select target. `COUIMarkWithDividerPreference` splits the row into `main_layout`, which
+ *   reports to `OnMainLayoutClickListener`, and `radio_layout`, which still runs the preference
+ *   click. `null` (default) keeps a single row-wide click target.
  */
 @Composable
 @NonRestartableComposable
@@ -66,8 +70,10 @@ fun MarkPreference(
     cardListPosition: CardListPosition = CardListPosition.None,
     holdDownState: Boolean = false,
     enabled: Boolean = true,
+    onMainLayoutClick: (() -> Unit)? = null,
 ) {
     val currentOnClick by rememberUpdatedState(onClick)
+    val currentOnMainLayoutClick by rememberUpdatedState(onMainLayoutClick)
 
     BasicComponent(
         modifier = modifier,
@@ -85,7 +91,12 @@ fun MarkPreference(
                             checked = checked,
                             enabled = enabled,
                             markColors = markColors,
-                            modifier = Modifier.padding(end = 5.dp),
+                            // `coui_head_mark` in coui_preference_mark_divider_default.xml: the box
+                            // carries support_preference_mark_checkbox_margin_end (11dp) before the
+                            // text block. Its -4dp layout_marginStart has no Compose equivalent —
+                            // padding cannot be negative — so the mark starts at the row's own
+                            // padding instead.
+                            modifier = Modifier.padding(end = MarkPreferenceHeadMarkMarginEnd),
                         )
                     }
 
@@ -117,20 +128,30 @@ fun MarkPreference(
             if (markLocation == MarkLocation.End) {
                 Row(
                     modifier = Modifier
-                        .padding(start = 8.dp)
                         .align(Alignment.CenterVertically),
                 ) {
                     MarkPreferenceMark(
                         checked = checked,
                         enabled = enabled,
                         markColors = markColors,
+                        // Only a split row needs its own mark target; otherwise the row is the target.
+                        onClick = if (onMainLayoutClick != null) {
+                            { currentOnClick?.invoke() }
+                        } else {
+                            null
+                        },
                     )
                 }
             }
         },
         bottomAction = bottomAction,
         onClick = {
-            currentOnClick.takeIf { enabled }?.invoke()
+            val mainLayoutClick = currentOnMainLayoutClick
+            if (mainLayoutClick != null) {
+                if (enabled) mainLayoutClick()
+            } else {
+                currentOnClick.takeIf { enabled }?.invoke()
+            }
         },
         role = Role.RadioButton,
         holdDownState = holdDownState,
@@ -138,21 +159,71 @@ fun MarkPreference(
     )
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the onMainLayoutClick parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@NonRestartableComposable
+fun MarkPreference(
+    title: String,
+    checked: Boolean,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: String? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    markColors: RadioButtonColors = RadioButtonDefaults.radioButtonColors(),
+    startAction: @Composable (() -> Unit)? = null,
+    endActions: @Composable (RowScope.() -> Unit)? = null,
+    markLocation: MarkLocation = MarkLocation.End,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+): Unit = MarkPreference(
+    title = title,
+    checked = checked,
+    onClick = onClick,
+    modifier = modifier,
+    titleColor = titleColor,
+    summary = summary,
+    summaryColor = summaryColor,
+    markColors = markColors,
+    startAction = startAction,
+    endActions = endActions,
+    markLocation = markLocation,
+    bottomAction = bottomAction,
+    insideMargin = insideMargin,
+    cardListPosition = cardListPosition,
+    holdDownState = holdDownState,
+    enabled = enabled,
+)
+
 @Composable
 private fun MarkPreferenceMark(
     checked: Boolean,
     enabled: Boolean,
     markColors: RadioButtonColors,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     RadioButton(
         modifier = modifier,
         selected = checked,
-        onClick = null,
+        onClick = onClick,
         enabled = enabled,
         colors = markColors,
     )
 }
+
+/**
+ * The gap `coui_head_mark` keeps between the box and the text block,
+ * `support_preference_mark_checkbox_margin_end` (11dp).
+ */
+private val MarkPreferenceHeadMarkMarginEnd = 11.dp
 
 /**
  * The location of the mark in a [MarkPreference]: [End] maps to COUI TAIL_MARK (default),

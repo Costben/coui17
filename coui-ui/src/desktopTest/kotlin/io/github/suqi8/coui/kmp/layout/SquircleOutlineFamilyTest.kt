@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
@@ -112,6 +113,32 @@ class SquircleOutlineFamilyTest {
         println("[corner] circular arc misses it by ${arc}px (r=$radius)")
         assertTrue(smooth < 0.005f * radius, "smooth corner deviates ${smooth}px, want < ${0.005f * radius}")
         assertTrue(arc > 0.07f * radius, "arc deviates ${arc}px, want > ${0.07f * radius}")
+    }
+
+    /**
+     * The panels ColorOS 17 draws at weight 3.0 ask for [SquircleDefaults.WeightLarge]; their outline
+     * has to sit on the `n = 3` superellipse, not on the default `n = 2.5` one, and `copy` has to
+     * keep it.
+     */
+    @Test
+    fun largeWeightShapeSitsOnTheN3Superellipse() {
+        val radius = 108.5f
+        val shape = SquircleShape(cornerRadius = radius.dp, weight = SquircleDefaults.WeightLarge)
+        val outline = shape.createOutline(
+            androidx.compose.ui.geometry.Size(4 * radius, 4 * radius),
+            LayoutDirection.Ltr,
+            DensityStub,
+        )
+        assertTrue(outline is Outline.Generic, "the weighted squircle must stay a path")
+        val n3 = cornerDeviationFromSuperellipse(outline.path, radius, exponent = 3f)
+        val n25 = cornerDeviationFromSuperellipse(outline.path, radius, exponent = 2.5f)
+        println("[corner] n=3 path misses Lp(3) by ${n3}px and Lp(2.5) by ${n25}px (r=$radius)")
+        assertTrue(n3 < 0.01f * radius, "n=3 corner deviates ${n3}px, want < ${0.01f * radius}")
+        assertTrue(n25 > n3, "the n=3 shape must sit closer to Lp(3) than to Lp(2.5)")
+
+        val copied = shape.copy(topStart = androidx.compose.foundation.shape.CornerSize(radius.dp))
+        assertEquals(SquircleDefaults.WeightLarge, (copied as SquircleShape).weight)
+        assertTrue(copied != SquircleShape(cornerRadius = radius.dp), "weight participates in equality")
     }
 
     /**

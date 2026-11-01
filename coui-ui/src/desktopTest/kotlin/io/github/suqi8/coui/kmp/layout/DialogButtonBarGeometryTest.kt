@@ -151,7 +151,7 @@ class DialogButtonBarGeometryTest {
         size = Size(392f, 200f),
         density = Density(1f),
     ) {
-        val wrappingLabel = "把这条非常非常长的记录以及它的全部本地副本一起彻底删除掉"
+        val wrappingLabel = "Delete this very long record and every local copy of it for good, right now"
         setContent {
             COUITheme(colors = lightColorScheme()) {
                 Box(modifier = Modifier.width(panelWidth)) {

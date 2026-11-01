@@ -52,21 +52,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.anim.COUILinear
 import io.github.suqi8.coui.kmp.anim.COUIOutEase
 import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -92,7 +97,8 @@ import kotlinx.coroutines.launch
  * @param defaultWindowInsetsPadding Whether to reserve the caption bar's bottom inset below the
  * items. COUI `COUINavigationView.applyWindowInsets` only folds the `systemBars` left/right insets
  * into the view's start/end padding and never consumes the bottom navigation-bar inset, so the bar
- * does not add a navigation-bar inset of its own: bottom avoidance is the host layout's job.
+ * does not add a navigation-bar inset of its own: bottom avoidance is the host layout's job. Off by
+ * default; pass `true` for a host that leaves the bottom inset to the bar.
  * @param visible Whether the bar is on screen. Toggling it plays the COUI show / hide motion on the
  * bar itself (see [NavigationBarMotion]); the bar stays composed and slides out by its own height.
  * For the menu enter / exit transition COUI plays when swapping menus use [NavigationBarEnterExit].
@@ -105,11 +111,12 @@ fun NavigationBar(
     color: Color = COUITheme.colorScheme.bar,
     backdrop: Backdrop? = LocalBackdrop.current,
     showDivider: Boolean = true,
-    defaultWindowInsetsPadding: Boolean = true,
+    defaultWindowInsetsPadding: Boolean = false,
     visible: Boolean = true,
     mode: NavigationBarDisplayMode = NavigationBarDisplayMode.IconAndText,
     content: @Composable RowScope.() -> Unit,
 ) {
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val captionBarPaddings = WindowInsets.captionBar.only(WindowInsetsSides.Bottom).asPaddingValues()
     val captionBarBottomPaddingValue = captionBarPaddings.calculateBottomPadding()
 
@@ -142,6 +149,8 @@ fun NavigationBar(
                 shape = RectangleShape,
                 containerColor = color,
                 fallback = Modifier.background(color),
+                blurRadius = NavigationBarDefaults.blurRadius(),
+                blendColors = NavigationBarDefaults.blurColors(isDark),
             ),
     ) {
         if (showDivider) {
@@ -175,7 +184,7 @@ fun NavigationBar(
     modifier: Modifier = Modifier,
     color: Color = COUITheme.colorScheme.background,
     showDivider: Boolean = true,
-    defaultWindowInsetsPadding: Boolean = true,
+    defaultWindowInsetsPadding: Boolean = false,
     mode: NavigationBarDisplayMode = NavigationBarDisplayMode.IconAndText,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -382,7 +391,7 @@ fun RowScope.NavigationBarItem(
                     text = label,
                     color = labelColor,
                     textAlign = TextAlign.Center,
-                    fontSize = NavigationBarDefaults.LabelFontSize,
+                    fontSize = navigationLabelFontSize(NavigationBarDefaults.LabelFontSize),
                     fontWeight = fontWeight,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -420,7 +429,7 @@ fun RowScope.NavigationBarItem(
                     text = label,
                     color = labelColor,
                     textAlign = TextAlign.Center,
-                    fontSize = NavigationBarDefaults.LabelFontSize,
+                    fontSize = navigationLabelFontSize(NavigationBarDefaults.LabelFontSize),
                     fontWeight = fontWeight,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -434,7 +443,7 @@ fun RowScope.NavigationBarItem(
                     text = label,
                     color = labelColor,
                     textAlign = TextAlign.Center,
-                    fontSize = NavigationBarDefaults.TextFontSize,
+                    fontSize = navigationLabelFontSize(NavigationBarDefaults.TextFontSize),
                     fontWeight = fontWeight,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -631,8 +640,69 @@ fun FloatingNavigationBarItem(
     }
 }
 
+/**
+ * The `sp` value a label of [sizeSp] renders at, with the 1.15x cap of
+ * `COUIChangeTextUtil.getSuitableFontSize(size, fontScale, 2)` applied.
+ *
+ * Asked for the label's *rendered* size the native divides the dp size by the font scale and then
+ * multiplies by the cap; an `sp` value already carries the font scale, so the same growth is
+ * `sizeSp * 1.15 / fontScale`. At a font scale of 1.15 or below, the label keeps its size.
+ */
+internal fun cappedLabelFontSizeSp(sizeSp: Float, fontScale: Float): Float = if (fontScale <= NAVIGATION_FONT_SCALE_CAP) sizeSp else sizeSp * NAVIGATION_FONT_SCALE_CAP / fontScale
+
+/**
+ * `COUIChangeTextUtil.getSuitableFontSize(size, fontScale, 2)`, the call `COUINavigationView` makes in
+ * its constructor: the label stops growing once the user's font scale passes 1.15, reaching at most
+ * 1.15x its dp size. That is what keeps a five-item bar's labels inside their cells at the largest
+ * system font sizes, at which the uncapped `sp` size would run past the cell.
+ */
+@Composable
+private fun navigationLabelFontSize(size: TextUnit): TextUnit {
+    val fontScale = LocalDensity.current.fontScale
+    return cappedLabelFontSizeSp(size.value, fontScale).sp
+}
+
+/** The `maxLevel` 2 cap of `COUIChangeTextUtil.getSuitableFontSize`. */
+private const val NAVIGATION_FONT_SCALE_CAP = 1.15f
+
 /** Contains default values used by [NavigationBar] and [NavigationBarItem]. */
 object NavigationBarDefaults {
+    /**
+     * The tint layers of `FRAMEWORK_BOTTOM_BAR_PARAMS_LIGHT`: `#B3666666` in `ColorDodge`, then
+     * `#99F5F5F5` in `Luminosity`. The navigation bar is a bottom bar, so it takes the bottom-bar
+     * recipe rather than the single `couiColorBar` fill.
+     */
+    val BlurColorsLight: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0xB3666666), mode = BlurBlendMode.ColorDodge),
+        BlendColorEntry(color = Color(0x99F5F5F5), mode = BlurBlendMode.Luminosity),
+    )
+
+    /**
+     * The tint layers of `FRAMEWORK_BOTTOM_BAR_PARAMS_DARK`: `#80666666` in `Overlay`, then
+     * `#B3262626` in `Luminosity`.
+     */
+    val BlurColorsDark: List<BlendColorEntry> = listOf(
+        BlendColorEntry(color = Color(0x80666666), mode = BlurBlendMode.Overlay),
+        BlendColorEntry(color = Color(0xB3262626), mode = BlurBlendMode.Luminosity),
+    )
+
+    /** The tint layers the bar lays over its blur, picked by theme. */
+    fun blurColors(isDark: Boolean): List<BlendColorEntry> = if (isDark) BlurColorsDark else BlurColorsLight
+
+    /**
+     * `FRAMEWORK_BOTTOM_BAR_PARAMS_*` blur radius, 25. `COUIMaterialBlurEffect.setViewBlurEffect`
+     * hands it to `RenderEffect.createBlurEffect(25, 25, MIRROR)`, whose radius is a Skia blur sigma
+     * in pixels; `textureBlur` derives its sigma as `0.45 * px`, so the matching dp radius is
+     * `25 / 0.45` pixels converted to dp.
+     */
+    @Composable
+    fun blurRadius(): Float = with(LocalDensity.current) {
+        (NATIVE_BLUR_RADIUS_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+    }
+
+    private const val NATIVE_BLUR_RADIUS_PX = 25f
+    private const val TEXTURE_BLUR_SIGMA_SCALE = 0.45f
+
     /** The item cell height (COUI coui_tool_navigation_item_height). */
     val ItemHeight = 56.dp
 
@@ -651,10 +721,16 @@ object NavigationBarDefaults {
     /** The bottom padding of the label (COUINavigationItemView.topToBottom(): 9dp - 2dp). */
     val LabelBottomPadding = 7.dp
 
-    /** The label font size (COUI coui_navigation_item_text_size). */
+    /**
+     * The label font size (COUI `coui_navigation_item_text_size`, 10dp). Rendered through
+     * [navigationLabelFontSize], so it stops growing at 1.15x once the user's font scale passes 1.15.
+     */
     val LabelFontSize = 10.sp
 
-    /** The text-only font size (COUI coui_navigation_item_large_text_size). */
+    /**
+     * The text-only font size (COUI `coui_navigation_item_large_text_size`, 14dp), capped the same way
+     * [LabelFontSize] is.
+     */
     val TextFontSize = 14.sp
 
     /** The icon cross-fade duration (COUI tab icon selector enter/exitFadeDuration, 180ms). */

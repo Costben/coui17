@@ -87,6 +87,8 @@ internal fun mapMd3RolesToCOUIColorsCommon(roles: MonetRoles, dark: Boolean): Co
     val baseSurfaceContainerHigh = roles.surfaceContainerHigh
     val onSurfaceSecondaryOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.8f), baseSurface)
     val labelPrimaryVariantOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.72f), baseSurface)
+    val controlsOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.16f), baseSurface)
+    val pressBackgroundOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.08f), baseSurface)
     val onSurfaceContainerHighOpaque = ensureOpaqueOver(roles.onSurface.copy(alpha = 0.8f), baseSurfaceContainerHigh)
     val sliderBackground = ensureOpaqueOver(roles.primary.copy(alpha = 0.2f), baseSurface)
     val disabledPrimaryOpaque = ensureOpaqueOver(roles.primary.copy(alpha = 0.38f), baseSurface)
@@ -156,5 +158,14 @@ internal fun mapMd3RolesToCOUIColorsCommon(roles: MonetRoles, dark: Boolean): Co
         // COUI coui_color_bar follows the Material bottom navigation container role.
         bar = roles.surfaceContainer,
         labelPrimaryVariant = labelPrimaryVariantOpaque,
+        controls = controlsOpaque,
+        labelTertiary = onSurfaceSecondaryOpaque,
+        pressBackground = pressBackgroundOpaque,
+        quarternaryNeutral = pressBackgroundOpaque,
+        // COUI tints the container-theme fill with the scheme's accent.
+        containerTheme = roles.primary,
+        // The focus mask and ring follow that accent: 12% / 20% and 40%.
+        focus = roles.primary.copy(alpha = if (dark) 0x33 / 255f else 0x1F / 255f),
+        focusOutline = roles.primary.copy(alpha = 0x66 / 255f),
     )
 }

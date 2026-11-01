@@ -3,6 +3,7 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.annotation.IntRange
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -16,6 +17,7 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,22 +31,28 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -57,7 +65,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -90,6 +100,12 @@ import kotlin.math.roundToInt
  * @param secondaryProgress The optional secondary progress ("intent tier") drawn behind the primary active track.
  *   It is coerced into [valueRange]; the part beyond the primary value stays visible, matching the secondary layer
  *   [IntentSeekBar] draws. `null` (the default) draws nothing. New in 1.2.0.
+ * @param showProgress Whether to draw the active track (COUI couiSeekBarShowProgress). New in 1.2.0.
+ * @param showThumb Whether to draw the thumb (COUI couiSeekBarShowThumb). New in 1.2.0.
+ * @param startFromMiddle Whether the active track grows from the middle of the bar towards the
+ *   thumb instead of from the start edge (COUI couiSeekBarStartMiddle). New in 1.2.0.
+ * @param moveByFinger Whether the thumb follows the finger's displacement instead of jumping to the
+ *   finger's position (COUI `MOVE_BY_FINGER`; the default is `MOVE_BY_DISTANCE`). New in 1.2.0.
  */
 @Composable
 fun Slider(
@@ -108,6 +124,10 @@ fun Slider(
     keyPoints: List<Float>? = null,
     magnetThreshold: Float = 0.02f,
     secondaryProgress: Float? = null,
+    showProgress: Boolean = true,
+    showThumb: Boolean = true,
+    startFromMiddle: Boolean = false,
+    moveByFinger: Boolean = false,
 ) {
     require(steps >= 0) { "steps should be >= 0" }
     require(valueRange.start < valueRange.endInclusive) { "valueRange start should be less than end" }
@@ -117,30 +137,49 @@ fun Slider(
     val effectiveReverseDirection = if (layoutDirection == LayoutDirection.Rtl) !reverseDirection else reverseDirection
     val onValueChangeState by rememberUpdatedState(onValueChange)
     val onValueChangeFinishedState by rememberUpdatedState(onValueChangeFinished)
+    val density = LocalDensity.current
+    // The touch target is 36dp tall (couiSeekBarMinHeight) but the track keeps its own height, so
+    // the thumb inset and the value mapping are derived from that thickness, not from the layout.
+    val trackHeightPx = with(density) { height.toPx() }
+    val restingInsetPx = trackHeightPx * TrackCapInsetRatio
     var dragOffset by remember { mutableFloatStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
     var isThumbGrabbed by remember { mutableStateOf(false) }
     var isHoveringThumb by remember { mutableStateOf(false) }
+    // The deformation amount of the last drag frame, eased back to 0 on release
+    // (DeformationEffectParams, MAX_MOVING_DISTANCE = 30px for the full 4.7dp stretch).
+    var deformationRaw by remember { mutableFloatStateOf(0f) }
     var layoutWidth by remember { mutableIntStateOf(0) }
     var layoutHeight by remember { mutableIntStateOf(0) }
     val hapticState = remember { SliderHapticState() }
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val scope = rememberCoroutineScope()
+    val flingPosition = remember { Animatable(0f) }
 
     val coercedValue = value.coerceIn(valueRange.start, valueRange.endInclusive)
 
+    // COUISeekBarAdvanced DRAG_TRANSITION_SPRING_RESPONSE 0.15 while dragging and
+    // ClickAnimationHandler CLICK_SPRING_RESPONSE 0.3 for a tap, both critically damped.
     val progressAnimationSpec = remember(isDragging) {
         if (isDragging) {
-            spring(dampingRatio = 0.9f, stiffness = 1755f)
+            spring(dampingRatio = 1f, stiffness = 1754.6f)
         } else {
-            spring<Float>(dampingRatio = 0.96f, stiffness = 322f)
+            spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
         }
     }
 
     val animatedValueState = animateFloatAsState(coercedValue, progressAnimationSpec)
+    val deformation by animateFloatAsState(
+        targetValue = if (isDragging) deformationRaw else 0f,
+        animationSpec = DeformationSpring,
+        label = "SliderDeformation",
+    )
+    val thumbScaleTarget = if (isPressed || (isDragging && isThumbGrabbed) || isHoveringThumb) ThumbPressedScale else 1f
     val thumbScaleState = animateFloatAsState(
-        if (isPressed || (isDragging && isThumbGrabbed) || isHoveringThumb) ThumbPressedScale else 1f,
-        ThumbScaleAnimationSpec,
+        targetValue = thumbScaleTarget,
+        animationSpec = if (thumbScaleTarget > 1f) ThumbScaleEnlargeSpec else ThumbScaleShrinkSpec,
+        label = "SliderThumbScale",
     )
 
     val stepFractions = remember(steps) { stepsToTickFractions(steps) }
@@ -167,9 +206,22 @@ fun Slider(
 
     val currentLayoutWidth = layoutWidth
     val currentLayoutHeight = layoutHeight
+    // COUISeekBar PhysicsAnimationHandler: the thumb keeps sliding after a fast release and settles
+    // on a spring, reporting every intermediate value.
+    val flingTarget: (Float, Float) -> Unit = { target, from ->
+        scope.launch {
+            flingPosition.snapTo(from)
+            flingPosition.animateTo(target, TrackGrowAnimationSpec) {
+                val fraction = if (effectiveReverseDirection) 1f - value else value
+                onValueChangeState(fractionToValue(fraction))
+            }
+            onValueChangeFinishedState?.invoke()
+        }
+    }
 
     Box(
         modifier = modifier
+            .defaultMinSize(minHeight = SliderDefaults.MinTouchHeight)
             .then(
                 if (enabled) {
                     Modifier
@@ -191,7 +243,7 @@ fun Slider(
                                         continue
                                     }
 
-                                    val capInset = currentLayoutHeight * TrackCapInsetRatio
+                                    val capInset = restingInsetPx
                                     val availableWidth = (currentLayoutWidth - 2f * capInset).coerceAtLeast(0f)
                                     val hitRadius = capInset
 
@@ -215,7 +267,8 @@ fun Slider(
                             orientation = Orientation.Horizontal,
                             state = rememberDraggableState { dragAmount ->
                                 dragOffset += dragAmount
-                                val visualFraction = horizontalVisualFraction(dragOffset, layoutWidth, layoutHeight)
+                                deformationRaw = (abs(dragAmount) / MAX_MOVING_DISTANCE).coerceIn(0f, 1f)
+                                val visualFraction = horizontalVisualFraction(dragOffset, layoutWidth, restingInsetPx)
                                 val fractionForValue = if (effectiveReverseDirection) 1f - visualFraction else visualFraction
                                 val calculatedValue = fractionToValue(fractionForValue)
                                 onValueChangeState(calculatedValue)
@@ -229,24 +282,35 @@ fun Slider(
                                 )
                             },
                             onDragStarted = { offset ->
-                                val capInset = layoutHeight * TrackCapInsetRatio
+                                val capInset = restingInsetPx
                                 val availableWidth = (layoutWidth - 2f * capInset).coerceAtLeast(0f)
                                 val fraction = (animatedValueState.value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
                                 val effectiveFraction = if (effectiveReverseDirection) 1f - fraction else fraction
                                 val thumbX = capInset + effectiveFraction * availableWidth
                                 isThumbGrabbed = abs(offset.x - thumbX) <= capInset
                                 isDragging = true
-                                dragOffset = offset.x
-                                val visualFraction = horizontalVisualFraction(offset.x, layoutWidth, layoutHeight)
+                                // MOVE_BY_FINGER (moveByFinger): the thumb keeps its value and only
+                                // follows the displacement, instead of jumping under the finger.
+                                dragOffset = if (moveByFinger) thumbX else offset.x
+                                val visualFraction = horizontalVisualFraction(offset.x, layoutWidth, capInset)
                                 val fractionForValue = if (effectiveReverseDirection) 1f - visualFraction else visualFraction
                                 val calculatedValue = fractionToValue(fractionForValue)
                                 onValueChangeState(calculatedValue)
                                 hapticState.reset(calculatedValue)
                             },
-                            onDragStopped = {
+                            onDragStopped = { velocity ->
                                 isDragging = false
                                 isThumbGrabbed = false
-                                onValueChangeFinishedState?.invoke()
+                                val from = horizontalVisualFraction(dragOffset, layoutWidth, restingInsetPx)
+                                // COUISeekBar physics: a release faster than PHYSICAL_VELOCITY_LIMIT
+                                // keeps sliding (PhysicsAnimationHandler) instead of stopping dead.
+                                val projected = (from + velocity * SliderDefaults.FLING_PROJECTION_SECONDS / layoutWidth)
+                                    .coerceIn(0f, 1f)
+                                if (abs(velocity) >= SliderDefaults.FLING_VELOCITY_LIMIT && projected != from) {
+                                    flingTarget(projected, from)
+                                } else {
+                                    onValueChangeFinishedState?.invoke()
+                                }
                             },
                         )
                         .indication(interactionSource, null)
@@ -285,6 +349,10 @@ fun Slider(
             reverseDirection = effectiveReverseDirection,
             secondaryProgressFraction = secondaryProgress?.let { secondaryProgressFraction(it, valueRange) },
             secondaryProgressColor = colors.secondaryProgressColor(enabled),
+            showProgress = showProgress,
+            showThumb = showThumb,
+            startFromMiddle = startFromMiddle,
+            deformationProvider = { deformation },
             modifier = Modifier.fillMaxWidth().height(height),
         )
     }
@@ -334,6 +402,8 @@ fun VerticalSlider(
     keyPoints: List<Float>? = null,
     magnetThreshold: Float = 0.02f,
     secondaryProgress: Float? = null,
+    showProgress: Boolean = true,
+    showThumb: Boolean = true,
 ) {
     require(steps >= 0) { "steps should be >= 0" }
     require(valueRange.start < valueRange.endInclusive) { "valueRange start should be less than end" }
@@ -362,9 +432,11 @@ fun VerticalSlider(
     }
 
     val animatedValueState = animateFloatAsState(coercedValue, progressAnimationSpec)
+    val thumbScaleTarget = if (isPressed || (isDragging && isThumbGrabbed) || isHoveringThumb) ThumbPressedScale else 1f
     val thumbScaleState = animateFloatAsState(
-        if (isPressed || (isDragging && isThumbGrabbed) || isHoveringThumb) ThumbPressedScale else 1f,
-        ThumbScaleAnimationSpec,
+        targetValue = thumbScaleTarget,
+        animationSpec = if (thumbScaleTarget > 1f) ThumbScaleEnlargeSpec else ThumbScaleShrinkSpec,
+        label = "SliderThumbScale",
     )
 
     val stepFractions = remember(steps) { stepsToTickFractions(steps) }
@@ -391,9 +463,9 @@ fun VerticalSlider(
 
     val currentLayoutWidth = layoutWidth
     val currentLayoutHeight = layoutHeight
-
     Box(
         modifier = modifier
+            .defaultMinSize(minHeight = SliderDefaults.MinTouchHeight)
             .then(
                 if (enabled) {
                     Modifier
@@ -553,6 +625,8 @@ fun RangeSlider(
     keyPoints: List<Float>? = null,
     magnetThreshold: Float = 0.02f,
     secondaryProgress: Float? = null,
+    showProgress: Boolean = true,
+    showThumb: Boolean = true,
 ) {
     require(steps >= 0) { "steps should be >= 0" }
     require(valueRange.start < valueRange.endInclusive) { "valueRange start should be less than end" }
@@ -597,13 +671,17 @@ fun RangeSlider(
 
     val animatedStartValueState = animateFloatAsState(coercedStart, progressAnimationSpec)
     val animatedEndValueState = animateFloatAsState(coercedEnd, progressAnimationSpec)
+    val startThumbScaleTarget = if (isDraggingStart || isPressed || isHoveringStartThumb) ThumbPressedScale else 1f
     val startThumbScaleState = animateFloatAsState(
-        if (isDraggingStart || isPressed || isHoveringStartThumb) ThumbPressedScale else 1f,
-        ThumbScaleAnimationSpec,
+        targetValue = startThumbScaleTarget,
+        animationSpec = if (startThumbScaleTarget > 1f) ThumbScaleEnlargeSpec else ThumbScaleShrinkSpec,
+        label = "RangeSliderStartThumbScale",
     )
+    val endThumbScaleTarget = if (isDraggingEnd || isPressed || isHoveringEndThumb) ThumbPressedScale else 1f
     val endThumbScaleState = animateFloatAsState(
-        if (isDraggingEnd || isPressed || isHoveringEndThumb) ThumbPressedScale else 1f,
-        ThumbScaleAnimationSpec,
+        targetValue = endThumbScaleTarget,
+        animationSpec = if (endThumbScaleTarget > 1f) ThumbScaleEnlargeSpec else ThumbScaleShrinkSpec,
+        label = "RangeSliderEndThumbScale",
     )
 
     val stepFractions = remember(steps) { stepsToTickFractions(steps) }
@@ -630,9 +708,9 @@ fun RangeSlider(
 
     val currentLayoutWidth = layoutWidth
     val currentLayoutHeight = layoutHeight
-
     Box(
         modifier = modifier
+            .defaultMinSize(minHeight = SliderDefaults.MinTouchHeight)
             .then(
                 if (enabled) {
                     Modifier
@@ -865,6 +943,94 @@ fun RangeSlider(
 
 @Suppress("DEPRECATION")
 @Deprecated(
+    message = "Migrated to the overload that adds startFromMiddle and moveByFinger.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Slider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    @IntRange(from = 0) steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    reverseDirection: Boolean = false,
+    height: Dp = SliderDefaults.MinHeight,
+    colors: SliderColors = SliderDefaults.sliderColors(),
+    hapticEffect: SliderDefaults.SliderHapticEffect = SliderDefaults.DefaultHapticEffect,
+    showKeyPoints: Boolean = false,
+    keyPoints: List<Float>? = null,
+    magnetThreshold: Float = 0.02f,
+    secondaryProgress: Float? = null,
+    showProgress: Boolean = true,
+    showThumb: Boolean = true,
+) {
+    Slider(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        valueRange = valueRange,
+        steps = steps,
+        onValueChangeFinished = onValueChangeFinished,
+        reverseDirection = reverseDirection,
+        height = height,
+        colors = colors,
+        hapticEffect = hapticEffect,
+        showKeyPoints = showKeyPoints,
+        keyPoints = keyPoints,
+        magnetThreshold = magnetThreshold,
+        secondaryProgress = secondaryProgress,
+        showProgress = showProgress,
+        showThumb = showThumb,
+    )
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds showProgress and showThumb.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Slider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    @IntRange(from = 0) steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    reverseDirection: Boolean = false,
+    height: Dp = SliderDefaults.MinHeight,
+    colors: SliderColors = SliderDefaults.sliderColors(),
+    hapticEffect: SliderDefaults.SliderHapticEffect = SliderDefaults.DefaultHapticEffect,
+    showKeyPoints: Boolean = false,
+    keyPoints: List<Float>? = null,
+    magnetThreshold: Float = 0.02f,
+    secondaryProgress: Float? = null,
+) {
+    Slider(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        valueRange = valueRange,
+        steps = steps,
+        onValueChangeFinished = onValueChangeFinished,
+        reverseDirection = reverseDirection,
+        height = height,
+        colors = colors,
+        hapticEffect = hapticEffect,
+        showKeyPoints = showKeyPoints,
+        keyPoints = keyPoints,
+        magnetThreshold = magnetThreshold,
+        secondaryProgress = secondaryProgress,
+    )
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
     message = "Migrated to the overload that adds a secondaryProgress parameter.",
     level = DeprecationLevel.HIDDEN,
 )
@@ -1004,6 +1170,10 @@ private fun SliderTrack(
     reverseDirection: Boolean,
     secondaryProgressFraction: Float?,
     secondaryProgressColor: Color,
+    showProgress: Boolean = true,
+    showThumb: Boolean = true,
+    startFromMiddle: Boolean = false,
+    deformationProvider: () -> Float = { 0f },
     modifier: Modifier = Modifier,
 ) {
     val trackGrowFraction by animateFloatAsState(
@@ -1012,6 +1182,7 @@ private fun SliderTrack(
         label = "SliderTrackGrow",
     )
 
+    val squircleEnabled = isSquircleEnabled()
     Canvas(modifier = modifier) {
         val barHeight = size.height
         val barWidth = size.width
@@ -1089,11 +1260,11 @@ private fun SliderTrack(
             val thumbCenterX = capInset + effectiveFraction * availableWidth
             val centerY = barHeight / 2f
 
-            drawRoundRect(
-                color = backgroundColor,
+            drawTrackCapsule(
+                brush = SolidColor(backgroundColor),
                 topLeft = Offset(capInset - backgroundHeight / 2f, centerY - backgroundHeight / 2f),
                 size = Size(availableWidth + backgroundHeight, backgroundHeight),
-                cornerRadius = CornerRadius(backgroundHeight / 2f),
+                squircleEnabled = squircleEnabled,
             )
 
             if (secondaryProgressFraction != null) {
@@ -1102,23 +1273,59 @@ private fun SliderTrack(
                 val secondaryCenterX = capInset + effectiveSecondary * availableWidth
                 val secondaryLeft = if (reverseDirection) secondaryCenterX - halfTrackSecondary else capInset - halfTrackSecondary
                 val secondaryRight = if (reverseDirection) barWidth - capInset + halfTrackSecondary else secondaryCenterX + halfTrackSecondary
-                drawRoundRect(
-                    color = secondaryProgressColor,
+                drawTrackCapsule(
+                    brush = SolidColor(secondaryProgressColor),
                     topLeft = Offset(secondaryLeft, centerY - halfTrackSecondary),
                     size = Size((secondaryRight - secondaryLeft).coerceAtLeast(0f), trackHeight),
-                    cornerRadius = CornerRadius(halfTrackSecondary),
+                    squircleEnabled = squircleEnabled,
                 )
             }
 
             val halfTrack = trackHeight / 2f
-            val progressLeft = if (reverseDirection) thumbCenterX - halfTrack else capInset - halfTrack
-            val progressRight = if (reverseDirection) barWidth - capInset + halfTrack else thumbCenterX + halfTrack
-            drawRoundRect(
-                color = foregroundColor,
-                topLeft = Offset(progressLeft, centerY - halfTrack),
-                size = Size((progressRight - progressLeft).coerceAtLeast(0f), trackHeight),
-                cornerRadius = CornerRadius(halfTrack),
-            )
+            if (showProgress && !startFromMiddle) {
+                // COUISeekBar glitter effect (couiSeekBarShowGlitterEffect): a white sheen swept over
+                // the active track, from coui_seekbar_glitter_effect_min_color to _max_color.
+                val progressLeft = if (reverseDirection) thumbCenterX - halfTrack else capInset - halfTrack
+                val progressRight = if (reverseDirection) barWidth - capInset + halfTrack else thumbCenterX + halfTrack
+                if (progressRight > progressLeft) {
+                    drawTrackCapsule(
+                        brush = Brush.horizontalGradient(
+                            0f to GlitterMinColor,
+                            0.5f to GlitterMaxColor,
+                            1f to GlitterMinColor,
+                            startX = progressLeft,
+                            endX = progressRight,
+                        ),
+                        topLeft = Offset(progressLeft, centerY - halfTrack),
+                        size = Size(progressRight - progressLeft, trackHeight),
+                        squircleEnabled = squircleEnabled,
+                    )
+                }
+            }
+            if (showProgress && startFromMiddle) {
+                val middle = capInset + availableWidth / 2f
+                val stretch = MaxDeformedWidth.toPx() * deformationProvider()
+                val left = min(middle, thumbCenterX - stretch)
+                val right = max(middle, thumbCenterX + stretch)
+                drawTrackCapsule(
+                    brush = SolidColor(foregroundColor),
+                    topLeft = Offset(left, centerY - halfTrack),
+                    size = Size((right - left).coerceAtLeast(halfTrack * 2f), trackHeight),
+                    squircleEnabled = squircleEnabled,
+                )
+            } else if (showProgress) {
+                // COUI deformation (couiSeekBarDeformation): the edge that follows the finger
+                // stretches by up to DEFAULT_MAX_WIDTH_DEFORMED_VALUE while the thumb moves.
+                val stretch = MaxDeformedWidth.toPx() * deformationProvider()
+                val progressLeft = if (reverseDirection) thumbCenterX - halfTrack - stretch else capInset - halfTrack
+                val progressRight = if (reverseDirection) barWidth - capInset + halfTrack else thumbCenterX + halfTrack + stretch
+                drawTrackCapsule(
+                    brush = SolidColor(foregroundColor),
+                    topLeft = Offset(progressLeft, centerY - halfTrack),
+                    size = Size((progressRight - progressLeft).coerceAtLeast(0f), trackHeight),
+                    squircleEnabled = squircleEnabled,
+                )
+            }
 
             if (showKeyPoints && stepFractions.isNotEmpty()) {
                 val keyPointRadius = SliderDefaults.KeyPointRadius.toPx()
@@ -1135,12 +1342,14 @@ private fun SliderTrack(
                     )
                 }
             }
-            drawThumbWithShadow(
-                center = Offset(thumbCenterX, centerY),
-                radius = trackHeight * ThumbRadiusRatio * thumbScale,
-                thumbColor = thumbColor,
-                shadowEnabled = enabled,
-            )
+            if (showThumb) {
+                drawThumbWithShadow(
+                    center = Offset(thumbCenterX, centerY),
+                    radius = trackHeight * ThumbRadiusRatio * thumbScale,
+                    thumbColor = thumbColor,
+                    shadowEnabled = enabled,
+                )
+            }
         }
     }
 }
@@ -1167,6 +1376,9 @@ private fun RangeSliderTrack(
     isRtl: Boolean,
     secondaryProgressFraction: Float?,
     secondaryProgressColor: Color,
+    showProgress: Boolean = true,
+    showThumb: Boolean = true,
+    deformationProvider: () -> Float = { 0f },
     modifier: Modifier = Modifier,
 ) {
     val trackGrowFraction by animateFloatAsState(
@@ -1175,6 +1387,7 @@ private fun RangeSliderTrack(
         label = "RangeSliderTrackGrow",
     )
 
+    val squircleEnabled = isSquircleEnabled()
     Canvas(modifier = modifier) {
         val barHeight = size.height
         val barWidth = size.width
@@ -1195,11 +1408,11 @@ private fun RangeSliderTrack(
 
         val centerY = barHeight / 2f
 
-        drawRoundRect(
-            color = backgroundColor,
+        drawTrackCapsule(
+            brush = SolidColor(backgroundColor),
             topLeft = Offset(capInset - backgroundHeight / 2f, centerY - backgroundHeight / 2f),
             size = Size(availableWidth + backgroundHeight, backgroundHeight),
-            cornerRadius = CornerRadius(backgroundHeight / 2f),
+            squircleEnabled = squircleEnabled,
         )
 
         val halfTrack = trackHeight / 2f
@@ -1210,18 +1423,18 @@ private fun RangeSliderTrack(
             val secondaryX = capInset + effectiveSecondary * availableWidth
             val secondaryLeft = if (isRtl) secondaryX - halfTrack else capInset - halfTrack
             val secondaryRight = if (isRtl) barWidth - capInset + halfTrack else secondaryX + halfTrack
-            drawRoundRect(
-                color = secondaryProgressColor,
+            drawTrackCapsule(
+                brush = SolidColor(secondaryProgressColor),
                 topLeft = Offset(secondaryLeft, centerY - halfTrack),
                 size = Size((secondaryRight - secondaryLeft).coerceAtLeast(0f), trackHeight),
-                cornerRadius = CornerRadius(halfTrack),
+                squircleEnabled = squircleEnabled,
             )
         }
-        drawRoundRect(
-            color = foregroundColor,
+        drawTrackCapsule(
+            brush = SolidColor(foregroundColor),
             topLeft = Offset(rangeLeft - halfTrack, centerY - halfTrack),
             size = Size(rangeRight - rangeLeft + trackHeight, trackHeight),
-            cornerRadius = CornerRadius(halfTrack),
+            squircleEnabled = squircleEnabled,
         )
 
         if (showKeyPoints && stepFractions.isNotEmpty()) {
@@ -1533,11 +1746,46 @@ private val ThumbRadiusRatio = 0.3f
 /** COUISeekBar: coui_seekbar_thumb_max_radius (8dp) over coui_seekbar_thumb_radius (6dp). */
 private val ThumbPressedScale = 8f / 6f
 
-/** COUISeekBar touch enlarge/release animators: 183ms with COUIEaseInterpolator. */
-private val TrackGrowAnimationSpec = tween<Float>(durationMillis = 183, easing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f))
+/**
+ * COUISeekBarCore track height spring: `HEIGHT_SPRING_RESPONSE` 0.5, `HEIGHT_SPRING_BOUNCE` 0,
+ * i.e. a critically damped spring with stiffness (2 * PI / 0.5)^2.
+ */
+private val TrackGrowAnimationSpec = spring<Float>(dampingRatio = 1f, stiffness = 157.9f)
 
-/** COUISeekBar thumb radius spring (COUISpringForce response 0.2f / bounce 0f). */
-private val ThumbScaleAnimationSpec = spring<Float>(dampingRatio = 1f, stiffness = 987f)
+/**
+ * COUISeekBar thumb radius springs: `THUMB_SCALE_SPRING_RESPONSE` 0.5 with
+ * `THUMB_SCALE_BOUNCE_ENLARGE` 0.3 when growing and `THUMB_SCALE_BOUNCE_SHRINK` 0 when shrinking.
+ */
+private val ThumbScaleEnlargeSpec = spring<Float>(dampingRatio = 0.7f, stiffness = 157.9f)
+
+/** See [ThumbScaleEnlargeSpec]; shrinking is critically damped. */
+private val ThumbScaleShrinkSpec = spring<Float>(dampingRatio = 1f, stiffness = 157.9f)
+
+/**
+ * COUISeekBar deformation follow spring: `DEFORMATION_SPRING_RESPONSE` 0.1, bounce 0.
+ */
+private val DeformationSpring = spring<Float>(dampingRatio = 1f, stiffness = 3947.8f)
+
+/** DeformationEffectParams: `DEFAULT_MAX_WIDTH_DEFORMED_VALUE`, in dp. */
+private val MaxDeformedWidth = 4.7.dp
+
+/** DeformationEffectParams: `DEFAULT_MAX_MOVING_DISTANCE`, in px per frame. */
+private const val MAX_MOVING_DISTANCE = 30f
+
+/** coui_seekbar_glitter_effect_min_color. */
+private val GlitterMinColor = Color(0x00FFFFFF)
+
+/** coui_seekbar_glitter_effect_max_color. */
+private val GlitterMaxColor = Color(0xA0FFFFFF)
+
+/** The vertical gradient of the textured thumb (TexturedThumbRenderer LAYER_A_ALPHA_TOP). */
+private val ThumbTextureTopAlpha = 230 / 255f
+
+/** The vertical gradient of the textured thumb (TexturedThumbRenderer LAYER_A_ALPHA_BOTTOM). */
+private val ThumbTextureBottomAlpha = 140 / 255f
+
+/** TexturedThumbRenderer LAYER_B_FILL: the inner highlight of the thumb (#77FFFFFF). */
+private val ThumbHighlightColor = Color(0x77FFFFFF)
 
 /** COUISeekBar style: couiSeekBarThumbShadowSize = 4dp (shadow blur radius). */
 private val ThumbShadowRadius = 4.dp
@@ -1549,8 +1797,48 @@ private val ThumbShadowOffsetY = 2.dp
 private val ThumbShadowColor = Color(0x1A000000)
 
 /**
- * Draws the slider thumb as a circle with a soft drop shadow (COUISeekBar.drawThumb);
- * the shadow is skipped when the slider is disabled.
+ * Draws a horizontal track as the ColorOS capsule. COUISeekBarCore hands half the bar's height to
+ * the smooth round rect path, so on ColorOS 17 the ends ease into the sides rather than meeting
+ * them as a plain semicircle; `coui_seekbar_background_radius` is only read by the vertical bar.
+ */
+private fun DrawScope.drawTrackCapsule(
+    brush: Brush,
+    topLeft: Offset,
+    size: Size,
+    squircleEnabled: Boolean,
+) {
+    if (squircleEnabled) {
+        drawPath(Path().apply { addSegmentCapsule(Rect(topLeft, size)) }, brush)
+    } else {
+        drawRoundRect(brush = brush, topLeft = topLeft, size = size, cornerRadius = CornerRadius(size.minDimension / 2f))
+    }
+}
+
+/**
+ * The soft drop shadow of a seek bar thumb: `couiSeekBarThumbShadowSize`, which StandardThumbRenderer
+ * and IntentThumbRenderer both hand to the paint's shadow layer.
+ */
+internal fun DrawScope.drawThumbShadow(center: Offset, radius: Float) {
+    val shadowRadius = radius + ThumbShadowRadius.toPx()
+    val shadowCenter = Offset(center.x, center.y + ThumbShadowOffsetY.toPx())
+    drawCircle(
+        brush = Brush.radialGradient(
+            0f to ThumbShadowColor,
+            radius / shadowRadius to ThumbShadowColor,
+            1f to ThumbShadowColor.copy(alpha = 0f),
+            center = shadowCenter,
+            radius = shadowRadius,
+        ),
+        radius = shadowRadius,
+        center = shadowCenter,
+    )
+}
+
+/**
+ * Draws the slider thumb with a soft drop shadow (COUISeekBar.drawThumb), followed by the two
+ * textured layers of COUISeekBar's [TexturedThumbRenderer]: a vertical white gradient that fades
+ * towards the top (LAYER_A, argb 230 -> 140) and a white highlight ring (LAYER_B).
+ * The shadow is skipped when the slider is disabled.
  */
 private fun DrawScope.drawThumbWithShadow(
     center: Offset,
@@ -1558,26 +1846,34 @@ private fun DrawScope.drawThumbWithShadow(
     thumbColor: Color,
     shadowEnabled: Boolean,
 ) {
-    if (shadowEnabled && radius > 0f) {
-        val shadowRadius = radius + ThumbShadowRadius.toPx()
-        val shadowCenter = Offset(center.x, center.y + ThumbShadowOffsetY.toPx())
-        drawCircle(
-            brush = Brush.radialGradient(
-                0f to ThumbShadowColor,
-                radius / shadowRadius to ThumbShadowColor,
-                1f to ThumbShadowColor.copy(alpha = 0f),
-                center = shadowCenter,
-                radius = shadowRadius,
-            ),
-            radius = shadowRadius,
-            center = shadowCenter,
-        )
-    }
+    if (shadowEnabled && radius > 0f) drawThumbShadow(center, radius)
+    if (radius <= 0f) return
     drawCircle(color = thumbColor, radius = radius, center = center)
+    // LAYER_A: white gradient, opaque towards the bottom and translucent towards the top.
+    drawCircle(
+        brush = Brush.verticalGradient(
+            0f to Color.White.copy(alpha = ThumbTextureBottomAlpha),
+            0.8f to Color.White.copy(alpha = ThumbTextureTopAlpha),
+            1f to Color.White.copy(alpha = ThumbTextureTopAlpha),
+            startY = center.y - radius,
+            endY = center.y + radius,
+        ),
+        radius = radius,
+        center = center,
+    )
+    // LAYER_B: the white highlight ring that gives the ball its glassy edge.
+    drawCircle(
+        color = ThumbHighlightColor,
+        radius = radius * 0.62f,
+        center = Offset(center.x, center.y + radius * 0.12f),
+        style = Stroke(width = radius * 0.3f),
+    )
 }
 
-private fun horizontalVisualFraction(offsetX: Float, sizeWidth: Int, sizeHeight: Int): Float {
-    val capInset = sizeHeight * TrackCapInsetRatio
+/** [horizontalVisualFraction] with the resting cap inset derived from the given track thickness. */
+private fun horizontalVisualFraction(offsetX: Float, sizeWidth: Int, trackThickness: Int): Float = horizontalVisualFraction(offsetX, sizeWidth, trackThickness * TrackCapInsetRatio)
+
+private fun horizontalVisualFraction(offsetX: Float, sizeWidth: Int, capInset: Float): Float {
     val availableWidth = (sizeWidth - 2f * capInset).coerceAtLeast(0f)
     return if (availableWidth == 0f) 0f else ((offsetX - capInset) / availableWidth).coerceIn(0f, 1f)
 }
@@ -1644,9 +1940,43 @@ private fun computeAllKeyPointFractions(
 
 object SliderDefaults {
     /**
-     * The minimum height of the [Slider] and [RangeSlider].
+     * The height of the drawn track of the [Slider] and [RangeSlider]
+     * (COUI `coui_seekbar_background_height` / `coui_seekbar_progress_height`).
      */
     val MinHeight = 20.dp
+
+    /**
+     * The minimum height of the slider's touch target (COUI `couiSeekBarMinHeight`): the track is
+     * 20dp but the view is 36dp tall, so the extra 16dp is tappable.
+     *
+     * New in 1.2.0.
+     */
+    val MinTouchHeight = 36.dp
+
+    /**
+     * The value range that matches COUI's integer progress model
+     * (`SeekBarState.DEFAULT_MAX` = 100). `SliderDefaults` keeps the 0f..1f default for
+     * compatibility; pass this range to work in COUI's 0..100 percent units.
+     *
+     * New in 1.2.0.
+     */
+    val PercentRange: ClosedFloatingPointRange<Float> = 0f..100f
+
+    /**
+     * The release speed above which the thumb keeps sliding
+     * (COUI `PhysicsAnimationHandler.PHYSICAL_VELOCITY_LIMIT`, px per second).
+     *
+     * New in 1.2.0.
+     */
+    const val FLING_VELOCITY_LIMIT = 100f
+
+    /**
+     * How far a fling of one pixel per second travels, in seconds; derived from COUI's
+     * `DEFAULT_FLING_FREQUENCY` 2.8 and `DEFAULT_FLING_LINEAR_DAMPING` 15.
+     *
+     * New in 1.2.0.
+     */
+    const val FLING_PROJECTION_SECONDS = 0.35f
 
     /**
      * The radius of the key points on the [Slider] and [RangeSlider].
@@ -1678,9 +2008,10 @@ object SliderDefaults {
         foregroundColor: Color = COUITheme.colorScheme.primary,
         disabledForegroundColor: Color = COUITheme.colorScheme.disabledPrimarySlider,
         backgroundColor: Color = COUITheme.colorScheme.sliderBackground,
-        disabledBackgroundColor: Color = COUITheme.colorScheme.disabledSecondary,
+        disabledBackgroundColor: Color = COUITheme.colorScheme.sliderBackground,
         thumbColor: Color = COUITheme.colorScheme.onPrimary,
-        disabledThumbColor: Color = COUITheme.colorScheme.disabledOnPrimary,
+        // coui_seekbar_thumb_disable_color: 54% white (dark: 29ffffff).
+        disabledThumbColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
         keyPointColor: Color = COUITheme.colorScheme.sliderKeyPoint,
         keyPointForegroundColor: Color = COUITheme.colorScheme.sliderKeyPointForeground,
         secondaryProgressColor: Color = COUITheme.colorScheme.secondaryVariant,
@@ -1721,9 +2052,10 @@ object SliderDefaults {
         foregroundColor: Color = COUITheme.colorScheme.primary,
         disabledForegroundColor: Color = COUITheme.colorScheme.disabledPrimarySlider,
         backgroundColor: Color = COUITheme.colorScheme.sliderBackground,
-        disabledBackgroundColor: Color = COUITheme.colorScheme.disabledSecondary,
+        disabledBackgroundColor: Color = COUITheme.colorScheme.sliderBackground,
         thumbColor: Color = COUITheme.colorScheme.onPrimary,
-        disabledThumbColor: Color = COUITheme.colorScheme.disabledOnPrimary,
+        // coui_seekbar_thumb_disable_color: 54% white (dark: 29ffffff).
+        disabledThumbColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
         keyPointColor: Color = COUITheme.colorScheme.sliderKeyPoint,
         keyPointForegroundColor: Color = COUITheme.colorScheme.sliderKeyPointForeground,
     ): SliderColors = sliderColors(

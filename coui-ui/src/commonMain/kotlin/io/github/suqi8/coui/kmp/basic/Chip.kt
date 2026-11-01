@@ -7,6 +7,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Indication
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -47,7 +49,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
@@ -84,8 +88,14 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param dismissContentDescription The content description of the dismiss affordance, exposed as
  *   semantics so accessibility services and UI tests can find it. New in 1.2.0.
  * @param dismissButtonSize The touch target of the dismiss affordance. Defaults to
- *   [ChipDefaults.DismissButtonSize] (48dp) so the close button meets the minimum touch target
- *   size. New in 1.2.0.
+ *   [ChipDefaults.DismissButtonSize] (28dp, COUI
+ *   `coui_chip_input_style_close_icon_touch_bounds_size`). New in 1.2.0.
+ * @param count The optional trailing count text, drawn after the label in a
+ *   [ChipDefaults.CountTextSize] style (COUIChipDrawable countText / `COUNT_TEXT_SIZE`) and spoken
+ *   as part of the chip's content description (COUIChip.onInitializeAccessibilityNodeInfo).
+ *   New in 1.2.0.
+ * @param showRedDot Whether to draw the COUI hint red dot at the top-end corner of the label
+ *   (COUIChipDrawable drawRedDot, COUIHintRedDot.Small). New in 1.2.0.
  * @param cornerRadius The corner radius of the [Chip]. The default resolves to half the measured
  *   height, as COUIChipDrawable's `-1` does, and follows the system capsule curve; an explicit
  *   smaller radius keeps the Lp squircle.
@@ -119,6 +129,8 @@ fun Chip(
     dismissIcon: (@Composable () -> Unit)? = null,
     dismissContentDescription: String = ChipDefaults.DISMISS_CONTENT_DESCRIPTION,
     dismissButtonSize: Dp = ChipDefaults.DismissButtonSize,
+    count: String? = null,
+    showRedDot: Boolean = false,
 ) {
     @Suppress("NAME_SHADOWING")
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
@@ -175,6 +187,16 @@ fun Chip(
     } else {
         containerColor
     }
+    // COUIChipDrawable.CloseIconAnimation: the close icon and the width it occupies grow from 0 to 1
+    // on a COUISpringForce(response 0.3, bounce 0); the icon itself is scaled between
+    // CLOSE_ICON_SCALE_MIN_VALUE (0.3) and 1 while it appears.
+    val dismissProgress = remember { Animatable(if (onDismiss != null) 1f else 0f) }
+    LaunchedEffect(onDismiss != null) {
+        dismissProgress.animateTo(if (onDismiss != null) 1f else 0f, ChipCloseIconSpring)
+    }
+    val dismissFraction = dismissProgress.value
+    val dismissVisualScale = CHIP_CLOSE_ICON_SCALE_MIN +
+        (1f - CHIP_CLOSE_ICON_SCALE_MIN) * dismissFraction
     // COUIChipDrawable.clipSmoothRoundRect: the default chipCornerRadius (-1) resolves to half the
     // background height, so the default token follows the measured size and draws the system
     // capsule curve. An explicit other radius keeps the Lp squircle. See CapsuleOutlineShape.
@@ -206,7 +228,14 @@ fun Chip(
                     enabled = enabled,
                     role = Role.Checkbox,
                     onClick = onClick,
-                ),
+                )
+                .semantics {
+                    // COUIChip.onInitializeAccessibilityNodeInfo concatenates the label, the
+                    // coui_chip_count_separator and the count text into the node's text.
+                    if (count != null) {
+                        contentDescription = label + ChipDefaults.COUNT_SEPARATOR + count
+                    }
+                },
             propagateMinConstraints = true,
         ) {
             val layoutDirection = LocalLayoutDirection.current
@@ -216,8 +245,14 @@ fun Chip(
                     .padding(
                         start = insideMargin.calculateStartPadding(layoutDirection),
                         top = insideMargin.calculateTopPadding(),
-                        // COUIChipDrawable: a close icon takes the place of chipEndPadding.
-                        end = if (onDismiss != null) 0.dp else insideMargin.calculateEndPadding(layoutDirection),
+                        // COUIChipDrawable: a close icon takes the place of chipEndPadding, and a red
+                        // dot widens the chip by mRedDotOffsetHorizontal + dot diameter.
+                        end = if (onDismiss != null) {
+                            0.dp
+                        } else {
+                            insideMargin.calculateEndPadding(layoutDirection) +
+                                if (showRedDot) ChipDefaults.RedDotReservedWidth else 0.dp
+                        },
                         bottom = insideMargin.calculateBottomPadding(),
                     ),
                 horizontalArrangement = Arrangement.Center,
@@ -240,16 +275,33 @@ fun Chip(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.widthIn(max = ChipDefaults.TextMaxWidth),
                 )
-                if (onDismiss != null) {
+                if (count != null) {
+                    // COUIChipDrawable.drawCount: the count text follows the label after
+                    // mCountMarginStart, in COUNT_TEXT_SIZE (12sp) or countTextAppearance.
+                    Spacer(Modifier.width(ChipDefaults.CountMarginStart))
+                    Text(
+                        text = count,
+                        color = contentColor,
+                        style = ChipDefaults.countTextStyle(),
+                        maxLines = 1,
+                    )
+                }
+                if (dismissFraction > 0f) {
                     // COUIChipDrawable.calculateCloseIconWidth: closeIconStartPadding + closeIconSize +
                     // closeIconEndPadding, with the icon closeIconEndPadding from the chip's end edge.
+                    // The whole block is scaled by the close icon animation progress, so the chip
+                    // widens as the icon appears.
                     Box(
                         modifier = Modifier
                             .padding(
-                                start = ChipDefaults.DismissIconStartPadding,
-                                end = ChipDefaults.DismissIconEndPadding,
+                                start = ChipDefaults.DismissIconStartPadding * dismissFraction,
+                                end = ChipDefaults.DismissIconEndPadding * dismissFraction,
                             )
-                            .size(ChipDefaults.DismissIconSize),
+                            .size(ChipDefaults.DismissIconSize)
+                            .graphicsLayer {
+                                scaleX = dismissVisualScale
+                                scaleY = dismissVisualScale
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         // calculateCloseIconTouchBounds: a closeIconTouchBoundsSize square centred on
@@ -260,9 +312,11 @@ fun Chip(
                                 .clickable(
                                     interactionSource = dismissInteractionSource,
                                     indication = null,
-                                    enabled = enabled,
+                                    enabled = enabled && dismissFraction >= 1f,
                                     role = Role.Button,
-                                    onClick = onDismiss,
+                                    // COUIChipDrawable keeps the close icon drawn while the hide
+                                    // animation runs, but it is only clickable while visible.
+                                    onClick = { onDismiss?.invoke() },
                                 )
                                 .semantics { contentDescription = dismissContentDescription },
                             contentAlignment = Alignment.Center,
@@ -280,15 +334,83 @@ fun Chip(
                     }
                 }
             }
+            if (showRedDot) {
+                // COUIChipDrawable.drawRedDot: a COUIHintRedDot.Small dot pinned to the top-end corner
+                // of the label, mRedDotOffsetHorizontal from it and mRedDotOffsetVertical from the top.
+                val dotEndInset = if (onDismiss != null) {
+                    ChipDefaults.DismissIconStartPadding + ChipDefaults.DismissIconSize +
+                        ChipDefaults.DismissIconEndPadding
+                } else {
+                    insideMargin.calculateEndPadding(layoutDirection)
+                }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(
+                            top = ChipDefaults.RedDotOffsetVertical,
+                            end = (dotEndInset - ChipDefaults.RedDotReservedWidth).coerceAtLeast(0.dp),
+                        )
+                        .size(ChipDefaults.RedDotSize)
+                        .background(color = ChipDefaults.redDotColor(), shape = CircleShape),
+                )
+            }
         }
     }
 }
 
 @Suppress("DEPRECATION")
 @Deprecated(
+    message = "Migrated to the overload that adds count and showRedDot parameters.",
+    level = DeprecationLevel.HIDDEN,
+)
+@OptIn(ExperimentalCOUIApi::class)
+@Composable
+fun Chip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: (@Composable () -> Unit)? = null,
+    cornerRadius: Dp = COUITheme.dimens.chip.cornerRadius,
+    minWidth: Dp = COUITheme.dimens.chip.minWidth,
+    minHeight: Dp = COUITheme.dimens.chip.minHeight,
+    maxWidth: Dp = COUITheme.dimens.chip.maxWidth,
+    colors: ChipColors = ChipDefaults.chipColors(),
+    insideMargin: PaddingValues = COUITheme.dimens.chip.insideMargin,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+    onDismiss: (() -> Unit)? = null,
+    dismissIcon: (@Composable () -> Unit)? = null,
+    dismissContentDescription: String = ChipDefaults.DISMISS_CONTENT_DESCRIPTION,
+    dismissButtonSize: Dp = ChipDefaults.DismissButtonSize,
+): Unit = Chip(
+    selected = selected,
+    onClick = onClick,
+    label = label,
+    modifier = modifier,
+    enabled = enabled,
+    icon = icon,
+    cornerRadius = cornerRadius,
+    minWidth = minWidth,
+    minHeight = minHeight,
+    maxWidth = maxWidth,
+    colors = colors,
+    insideMargin = insideMargin,
+    interactionSource = interactionSource,
+    indication = indication,
+    onDismiss = onDismiss,
+    dismissIcon = dismissIcon,
+    dismissContentDescription = dismissContentDescription,
+    dismissButtonSize = dismissButtonSize,
+)
+
+@Suppress("DEPRECATION")
+@Deprecated(
     message = "Migrated to the overload that adds dismiss and sizing parameters.",
     level = DeprecationLevel.HIDDEN,
 )
+@OptIn(ExperimentalCOUIApi::class)
 @Composable
 fun Chip(
     selected: Boolean,
@@ -384,6 +506,93 @@ object ChipDefaults {
     @ExperimentalCOUIApi
     const val DISMISS_CONTENT_DESCRIPTION = "Dismiss"
 
+    /**
+     * The gap between the label and the count text (COUIChipDrawable `mCountMarginStart`, which
+     * defaults to 2dp and is overridden by the chipCountStartMargin attribute).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val CountMarginStart = 2.dp
+
+    /**
+     * The separator spoken between the label and the count (COUI `coui_chip_count_separator`; the
+     * decompiled build ships no strings resources, so this mirrors the concatenation order).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    const val COUNT_SEPARATOR = ", "
+
+    /**
+     * The font size of the count text when no countTextAppearance is set
+     * (COUIChipDrawable `COUNT_TEXT_SIZE` = 12sp).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val CountTextSize: TextUnit = 12.sp
+
+    /**
+     * The diameter of the hint red dot (COUI `Widget.COUI.COUIHintRedDot.Small`
+     * couiDotDiameter = `coui_dot_diameter_small` 6dp).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val RedDotSize = 6.dp
+
+    /**
+     * The horizontal offset between the label and the red dot (COUI
+     * `coui_chip_red_dot_offset_horizontal`).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val RedDotOffsetHorizontal = 2.dp
+
+    /**
+     * The vertical offset of the red dot from the chip's top edge (COUI
+     * `coui_chip_red_dot_offset_vertical`).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val RedDotOffsetVertical = 6.dp
+
+    /**
+     * The width a red dot adds to the chip: the horizontal offset plus the dot diameter
+     * (COUIChipDrawable.calculateRedDotWidth).
+     *
+     * New in 1.2.0.
+     */
+    @ExperimentalCOUIApi
+    val RedDotReservedWidth: Dp = RedDotOffsetHorizontal + RedDotSize
+
+    /**
+     * The color of the hint red dot (COUI `coui_color_additional_red`: #EB3B2F light,
+     * #EB493D dark).
+     *
+     * New in 1.2.0.
+     */
+    @Composable
+    @ExperimentalCOUIApi
+    fun redDotColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+        ChipRedDotDark
+    } else {
+        ChipRedDotLight
+    }
+
+    /**
+     * The default text style of the count text: the label style at [CountTextSize]
+     * (COUIChipDrawable falls back to 12sp when countTextAppearance is not set).
+     *
+     * New in 1.2.0.
+     */
+    @Composable
+    @ExperimentalCOUIApi
+    fun countTextStyle(): TextStyle = textStyle().copy(fontSize = CountTextSize)
+
     /** The size of the leading icon (COUI coui_chip_selection_style_chip_icon_size). */
     val IconSize = 16.dp
 
@@ -415,7 +624,7 @@ object ChipDefaults {
         selectedDisabledContainerColor: Color = COUITheme.colorScheme.disabledPrimaryButton,
         contentColor: Color = COUITheme.colorScheme.onSurface,
         selectedContentColor: Color = COUITheme.colorScheme.onPrimary,
-        disabledContentColor: Color = COUITheme.colorScheme.disabledOnSecondaryVariant,
+        disabledContentColor: Color = chipDisabledContentColor(),
         selectedDisabledContentColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
     ): ChipColors = remember(
         containerColor,
@@ -498,6 +707,35 @@ private val ChipPressedTintLight = Color(0x1F000000)
 
 /** couiColorPress in dark themes (coui_color_press_dark #33FFFFFF). */
 private val ChipPressedTintDark = Color(0x33FFFFFF)
+
+/** `chip_unchecked_text_disable_color` in light themes (#42000000). */
+private val ChipUncheckedDisabledTextLight = Color(0x42000000)
+
+/** `chip_unchecked_text_disable_color` in dark themes (#29FFFFFF). */
+private val ChipUncheckedDisabledTextDark = Color(0x29FFFFFF)
+
+/** COUI `coui_color_additional_red` in light themes (#EB3B2F). */
+private val ChipRedDotLight = Color(0xFFEB3B2F)
+
+/** COUI `coui_color_additional_red` in dark themes (#EB493D). */
+private val ChipRedDotDark = Color(0xFFEB493D)
+
+/** The smallest scale the close icon shrinks to while appearing (COUIChipDrawable CLOSE_ICON_SCALE_MIN_VALUE). */
+private val CHIP_CLOSE_ICON_SCALE_MIN = 0.3f
+
+/** COUIChipDrawable.CloseIconAnimation spring: COUISpringForce(response 0.3f, bounce 0f). */
+private val ChipCloseIconSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
+
+/**
+ * The text color of a disabled unselected chip: COUI `chip_unchecked_text_disable_color`
+ * (#42000000 light / #29FFFFFF dark), which is not the same as the shared disabled secondary color.
+ */
+@Composable
+private fun chipDisabledContentColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
+    ChipUncheckedDisabledTextDark
+} else {
+    ChipUncheckedDisabledTextLight
+}
 
 /**
  * A release before the press tint reaches this progress defers the fade-out until it does, so

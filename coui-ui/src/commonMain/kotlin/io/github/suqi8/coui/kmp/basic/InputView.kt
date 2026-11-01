@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -164,6 +165,9 @@ fun InputView(
                 onValueChange = handleValueChange,
                 modifier = Modifier
                     .fillMaxWidth()
+                    // coui_multi_input_card_view.xml gives the multi-line input area a fixed
+                    // coui_card_multi_input_height so a short draft still fills the card.
+                    .heightIn(min = if (singleLine) 0.dp else InputViewDefaults.MultiFieldHeight)
                     .padding(top = fieldTopPadding, bottom = fieldBottomPadding),
                 backgroundMode = TextFieldMode.None,
                 insideMargin = DpSize(0.dp, 0.dp),
@@ -279,6 +283,12 @@ object InputViewDefaults {
 
     /** The vertical padding of the multi-line field (COUI coui_card_multi_edittext_padding). */
     val MultiFieldPadding = 13.dp
+
+    /**
+     * The minimum height of the multi-line input area (COUI `coui_card_multi_input_height` 152dp,
+     * the height of the input_layout frame in coui_multi_input_card_view.xml).
+     */
+    val MultiFieldHeight = 152.dp
 
     /** The gap between the multi-line field and its counter. */
     val MultiCountSpacing = 4.dp

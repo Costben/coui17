@@ -194,6 +194,8 @@ private fun TouchSearchViewDemo() {
             keys = TouchSearchViewDefaults.NormalKeys,
             onKeySelected = { selectedKey = it },
             modifier = Modifier.align(Alignment.TopEnd),
+            // The native setName() list: the entries filed under the held key.
+            sectionNames = mapOf("#" to listOf("12306", "114", "淘宝")),
         )
     }
 }

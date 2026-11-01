@@ -14,6 +14,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.BasicComponentColors
@@ -38,6 +40,9 @@ import io.github.suqi8.coui.kmp.preference.internal.StartActionSlot
  * @param startAction The [Composable] content on the start side of the [RadioButtonPreference].
  * @param endActions The [Composable] content on the end side of the [RadioButtonPreference].
  * @param radioButtonLocation The location of radio button, [RadioButtonLocation.Start] or [RadioButtonLocation.End].
+ *   Defaults to [RadioButtonLocation.End]: `Preference.COUI.COUIMarkPreference` binds the mark through
+ *   `android:widgetLayout=@layout/coui_preference_widget_mark`, whose `coui_tail_mark` sits in the row's
+ *   trailing `widget_frame`.
  * @param bottomAction The [Composable] content at the bottom of the [RadioButtonPreference].
  * @param insideMargin The margin inside the [RadioButtonPreference].
  * @param cardListPosition The row's position inside its card group. Rounded outer edges receive extra padding.
@@ -57,7 +62,7 @@ fun RadioButtonPreference(
     radioButtonColors: RadioButtonColors = RadioButtonDefaults.radioButtonColors(),
     startAction: @Composable (() -> Unit)? = null,
     endActions: @Composable (RowScope.() -> Unit)? = null,
-    radioButtonLocation: RadioButtonLocation = RadioButtonLocation.Start,
+    radioButtonLocation: RadioButtonLocation = RadioButtonLocation.End,
     bottomAction: (@Composable () -> Unit)? = null,
     insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
     cardListPosition: CardListPosition = CardListPosition.None,
@@ -67,7 +72,10 @@ fun RadioButtonPreference(
     val currentOnClick by rememberUpdatedState(onClick)
 
     BasicComponent(
-        modifier = modifier,
+        // `COUIMarkPreference.onBindViewHolder` turns the row into an action labelled
+        // `coui_accessibility_select` and drops it once the tail mark is checked, so the reader knows
+        // the row is already selected.
+        modifier = modifier.semantics { this.selected = selected },
         insideMargin = insideMargin,
         cardListPosition = cardListPosition,
         title = title,
@@ -91,7 +99,6 @@ fun RadioButtonPreference(
                             modifier = Modifier
                                 .align(Alignment.CenterVertically)
                                 .weight(1f, fill = false),
-                            endSpacing = 5.dp,
                             content = it,
                         )
                     }
@@ -125,6 +132,7 @@ fun RadioButtonPreference(
         onClick = {
             currentOnClick.takeIf { enabled }?.invoke()
         },
+        onClickLabel = RadioButtonPreferenceDefaults.SelectActionLabel,
         role = Role.RadioButton,
         holdDownState = holdDownState,
         enabled = enabled,
@@ -182,4 +190,16 @@ private fun RadioButtonPreferenceEndAction(
 enum class RadioButtonLocation {
     Start,
     End,
+}
+
+/**
+ * Defaults of [RadioButtonPreference].
+ */
+object RadioButtonPreferenceDefaults {
+
+    /**
+     * The click action label COUI puts on the row, `coui_accessibility_select`
+     * (`COUIMarkPreference.onBindViewHolder`).
+     */
+    val SelectActionLabel = "Select"
 }

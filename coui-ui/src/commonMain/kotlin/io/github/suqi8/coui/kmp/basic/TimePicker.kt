@@ -19,10 +19,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * A plain time-of-day holder used by [TimePicker].
@@ -45,9 +48,12 @@ data class TimeValue(
  * Hour and minute scroll wheels arranged like the COUI time picker
  * (COUITimeLimitPicker). In 12-hour mode an AM/PM wheel is added; COUI places
  * it before the hour wheel for locales whose time pattern starts with the
- * day period (e.g. Chinese) and after the minute wheel otherwise, which is
- * controlled here by [amPmFirst]. Optional unit labels (e.g. "h" / "min")
+ * day period (e.g. Chinese) and after the minute wheel otherwise, which
+ * [amPmFirst] defaults to and can override. Optional unit labels (e.g. "h" / "min")
  * are drawn beside the selected row, matching the COUI unit text.
+ *
+ * Two hairlines are drawn across the selected row, `coui_selected_background_radius` above and
+ * below the center, exactly as `COUITimeLimitPicker.dispatchDraw` paints them.
  *
  * @param value The currently selected time. The hour is always in 24-hour form.
  * @param onValueChange The callback invoked when the selected time changes.
@@ -56,7 +62,7 @@ data class TimeValue(
  * @param is24Hour Whether the hour wheel uses the 24-hour format. When false,
  *   hours display as 1..12 with an AM/PM wheel.
  * @param amPmFirst Whether the AM/PM wheel is placed before the hour wheel
- *   (only used when [is24Hour] is false).
+ *   (only used when [is24Hour] is false). Defaults to the order of the current locale.
  * @param amLabel The display string for AM on the AM/PM wheel.
  * @param pmLabel The display string for PM on the AM/PM wheel.
  * @param hourUnit The unit label drawn beside the selected hour; empty to hide.
@@ -76,7 +82,7 @@ fun TimePicker(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     is24Hour: Boolean = true,
-    amPmFirst: Boolean = false,
+    amPmFirst: Boolean = TimePickerDefaults.AmPmFirst,
     amLabel: String = TimePickerDefaults.AmLabel,
     pmLabel: String = TimePickerDefaults.PmLabel,
     hourUnit: String = TimePickerDefaults.HourUnit,
@@ -137,60 +143,63 @@ fun TimePicker(
     }
     val showAmPm = !is24Hour
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(insideMargin),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (showAmPm && amPmFirst) {
-            AmPmWheel(
-                value = if (coercedHour < 12) 0 else 1,
-                onValueChange = onAmPmChange,
+    Box(modifier) {
+        PickerSelectionDividers(Modifier.matchParentSize())
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(insideMargin),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (showAmPm && amPmFirst) {
+                AmPmWheel(
+                    value = if (coercedHour < 12) 0 else 1,
+                    onValueChange = onAmPmChange,
+                    enabled = enabled,
+                    label = amPmLabel,
+                    columnWidth = amPmColumnWidth,
+                    colors = colors,
+                    textStyle = textStyle,
+                    itemHeight = itemHeight,
+                )
+            }
+            WheelWithUnit(
+                value = displayHour,
+                onValueChange = onHourChange,
                 enabled = enabled,
-                label = amPmLabel,
-                columnWidth = amPmColumnWidth,
+                range = hourRange,
+                label = hourLabel,
+                columnWidth = hourColumnWidth,
+                unit = hourUnit,
                 colors = colors,
                 textStyle = textStyle,
                 itemHeight = itemHeight,
             )
-        }
-        WheelWithUnit(
-            value = displayHour,
-            onValueChange = onHourChange,
-            enabled = enabled,
-            range = hourRange,
-            label = hourLabel,
-            columnWidth = hourColumnWidth,
-            unit = hourUnit,
-            colors = colors,
-            textStyle = textStyle,
-            itemHeight = itemHeight,
-        )
-        WheelWithUnit(
-            value = coercedMinute,
-            onValueChange = onMinuteChange,
-            enabled = enabled,
-            range = 0..59,
-            label = TwoDigitLabel,
-            columnWidth = minuteColumnWidth,
-            unit = minuteUnit,
-            colors = colors,
-            textStyle = textStyle,
-            itemHeight = itemHeight,
-        )
-        if (showAmPm && !amPmFirst) {
-            AmPmWheel(
-                value = if (coercedHour < 12) 0 else 1,
-                onValueChange = onAmPmChange,
+            WheelWithUnit(
+                value = coercedMinute,
+                onValueChange = onMinuteChange,
                 enabled = enabled,
-                label = amPmLabel,
-                columnWidth = amPmColumnWidth,
+                range = 0..59,
+                label = TwoDigitLabel,
+                columnWidth = minuteColumnWidth,
+                unit = minuteUnit,
                 colors = colors,
                 textStyle = textStyle,
                 itemHeight = itemHeight,
             )
+            if (showAmPm && !amPmFirst) {
+                AmPmWheel(
+                    value = if (coercedHour < 12) 0 else 1,
+                    onValueChange = onAmPmChange,
+                    enabled = enabled,
+                    label = amPmLabel,
+                    columnWidth = amPmColumnWidth,
+                    colors = colors,
+                    textStyle = textStyle,
+                    itemHeight = itemHeight,
+                )
+            }
         }
     }
 }
@@ -220,6 +229,7 @@ private fun WheelWithUnit(
             colors = colors,
             textStyle = textStyle,
             itemHeight = itemHeight,
+            longPressUpdateInterval = TimePickerDefaults.LongPressInterval,
         )
         if (unit.isNotEmpty()) {
             // COUI draws the unit at the selected value's trailing edge, offset from the wheel center.
@@ -260,6 +270,9 @@ private fun AmPmWheel(
         colors = colors,
         textStyle = textStyle,
         itemHeight = itemHeight,
+        // coui_time_limit_picker.xml gives the AM/PM wheel startTextSize 18dp.
+        normalTextSize = TimePickerDefaults.AmPmNormalTextSize,
+        longPressUpdateInterval = TimePickerDefaults.LongPressInterval,
     )
 }
 
@@ -286,6 +299,12 @@ object TimePickerDefaults {
     /** Font size of the unit label (COUI coui_numberpicker_unit_textSize). */
     val UnitFontSize = 14.sp
 
+    /** Normal text size of the AM/PM wheel (`startTextSize` in `coui_time_limit_picker.xml`). */
+    val AmPmNormalTextSize = 18.dp
+
+    /** How often a held row keeps stepping (`LONGPRESS_UPDATE_INTERVAL`, 100ms). */
+    val LongPressInterval: Duration = 100.milliseconds
+
     /** Default AM label, as COUI shows in English. */
     val AmLabel = "AM"
 
@@ -297,7 +316,18 @@ object TimePickerDefaults {
 
     /** Default minute unit label (hidden). */
     val MinuteUnit = ""
+
+    /**
+     * Whether the AM/PM wheel leads the hour wheel in the current locale.
+     *
+     * `COUITimeLimitPicker` derives this from `DateFormat.getBestDateTimePattern(locale, "hm")`:
+     * the day period comes first in East Asia and last almost everywhere else.
+     */
+    val AmPmFirst: Boolean
+        get() = Locale.current.language in DayPeriodFirstLanguages
 }
+
+private val DayPeriodFirstLanguages = setOf("zh", "ja", "ko")
 
 private val TwoDigitLabel: (Int) -> String = { it.toString().padStart(2, '0') }
 

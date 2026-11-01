@@ -34,13 +34,14 @@ import kotlin.math.floor
 private const val TAG = "COUIAppBarBlur"
 
 /**
- * `AppBarBlurParams` defaults (`appBarBlurParamsDefault`): start radius 30px, end radius 0px,
- * speed 3. These are handed to the framework unchanged; it is the framework's own blur that
- * consumes them, so they need no tuning against COUI's engine.
+ * `AppBarBlurParams` defaults (`appBarBlurParamsDefault`), read from [AppBarGlassDefaults] so the
+ * native and engine paths cannot drift apart: start radius 30px, end radius 0px, speed 3. These are
+ * handed to the framework unchanged; it is the framework's own blur that consumes them, so they need
+ * no tuning against COUI's engine.
  */
-private const val NATIVE_START_BLUR_RADIUS_PX = 30f
-private const val NATIVE_END_BLUR_RADIUS_PX = 0f
-private const val NATIVE_GRADIENT_BLUR_SPEED = 3f
+private val NATIVE_START_BLUR_RADIUS_PX: Float get() = AppBarGlassDefaults.GradientBlurRadiusPx
+private val NATIVE_END_BLUR_RADIUS_PX: Float get() = AppBarGlassDefaults.GradientEndBlurRadiusPx
+private val NATIVE_GRADIENT_BLUR_SPEED: Float get() = AppBarGlassDefaults.GradientBlurSpeed
 
 /**
  * A way to put a gradient blur on the overlay view's RenderNode as a backdrop effect, so HWUI blurs

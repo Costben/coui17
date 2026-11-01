@@ -34,19 +34,28 @@ import kotlin.math.roundToInt
  */
 @Stable
 internal class PopupBarriers {
-    private val tops = mutableStateMapOf<Any, Int>()
+    private val bars = mutableStateMapOf<Any, Bar>()
 
-    /** The highest registered barrier top in window pixels, outsets applied, or `null` when there is none. */
-    val bottomBarrierTop: Int?
-        get() = tops.values.minOrNull()
+    /**
+     * The highest barrier top in window pixels, outsets applied, that can bound a popup anchored at
+     * [anchorTop], or `null` when there is none.
+     *
+     * A bar that ends above the anchor is skipped. The native walk has no such case, because its bars
+     * sit at the bottom of the window; a bar scrolling with a page can end up above the anchor, where
+     * honouring it would throw the popup to the top of the window.
+     */
+    fun bottomBarrierTop(anchorTop: Int): Int? = bars.values.filter { it.bottom > anchorTop }.minOfOrNull { it.top }
 
-    fun update(owner: Any, top: Int) {
-        if (tops[owner] != top) tops[owner] = top
+    fun update(owner: Any, top: Int, bottom: Int) {
+        val bar = Bar(top, bottom)
+        if (bars[owner] != bar) bars[owner] = bar
     }
 
     fun remove(owner: Any) {
-        tops.remove(owner)
+        bars.remove(owner)
     }
+
+    private data class Bar(val top: Int, val bottom: Int)
 }
 
 /** The [PopupBarriers] of the current COUI theme, or `null` outside one. */
@@ -117,7 +126,7 @@ private class PopupBottomBarrierNode(var gap: Dp) :
             return
         }
         val gapPx = with(requireDensity()) { gap.toPx() }
-        barriers.update(this, (bounds.top - gapPx).roundToInt().coerceAtLeast(0))
+        barriers.update(this, (bounds.top - gapPx).roundToInt().coerceAtLeast(0), bounds.bottom.roundToInt())
     }
 
     override fun onDetach() {

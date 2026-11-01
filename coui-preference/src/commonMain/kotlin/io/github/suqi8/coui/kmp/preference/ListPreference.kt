@@ -46,7 +46,7 @@ import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Check
-import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
+import io.github.suqi8.coui.kmp.overlay.OverlayBottomAssignmentDialog
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -165,7 +165,7 @@ fun ListPreference(
     )
 
     if (hasEntries) {
-        OverlayBottomSheet(
+        OverlayBottomAssignmentDialog(
             show = isSheetShown.value,
             title = dialogTitle,
             onDismissRequest = { setExpanded(false) },
@@ -177,6 +177,8 @@ fun ListPreference(
                     modifier = Modifier
                         .weight(1f, fill = false)
                         .fillMaxWidth()
+                        // `coui_list_to_ex_bottom_padding`: the gap the list keeps to the button bar.
+                        .padding(bottom = ListPreferenceDefaults.ButtonBarTopPadding)
                         .verticalScroll(rememberScrollState()),
                 ) {
                     entries.forEachIndexed { index, entry ->
@@ -207,10 +209,7 @@ fun ListPreference(
                     onClick = { setExpanded(false) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            top = ListPreferenceDefaults.ButtonBarTopPadding,
-                            bottom = ListPreferenceDefaults.ButtonBarBottomPadding,
-                        ),
+                        .padding(bottom = ListPreferenceDefaults.ButtonBarBottomPadding),
                     colors = ButtonDefaults.textButtonColorsBorderless(),
                 )
             }
@@ -295,7 +294,10 @@ internal fun SelectPanelItem(
                 .fillMaxWidth()
                 .heightIn(min = ListPreferenceDefaults.PanelItemMinHeight)
                 .then(interactionModifier)
-                .padding(vertical = ListPreferenceDefaults.PanelItemVerticalPadding),
+                .padding(
+                    horizontal = ListPreferenceDefaults.PanelItemHorizontalPadding,
+                    vertical = ListPreferenceDefaults.PanelItemVerticalPadding,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
@@ -305,6 +307,9 @@ internal fun SelectPanelItem(
             ) {
                 Text(
                     text = text,
+                    // `coui_select_dialog_singlechoice.xml`: ?attr/couiTextAppearanceHeadline6 (16sp
+                    // medium) in ?couiColorPrimaryNeutral, with alert_dialog_title_min_height.
+                    modifier = Modifier.heightIn(min = ListPreferenceDefaults.PanelItemTitleMinHeight),
                     fontSize = COUITheme.textStyles.headline2.fontSize,
                     fontWeight = FontWeight.Medium,
                     color = colors.itemTextColor(enabled),
@@ -312,7 +317,9 @@ internal fun SelectPanelItem(
                 summary?.let {
                     Text(
                         text = it,
-                        modifier = Modifier.padding(top = ListPreferenceDefaults.PanelItemSummarySpacing),
+                        modifier = Modifier
+                            .padding(top = ListPreferenceDefaults.PanelItemSummarySpacing)
+                            .heightIn(min = ListPreferenceDefaults.PanelItemSummaryMinHeight),
                         fontSize = COUITheme.textStyles.body2.fontSize,
                         color = colors.itemSummaryColor(enabled),
                     )
@@ -321,7 +328,10 @@ internal fun SelectPanelItem(
             endContent()
         }
         if (showDivider) {
-            HorizontalDivider()
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = ListPreferenceDefaults.PanelItemHorizontalPadding),
+                thickness = ListPreferenceDefaults.PanelItemDividerThickness,
+            )
         }
     }
 }
@@ -362,6 +372,29 @@ object ListPreferenceDefaults {
     val PanelItemVerticalPadding = 10.dp
 
     /**
+     * The horizontal inset of a panel row and of its divider
+     * (`alert_dialog_single_list_padding_left` / `..._right`, 24dp, the item's own
+     * `paddingStart` / `paddingEnd`; the divider is a `match_parent` child, so it spans the same
+     * content width).
+     */
+    val PanelItemHorizontalPadding = 24.dp
+
+    /**
+     * The minimum height of a panel row's title (`alert_dialog_title_min_height`, 22dp).
+     */
+    val PanelItemTitleMinHeight = 22.dp
+
+    /**
+     * The minimum height of a panel row's summary (`alert_dialog_summary_min_height`, 20dp).
+     */
+    val PanelItemSummaryMinHeight = 20.dp
+
+    /**
+     * The thickness of the hairline under a panel row (`coui_list_divider_height`, 0.33dp).
+     */
+    val PanelItemDividerThickness = 0.33.dp
+
+    /**
      * The gap between the text block and the selection indicator of a panel row
      * (COUI coui_dialog_layout_margin_horizontal).
      */
@@ -378,12 +411,13 @@ object ListPreferenceDefaults {
 
     /**
      * The gap between the last panel row and the button bar
-     * (COUI alert_dialog_single_list_last_item_padding_bottom).
+     * (`coui_alert_dialog_button_parent_padding_vertical`, 4dp — the button panel's own top cell
+     * padding). The rows carry their 10dp bottom inset already.
      */
-    val ButtonBarTopPadding = 6.dp
+    val ButtonBarTopPadding = 4.dp
 
-    /** The padding below the panel button bar. */
-    val ButtonBarBottomPadding = 12.dp
+    /** The padding below the panel button bar (`coui_alert_dialog_button_parent_padding_bottom`). */
+    val ButtonBarBottomPadding = 16.dp
 
     /**
      * The default [ListPreferenceColors] of the selection panel rows.

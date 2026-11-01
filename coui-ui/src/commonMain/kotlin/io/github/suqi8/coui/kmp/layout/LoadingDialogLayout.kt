@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.InfiniteProgressIndicator
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -69,6 +70,8 @@ internal fun LoadingDialogContentLayout(
         // COUI rotating dialogs are always centered with the center-dialog transitions.
         forceCentered = true,
         cornerRadius = LoadingDialogDefaults.CornerRadius,
+        // 15dp is a `*_radius_normal_16_1` token, so this card stays on the normal weight.
+        cornerWeight = SquircleDefaults.WeightNormal,
         topInset = topInset,
     ) {
         Column(
@@ -127,11 +130,13 @@ object LoadingDialogDefaults {
     val SpinnerSize = 36.dp
 
     /**
-     * The default color of the message below the spinner. COUI progress_tips uses
-     * couiColorLabelPrimary.
+     * The default color of the message below the spinner. `coui_progress_dialog_rotating` gives
+     * `progress_tips` `?attr/couiColorLabelSecondary` (`coui_color_label_secondary`, `#8a000000`,
+     * night `#8affffff`), the theme's [onSurfaceSecondary][io.github.suqi8.coui.kmp.theme.Colors]
+     * slot.
      */
     @Composable
-    fun textColor() = COUITheme.colorScheme.onBackground
+    fun textColor() = COUITheme.colorScheme.onSurfaceSecondary
 
     /**
      * The default color of the spinner. The COUI rotating animation strokes the primary

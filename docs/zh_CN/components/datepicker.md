@@ -57,6 +57,7 @@ DatePicker(
 | textStyle        | TextStyle            | 滚轮项目的文本样式                     | COUITheme.textStyles.title3        | 否       |
 | itemHeight       | Dp                   | 每个滚轮项目的高度                     | NumberPickerDefaults.ItemHeight     | 否       |
 | insideMargin     | PaddingValues        | 滚轮列周围的内边距                     | DatePickerDefaults.InsideMargin     | 否       |
+| yearIgnorable    | Boolean              | 年份滚轮多出一个忽略槽位（couiYearIgnorable） | false                      | 否       |
 
 ### DateValue 类
 

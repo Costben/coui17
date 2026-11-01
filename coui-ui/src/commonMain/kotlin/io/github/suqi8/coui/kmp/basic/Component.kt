@@ -16,22 +16,32 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.interfaces.HoldDownObserver
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlin.math.roundToInt
 
 /**
  * A basic component with COUI style. Widely used in other extension components.
@@ -47,6 +57,9 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param insideMargin The margin inside the [BasicComponent].
  * @param cardListPosition The row's position inside its card group. Rounded outer edges receive an
  *   extra [CardListPosition.HeadOrTailPadding]. Defaults to [CardListPosition.None].
+ * @param showDivider Whether to draw the hairline between this row and the next one, COUI
+ *   `couiShowDivider` (true by default). Like `COUIPreference.drawDivider()`, only a head or middle
+ *   row of a card group draws one.
  * @param onClick The callback when the [BasicComponent] is clicked.
  * @param onClickLabel Optional label describing the click action for accessibility services.
  * @param role The semantic [Role] of the [BasicComponent] for accessibility services.
@@ -68,6 +81,7 @@ fun BasicComponent(
     bottomAction: (@Composable () -> Unit)? = null,
     insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
     cardListPosition: CardListPosition = CardListPosition.None,
+    showDivider: Boolean = true,
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
     role: Role? = null,
@@ -75,38 +89,95 @@ fun BasicComponent(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
 ) {
-    BasicComponent(
-        startAction = startAction,
-        endActions = endActions,
-        bottomAction = bottomAction,
-        modifier = modifier,
-        insideMargin = insideMargin,
-        cardListPosition = cardListPosition,
-        onClick = onClick,
-        onClickLabel = onClickLabel,
-        role = role,
-        holdDownState = holdDownState,
-        enabled = enabled,
-        interactionSource = interactionSource,
+    // `COUICustomListSelectedLinearLayout` re-measures its icon once the title and summary have been
+    // laid out, because both the icon's margins and its top offset depend on how many lines the text
+    // block wraps to. Compose learns the same geometry from `onTextLayout`; the first frame lays the
+    // icon out as a one-line row and the second settles it.
+    val titleGeometry = remember { mutableStateOf(TextLineGeometry()) }
+    val summaryGeometry = remember { mutableStateOf(TextLineGeometry()) }
+    CompositionLocalProvider(
+        LocalPreferenceTextMetrics provides PreferenceTextMetrics(titleGeometry.value, summaryGeometry.value),
     ) {
-        if (title != null) {
-            Text(
-                text = title,
-                style = COUITheme.textStyles.headline1,
-                fontWeight = FontWeight.Medium,
-                color = titleColor.color(enabled),
-            )
-        }
-        if (summary != null) {
-            Text(
-                text = summary,
-                modifier = Modifier.padding(top = if (title != null) MarginBetweenLine else 0.dp),
-                style = COUITheme.textStyles.body2,
-                color = summaryColor.color(enabled),
-            )
+        BasicComponent(
+            startAction = startAction,
+            endActions = endActions,
+            bottomAction = bottomAction,
+            modifier = modifier,
+            insideMargin = insideMargin,
+            cardListPosition = cardListPosition,
+            showDivider = showDivider,
+            onClick = onClick,
+            onClickLabel = onClickLabel,
+            role = role,
+            holdDownState = holdDownState,
+            enabled = enabled,
+            interactionSource = interactionSource,
+        ) {
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = COUITheme.textStyles.headline1,
+                    fontWeight = FontWeight.Medium,
+                    color = titleColor.color(enabled),
+                    onTextLayout = { titleGeometry.value = it.lineGeometry() },
+                )
+            }
+            if (summary != null) {
+                // `coui_preference.xml` stacks the summary straight under the title: the 2dp
+                // `support_preference_margin_between_line` belongs to the icon placement, not the text.
+                Text(
+                    text = summary,
+                    style = COUITheme.textStyles.footnote1,
+                    color = summaryColor.color(enabled),
+                    onTextLayout = { summaryGeometry.value = it.lineGeometry() },
+                )
+            }
         }
     }
 }
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the showDivider parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun BasicComponent(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: String? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    startAction: @Composable (() -> Unit)? = null,
+    endActions: @Composable (RowScope.() -> Unit)? = null,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
+    role: Role? = null,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+): Unit = BasicComponent(
+    modifier = modifier,
+    title = title,
+    titleColor = titleColor,
+    summary = summary,
+    summaryColor = summaryColor,
+    startAction = startAction,
+    endActions = endActions,
+    bottomAction = bottomAction,
+    insideMargin = insideMargin,
+    cardListPosition = cardListPosition,
+    showDivider = true,
+    onClick = onClick,
+    onClickLabel = onClickLabel,
+    role = role,
+    holdDownState = holdDownState,
+    enabled = enabled,
+    interactionSource = interactionSource,
+)
 
 /**
  * A basic component with COUI style. Widely used in other extension components.
@@ -119,6 +190,9 @@ fun BasicComponent(
  * @param cardListPosition The row's position inside its card group. Rounded outer edges receive an
  *   extra [CardListPosition.HeadOrTailPadding], so a standalone row is 4dp taller than a middle row
  *   and a head/tail row is 2dp taller. Defaults to [CardListPosition.None] (no extra padding).
+ * @param showDivider Whether to draw the hairline between this row and the next one, COUI
+ *   `couiShowDivider` (true by default). Like `COUIPreference.drawDivider()`, only a head or middle
+ *   row of a card group draws one.
  * @param onClick The callback when the [BasicComponent] is clicked.
  * @param onClickLabel Optional label describing the click action for accessibility services.
  * @param role The semantic [Role] of the [BasicComponent] for accessibility services.
@@ -137,6 +211,7 @@ fun BasicComponent(
     bottomAction: (@Composable () -> Unit)? = null,
     insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
     cardListPosition: CardListPosition = CardListPosition.None,
+    showDivider: Boolean = true,
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
     role: Role? = null,
@@ -169,11 +244,37 @@ fun BasicComponent(
     val extraPaddingTop = cardListPosition.extraPaddingTop
     val extraPaddingBottom = cardListPosition.extraPaddingBottom
 
+    // COUIPreferenceItemDecoration draws coui_list_divider_height of couiColorDivider between rows,
+    // inset by coui_preference_divider_default_horizontal_padding on both sides. The decoration sits
+    // in the gap between items, so the hairline does not add to the row height.
+    val drawDivider = cardListPosition.drawsRowDivider(showDivider)
+    val dividerColor = COUITheme.colorScheme.dividerLine
+
+    // The line geometry the leading icon aligns against, published by the overload that renders the
+    // title and summary text itself.
+    val textMetrics = LocalPreferenceTextMetrics.current
+
     Column(
         modifier = modifier
             .heightIn(min = BasicComponentDefaults.MinHeight + extraPaddingTop + extraPaddingBottom)
             .fillMaxWidth()
             .then(clickableModifier)
+            .then(
+                if (drawDivider) {
+                    Modifier.drawWithContent {
+                        drawContent()
+                        val inset = BasicComponentDefaults.DividerHorizontalPadding.toPx()
+                        val thickness = BasicComponentDefaults.DividerHeight.toPx()
+                        drawRect(
+                            color = dividerColor,
+                            topLeft = Offset(inset, size.height - thickness),
+                            size = Size((size.width - inset * 2f).coerceAtLeast(0f), thickness),
+                        )
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .padding(insideMargin)
             .padding(top = extraPaddingTop, bottom = extraPaddingBottom),
         verticalArrangement = Arrangement.Center,
@@ -212,7 +313,9 @@ fun BasicComponent(
                     }
                 },
             ) { measurables, constraints ->
-                val spacerPx = 8.dp.roundToPx()
+                // COUI PreferenceIcon's layout_marginEnd (coui_preference_icon_margin_right, 16dp):
+                // the only gap between the start action and the text block.
+                val spacerPx = 16.dp.roundToPx()
 
                 val startMeasurable = measurables.firstOrNull { it.layoutId == "start" }
                 val centerMeasurable = measurables.first { it.layoutId == "center" }
@@ -229,6 +332,9 @@ fun BasicComponent(
                 val widthAfterStart = (maxWidth - startWidth - startSpacerWidth).coerceAtLeast(0)
 
                 val endIntrinsicWidth = endMeasurable?.maxIntrinsicWidth(maxHeight) ?: 0
+                // `coui_preference.xml` lets a wrap_content `widget_frame` take all it wants, but an
+                // uncapped trailing value leaves the text block no width and breaks it into a single
+                // column of characters, so the cap stays even though the native row has none.
                 val endHardCap = (widthAfterStart - spacerPx).coerceAtLeast(0) * 6 / 10
                 val endTargetWidth = endIntrinsicWidth.coerceAtMost(endHardCap)
                 val endPlaceable = endMeasurable?.measure(
@@ -243,13 +349,31 @@ fun BasicComponent(
                 )
 
                 val startHeight = startPlaceable?.height ?: 0
+                // COUICustomListSelectedLinearLayout.setIconCenterInParent gives the icon equal top and
+                // bottom margins picked by its size, so they never move it off the centre line; they
+                // only grow the row.
+                val iconMarginPx = if (startWidth > 0) {
+                    iconVerticalMarginPx(startHeight, textMetrics?.lineCount ?: 1)
+                } else {
+                    0
+                }
+                val startBlockHeight = startHeight + iconMarginPx * 2
                 val endHeight = endPlaceable?.height ?: 0
-                val rowHeight = maxOf(startHeight, centerPlaceable.height, endHeight)
+                val rowHeight = maxOf(startBlockHeight, centerPlaceable.height, endHeight)
                 val layoutHeight = rowHeight
                     .coerceIn(constraints.minHeight, maxHeight.takeIf { it != Constraints.Infinity } ?: rowHeight)
 
+                // Three or more lines of text switch the icon from centred to top-anchored on the
+                // first two lines, and setIconTopInParent drops both margins; see [preferenceIconTopPx].
+                val topAnchoredStartTop = preferenceIconTopPx(
+                    metrics = textMetrics,
+                    iconHeightPx = startHeight,
+                    marginBetweenLinePx = BasicComponentDefaults.MarginBetweenLine.roundToPx(),
+                )
+
                 layout(width = maxWidth, height = layoutHeight) {
-                    val startTop = (rowHeight - startHeight).coerceAtLeast(0) / 2
+                    val startTop = topAnchoredStartTop
+                        ?: ((rowHeight - startBlockHeight).coerceAtLeast(0) / 2 + iconMarginPx)
                     val centerTop = (rowHeight - centerPlaceable.height) / 2
                     val endTop = (rowHeight - endHeight).coerceAtLeast(0) / 2
 
@@ -273,6 +397,51 @@ fun BasicComponent(
     }
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the showDivider parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun BasicComponent(
+    modifier: Modifier = Modifier,
+    startAction: @Composable (() -> Unit)? = null,
+    endActions: @Composable (RowScope.() -> Unit)? = null,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
+    role: Role? = null,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    BasicComponent(
+        modifier = modifier,
+        startAction = startAction,
+        endActions = endActions,
+        bottomAction = bottomAction,
+        insideMargin = insideMargin,
+        cardListPosition = cardListPosition,
+        showDivider = true,
+        onClick = onClick,
+        onClickLabel = onClickLabel,
+        role = role,
+        holdDownState = holdDownState,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        content = content,
+    )
+}
+
+/**
+ * Whether a row at this position draws the hairline below it, mirroring `COUIPreference.drawDivider()`:
+ * only the head and middle rows of a card group do, and only while `couiShowDivider` is on.
+ */
+internal fun CardListPosition.drawsRowDivider(showDivider: Boolean): Boolean = showDivider && (this == CardListPosition.Head || this == CardListPosition.Middle)
+
 object BasicComponentDefaults {
 
     /**
@@ -285,6 +454,25 @@ object BasicComponentDefaults {
      * The default margin inside the [BasicComponent].
      */
     val InsideMargin = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+
+    /**
+     * The height of the hairline [BasicComponent] draws between two rows of a card group, COUI
+     * `coui_list_divider_height` (0.33dp).
+     */
+    val DividerHeight = 0.33.dp
+
+    /**
+     * The horizontal inset of that hairline on both sides, COUI
+     * `coui_preference_divider_default_horizontal_padding` (32dp).
+     */
+    val DividerHorizontalPadding = 32.dp
+
+    /**
+     * The gap COUI counts between the title and the summary when it measures the leading icon,
+     * `support_preference_margin_between_line` (2dp). The two texts themselves are stacked without a
+     * gap; the value only feeds the icon placement of a multi-line row.
+     */
+    val MarginBetweenLine = 2.dp
 
     /**
      * The default color of the title.
@@ -302,10 +490,14 @@ object BasicComponentDefaults {
 
     /**
      * The default color of the summary.
+     *
+     * `coui_preference_secondary_text_color` resolves to `?couiColorSecondNeutral` in every state
+     * but disabled, i.e. `coui_color_secondary_neutral` (`#8a000000`, night `#8affffff`) — the color
+     * [Colors.onSurfaceSecondary] carries.
      */
     @Composable
     fun summaryColor(
-        color: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
+        color: Color = COUITheme.colorScheme.onSurfaceSecondary,
         disabledColor: Color = COUITheme.colorScheme.disabledOnSecondaryVariant,
     ): BasicComponentColors = remember(color, disabledColor) {
         BasicComponentColors(
@@ -324,5 +516,101 @@ data class BasicComponentColors(
     internal fun color(enabled: Boolean): Color = if (enabled) color else disabledColor
 }
 
-/** COUI support_preference_margin_between_line: the summary's layout_marginTop in coui_preference.xml. */
-private val MarginBetweenLine = 2.dp
+/**
+ * How one of a row's text views wrapped, reduced to what the leading icon needs: its line count, the
+ * height of a line, and the view's total height. Mirrors the `getLineCount()`, `getLineTop()` and
+ * `getLineBottom()` reads of `COUICustomListSelectedLinearLayout.operateMultilineIconPosition`.
+ */
+@Immutable
+internal data class TextLineGeometry(
+    val lines: Int = 0,
+    val firstLineBottomPx: Int = 0,
+    val secondLineBottomPx: Int = 0,
+    val heightPx: Int = 0,
+)
+
+internal fun TextLayoutResult.lineGeometry(): TextLineGeometry = TextLineGeometry(
+    lines = lineCount,
+    firstLineBottomPx = if (lineCount > 0) getLineBottom(0).roundToInt() else 0,
+    secondLineBottomPx = if (lineCount > 1) getLineBottom(1).roundToInt() else 0,
+    heightPx = size.height,
+)
+
+/** The title and summary geometry of a preference row, in the order the two are stacked. */
+@Immutable
+internal data class PreferenceTextMetrics(
+    val title: TextLineGeometry,
+    val summary: TextLineGeometry,
+) {
+    val lineCount: Int get() = title.lines + summary.lines
+}
+
+/**
+ * The text geometry of the enclosing row. [BasicComponent]'s string overload publishes it once the
+ * title and summary have been laid out; rows that build their own content leave it `null`, and their
+ * leading icon stays centred.
+ */
+internal val LocalPreferenceTextMetrics = compositionLocalOf<PreferenceTextMetrics?> { null }
+
+/**
+ * The distance from the top of the text block to the centre of its first two lines, or `null` when
+ * the block is at most two lines tall and `setIconCenterInParent` keeps the icon centred.
+ *
+ * `checkFirstTwoLineCenter` walks title, summary and assignment in order and spends a budget of two
+ * lines on them, so the centre is taken from the title alone when it wraps, and from the title's
+ * first line plus the summary's first line otherwise.
+ */
+internal fun preferenceFirstTwoLineCentrePx(
+    metrics: PreferenceTextMetrics,
+    marginBetweenLinePx: Int,
+): Float? {
+    if (metrics.lineCount <= 2) return null
+    return when {
+        metrics.title.lines >= 2 -> metrics.title.secondLineBottomPx / 2f
+
+        metrics.title.lines == 1 ->
+            (metrics.title.heightPx + marginBetweenLinePx + metrics.summary.firstLineBottomPx) / 2f
+
+        else -> metrics.summary.secondLineBottomPx / 2f
+    }
+}
+
+/**
+ * The equal top and bottom margin COUI gives a leading icon of [iconHeightPx]: the single-line ladder
+ * (`coui_preference_icon_margin_top` 14dp, then a 24dp icon 12dp, 32dp 10dp, 36dp 12dp, 50dp 8dp) or,
+ * once the text block wraps to exactly two lines, the `_top_multiline` pair (24dp 20dp, 32dp 16dp,
+ * 36dp 14dp; the 50dp branch keeps 8dp). Three or more lines are placed by [preferenceIconTopPx]
+ * instead, which drops both margins.
+ */
+internal fun Density.iconVerticalMarginPx(iconHeightPx: Int, lineCount: Int): Int {
+    if (lineCount > 2) return 0
+    val multiline = lineCount == 2
+    return when (iconHeightPx.toDp().value.roundToInt()) {
+        24 -> if (multiline) 20.dp else 12.dp
+        32 -> if (multiline) 16.dp else 10.dp
+        36 -> if (multiline) 14.dp else 12.dp
+        50 -> 8.dp
+        else -> 14.dp
+    }.roundToPx()
+}
+
+/**
+ * The top offset of the leading icon inside the text block, COUI
+ * `COUICustomListSelectedLinearLayout.setIconTopInParent`: the icon is anchored so that its centre
+ * sits on the centre of the first two lines, and never rises above the block. `null` means the icon
+ * stays centred.
+ *
+ * The native measurement works from the row's outer edge, where the text block starts
+ * `support_preference_text_content_padding_top` (10dp) lower and the icon has an 8dp floor. The port
+ * keeps that 10dp in the row's inside margin, so the coordinate here starts at the text block and the
+ * floor becomes "not above the block".
+ */
+internal fun preferenceIconTopPx(
+    metrics: PreferenceTextMetrics?,
+    iconHeightPx: Int,
+    marginBetweenLinePx: Int,
+): Int? {
+    if (metrics == null) return null
+    val centre = preferenceFirstTwoLineCentrePx(metrics, marginBetweenLinePx) ?: return null
+    return (centre - iconHeightPx / 2f).roundToInt().coerceAtLeast(0)
+}

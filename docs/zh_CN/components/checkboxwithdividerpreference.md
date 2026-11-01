@@ -64,3 +64,10 @@ CheckBoxWithDividerPreference(
 | cardListPosition | CardListPosition                | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None             | 否       |
 | holdDownState    | Boolean                         | 组件是否处于按下状态                        | false                                 | 否       |
 | enabled          | Boolean                         | 组件是否可交互                              | true                                  | 否       |
+| onMainLayoutClick | (() -> Unit)?                  | 主区域(复选框之外)的点击回调;为 null 时整行一个点击区 | null | 否 |
+
+### CheckBoxWithDividerPreferenceDefaults 常量
+
+| 常量名            | 类型 | 说明                                   | 默认值 |
+| ----------------- | ---- | -------------------------------------- | ------ |
+| CheckboxEndMargin | Dp   | 尾部复选在行尾内边距之外额外保留的间距 | 16.dp  |

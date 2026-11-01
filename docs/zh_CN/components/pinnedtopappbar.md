@@ -116,7 +116,11 @@ val scrollBehavior = PinnedScrollBehavior(state = rememberTopAppBarState())
 | ActionItemSize | Dp | 40.dp | 操作为 141px = 39.9dp 方形；即 `TopAppBarDefaults.ActionItemMinWidth` |
 | NavigationIconGap | Dp | 10.dp | 相册未实测；取设置工具栏的 `TopAppBarDefaults.NavigationIconGap` |
 | TitleActionGap | Dp | 4.dp | `TopAppBarDefaults.ActionIconGap` |
+| TextActionMaxWidth | Dp | 104.dp | `coui_action_bar_text_menu_item_max_width` |
+| TextActionMaxLines | Int | 2 | `COUIActionMenuView.MAX_TEXT_MENU_ITEM_LINE` |
 | titleStyle() | TextStyle | `title1`（32sp） | 「照片」墨迹高 29.2dp、两字宽 59dp；字重未实测 |
+
+`PinnedTopAppBarTextAction(text, onClick)` 是纯图标操作的文字版：宽度上限 `TextActionMaxWidth`，最多折 `TextActionMaxLines` 行，超出省略，对应 `COUIActionMenuView` 对文字型 `COUIActionMenuItemView` 的测量。
 
 ## 实测数据
 

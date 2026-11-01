@@ -124,6 +124,8 @@ ColorOS 17 页面严格遵循**两层表面体系**：页面背景层（`backgro
 
 主框架由一个外层 `Scaffold` 承载 `HorizontalPager`。底部悬浮导航栏浮于 `HorizontalPager` 之上并采样整个 Pager；每个 Tab 页面内部自带独立顶栏与单页 Backdrop。
 
+切页有两种动效：手势滑动时 Pager 跟手；点击底栏时不滚动 Pager，而是直接跳到目标页，离开页与进入页同时淡出淡入（响应时间分别为 0.15s、0.2s），途经的页面不显示，淡入淡出期间禁用手势滑动。系统带底栏的应用即使能左右滑动，点击底栏也不做横向滑动。
+
 ```kotlin
 @Composable
 fun MainShell(pages: List<Tab>) {

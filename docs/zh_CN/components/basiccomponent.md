@@ -128,6 +128,7 @@ BasicComponent(
 | bottomAction      | @Composable (() -> Unit)?          | 组件底部的可组合内容 | null                                  | 否       |
 | insideMargin      | PaddingValues                      | 组件内部边距         | BasicComponentDefaults.InsideMargin   | 否       |
 | cardListPosition  | CardListPosition                   | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None | 否       |
+| showDivider       | Boolean                            | 是否在本行与下一行之间画细分隔线（`couiShowDivider`）；只有卡片组的首行和中间行会画 | true | 否       |
 | onClick           | (() -> Unit)?                      | 点击组件时触发的回调 | null                                  | 否       |
 | onClickLabel      | String?                            | 无障碍点击操作描述   | null                                  | 否       |
 | role              | Role?                              | 无障碍语义角色       | null                                  | 否       |
@@ -145,6 +146,7 @@ BasicComponent(
 | bottomAction      | @Composable (() -> Unit)?          | 组件底部的可组合内容 | null                                | 否       |
 | insideMargin      | PaddingValues                      | 组件内部边距         | BasicComponentDefaults.InsideMargin | 否       |
 | cardListPosition  | CardListPosition                   | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None | 否       |
+| showDivider       | Boolean                            | 是否在本行与下一行之间画细分隔线（`couiShowDivider`）；只有卡片组的首行和中间行会画 | true | 否       |
 | onClick           | (() -> Unit)?                      | 点击组件时触发的回调 | null                                | 否       |
 | onClickLabel      | String?                            | 无障碍点击操作描述   | null                                | 否       |
 | role              | Role?                              | 无障碍语义角色       | null                                | 否       |
@@ -163,6 +165,7 @@ BasicComponentDefaults 对象提供了 BasicComponent 组件的默认值和颜�
 | ------------ | ------------- | -------------- | -------------------- |
 | MinHeight    | Dp            | 行的最小高度（未计入卡片组位置内边距） | 48.dp |
 | InsideMargin | PaddingValues | 组件的内部边距 | PaddingValues(horizontal = 16.dp, vertical = 10.dp) |
+| MarginBetweenLine | Dp | 摆放起始图标时标题与摘要之间的间距 | 2.dp |
 
 #### BasicComponentDefaults 方法
 
@@ -249,3 +252,11 @@ Column {
     }
 }
 ```
+
+## 偏好行几何
+
+带起始操作的行按 `COUICustomListSelectedLinearLayout` 的方式摆放它：
+
+- 图标上下各留 `coui_preference_icon_margin_top` 14dp；24dp / 32dp / 36dp / 50dp 的图标分别是 12dp / 10dp / 12dp / 8dp，文字折成两行后改用 20dp / 16dp / 14dp 的多行档。
+- 超过两行时图标不再居中：它的中心落在文字块前两行文字的中线上，并且不会高于文字块。
+- 行尾内容保留自身宽度，文字块取剩余宽度，即 `coui_preference.xml` 的 `layout_weight="1"`；行尾内容不再被限制在剩余宽度的一个比例内。

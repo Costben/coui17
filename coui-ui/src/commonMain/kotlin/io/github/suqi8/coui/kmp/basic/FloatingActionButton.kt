@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -33,8 +37,9 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 /**
  * A [FloatingActionButton] component with COUI style.
  *
- * While pressed, the whole button springs down to [FloatingActionButtonDefaults.PressedScale]
- * (COUIPressFeedbackHelper); the pressed tint overlay comes from `LocalIndication`.
+ * While pressed, the whole button shrinks to [FloatingActionButtonDefaults.PressedScale] with a
+ * 200ms `COUIMoveEaseInterpolator` tween and grows back over 340ms when released
+ * (COUIFABPressFeedbackUtil); the pressed tint overlay comes from `LocalIndication`.
  *
  * @param onClick The callback when the [FloatingActionButton] is clicked.
  * @param modifier The modifier to be applied to the [FloatingActionButton].
@@ -67,12 +72,28 @@ fun FloatingActionButton(
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
 
     val isPressed by interactionSource.collectIsPressedAsState()
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) FloatingActionButtonDefaults.PressedScale else 1f,
-        // The COUI press feedback spring (COUISpringForce response 0.3f / bounce 0f).
-        animationSpec = spring(dampingRatio = 1f, stiffness = 438.65f),
-        label = "fabPressScale",
-    )
+    // COUIFABPressFeedbackUtil: pressing runs a 200ms tween from 1.0 to 0.9, releasing runs a 340ms
+    // tween back to 1.0 from wherever it stopped; both use COUIMoveEaseInterpolator.
+    val pressScale = remember { Animatable(1f) }
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            pressScale.animateTo(
+                targetValue = FloatingActionButtonDefaults.PressedScale,
+                animationSpec = tween(
+                    durationMillis = FloatingActionButtonDefaults.PRESS_DURATION,
+                    easing = FloatingActionButtonDefaults.MoveEase,
+                ),
+            )
+        } else {
+            pressScale.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = FloatingActionButtonDefaults.RELEASE_DURATION,
+                    easing = FloatingActionButtonDefaults.MoveEase,
+                ),
+            )
+        }
+    }
 
     val glass = backdrop != null && isRuntimeShaderSupported()
     val glassModifier = if (glass) {
@@ -97,13 +118,23 @@ fun FloatingActionButton(
         modifier = modifier
             .semantics { role = Role.Button }
             .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
+                scaleX = pressScale.value
+                scaleY = pressScale.value
             }
+            // COUIFABShadowUtils: the elevation shadow of the FAB is drawn with
+            // coui_floating_button_elevation_color (#8A000000) instead of the platform colour.
+            // The Surface only provides the shape / fill, so its own shadow is switched off.
+            .shadow(
+                elevation = shadowElevation,
+                shape = shape,
+                clip = false,
+                ambientColor = FloatingActionButtonDefaults.ShadowColor,
+                spotColor = FloatingActionButtonDefaults.ShadowColor,
+            )
             .then(glassModifier),
         shape = shape,
         color = if (glass) Color.Transparent else containerColor,
-        shadowElevation = shadowElevation,
+        shadowElevation = 0.dp,
         interactionSource = interactionSource,
     ) {
         Box(
@@ -129,8 +160,20 @@ object FloatingActionButtonDefaults {
     /** The default shadow elevation of the [FloatingActionButton] (COUI support_shadow_size_level_three). */
     val ShadowElevation = 12.dp
 
-    /** The scale the button springs down to while pressed (COUIPressFeedbackHelper end ratio). */
-    val PressedScale = 0.92f
+    /** The colour of the elevation shadow (COUI `coui_floating_button_elevation_color`). */
+    val ShadowColor = Color(0x8A000000)
+
+    /** The scale the button shrinks to while pressed (COUIFABPressFeedbackUtil DEFAULT_PRESS_FEEDBACK_SCALE_MIN_VALUE). */
+    val PressedScale = 0.9f
+
+    /** The press-in duration (COUIFABPressFeedbackUtil DEFAULT_PRESS_FEEDBACK_ANIMATION_DURATION). */
+    const val PRESS_DURATION = 200
+
+    /** The release duration (COUIFABPressFeedbackUtil DEFAULT_RELEASE_ANIMATION_DURATION). */
+    const val RELEASE_DURATION = 340
+
+    /** The press feedback curve, `COUIMoveEaseInterpolator` (cubic-bezier(0.3, 0, 0.1, 1)). */
+    val MoveEase: Easing = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)
 
     /** The blur sigma of `FRAMEWORK_FAB_PARAMS`, in pixels. */
     const val NATIVE_BLUR_RADIUS_PX = 10f

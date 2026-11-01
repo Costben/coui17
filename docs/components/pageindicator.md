@@ -39,6 +39,7 @@ PageIndicator(count = 8, currentIndex = 6)
 | modifier      | Modifier | Modifier applied to the indicator                              | Modifier                                 | No       |
 | activeColor   | Color   | Colour of the active dot (`traceDotColor`)                      | COUITheme.colorScheme.onSurface          | No       |
 | inactiveColor | Color   | Colour of the other dots (`dotColor`)                           | COUITheme.colorScheme.disabledOnSurface  | No       |
+| contentDescription    | String?                                     | Accessibility description; `null` uses "current / count" | null | No |
 
 ### PageIndicatorDefaults
 

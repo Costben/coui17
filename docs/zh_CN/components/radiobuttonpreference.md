@@ -81,7 +81,7 @@ RadioButtonPreference(
 | radioButtonColors | RadioButtonColors               | 单选按钮控件颜色配置         | RadioButtonDefaults.radioButtonColors()   | 否       |
 | startAction         | @Composable (() -> Unit)?          | 自定义起始内容             | null                                      | 否       |
 | endActions          | @Composable (RowScope.() -> Unit)? | 自定义末尾内容             | null                                      | 否       |
-| radioButtonLocation | RadioButtonLocation                | 单选按钮控件的位置         | RadioButtonLocation.Start                 | 否       |
+| radioButtonLocation | RadioButtonLocation                | 单选按钮控件的位置         | RadioButtonLocation.End                   | 否       |
 | bottomAction      | @Composable (() -> Unit)?       | 自定义底部内容               | null                                      | 否       |
 | insideMargin      | PaddingValues                   | 内部内容边距                 | BasicComponentDefaults.InsideMargin       | 否       |
 | cardListPosition | CardListPosition | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None | 否 |
@@ -181,3 +181,11 @@ Scaffold {
     }
 }
 ```
+
+### RadioButtonPreferenceDefaults 常量
+
+| 常量名            | 类型   | 说明                       | 默认值   |
+| ----------------- | ------ | -------------------------- | -------- |
+| SelectActionLabel | String | 行向读屏上报的点击动作文案 | "Select" |
+
+行还会通过 `Modifier.semantics { selected }` 上报选中状态，读屏据此播报该行是否已被选中。

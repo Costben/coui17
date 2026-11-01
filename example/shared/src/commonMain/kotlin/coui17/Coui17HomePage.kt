@@ -21,6 +21,7 @@ import component.ArrowDemo
 import component.BadgeDemo
 import component.BasicComponentDemo
 import component.BlurDemo
+import component.BottomAssignmentDialogDemo
 import component.BottomFloatingAccessoryNavigationBarDemo
 import component.BottomFloatingNavigationBarDemo
 import component.BottomFloatingScrollToolbarDemo
@@ -60,7 +61,6 @@ import component.InputViewCardSingleInputDemo
 import component.InstallLoadProgressDemo
 import component.IntentSeekBarDemoContent
 import component.ListPreferenceDemoContent
-import component.LoadProgressButtonDemo
 import component.LoadingButtonDemo
 import component.LockAndBannerDemo
 import component.MarkPreferenceDemo
@@ -149,12 +149,12 @@ fun Coui17HomePage(
         coui17Entry("BannerIndicator") { BannerIndicatorDemo() }
         coui17Entry("MarqueeText") { MarqueeTextDemo() }
         coui17Entry("FlowLayout") { FlowLayoutDemo() }
+        coui17Entry("Folded FlowLayout") { FoldedFlowLayoutDemo() }
         coui17Entry("ExpandableList") { ExpandableListDemoContent() }
 
         coui17Section("Buttons & actions")
         coui17Entry("Button") { ButtonDemo() }
         coui17Entry("Loading Button") { LoadingButtonDemo() }
-        coui17Entry("LoadProgressButton") { LoadProgressButtonDemo() }
         coui17Entry("FloatingButton") { FloatingButtonDemoContent() }
         coui17Entry("ProgressIndicator") { ProgressIndicatorDemo() }
         coui17Entry("InstallLoadProgress") { InstallLoadProgressDemo() }
@@ -200,6 +200,7 @@ fun Coui17HomePage(
         coui17Section("Overlays & menus")
         coui17Entry("Dialog") { DialogDemo() }
         coui17Entry("BottomSheet") { BottomSheetDemo() }
+        coui17Entry("OverlayBottomAssignmentDialog") { BottomAssignmentDialogDemo() }
         coui17Entry("WindowDialog variants") { WindowDialogVariantsDemo() }
         coui17Entry("WindowIconMenu variants") { WindowIconMenuVariantsDemo() }
         coui17Entry("GuideDialog") { GuideDialogDemo() }

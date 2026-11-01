@@ -86,8 +86,16 @@ import kotlin.math.roundToInt
  */
 object AppBarGlassDefaults {
 
-    /** `AppBarBlurParams.normalBlurRadiusPx`. In px, because that is what the framework consumes. */
-    val BlurRadiusPx = 150f
+    /**
+     * `AppBarBlurParams.normalBlurRadiusPx`, the uniform blur's radius. In px, because that is what
+     * the framework consumes.
+     *
+     * HWUI's blur radius is not a sigma: `RenderEffect.createBlurEffect` (which is what
+     * `COUIMaterialEffect` ends in) converts it with `0.57735`, so the platform's 50px is a ~29px
+     * sigma. COUI's own engine takes the same radius and applies its own `0.45` slope, so the
+     * conversion is done where the engine is handed the value, not here.
+     */
+    val BlurRadiusPx = 50f
 
     /** `AppBarBlurParams.normalBackgroundAlphaFraction`, light theme. */
     val BackgroundAlpha = 0.8f
@@ -98,12 +106,11 @@ object AppBarGlassDefaults {
     /**
      * `AppBarBlurParams.startBlurRadius`, the gradient shape's full-strength radius. In px.
      *
-     * Raised from the platform's 30px, then from 50px: at 620dpi 50px is only ~13dp, and over a
-     * 52dp bar the gradient blur still reads as plain translucency rather than frost. 150px is
-     * ~24dp at that density — the radius ColorOS 17 actually shows in Gallery/Weibo, where content
-     * passing under the bar turns into a soft colour wash instead of legible glyphs.
+     * 30px is the HWUI radius `OplusRenderEffect.createGradientBlurEffect` is given, a ~17px sigma.
+     * The engine path converts it the same way [BlurRadiusPx] is converted, so both shapes stay on
+     * the platform's own strength instead of drifting apart by the sigma slope.
      */
-    val GradientBlurRadiusPx = 150f
+    val GradientBlurRadiusPx = 30f
 
     /** `AppBarBlurParams.endBlurRadius`, the radius at the far end of the gradient. In px. */
     val GradientEndBlurRadiusPx = 0f
@@ -163,7 +170,7 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
     return textureBlur(
         backdrop = backdrop,
         shape = RectangleShape,
-        blurRadius = with(LocalDensity.current) { AppBarGlassDefaults.BlurRadiusPx.toDp().value },
+        blurRadius = with(LocalDensity.current) { appBarEngineBlurRadiusPx(AppBarGlassDefaults.BlurRadiusPx).toDp().value },
         colors = BlurDefaults.blurColors(
             blendColors = listOf(BlendColorEntry(color = color.copy(alpha = alpha))),
         ),

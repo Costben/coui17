@@ -2,7 +2,7 @@
 
 `HighlightedIconButton` 是 ColorOS 17 带光晕的工具栏图标按钮，对应 ColorOS 给工具栏返回键与三点菜单键施加的那套光效。
 
-ColorOS 给这两个键做的是同一套处理：一个**正圆 40dp**——不是 squircle——配一层「中心暗、边缘亮」的径向填充、一圈按角度分布的白描边，以及边缘外侧随主题不同的光晕。按下时整块控件弹到 `HighlightedIconButtonDefaults.PressedScale`，描边与外光晕消失，填充与图标变亮；两个主题表现一致。
+ColorOS 给这两个键做的是同一套处理：一个**正圆 40dp**——不是 squircle——配一层「中心暗、边缘亮」的径向填充、一圈按角度分布的白描边，以及边缘外侧随主题不同的光晕。按下时整块控件弹到 `HighlightedIconButtonDefaults.PressedScale`，描边与外光晕消失，填充与图标变亮；两个主题表现一致。40dp 的圆盘放在 `48dp x 40dp` 的触控区里，即 `COUIActionMenuItemView` 给图标菜单项的 `minWidth` / `minHeight`。
 
 深色主题的下光晕直接调用 ColorOS 焦散阴影接口，使用 level-2 的偏移矩形距离场与纵向幂次衰减。其他平台使用还原的着色器公式；不再使用角度蒙版。光晕与按钮共用形变，按压时淡出。拖动使用系统 TouchMotion 的橡皮筋位移和面积守恒弹性形变，松手回弹；填充、图标、描边和外光晕共用变换。
 
@@ -67,6 +67,8 @@ HighlightedIconButton(onClick = onClick) {
 | 常量名                | 类型                   | 说明                                                       | 值 |
 | --------------------- | ---------------------- | ---------------------------------------------------------- | -- |
 | Size                  | Dp                     | 按钮直径                                                   | 40.dp |
+| IconMenuMinWidth      | Dp                     | 触控区最小宽度,`coui_action_menu_item_min_width`            | 48.dp |
+| IconMenuMinHeight     | Dp                     | 触控区最小高度,`coui_action_menu_item_min_height`           | 40.dp |
 | PressedScale          | Float                  | 按下时整块控件弹到的缩放                                   | 0.89f |
 | PressSpring           | SpringSpec\<Float\>    | 按压弹簧                                                   | 响应 0.3 / 阻尼 1.0 |
 | FillAlpha             | Float                  | 径向填充的绘制透明度                                       | 0.78f |

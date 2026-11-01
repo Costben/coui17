@@ -116,6 +116,10 @@ Slider(
 | keyPoints             | List\<Float\>?                    | 要在滑块上显示的自定义关键点值。如果为 null,则使用 steps 参数的步长位置。值应在 valueRange 范围内                | null                               | 否       |
 | magnetThreshold       | Float                             | 磁吸对齐阈值,以分数表示 (0.0 到 1.0)。当滑块值与关键点的距离在此阈值内时,将对齐到该点。仅在设置 keyPoints 时生效 | 0.02f                              | 否       |
 | secondaryProgress     | Float?                            | 可选次级进度("意图层"),绘制在主进度轨道后方;钳制到 valueRange 内,超出拇指的部分可见 | null                               | 否       |
+| showProgress          | Boolean                                     | 是否绘制已播放轨道（`couiSeekBarShowProgress`） | true | 否 |
+| showThumb             | Boolean                                     | 是否绘制滑块拇指（`couiSeekBarShowThumb`） | true | 否 |
+| startFromMiddle       | Boolean                                     | 进度从中点向拇指两侧生长（`couiSeekBarStartMiddle`） | false | 否 |
+| moveByFinger          | Boolean                                     | 拇指跟随手指位移而不是跳到手指位置（`MOVE_BY_FINGER`） | false | 否 |
 
 ### VerticalSlider 属性
 
@@ -166,6 +170,10 @@ SliderDefaults 对象提供了 Slider 组件的默认配置。
 | 常量名              | 类型               | 默认值                  | 说明               |
 | ------------------- | ------------------ | ----------------------- | ------------------ |
 | MinHeight           | Dp                 | 20.dp                   | 滑块的默认高度     |
+| MinTouchHeight      | Dp                 | 36.dp                   | 触摸区最小高度（`couiSeekBarMinHeight`） |
+| PercentRange        | ClosedFloatingPointRange\<Float\> | 0f..100f  | COUI 的 0..100 进度量纲 |
+| FLING_VELOCITY_LIMIT | Float             | 100f                    | 超过该松手速度后继续惯性滑行 |
+| FLING_PROJECTION_SECONDS | Float          | 0.35f                   | 惯性投影系数（每秒每 px/s 的位移） |
 | KeyPointRadius      | Dp                 | 3.0.dp                  | 关键点的默认半径   |
 | DefaultHapticEffect | SliderHapticEffect | SliderHapticEffect.Edge | 默认的触感反馈类型 |
 

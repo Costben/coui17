@@ -4,7 +4,10 @@ package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.DecayAnimationSpec
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -32,8 +36,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -88,6 +94,16 @@ object PinnedTopAppBarDefaults {
 
     /** The minimum gap between the title and the first action, [TopAppBarDefaults.ActionIconGap]. */
     val TitleActionGap = TopAppBarDefaults.ActionIconGap
+
+    /**
+     * The widest a text action grows: `COUIActionMenuView.mTextMenuItemMaxWidth`
+     * (`coui_action_bar_text_menu_item_max_width`, 104dp). An action whose label needs more than
+     * [TextActionMaxLines] lines at that width is narrowed further, until it fits in two.
+     */
+    val TextActionMaxWidth = 104.dp
+
+    /** `COUIActionMenuView.MAX_TEXT_MENU_ITEM_LINE`: a text action wraps to at most 2 lines. */
+    val TextActionMaxLines = 2
 
     /**
      * The title text style: `COUITheme.textStyles.title1` (couiTextAppearanceHeadline1, 32sp).
@@ -222,6 +238,49 @@ fun PinnedTopAppBar(
                 content = actions,
             )
         }
+    }
+}
+
+/**
+ * A text action for [PinnedTopAppBar]'s `actions` row — the "Edit" / "Done" label an app bar shows
+ * where an icon would otherwise sit.
+ *
+ * `COUIActionMenuView` measures a `COUIActionMenuItemView` tagged as a text item against
+ * [PinnedTopAppBarDefaults.TextActionMaxWidth] (104dp) and wraps it to
+ * [PinnedTopAppBarDefaults.TextActionMaxLines] (2 lines); a label that still needs more lines is
+ * narrowed until it fits in two.
+ *
+ * @param text The label.
+ * @param onClick Called when the action is tapped.
+ * @param modifier The modifier to be applied to the action.
+ * @param enabled Whether the action responds to taps.
+ * @param color The label colour, the theme's primary by default.
+ * @param textStyle The label's text style.
+ */
+@Composable
+fun PinnedTopAppBarTextAction(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    color: Color = COUITheme.colorScheme.primary,
+    textStyle: TextStyle = COUITheme.textStyles.button,
+) {
+    Box(
+        modifier = modifier
+            .widthIn(max = PinnedTopAppBarDefaults.TextActionMaxWidth)
+            .height(PinnedTopAppBarDefaults.ActionItemSize)
+            .clickable(enabled = enabled, indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            color = color,
+            style = textStyle,
+            maxLines = PinnedTopAppBarDefaults.TextActionMaxLines,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

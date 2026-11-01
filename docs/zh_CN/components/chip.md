@@ -106,6 +106,8 @@ Chip(
 | dismissIcon       | (@Composable () -> Unit)?  | 自定义关闭按钮内容               | null(内置 Close)         | 否   |
 | dismissContentDescription | String             | 关闭按钮的无障碍描述             | ChipDefaults.DISMISS_CONTENT_DESCRIPTION | 否 |
 | dismissButtonSize | Dp                         | 关闭按钮的点击目标尺寸           | ChipDefaults.DismissButtonSize | 否   |
+| count                 | String?                                     | 尾部计数文字（COUIChipDrawable countText，12sp） | null | 否 |
+| showRedDot            | Boolean                                     | 在文字右上角画提示红点（COUIHintRedDot.Small） | false | 否 |
 | cornerRadius      | Dp                         | 胶囊圆角；默认取实测高度的一半并走系统胶囊曲线，显式传入更小值保持 Lp 超椭圆 | ChipDefaults.CornerRadius | 否   |
 | minWidth          | Dp                         | 最小宽度                         | ChipDefaults.MinWidth     | 否   |
 | minHeight         | Dp                         | 最小高度                         | ChipDefaults.MinHeight    | 否   |

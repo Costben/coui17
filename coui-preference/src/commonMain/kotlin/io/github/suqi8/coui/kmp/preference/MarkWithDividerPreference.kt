@@ -27,9 +27,9 @@ import io.github.suqi8.coui.kmp.preference.internal.PreferenceWidgetDivider
  * the mark. This port keeps [MarkPreference] and hands the line to its `endActions`.
  *
  * `COUIMarkWithDividerPreference` also splits the row into two click targets — `main_layout` fires
- * `OnMainLayoutClickListener` and `radio_layout` toggles the mark — but neither the repo's
- * [MarkPreference] nor this wrapper models that split; the whole row keeps the single
- * [MarkPreference] click target.
+ * `OnMainLayoutClickListener` and `radio_layout` toggles the mark — which [onMainLayoutClick] models.
+ * With it set, the mark keeps [onClick] and the rest of the row reports to the main-area callback.
+ * Left `null`, the whole row is one click target that runs [onClick].
  *
  * @param title The title of the [MarkWithDividerPreference].
  * @param checked Whether this row currently carries the mark.
@@ -46,6 +46,7 @@ import io.github.suqi8.coui.kmp.preference.internal.PreferenceWidgetDivider
  * @param cardListPosition The row's position inside its card group.
  * @param holdDownState Used to determine whether it is in the pressed state.
  * @param enabled Whether the [MarkWithDividerPreference] is clickable.
+ * @param onMainLayoutClick The callback of the row's main area, separate from the mark.
  */
 @Composable
 @NonRestartableComposable
@@ -65,6 +66,7 @@ fun MarkWithDividerPreference(
     cardListPosition: CardListPosition = CardListPosition.None,
     holdDownState: Boolean = false,
     enabled: Boolean = true,
+    onMainLayoutClick: (() -> Unit)? = null,
 ) {
     MarkPreference(
         title = title,
@@ -94,5 +96,47 @@ fun MarkWithDividerPreference(
         cardListPosition = cardListPosition,
         holdDownState = holdDownState,
         enabled = enabled,
+        onMainLayoutClick = onMainLayoutClick,
     )
 }
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the onMainLayoutClick parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@NonRestartableComposable
+fun MarkWithDividerPreference(
+    title: String,
+    checked: Boolean,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: String? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    markColors: RadioButtonColors = RadioButtonDefaults.radioButtonColors(),
+    startAction: @Composable (() -> Unit)? = null,
+    endActions: @Composable (RowScope.() -> Unit)? = null,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+): Unit = MarkWithDividerPreference(
+    title = title,
+    checked = checked,
+    onClick = onClick,
+    modifier = modifier,
+    titleColor = titleColor,
+    summary = summary,
+    summaryColor = summaryColor,
+    markColors = markColors,
+    startAction = startAction,
+    endActions = endActions,
+    bottomAction = bottomAction,
+    insideMargin = insideMargin,
+    cardListPosition = cardListPosition,
+    holdDownState = holdDownState,
+    enabled = enabled,
+)

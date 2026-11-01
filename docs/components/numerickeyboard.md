@@ -82,6 +82,10 @@ An icon is drawn at its own intrinsic size and tinted with `NumericKeyboardColor
 | enabled       | Boolean                   | Whether the pad reacts to pointers                       | true                             | No       |
 | onLeftClick   | () -> Unit                | Called when the left side cell is released               | {}                               | No       |
 | onRightClick  | () -> Unit                | Called when the right side cell is released              | {}                               | No       |
+| numberBackgroundColor | Color             | Circle behind each digit (`couiNumberBackgroundColor`)   | Color.Transparent                | No       |
+| numberTextSize | Dp                       | Digit size, read as a dimension so it ignores the font scale | NumericKeyboardDefaults.NumberTextSizeDp | No |
+| horizontalPadding | Dp                    | Start/end padding of the grid                            | NumericKeyboardDefaults.HorizontalPadding | No |
+| verticalPadding | Dp                       | Top/bottom padding of the grid                           | NumericKeyboardDefaults.VerticalPadding | No |
 
 ### NumericKeyboardSideStyle
 

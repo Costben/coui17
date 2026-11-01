@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.Icon
@@ -153,7 +154,10 @@ fun WindowSpinnerPreferenceDemo() {
                 ),
             )
 
-            Card {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
                 WindowSpinnerPreference(
                     title = "Dropdown Selector",
                     items = options1,

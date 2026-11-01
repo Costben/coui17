@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.preference.CheckboxLocation
 import io.github.suqi8.coui.kmp.preference.CheckboxPreference
 
@@ -40,7 +41,10 @@ fun CheckboxPreferenceDemo() {
             var rightChecked by remember { mutableStateOf(false) }
             var notificationsEnabled by remember { mutableStateOf(false) }
 
-            Card {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
                 CheckboxPreference(
                     title = "Checkbox Option",
                     checked = isChecked,

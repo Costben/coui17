@@ -84,6 +84,9 @@ private val availableComponents = listOf(
     AvailableComponent("OverlayIconCascadingDropdownMenu", "overlayIconCascadingDropdownMenu") { OverlayIconCascadingDropdownMenuDemo() },
     AvailableComponent("OverlayBottomSheet", "overlayBottomSheet") { OverlayBottomSheetDemo() },
     AvailableComponent("OverlayDialog", "overlayDialog") { OverlayDialogDemo() },
+    AvailableComponent("OverlayBottomAssignmentDialog", "overlayBottomAssignmentDialog") {
+        OverlayBottomAssignmentDialogDemo()
+    },
     AvailableComponent("WindowListPopup", "windowListPopup") { WindowListPopupDemo() },
     AvailableComponent("WindowCascadingListPopup", "windowCascadingListPopup") { WindowCascadingListPopupDemo() },
     AvailableComponent("WindowDropdownPreference", "windowDropdownPreference") { WindowDropdownPreferenceDemo() },

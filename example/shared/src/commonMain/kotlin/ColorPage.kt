@@ -4,6 +4,7 @@
 
 package pages
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -264,15 +265,14 @@ fun ColorsPreview(colors: Colors) {
         colorBlocks.chunked(2).forEach { rowColors ->
             Row(
                 modifier = Modifier.padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                rowColors.forEachIndexed { idx, block ->
+                rowColors.forEach { block ->
                     ColorBlock(
                         displayName = str(block.displayName),
                         surfaceColor = block.surfaceColor,
                         textColor = block.textColor,
-                        modifier = Modifier
-                            .weight(1f)
-                            .then(if (idx < rowColors.lastIndex) Modifier.padding(end = 16.dp) else Modifier),
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }

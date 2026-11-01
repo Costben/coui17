@@ -26,6 +26,23 @@ val COUIInEase: Easing = CubicBezierEasing(0f, 0f, 0.1f, 1f)
 val COUIOutEase: Easing = CubicBezierEasing(0.3f, 0f, 1f, 1f)
 
 /**
+ * The symmetric ease-in-out ColorOS uses where a pair of In/Out curves would be asymmetric.
+ *
+ * It is `COUIEaseInterpolator`, a `PathInterpolator` with
+ * `(controlX1, controlY1, controlX2, controlY2) = (0.33f, 0.0f, 0.67f, 1.0f)`.
+ */
+val COUIEase: Easing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f)
+
+/**
+ * The easing ColorOS uses when a view is moved or resized on screen.
+ *
+ * It is `COUIMoveEaseInterpolator`, a `PathInterpolator` with
+ * `(controlX1, controlY1, controlX2, controlY2) = (0.3f, 0.0f, 0.1f, 1.0f)`. It shares its first
+ * control point with [COUIOutEase] but accelerates later, so a travelling view keeps its speed.
+ */
+val COUIMoveEase: Easing = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)
+
+/**
  * The easing ColorOS uses where an animation is left unshaped.
  *
  * It is `android.view.animation.LinearInterpolator` with an empty body — no fields and no overrides —

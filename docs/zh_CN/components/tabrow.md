@@ -131,6 +131,7 @@ TabRowDefaults 对象提供了 TabRow 组件的默认配置。
 
 | 常量名                            | 类型 | 值          | 说明                                                     |
 | --------------------------------- | ---- | ----------- | -------------------------------------------------------- |
+| TabRowMinHeight                   | Dp   | 28.dp       | 调用方指定高度的下限（`coui_segment_min_height`）        |
 | TabRowHeight                      | Dp   | 40.dp       | 标准样式的默认高度                                       |
 | TabRowWithContourHeight           | Dp   | 40.dp       | 带轮廓样式的默认高度                                     |
 | TabRowWithContourTinyHeight       | Dp   | 32.dp       | COUI `SegmentButton.Tiny` 样式的高度                     |

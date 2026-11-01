@@ -13,6 +13,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
@@ -44,6 +46,11 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -51,15 +58,20 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.anim.COUIOutEase
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
+import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * The ColorOS 17 numeric PIN pad.
@@ -137,6 +149,15 @@ import kotlin.math.min
  * @param enabled Whether the pad reacts to pointers.
  * @param onLeftClick Called when the left side cell is released (`OnClickItemListener.onClickLeft`).
  * @param onRightClick Called when the right side cell is released (`OnClickItemListener.onClickRight`).
+ * @param numberBackgroundColor The circle behind each digit, `couiNumberBackgroundColor`. The base
+ *   style leaves it transparent; the lock screen's `Widget.COUI.COUIPasswordDial` sets it to
+ *   [NumericKeyboardDefaults.PasswordDialKeyBackground].
+ * @param numberTextSize The size of a digit. Read as a dimension so it ignores the font scale
+ *   (`couiNumberTextSize`, `number_keyboard_number_size`); the password dial uses
+ *   [NumericKeyboardDefaults.PasswordDialNumberTextSize].
+ * @param horizontalPadding The start/end padding of the grid (`coui_password_dial_grid_padding_horizontal`
+ *   on the lock screen, 12dp; 0dp in the base style).
+ * @param verticalPadding The top/bottom padding of the grid.
  */
 @Composable
 fun NumericKeyboard(
@@ -149,6 +170,10 @@ fun NumericKeyboard(
     enabled: Boolean = true,
     onLeftClick: () -> Unit = {},
     onRightClick: () -> Unit = {},
+    numberBackgroundColor: Color = Color.Transparent,
+    numberTextSize: Dp = NumericKeyboardDefaults.NumberTextSizeDp,
+    horizontalPadding: Dp = NumericKeyboardDefaults.HorizontalPadding,
+    verticalPadding: Dp = NumericKeyboardDefaults.VerticalPadding,
 ) {
     val currentOnNumberClick by rememberUpdatedState(onNumberClick)
     val currentOnLeftClick by rememberUpdatedState(onLeftClick)
@@ -156,9 +181,10 @@ fun NumericKeyboard(
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     val measurer = rememberTextMeasurer()
+    val haptic = rememberCouiHaptic()
 
-    val horizontalPaddingPx = with(density) { NumericKeyboardDefaults.HorizontalPadding.toPx() }
-    val verticalPaddingPx = with(density) { NumericKeyboardDefaults.VerticalPadding.toPx() }
+    val horizontalPaddingPx = with(density) { horizontalPadding.toPx() }
+    val verticalPaddingPx = with(density) { verticalPadding.toPx() }
     val cellSizePx = with(density) { NumericKeyboardDefaults.CellSize.toPx() }
     val pressableAreaPx = with(density) { NumericKeyboardDefaults.AdditionalPressableArea.toPx() }
     val numberOffsetYPx = with(density) { NumericKeyboardDefaults.NumberOffsetY.toPx() }
@@ -196,7 +222,7 @@ fun NumericKeyboard(
 
     val numberStyle = TextStyle(
         color = colors.numberColor,
-        fontSize = NumericKeyboardDefaults.NumberTextSize,
+        fontSize = with(density) { numberTextSize.toSp() },
         fontWeight = FontWeight.Medium,
         textAlign = TextAlign.Center,
     )
@@ -219,6 +245,8 @@ fun NumericKeyboard(
     fun press(index: Int) {
         val state = presses[index]
         pressedIndex = index
+        // PasswordDialKeyView.dispatchTouchEvent: 302 on a linear motor, 301 on a rotor motor.
+        haptic(CouiHapticEffect.Switch)
         scope.launch {
             state.show.snapTo(0f)
             state.show.animateTo(
@@ -310,6 +338,15 @@ fun NumericKeyboard(
                         scale = NumericKeyboardDefaults.PressPeakScale +
                             (NumericKeyboardDefaults.PressEndScale - NumericKeyboardDefaults.PressPeakScale) * state.fade.value
                         alpha = colors.circleMaxAlpha * (1f - state.fade.value)
+                    }
+                    // COUINumericKeyboard.drawCell fills the key circle with couiNumberBackgroundColor
+                    // before the digit, and COUIPressFeedbackHelper shrinks the key content on press.
+                    if (index != 9 && index != 11 && numberBackgroundColor.alpha > 0f) {
+                        drawCircle(
+                            color = numberBackgroundColor,
+                            radius = cellSizePx / 2f,
+                            center = center,
+                        )
                     }
                     when (pressEffect) {
                         NumericKeyboardPressEffect.Ripple -> {
@@ -411,20 +448,97 @@ fun NumericKeyboard(
                             val number = NumericKeyboardDefaults.Numbers[index]
                             val layout = numberLayouts[index]
                             if (number >= 0 && layout != null) {
-                                drawText(
-                                    textLayoutResult = layout,
-                                    topLeft = Offset(
-                                        x = center.x - layout.size.width / 2f,
-                                        y = center.y - layout.size.height / 2f - numberOffsetYPx,
-                                    ),
-                                )
+                                // COUIPressFeedbackHelper drives cell.mButtonScale, which scales the
+                                // digit with the key while it is held.
+                                val pressProgress = if (pressed) state.show.value else 1f - state.fade.value
+                                val keyScale = 1f - (1f - ButtonDefaults.PressedScale) * pressProgress
+                                scale(keyScale, keyScale, pivot = center) {
+                                    drawText(
+                                        textLayoutResult = layout,
+                                        topLeft = Offset(
+                                            x = center.x - layout.size.width / 2f,
+                                            y = center.y - layout.size.height / 2f - numberOffsetYPx,
+                                        ),
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        // One accessibility node per key so TalkBack can reach the digits individually; the native
+        // builds the same twelve nodes through PatternExploreByTouchHelper.
+        val geo = geometry
+        if (geo != null) {
+            for (row in 0 until NumericKeyboardDefaults.RowCount) {
+                for (column in 0 until NumericKeyboardDefaults.ColumnCount) {
+                    val index = row * 3 + column
+                    val style = when (index) {
+                        9 -> leftStyle
+                        11 -> rightStyle
+                        else -> null
+                    }
+                    if ((index == 9 || index == 11) && style == null) continue
+                    val label = when (index) {
+                        9 -> style?.description ?: style?.text ?: NumericKeyboardDefaults.DeleteText
+                        11 -> style?.description ?: style?.text ?: NumericKeyboardDefaults.FinishText
+                        else -> NumericKeyboardDefaults.Numbers[index].toString()
+                    }
+                    val center = geo.center(column, row)
+                    Box(
+                        Modifier
+                            .offset {
+                                IntOffset(
+                                    x = (center.x - cellSizePx / 2f).roundToInt(),
+                                    y = (center.y - cellSizePx / 2f).roundToInt(),
+                                )
+                            }
+                            .size(NumericKeyboardDefaults.CellSize)
+                            .semantics {
+                                contentDescription = label
+                                role = Role.Button
+                                onClick(label = label) {
+                                    dispatch(index)
+                                    true
+                                }
+                            },
+                    )
+                }
+            }
+        }
     }
+}
+
+/** Binary-compatibility bridge for the [NumericKeyboard] overload that predates the key styling. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the key background, digit size and grid padding.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun NumericKeyboard(
+    onNumberClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    leftStyle: NumericKeyboardSideStyle? = null,
+    rightStyle: NumericKeyboardSideStyle? = null,
+    colors: NumericKeyboardColors = NumericKeyboardDefaults.colors(),
+    pressEffect: NumericKeyboardPressEffect = NumericKeyboardPressEffect.Light,
+    enabled: Boolean = true,
+    onLeftClick: () -> Unit = {},
+    onRightClick: () -> Unit = {},
+) {
+    NumericKeyboard(
+        onNumberClick = onNumberClick,
+        modifier = modifier,
+        leftStyle = leftStyle,
+        rightStyle = rightStyle,
+        colors = colors,
+        pressEffect = pressEffect,
+        enabled = enabled,
+        onLeftClick = onLeftClick,
+        onRightClick = onRightClick,
+    )
 }
 
 /** What a [NumericKeyboard] draws under a finger, `COUINumericKeyboard.couiPressEffect`. */
@@ -561,6 +675,26 @@ object NumericKeyboardDefaults {
      * 32dp. The native reads it as pixels and so ignores the font scale; the port uses sp.
      */
     val NumberTextSize = 32.sp
+
+    /**
+     * The same digit size as a dimension. `COUINumericKeyboard` reads `couiNumberTextSize` with
+     * `getDimensionPixelSize`, so the digits never follow the font scale.
+     */
+    val NumberTextSizeDp = 32.dp
+
+    /**
+     * The digit size of the lock screen's password dial (`coui_password_dial_key_text_size`, 30sp).
+     */
+    val PasswordDialNumberTextSize = 30.dp
+
+    /**
+     * The circle behind a digit on the lock screen's password dial: `Widget.COUI.COUIPasswordDial`
+     * sets `couiNumberBackgroundColor` and `couiSideBackgroundColor` to 20% white.
+     */
+    val PasswordDialKeyBackground = Color(0x33FFFFFF)
+
+    /** The grid's horizontal padding on the password dial (`coui_password_dial_grid_padding_horizontal`). */
+    val PasswordDialGridPadding = 12.dp
 
     /**
      * The size of the default finish label. COUI `coui_number_keyboard_finish_text_size`, 16dp, read

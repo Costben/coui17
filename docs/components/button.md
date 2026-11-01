@@ -164,7 +164,7 @@ The ButtonDefaults object provides default values and color configurations for b
 | MinWidth      | Dp            | Minimum width of the button    | 58.dp                |
 | MinHeight     | Dp            | Minimum height of the button   | 44.dp                |
 | CornerRadius  | Dp            | Corner radius of the button    | 22.dp                |
-| InsideMargin  | PaddingValues | Internal padding of the button | PaddingValues(horizontal = 12.dp, vertical = 0.dp) |
+| InsideMargin  | PaddingValues | Internal padding of the button | PaddingValues(horizontal = 12.dp, vertical = 8.dp) |
 | MinWidthSmall | Dp            | Minimum width of the small size tier (COUI Widget.COUI.Button.Small) | 52.dp |
 | MinHeightSmall | Dp           | Minimum height of the small size tier | 28.dp |
 | CornerRadiusSmall | Dp        | Corner radius of the small size tier (height-derived capsule) | 14.dp |

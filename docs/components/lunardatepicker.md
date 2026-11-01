@@ -59,6 +59,7 @@ LunarDatePicker(
 | textStyle        | TextStyle               | Text style for the wheel items                         | COUITheme.textStyles.title3         | No       |
 | itemHeight       | Dp                      | The height of each wheel item                          | NumberPickerDefaults.ItemHeight     | No       |
 | insideMargin     | PaddingValues           | Padding around the wheel columns                       | LunarDatePickerDefaults.InsideMargin | No      |
+| yearIgnorable    | Boolean                 | Adds an ignore slot to the year wheel; with no year the month wheel lists all 24 months (`couiYearIgnorable`) | false | No |
 
 ### LunarDateValue Class
 

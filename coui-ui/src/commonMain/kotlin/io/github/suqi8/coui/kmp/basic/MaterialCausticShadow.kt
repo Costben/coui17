@@ -150,7 +150,7 @@ half4 main(float2 pos) {
     float value = smoothstep(sdf, 0.0, opticsSdf);
     value *= pow(smoothstep(halfSizeOptics.y + sdf, -halfSizeOptics.y - sdf, -pos_optics.y), 18.0);
     value = pow(value, 0.6) * 0.6 + 0.4 * value;
-    float gray = clamp((dot(float3(0.2126, 0.7152, 0.0722), in_background) - 0.45) * 0.6, 0.0, 1.0);
+    float gray = clamp((dot(float3(0.299, 0.587, 0.114), in_background) - 0.45) * 0.6, 0.0, 1.0);
     float alpha = in_color.a * value * (1.0 - gray) * (1.0 - gray);
     return half4(in_color.rgb * alpha, alpha);
 }

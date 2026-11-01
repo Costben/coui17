@@ -110,6 +110,7 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -119,6 +120,7 @@ import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.jvm.JvmName
 import kotlin.math.abs
@@ -223,6 +225,9 @@ internal class PopupListItemHandle {
     var enabled: Boolean = true
     var onClick: () -> Unit = {}
 
+    /** The row's long-click action, or `null` when the row is not a long-press target. */
+    var onLongClick: (() -> Unit)? = null
+
     fun contains(y: Float): Boolean = y >= top && y < bottom
 }
 
@@ -255,6 +260,13 @@ internal class PopupListGestureHost {
 
     /** The row currently holding the highlight, or `null` while no row is pressed. */
     private var activeItem: PopupListItemHandle? = null
+
+    /**
+     * Whether the current gesture already delivered a long click. A long click consumes the release:
+     * `View.performLongClick` returning true sets the platform's `mHasPerformedLongPress`, and the
+     * following UP then no longer clicks the row.
+     */
+    private var longPressConsumed = false
 
     /**
      * The highlight is one shape for the whole list, not one per row: dragging to another row
@@ -398,6 +410,7 @@ internal class PopupListGestureHost {
 
     /** Enters the row under [y], if any. */
     fun onDown(y: Float, scope: CoroutineScope) {
+        longPressConsumed = false
         val target = sortedItems().firstOrNull { it.contains(y) }
         activeItem = target
         if (target != null && target.enabled) {
@@ -405,6 +418,28 @@ internal class PopupListGestureHost {
         } else {
             fadeHighlight(scope)
         }
+    }
+
+    /**
+     * The row under [y] that a long press may target, or `null`. `COUIPopupListWindow`'s
+     * `RegionBasedLongPressDetector` only resolves rows that carry a long-click action: a main-menu
+     * row with a submenu, or a sub-menu row whose item has a long-click listener.
+     */
+    fun longPressTargetAt(y: Float): PopupListItemHandle? = sortedItems().firstOrNull { it.contains(y) && it.enabled && it.onLongClick != null }
+
+    /**
+     * Whether [row] is still the pressed row, so the prepared long press may fire
+     * (`isPointInTargetView` in the native detector: the finger must not have left the target).
+     */
+    fun canFireLongPress(row: PopupListItemHandle): Boolean = activeItem === row && row.enabled && row.onLongClick != null
+
+    /** Delivers [row]'s long click and suppresses the following click. Returns false if it was stale. */
+    fun fireLongPress(row: PopupListItemHandle): Boolean {
+        if (!canFireLongPress(row)) return false
+        val action = row.onLongClick ?: return false
+        longPressConsumed = true
+        action()
+        return true
     }
 
     /** Whether a move to [y] would hand the highlight to a different, enabled row. */
@@ -442,11 +477,15 @@ internal class PopupListGestureHost {
         fadeHighlight(scope)
     }
 
-    /** Selects the row the finger currently rests on (COUI resolves the target at UP, not at DOWN). */
+    /**
+     * Selects the row the finger currently rests on (COUI resolves the target at UP, not at DOWN).
+     * A long click that already fired owns the gesture, so the release no longer selects.
+     */
     fun onUp(scope: CoroutineScope) {
         val target = activeItem
+        val consumed = longPressConsumed
         cancel(scope)
-        if (target != null && target.enabled) target.onClick()
+        if (!consumed && target != null && target.enabled) target.onClick()
     }
 }
 
@@ -558,6 +597,9 @@ private val IntrinsicMeasurable.popupListItemGroupKey: Any?
  *   [ListPopupColumn] skips the 12dp divider band between two rows carrying an equal non-null key,
  *   matching `COUIPopupListWindow`'s `getGroupId()` boundary rule. `null` keeps the band between
  *   every adjacent pair.
+ * @param onLongClick Invoked when the row has been held for [DropdownDefaults.LongPressTimeoutMillis]
+ *   without the finger leaving it (COUI `RegionBasedLongPressDetector`). `null` keeps the row out of
+ *   the long-press path entirely, so a tap behaves exactly as before.
  */
 @Composable
 internal fun Modifier.popupListItem(
@@ -566,6 +608,7 @@ internal fun Modifier.popupListItem(
     role: Role,
     onClick: () -> Unit,
     groupKey: Any? = null,
+    onLongClick: (() -> Unit)? = null,
 ): Modifier {
     val interactionEnabled = enabled && LocalPopupInteractionEnabled.current
     val host = LocalPopupListGestureHost.current ?: return this.selectable(
@@ -577,8 +620,16 @@ internal fun Modifier.popupListItem(
 
     val handle = remember { PopupListItemHandle() }
     val currentOnClick by rememberUpdatedState(onClick)
+    val currentOnLongClick by rememberUpdatedState(onLongClick)
     handle.enabled = interactionEnabled
     handle.onClick = remember { { currentOnClick() } }
+    handle.onLongClick = remember(onLongClick == null) {
+        if (onLongClick == null) {
+            null
+        } else {
+            { currentOnLongClick?.invoke() }
+        }
+    }
 
     DisposableEffect(host, handle) {
         host.register(handle)
@@ -828,6 +879,23 @@ private fun Modifier.popupListGestures(
             // A press that lands on a divider band or header still tracks: dragging into a row then
             // picks it up, as COUITouchRecyclerView does for a DOWN with no selectable child.
             host.onDown(downY, scope)
+            // COUI COUIPopupListWindow's RegionBasedLongPressDetector: the row under the finger arms
+            // a timer at DOWN and the long click fires once it elapses with the finger still on it.
+            val longPressRow = host.longPressTargetAt(downY)
+            var longPressJob: Job? = null
+            if (longPressRow != null) {
+                longPressJob = scope.launch {
+                    delay(DropdownDefaults.LongPressTimeoutMillis)
+                    if (host.canFireLongPress(longPressRow)) {
+                        performHaptic(CouiHapticEffect.Long)
+                        host.fireLongPress(longPressRow)
+                    }
+                }
+            }
+            fun cancelLongPress() {
+                longPressJob?.cancel()
+                longPressJob = null
+            }
             var pressed = true
             var released = false
 
@@ -838,6 +906,7 @@ private fun Modifier.popupListGestures(
 
                     if (event.changes.size > 1) {
                         // A second pointer cancels the selection, as COUI does on ACTION_POINTER_DOWN.
+                        cancelLongPress()
                         host.cancel(scope)
                         pressed = false
                         break
@@ -849,11 +918,17 @@ private fun Modifier.popupListGestures(
                     val inside = change.position.x >= 0f && change.position.x < size.width &&
                         change.position.y >= 0f && change.position.y < size.height
                     if (!inside) {
+                        cancelLongPress()
                         host.cancel(scope)
                     } else if (host.isDynamicSelection) {
                         val crossing = host.willChangeRow(change.position.y)
                         host.onMoveTo(change.position.y, scope)
                         if (crossing) performHaptic(CouiHapticEffect.Switch)
+                    }
+                    // Leaving the target row cancels the pending long click
+                    // (`RegionBasedLongPressDetector.isPointInTargetView`), even inside the list.
+                    if (longPressRow != null && !longPressRow.contains(change.position.y)) {
+                        cancelLongPress()
                     }
 
                     if (change.changedToUpIgnoreConsumed()) {
@@ -875,11 +950,15 @@ private fun Modifier.popupListGestures(
 
                     val y = change.position.y
                     if (!host.isDynamicSelection && abs(y - downY) > touchSlop) {
+                        // A drag that scrolls the list cancels the native detector through its
+                        // CancelPredicate; the same move ends the selection here.
+                        cancelLongPress()
                         host.cancel(scope)
                         pressed = false
                     }
                 }
             } finally {
+                cancelLongPress()
                 host.cancel(scope)
             }
         }
@@ -914,8 +993,10 @@ private fun DrawScope.drawPopupItemHighlight(
         height = height,
         cornerRadius = radius.toPx(),
         // COUI asks for weight 1.0 on a stadium row, which is a plain arc; the taller rows
-        // take weight 3.0 and follow the squircle silhouette.
+        // take weight 3.0 (MixedPopupListAdapter.MASK_SMOOTH_ROUND_CORNER_WEIGHT_DEFAULT) and
+        // follow the squircle silhouette.
         squircleEnabled = squircleEnabled && !singleLine,
+        weight = SquircleDefaults.WeightLarge,
     )
     translate(left = inset, top = top) {
         drawPath(path, color = color, alpha = alpha.coerceIn(0f, 1f))
@@ -1629,7 +1710,7 @@ fun rememberListPopupLayoutInfo(
     }
 
     val containerSize = windowInfo.containerSize
-    val bottomBarrierTop = LocalPopupBarriers.current?.bottomBarrierTop
+    val bottomBarrierTop = LocalPopupBarriers.current?.bottomBarrierTop(parentBounds.top)
 
     val windowBounds = remember(
         layoutDirection,

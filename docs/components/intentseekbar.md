@@ -78,6 +78,7 @@ In the native component the mode switches automatically as soon as the caller se
 | showThumb             | Boolean                                 | Whether the thumb is drawn                                         | false                               | No       |
 | size                  | IntentSeekBarSize                       | The track / thumb triplet                                          | IntentSeekBarSize.Default           | No       |
 | colors                | IntentSeekBarColors                     | The colours                                                        | IntentSeekBarDefaults.colors()      | No       |
+| playbackState         | IntentSeekBarPlaybackState              | Drives the five `COUIIntentSeekBar.VisualState`s: plain track, cone light, full / partial loading | `Idle` | No |
 
 ### IntentSeekBarSize
 

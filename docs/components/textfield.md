@@ -297,6 +297,7 @@ The TextFieldDefaults object provides default values for TextField components.
 | Constant Name    | Type     | Description                                        | Default Value         |
 | ---------------- | -------- | -------------------------------------------------- | --------------------- |
 | CornerRadius     | Dp       | Corner radius of the field                         | 10.dp                 |
+| MinHeight        | Dp       | Minimum height of the field (COUI `coui_edit_text_height_min`) | 62.dp      |
 | InsideMargin     | DpSize   | Internal padding in Rectangle mode                 | DpSize(16.dp, 12.dp)  |
 | LineInsideMargin | DpSize   | Internal padding in Line mode                      | DpSize(0.dp, 15.dp)   |
 | NoneInsideMargin | DpSize   | Internal padding in None mode                      | DpSize(0.dp, 9.dp)    |

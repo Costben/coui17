@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.LayoutDirection
  * @property capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
  *   (`true`) or keeps the continuous-curvature superellipse (`false`, the 28dp popup panel corner).
  *   Button capsules do not use this shape; they trace the system capsule curve instead.
+ * @property weight The Lp exponent of the corner curve, [SquircleDefaults.WeightNormal] by default.
+ *   Pass [SquircleDefaults.WeightLarge] where ColorOS 17 draws weight 3.0 — cards, dialog and sheet
+ *   panels — so the outline matches the fill it clips.
  */
 @Immutable
 class SquircleShape private constructor(
@@ -44,6 +47,7 @@ class SquircleShape private constructor(
     private val extension: Float,
     private val squircleEnabled: Boolean,
     val capsuleCircleBlend: Boolean,
+    val weight: Float,
 ) : CornerBasedShape(
     topStart = topStart,
     topEnd = topEnd,
@@ -61,12 +65,14 @@ class SquircleShape private constructor(
      *   fallback the shader-backed modifiers use. Forward [isSquircleEnabled].
      * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
      *   (`true`) or keeps the continuous-curvature superellipse (`false`).
+     * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
      */
     constructor(
         cornerRadius: Dp,
         extension: Float = SquircleDefaults.Extension,
         squircleEnabled: Boolean = true,
         capsuleCircleBlend: Boolean = true,
+        weight: Float = SquircleDefaults.Weight,
     ) : this(
         topStart = CornerSize(cornerRadius),
         topEnd = CornerSize(cornerRadius),
@@ -75,6 +81,25 @@ class SquircleShape private constructor(
         extension = extension,
         squircleEnabled = squircleEnabled,
         capsuleCircleBlend = capsuleCircleBlend,
+        weight = weight,
+    )
+
+    /** Binary-compatibility bridge for the constructor from before `weight` existed. */
+    @Deprecated(
+        message = "Migrated to the constructor that adds weight.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    constructor(
+        cornerRadius: Dp,
+        extension: Float = SquircleDefaults.Extension,
+        squircleEnabled: Boolean = true,
+        capsuleCircleBlend: Boolean = true,
+    ) : this(
+        cornerRadius = cornerRadius,
+        extension = extension,
+        squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = capsuleCircleBlend,
+        weight = SquircleDefaults.Weight,
     )
 
     /**
@@ -91,6 +116,7 @@ class SquircleShape private constructor(
      *   [isSquircleEnabled].
      * @param capsuleCircleBlend Whether a corner at the capsule radius blends into a circular arc
      *   (`true`) or keeps the continuous-curvature superellipse (`false`).
+     * @param weight The Lp exponent of the corner curve; see [SquircleDefaults.WeightLarge].
      */
     constructor(
         topStart: Dp,
@@ -100,6 +126,7 @@ class SquircleShape private constructor(
         extension: Float = SquircleDefaults.Extension,
         squircleEnabled: Boolean = true,
         capsuleCircleBlend: Boolean = true,
+        weight: Float = SquircleDefaults.Weight,
     ) : this(
         topStart = CornerSize(topStart),
         topEnd = CornerSize(topEnd),
@@ -108,6 +135,31 @@ class SquircleShape private constructor(
         extension = extension,
         squircleEnabled = squircleEnabled,
         capsuleCircleBlend = capsuleCircleBlend,
+        weight = weight,
+    )
+
+    /** Binary-compatibility bridge for the constructor from before `weight` existed. */
+    @Deprecated(
+        message = "Migrated to the constructor that adds weight.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    constructor(
+        topStart: Dp,
+        topEnd: Dp,
+        bottomEnd: Dp,
+        bottomStart: Dp,
+        extension: Float = SquircleDefaults.Extension,
+        squircleEnabled: Boolean = true,
+        capsuleCircleBlend: Boolean = true,
+    ) : this(
+        topStart = topStart,
+        topEnd = topEnd,
+        bottomEnd = bottomEnd,
+        bottomStart = bottomStart,
+        extension = extension,
+        squircleEnabled = squircleEnabled,
+        capsuleCircleBlend = capsuleCircleBlend,
+        weight = SquircleDefaults.Weight,
     )
 
     /** Draws the smooth-corner outline from the px radii [CornerBasedShape] already resolved. */
@@ -150,6 +202,7 @@ class SquircleShape private constructor(
             extension = extension,
             squircleEnabled = true,
             capsuleCircleBlend = capsuleCircleBlend,
+            weight = weight,
         )
         return Outline.Generic(path)
     }
@@ -167,6 +220,7 @@ class SquircleShape private constructor(
         extension = extension,
         squircleEnabled = squircleEnabled,
         capsuleCircleBlend = capsuleCircleBlend,
+        weight = weight,
     )
 
     override fun equals(other: Any?): Boolean {
@@ -178,7 +232,8 @@ class SquircleShape private constructor(
             bottomStart == other.bottomStart &&
             extension == other.extension &&
             squircleEnabled == other.squircleEnabled &&
-            capsuleCircleBlend == other.capsuleCircleBlend
+            capsuleCircleBlend == other.capsuleCircleBlend &&
+            weight == other.weight
     }
 
     override fun hashCode(): Int {
@@ -189,10 +244,11 @@ class SquircleShape private constructor(
         result = 31 * result + extension.hashCode()
         result = 31 * result + squircleEnabled.hashCode()
         result = 31 * result + capsuleCircleBlend.hashCode()
+        result = 31 * result + weight.hashCode()
         return result
     }
 
     override fun toString(): String = "SquircleShape(topStart=$topStart, topEnd=$topEnd, bottomEnd=$bottomEnd, " +
         "bottomStart=$bottomStart, extension=$extension, squircleEnabled=$squircleEnabled, " +
-        "capsuleCircleBlend=$capsuleCircleBlend)"
+        "capsuleCircleBlend=$capsuleCircleBlend, weight=$weight)"
 }

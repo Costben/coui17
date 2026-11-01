@@ -4,6 +4,10 @@
 
 本组件对标 ColorOS 17 安装进度按钮，覆盖 `InstallDownload` / `InstallDownloadSmall` 两种样式变体。
 
+::: tip 绘制交给 InstallLoadProgress
+`LoadProgressButton` 现在由 [InstallLoadProgress](../components/installloadprogress) 绘制：胶囊走系统曲线，静止时只有 `Large` 是强调色填充，`Small` 为浅色底、强调色文字，`Circle` 是 30dp 的平滑圆角方块。新代码可以直接用 `InstallLoadProgress`；这里保留的只是 `LoadProgressButtonColors` 这组入参。
+:::
+
 <div style="position: relative; height: 250px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=loadProgressButton" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </div>

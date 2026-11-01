@@ -33,9 +33,9 @@ import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Add
-import io.github.suqi8.coui.kmp.icon.extended.Home
-import io.github.suqi8.coui.kmp.icon.extended.Messages
-import io.github.suqi8.coui.kmp.icon.extended.Settings
+import io.github.suqi8.coui.kmp.icon.extended.Favorites
+import io.github.suqi8.coui.kmp.icon.extended.GridView
+import io.github.suqi8.coui.kmp.icon.extended.Layers
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -51,14 +51,12 @@ fun BottomFloatingNavigationBarDemo() {
     val colorScheme = COUITheme.colorScheme
     // Three items: the bar hands the expansion view's footprint plus the side spacing to the
     // capsule as a width bound, so the capsule has to leave that much of the row free.
-    val homeLabel = str("Home")
-    val messagesLabel = str("Messages")
-    val settingsLabel = str("Settings")
-    val items = remember(homeLabel, messagesLabel, settingsLabel) {
+    val itemLabels = listOf(str("Item {}", 1), str("Item {}", 2), str("Item {}", 3))
+    val items = remember(itemLabels) {
         listOf(
-            homeLabel to COUIIcons.Home,
-            messagesLabel to COUIIcons.Messages,
-            settingsLabel to COUIIcons.Settings,
+            itemLabels[0] to COUIIcons.Favorites,
+            itemLabels[1] to COUIIcons.Layers,
+            itemLabels[2] to COUIIcons.GridView,
         )
     }
     val backdrop = rememberBlurBackdrop()

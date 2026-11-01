@@ -108,7 +108,9 @@ Every value below is aligned with the ColorOS 17 implementation; none of them is
 | :--- | :--- | :--- |
 | `WrapperHeight` | 40dp | `dimen/coui_search_view_wrapper_height` |
 | `AnimateHeight` | 50dp | `dimen/coui_search_view_animate_height` |
-| `CollapsedMinHeight` | 1dp | `dimen/coui_search_view_collapsed_min_height` (declared `1px`) |
+| `CollapsedMinHeight` | 1dp | `dimen/coui_search_view_collapsed_min_height` (declared `1px`; `CollapsedMinHeightPx` = 1) |
+| `ICON_ROTATION_Y` | 80° | `mSearchIcon.animate().rotationY(80.0f)` |
+| `ICON_ROTATION_DURATION_MILLIS` | 150 | the same call's `setDuration(150L)` |
 | `IconSize` | 24dp | `dimen/coui_search_view_icon_size` |
 | `SearchIconMargin` | 12dp | `dimen/coui_search_view_search_icon_margin` |
 | `CornerRadius` | 18dp | `dimen/coui_search_view_corner` |

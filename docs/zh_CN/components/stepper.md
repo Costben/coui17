@@ -31,7 +31,7 @@ Stepper(
 | value         | Int             | 当前值                     | -                            | 是   |
 | onValueChange | (Int) -> Unit   | 步进时返回新值的回调       | -                            | 是   |
 | modifier      | Modifier        | 应用于步进器的修饰符       | Modifier                     | 否   |
-| minValue      | Int             | 可达到的最小值             | Int.MIN_VALUE                | 否   |
+| minValue      | Int             | 可达到的最小值             | -999                         | 否   |
 | maxValue      | Int             | 可达到的最大值             | Int.MAX_VALUE                | 否   |
 | step          | Int             | 每次按压的增减量           | 1                            | 否   |
 | enabled       | Boolean         | 步进器是否启用             | true                         | 否   |

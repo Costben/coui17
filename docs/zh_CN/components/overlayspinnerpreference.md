@@ -340,6 +340,7 @@ Scaffold {
 | children | List\<DropdownItem>?              | 可选的子菜单项；仅级联变体   | null   | 否       |
 | hint | @Composable (() -> Unit)?         | 可选的尾部提示槽（徽标、红点、短计数），显示在选中指示图标之前，最大宽度 40dp。行被禁用时整体隐藏 | null   | 否       |
 | alert | Boolean                           | 是否为警示（危险）项；其标题使用错误色 | false  | 否       |
+| onLongClick | (() -> Unit)? | 长按该行 650ms 时触发（COUI 区域化长按）；带 `children` 的行长按也会展开二级菜单，对话框列表不使用 | null | 否 |
 
 ### DropdownColors 属性
 

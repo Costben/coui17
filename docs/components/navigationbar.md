@@ -115,7 +115,7 @@ The bar samples the content behind it from `LocalBackdrop`; provide a backdrop t
 | modifier                   | Modifier                 | Modifier applied to the nav bar     | Modifier                              | No       |
 | color                      | Color                    | Background color of the nav bar     | COUITheme.colorScheme.background     | No       |
 | showDivider                | Boolean                  | Show top divider line or not        | true                                  | No       |
-| defaultWindowInsetsPadding | Boolean                  | Apply default window insets padding | true                                  | No       |
+| defaultWindowInsetsPadding | Boolean                  | Reserve the caption-bar bottom inset below the items (off by default: the bottom inset is the host's) | false | No |
 | mode                       | NavigationBarDisplayMode    | Display mode for items              | NavigationBarDisplayMode.IconAndText     | No       |
 | content                    | @Composable RowScope.()  | The content of the nav bar          | -                                     | Yes      |
 

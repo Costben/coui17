@@ -81,7 +81,7 @@ TooltipBox(
 @Composable
 fun TooltipScope.PlainTooltip(
     modifier: Modifier = Modifier,
-    caretShape: Shape? = null,
+    caretShape: Shape? = TooltipDefaults.caretShape(),
     maxWidth: Dp = TooltipDefaults.PlainTooltipMaxWidth,
     cornerRadius: Dp = TooltipDefaults.PlainTooltipCornerRadius,
     containerColor: Color = TooltipDefaults.plainTooltipContainerColor,
@@ -91,7 +91,7 @@ fun TooltipScope.PlainTooltip(
 )
 ```
 
-By default the plain tooltip is a blue bubble with white text, matching ColorOS `COUIToolTips` (`couiColorTips` over `coui_color_white`). Pass `caretShape = TooltipDefaults.caretShape()` to draw a caret pointing at the anchor; the default is caret-less.
+By default the plain tooltip is a blue bubble with white text, matching ColorOS `COUIToolTips` (`couiColorTips` over `coui_color_white`). The bubble carries the COUI arrow by default — `COUIToolTips.show()` / `showWithDirection()` default `hasIndicator` to true — and the arrow points at the anchor. Pass `caretShape = null` for the caret-less Miuix bubble.
 
 ## RichTooltip
 
@@ -103,7 +103,7 @@ fun TooltipScope.RichTooltip(
     modifier: Modifier = Modifier,
     title: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
-    caretShape: Shape? = null,
+    caretShape: Shape? = TooltipDefaults.caretShape(),
     maxWidth: Dp = TooltipDefaults.RichTooltipMaxWidth,
     cornerRadius: Dp = TooltipDefaults.RichTooltipCornerRadius,
     colors: RichTooltipColors = TooltipDefaults.richTooltipColors(),
@@ -211,7 +211,7 @@ fun TooltipDefaults.caretShape(): Shape
 val TooltipDefaults.caretSize: DpSize // 16 x 8 dp
 ```
 
-Pass `caretShape = TooltipDefaults.caretShape()` to `PlainTooltip` / `RichTooltip` to draw a caret pointing at the anchor (for `Above` / `Below` positioning). The default is caret-less, matching the rest of COUI's floating surfaces.
+The bubble indicator is on by default. It is the `_sharp_` arrow of `COUIToolTips`: the centred 20×10.1dp `coui_*_sharp_middle_arrow_up` when the anchor is clear of the bubble's corners, and the 16.27×10.29dp `coui_*_sharp_edges_arrow_up_right` near an end. Its base curves (5.19dp / 7.92dp) follow the 17dp bubble corner, the tip is a 2dp radius, and the arrow overlaps the bubble edge by `CaretEmbedDistance` (0.33dp) so the silhouettes merge. It rotates to whichever side faces the anchor (`Above` / `Below` / `Left` / `Right`) and mirrors toward the nearer end. Pass `caretShape = null` to keep the caret-less Miuix bubble.
 
 ### Constants
 
@@ -220,10 +220,17 @@ Pass `caretShape = TooltipDefaults.caretShape()` to `PlainTooltip` / `RichToolti
 | SpacingBetweenTooltipAndAnchor | Dp        | Spacing between a tooltip and its anchor | 8.dp                                               |
 | HorizontalEdgeMargin           | Dp            | Minimum gap to the left and right window edges | 16.dp                                              |
 | PlainTooltipMaxWidth       | Dp            | Maximum width of a plain tooltip         | 200.dp                                             |
-| PlainTooltipCornerRadius   | Dp            | Corner radius of a plain tooltip         | 12.dp                                              |
-| PlainTooltipInsideMargin   | PaddingValues | Inner padding of a plain tooltip         | PaddingValues(horizontal = 12.dp, vertical = 8.dp) |
+| PlainTooltipCornerRadius   | Dp            | Corner radius of a plain tooltip         | 17.dp                                              |
+| PlainTooltipInsideMargin   | PaddingValues | Inner padding of a plain tooltip         | PaddingValues(all = 12.dp)                         |
+| CaretWidth                 | Dp            | Width of the centred bubble indicator     | 20.dp                                              |
+| CaretHeight                | Dp            | Height of the centred bubble indicator    | 10.1.dp                                            |
+| CaretEdgeWidth             | Dp            | Width of the end bubble indicator         | 16.27.dp                                           |
+| CaretEdgeHeight            | Dp            | Height of the end bubble indicator        | 10.29.dp                                           |
+| CaretEmbedDistance         | Dp            | Overlap between the indicator and the bubble edge | 0.33.dp                                    |
+| CaretEdgeExtraDistance     | Dp            | Clearance the end indicator keeps from the bubble end | 2.dp                                  |
+| CaretPadding               | Dp            | Space the bubble leaves for the indicator | 9.96.dp                                            |
 | RichTooltipMaxWidth        | Dp            | Maximum width of a rich tooltip          | 320.dp                                             |
-| RichTooltipCornerRadius    | Dp            | Corner radius of a rich tooltip          | 16.dp                                              |
+| RichTooltipCornerRadius    | Dp            | Corner radius of a rich tooltip          | 17.dp                                              |
 | RichTooltipInsideMargin    | PaddingValues | Inner padding of a rich tooltip          | PaddingValues(all = 16.dp)                         |
 | RichTooltipActionCornerRadius | Dp         | Corner radius of a rich tooltip action button | 8.dp                                          |
 | RichTooltipActionInsideMargin | PaddingValues | Inner padding of a rich tooltip action button | PaddingValues(horizontal = 12.dp, vertical = 6.dp) |

@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.preference.RadioButtonPreference
 
 @Composable
@@ -37,14 +38,20 @@ fun RadioButtonPreferenceDemo() {
         ) {
             var selectedIndex by remember { mutableIntStateOf(0) }
 
-            Card {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
                 RadioButtonPreference(
                     title = "Option A",
                     selected = selectedIndex == 0,
                     onClick = { selectedIndex = 0 },
                 )
             }
-            Card {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
                 RadioButtonPreference(
                     title = "Option B",
                     summary = "With summary description",
@@ -52,14 +59,20 @@ fun RadioButtonPreferenceDemo() {
                     onClick = { selectedIndex = 1 },
                 )
             }
-            Card {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
                 RadioButtonPreference(
                     title = "Option C",
                     selected = selectedIndex == 2,
                     onClick = { selectedIndex = 2 },
                 )
             }
-            Card {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
                 RadioButtonPreference(
                     title = "Disabled RadioButton",
                     summary = "This radio button is currently unavailable",

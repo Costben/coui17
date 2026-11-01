@@ -75,6 +75,10 @@ NumericKeyboard(
 | enabled       | Boolean                   | 是否响应指针                               | true                             | 否   |
 | onLeftClick   | () -> Unit                | 左侧格子抬手时回调                         | {}                               | 否   |
 | onRightClick  | () -> Unit                | 右侧格子抬手时回调                         | {}                               | 否   |
+| numberBackgroundColor | Color             | 每个数字键下的圆底（couiNumberBackgroundColor）          | Color.Transparent                | 否       |
+| numberTextSize | Dp                       | 数字字号，按尺寸取值，不随系统字体缩放                  | NumericKeyboardDefaults.NumberTextSizeDp | 否 |
+| horizontalPadding | Dp                    | 栅格左右内边距                                          | NumericKeyboardDefaults.HorizontalPadding | 否 |
+| verticalPadding | Dp                       | 栅格上下内边距                                          | NumericKeyboardDefaults.VerticalPadding | 否 |
 
 ### NumericKeyboardSideStyle
 

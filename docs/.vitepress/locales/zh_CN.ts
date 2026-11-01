@@ -213,6 +213,7 @@ export default defineConfig({
                         { text: "LoadingDialog", link: "/zh_CN/components/loadingdialog" },
                         { text: "SecurityDialog", link: "/zh_CN/components/securitydialog" },
                         { text: "DialogButtonBar", link: "/zh_CN/components/dialogbuttonbar" },
+                        { text: "OverlayBottomAssignmentDialog", link: "/zh_CN/components/overlaybottomassignmentdialog" },
                     ],
                 },
             ],

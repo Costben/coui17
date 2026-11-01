@@ -69,7 +69,7 @@ InputPreference(
 | startAction      | @Composable (() -> Unit)?       | 左侧显示的自定义内容                       | null                                  | 否       |
 | endActions       | @Composable (RowScope.() -> Unit)? | 右侧显示的自定义内容                    | null                                  | 否       |
 | bottomAction     | @Composable (() -> Unit)?       | 底部显示的自定义内容                       | null                                  | 否       |
-| insideMargin     | PaddingValues                   | 组件内部内容的边距                         | BasicComponentDefaults.InsideMargin   | 否       |
+| insideMargin     | PaddingValues                   | 组件内部内容的边距(有标题时上 0dp、下 7dp)   | InputPreferenceDefaults.InsideMargin  | 否       |
 | cardListPosition | CardListPosition                | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None           | 否       |
 | enabled          | Boolean                         | 输入框是否可编辑                           | true                                  | 否       |
 | readOnly         | Boolean                         | 输入框是否拒绝编辑                         | false                                 | 否       |

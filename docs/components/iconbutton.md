@@ -85,6 +85,7 @@ Scaffold {
 | cornerRadius    | Dp                     | Button corner radius               | IconButtonDefaults.CornerRadius | No       |
 | minHeight       | Dp                     | Button minimum height              | IconButtonDefaults.MinHeight    | No       |
 | minWidth        | Dp                     | Button minimum width               | IconButtonDefaults.MinWidth     | No       |
+| interactionSource     | MutableInteractionSource?                   | Interaction source of the button | null | No |
 | content         | @Composable () -> Unit | Button content, typically an Icon  | -                               | Yes      |
 
 ### IconButtonDefaults Object

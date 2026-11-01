@@ -5,6 +5,7 @@ package io.github.suqi8.coui.kmp.utils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -96,10 +97,12 @@ class COUIPopupUtils {
         private val DialogDimExit: ExitTransition =
             fadeOut(animationSpec = tween(250, easing = DecelerateEasing(1.5f)))
 
+        // `coui_popup_list_window_exit`: alpha 1 -> 0 over 200ms with
+        // `pathInterpolator(0.3, 0, 0.8, 0.15)`, the scrim following the window out.
         private val PopupDimEnter: EnterTransition =
             fadeIn(animationSpec = tween(300, easing = SinOutEasing))
         private val PopupDimExit: ExitTransition =
-            fadeOut(animationSpec = tween(150, easing = SinOutEasing))
+            fadeOut(animationSpec = tween(200, easing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)))
 
         @Composable
         private fun rememberDefaultDialogEnterTransition(largeScreen: Boolean): EnterTransition = remember(largeScreen) {

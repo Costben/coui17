@@ -202,7 +202,9 @@ object ScrollBarDefaults {
     val EndPadding: Dp = 5.5.dp
     val ThumbMinLength: Dp = 48.dp
     val CornerRadius: Dp = Dp.Unspecified
-    val FadeDelayMillis = 1000
+
+    /** COUI `COUIScrollBar.SCROLLER_FADE_TIMEOUT`: 2000ms after the scroll stops. */
+    val FadeDelayMillis = 2000
     val FadeDurationMillis = 500
     val TouchTargetWidth: Dp = 48.dp
     val DragThumbWidth: Dp = 6.dp
@@ -211,7 +213,9 @@ object ScrollBarDefaults {
      * The padding from the end edge while dragging (COUI coui_scrollbar_drawable_pressed_inset).
      */
     val DragEndPadding: Dp = 4.dp
-    val ThumbAlpha = 0.1f
+
+    /** COUI `coui_scrollbar_color` is #29000000 / #40ffffff: 0x29 = 41/255. */
+    val ThumbAlpha = 0.16f
     val DragThumbAlpha = 0.3f
     val DragAnimationDurationMillis = 150
 

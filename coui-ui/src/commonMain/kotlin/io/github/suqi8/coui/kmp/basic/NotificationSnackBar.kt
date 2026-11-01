@@ -3,12 +3,16 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,13 +38,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.COUIMoveEase
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Close
@@ -52,6 +63,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.math.abs
+import kotlin.math.max
 
 /**
  * The notification-style snackbar of ColorOS.
@@ -73,10 +86,6 @@ import kotlinx.coroutines.sync.withLock
  * - the `couiRoundCornerLRadius` 13dp / `couiRoundCornerLWeight` 0.99 pair that
  *   `OplusOutline.setSmoothRoundRect` takes when `RoundCornerUtil.isVersionSupport()` is true; the
  *   port keeps the `couiRoundCornerL` radius of the native fallback;
- * - the swipe-to-dismiss gesture of `onInterceptTouchEvent` / `onTouchEvent` (a swipe past 1/8 of the
- *   measured width dismisses along X, a downward swipe past 1/8 dismisses along Y, the cancel
- *   animation returns on the `COUISpringAnimation` response 0.35 / bounce 0 exposed as
- *   [NotificationSnackBarDefaults.ReturnSpring]);
  * - the "one snackbar at a time" bookkeeping of `make()`, which scans the parent for an already
  *   visible `COUISnackBar`; [NotificationSnackBarHostState] replaces the newest entry instead;
  * - the `ContextThemeWrapper(Theme.COUI_Main)` fallback of `make()` when the host theme does not
@@ -95,6 +104,8 @@ import kotlinx.coroutines.sync.withLock
  * @param cornerRadius The corner radius of the container. COUI `couiRoundCornerL`
  *   ([NotificationSnackBarDefaults.CornerRadius]).
  * @param colors The [NotificationSnackBarColors] of the snackbar.
+ * @param onSwipedDismiss The callback when a swipe past 1/8 of the width dismisses the snackbar.
+ *   The gesture is only enabled when this or [onClose] is set.
  */
 @Composable
 fun NotificationSnackBar(
@@ -108,13 +119,100 @@ fun NotificationSnackBar(
     onClose: (() -> Unit)? = null,
     cornerRadius: Dp = NotificationSnackBarDefaults.CornerRadius,
     colors: NotificationSnackBarColors = NotificationSnackBarDefaults.colors(),
+    onSwipedDismiss: (() -> Unit)? = null,
 ) {
     val squircleEnabled = isSquircleEnabled()
     val shape = remember(cornerRadius, squircleEnabled) {
         SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
     val closeSize = NotificationSnackBarDefaults.CloseSize
-    Box(modifier = modifier.padding(end = NotificationSnackBarDefaults.LayoutMarginEnd)) {
+    val scope = rememberCoroutineScope()
+    val windowSize = LocalWindowInfo.current.containerSize
+    val dismissOnSwipe = onSwipedDismiss != null || onClose != null
+    val offsetX = remember { Animatable(0f) }
+    val offsetY = remember { Animatable(0f) }
+    Box(
+        modifier = modifier
+            .padding(end = NotificationSnackBarDefaults.LayoutMarginEnd)
+            .graphicsLayer {
+                translationX = offsetX.value
+                translationY = offsetY.value
+            }
+            .pointerInput(dismissOnSwipe, windowSize) {
+                if (!dismissOnSwipe) return@pointerInput
+                // COUINotificationSnackBar picks the axis on the first move: X wins when the
+                // horizontal delta is larger, otherwise Y. Only the Y drag is limited, so the
+                // snackbar cannot be pushed up past 1/8 of its width.
+                val onDismissed = onSwipedDismiss ?: onClose
+                var axis = 0
+                val threshold = size.width.toFloat() / NotificationSnackBarDefaults.SWIPE_DISTANCE_DIVISOR
+
+                suspend fun settle() {
+                    val dismiss = if (axis == 1) {
+                        abs(offsetX.value) > threshold
+                    } else {
+                        // The Y threshold also requires a downward swipe.
+                        offsetY.value > threshold
+                    }
+                    if (dismiss) {
+                        if (axis == 1) {
+                            // Target = (screen - width) / 2 + width, the distance that clears the
+                            // window from the centred position.
+                            val sign = if (offsetX.value < 0f) -1f else 1f
+                            val target = sign * ((windowSize.width - size.width) / 2f + size.width)
+                            val duration = (
+                                (abs(target) - abs(offsetX.value)) /
+                                    NotificationSnackBarDefaults.SWIPE_SLIDE_SPEED
+                                ).toInt()
+                            offsetX.animateTo(
+                                targetValue = target,
+                                animationSpec = tween(
+                                    durationMillis = duration.coerceAtLeast(0),
+                                    easing = NotificationSnackBarDefaults.SwipeSlideEasing,
+                                ),
+                            )
+                        } else {
+                            // Target = the parent's bottom plus the snackbar height: it slides just
+                            // past the window edge.
+                            val target = (windowSize.height + size.height).toFloat()
+                            val duration = (target / NotificationSnackBarDefaults.SWIPE_SLIDE_SPEED).toInt()
+                            offsetY.animateTo(
+                                targetValue = target,
+                                animationSpec = tween(
+                                    durationMillis = duration.coerceAtLeast(0),
+                                    easing = NotificationSnackBarDefaults.SwipeSlideEasing,
+                                ),
+                            )
+                        }
+                        onDismissed?.invoke()
+                    } else if (axis == 1) {
+                        offsetX.animateTo(0f, NotificationSnackBarDefaults.ReturnSpring)
+                    } else {
+                        offsetY.animateTo(0f, NotificationSnackBarDefaults.ReturnSpring)
+                    }
+                }
+
+                detectDragGestures(
+                    onDragStart = { axis = 0 },
+                    onDrag = { change, drag ->
+                        change.consume()
+                        if (axis == 0 && (drag.x != 0f || drag.y != 0f)) {
+                            axis = if (abs(drag.x) > abs(drag.y)) 1 else 2
+                        }
+                        when (axis) {
+                            1 -> scope.launch { offsetX.snapTo(offsetX.value + drag.x) }
+
+                            2 -> scope.launch {
+                                val limit = -threshold
+                                offsetY.snapTo(max(limit, offsetY.value + drag.y))
+                            }
+                        }
+                    },
+                    onDragEnd = { scope.launch { settle() } },
+                    onDragCancel = { scope.launch { settle() } },
+                )
+            },
+    ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = shape,
@@ -210,6 +308,43 @@ fun NotificationSnackBar(
         }
     }
 }
+
+/**
+ * The 1.1.0 listener set, kept for binary compatibility with pre-1.2.0 callers.
+ *
+ * Without the swipe callback the gesture still works through [onClose], which is what the host
+ * passes; this shape only exists so the old JVM signature keeps resolving.
+ */
+@Suppress("DEPRECATION", "unused")
+@Deprecated(
+    message = "Migrated to the overload that takes onSwipedDismiss.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun NotificationSnackBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    icon: ImageVector? = null,
+    imageType: NotificationSnackBarImageType = NotificationSnackBarImageType.Square,
+    actionText: String? = null,
+    onAction: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    cornerRadius: Dp = NotificationSnackBarDefaults.CornerRadius,
+    colors: NotificationSnackBarColors = NotificationSnackBarDefaults.colors(),
+) = NotificationSnackBar(
+    title = title,
+    modifier = modifier,
+    subtitle = subtitle,
+    icon = icon,
+    imageType = imageType,
+    actionText = actionText,
+    onAction = onAction,
+    onClose = onClose,
+    cornerRadius = cornerRadius,
+    colors = colors,
+    onSwipedDismiss = onClose,
+)
 
 /**
  * The three notification image geometries of `COUINotificationSnackBar.ImageType`.
@@ -322,6 +457,25 @@ object NotificationSnackBarDefaults {
      * `COUISpringAnimation` with `bounce` 0 and `response` 0.35.
      */
     val ReturnSpring: SpringSpec<Float> = folmeSpring(damping = 1f, response = 0.35f)
+
+    /**
+     * `COUINotificationSnackBar.SLIDING_LIMIT_VALUE`: a horizontal swipe past 1/8 of the measured
+     * width dismisses, and a downward swipe past the same 1/8 of the measured width dismisses along
+     * Y. The system divides the width for both axes, not the height.
+     */
+    const val SWIPE_DISTANCE_DIVISOR: Int = 8
+
+    /**
+     * `COUINotificationSnackBar.SLIDING_SPEED`: the dismissal slide lasts
+     * `(target - travelled) / 1.75` milliseconds, so the faster the swipe the shorter the slide.
+     */
+    const val SWIPE_SLIDE_SPEED: Float = 1.75f
+
+    /**
+     * The easing of the dismissal slide. `COUINotificationSnackBar.getViewTranslationAnimator` runs
+     * it through `COUIMoveEaseInterpolator`.
+     */
+    val SwipeSlideEasing: Easing = COUIMoveEase
 
     /**
      * The width of the notification image box for [type]. COUI
@@ -574,6 +728,11 @@ fun NotificationSnackBarHost(
                             scope.launch { state.dismiss(NotificationSnackBarResult.Dismissed) }
                         }
                     } ?: {
+                        scope.launch { state.dismiss(NotificationSnackBarResult.Dismissed) }
+                    },
+                    // A swipe dismisses the host entry without running the caller's close
+                    // listener, like COUINotificationSnackBar's own dismiss().
+                    onSwipedDismiss = {
                         scope.launch { state.dismiss(NotificationSnackBarResult.Dismissed) }
                     },
                 )

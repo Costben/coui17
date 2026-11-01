@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
@@ -166,6 +168,9 @@ private fun CountBadge(
     Box(
         modifier = modifier
             .size(width = width, height = height)
+            // COUIHintRedDot.setPointNumber appends the number to the accessibility description so
+            // screen readers announce the unread count.
+            .semantics { contentDescription = count.toString() }
             .then(backgroundModifier),
         contentAlignment = Alignment.Center,
     ) {

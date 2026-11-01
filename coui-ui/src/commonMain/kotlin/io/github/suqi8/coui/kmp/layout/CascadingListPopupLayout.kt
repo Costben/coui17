@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -68,6 +70,7 @@ import io.github.suqi8.coui.kmp.basic.popupSurfaceColor
 import io.github.suqi8.coui.kmp.basic.rememberListPopupLayoutInfo
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -109,6 +112,13 @@ private val PopupSubMenuMinWidth = 196.dp
  */
 private const val SUBMENU_SPRING_DAMPING = 1f
 private const val SUBMENU_SPRING_RESPONSE = 0.35f
+
+/**
+ * COUI `COUIPopupMenuRootView.MAIN_AREA_DISMISS_DELAY_MS`: while a submenu is open, a finger that
+ * slides inside the main menu closes the submenu only after this grace period, so it can still
+ * slide back into the submenu — or simply lift — without losing it.
+ */
+private const val MAIN_AREA_DISMISS_DELAY_MS = 500L
 
 /**
  * Rubber-band travel of the panel (`TouchMotionTierParams.iolMaxStretchDistance`, 28dp) — the
@@ -200,8 +210,14 @@ internal fun panelHandUpBounce(initialVelocity: Float, areaBounce: Float): Float
 /** COUI SmallScreenAnimationController.mMainMenuScalePercent. */
 private const val PRIMARY_SHRUNK_SCALE = 0.9f
 
-/** COUI SmallScreenAnimationController.DEFAULT_MAIN_MENU_ALPHA_PERCENT (small screen: 0.3). */
+/** COUI SmallScreenAnimationController.DEFAULT_MAIN_MENU_ALPHA_PERCENT (compact windows). */
 private const val PRIMARY_SHRUNK_ALPHA = 0.3f
+
+/**
+ * COUI DefaultScreenAnimationController.DEFAULT_MAIN_MENU_ALPHA_PERCENT, used on windows that are
+ * not `WindowWidthSizeClass.Compact` (the controller `COUIPopupMenuRootView.setDomain` picks there).
+ */
+private const val PRIMARY_SHRUNK_ALPHA_LARGE = 0.7f
 
 /**
  * Popup content bounds in the dismiss layer's local coordinates.
@@ -209,9 +225,15 @@ private const val PRIMARY_SHRUNK_ALPHA = 0.3f
  * A plain holder rather than a state: it is written from the sub-layout's measure/layout pass and
  * read inside the dismiss gesture, so making it observable would only add a needless invalidation
  * (and risk a measure loop).
+ *
+ * [rect] is the union of both cards and tells an outside tap from a tap on the popup. [primary] and
+ * [secondary] are kept apart for the main-area dismiss rule, which only covers the part of the main
+ * menu the submenu does not overlap (`COUIPopupMenuRootView.isPointInMainMenuExclusiveForDelayedDismiss`).
  */
 private class PopupContentBounds {
     var rect: IntRect = IntRect.Zero
+    var primary: IntRect = IntRect.Zero
+    var secondary: IntRect = IntRect.Zero
 }
 
 /**
@@ -324,6 +346,9 @@ private fun CascadingListPopupLayoutImpl(
     val expandFraction = remember { Animatable(0f) }
     val primaryScale = remember { Animatable(1f) }
     val primaryAlpha = remember { Animatable(1f) }
+    // COUIPopupMenuRootView.mMainAreaDismissRunnablePosted: the main-area dismiss is armed while a
+    // drag keeps the finger inside the main menu, and disarmed by sliding back or lifting.
+    var mainAreaDismissPending by remember { mutableStateOf(false) }
 
     val layoutDirection = LocalLayoutDirection.current
 
@@ -369,7 +394,12 @@ private fun CascadingListPopupLayoutImpl(
         }
     }
 
-    LaunchedEffect(expandedItem) {
+    // COUI switches animation controllers on the window width: a compact window runs
+    // SmallScreenAnimationController, anything wider the DefaultScreenAnimationController.
+    val compactWindow = LocalWindowInfo.current.containerDpSize.width < 600.dp
+    val shrunkAlpha = if (compactWindow) PRIMARY_SHRUNK_ALPHA else PRIMARY_SHRUNK_ALPHA_LARGE
+
+    LaunchedEffect(expandedItem, shrunkAlpha) {
         val item = expandedItem
         if (item != null) {
             displayedItem = item
@@ -396,10 +426,25 @@ private fun CascadingListPopupLayoutImpl(
         // mMainMenuAlphaPercent; the card material itself stays opaque.
         launch {
             primaryAlpha.animateTo(
-                if (target == 1f) PRIMARY_SHRUNK_ALPHA else 1f,
+                if (target == 1f) shrunkAlpha else 1f,
                 mainSpec,
             )
         }
+    }
+
+    // COUIPopupMenuRootView.mMainAreaDismissRunnable: `hideSubMenu(true)` — the submenu, not the
+    // whole popup — once the grace period passes. Re-checked on fire because the submenu may have
+    // been collapsed by something else in the meantime; `mSubMenuEntered` gates the native runnable
+    // the same way.
+    LaunchedEffect(mainAreaDismissPending, expandedItem) {
+        if (!mainAreaDismissPending) return@LaunchedEffect
+        if (expandedItem == null) {
+            mainAreaDismissPending = false
+            return@LaunchedEffect
+        }
+        delay(MAIN_AREA_DISMISS_DELAY_MS)
+        mainAreaDismissPending = false
+        if (expandedItem != null) expandedItem = null
     }
 
     // COUISpringDragHelper's model: the panel chases the finger on the drag spring and, on release,
@@ -648,6 +693,15 @@ private fun CascadingListPopupLayoutImpl(
                                     }
                                 }
                             },
+                        )
+                        // COUIPopupMenuRootView.dispatchTouchEvent runs the main-area dismiss handler
+                        // before its children see the event; this layer observes the same pass.
+                        .mainAreaDelayedDismiss(
+                            bounds = popupContentBounds,
+                            enabled = expandedItem != null && !passTouches,
+                            subMenuEntered = { expandFraction.value >= 1f },
+                            onPost = { mainAreaDismissPending = true },
+                            onCancel = { mainAreaDismissPending = false },
                         ),
                 ) {
                     // The host invokes this content in its own composition (COUIPopupUtils
@@ -684,7 +738,7 @@ private fun CascadingListPopupLayoutImpl(
                                 }
                             },
                             onPrimarySizeChange = { primarySize = it },
-                            onContentBoundsChange = { popupContentBounds.rect = it },
+                            contentBounds = popupContentBounds,
                             windowBounds = layoutInfo.windowBounds,
                             popupMargin = layoutInfo.popupMargin,
                             parentBounds = parentBounds,
@@ -734,7 +788,7 @@ private fun CascadingMorphSubLayout(
     getAnchorBounds: (DropdownItem) -> IntRect?,
     setAnchorBounds: (DropdownItem, IntRect) -> Unit,
     onPrimarySizeChange: (IntSize) -> Unit,
-    onContentBoundsChange: (IntRect) -> Unit,
+    contentBounds: PopupContentBounds,
     windowBounds: IntRect,
     popupMargin: IntRect,
     parentBounds: IntRect,
@@ -932,22 +986,24 @@ private fun CascadingMorphSubLayout(
             }
             // Reported in the dismiss layer's local coordinates so it can tell a tap on the popup
             // from a tap outside it. See [PopupContentBounds].
-            var bounds = IntRect(
+            val primaryRect = IntRect(
                 left = primaryDxLocal,
                 top = primaryDyLocal,
                 right = primaryDxLocal + primaryWidth,
                 bottom = primaryDyLocal + primaryHeight,
             )
+            var bounds = primaryRect
+            var secondaryRect = IntRect.Zero
             secondaryLayout?.let { (placeables, rect) ->
                 val sx = rect.left - host.x
                 val sy = rect.top - host.y
                 placeables.forEach { it.place(sx, sy) }
-                bounds = unionOf(
-                    bounds,
-                    IntRect(sx, sy, sx + rect.width, sy + rect.height),
-                )
+                secondaryRect = IntRect(sx, sy, sx + rect.width, sy + rect.height)
+                bounds = unionOf(bounds, secondaryRect)
             }
-            onContentBoundsChange(bounds)
+            contentBounds.primary = primaryRect
+            contentBounds.secondary = secondaryRect
+            contentBounds.rect = bounds
         }
     }
 }
@@ -1041,6 +1097,88 @@ private fun unionOf(a: IntRect, b: IntRect): IntRect = IntRect(
     right = maxOf(a.right, b.right),
     bottom = maxOf(a.bottom, b.bottom),
 )
+
+/** `Rect.contains` as the native float form: both edges inclusive, no rounding to whole pixels. */
+private fun IntRect.containsPoint(x: Float, y: Float): Boolean = x >= left && x <= right && y >= top && y <= bottom
+
+/**
+ * `COUIPopupMenuRootView.handleMainAreaDelayedDismissOnTouch`, run from `dispatchTouchEvent` only
+ * while `mDelayedMainAreaDismissEnabled && mSubMenuEntered && mSubMenuRootView != null`.
+ *
+ * The rule reproduces the native branches one for one:
+ * - a DOWN inside the main menu (`isPointInMainMenuExclusiveForDelayedDismiss`: inside the main
+ *   menu and not inside the submenu) starts tracking from that point;
+ * - a tracked MOVE that leaves the main menu cancels, one that is still inside and has passed the
+ *   touch slop arms the delayed dismiss;
+ * - an untracked MOVE that lands in the main menu starts tracking and arms it at once — the native
+ *   branch for a finger that came in from the submenu;
+ * - a lift or a cancel disarms.
+ *
+ * The observer runs in [PointerEventPass.Initial] and consumes nothing, so the rows keep their own
+ * gestures. The delivered dismiss hides the submenu; it never dismisses the popup itself.
+ */
+private fun Modifier.mainAreaDelayedDismiss(
+    bounds: PopupContentBounds,
+    enabled: Boolean,
+    subMenuEntered: () -> Boolean,
+    onPost: () -> Unit,
+    onCancel: () -> Unit,
+): Modifier = if (!enabled) {
+    this
+} else {
+    pointerInput(bounds) {
+        val touchSlop = viewConfiguration.touchSlop
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            var tracking = false
+            var posted = false
+            var downX = 0f
+            var downY = 0f
+            fun inMainMenuExclusive(x: Float, y: Float): Boolean = bounds.primary.containsPoint(x, y) && !bounds.secondary.containsPoint(x, y)
+
+            onCancel()
+            // The native handler is not called until the submenu has finished entering, so a DOWN
+            // during the enter does not start tracking; the first MOVE inside then arms at once.
+            if (subMenuEntered() && inMainMenuExclusive(down.position.x, down.position.y)) {
+                tracking = true
+                downX = down.position.x
+                downY = down.position.y
+            }
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                if (!change.pressed) {
+                    onCancel()
+                    break
+                }
+                val x = change.position.x
+                val y = change.position.y
+                val inside = inMainMenuExclusive(x, y)
+                if (tracking) {
+                    if (!inside) {
+                        onCancel()
+                        tracking = false
+                    } else if (!posted) {
+                        val dx = x - downX
+                        val dy = y - downY
+                        if (dx * dx + dy * dy > touchSlop * touchSlop) {
+                            posted = true
+                            onPost()
+                        }
+                    }
+                } else if (inside) {
+                    tracking = true
+                    downX = x
+                    downY = y
+                    if (!posted) {
+                        posted = true
+                        onPost()
+                    }
+                }
+            }
+        }
+    }
+}
 
 /**
  * COUI `PopupMenuLocateHelper` sub-menu placement for a compact window:

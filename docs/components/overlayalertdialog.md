@@ -102,7 +102,7 @@ OverlayAlertDialog(
 | ------------------ | ---- | --------------------------------------------------------------------------------- |
 | ConfirmText        | String | Default label of the confirm button (`OK`)                                      |
 | CancelText         | String | Default label of the cancel button (`Cancel`)                                   |
-| CornerRadius       | Dp   | Panel corner radius (19.dp), the shared `DialogDefaults.CornerRadius`            |
+| CornerRadius       | Dp   | Panel corner radius (45.dp), the shared `DialogDefaults.CornerRadius`            |
 | MaxWidth           | Dp   | Maximum panel width (392.dp), the shared `DialogDefaults.MaxWidth`               |
 | ButtonBarMarginTop | Dp   | Gap between the panel content and the button row (8.dp, COUI `coui_alert_dialog_customer_layout_padding_bottom`) |
 

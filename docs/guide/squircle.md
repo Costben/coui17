@@ -194,6 +194,32 @@ Modifier.squircleBackground(
 
 Reference the default via `SquircleDefaults.Extension`.
 
+## Corner Weight
+
+`weight` is the Lp exponent of the corner curve — the `superN` value ColorOS 17 feeds its hwui
+`sdRoundRect` SDF (`RoundCornerUtil.WEIGHT_16_1_NORMAL` = 2.5, `WEIGHT_16_1_LARGE` = 3.0). The
+default is 2.5, so a surface that does not ask for another weight renders exactly as before.
+
+Pass `SquircleDefaults.WeightLarge` where the platform draws weight 3.0 — cards, dialog and
+bottom-sheet panels, multi-line top tips and tooltip bubbles — together with the radius the matching
+`*_radius_large_16_1` token carries (17dp for a card, 45dp for a panel).
+
+| Parameter |         Default          | Values  | Effect                                                                                                                       |
+| --------- | :----------------------: | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `weight`  | `WeightNormal` (`2.5`)   | `2.5`, `3.0` | A larger exponent hugs the corner tighter: the 45° inset is `0.2063R` at 3.0 against `0.2421R` at 2.5. |
+
+The shader path bakes one distance field per weight and binds the nearer one, so a weight never adds
+a texture tap; anything between or outside the two values rounds to the nearer bake. The path API
+evaluates the exact weight it is given.
+
+```kotlin
+Modifier.squircleSurface(
+    color = COUITheme.colorScheme.surfaceContainer,
+    cornerRadius = 17.dp,
+    weight = SquircleDefaults.WeightLarge,
+)
+```
+
 ## Path API
 
 When you need a squircle outline outside the modifier pipeline (a `clipPath`
@@ -270,6 +296,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `bottomEnd`    | `Dp`    | Per-corner radius (per-corner overload)                  | -                               |
 | `bottomStart`  | `Dp`    | Per-corner radius (per-corner overload)                  | -                               |
 | `extension`    | `Float` | Corner-tile size multiplier, clamped to `[1, 2]`         | `SquircleDefaults.Extension` = 1.0  |
+| `weight`       | `Float` | Lp exponent of the corner curve (`2.5` or `3.0`)         | `SquircleDefaults.Weight` = 2.5     |
 
 ### squircleBorder
 
@@ -279,6 +306,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `color`        | `Color` | Stroke color                                 | -                               |
 | `cornerRadius` | `Dp`    | Uniform corner radius                        | -                               |
 | `extension`    | `Float` | Corner-tile size multiplier                  | `SquircleDefaults.Extension`    |
+| `weight`       | `Float` | Lp exponent of the corner curve              | `SquircleDefaults.Weight`       |
 
 ### Path.addSquircleRect
 
@@ -289,6 +317,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `cornerRadius`    | `Float`   | Corner radius in pixels                                            | -                               |
 | `extension`       | `Float`   | Corner-tile size multiplier                                        | `SquircleDefaults.Extension`    |
 | `squircleEnabled` | `Boolean` | When `false`, appends a plain rounded rect of the same dimensions  | `true`                          |
+| `weight`          | `Float`   | Lp exponent of the corner curve                                    | `SquircleDefaults.Weight`       |
 
 ### SquircleDefaults
 
@@ -297,3 +326,6 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `Extension`    | `Float` | Default corner-tile size multiplier  | `1.0`  |
 | `ExtensionMin` | `Float` | Lower bound for `Extension`          | `1.0`  |
 | `ExtensionMax` | `Float` | Upper bound for `Extension`          | `2.0`  |
+| `WeightNormal` | `Float` | Lp exponent of the `16_1 normal` corner tokens | `2.5` |
+| `WeightLarge`  | `Float` | Lp exponent of the `16_1 large` corner tokens  | `3.0` |
+| `Weight`       | `Float` | Default corner weight, `WeightNormal`          | `2.5` |

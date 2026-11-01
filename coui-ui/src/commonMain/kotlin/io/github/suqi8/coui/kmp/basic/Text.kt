@@ -26,16 +26,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 import io.github.suqi8.coui.kmp.theme.LocalTextStyles
+
+/**
+ * The style a [Text] uses when the caller passes none.
+ *
+ * `main` keeps the 17sp inherited from Miuix, but a plain `TextView` under `Theme.COUI` draws at the
+ * theme's `android:textAppearance`, `TextAppearance.COUI`, whose size is `coui_textview_text_size`
+ * 15sp. Components that mirror a specific text appearance pass their own style.
+ */
+@Composable
+private fun defaultTextStyle(): TextStyle = LocalTextStyles.current.main.copy(fontSize = 15.sp)
 
 /**
  * A [Text] component with COUI style.
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
+ * The default [style] is the theme's `main` tier at the 15sp of `TextAppearance.COUI`, the
+ * appearance a plain `TextView` resolves under `Theme.COUI`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *
@@ -104,7 +116,7 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
-    style: TextStyle = LocalTextStyles.current.main,
+    style: TextStyle = defaultTextStyle(),
 ) {
     val textColor = color.takeOrElse { style.color.takeOrElse { LocalContentColor.current } }
 
@@ -137,7 +149,8 @@ fun Text(
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
+ * The default [style] is the theme's `main` tier at the 15sp of `TextAppearance.COUI`, the
+ * appearance a plain `TextView` resolves under `Theme.COUI`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *
@@ -203,7 +216,7 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
-    style: TextStyle = LocalTextStyles.current.main,
+    style: TextStyle = defaultTextStyle(),
 ) {
     BasicText(
         text = text,
@@ -234,7 +247,8 @@ fun Text(
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
+ * The default [style] is the theme's `main` tier at the 15sp of `TextAppearance.COUI`, the
+ * appearance a plain `TextView` resolves under `Theme.COUI`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *
@@ -306,7 +320,7 @@ fun Text(
     minLines: Int = 1,
     inlineContent: Map<String, InlineTextContent> = mapOf(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalTextStyles.current.main,
+    style: TextStyle = defaultTextStyle(),
 ) {
     val textColor = color.takeOrElse { style.color.takeOrElse { LocalContentColor.current } }
     val linkStyles = rememberTextLinkStyles()
@@ -343,7 +357,8 @@ fun Text(
  *
  * High level element that displays text and provides semantics / accessibility information.
  *
- * The default [style] uses `LocalTextStyles.current.main`. If you are setting your own style, you
+ * The default [style] is the theme's `main` tier at the 15sp of `TextAppearance.COUI`, the
+ * appearance a plain `TextView` resolves under `Theme.COUI`. If you are setting your own style, you
  * may want to consider first retrieving the current style, and using [TextStyle.copy] to keep any
  * theme defined attributes, only modifying the specific attributes you want to override.
  *
@@ -412,7 +427,7 @@ fun Text(
     minLines: Int = 1,
     inlineContent: Map<String, InlineTextContent> = mapOf(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalTextStyles.current.main,
+    style: TextStyle = defaultTextStyle(),
 ) {
     val linkStyles = rememberTextLinkStyles()
     val textWithMaterialLinkStyles =

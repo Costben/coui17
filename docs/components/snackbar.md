@@ -271,3 +271,7 @@ TextButton(
     },
 )
 ```
+
+## Multi-line Layout
+
+`COUISnackBar` stacks a wrapped message: once the message needs more than one line and the action is the trailing element, the action moves under the text block — 12dp under the card's top edge, 10dp below the text and 9dp above the card's bottom edge. A single-line snackbar keeps the action beside the text.

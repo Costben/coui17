@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,10 @@ import io.github.suqi8.coui.kmp.preference.internal.PreferenceWidgetDivider
  * @param cardListPosition The row's position inside its card group.
  * @param holdDownState Used to determine whether it is in the pressed state.
  * @param enabled Whether the [CheckBoxWithDividerPreference] is clickable.
+ * @param onMainLayoutClick The callback of the row's main area, separate from the checkbox.
+ *   `COUICheckBoxWithDividerPreference` listens to `main_layout` through `PreciseClickHelper` and
+ *   reports it through `getOnMainLayoutClickListener`, while the trailing `check_box_layout` keeps
+ *   toggling the box. `null` (default) keeps the whole row toggling.
  */
 @Composable
 @NonRestartableComposable
@@ -61,34 +66,95 @@ fun CheckBoxWithDividerPreference(
     cardListPosition: CardListPosition = CardListPosition.None,
     holdDownState: Boolean = false,
     enabled: Boolean = true,
+    onMainLayoutClick: (() -> Unit)? = null,
 ) {
-    CheckboxPreference(
-        title = title,
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        modifier = modifier,
-        titleColor = titleColor,
-        summary = summary,
-        summaryColor = summaryColor,
-        checkboxColors = checkboxColors,
-        startAction = startAction,
-        endActions = {
-            PreferenceWidgetDivider()
-            endActions?.let {
-                Row(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .align(Alignment.CenterVertically),
-                ) {
-                    it()
+    CompositionLocalProvider(
+        LocalCheckboxEndMargin provides CheckBoxWithDividerPreferenceDefaults.CheckboxEndMargin,
+    ) {
+        CheckboxPreference(
+            title = title,
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = modifier,
+            titleColor = titleColor,
+            summary = summary,
+            summaryColor = summaryColor,
+            checkboxColors = checkboxColors,
+            startAction = startAction,
+            endActions = {
+                PreferenceWidgetDivider()
+                endActions?.let {
+                    Row(
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .align(Alignment.CenterVertically),
+                    ) {
+                        it()
+                    }
                 }
-            }
-        },
-        checkboxLocation = CheckboxLocation.End,
-        bottomAction = bottomAction,
-        insideMargin = insideMargin,
-        cardListPosition = cardListPosition,
-        holdDownState = holdDownState,
-        enabled = enabled,
-    )
+            },
+            checkboxLocation = CheckboxLocation.End,
+            bottomAction = bottomAction,
+            insideMargin = insideMargin,
+            cardListPosition = cardListPosition,
+            holdDownState = holdDownState,
+            enabled = enabled,
+            onMainLayoutClick = onMainLayoutClick,
+        )
+    }
 }
+
+/**
+ * Defaults of [CheckBoxWithDividerPreference].
+ */
+object CheckBoxWithDividerPreferenceDefaults {
+
+    /**
+     * The gap between the trailing checkbox and the row's own inside margin. The layout puts the box
+     * `support_preference_title_padding_end` (32dp) from the row's edge on a root that has no padding
+     * of its own; [BasicComponentDefaults.InsideMargin] already supplies 16dp of that, so the box takes
+     * the remaining 16dp as its own end margin.
+     */
+    val CheckboxEndMargin = 16.dp
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the onMainLayoutClick parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@NonRestartableComposable
+fun CheckBoxWithDividerPreference(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: String? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    checkboxColors: CheckboxColors = CheckboxDefaults.checkboxColors(),
+    startAction: @Composable (() -> Unit)? = null,
+    endActions: @Composable (RowScope.() -> Unit)? = null,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+): Unit = CheckBoxWithDividerPreference(
+    title = title,
+    checked = checked,
+    onCheckedChange = onCheckedChange,
+    modifier = modifier,
+    titleColor = titleColor,
+    summary = summary,
+    summaryColor = summaryColor,
+    checkboxColors = checkboxColors,
+    startAction = startAction,
+    endActions = endActions,
+    bottomAction = bottomAction,
+    insideMargin = insideMargin,
+    cardListPosition = cardListPosition,
+    holdDownState = holdDownState,
+    enabled = enabled,
+)

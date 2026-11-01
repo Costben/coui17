@@ -238,7 +238,7 @@ fun WindowSpinnerPreference(
                     text = selectedValueText,
                     modifier = Modifier
                         .widthIn(max = 162.dp)
-                        .padding(start = 8.dp, end = 4.dp)
+                        .padding(start = 24.dp)
                         .weight(1f, fill = false),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = valueColor,
@@ -248,6 +248,7 @@ fun WindowSpinnerPreference(
             }
             DropdownArrowEndAction(
                 actionColor = actionColor,
+                modifier = Modifier.padding(start = 16.dp),
             )
             if (hasEntries) {
                 WindowDropdownPopup(
@@ -475,7 +476,7 @@ fun WindowSpinnerPreference(
                     text = selectedValueText,
                     modifier = Modifier
                         .widthIn(max = 162.dp)
-                        .padding(start = 8.dp, end = 4.dp)
+                        .padding(start = 24.dp)
                         .weight(1f, fill = false),
                     fontSize = COUITheme.textStyles.body2.fontSize,
                     color = valueColor,
@@ -485,6 +486,7 @@ fun WindowSpinnerPreference(
             }
             DropdownArrowEndAction(
                 actionColor = actionColor,
+                modifier = Modifier.padding(start = 16.dp),
             )
             if (hasEntries) {
                 WindowDropdownDialog(

@@ -5,6 +5,7 @@
 
 package coui17
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,6 +37,7 @@ import io.github.suqi8.coui.kmp.basic.Banner
 import io.github.suqi8.coui.kmp.basic.BannerIndicator
 import io.github.suqi8.coui.kmp.basic.Button
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.Chip
 import io.github.suqi8.coui.kmp.basic.CompleteState
@@ -175,6 +178,62 @@ fun FlowLayoutDemo() {
                     onClick = {
                         selected = if (checked) selected - tag else selected + tag
                     },
+                    label = str(tag),
+                    minHeight = 28.dp,
+                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * `COUIFlowLayout` folding: the tags collapse to one row and the last line carries the expand button,
+ * which grows the block over 400ms after a 100ms delay on `COUIMoveEase`.
+ */
+@Composable
+fun FoldedFlowLayoutDemo() {
+    val tags = listOf("Recommended", "Popular", "Nearby", "Archived", "Inbox", "Drafts", "Spam")
+    var expanded by remember { mutableStateOf(false) }
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        FlowLayout(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            itemSpacing = 8.dp,
+            lineSpacing = 8.dp,
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+            maxRowFolded = 1,
+            expandButton = { toggle ->
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable(onClick = toggle),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("+", style = COUITheme.textStyles.button)
+                }
+            },
+            foldButton = { toggle ->
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable(onClick = toggle),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("−", style = COUITheme.textStyles.button)
+                }
+            },
+        ) {
+            tags.forEach { tag ->
+                Chip(
+                    selected = false,
+                    onClick = {},
                     label = str(tag),
                     minHeight = 28.dp,
                     insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -399,6 +458,8 @@ fun DividerPreferenceGroupDemo() {
     var marked by remember { mutableIntStateOf(0) }
     val rows = 3
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -431,6 +492,8 @@ fun DividerPreferenceGroupDemo() {
 fun EditTextPreferenceDemo() {
     var value by remember { mutableStateOf("ColorOS") }
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -452,6 +515,8 @@ fun EditTextPreferenceDemo() {
 fun InputPreferenceDemo() {
     var value by remember { mutableStateOf("") }
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -471,6 +536,8 @@ fun InputPreferenceDemo() {
 fun LoadInstallProgressPreferenceDemo() {
     var state by remember { mutableStateOf(LoadProgressState.Default) }
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -496,6 +563,8 @@ fun LoadInstallProgressPreferenceDemo() {
 @Composable
 fun AppInfoPreferenceDemo() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -559,6 +628,8 @@ fun CardInstructionPreferenceDemo() {
 @Composable
 fun PagerHeaderFooterPreferenceDemo() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -580,6 +651,8 @@ fun PagerHeaderFooterPreferenceDemo() {
 @Composable
 fun SpannablePreferenceDemo() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -605,6 +678,8 @@ fun SpannablePreferenceDemo() {
 fun StepperPreferenceDemo() {
     var value by remember { mutableIntStateOf(3) }
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -625,6 +700,8 @@ fun StepperPreferenceDemo() {
 @Composable
 fun StatusSwitchingPreferenceDemo() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -653,6 +730,8 @@ fun StatusSwitchingPreferenceDemo() {
 fun CategoryHeaderPreferenceDemo() {
     var checked by remember { mutableStateOf(false) }
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

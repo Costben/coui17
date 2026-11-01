@@ -57,7 +57,7 @@ RecommendedPreference(
 
 | 常量                | 类型          | 默认值                            | 说明                                                         |
 | ------------------- | ------------- | --------------------------------- | ------------------------------------------------------------ |
-| CornerRadius        | Dp            | 12.dp                             | COUI couiRoundCornerM                                        |
+| CornerRadius        | Dp            | 20.dp                             | COUI couiRoundCornerXL                                       |
 | InsideMargin        | PaddingValues | PaddingValues(horizontal = 16.dp) | 卡内文字缩进（COUI 32dp 减去 16dp 卡片外边距）               |
 | HeaderTopPadding    | Dp            | 16.dp                             | COUI recommended_recyclerView_padding_top                    |
 | HeaderBottomSpacing | Dp            | 8.dp                              | COUI recommended_preference_list_item_head_bottom_margin     |

@@ -3,10 +3,13 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,13 +27,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.interfaces.HoldDownObserver
 import io.github.suqi8.coui.kmp.interfaces.collectIsHeldDownAsState
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
@@ -50,6 +55,9 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param cornerRadius The corner radius of the [Card].
  * @param insideMargin The margin inside the [Card].
  * @param colors [CardColors] that will be used to resolve the color(s) used for the [Card].
+ * @param weight The Lp exponent of the corner curve. Defaults to [CardDefaults.Weight], the
+ *   standalone card silhouette. Pass [CardDefaults.GroupWeight] with
+ *   [CardDefaults.GroupCornerRadius] for the card that holds a preference group.
  * @param content The [Composable] content of the [Card].
  */
 @Composable
@@ -59,6 +67,7 @@ fun Card(
     cornerRadius: Dp = COUITheme.dimens.card.cornerRadius,
     insideMargin: PaddingValues = COUITheme.dimens.card.insideMargin,
     colors: CardColors = CardDefaults.defaultColors(),
+    weight: Float = CardDefaults.Weight,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     BasicCard(
@@ -66,6 +75,7 @@ fun Card(
         contentColor = colors.contentColor,
         modifier = modifier,
         cornerRadius = cornerRadius,
+        weight = weight,
     ) {
         Column(
             modifier = Modifier.padding(insideMargin),
@@ -73,6 +83,28 @@ fun Card(
         )
     }
 }
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the weight parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@NonRestartableComposable
+fun Card(
+    modifier: Modifier = Modifier,
+    cornerRadius: Dp = COUITheme.dimens.card.cornerRadius,
+    insideMargin: PaddingValues = COUITheme.dimens.card.insideMargin,
+    colors: CardColors = CardDefaults.defaultColors(),
+    content: @Composable ColumnScope.() -> Unit,
+): Unit = Card(
+    modifier = modifier,
+    cornerRadius = cornerRadius,
+    insideMargin = insideMargin,
+    colors = colors,
+    weight = CardDefaults.Weight,
+    content = content,
+)
 
 /**
  * A [Card] component with COUI style.
@@ -85,11 +117,15 @@ fun Card(
  * @param insideMargin The margin inside the [Card].
  * @param colors [CardColors] that will be used to resolve the color(s) used for the [Card].
  * @param pressFeedbackType The press feedback type of the [Card]. Defaults to
- *   [PressFeedbackType.Tint], which animates the fill towards [CardColors.pressedColor].
+ *   [PressFeedbackType.Tint], which tints the card with [CardColors.pressedColor].
  * @param showIndication Whether to show indication of the [Card].
  * @param holdDownState Whether the [Card] is in a hold-down state.
+ * @param selected Whether the [Card] is in a locked selected state: the press tint is held at its
+ *   end value, mirroring COUICardListSelectedItemLayout.setIsSelected(selected, animate), which
+ *   locks the press state effect of the card background. New in 1.2.0.
  * @param onClick The callback to be invoked when the [Card] is clicked.
  * @param onLongPress The callback to be invoked when the [Card] is long pressed.
+ * @param weight The Lp exponent of the corner curve; see the non-clickable [Card].
  * @param content The [Composable] content of the [Card].
  */
 @Composable
@@ -101,8 +137,10 @@ fun Card(
     pressFeedbackType: PressFeedbackType = PressFeedbackType.Tint,
     showIndication: Boolean = false,
     holdDownState: Boolean = false,
+    selected: Boolean = false,
     onClick: (() -> Unit)? = null,
     onLongPress: (() -> Unit)? = null,
+    weight: Float = CardDefaults.Weight,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -119,15 +157,20 @@ fun Card(
         }
     }
 
-    // COUI card press feedback (COUICardListSelectedItemLayout): fill animates towards pressedColor.
+    // COUI card press feedback (COUICardListSelectedItemLayout): the background drawable is a
+    // COUIStateEffectDrawable whose mask layer animates towards couiColorPress. hover, focus and
+    // press are three independent StateEffectAnimators, and setIsSelected locks the press state so
+    // a selected row keeps the tint (COUIMaskEffectDrawable.setStateLocked).
     val tintEnabled = pressFeedbackType == PressFeedbackType.Tint
     val isPressed by interactionSource.collectIsPressedAsState()
     val isHeldDown by interactionSource.collectIsHeldDownAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isFocused by interactionSource.collectIsFocusedAsState()
     val tintProgress = remember { Animatable(0f) }
-    LaunchedEffect(tintEnabled, isPressed, isHeldDown) {
+    LaunchedEffect(tintEnabled, isPressed, isHeldDown, selected) {
         if (!tintEnabled) {
             tintProgress.snapTo(0f)
-        } else if (isPressed || isHeldDown) {
+        } else if (isPressed || isHeldDown || selected) {
             tintProgress.animateTo(1f, CardPressFeedbackSpring)
         } else if (tintProgress.value > 0f) {
             if (tintProgress.value < PressedTintMinVisibleProgress) {
@@ -143,11 +186,23 @@ fun Card(
             tintProgress.animateTo(0f, CardPressFeedbackSpring)
         }
     }
-    val fillColor = if (tintProgress.value > 0f) {
-        lerp(colors.color, colors.pressedColor, tintProgress.value)
-    } else {
-        colors.color
-    }
+    val hoverProgress by animateFloatAsState(
+        targetValue = if (isHovered) 1f else 0f,
+        animationSpec = CardPressFeedbackSpring,
+        label = "cardHover",
+    )
+    val focusProgress by animateFloatAsState(
+        targetValue = if (isFocused) 1f else 0f,
+        animationSpec = CardPressFeedbackSpring,
+        label = "cardFocus",
+    )
+    // COUIMaskEffectDrawable draws the hover mask, then the focus mask, then the press mask, all
+    // over the card background and inside the same squircle, so the press tint is stacked as a
+    // translucent layer instead of replacing the fill.
+    val fillColor = colors.color
+        .maskedBy(cardHoverTint(), hoverProgress)
+        .maskedBy(cardFocusTint(), focusProgress)
+        .maskedBy(colors.pressedColor, tintProgress.value)
 
     val usedInteractionSource = if (pressFeedback != null) interactionSource else null
     val indicationToUse = if (showIndication) LocalIndication.current else null
@@ -181,6 +236,7 @@ fun Card(
             delay = null,
         ),
         cornerRadius = cornerRadius,
+        weight = weight,
     ) {
         Column(
             modifier = Modifier
@@ -191,6 +247,71 @@ fun Card(
     }
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the selected parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Card(
+    modifier: Modifier = Modifier,
+    cornerRadius: Dp = COUITheme.dimens.card.cornerRadius,
+    insideMargin: PaddingValues = COUITheme.dimens.card.insideMargin,
+    colors: CardColors = CardDefaults.defaultColors(),
+    pressFeedbackType: PressFeedbackType = PressFeedbackType.Tint,
+    showIndication: Boolean = false,
+    holdDownState: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    onLongPress: (() -> Unit)? = null,
+    weight: Float = CardDefaults.Weight,
+    content: @Composable ColumnScope.() -> Unit,
+): Unit = Card(
+    modifier = modifier,
+    cornerRadius = cornerRadius,
+    insideMargin = insideMargin,
+    colors = colors,
+    pressFeedbackType = pressFeedbackType,
+    showIndication = showIndication,
+    holdDownState = holdDownState,
+    selected = false,
+    onClick = onClick,
+    onLongPress = onLongPress,
+    weight = weight,
+    content = content,
+)
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the weight parameter.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun Card(
+    modifier: Modifier = Modifier,
+    cornerRadius: Dp = COUITheme.dimens.card.cornerRadius,
+    insideMargin: PaddingValues = COUITheme.dimens.card.insideMargin,
+    colors: CardColors = CardDefaults.defaultColors(),
+    pressFeedbackType: PressFeedbackType = PressFeedbackType.Tint,
+    showIndication: Boolean = false,
+    holdDownState: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    onLongPress: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+): Unit = Card(
+    modifier = modifier,
+    cornerRadius = cornerRadius,
+    insideMargin = insideMargin,
+    colors = colors,
+    pressFeedbackType = pressFeedbackType,
+    showIndication = showIndication,
+    holdDownState = holdDownState,
+    selected = false,
+    onClick = onClick,
+    onLongPress = onLongPress,
+    weight = CardDefaults.Weight,
+    content = content,
+)
+
 /**
  * A [BasicCard] component.
  *
@@ -198,6 +319,7 @@ fun Card(
  * @param contentColor The content color of the [BasicCard].
  * @param modifier The modifier to be applied to the [BasicCard].
  * @param cornerRadius The corner radius of the [BasicCard].
+ * @param weight The Lp exponent of the corner curve.
  * @param content The [Composable] content of the [BasicCard].
  */
 @Composable
@@ -206,6 +328,7 @@ private fun BasicCard(
     contentColor: Color,
     modifier: Modifier = Modifier,
     cornerRadius: Dp = CardDefaults.CornerRadius,
+    weight: Float = CardDefaults.Weight,
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
@@ -216,7 +339,11 @@ private fun BasicCard(
                 .semantics(mergeDescendants = false) {
                     isTraversalGroup = true
                 }
-                .squircleSurface(color = color, cornerRadius = cornerRadius),
+                .squircleSurface(
+                    color = color,
+                    cornerRadius = cornerRadius,
+                    weight = weight,
+                ),
             propagateMinConstraints = true,
         ) {
             content()
@@ -294,11 +421,32 @@ object CardDefaults {
      * it at draw time through `RoundCornerUtil.getRoundCornerForOS17` to
      * `coui_round_corner_m_radius_large_16_1` = 17dp.
      *
-     * The native card outline (`RoundRectDrawable.getOutline`) additionally hardcodes smooth weight
-     * 3.0. `squircleSurface` cannot express that yet: the corner curve is baked once at a single
-     * control point tuned to weight 2.5, with no per-call weight knob.
+     * The native card outline (`RoundRectDrawable.getOutline`) draws that radius with smooth weight
+     * 3.0, which is why the standalone card surface is painted at [SquircleDefaults.WeightLarge].
+     *
+     * A card that holds a preference group is not this shape: see [GroupCornerRadius].
      */
     val CornerRadius = 17.dp
+
+    /**
+     * The corner weight of a standalone card (`COUICardView`), i.e. [CornerRadius] drawn at Lp 3.0.
+     */
+    val Weight = SquircleDefaults.WeightLarge
+
+    /**
+     * The corner radius of the card that holds a preference group.
+     *
+     * `COUICardListSelectedItemLayout` defaults `couiCardRadius` to `?attr/couiRoundCornerXL` →
+     * `coui_round_corner_xl` = 20dp and draws it through `addSmoothRoundRect(..., 2.5f)`, i.e. one
+     * step softer than the standalone card. Use it together with [GroupWeight].
+     */
+    val GroupCornerRadius = 20.dp
+
+    /**
+     * The corner weight of the card that holds a preference group: `COUICardListSelectedItemLayout`
+     * bakes `addSmoothRoundRect` at Lp 2.5.
+     */
+    val GroupWeight = SquircleDefaults.WeightNormal
 
     /**
      * The default margin inside the [Card].
@@ -327,7 +475,8 @@ object CardDefaults {
  *
  * @param color The background color of the card.
  * @param contentColor The content color of the card.
- * @param pressedColor The fill color the card animates towards while pressed (couiColorCardPressed).
+ * @param pressedColor The mask stacked over the card while pressed, COUI `couiColorCardPressed`
+ *   (`#E6E6E6` / `#33FFFFFF`).
  */
 @Immutable
 data class CardColors(
@@ -338,6 +487,26 @@ data class CardColors(
 
 /** The COUI card press feedback spring (COUISpringForce response 0.3f / bounce 0f). */
 private val CardPressFeedbackSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)
+
+/** couiColorHover in light themes (coui_color_hover #14000000). */
+private val CardHoverTintLight = Color(0x14000000)
+
+/** couiColorHover in dark themes (coui_color_hover_dark #26FFFFFF). */
+private val CardHoverTintDark = Color(0x26FFFFFF)
+
+/** The hover mask color, `couiColorHover`. */
+@Composable
+private fun cardHoverTint(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) CardHoverTintDark else CardHoverTintLight
+
+/**
+ * The focus mask color, COUI `couiColorFocus` (`coui_color_focus_blue`, `#1F0080FF` / `#331A8CFF`),
+ * which the theme derives from its accent.
+ */
+@Composable
+private fun cardFocusTint(): Color = COUITheme.colorScheme.focus
+
+/** Draws [mask] over this color at [progress], as COUIMaskEffectDrawable stacks its mask layers. */
+internal fun Color.maskedBy(mask: Color, progress: Float): Color = if (progress <= 0f || mask.alpha == 0f) this else mask.copy(alpha = mask.alpha * progress).compositeOver(this)
 
 /** The minimum press tint progress before a release may fade out (COUIMaskEffectDrawable). */
 private val PressedTintMinVisibleProgress = 0.7f

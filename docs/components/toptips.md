@@ -120,7 +120,7 @@ TopTips(
 | style              | TopTipsStyle               | `Standard` or `AiPayment`; selects the layout mode                       | TopTipsStyle.Standard                      | No       |
 | backgroundStyle    | TopTipsBackgroundStyle     | Solid fill: `White` (`couiColorCard`) or `Gray` (`couiColorContainer4`)  | TopTipsBackgroundStyle.Gray                | No       |
 | backgroundOverlay  | (@Composable () -> Unit)?  | Overlay drawn over the fill; blanks the card fill when set               | null                                       | No       |
-| cornerRadius       | Dp?                        | Explicit corner radius; null follows the native rules: a true circle for an untitled single line, the 28dp Lp(2.5) squircle otherwise | null                                       | No       |
+| cornerRadius       | Dp?                        | Explicit corner radius; null follows the native rules: a true circle for an untitled single line, the 28dp Lp(3.0) squircle otherwise | null                                       | No       |
 | colors             | TopTipsColors              | Color configuration                                                      | TopTipsDefaults.topTipsColors(backgroundStyle) | No   |
 | content            | (@Composable () -> Unit)?  | Custom message slot; replaces `text` when non-null (new in 1.2.0)         | null                                       | No       |
 
@@ -137,7 +137,7 @@ TopTips(
 | TextMinHeight         | Dp   | 20.dp  | coui_toptips_view_content_min_height       |
 | TitleMinHeight        | Dp   | 22.dp  | coui_toptips_view_title_min_height         |
 
-`getMultiLineRadius` uses `CornerRadius` for any banner that is not a single untitled line; `getSingleLineRadius` uses `SingleLineCornerRadius` for an untitled message that fits one line. The single-line form is drawn through the Outline path at weight 1.0, i.e. a full-radius true circle. The multi-line form keeps the 28dp Lp(2.5) squircle: the system's weight 3.0 has no equivalent here yet.
+`getMultiLineRadius` uses `CornerRadius` for any banner that is not a single untitled line; `getSingleLineRadius` uses `SingleLineCornerRadius` for an untitled message that fits one line. The single-line form is drawn through the Outline path at weight 1.0, i.e. a full-radius true circle. The multi-line form is the 28dp Lp(3.0) squircle (`WEIGHT_MULTIPLE_LINE`).
 
 #### Methods
 

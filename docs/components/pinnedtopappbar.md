@@ -116,7 +116,13 @@ Handed to a `TopAppBar` it keeps that bar fully expanded, and the bar's divider 
 | ActionItemSize | Dp | 40.dp | Actions 141px = 39.9dp square; `TopAppBarDefaults.ActionItemMinWidth` |
 | NavigationIconGap | Dp | 10.dp | Not measured on Gallery; the Settings toolbar's `TopAppBarDefaults.NavigationIconGap` |
 | TitleActionGap | Dp | 4.dp | `TopAppBarDefaults.ActionIconGap` |
+| TextActionMaxWidth | Dp | 104.dp | `coui_action_bar_text_menu_item_max_width` |
+| TextActionMaxLines | Int | 2 | `COUIActionMenuView.MAX_TEXT_MENU_ITEM_LINE` |
 | titleStyle() | TextStyle | `title1` (32sp) | Title ink "照片" is 29.2dp tall, two glyphs 59dp wide; weight not measured |
+
+`PinnedTopAppBarTextAction(text, onClick)` is the text counterpart of an icon-only action: it fills
+`TextActionMaxWidth`, wraps to `TextActionMaxLines`, and ellipsizes past that, the way
+`COUIActionMenuView` measures a `COUIActionMenuItemView` tagged as a text item.
 
 ## Measurements
 

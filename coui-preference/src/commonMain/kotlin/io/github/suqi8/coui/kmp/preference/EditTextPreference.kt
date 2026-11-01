@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,25 +26,26 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.BasicComponentColors
 import io.github.suqi8.coui.kmp.basic.BasicComponentDefaults
-import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.Text
-import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.TextField
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
-import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
+import io.github.suqi8.coui.kmp.layout.DialogButtonBar
+import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
+import io.github.suqi8.coui.kmp.overlay.OverlayBottomAssignmentDialog
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * A preference row that shows its value as trailing text and edits it in a bottom sheet,
- * mirroring COUIEditTextPreference.
+ * A preference row that shows its value as trailing text and edits it in the bottom-assignment
+ * dialog, mirroring COUIEditTextPreference.
  *
  * On the device the row itself is the standard `coui_preference` layout with an
- * `app:couiAssignment` value; the editor is `COUIEditTextPreferenceDialogFragment`, an
- * `AlertDialog` built by `COUIAlertDialogBuilder` around `res/layout/coui_preference_dialog_edittext.xml`
- * (a single-line `COUIEditText` with `quickDelete`). This repo renders every dialog-bearing
- * preference — [ListPreference] and [MultiSelectListPreference] included — as an
- * [OverlayBottomSheet], so the editor is a sheet holding the same single-line [TextField].
+ * `app:couiAssignment` value; the editor is `COUIEditTextPreferenceDialogFragment`, which builds
+ * `COUIAlertDialogBuilder` with `R.style.COUIAlertDialog_BottomAssignment` around
+ * `res/layout/coui_preference_dialog_edittext.xml` (a single-line `COUIEditText` with `quickDelete`).
+ * [OverlayBottomAssignmentDialog] is that dialog: the panel is pinned to the bottom edge and keeps
+ * the alert-dialog surface, so the editor is not a bottom sheet. [ListPreference] and
+ * [MultiSelectListPreference] use the same host.
  *
  * @param title The title of the [EditTextPreference].
  * @param value The current text value.
@@ -131,7 +133,8 @@ fun EditTextPreference(
                 ) {
                     Text(
                         text = value,
-                        fontSize = COUITheme.textStyles.body2.fontSize,
+                        // TextAppearance.COUI.List.Assignment.End: 13sp, one line, end aligned.
+                        fontSize = COUITheme.textStyles.footnote1.fontSize,
                         color = COUITheme.colorScheme.onSurfaceSecondary,
                         textAlign = TextAlign.End,
                         maxLines = 1,
@@ -153,7 +156,7 @@ fun EditTextPreference(
         enabled = enabled,
     )
 
-    OverlayBottomSheet(
+    OverlayBottomAssignmentDialog(
         show = isSheetShown.value,
         title = dialogTitle,
         onDismissRequest = { setExpanded(false) },
@@ -166,36 +169,32 @@ fun EditTextPreference(
                 onValueChange = { draft = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = EditTextPreferenceDefaults.SheetHorizontalPadding),
+                    .padding(
+                        start = EditTextPreferenceDefaults.SheetHorizontalPadding,
+                        end = EditTextPreferenceDefaults.SheetHorizontalPadding,
+                        // `coui_edittextdialog_marginbottom` is the field's own bottom margin.
+                        bottom = EditTextPreferenceDefaults.ButtonBarTopPadding,
+                    )
+                    .heightIn(min = EditTextPreferenceDefaults.DialogFieldMinHeight),
                 label = hint,
                 showClearButton = true,
                 singleLine = true,
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = EditTextPreferenceDefaults.ButtonBarTopPadding,
-                        bottom = EditTextPreferenceDefaults.ButtonBarBottomPadding,
-                    ),
-            ) {
-                TextButton(
+            DialogButtonBar(
+                negative = DialogButtonBarAction(
                     text = cancelButtonText,
                     onClick = { setExpanded(false) },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsBorderless(),
-                )
-                TextButton(
+                ),
+                positive = DialogButtonBarAction(
                     text = confirmButtonText,
+                    enabled = supportEmptyInput || draft.isNotEmpty(),
                     onClick = {
                         currentOnValueChange(draft)
                         setExpanded(false)
                     },
-                    enabled = supportEmptyInput || draft.isNotEmpty(),
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.textButtonColorsBorderless(),
-                )
-            }
+                    recommended = true,
+                ),
+            )
         }
     }
 }
@@ -209,11 +208,20 @@ object EditTextPreferenceDefaults {
     val SheetHorizontalPadding = 24.dp
 
     /**
-     * The gap between the editor field and the button bar, from
-     * `dimen/coui_edittextdialog_marginbottom` (14dp).
+     * The bottom margin of the editor field, from `dimen/coui_edittextdialog_marginbottom` (14dp).
+     * It is the gap the field keeps to the dialog's button bar; the name predates the dialog host.
      */
     val ButtonBarTopPadding = 14.dp
 
-    /** The padding below the sheet button bar, matching [ListPreferenceDefaults.ButtonBarBottomPadding]. */
+    /**
+     * The minimum height of the editor field, from
+     * `dimen/support_preference_dialog_edittext_min_height` (34dp).
+     */
+    val DialogFieldMinHeight = 34.dp
+
+    /**
+     * Retained for source compatibility and unused: the alert dialog's button bar brings its own
+     * `coui_alert_dialog_button_parent_padding_bottom` inset, so the field's host adds none.
+     */
     val ButtonBarBottomPadding = 12.dp
 }

@@ -204,6 +204,7 @@ export default defineConfig({
                         { text: "LoadingDialog", link: "/components/loadingdialog" },
                         { text: "SecurityDialog", link: "/components/securitydialog" },
                         { text: "DialogButtonBar", link: "/components/dialogbuttonbar" },
+                        { text: "OverlayBottomAssignmentDialog", link: "/components/overlaybottomassignmentdialog" },
                     ],
                 },
             ],

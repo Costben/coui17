@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -45,7 +47,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -223,8 +227,7 @@ fun TopTips(
         val multiText = leadingWidthPx + textWidthPx + trailingWidthPx > availableWidthPx
         // COUIDefaultTopTips.setSmoothRoundRect(rect, radius, 1.0) with setClipToOutline: an
         // untitled single line is the pure Outline path at weight 1.0, i.e. n = max(1, 2) = 2, a
-        // true circle. The multi-line form keeps the Lp(2.5) squircle: the system's weight 3.0 has
-        // no equivalent here yet.
+        // true circle. The multi-line form is the Lp(3.0) squircle `WEIGHT_MULTIPLE_LINE` asks for.
         val singleLine = cornerRadius == null && displayTitle == null && !multiText
         val fillColor = if (backgroundOverlay == null) colors.containerColor else Color.Transparent
         val backgroundModifier = if (singleLine) {
@@ -235,6 +238,7 @@ fun TopTips(
             Modifier.squircleSurface(
                 color = fillColor,
                 cornerRadius = cornerRadius ?: TopTipsDefaults.CornerRadius,
+                weight = SquircleDefaults.WeightLarge,
             )
         }
 
@@ -242,8 +246,52 @@ fun TopTips(
             backgroundOverlay?.invoke()
         }
 
-        if (multiText) {
-            Column(modifier = Modifier.fillMaxWidth()) {
+        // COUIDefaultTopTips.animateWidthChange resizes the banner over 300ms on COUIEase when the
+        // content reflows between the single and the multi-line form.
+        Box(modifier = Modifier.animateContentSize(WIDTH_CHANGE_SPEC)) {
+            if (multiText) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TopTipsTextArea(
+                            title = displayTitle,
+                            text = text,
+                            content = content,
+                            startIcon = startIcon,
+                            marqueeEnabled = marqueeEnabled,
+                            titleStyle = titleStyle,
+                            contentStyle = contentStyle,
+                            titleColor = colors.titleColor,
+                            contentColor = colors.contentColor,
+                        )
+                    }
+                    TopTipsTrailing(
+                        action = action,
+                        onAction = onAction,
+                        ignore = ignore,
+                        onIgnore = onIgnore,
+                        onClose = onClose,
+                        layoutMode = layoutMode,
+                        actionStyle = actionStyle,
+                        colors = colors,
+                        expandDualButtons = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = BTN_TOP_MARGIN,
+                                start = CONTENT_END_MARGIN,
+                                end = CONTENT_END_MARGIN,
+                                bottom = if (layoutMode == TopTipsLayoutMode.AiPayment && action != null && ignore != null) {
+                                    AI_PAYMENT_DUAL_BTN_BOTTOM_MARGIN
+                                } else {
+                                    MULTI_BTN_BOTTOM_MARGIN
+                                },
+                            ),
+                    )
+                }
+            } else {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -259,58 +307,18 @@ fun TopTips(
                         titleColor = colors.titleColor,
                         contentColor = colors.contentColor,
                     )
+                    TopTipsTrailing(
+                        action = action,
+                        onAction = onAction,
+                        ignore = ignore,
+                        onIgnore = onIgnore,
+                        onClose = onClose,
+                        layoutMode = layoutMode,
+                        actionStyle = actionStyle,
+                        colors = colors,
+                        modifier = Modifier.padding(end = CONTENT_END_MARGIN),
+                    )
                 }
-                TopTipsTrailing(
-                    action = action,
-                    onAction = onAction,
-                    ignore = ignore,
-                    onIgnore = onIgnore,
-                    onClose = onClose,
-                    layoutMode = layoutMode,
-                    actionStyle = actionStyle,
-                    colors = colors,
-                    expandDualButtons = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            top = BTN_TOP_MARGIN,
-                            start = CONTENT_END_MARGIN,
-                            end = CONTENT_END_MARGIN,
-                            bottom = if (layoutMode == TopTipsLayoutMode.AiPayment && action != null && ignore != null) {
-                                AI_PAYMENT_DUAL_BTN_BOTTOM_MARGIN
-                            } else {
-                                MULTI_BTN_BOTTOM_MARGIN
-                            },
-                        ),
-                )
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TopTipsTextArea(
-                    title = displayTitle,
-                    text = text,
-                    content = content,
-                    startIcon = startIcon,
-                    marqueeEnabled = marqueeEnabled,
-                    titleStyle = titleStyle,
-                    contentStyle = contentStyle,
-                    titleColor = colors.titleColor,
-                    contentColor = colors.contentColor,
-                )
-                TopTipsTrailing(
-                    action = action,
-                    onAction = onAction,
-                    ignore = ignore,
-                    onIgnore = onIgnore,
-                    onClose = onClose,
-                    layoutMode = layoutMode,
-                    actionStyle = actionStyle,
-                    colors = colors,
-                    modifier = Modifier.padding(end = CONTENT_END_MARGIN),
-                )
             }
         }
     }
@@ -985,3 +993,12 @@ private const val SHOW_DISMISS_DURATION_MILLIS = 250
  * the symmetric ease-in-out cubic bezier.
  */
 private val SHOW_DISMISS_EASING = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+
+/**
+ * The reflow animation: `COUIDefaultTopTips.WIDTH_CHANGE_ANIMATION_DURATION` (300ms) through
+ * `COUIEaseInterpolator` (`cubic-bezier(0.33, 0, 0.67, 1)`).
+ */
+private val WIDTH_CHANGE_SPEC: FiniteAnimationSpec<IntSize> = tween(
+    durationMillis = 300,
+    easing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f),
+)

@@ -61,6 +61,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Constraints
@@ -72,8 +73,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.theme.COUITheme
-import io.github.suqi8.coui.kmp.theme.COUITheme.isDynamicColor
-import io.github.suqi8.coui.kmp.theme.LocalColors
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlinx.coroutines.CoroutineScope
@@ -142,7 +141,9 @@ fun Switch(
     )
 
     // COUI press/hover feedback: translucent overlay over the bar color (coui_color_press / coui_color_hover).
+    // COUISwitch.configStateEffectAnimator drives both with spring(response 0.3, bounce 0).
     val overlayTone = COUITheme.colorScheme.onSurface
+    val overlaySpring = remember { folmeSpring<Color>(damping = 1f, response = 0.3f) }
     val pressOverlayState = animateColorAsState(
         when {
             !enabled -> Color.Transparent
@@ -150,6 +151,7 @@ fun Switch(
             isHovered -> overlayTone.copy(alpha = 0.078f)
             else -> Color.Transparent
         },
+        animationSpec = overlaySpring,
     )
 
     // COUI loading state (COUISwitch.startLoading()/stopLoading()).
@@ -216,6 +218,8 @@ fun Switch(
             role = Role.Switch
             toggleableState = ToggleableState(checked)
             if (!enabled) disabled()
+            // COUISwitch announces its own strings: switch_on / switch_off / switch_loading.
+            if (isLoading) stateDescription = LOADING_STATE_DESCRIPTION
         }
     }
 
@@ -468,8 +472,8 @@ private fun blendArgb(start: Color, end: Color, ratio: Float): Color = Color(
 
 object SwitchDefaults {
 
-    /** The track width of the [Switch] (COUISwitch bar_width). */
-    val TrackWidth: Dp = 38.dp
+    /** The track width of the [Switch] (COUISwitch `bar_width`). */
+    val TrackWidth: Dp = 44.dp
 
     /** The track height of the [Switch] (COUISwitch bar_height). */
     val TrackHeight: Dp = 24.dp
@@ -516,18 +520,20 @@ object SwitchDefaults {
     )
 
     /**
-     * The default colors for the [Switch]. COUISwitch keeps the thumb white in both states.
+     * The default colors for the [Switch]. COUISwitch keeps the thumb white in both states and
+     * fades the disabled thumb to 54% white (`switch_outer_circle_disable_color`); the resting
+     * track is `couiColorControls` and the disabled one `couiColorPressBackground`.
      */
     @Composable
     fun switchColors(
-        checkedThumbColor: Color = if (isDynamicColor) LocalColors.current.onPrimary else COUITheme.colorScheme.onPrimary,
-        uncheckedThumbColor: Color = if (isDynamicColor) LocalColors.current.onPrimary else COUITheme.colorScheme.onSecondary,
-        disabledCheckedThumbColor: Color = if (isDynamicColor) LocalColors.current.surface else COUITheme.colorScheme.disabledOnPrimary,
-        disabledUncheckedThumbColor: Color = COUITheme.colorScheme.disabledOnSecondary,
+        checkedThumbColor: Color = COUITheme.colorScheme.onPrimary,
+        uncheckedThumbColor: Color = COUITheme.colorScheme.onSecondary,
+        disabledCheckedThumbColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
+        disabledUncheckedThumbColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
         checkedTrackColor: Color = COUITheme.colorScheme.primary,
-        uncheckedTrackColor: Color = COUITheme.colorScheme.secondary,
+        uncheckedTrackColor: Color = COUITheme.colorScheme.controls,
         disabledCheckedTrackColor: Color = COUITheme.colorScheme.disabledPrimary,
-        disabledUncheckedTrackColor: Color = COUITheme.colorScheme.disabledSecondary,
+        disabledUncheckedTrackColor: Color = COUITheme.colorScheme.pressBackground,
     ): SwitchColors = remember(
         checkedThumbColor,
         uncheckedThumbColor,
@@ -574,3 +580,6 @@ data class SwitchColors(
     @Stable
     internal fun uncheckedTrackColor(enabled: Boolean): Color = if (enabled) uncheckedTrackColor else disabledUncheckedTrackColor
 }
+
+/** COUISwitch `R.string.switch_loading`, the state announced while the switch is loading. */
+private const val LOADING_STATE_DESCRIPTION = "Loading"

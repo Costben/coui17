@@ -99,7 +99,7 @@ private data class DemoNotification(
     val body: String,
     val time: String,
     val bodyLines: Int,
-    /** Delete-only rows drop the settings cell and delete on a full swipe, like a history entry. */
+    /** Delete-only rows drop the settings cell, like a history entry. */
     val deleteOnly: Boolean = false,
 )
 
@@ -179,7 +179,7 @@ fun NotificationSwipeDemo() {
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                Text(str("Swipe left to reveal notification actions; the last one deletes on a full swipe"), color = shade.info)
+                Text(str("Swipe left to reveal notification actions; keep pulling to open the bin and delete"), color = shade.info)
                 if (settingsSelected) Text(str("Notification settings selected"), color = shade.info)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     TextButton(
@@ -222,7 +222,7 @@ private fun DemoNotificationCard(
         rimColor = Color.White,
         settingsDescription = str("Settings"),
         dismissDescription = str("Delete"),
-        dismissOnFullSwipe = item.deleteOnly,
+        dismissOnFullSwipe = true,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),

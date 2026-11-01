@@ -90,6 +90,8 @@ Scaffold {
 | onClick       | (() -> Unit)?                   | 点击时触发的回调           | null                                  | 否       |
 | holdDownState | Boolean                         | 组件是否处于按下状态       | false                                 | 否       |
 | enabled       | Boolean                         | 组件是否可交互             | true                                  | 否       |
+| statusText    | String?                         | 箭头前的行尾状态文字(14sp、单行、末尾对齐) | null | 否 |
+| showRedDot    | Boolean                         | 在状态文字与箭头之间显示提示红点 | false                             | 否       |
 
 ### ArrowPreferenceDefaults 对象
 
@@ -100,6 +102,9 @@ ArrowPreferenceDefaults 对象提供右侧箭头图标的默认颜色配置。
 | 方法名            | 类型              | 说明                                   |
 | ----------------- | ----------------- | -------------------------------------- |
 | endActionColors   | EndActionColors   | 返回用于右侧箭头图标的着色（tint）配置 |
+| StatusTextMaxWidth    | Dp | 状态文字最大宽度(`coui_preference_status_text_max_width`) |
+| StatusTextStartPadding | Dp | 状态文字前的间距(`support_preference_widget_focus_jump_margin_start`) |
+| RedDotEndPadding      | Dp | 红点与箭头之间的间距 |
 
 ### 箭头着色说明
 

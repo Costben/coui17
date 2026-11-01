@@ -48,6 +48,7 @@ These are `array/normal_touchsearch_keys` and `array/special_touchsearch_keys`. 
 | enabled              | Boolean            | Whether the rail reacts to touch                             | true                             | No       |
 | hapticFeedbackEnabled | Boolean           | Whether a key change fires haptic feedback                    | true                             | No       |
 | colors               | TouchSearchViewColors | The colours                                               | TouchSearchViewDefaults.colors() | No       |
+| sectionNames         | Map&lt;String, List&lt;String&gt;&gt; | Names listed beside the tile while a key is held, keyed by rail key | emptyMap() | No       |
 
 The rail sizes itself to `BackgroundWidth` x (`PaddingTop` + `keys.size` * (`EachItemHeight` + `ItemSpacing`) + `PaddingBottom`). Wrap it in a sized parent to make it shorter than its content — at `NormalKeys` and the default 16dp stride that is 39dp x 480dp.
 
@@ -65,6 +66,16 @@ The rail sizes itself to `BackgroundWidth` x (`PaddingTop` + `keys.size` * (`Eac
 | PopupSize       | Dp                 | 48.dp                            | coui_touchsearch_popup_first_default_width / _height |
 | PopupTextSize   | TextUnit           | 20.sp                            | coui_touchsearch_popupwin_first_textsize             |
 | PopupEndMargin  | Dp                 | 0.5.dp                           | coui_touchsearch_popupwin_right_margin               |
+| SecondPopupWidth | Dp                | 112.dp                           | coui_touchsearch_popup_first_layout_width (couiPopupWinSecondWidth) |
+| SecondRowHeight | Dp                 | 48.dp                            | couiPopupWinSecondHeight defaulting to the first tile height |
+| SecondPopupMaxHeight | Dp            | 304.dp                           | coui_touchsearch_popupname_max_height                |
+| SecondPopupMargin | Dp               | 8.dp                             | coui_touchsearch_popupwin_second_marginEnd           |
+| SecondPopupOffset | Dp               | 23.dp                            | coui_touchsearch_popupwin_default_offset             |
+| SecondTextSize  | TextUnit           | 18.sp                            | coui_touchsearch_popupwin_second_textsize            |
+| SecondPopupCornerRadius | Dp         | 6.dp                             | coui_touchsearch_second_name_bg nine-patch corner    |
+| PopupAppearDurationMillis    | Int | 350 | `initPopupWindowAnimator` `setDuration(350L)` |
+| PopupDisappearDurationMillis | Int | 300 | `initPopupWindowAnimator` `setDuration(300L)` |
+| PopupScaleMin   | Float              | 0.8f                             | `SCALE_MIN`, the popup's fade/scale end point |
 | CharOffset      | Dp                 | 0.dp                             | coui_touchsearch_char_offset                         |
 | TouchPadding    | Dp                 | 8.5.dp                           | coui_touchsearch_touch_padding_start / _end          |
 | TouchEndGap     | Dp                 | 8.dp                             | coui_touchsearch_touch_end_gap                       |
@@ -92,6 +103,8 @@ The rail sizes itself to `BackgroundWidth` x (`PaddingTop` + `keys.size` * (`Eac
 | attr/couiColorPrimaryTextOnPopup → color/couiDefaultPrimaryR      | #ff347cff             | Pressed key text               | primary (#FF0080FF — nearest slot)          |
 | attr/couiColorBackgroundTop → color/coui_color_background_top     | #ffffffff / #ff333333 | Magnified tile fill            | file constant, no theme slot                |
 | color/coui_touchsearch_popup_text_color                           | #d9000000 / #d9ffffff | Magnified tile text            | file constant, no theme slot                |
+| attr/couiColorSecondary → color/coui_color_secondary_blue         | #260080ff / #401a8cff | Name list fill                 | tertiaryContainer                           |
+| color/coui_touchsearch_popupwin_sub_textcolor                     | selector              | Name list text                 | primary                                     |
 | color/coui_touchsearchview_key_text_color_unpressed               | #8c000000 / #8cffffff | Key text, unpressed (style)    | superseded by the selector above            |
 | color/coui_touchsearchview_popup_bg_color                         | #ffffffff             | Popup background (style)       | superseded by couiColorBackgroundTop        |
 | color/coui_touchsearchview_dot_color                              | selector              | Hidden-letter dot              | Not ported — see below                      |
@@ -106,6 +119,20 @@ The rail sizes itself to `BackgroundWidth` x (`PaddingTop` + `keys.size` * (`Eac
 | Key typeface | `sans-serif-medium`           | COUITouchSearchView.refresh()              |
 | Tile key    | 20sp, medium                   | coui_touchsearch_popupwin_first_textsize   |
 
+## Name List
+
+`COUITouchSearchView.setName(String[])` opens a second popup window beside the magnified tile, listing the entries filed under the key being held. Pass `sectionNames` to reproduce it:
+
+```kotlin
+TouchSearchView(
+    keys = TouchSearchViewDefaults.NormalKeys,
+    onKeySelected = { },
+    sectionNames = mapOf("#" to listOf("12306", "淘宝", "微信")),
+)
+```
+
+The panel is `SecondPopupWidth` (112dp) wide, one `SecondRowHeight` (48dp) row per name, and at most `SecondPopupMaxHeight` (304dp) tall. It sits `SecondPopupMargin` (8dp) to the start of the tile, centred on it, and is pushed back inside the rail's span plus `SecondPopupOffset` (23dp) above and below. It is drawn only while a key is held, matching `closing()` dismissing the second window outright, and it appears without the tile's fade so the two windows do not animate together.
+
 ## Behavior
 
 - Geometry is the native `updateKeys` + `onDraw`: each key owns a 14dp cell plus 2dp of spacing, so the stride is 16dp; the rail is 39dp wide with 16dp of padding above the first key and below the last. Text is centred horizontally and vertically in its cell, which is where the native baseline lands (`key.top + (touchBottom - top) / 2 - (descent + ascent) / 2`).
@@ -116,6 +143,6 @@ The rail sizes itself to `BackgroundWidth` x (`PaddingTop` + `keys.size` * (`Eac
 
 - The dot-collapse path: `initHeightRangeSpec`, `getShowLettersSize`, `getLetterSizeFromDot`, `getLimitDotLevel` and `LetterLimitLevelInfo`, which fold letters into `·` (`string/coui_touchsearch_dot`) as the rail gets shorter than `coui_touchsearch_limit1_height`. `TouchSearchViewDefaults.LimitHeights`, `MinHeight` and `Dot` record the recovered tokens but nothing consumes them, so a rail shorter than its content simply clips.
 - The leading collection key icon (`mKeyCollectDrawable`, `drawable/coui_touchsearch_collect_normal` / `_popup`, sized by `coui_touchsearch_collect_drawable_popup_width` / `_height` = 16dp) drawn in place of the `*` key when `attr/couiFirstIsCharacter` is false.
-- The second-level popup: `coui_touchsearch_popupwin_second_textsize` (18sp), `coui_touchsearch_popupwin_second_marginEnd` (8dp), `coui_touchsearch_popupname_max_height` (304dp), `coui_touchsearch_popupwin_default_offset` (23dp) and `coui_touchsearch_popup_second_text_height` (40dp) all belong to the window that lists the entries under a letter, which lives outside the rail.
+- The name list does not scroll: rows past `SecondPopupMaxHeight` are clipped instead of the native `ScrollView`, and a tap on a name does not fire `onNameClick`.
 - `coui_touchsearch_right_margin` (5dp), `coui_touchsearch_popupwin_margin` (4dp) and `coui_touchsearch_popup_first_key_padding_bottom` (10dp), which position the native popup window rather than paint it.
 - The magnified tile is drawn as an unrounded rectangle at the rail's start rather than in a separate `PopupWindow`, so it is clipped by any ancestor that clips its bounds. Give the rail a non-clipping parent with at least 48.5dp of space on its start side.

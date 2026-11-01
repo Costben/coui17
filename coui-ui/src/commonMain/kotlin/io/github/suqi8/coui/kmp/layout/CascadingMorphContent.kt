@@ -171,6 +171,13 @@ private fun CascadingPrimaryColumn(
                                     // children, and those children are leaves whatever they carry.
                                     if (item.children.isNullOrEmpty()) onLeafSelected(item) else onExpand(item)
                                 },
+                                // COUIPopupListWindow.dispatchMainMenuMixedItemLongClick runs the
+                                // item's long-click listener first, then opens the submenu of a row
+                                // that has one.
+                                onLongClick = {
+                                    item.onLongClick?.invoke()
+                                    if (!item.children.isNullOrEmpty()) onExpand(item)
+                                },
                                 onAnchorBounds = onAnchorBounds,
                             )
                         }
@@ -210,6 +217,7 @@ private fun CascadingPrimaryRow(
     isLast: Boolean,
     dropdownColors: DropdownColors,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onAnchorBounds: (DropdownItem, IntRect) -> Unit,
     groupKey: Any? = null,
 ) {
@@ -229,6 +237,9 @@ private fun CascadingPrimaryRow(
         isLast = isLast,
         onSelectedIndexChange = { onClick() },
         groupKey = groupKey,
+        // A long press is only a target when the row has a submenu or its own long-click action;
+        // COUIPopupListWindow's resolver skips every other main-menu row.
+        onLongClick = if (item.onLongClick != null || !item.children.isNullOrEmpty()) onLongClick else null,
         modifier = Modifier
             .fillMaxWidth()
             .onGloballyPositioned { coords ->

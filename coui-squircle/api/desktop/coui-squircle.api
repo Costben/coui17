@@ -4,20 +4,31 @@ public final class io/github/suqi8/coui/kmp/squircle/LocalSquircleEnabledKt {
 }
 
 public final class io/github/suqi8/coui/kmp/squircle/SquircleBackgroundKt {
-	public static final fun absoluteSquircleBackground-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun absoluteSquircleClip-2iUBClk (Landroidx/compose/ui/Modifier;FFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun absoluteSquircleSurface-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun squircleBackground-BazWgJc (Landroidx/compose/ui/Modifier;JFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun squircleBackground-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun squircleClip-2iUBClk (Landroidx/compose/ui/Modifier;FFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun squircleClip-uFdPcIQ (Landroidx/compose/ui/Modifier;FFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun squircleSurface-BazWgJc (Landroidx/compose/ui/Modifier;JFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun squircleSurface-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun absoluteSquircleBackground-aAdtmmo (Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun absoluteSquircleBackground-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun absoluteSquircleClip-2iUBClk (Landroidx/compose/ui/Modifier;FFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun absoluteSquircleClip-E3MpRCE (Landroidx/compose/ui/Modifier;FFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun absoluteSquircleSurface-aAdtmmo (Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun absoluteSquircleSurface-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleBackground-3MZ6nm0 (Landroidx/compose/ui/Modifier;JFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleBackground-BazWgJc (Landroidx/compose/ui/Modifier;JFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleBackground-aAdtmmo (Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleBackground-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleClip-2iUBClk (Landroidx/compose/ui/Modifier;FFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleClip-DzVHIIc (Landroidx/compose/ui/Modifier;FFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleClip-E3MpRCE (Landroidx/compose/ui/Modifier;FFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleClip-uFdPcIQ (Landroidx/compose/ui/Modifier;FFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleSurface-3MZ6nm0 (Landroidx/compose/ui/Modifier;JFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleSurface-BazWgJc (Landroidx/compose/ui/Modifier;JFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleSurface-aAdtmmo (Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleSurface-vAdtvn4 (Landroidx/compose/ui/Modifier;JFFFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 }
 
 public final class io/github/suqi8/coui/kmp/squircle/SquircleBorderKt {
-	public static final fun squircleBorder-P62OM_Y (Landroidx/compose/ui/Modifier;FJFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun squircleBorder-hGBTI10 (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleBorder-P62OM_Y (Landroidx/compose/ui/Modifier;FJFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleBorder-e9TtHpQ (Landroidx/compose/ui/Modifier;FJFFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final synthetic fun squircleBorder-hGBTI10 (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun squircleBorder-jIwJxvA (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FFFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 }
 
 public final class io/github/suqi8/coui/kmp/squircle/SquircleDefaults {
@@ -26,27 +37,39 @@ public final class io/github/suqi8/coui/kmp/squircle/SquircleDefaults {
 	public final fun getExtension ()F
 	public final fun getExtensionMax ()F
 	public final fun getExtensionMin ()F
+	public final fun getWeight ()F
+	public final fun getWeightLarge ()F
+	public final fun getWeightNormal ()F
 }
 
 public final class io/github/suqi8/coui/kmp/squircle/SquirclePathKt {
 	public static final synthetic fun addSquircleRect (Landroidx/compose/ui/graphics/Path;FFFFZ)V
-	public static final fun addSquircleRect (Landroidx/compose/ui/graphics/Path;FFFFZZ)V
+	public static final synthetic fun addSquircleRect (Landroidx/compose/ui/graphics/Path;FFFFZZ)V
+	public static final fun addSquircleRect (Landroidx/compose/ui/graphics/Path;FFFFZZF)V
 	public static synthetic fun addSquircleRect$default (Landroidx/compose/ui/graphics/Path;FFFFZILjava/lang/Object;)V
+	public static synthetic fun addSquircleRect$default (Landroidx/compose/ui/graphics/Path;FFFFZZFILjava/lang/Object;)V
 	public static synthetic fun addSquircleRect$default (Landroidx/compose/ui/graphics/Path;FFFFZZILjava/lang/Object;)V
-	public static final fun addSquircleRoundRect (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZZ)V
+	public static final synthetic fun addSquircleRoundRect (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZZ)V
+	public static final fun addSquircleRoundRect (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZZF)V
+	public static synthetic fun addSquircleRoundRect$default (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZZFILjava/lang/Object;)V
 	public static synthetic fun addSquircleRoundRect$default (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;FFFFFZZILjava/lang/Object;)V
 }
 
 public final class io/github/suqi8/coui/kmp/squircle/SquircleShape : androidx/compose/foundation/shape/CornerBasedShape {
 	public static final field $stable I
+	public synthetic fun <init> (FFFFFZZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFZZFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFFFFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFFFFZZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFZZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFZZFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFZZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun copy (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;)Landroidx/compose/foundation/shape/CornerBasedShape;
 	public fun createOutline-LjSzlW0 (JFFFFLandroidx/compose/ui/unit/LayoutDirection;)Landroidx/compose/ui/graphics/Outline;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCapsuleCircleBlend ()Z
+	public final fun getWeight ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

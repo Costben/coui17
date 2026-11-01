@@ -71,6 +71,13 @@ NumberPicker(
 | colors           | NumberPickerColors | 选择器的颜色配置                                     | NumberPickerDefaults.colors()    | 否       |
 | textStyle        | TextStyle          | 选择器项目的文本样式                                 | COUITheme.textStyles.title3     | 否       |
 | itemHeight       | Dp                 | 每个项目的高度                                       | NumberPickerDefaults.ItemHeight   | 否       |
+| ignorable        | Boolean            | 在 range 之后多出一个忽略条槽位，选中时绘制横杠而非数值 | false                       | 否       |
+| maxWidth         | Dp                 | 选择器最大宽度                                          | NumberPickerDefaults.MaxWidth | 否      |
+| focusTextSize    | Dp                 | 居中行字号，按尺寸取值，不随系统字体缩放                | NumberPickerDefaults.FocusTextSize | 否 |
+| normalTextSize   | Dp                 | 其余行字号，按尺寸取值，不随系统字体缩放                | NumberPickerDefaults.NormalTextSize | 否 |
+| vibrateLevel     | CouiVibrateLevel   | 滚动一格时的触感强度                                    | CouiVibrateLevel.Crisp     | 否       |
+| longPressUpdateInterval | Duration    | 长按某一行的连续步进间隔                                | NumberPickerDefaults.LongPressUpdateInterval | 否 |
+| onScrollingStop  | (() -> Unit)?      | 滚动停止时回调                                          | null                       | 否       |
 
 ### NumberPickerDefaults 对象
 

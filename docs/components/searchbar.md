@@ -84,8 +84,10 @@ The SearchBarDefaults object provides default values for SearchBar and InputFiel
 | Constant Name              | Type     | Description                                        | Default Value      |
 | -------------------------- | -------- | -------------------------------------------------- | ------------------ |
 | InsideMargin               | DpSize   | Internal padding of the SearchBar                  | DpSize(16.dp, 6.dp)|
+| NATIVE_BLUR_SIGMA_PX       | Float    | Blur sigma of the blurred preset (`FRAMEWORK_TOP_BAR_BLUR_PARAMS`) | 20f |
+| NATIVE_TOP_BAR_BLUR_SIGMA_PX | Float  | Blur sigma of the default preset (`FRAMEWORK_TOP_BAR_PARAMS`): none, the capsule is two tint layers | 0f |
 | InputFieldMinHeight        | Dp       | Minimum height of the InputField background        | 40.dp              |
-| InputFieldFontSize         | TextUnit | Font size for the InputField text and label        | 16.sp              |
+| InputFieldFontSize         | TextUnit | Font size for the InputField text and label        | 15.sp              |
 | LeadingIconStartPadding    | Dp       | Start padding for default leading icon             | 12.dp              |
 | LeadingIconEndPadding      | Dp       | End padding for default leading icon               | 8.dp               |
 | TrailingIconStartPadding   | Dp       | Start padding for default clear button             | 4.dp               |

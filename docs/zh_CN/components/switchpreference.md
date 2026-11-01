@@ -74,6 +74,8 @@ SwitchPreference(
 | cardListPosition | CardListPosition | 该行在卡片组中的位置，圆角外边缘会获得额外内边距 | CardListPosition.None | 否 |
 | holdDownState   | Boolean                         | 组件是否处于按下状态          | false                                 | 否       |
 | enabled         | Boolean                         | 组件是否可交互                | true                                  | 否       |
+| showRedDot      | Boolean                         | 在开关前绘制 `jump_icon_red_dot` 红点（`hasTitleRedDot`） | false | 否 |
+| onClick         | (() -> Unit)?                   | 偏好项点击回调，直接拨动开关时也会派发 | null | 否 |
 
 ## 进阶用法
 

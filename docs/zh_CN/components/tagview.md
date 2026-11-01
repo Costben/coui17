@@ -38,7 +38,11 @@ TagView(
 | modifier     | Modifier       | 应用于角标的修饰符               | Modifier                     | 否   |
 | leadingIcon  | ImageVector?   | 可选 5dp x 10dp 前置图片         | null                         | 否   |
 | trailingIcon | ImageVector?   | 可选后置图片(`wrap_content`)     | null                         | 否   |
-| cornerRadius | Dp             | 统一圆角半径                     | TagViewDefaults.CornerRadius | 否   |
+| cornerRadius | Dp             | 四角圆角的回退值                 | TagViewDefaults.CornerRadius | 否   |
+| topStartCornerRadius | Dp    | 左上圆角(`couiTagTLCornerRadius`) | cornerRadius | 否   |
+| topEndCornerRadius | Dp      | 右上圆角(`couiTagTRCornerRadius`) | cornerRadius | 否   |
+| bottomEndCornerRadius | Dp    | 左下圆角(`couiTagBLCornerRadius`) | cornerRadius | 否   |
+| bottomStartCornerRadius | Dp  | 右下圆角(`couiTagBRCornerRadius`) | cornerRadius | 否   |
 | strokeWidth  | Dp             | 外描边宽度                       | TagViewDefaults.StrokeWidth  | 否   |
 | colors       | TagViewColors  | 角标配色                         | TagViewDefaults.tagViewColors() | 否 |
 
@@ -85,7 +89,7 @@ TagView(
 
 ## 未移植
 
-- `COUITagBackgroundView` 的四个独立圆角(`couiTagTLCornerRadius`、`couiTagTRCornerRadius`、`couiTagBLCornerRadius`、`couiTagBRCornerRadius`)合并为单个 `cornerRadius`;目前复现到的用例都使用统一的 `couiTagCornerRadius`。
+- 原生的四角是物理角(`TL` / `TR` / `BL` / `BR`);移植版暴露为起始/结束角,使徽标随布局方向翻转,与库内其他组件一致。
 - 默认 `couiTagBackgroundColor` 背后的主题值 `couiColorBackgroundWithTag` 无法解析:该属性在 `attrs.xml` 中有声明,但 ColorOS 17 资源中既没有它的 `Theme.COUI` 赋值,也没有 `coui_color_background_with_tag` 颜色。因此移植采用唯一观察到的消费方写法——拨号盘的 `app:couiTagBackgroundColor="?attr/couiColorContainer8"`、`app:couiTagCornerRadius="4dp"`、`app:couiTagViewTextColor="@color/coui_color_label_secondary"`。白色文字在浅色底上不可见,这是一次有意的替换,不是还原到的框架默认值。
 - `couiTagViewTextSize` 在原生中通过 `setTextSize(0, px)` 传入 10dp 尺寸,而布局给文字的 `couiTextTag` 样式声明 10sp;移植采用 10sp。
 - `COUITagBackgroundView.onAttachedToWindow` 中把父容器 `clipChildren` 设为 `false`,以及 `dispatchDraw` 的 `Path` 裁剪,在 Compose 中不需要,因为父容器默认不裁剪子节点。

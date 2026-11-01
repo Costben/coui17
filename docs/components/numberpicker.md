@@ -67,10 +67,17 @@ NumberPicker(
 | range            | IntRange           | The range of selectable values                                           | 0..10                      | No       |
 | label            | (Int) -> String    | Converts a value to its display string                                   | `{ it.toString() }`          | No       |
 | visibleItemCount | Int                | Number of visible items. Must be odd and at least 3                      | 3                          | No       |
-| wrapAround       | Boolean            | Whether the picker wraps around (infinite scrolling)                     | false                      | No       |
+| wrapAround       | Boolean            | Whether the picker wraps around (infinite scrolling). Ignored when the range is shorter than the wheel | true | No |
 | colors           | NumberPickerColors | Color configuration of the picker                                        | NumberPickerDefaults.colors() | No       |
 | textStyle        | TextStyle          | Text style for picker items                                              | COUITheme.textStyles.title3 | No       |
 | itemHeight       | Dp                 | The height of each item in the picker                                    | NumberPickerDefaults.ItemHeight | No       |
+| ignorable        | Boolean            | Adds one slot past `range` that draws the ignore bar instead of a value   | false                      | No       |
+| maxWidth         | Dp                 | Widest the picker may grow                                               | NumberPickerDefaults.MaxWidth | No      |
+| focusTextSize    | Dp                 | Text size of the centered row; a dimension, so it ignores the font scale  | NumberPickerDefaults.FocusTextSize | No |
+| normalTextSize   | Dp                 | Text size of the other rows; a dimension, so it ignores the font scale    | NumberPickerDefaults.NormalTextSize | No |
+| vibrateLevel     | CouiVibrateLevel   | Strength of the step tick                                                | CouiVibrateLevel.Crisp     | No       |
+| longPressUpdateInterval | Duration    | How often a held row keeps stepping                                     | NumberPickerDefaults.LongPressUpdateInterval | No |
+| onScrollingStop  | (() -> Unit)?      | Called once a scroll settles                                             | null                       | No       |
 
 ### NumberPickerDefaults Object
 

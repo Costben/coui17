@@ -62,6 +62,18 @@ class COUITouchMotionTest {
     }
 
     @Test
+    fun pressAndReleaseSpringsFollowThePressEngineConfig() {
+        val spec = COUITouchMotionSpec()
+        // COUIPressAnimatorUnit feeds PressEngineConfig into the scale spring: press 0.13 / 0.18,
+        // release 0.35 / 0.62, with bounce mapped to dampingRatio = 1 - bounce and
+        // stiffness = (2π / response)².
+        assertEquals(2336f, spec.pressSpring.stiffness, absoluteTolerance = 1f)
+        assertEquals(0.82f, spec.pressSpring.dampingRatio, absoluteTolerance = 1e-4f)
+        assertEquals(322.3f, spec.releaseSpring.stiffness, absoluteTolerance = 1f)
+        assertEquals(0.38f, spec.releaseSpring.dampingRatio, absoluteTolerance = 1e-4f)
+    }
+
+    @Test
     fun pressBezierSolvesParametricXBeforeReadingY() {
         val midpoint = couiCubicBezierInterpolate(0.5f, 0f, 0f, 0f, 1f)
         assertEquals(0.8899f, midpoint, absoluteTolerance = 0.001f)

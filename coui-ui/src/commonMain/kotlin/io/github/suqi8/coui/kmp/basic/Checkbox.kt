@@ -5,11 +5,17 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.IndicationInstance
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.wrapContentSize
@@ -33,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
@@ -51,6 +58,7 @@ import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.SinkFeedback
 import io.github.suqi8.coui.kmp.utils.pressable
+import kotlinx.coroutines.flow.collect
 
 /**
  * A [Checkbox] component with COUI style, supporting three states: On, Off, and Indeterminate.
@@ -138,7 +146,15 @@ fun Checkbox(
     val clipShape = remember(squircleEnabled) {
         SquircleShape(cornerRadius = CheckboxClipCornerRadius, squircleEnabled = squircleEnabled)
     }
-    val sinkFeedback = remember { SinkFeedback(sinkAmount = 0.85f, animationSpec = spring(0.99f, 986.96f)) }
+    // COUICheckBox.setCircleRippleMask: pressing spreads a circular ripple inside the checkbox mask
+    // instead of sinking the whole control.
+    val maskInteractionSource = remember { MutableInteractionSource() }
+    val maskPressed by maskInteractionSource.collectIsPressedAsState()
+    val maskRippleProgress by animateFloatAsState(
+        targetValue = if (maskPressed) 1f else 0f,
+        animationSpec = tween(if (maskPressed) MASK_RIPPLE_SPREAD_MILLIS else MASK_RIPPLE_FADE_MILLIS),
+        label = "checkboxMaskRipple",
+    )
 
     val finalModifier = if (onClick != null) {
         Modifier.triStateToggleable(
@@ -170,8 +186,8 @@ fun Checkbox(
             .wrapContentSize(Alignment.Center)
             .requiredSize(24.dp)
             .pressable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = sinkFeedback,
+                interactionSource = maskInteractionSource,
+                indication = null,
                 enabled = enabled,
                 delay = null,
             )
@@ -220,6 +236,14 @@ fun Checkbox(
                 val barThickness = BarThicknessFraction * d
 
                 onDrawBehind {
+                    // The circular mask ripple spreads from the centre of the 24dp control.
+                    if (maskRippleProgress > 0f) {
+                        drawCircle(
+                            color = MaskRippleColor.copy(alpha = MaskRippleColor.alpha * maskRippleProgress),
+                            radius = d / 2f * (0.2f + 0.8f * maskRippleProgress),
+                            center = center,
+                        )
+                    }
                     scale(scale = popScale.value) {
                         val fillFraction = fillFractionState.value
                         if (fillFraction < 1f) {
@@ -299,12 +323,14 @@ object CheckboxDefaults {
     fun checkboxColors(
         checkedForegroundColor: Color = COUITheme.colorScheme.onPrimary,
         uncheckedForegroundColor: Color = COUITheme.colorScheme.secondary,
-        disabledCheckedForegroundColor: Color = COUITheme.colorScheme.disabledOnPrimary,
-        disabledUncheckedForegroundColor: Color = COUITheme.colorScheme.disabledOnPrimary,
+        disabledCheckedForegroundColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
+        disabledUncheckedForegroundColor: Color = COUITheme.colorScheme.disabledOnPrimaryButton,
         checkedBackgroundColor: Color = COUITheme.colorScheme.primary,
-        uncheckedBackgroundColor: Color = COUITheme.colorScheme.secondary,
+        // The unchecked box is an outline in `couiColorLabelTertiary`, not a fill in `secondary`.
+        uncheckedBackgroundColor: Color = COUITheme.colorScheme.labelTertiary,
         disabledCheckedBackgroundColor: Color = COUITheme.colorScheme.disabledPrimary,
-        disabledUncheckedBackgroundColor: Color = COUITheme.colorScheme.disabledSecondary,
+        // coui_btn_check_off_disabled.xml strokes `couiColorQuarternaryNeutral`.
+        disabledUncheckedBackgroundColor: Color = COUITheme.colorScheme.quarternaryNeutral,
     ): CheckboxColors = remember(
         checkedForegroundColor,
         uncheckedForegroundColor,
@@ -363,7 +389,7 @@ private val RingCornerRadiusFraction = 3.2f / ViewportSize
 private val RingStrokeWidthFraction = 1.3f / ViewportSize
 
 // Checkmark centerline derived from the filled outline in coui_btn_check_on_normal.xml.
-private val CheckStrokeWidthFraction = 1.38f / ViewportSize
+private val CheckStrokeWidthFraction = 1.3f / ViewportSize
 private val CheckStartPoint = Offset(7.4835f / ViewportSize, 11.8935f / ViewportSize)
 private val CheckMiddlePoint = Offset(10.831f / ViewportSize, 15.3035f / ViewportSize)
 private val CheckEndPoint = Offset(17.5165f / ViewportSize, 8.4925f / ViewportSize)
@@ -382,3 +408,12 @@ private val PopHalfDurationMillis = 150
 
 // Clip proportional to the drawn square, scaled up to the 24dp layout box (24 * 4 / 18).
 private val CheckboxClipCornerRadius = (ViewportSize * 4f / 18f).dp
+
+/** COUIMaskRippleDrawable: the spread duration of the circular mask ripple. */
+private const val MASK_RIPPLE_SPREAD_MILLIS = 200
+
+/** COUIMaskRippleDrawable: the fade-out duration once the finger lifts. */
+private const val MASK_RIPPLE_FADE_MILLIS = 120
+
+/** The ripple colour of the checkbox mask (couiColorRipple, 12% black in light themes). */
+private val MaskRippleColor = Color(0x1F000000)

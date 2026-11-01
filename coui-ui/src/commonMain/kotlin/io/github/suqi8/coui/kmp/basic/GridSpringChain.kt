@@ -358,6 +358,12 @@ object GridSpringChainDefaults {
      */
     val GridMainFriction = 10f
 
+    /**
+     * `COUIGridSpringChain.ATTACHMENT_TENSION` (150), the neighbour tension the grid's constructor
+     * passes to `COUISpringChain.create` — it overrides [AttachmentTension].
+     */
+    val GridAttachmentTension = 150f
+
     /** `COUIGridSpringChain.BACK_TO_TOP` (1). */
     val BackToTop = 1
 

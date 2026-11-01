@@ -64,3 +64,10 @@ CheckBoxWithDividerPreference(
 | cardListPosition | CardListPosition                | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None           | No       |
 | holdDownState    | Boolean                         | Whether the component is held down                                | false                                 | No       |
 | enabled          | Boolean                         | Component interactive state                                       | true                                  | No       |
+| onMainLayoutClick | (() -> Unit)?                  | Callback of the row's main area, separate from the checkbox; `null` keeps one row-wide target | null | No |
+
+### CheckBoxWithDividerPreferenceDefaults Constants
+
+| Constant Name     | Type | Description                                                  | Default Value |
+| ----------------- | ---- | ------------------------------------------------------------ | ------------- |
+| CheckboxEndMargin | Dp   | Gap the trailing box keeps inside the row's end inside margin | 16.dp         |

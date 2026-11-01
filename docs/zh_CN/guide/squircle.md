@@ -182,6 +182,31 @@ Modifier.squircleBackground(
 
 引用默认值用 `SquircleDefaults.Extension`。
 
+## 圆角权重
+
+`weight` 是角部曲线的 Lp 指数，即 ColorOS 17 交给 hwui `sdRoundRect` SDF 的 `superN`
+（`RoundCornerUtil.WEIGHT_16_1_NORMAL` = 2.5、`WEIGHT_16_1_LARGE` = 3.0）。默认 2.5，
+不传权重的表面渲染结果与此前完全一致。
+
+系统用 3.0 绘制的表面——卡片、对话框与底部面板、多行 TopTips、tooltip 气泡——请传
+`SquircleDefaults.WeightLarge`，并同时换成对应 `*_radius_large_16_1` 令牌的半径
+（卡片 17dp，面板 45dp）。
+
+| 参数     |          默认值          | 取值    | 效果                                                                                    |
+| -------- | :----------------------: | ------- | --------------------------------------------------------------------------------------- |
+| `weight` | `WeightNormal`（`2.5`）  | `2.5`、`3.0` | 指数越大角部收得越紧：45° 内缩在 3.0 下为 `0.2063R`，2.5 下为 `0.2421R`。 |
+
+shader 路径每种权重各烘焙一张距离场，按就近取用，因此权重不会增加采样次数；两档之间的
+值取最近的一档。path API 则精确按传入权重求值。
+
+```kotlin
+Modifier.squircleSurface(
+    color = COUITheme.colorScheme.surfaceContainer,
+    cornerRadius = 17.dp,
+    weight = SquircleDefaults.WeightLarge,
+)
+```
+
 ## Path API
 
 当你需要在 modifier 流水线之外构造 squircle 轮廓（例如每帧重建的 `clipPath`
@@ -258,6 +283,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `bottomEnd`    | `Dp`    | 每角半径（按角重载）                              | -                                   |
 | `bottomStart`  | `Dp`    | 每角半径（按角重载）                              | -                                   |
 | `extension`    | `Float` | 角部区域倍数，钳位到 `[1, 2]`                     | `SquircleDefaults.Extension` = 1.0  |
+| `weight`       | `Float` | 角部曲线的 Lp 指数（`2.5` 或 `3.0`）              | `SquircleDefaults.Weight` = 2.5     |
 
 ### squircleBorder
 
@@ -267,6 +293,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `color`        | `Color` | 描边颜色          | -                               |
 | `cornerRadius` | `Dp`    | 统一圆角半径      | -                               |
 | `extension`    | `Float` | 角部区域倍数      | `SquircleDefaults.Extension`    |
+| `weight`       | `Float` | 角部曲线的 Lp 指数 | `SquircleDefaults.Weight`       |
 
 ### Path.addSquircleRect
 
@@ -277,6 +304,7 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `cornerRadius`    | `Float`   | 圆角半径（像素）                                     | -                               |
 | `extension`       | `Float`   | 角部区域倍数                                         | `SquircleDefaults.Extension`    |
 | `squircleEnabled` | `Boolean` | 为 `false` 时改为追加同尺寸的圆角矩形                 | `true`                          |
+| `weight`          | `Float`   | 角部曲线的 Lp 指数                                   | `SquircleDefaults.Weight`       |
 
 ### SquircleDefaults
 
@@ -285,3 +313,6 @@ fun OutlinedSurface(cornerRadius: Dp) {
 | `Extension`    | `Float` | 默认角部区域倍数           | `1.0`  |
 | `ExtensionMin` | `Float` | `Extension` 下限           | `1.0`  |
 | `ExtensionMax` | `Float` | `Extension` 上限           | `2.0`  |
+| `WeightNormal` | `Float` | `16_1 normal` 角令牌的 Lp 指数 | `2.5` |
+| `WeightLarge`  | `Float` | `16_1 large` 角令牌的 Lp 指数  | `3.0` |
+| `Weight`       | `Float` | 默认圆角权重，即 `WeightNormal` | `2.5` |

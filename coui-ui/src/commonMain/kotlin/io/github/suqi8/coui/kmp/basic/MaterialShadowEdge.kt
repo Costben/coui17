@@ -363,8 +363,8 @@ data class MaterialStrokeParams(
 
         /**
          * `CONTENT_CAPSULE_PARAMS_4_LIGHT` / `_DARK` — `TYPE_CONTENT_CAPSULE_4`, the rim of a
-         * `COUIButton` whose `ButtonType` is `PRIMARY`. ColorOS ships the same numbers for both
-         * themes; only the fill under the rim changes.
+         * `COUIButton` whose `ButtonType` is `PRIMARY`. The dark variant dims the rim from 0.3 to
+         * 0.25; only the fill under it changes otherwise.
          */
         val ContentCapsule4: MaterialStrokeParams = MaterialStrokeParams(
             edgeAlpha = 0.3f,
@@ -374,6 +374,19 @@ data class MaterialStrokeParams(
             shadowFadeOut = 0f,
             shadowFadeScale = 1f,
         )
+
+        /** `CONTENT_CAPSULE_PARAMS_4_DARK` — [ContentCapsule4] in dark theme. */
+        val ContentCapsule4Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.25f,
+            edgeWidth = 2.5.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.1f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** Resolves `TYPE_CONTENT_CAPSULE_4` by night mode, as `getStrokeParamsByType` does. */
+        fun contentCapsule4(isDark: Boolean): MaterialStrokeParams = if (isDark) ContentCapsule4Dark else ContentCapsule4
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_1` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule1(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule1Dark else FrameworkCapsule1Light

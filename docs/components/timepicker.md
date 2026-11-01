@@ -70,6 +70,7 @@ TimePicker(
 | textStyle         | TextStyle           | Text style for the wheel items                             | COUITheme.textStyles.title3        | No       |
 | itemHeight        | Dp                  | The height of each wheel item                              | NumberPickerDefaults.ItemHeight     | No       |
 | insideMargin      | PaddingValues       | Padding around the wheel columns                           | TimePickerDefaults.InsideMargin     | No       |
+| amPmFirst (default) | Boolean           | Now defaults to the order of the current locale: the AM/PM wheel leads in zh/ja/ko and follows elsewhere | TimePickerDefaults.AmPmFirst | No |
 
 ### TimeValue Class
 

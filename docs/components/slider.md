@@ -116,6 +116,10 @@ Slider(
 | keyPoints             | List\<Float\>?                    | Custom key point values to display on the slider. If null, uses step positions from steps parameter. Values should be within valueRange                                        | null                               | No       |
 | magnetThreshold       | Float                             | Magnetic snap threshold as a fraction (0.0 to 1.0). When slider value is within this distance from a key point, it will snap to that point. Only applies when keyPoints is set | 0.02f                              | No       |
 | secondaryProgress     | Float?                            | Optional secondary ("intent tier") drawn behind the played track; coerced into valueRange, the part past the thumb stays visible | null                               | No       |
+| showProgress          | Boolean                                     | Whether to draw the active track (`couiSeekBarShowProgress`)                                                                                                                  | true                               | No       |
+| showThumb             | Boolean                                     | Whether to draw the thumb (`couiSeekBarShowThumb`)                                                                                                                            | true                               | No       |
+| startFromMiddle       | Boolean                                     | Grow the active track from the middle of the bar towards the thumb (`couiSeekBarStartMiddle`)                                                                                | false                              | No       |
+| moveByFinger          | Boolean                                     | The thumb follows the finger displacement instead of jumping to the finger position (`MOVE_BY_FINGER`)                                                                        | false                              | No       |
 
 ### VerticalSlider Properties
 
@@ -166,6 +170,10 @@ The SliderDefaults object provides default configurations for the Slider compone
 | Constant Name       | Type               | Default Value           | Description                  |
 | ------------------- | ------------------ | ----------------------- | ---------------------------- |
 | MinHeight           | Dp                 | 20.dp                   | Default height of the slider |
+| MinTouchHeight      | Dp                 | 36.dp                   | Minimum touch target height (`couiSeekBarMinHeight`) |
+| PercentRange        | ClosedFloatingPointRange\<Float\> | 0f..100f  | The COUI 0..100 progress range |
+| FLING_VELOCITY_LIMIT | Float             | 100f                    | Release speed above which the thumb keeps sliding |
+| FLING_PROJECTION_SECONDS | Float          | 0.35f                   | Fling travel per px/s, in seconds |
 | KeyPointRadius      | Dp                 | 3.0.dp                  | Default radius of key points |
 | DefaultHapticEffect | SliderHapticEffect | SliderHapticEffect.Edge | Default haptic feedback type |
 

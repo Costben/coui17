@@ -64,6 +64,19 @@ import androidx.compose.ui.graphics.Color
  * @param sliderBackground The background color of the slider.
  * @param bar The background color of the bottom navigation bar. COUI `coui_color_bar` (`?attr/couiColorBar`). Cases: NavigationBar.
  * @param labelPrimaryVariant The color of unselected items in the floating bottom navigation bar. COUI `coui_color_label_primary_variant` (`?attr/couiColorLabelPrimaryVariant`). Cases: BottomFloatingNavigationBar.
+ * @param controls The resting fill of the switch track. COUI `coui_color_controls` (`?attr/couiColorControls`). Cases: Switch.
+ * @param labelTertiary The low-emphasis label color, used for the outline of an unchecked checkbox. COUI `coui_color_label_tertiary` (`?attr/couiColorLabelTertiary`). Cases: Checkbox.
+ * @param pressBackground The neutral fill of controls that cannot be interacted with. COUI `coui_color_press_background` (`?attr/couiColorPressBackground`). Cases: Switch.
+ * @param quarternaryNeutral The faintest neutral, one step below [outline]. COUI `coui_color_quarternary_neutral` (`?attr/couiColorQuarternaryNeutral`). Cases: Checkbox.
+ * @param containerTheme The fill of a button in its container-theme appearance, COUI
+ *   `?attr/couiColorContainerTheme` (`coui_color_container_theme_blue`, `#0080FF` / `#1A8CFF`).
+ *   Cases: Button.
+ * @param focus The focus mask COUI draws under a focused control, `?attr/couiColorFocus`
+ *   (`coui_color_focus_blue`, `#1F0080FF` / `#331A8CFF`): the container theme at 12% in the light
+ *   scheme and 20% in the dark one. Cases: COUIIndication.
+ * @param focusOutline The 3dp focus ring around a focused control, `?attr/couiColorFocusOutline`
+ *   (`coui_color_focus_outline_blue`, `#660080FF` / `#665C9DFF`): a 40% tint of the theme blue, of
+ *   `#5C9DFF` in the dark scheme. Cases: COUIIndication.
  */
 @Stable
 class Colors(
@@ -122,6 +135,13 @@ class Colors(
     sliderBackground: Color,
     bar: Color,
     labelPrimaryVariant: Color,
+    controls: Color,
+    labelTertiary: Color,
+    pressBackground: Color,
+    quarternaryNeutral: Color,
+    containerTheme: Color,
+    focus: Color = containerTheme.copy(alpha = 0x1F / 255f),
+    focusOutline: Color = containerTheme.copy(alpha = 0x66 / 255f),
 ) {
     var primary by mutableStateOf(primary, structuralEqualityPolicy())
         internal set
@@ -233,10 +253,153 @@ class Colors(
         internal set
     var labelPrimaryVariant by mutableStateOf(labelPrimaryVariant, structuralEqualityPolicy())
         internal set
+    var controls by mutableStateOf(controls, structuralEqualityPolicy())
+        internal set
+    var labelTertiary by mutableStateOf(labelTertiary, structuralEqualityPolicy())
+        internal set
+    var pressBackground by mutableStateOf(pressBackground, structuralEqualityPolicy())
+        internal set
+    var quarternaryNeutral by mutableStateOf(quarternaryNeutral, structuralEqualityPolicy())
+        internal set
+    var containerTheme by mutableStateOf(containerTheme, structuralEqualityPolicy())
+        internal set
+    var focus by mutableStateOf(focus, structuralEqualityPolicy())
+        internal set
+    var focusOutline by mutableStateOf(focusOutline, structuralEqualityPolicy())
+        internal set
 
     /**
-     * The [Colors] form without [bar] / [labelPrimaryVariant], kept for binary compatibility;
-     * [bar] falls back to [surface] and [labelPrimaryVariant] to [onSurfaceVariantSummary].
+     * The [Colors] form without [containerTheme], kept for binary compatibility; [containerTheme]
+     * falls back to [secondaryContainer].
+     */
+    constructor(
+        primary: Color,
+        onPrimary: Color,
+        primaryVariant: Color,
+        onPrimaryVariant: Color,
+        error: Color,
+        onError: Color,
+        errorContainer: Color,
+        onErrorContainer: Color,
+        disabledPrimary: Color,
+        disabledOnPrimary: Color,
+        disabledPrimaryButton: Color,
+        disabledOnPrimaryButton: Color,
+        disabledPrimarySlider: Color,
+        primaryContainer: Color,
+        onPrimaryContainer: Color,
+        secondary: Color,
+        onSecondary: Color,
+        secondaryVariant: Color,
+        onSecondaryVariant: Color,
+        disabledSecondary: Color,
+        disabledOnSecondary: Color,
+        disabledSecondaryVariant: Color,
+        disabledOnSecondaryVariant: Color,
+        secondaryContainer: Color,
+        onSecondaryContainer: Color,
+        secondaryContainerVariant: Color,
+        onSecondaryContainerVariant: Color,
+        tertiaryContainer: Color,
+        onTertiaryContainer: Color,
+        tertiaryContainerVariant: Color,
+        background: Color,
+        onBackground: Color,
+        onBackgroundVariant: Color,
+        surface: Color,
+        onSurface: Color,
+        surfaceVariant: Color,
+        onSurfaceSecondary: Color,
+        onSurfaceVariantSummary: Color,
+        onSurfaceVariantActions: Color,
+        disabledOnSurface: Color,
+        surfaceContainer: Color,
+        onSurfaceContainer: Color,
+        onSurfaceContainerVariant: Color,
+        surfaceContainerHigh: Color,
+        onSurfaceContainerHigh: Color,
+        surfaceContainerHighest: Color,
+        onSurfaceContainerHighest: Color,
+        outline: Color,
+        dividerLine: Color,
+        windowDimming: Color,
+        sliderKeyPoint: Color,
+        sliderKeyPointForeground: Color,
+        sliderBackground: Color,
+        bar: Color,
+        labelPrimaryVariant: Color,
+        controls: Color,
+        labelTertiary: Color,
+        pressBackground: Color,
+        quarternaryNeutral: Color,
+    ) : this(
+        primary = primary,
+        onPrimary = onPrimary,
+        primaryVariant = primaryVariant,
+        onPrimaryVariant = onPrimaryVariant,
+        error = error,
+        onError = onError,
+        errorContainer = errorContainer,
+        onErrorContainer = onErrorContainer,
+        disabledPrimary = disabledPrimary,
+        disabledOnPrimary = disabledOnPrimary,
+        disabledPrimaryButton = disabledPrimaryButton,
+        disabledOnPrimaryButton = disabledOnPrimaryButton,
+        disabledPrimarySlider = disabledPrimarySlider,
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = onPrimaryContainer,
+        secondary = secondary,
+        onSecondary = onSecondary,
+        secondaryVariant = secondaryVariant,
+        onSecondaryVariant = onSecondaryVariant,
+        disabledSecondary = disabledSecondary,
+        disabledOnSecondary = disabledOnSecondary,
+        disabledSecondaryVariant = disabledSecondaryVariant,
+        disabledOnSecondaryVariant = disabledOnSecondaryVariant,
+        secondaryContainer = secondaryContainer,
+        onSecondaryContainer = onSecondaryContainer,
+        secondaryContainerVariant = secondaryContainerVariant,
+        onSecondaryContainerVariant = onSecondaryContainerVariant,
+        tertiaryContainer = tertiaryContainer,
+        onTertiaryContainer = onTertiaryContainer,
+        tertiaryContainerVariant = tertiaryContainerVariant,
+        background = background,
+        onBackground = onBackground,
+        onBackgroundVariant = onBackgroundVariant,
+        surface = surface,
+        onSurface = onSurface,
+        surfaceVariant = surfaceVariant,
+        onSurfaceSecondary = onSurfaceSecondary,
+        onSurfaceVariantSummary = onSurfaceVariantSummary,
+        onSurfaceVariantActions = onSurfaceVariantActions,
+        disabledOnSurface = disabledOnSurface,
+        surfaceContainer = surfaceContainer,
+        onSurfaceContainer = onSurfaceContainer,
+        onSurfaceContainerVariant = onSurfaceContainerVariant,
+        surfaceContainerHigh = surfaceContainerHigh,
+        onSurfaceContainerHigh = onSurfaceContainerHigh,
+        surfaceContainerHighest = surfaceContainerHighest,
+        onSurfaceContainerHighest = onSurfaceContainerHighest,
+        outline = outline,
+        dividerLine = dividerLine,
+        windowDimming = windowDimming,
+        sliderKeyPoint = sliderKeyPoint,
+        sliderKeyPointForeground = sliderKeyPointForeground,
+        sliderBackground = sliderBackground,
+        bar = bar,
+        labelPrimaryVariant = labelPrimaryVariant,
+        controls = controls,
+        labelTertiary = labelTertiary,
+        pressBackground = pressBackground,
+        quarternaryNeutral = quarternaryNeutral,
+        containerTheme = secondaryContainer,
+    )
+
+    /**
+     * The [Colors] form without the control and neutral roles, kept for binary compatibility;
+     * [bar] falls back to [surface], [labelPrimaryVariant] to [onSurfaceVariantSummary],
+     * [controls] and [pressBackground] / [quarternaryNeutral] to [secondaryContainer], and
+     * [labelTertiary] to [onSurfaceVariantActions].
      */
     constructor(
         primary: Color,
@@ -348,6 +511,10 @@ class Colors(
         sliderBackground = sliderBackground,
         bar = surface,
         labelPrimaryVariant = onSurfaceVariantSummary,
+        controls = secondaryContainer,
+        labelTertiary = onSurfaceVariantActions,
+        pressBackground = secondaryContainer,
+        quarternaryNeutral = secondaryContainer,
     )
 
     /** The pre-1.2.0 [copy] without [bar] / [labelPrimaryVariant], kept for binary compatibility. */
@@ -466,6 +633,138 @@ class Colors(
         sliderBackground = sliderBackground,
         bar = bar,
         labelPrimaryVariant = labelPrimaryVariant,
+        containerTheme = containerTheme,
+    )
+
+    /**
+     * The [copy] form without [containerTheme], kept for binary compatibility; [containerTheme]
+     * falls back to [secondaryContainer].
+     */
+    @Suppress("DEPRECATION")
+    @Deprecated(
+        message = "Migrated to the copy that also takes containerTheme.",
+        level = DeprecationLevel.HIDDEN,
+    )
+    fun copy(
+        primary: Color = this.primary,
+        onPrimary: Color = this.onPrimary,
+        primaryVariant: Color = this.primaryVariant,
+        onPrimaryVariant: Color = this.onPrimaryVariant,
+        error: Color = this.error,
+        onError: Color = this.onError,
+        errorContainer: Color = this.errorContainer,
+        onErrorContainer: Color = this.onErrorContainer,
+        disabledPrimary: Color = this.disabledPrimary,
+        disabledOnPrimary: Color = this.disabledOnPrimary,
+        disabledPrimaryButton: Color = this.disabledPrimaryButton,
+        disabledOnPrimaryButton: Color = this.disabledOnPrimaryButton,
+        disabledPrimarySlider: Color = this.disabledPrimarySlider,
+        primaryContainer: Color = this.primaryContainer,
+        onPrimaryContainer: Color = this.onPrimaryContainer,
+        secondary: Color = this.secondary,
+        onSecondary: Color = this.onSecondary,
+        secondaryVariant: Color = this.secondaryVariant,
+        onSecondaryVariant: Color = this.onSecondaryVariant,
+        disabledSecondary: Color = this.disabledSecondary,
+        disabledOnSecondary: Color = this.disabledOnSecondary,
+        disabledSecondaryVariant: Color = this.disabledSecondaryVariant,
+        disabledOnSecondaryVariant: Color = this.disabledOnSecondaryVariant,
+        secondaryContainer: Color = this.secondaryContainer,
+        onSecondaryContainer: Color = this.onSecondaryContainer,
+        secondaryContainerVariant: Color = this.secondaryContainerVariant,
+        onSecondaryContainerVariant: Color = this.onSecondaryContainerVariant,
+        tertiaryContainer: Color = this.tertiaryContainer,
+        onTertiaryContainer: Color = this.onTertiaryContainer,
+        tertiaryContainerVariant: Color = this.tertiaryContainerVariant,
+        background: Color = this.background,
+        onBackground: Color = this.onBackground,
+        onBackgroundVariant: Color = this.onBackgroundVariant,
+        surface: Color = this.surface,
+        onSurface: Color = this.onSurface,
+        surfaceVariant: Color = this.surfaceVariant,
+        onSurfaceSecondary: Color = this.onSurfaceSecondary,
+        onSurfaceVariantSummary: Color = this.onSurfaceVariantSummary,
+        onSurfaceVariantActions: Color = this.onSurfaceVariantActions,
+        disabledOnSurface: Color = this.disabledOnSurface,
+        surfaceContainer: Color = this.surfaceContainer,
+        onSurfaceContainer: Color = this.onSurfaceContainer,
+        onSurfaceContainerVariant: Color = this.onSurfaceContainerVariant,
+        surfaceContainerHigh: Color = this.surfaceContainerHigh,
+        onSurfaceContainerHigh: Color = this.onSurfaceContainerHigh,
+        surfaceContainerHighest: Color = this.surfaceContainerHighest,
+        onSurfaceContainerHighest: Color = this.onSurfaceContainerHighest,
+        outline: Color = this.outline,
+        dividerLine: Color = this.dividerLine,
+        windowDimming: Color = this.windowDimming,
+        sliderKeyPoint: Color = this.sliderKeyPoint,
+        sliderKeyPointForeground: Color = this.sliderKeyPointForeground,
+        sliderBackground: Color = this.sliderBackground,
+        bar: Color = this.bar,
+        labelPrimaryVariant: Color = this.labelPrimaryVariant,
+        controls: Color = this.controls,
+        labelTertiary: Color = this.labelTertiary,
+        pressBackground: Color = this.pressBackground,
+        quarternaryNeutral: Color = this.quarternaryNeutral,
+    ): Colors = Colors(
+        primary,
+        onPrimary,
+        primaryVariant,
+        onPrimaryVariant,
+        error,
+        onError,
+        errorContainer,
+        onErrorContainer,
+        disabledPrimary,
+        disabledOnPrimary,
+        disabledPrimaryButton,
+        disabledOnPrimaryButton,
+        disabledPrimarySlider,
+        primaryContainer,
+        onPrimaryContainer,
+        secondary,
+        onSecondary,
+        secondaryVariant,
+        onSecondaryVariant,
+        disabledSecondary,
+        disabledOnSecondary,
+        disabledSecondaryVariant,
+        disabledOnSecondaryVariant,
+        secondaryContainer,
+        onSecondaryContainer,
+        secondaryContainerVariant,
+        onSecondaryContainerVariant,
+        tertiaryContainer,
+        onTertiaryContainer,
+        tertiaryContainerVariant,
+        background,
+        onBackground,
+        onBackgroundVariant,
+        surface,
+        onSurface,
+        surfaceVariant,
+        onSurfaceSecondary,
+        onSurfaceVariantSummary,
+        onSurfaceVariantActions,
+        disabledOnSurface,
+        surfaceContainer,
+        onSurfaceContainer,
+        onSurfaceContainerVariant,
+        surfaceContainerHigh,
+        onSurfaceContainerHigh,
+        surfaceContainerHighest,
+        onSurfaceContainerHighest,
+        outline,
+        dividerLine,
+        windowDimming,
+        sliderKeyPoint,
+        sliderKeyPointForeground,
+        sliderBackground,
+        bar,
+        labelPrimaryVariant,
+        controls,
+        labelTertiary,
+        pressBackground,
+        quarternaryNeutral,
     )
 
     fun copy(
@@ -524,6 +823,13 @@ class Colors(
         sliderBackground: Color = this.sliderBackground,
         bar: Color = this.bar,
         labelPrimaryVariant: Color = this.labelPrimaryVariant,
+        controls: Color = this.controls,
+        labelTertiary: Color = this.labelTertiary,
+        pressBackground: Color = this.pressBackground,
+        quarternaryNeutral: Color = this.quarternaryNeutral,
+        containerTheme: Color = this.containerTheme,
+        focus: Color = this.focus,
+        focusOutline: Color = this.focusOutline,
     ): Colors = Colors(
         primary,
         onPrimary,
@@ -580,6 +886,13 @@ class Colors(
         sliderBackground,
         bar,
         labelPrimaryVariant,
+        controls,
+        labelTertiary,
+        pressBackground,
+        quarternaryNeutral,
+        containerTheme,
+        focus,
+        focusOutline,
     )
 }
 
@@ -597,7 +910,7 @@ fun lightColorScheme(
     disabledOnPrimary: Color = Color.White,
     disabledPrimaryButton: Color = Color(0x4D0080FF),
     disabledOnPrimaryButton: Color = Color(0x8AFFFFFF),
-    disabledPrimarySlider: Color = Color(0xFFEBEBEB),
+    disabledPrimarySlider: Color = Color(0x4D0080FF),
     primaryContainer: Color = Color(0xFF0080FF),
     onPrimaryContainer: Color = Color.White,
     secondary: Color = Color(0xFFE5E5E5),
@@ -637,9 +950,16 @@ fun lightColorScheme(
     windowDimming: Color = Color.Black.copy(alpha = 0.2F),
     sliderKeyPoint: Color = Color(0xFFF2F2F2),
     sliderKeyPointForeground: Color = Color(0xFF6EB5FF),
-    sliderBackground: Color = Color(0x0D000000),
+    sliderBackground: Color = Color(0x1F000000),
     bar: Color = Color(0xFFFAFAFA),
     labelPrimaryVariant: Color = Color(0xB8000000),
+    controls: Color = Color(0x29000000),
+    labelTertiary: Color = Color(0x42000000),
+    pressBackground: Color = Color(0x14000000),
+    quarternaryNeutral: Color = Color(0x14000000),
+    containerTheme: Color = Color(0xFF0080FF),
+    focus: Color = Color(0x1F0080FF),
+    focusOutline: Color = Color(0x660080FF),
 ): Colors = Colors(
     primary,
     onPrimary,
@@ -696,6 +1016,13 @@ fun lightColorScheme(
     sliderBackground,
     bar,
     labelPrimaryVariant,
+    controls,
+    labelTertiary,
+    pressBackground,
+    quarternaryNeutral,
+    containerTheme,
+    focus,
+    focusOutline,
 )
 
 @Suppress("DEPRECATION")
@@ -756,7 +1083,7 @@ fun lightColorScheme(
     windowDimming: Color = Color.Black.copy(alpha = 0.2F),
     sliderKeyPoint: Color = Color(0xFFF2F2F2),
     sliderKeyPointForeground: Color = Color(0xFF6EB5FF),
-    sliderBackground: Color = Color(0x0D000000),
+    sliderBackground: Color = Color(0x1F000000),
 ): Colors = lightColorScheme(
     primary = primary,
     onPrimary = onPrimary,
@@ -827,17 +1154,17 @@ fun darkColorScheme(
     disabledOnPrimary: Color = Color(0xFF404040),
     disabledPrimaryButton: Color = Color(0x4D1A8CFF),
     disabledOnPrimaryButton: Color = Color(0x29FFFFFF),
-    disabledPrimarySlider: Color = Color(0xFF262626),
+    disabledPrimarySlider: Color = Color(0x4D1A8CFF),
     primaryContainer: Color = Color(0xFF5C9DFF),
     onPrimaryContainer: Color = Color.White,
     secondary: Color = Color(0xFF757575),
     onSecondary: Color = Color.White,
-    secondaryVariant: Color = Color(0x26FFFFFF),
+    secondaryVariant: Color = Color(0x1AFFFFFF),
     onSecondaryVariant: Color = Color(0xE6FFFFFF),
     disabledSecondary: Color = Color(0x4D757575),
     disabledOnSecondary: Color = Color(0x4DFFFFFF),
     disabledSecondaryVariant: Color = Color(0x1AFFFFFF),
-    disabledOnSecondaryVariant: Color = Color(0x4DFFFFFF),
+    disabledOnSecondaryVariant: Color = Color(0x28FFFFFF),
     secondaryContainer: Color = Color(0x26FFFFFF),
     onSecondaryContainer: Color = Color(0x66FFFFFF),
     secondaryContainerVariant: Color = Color(0x26FFFFFF),
@@ -867,9 +1194,16 @@ fun darkColorScheme(
     windowDimming: Color = Color.Black.copy(alpha = 0.6F),
     sliderKeyPoint: Color = Color(0xFF595959),
     sliderKeyPointForeground: Color = Color(0xFF5DAAFF),
-    sliderBackground: Color = Color(0x1AFFFFFF),
+    sliderBackground: Color = Color(0x33FFFFFF),
     bar: Color = Color(0xFF1E1E1E),
     labelPrimaryVariant: Color = Color(0xB8FFFFFF),
+    controls: Color = Color(0x40FFFFFF),
+    labelTertiary: Color = Color(0x4DFFFFFF),
+    pressBackground: Color = Color(0x26FFFFFF),
+    quarternaryNeutral: Color = Color(0x26FFFFFF),
+    containerTheme: Color = Color(0xFF1A8CFF),
+    focus: Color = Color(0x331A8CFF),
+    focusOutline: Color = Color(0x665C9DFF),
 ): Colors = Colors(
     primary,
     onPrimary,
@@ -926,6 +1260,13 @@ fun darkColorScheme(
     sliderBackground,
     bar,
     labelPrimaryVariant,
+    controls,
+    labelTertiary,
+    pressBackground,
+    quarternaryNeutral,
+    containerTheme,
+    focus,
+    focusOutline,
 )
 
 @Suppress("DEPRECATION")
@@ -986,7 +1327,7 @@ fun darkColorScheme(
     windowDimming: Color = Color.Black.copy(alpha = 0.6F),
     sliderKeyPoint: Color = Color(0xFF595959),
     sliderKeyPointForeground: Color = Color(0xFF5DAAFF),
-    sliderBackground: Color = Color(0x1AFFFFFF),
+    sliderBackground: Color = Color(0x33FFFFFF),
 ): Colors = darkColorScheme(
     primary = primary,
     onPrimary = onPrimary,
@@ -1100,6 +1441,13 @@ internal fun Colors.updateColorsFrom(other: Colors) {
     sliderBackground = other.sliderBackground
     bar = other.bar
     labelPrimaryVariant = other.labelPrimaryVariant
+    controls = other.controls
+    labelTertiary = other.labelTertiary
+    pressBackground = other.pressBackground
+    quarternaryNeutral = other.quarternaryNeutral
+    containerTheme = other.containerTheme
+    focus = other.focus
+    focusOutline = other.focusOutline
 }
 
 internal val LocalColors = staticCompositionLocalOf { lightColorScheme() }

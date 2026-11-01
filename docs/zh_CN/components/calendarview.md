@@ -61,6 +61,7 @@ CalendarView(
 | colors           | CalendarViewColors               | 网格配色                                | CalendarViewDefaults.colors() | 否   |
 | title            | (year: Int, month: Int) -> String | 由年份与月份(1..12)生成表头标题         | "September 2026"              | 否   |
 | weekdayLabel     | (dayOfWeek: Int) -> String       | 由 ISO 星期序号生成列标题               | "Mon" .. "Sun"                | 否   |
+| dayDescription   | (year, month, day) -> String     | 日期格的无障碍描述                      | "November 1, 2026"            | 否   |
 
 ### CalendarViewColors
 

@@ -39,6 +39,7 @@ PageIndicator(count = 8, currentIndex = 6)
 | modifier      | Modifier | 应用在指示器上的修饰符                            | Modifier                                 | 否   |
 | activeColor   | Color    | 当前圆点颜色（`traceDotColor`）                   | COUITheme.colorScheme.onSurface          | 否   |
 | inactiveColor | Color    | 其余圆点颜色（`dotColor`）                        | COUITheme.colorScheme.disabledOnSurface  | 否   |
+| contentDescription    | String?                                     | 无障碍描述；null 时用「当前页 / 总数」 | null | 否 |
 
 ### PageIndicatorDefaults
 

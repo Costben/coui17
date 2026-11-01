@@ -3,8 +3,13 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.annotation.IntRange
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -31,9 +36,11 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -54,6 +61,58 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
+/**
+ * The playback state the bar is drawn in, the port of `COUIIntentSeekBar.PlaybackState`. It is the
+ * only input `COUIIntentSeekBar.resolveVisualState` uses besides dragging.
+ */
+enum class IntentSeekBarPlaybackState {
+    /** `IDLE`: nothing to play, a plain track. */
+    Idle,
+
+    /** `LOADING_INITIAL`: the media has not started, so the whole track shows the loading sweep. */
+    LoadingInitial,
+
+    /** `PLAYING`: the played progress carries the cone light. */
+    Playing,
+
+    /** `PAUSED`: a plain track. */
+    Paused,
+
+    /** `LOADING_BUFFERING`: the played area keeps its progress and sweeps a buffering highlight. */
+    LoadingBuffering,
+}
+
+/** `COUIIntentSeekBar.VisualState`, the five appearances the bar can take. */
+internal enum class IntentSeekBarVisualState {
+    Static,
+    PlayingConeLight,
+    DraggingConeLight,
+    LoadingFull,
+    LoadingPartial,
+}
+
+/**
+ * `COUIIntentSeekBar.resolveVisualState`: a drag while playing or buffering takes the dragging cone
+ * light; otherwise the playback state decides, with idle and paused falling back to the plain track.
+ */
+internal fun resolveIntentSeekBarVisualState(
+    playbackState: IntentSeekBarPlaybackState,
+    isDragging: Boolean,
+): IntentSeekBarVisualState {
+    if (isDragging &&
+        (playbackState == IntentSeekBarPlaybackState.Playing || playbackState == IntentSeekBarPlaybackState.LoadingBuffering)
+    ) {
+        return IntentSeekBarVisualState.DraggingConeLight
+    }
+    return when (playbackState) {
+        IntentSeekBarPlaybackState.Idle -> IntentSeekBarVisualState.Static
+        IntentSeekBarPlaybackState.LoadingInitial -> IntentSeekBarVisualState.LoadingFull
+        IntentSeekBarPlaybackState.Playing -> IntentSeekBarVisualState.PlayingConeLight
+        IntentSeekBarPlaybackState.Paused -> IntentSeekBarVisualState.Static
+        IntentSeekBarPlaybackState.LoadingBuffering -> IntentSeekBarVisualState.LoadingPartial
+    }
+}
 
 /**
  * The ColorOS 17 *intent* seek bar (`COUIIntentSeekBar`,
@@ -111,6 +170,7 @@ fun IntentSeekBar(
     showThumb: Boolean = false,
     size: IntentSeekBarSize = IntentSeekBarSize.Default,
     colors: IntentSeekBarColors = IntentSeekBarDefaults.colors(),
+    playbackState: IntentSeekBarPlaybackState = IntentSeekBarPlaybackState.Idle,
 ) {
     require(steps >= 0) { "steps should be >= 0" }
     require(valueRange.start < valueRange.endInclusive) { "valueRange start should be less than end" }
@@ -183,6 +243,27 @@ fun IntentSeekBar(
     }
     val keyPointFractions = remember(steps) {
         if (steps <= 0) floatArrayOf() else FloatArray(steps + 2) { it / (steps + 1f) }
+    }
+
+    val visualState = resolveIntentSeekBarVisualState(playbackState, isDragging)
+    val loadingFraction = if (
+        visualState == IntentSeekBarVisualState.LoadingFull ||
+        visualState == IntentSeekBarVisualState.LoadingPartial
+    ) {
+        val transition = rememberInfiniteTransition(label = "intentSeekBarLoading")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = IntentSeekBarDefaults.LOADING_SWEEP_MILLIS,
+                    easing = LinearEasing,
+                ),
+            ),
+            label = "intentSeekBarLoadingSweep",
+        ).value
+    } else {
+        null
     }
 
     Box(
@@ -284,11 +365,50 @@ fun IntentSeekBar(
             thumbRadiusPx = thumbRadiusPx,
             capInsetPx = capInsetPx,
             showSecondaryProgress = showSecondaryProgress,
+            enabled = enabled,
             showThumb = showThumb,
             thumbPressed = isPressed || (isDragging && isThumbGrabbed) || isHoveringThumb,
+            visualState = visualState,
+            loadingFraction = loadingFraction,
             modifier = Modifier.fillMaxWidth().height(layoutHeight),
         )
     }
+}
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds playbackState.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun IntentSeekBar(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    secondaryProgress: Float = valueRange.start,
+    @IntRange(from = 0) steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    showSecondaryProgress: Boolean = true,
+    showThumb: Boolean = false,
+    size: IntentSeekBarSize = IntentSeekBarSize.Default,
+    colors: IntentSeekBarColors = IntentSeekBarDefaults.colors(),
+) {
+    IntentSeekBar(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        valueRange = valueRange,
+        secondaryProgress = secondaryProgress,
+        steps = steps,
+        onValueChangeFinished = onValueChangeFinished,
+        showSecondaryProgress = showSecondaryProgress,
+        showThumb = showThumb,
+        size = size,
+        colors = colors,
+    )
 }
 
 /**
@@ -308,8 +428,11 @@ private fun IntentSeekBarTrack(
     thumbRadiusPx: Float,
     capInsetPx: Float,
     showSecondaryProgress: Boolean,
+    enabled: Boolean,
     showThumb: Boolean,
     thumbPressed: Boolean,
+    visualState: IntentSeekBarVisualState,
+    loadingFraction: Float?,
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier) {
@@ -332,23 +455,146 @@ private fun IntentSeekBarTrack(
 
         drawPath(capsule, color = backgroundColor)
 
-        clipPath(capsule) {
-            if (showSecondaryProgress) {
-                drawIntentBar(secondaryProgressColor, secondaryFraction, capInsetPx, available, top, trackHeightPx, radius)
+        // COUIIntentSeekBar.drawActiveTrack: both loading states replace the played progress. The
+        // full state paints only the sweep over the bare track; the partial state keeps the played
+        // progress inside the swept clip.
+        val sweep = loadingFraction
+        when {
+            visualState == IntentSeekBarVisualState.LoadingFull && sweep != null -> {
+                drawLoadingSweep(
+                    sweep = sweep,
+                    trackLength = size.width,
+                    progressStart = 0f,
+                    top = top,
+                    height = trackHeightPx,
+                    radius = radius,
+                )
             }
-            drawIntentBar(progressColor, valueFraction, capInsetPx, available, top, trackHeightPx, radius)
+
+            visualState == IntentSeekBarVisualState.LoadingPartial && sweep != null -> {
+                clipPath(capsule) {
+                    drawLoadingSweep(
+                        sweep = sweep,
+                        trackLength = available,
+                        progressStart = capInsetPx,
+                        progressFraction = valueFraction,
+                        top = top,
+                        height = trackHeightPx,
+                        radius = radius,
+                    )
+                    drawIntentBar(progressColor, valueFraction, capInsetPx, available, top, trackHeightPx, radius)
+                }
+            }
+
+            else -> {
+                clipPath(capsule) {
+                    if (showSecondaryProgress) {
+                        drawIntentBar(secondaryProgressColor, secondaryFraction, capInsetPx, available, top, trackHeightPx, radius)
+                    }
+                    drawIntentBar(progressColor, valueFraction, capInsetPx, available, top, trackHeightPx, radius)
+                }
+                if (
+                    visualState == IntentSeekBarVisualState.PlayingConeLight ||
+                    visualState == IntentSeekBarVisualState.DraggingConeLight
+                ) {
+                    clipPath(capsule) {
+                        drawConeLightSheen(
+                            fraction = valueFraction,
+                            capInsetPx = capInsetPx,
+                            available = available,
+                            top = top,
+                            height = trackHeightPx,
+                            radius = radius,
+                        )
+                    }
+                }
+            }
         }
 
-        if (showThumb) {
+        if (showThumb && visualState != IntentSeekBarVisualState.LoadingFull) {
             // COUIIntentSeekBar.applyThumbSize: thumbMaxRadius is the pressed radius.
             val thumbRadius = if (thumbPressed) maxOf(thumbRadiusPx, capInsetPx) else thumbRadiusPx
+            val thumbCenter = Offset(capInsetPx + valueFraction * available, centerY)
+            // IntentThumbRenderer skips the shadow layer on a disabled bar.
+            if (enabled) drawThumbShadow(thumbCenter, thumbRadius)
             drawCircle(
                 color = thumbColor,
                 radius = thumbRadius,
-                center = Offset(capInsetPx + valueFraction * available, centerY),
+                center = thumbCenter,
             )
         }
     }
+}
+
+/**
+ * The loading sweep `LoadingEffectRenderer` paints: a white gradient that is transparent at both
+ * ends and `gradientMidAlpha` (0.6) in the middle, `gradientLengthRatio` (0.6) of the track long.
+ *
+ * `drawBufferingLoading` starts it at the played position and moves it across the whole track as its
+ * spring runs; `drawInitialLoading` moves it from one gradient width before the track to one past the
+ * end. Both clip to the track capsule.
+ */
+private fun DrawScope.drawLoadingSweep(
+    sweep: Float,
+    trackLength: Float,
+    progressStart: Float,
+    progressFraction: Float = 0f,
+    top: Float,
+    height: Float,
+    radius: Float,
+) {
+    val gradientLength = IntentSeekBarDefaults.LOADING_GRADIENT_LENGTH_RATIO * trackLength
+    val played = progressStart + progressFraction * trackLength
+    val span = (1f - progressFraction) * trackLength + gradientLength
+    val sweepEnd = played + span * sweep
+    val sweepStart = sweepEnd - gradientLength
+    drawRect(
+        brush = Brush.horizontalGradient(
+            colors = listOf(
+                Color.Transparent,
+                Color.White.copy(alpha = IntentSeekBarDefaults.LOADING_GRADIENT_MID_ALPHA),
+                Color.Transparent,
+            ),
+            startX = sweepStart,
+            endX = sweepEnd,
+        ),
+        topLeft = Offset(sweepStart, top),
+        size = Size(gradientLength, height),
+        // The gradient already carries its own alpha ramp; a round rect keeps the ends inside the
+        // capsule when the sweep pokes out of the track.
+        style = Fill,
+    )
+}
+
+/**
+ * The playing cone light. `ConicLightEffectRenderer` draws a conic shader burst anchored at the
+ * played position; the port paints the same warm tint (`DEFAULT_CONIC_LIGHT_COLOR`) as a gradient
+ * sheen that fades out over the played length.
+ */
+private fun DrawScope.drawConeLightSheen(
+    fraction: Float,
+    capInsetPx: Float,
+    available: Float,
+    top: Float,
+    height: Float,
+    radius: Float,
+) {
+    val tip = capInsetPx + fraction * available
+    if (tip <= capInsetPx) return
+    val span = IntentSeekBarDefaults.CONE_LIGHT_SPAN_PX * density
+    drawRect(
+        brush = Brush.horizontalGradient(
+            colors = listOf(
+                Color.Transparent,
+                Color(IntentSeekBarDefaults.ConicLightColor).copy(alpha = IntentSeekBarDefaults.CONE_LIGHT_ALPHA),
+                Color.Transparent,
+            ),
+            startX = tip - span,
+            endX = tip + span,
+        ),
+        topLeft = Offset(maxOf(0f, tip - span), top),
+        size = Size(2f * span, height),
+    )
 }
 
 private fun DrawScope.drawIntentBar(
@@ -413,10 +659,32 @@ enum class IntentSeekBarSize(
 object IntentSeekBarDefaults {
     /**
      * `attr/couiIntentSeekBarConicLightColor` default:
-     * `COUIIntentSeekBar.DEFAULT_CONIC_LIGHT_COLOR` = -493674 = `#fff87796`. The conic-light renderer
-     * that consumes it is not ported.
+     * `COUIIntentSeekBar.DEFAULT_CONIC_LIGHT_COLOR` = -493674 = `#fff87796`. The port paints it as a
+     * gradient sheen ([CONE_LIGHT_SPAN_PX]) rather than through the conic shader.
      */
     val ConicLightColor = 0xFFF87796
+
+    /** `ConicLightEffectRenderer.DRAG_ALPHA1` / `DRAG_ALPHA2`, 0.3. */
+    const val CONE_LIGHT_ALPHA = 0.3f
+
+    /**
+     * The cone light reaches `CONIC_LIGHT_HORIZONTAL_PADDING` (300) pixels each way from the played
+     * position; the sheen fades over the same distance.
+     */
+    val CONE_LIGHT_SPAN_PX = 300f
+
+    /**
+     * How long one loading sweep takes. `LoadingEffectRenderer` drives the sweep with
+     * `COUIIntentSeekBarParams.bufferingSpring` / `initialLoadingSpring`, whose `SpringData` fields
+     * the decompiled source does not name, so the port runs a linear 1200ms loop.
+     */
+    const val LOADING_SWEEP_MILLIS = 1200
+
+    /** `LoadingEffectParams.gradientLengthRatio`, 0.6 of the track. */
+    const val LOADING_GRADIENT_LENGTH_RATIO = 0.6f
+
+    /** `LoadingEffectParams.gradientMidAlpha`, 0.6. */
+    const val LOADING_GRADIENT_MID_ALPHA = 0.6f
 
     /** `color/coui_seekbar_intent_background_color_fixed` = `#4dffffff`. */
     val FixedBackgroundColor = Color(0x4DFFFFFF)

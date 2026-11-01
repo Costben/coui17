@@ -106,6 +106,8 @@ Chip(
 | dismissIcon       | (@Composable () -> Unit)?  | Custom dismiss affordance content          | null (built-in Close)     | No       |
 | dismissContentDescription | String             | Content description of the dismiss button  | ChipDefaults.DISMISS_CONTENT_DESCRIPTION | No |
 | dismissButtonSize | Dp                         | Touch target of the dismiss affordance     | ChipDefaults.DismissButtonSize | No   |
+| count                 | String?                                     | Optional trailing count text (COUIChipDrawable `countText`, 12sp) | null | No |
+| showRedDot            | Boolean                                     | Draw the hint red dot at the label's top-end corner (COUIHintRedDot.Small) | false | No |
 | cornerRadius      | Dp                         | Corner radius of the capsule; the default follows half the measured height and draws the system capsule curve, an explicit smaller value keeps the Lp squircle | ChipDefaults.CornerRadius | No       |
 | minWidth          | Dp                         | Minimum width                              | ChipDefaults.MinWidth     | No       |
 | minHeight         | Dp                         | Minimum height                             | ChipDefaults.MinHeight    | No       |

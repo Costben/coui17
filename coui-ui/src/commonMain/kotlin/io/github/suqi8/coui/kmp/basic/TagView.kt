@@ -60,8 +60,13 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  *   [TagViewDefaults.LeadingIconWidth] x [TagViewDefaults.LeadingIconHeight] slot of
  *   `coui_tag_view_layout.xml` (`tagLeftImageView`).
  * @param trailingIcon The optional trailing image (`tagImageView`, `wrap_content`).
- * @param cornerRadius The uniform corner radius of the badge. COUI `couiTagCornerRadius`
- *   ([TagViewDefaults.CornerRadius]).
+ * @param cornerRadius The corner radius of the badge, COUI `couiTagCornerRadius`
+ *   ([TagViewDefaults.CornerRadius]). The four corners below fall back to it.
+ * @param topStartCornerRadius The top-start corner, COUI `couiTagTLCornerRadius`. The native corners
+ *   are physical; this one follows the layout direction, like the rest of the library.
+ * @param topEndCornerRadius The top-end corner, COUI `couiTagTRCornerRadius`.
+ * @param bottomEndCornerRadius The bottom-end corner, COUI `couiTagBLCornerRadius`.
+ * @param bottomStartCornerRadius The bottom-start corner, COUI `couiTagBRCornerRadius`.
  * @param strokeWidth The width of the background outline. COUI `couiTagStrokeWidth`
  *   ([TagViewDefaults.StrokeWidth]).
  * @param colors The [TagViewColors] of the badge.
@@ -73,12 +78,28 @@ fun TagView(
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
     cornerRadius: Dp = TagViewDefaults.CornerRadius,
+    topStartCornerRadius: Dp = cornerRadius,
+    topEndCornerRadius: Dp = cornerRadius,
+    bottomEndCornerRadius: Dp = cornerRadius,
+    bottomStartCornerRadius: Dp = cornerRadius,
     strokeWidth: Dp = TagViewDefaults.StrokeWidth,
     colors: TagViewColors = TagViewDefaults.tagViewColors(),
 ) {
     val squircleEnabled = isSquircleEnabled()
-    val shape = remember(cornerRadius, squircleEnabled) {
-        SquircleShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    val shape = remember(
+        topStartCornerRadius,
+        topEndCornerRadius,
+        bottomEndCornerRadius,
+        bottomStartCornerRadius,
+        squircleEnabled,
+    ) {
+        SquircleShape(
+            topStart = topStartCornerRadius,
+            topEnd = topEndCornerRadius,
+            bottomEnd = bottomEndCornerRadius,
+            bottomStart = bottomStartCornerRadius,
+            squircleEnabled = squircleEnabled,
+        )
     }
     Row(
         modifier = modifier
@@ -121,6 +142,37 @@ fun TagView(
             )
         }
     }
+}
+
+/** Binary-compatibility bridge for [TagView] callers compiled before the per-corner radii. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds the per-corner radii.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun TagView(
+    text: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
+    cornerRadius: Dp = TagViewDefaults.CornerRadius,
+    strokeWidth: Dp = TagViewDefaults.StrokeWidth,
+    colors: TagViewColors = TagViewDefaults.tagViewColors(),
+) {
+    TagView(
+        text = text,
+        modifier = modifier,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        cornerRadius = cornerRadius,
+        topStartCornerRadius = cornerRadius,
+        topEndCornerRadius = cornerRadius,
+        bottomEndCornerRadius = cornerRadius,
+        bottomStartCornerRadius = cornerRadius,
+        strokeWidth = strokeWidth,
+        colors = colors,
+    )
 }
 
 /**
@@ -215,8 +267,11 @@ object TagViewDefaults {
      */
     @Composable
     fun tagViewColors(
-        containerColor: Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) TagContainer8Dark else TagContainer8Light,
-        contentColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
+        // COUITagBackgroundView falls back to ?attr/couiColorBackgroundWithTag, which the settings
+        // theme does not define, so a tag has no fill of its own; the text is coui_color_white
+        // (couiTagViewTextColor). Callers that want a visible tag pass both colours.
+        containerColor: Color = Color.Transparent,
+        contentColor: Color = TagTextWhite,
         strokeColor: Color = Color.Transparent,
     ): TagViewColors = remember(containerColor, contentColor, strokeColor) {
         TagViewColors(
@@ -232,3 +287,6 @@ private val TagContainer8Light = Color(0x14000000)
 
 /** `couiColorContainer8` in dark themes (`color/coui_color_container8_dark` #1affffff). */
 private val TagContainer8Dark = Color(0x1AFFFFFF)
+
+/** coui_color_white, the default `couiTagViewTextColor`. */
+private val TagTextWhite = Color(0xFFFFFFFF)

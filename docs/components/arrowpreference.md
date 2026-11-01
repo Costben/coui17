@@ -89,6 +89,8 @@ Scaffold {
 | cardListPosition | CardListPosition | Row position inside its card group; rounded outer edges gain extra padding | CardListPosition.None | No |
 | onClick       | (() -> Unit)?                   | Callback triggered on click      | null                                  | No       |
 | holdDownState | Boolean                         | Whether component is held down   | false                                 | No       |
+| statusText    | String?                         | Trailing status text before the arrow (14sp, one line, end aligned) | null | No |
+| showRedDot    | Boolean                         | Show the hint dot between the status text and the arrow | false                        | No       |
 | enabled       | Boolean                         | Whether component is interactive | true                                  | No       |
 
 ### ArrowPreferenceDefaults Object
@@ -100,12 +102,16 @@ The ArrowPreferenceDefaults object provides default color configuration for the 
 | Method Name       | Type              | Description                                         |
 | ----------------- | ----------------- | --------------------------------------------------- |
 | endActionColors   | EndActionColors   | Returns tint colors used by the trailing arrow icon |
+| StatusTextMaxWidth    | Dp | Widest the status text may get (`coui_preference_status_text_max_width`) |
+| StatusTextStartPadding | Dp | Gap before the status text (`support_preference_widget_focus_jump_margin_start`) |
+| RedDotEndPadding      | Dp | Gap between the hint dot and the arrow |
 
 ### Arrow Tint
 
 - The trailing arrow icon is always shown and tinted automatically.
 - Tint uses `COUITheme.colorScheme.onSurfaceVariantActions` when `enabled = true`.
 - Tint uses `COUITheme.colorScheme.disabledOnSecondaryVariant` when `enabled = false`.
+- The disabled arrow is painted with `?couiColorLabelQuaternary` (`coui_btn_next_disabled`), `#14000000` in light and `#26ffffff` at night — the `disabledSecondaryVariant` slot.
 
 ## Advanced Usage
 

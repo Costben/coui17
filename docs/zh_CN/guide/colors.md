@@ -63,4 +63,11 @@
 | `windowDimming` | 窗口遮罩（对话框/下拉） | `#4D000000` | `#99000000` |
 | `sliderKeyPoint` | 滑块关键点 | `#4DA3B3CD` | `#4D7A8AA6` |
 | `sliderKeyPointForeground` | 滑块关键点前景 | `#FF6EB5FF` | `#FF5DAAFF` |
-| `sliderBackground` | 滑块背景 | `#0F000000` | `#26FFFFFF` |
+| `sliderBackground` | 滑块背景 | `#1F000000` | `#33FFFFFF` |
+| `controls` | 开关轨道常态填充（`couiColorControls`） | `#29000000` | `#40FFFFFF` |
+| `labelTertiary` | 低强调文字色，未选中复选框描边（`couiColorLabelTertiary`） | `#42000000` | `#4DFFFFFF` |
+| `pressBackground` | 不可交互控件的淡填充（`couiColorPressBackground`） | `#14000000` | `#26FFFFFF` |
+| `quarternaryNeutral` | 最淡的中性色（`couiColorQuarternaryNeutral`） | `#14000000` | `#26FFFFFF` |
+| `containerTheme` | 强调按钮填充（`couiColorContainerTheme`） | `#0080FF` | `#1A8CFF` |
+| `focus` | 聚焦遮罩（`couiColorFocus`），容器主题色的 12% / 20% | `#1F0080FF` | `#331A8CFF` |
+| `focusOutline` | 聚焦描边（`couiColorFocusOutline`），容器主题色的 40%（深色为 `#5C9DFF`） | `#660080FF` | `#665C9DFF` |

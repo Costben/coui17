@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -45,9 +46,11 @@ fun IconButton(
     cornerRadius: Dp = IconButtonDefaults.CornerRadius,
     minHeight: Dp = IconButtonDefaults.MinHeight,
     minWidth: Dp = IconButtonDefaults.MinWidth,
+    interactionSource: MutableInteractionSource? = null,
     content: @Composable () -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    @Suppress("NAME_SHADOWING")
+    val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
 
     HoldDownObserver(holdDownState, interactionSource)
 
@@ -67,28 +70,73 @@ fun IconButton(
     Box(
         modifier = modifier
             .defaultMinSize(minWidth = minWidth, minHeight = minHeight)
+            // COUIIconButton inherits COUIButton's COUITouchMotionAnimator, which shrinks the
+            // surface while pressed (setPressScaleEnable) and springs back on release.
+            .couiTouchMotion(
+                enabled = enabled,
+                pressScaleEnabled = true,
+                lightEnabled = false,
+                consumeDrag = false,
+            )
             .squircleSurface(color = backgroundColor, cornerRadius = cornerRadius)
             .then(clickableModifier),
         contentAlignment = Alignment.Center,
     ) {
-        content()
+        Box(modifier = Modifier.padding(IconButtonDefaults.IconPadding)) {
+            content()
+        }
     }
+}
+
+/** Binary-compatibility bridge for the [IconButton] overload that predates `interactionSource`. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds an interactionSource.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun IconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    holdDownState: Boolean = false,
+    backgroundColor: Color = Color.Unspecified,
+    cornerRadius: Dp = IconButtonDefaults.CornerRadius,
+    minHeight: Dp = IconButtonDefaults.MinHeight,
+    minWidth: Dp = IconButtonDefaults.MinWidth,
+    content: @Composable () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        holdDownState = holdDownState,
+        backgroundColor = backgroundColor,
+        cornerRadius = cornerRadius,
+        minHeight = minHeight,
+        minWidth = minWidth,
+        interactionSource = null,
+        content = content,
+    )
 }
 
 object IconButtonDefaults {
 
     /**
-     * The default minimum width of the [IconButton].
+     * The padding around the icon (COUIIconButton `iconPadding` / `iconPaddingLeft` /
+     * `iconPaddingRight` / `iconPaddingTop` / `iconPaddingBottom`, all DEF_ICON_PADDING = 8dp).
      */
+    val IconPadding = 8.dp
+
+    /** The default minimum width of the [IconButton]. */
     val MinWidth = 48.dp
 
-    /**
-     * The default minimum height of the [IconButton].
-     */
+    /** The default minimum height of the [IconButton]; see [MinWidth]. */
     val MinHeight = 48.dp
 
     /**
-     * The default corner radius of the [IconButton] (COUI coui_toolbar_menu_bg_radius).
+     * The default corner radius of the [IconButton]. COUIIconButton has no radius of its own and
+     * inherits COUIButton's `mRadius`, whose default is 21dp.
      */
-    val CornerRadius = 24.dp
+    val CornerRadius = 21.dp
 }

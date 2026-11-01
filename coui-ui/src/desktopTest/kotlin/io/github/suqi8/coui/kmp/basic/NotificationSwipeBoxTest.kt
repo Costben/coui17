@@ -4,12 +4,15 @@
 
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -119,6 +122,25 @@ class NotificationSwipeBoxTest {
         onRoot().performTouchInput { swipe(Offset(200f, 20f), Offset(200f, 100f), 500) }
         waitForIdle()
         assertFalse(state.isRevealed)
+    }
+
+    @Test
+    fun aVerticalSwipeThatStartsOnACardScrollsTheList() = runSkikoComposeUiTest(size = Size(360f, 400f), density = Density(1f)) {
+        val scroll = ScrollState(0)
+        setContent {
+            COUITheme {
+                Column(Modifier.fillMaxSize().verticalScroll(scroll)) {
+                    repeat(6) {
+                        NotificationSwipeBox({}, {}, COUIIcons.Basic.Close, COUIIcons.Basic.Close) {
+                            Box(Modifier.fillMaxWidth().height(160.dp))
+                        }
+                    }
+                }
+            }
+        }
+        onRoot().performTouchInput { swipe(Offset(200f, 320f), Offset(200f, 80f), 300) }
+        waitForIdle()
+        assertTrue(scroll.value > 100)
     }
 
     @Test

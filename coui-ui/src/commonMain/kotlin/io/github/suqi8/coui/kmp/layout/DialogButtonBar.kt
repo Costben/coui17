@@ -455,7 +455,7 @@ private fun DialogBarButton(
     // a PRIMARY button and takes the much dimmer TYPE_CONTENT_CAPSULE_4.
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val edgeStroke = if (action.recommended) {
-        MaterialStrokeParams.ContentCapsule4
+        MaterialStrokeParams.contentCapsule4(isDark)
     } else {
         MaterialStrokeParams.contentCapsule5(isDark)
     }

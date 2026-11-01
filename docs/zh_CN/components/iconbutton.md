@@ -85,6 +85,7 @@ Scaffold {
 | cornerRadius    | Dp                     | 按钮圆角半径          | IconButtonDefaults.CornerRadius | 否       |
 | minHeight       | Dp                     | 按钮最小高度          | IconButtonDefaults.MinHeight    | 否       |
 | minWidth        | Dp                     | 按钮最小宽度          | IconButtonDefaults.MinWidth     | 否       |
+| interactionSource     | MutableInteractionSource?                   | 按钮的交互源 | null | 否 |
 | content         | @Composable () -> Unit | 按钮内容，通常是 Icon | -                               | 是       |
 
 ### IconButtonDefaults 对象

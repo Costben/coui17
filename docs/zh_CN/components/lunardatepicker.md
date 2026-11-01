@@ -59,6 +59,7 @@ LunarDatePicker(
 | textStyle        | TextStyle                | 滚轮文字样式                         | COUITheme.textStyles.title3         | 否       |
 | itemHeight       | Dp                       | 单个滚轮项的高度                     | NumberPickerDefaults.ItemHeight     | 否       |
 | insideMargin     | PaddingValues            | 滚轮区域的内边距                     | LunarDatePickerDefaults.InsideMargin | 否      |
+| yearIgnorable    | Boolean                  | 年份滚轮多出一个忽略槽位；忽略年份时月份滚轮列出全部 24 个月（couiYearIgnorable） | false | 否 |
 
 ### LunarDateValue 数据类
 

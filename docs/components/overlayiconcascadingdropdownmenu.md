@@ -214,6 +214,7 @@ All other parameters are identical to the entries overload above.
 | children      | List\<DropdownItem>?              | Optional submenu items; only the cascading variants render these as a submenu (depth limited to 2)                                | null          | No       |
 | hint          | @Composable (() -> Unit)?         | Optional trailing hint slot (badge, red dot, short count) shown before the selection indicator, width-capped at 40dp. Hidden entirely while the row is disabled | null          | No       |
 | alert         | Boolean                           | Whether this is an alert (destructive) item; its title uses the error color | false         | No       |
+| onLongClick | (() -> Unit)? | Callback invoked when the row is held for 650ms (`DropdownDefaults.LongPressTimeoutMillis`); a row with `children` also expands its submenu on hold. Dialog lists ignore it | null | No |
 
 ### DropdownColors Properties
 

@@ -64,8 +64,10 @@ public final class io/github/suqi8/coui/kmp/anim/BezierGravityPathMath {
 public final class io/github/suqi8/coui/kmp/anim/COUIEasingKt {
 	public static final fun folmeSpring (FFLjava/lang/Object;)Landroidx/compose/animation/core/SpringSpec;
 	public static synthetic fun folmeSpring$default (FFLjava/lang/Object;ILjava/lang/Object;)Landroidx/compose/animation/core/SpringSpec;
+	public static final fun getCOUIEase ()Landroidx/compose/animation/core/Easing;
 	public static final fun getCOUIInEase ()Landroidx/compose/animation/core/Easing;
 	public static final fun getCOUILinear ()Landroidx/compose/animation/core/Easing;
+	public static final fun getCOUIMoveEase ()Landroidx/compose/animation/core/Easing;
 	public static final fun getCOUIOutEase ()Landroidx/compose/animation/core/Easing;
 }
 
@@ -237,7 +239,10 @@ public final class io/github/suqi8/coui/kmp/basic/BasicComponentColors {
 public final class io/github/suqi8/coui/kmp/basic/BasicComponentDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/BasicComponentDefaults;
+	public final fun getDividerHeight-D9Ej5fM ()F
+	public final fun getDividerHorizontalPadding-D9Ej5fM ()F
 	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getMarginBetweenLine-D9Ej5fM ()F
 	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun summaryColor-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;
 	public final fun titleColor-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;
@@ -715,6 +720,7 @@ public final class io/github/suqi8/coui/kmp/basic/CalendarViewDefaults {
 	public static final field ROW_COUNT I
 	public final fun colors-J08w3-E (JJJJJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/CalendarViewColors;
 	public final fun dayTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public final fun getDayDescription ()Lkotlin/jvm/functions/Function3;
 	public final fun getDayHeight-D9Ej5fM ()F
 	public final fun getDayMinColumnPadding-D9Ej5fM ()F
 	public final fun getDayWidth-D9Ej5fM ()F
@@ -724,7 +730,11 @@ public final class io/github/suqi8/coui/kmp/basic/CalendarViewDefaults {
 	public final fun getNavigationButtonSize-D9Ej5fM ()F
 	public final fun getNavigationIconPadding-D9Ej5fM ()F
 	public final fun getNavigationIconSize-D9Ej5fM ()F
+	public final fun getPressFadeMillis ()I
 	public final fun getSelectedCircleRadius-D9Ej5fM ()F
+	public final fun getSelectionAnimationMillis ()I
+	public final fun getSwipeDurationMillis ()I
+	public final fun getSwipeThresholdRatio ()F
 	public final fun getTitle ()Lkotlin/jvm/functions/Function2;
 	public final fun getTodayRingWidth-D9Ej5fM ()F
 	public final fun getVerticalPadding-D9Ej5fM ()F
@@ -736,7 +746,8 @@ public final class io/github/suqi8/coui/kmp/basic/CalendarViewDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/CalendarViewKt {
-	public static final fun CalendarView (Lio/github/suqi8/coui/kmp/basic/DateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;ILio/github/suqi8/coui/kmp/basic/DateValue;Lio/github/suqi8/coui/kmp/basic/CalendarViewColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun CalendarView (Lio/github/suqi8/coui/kmp/basic/DateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;ILio/github/suqi8/coui/kmp/basic/DateValue;Lio/github/suqi8/coui/kmp/basic/CalendarViewColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun CalendarView (Lio/github/suqi8/coui/kmp/basic/DateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;ILio/github/suqi8/coui/kmp/basic/DateValue;Lio/github/suqi8/coui/kmp/basic/CalendarViewColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/CardColors {
@@ -760,12 +771,18 @@ public final class io/github/suqi8/coui/kmp/basic/CardDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/CardDefaults;
 	public final fun defaultColors-RGew2ao (JJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/CardColors;
 	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getGroupCornerRadius-D9Ej5fM ()F
+	public final fun getGroupWeight ()F
 	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getWeight ()F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/CardKt {
-	public static final fun Card-EUb7tLY (Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardColors;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Card-y8mjxYs (Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardColors;Lio/github/suqi8/coui/kmp/utils/PressFeedbackType;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Card-26cPPc4 (Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardColors;Lio/github/suqi8/coui/kmp/utils/PressFeedbackType;ZZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun Card-EUb7tLY (Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardColors;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Card-RfXq3Jk (Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardColors;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun Card-Yq1gxAc (Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardColors;Lio/github/suqi8/coui/kmp/utils/PressFeedbackType;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun Card-y8mjxYs (Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardColors;Lio/github/suqi8/coui/kmp/utils/PressFeedbackType;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun cardListPositionOf (II)Lio/github/suqi8/coui/kmp/basic/CardListPosition;
 }
 
@@ -833,10 +850,14 @@ public final class io/github/suqi8/coui/kmp/basic/ChipColors {
 
 public final class io/github/suqi8/coui/kmp/basic/ChipDefaults {
 	public static final field $stable I
+	public static final field COUNT_SEPARATOR Ljava/lang/String;
 	public static final field DISMISS_CONTENT_DESCRIPTION Ljava/lang/String;
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ChipDefaults;
 	public final fun chipColors-oq7We08 (JJJJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ChipColors;
+	public final fun countTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getCountMarginStart-D9Ej5fM ()F
+	public final fun getCountTextSize-XSAIIZE ()J
 	public final fun getDismissButtonSize-D9Ej5fM ()F
 	public final fun getDismissIconEndPadding-D9Ej5fM ()F
 	public final fun getDismissIconSize-D9Ej5fM ()F
@@ -847,13 +868,19 @@ public final class io/github/suqi8/coui/kmp/basic/ChipDefaults {
 	public final fun getMaxWidth-D9Ej5fM ()F
 	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getMinWidth-D9Ej5fM ()F
+	public final fun getRedDotOffsetHorizontal-D9Ej5fM ()F
+	public final fun getRedDotOffsetVertical-D9Ej5fM ()F
+	public final fun getRedDotReservedWidth-D9Ej5fM ()F
+	public final fun getRedDotSize-D9Ej5fM ()F
 	public final fun getTextMaxWidth-D9Ej5fM ()F
+	public final fun redDotColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
 	public final fun textStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ChipKt {
-	public static final fun Chip-2_rQPGY (ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;FFFFLio/github/suqi8/coui/kmp/basic/ChipColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Ljava/lang/String;FLandroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun Chip-2_rQPGY (ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;FFFFLio/github/suqi8/coui/kmp/basic/ChipColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Ljava/lang/String;FLandroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun Chip-FEmb9yg (ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;FFFFLio/github/suqi8/coui/kmp/basic/ChipColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Landroidx/compose/runtime/Composer;III)V
+	public static final fun Chip-Koo2Qgo (ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;FFFFLio/github/suqi8/coui/kmp/basic/ChipColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Ljava/lang/String;FLjava/lang/String;ZLandroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ChipTabData {
@@ -1164,8 +1191,10 @@ public final class io/github/suqi8/coui/kmp/basic/CompleteStateStatus : java/lan
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComponentKt {
-	public static final fun BasicComponent-FKrtxEo (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
-	public static final fun BasicComponent-NHrqhKs (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun BasicComponent-FKrtxEo (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun BasicComponent-NHrqhKs (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun BasicComponent-TUO5cB0 (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun BasicComponent-w3w8Ouo (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlurOverlayKt {
@@ -1247,16 +1276,22 @@ public final class io/github/suqi8/coui/kmp/basic/DatePickerDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/DatePickerDefaults;
 	public final fun getDayColumnWidth-D9Ej5fM ()F
 	public final fun getDayLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getDayLongPressInterval-UwyO8pc ()J
+	public final fun getIgnoredYear ()I
+	public final fun getIgnoredYearReference ()I
 	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getMonthColumnWidth-D9Ej5fM ()F
 	public final fun getMonthLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getMonthLongPressInterval-UwyO8pc ()J
 	public final fun getYearColumnWidth-D9Ej5fM ()F
 	public final fun getYearLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getYearLongPressInterval-UwyO8pc ()J
 	public final fun getYearRange ()Lkotlin/ranges/IntRange;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/DatePickerKt {
-	public static final fun DatePicker-n3Udp38 (Lio/github/suqi8/coui/kmp/basic/DateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;FFFLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/runtime/Composer;III)V
+	public static final fun DatePicker-35H1V-0 (Lio/github/suqi8/coui/kmp/basic/DateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;FFFLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/foundation/layout/PaddingValues;ZLandroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun DatePicker-n3Udp38 (Lio/github/suqi8/coui/kmp/basic/DateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;FFFLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/DateValue {
@@ -1336,6 +1371,7 @@ public final class io/github/suqi8/coui/kmp/basic/DropdownDefaults {
 	public final fun getIconEndPadding-D9Ej5fM ()F
 	public final fun getIconMinSize-D9Ej5fM ()F
 	public final fun getInsideHorizontalPadding-D9Ej5fM ()F
+	public final fun getLongPressTimeoutMillis ()J
 	public final fun getMaxItemTextWidth-D9Ej5fM ()F
 	public final fun getMiddleVerticalPadding-D9Ej5fM ()F
 	public final fun getMinHeight-D9Ej5fM ()F
@@ -1369,11 +1405,14 @@ public final class io/github/suqi8/coui/kmp/basic/DropdownEntry {
 
 public final class io/github/suqi8/coui/kmp/basic/DropdownItem {
 	public static final field $stable I
-	public fun <init> (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;Z)V
+	public synthetic fun <init> (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;Z)V
 	public synthetic fun <init> (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Lkotlin/jvm/functions/Function0;
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()Lkotlin/jvm/functions/Function0;
@@ -1382,8 +1421,10 @@ public final class io/github/suqi8/coui/kmp/basic/DropdownItem {
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Lkotlin/jvm/functions/Function2;
 	public final fun component9 ()Z
-	public final fun copy (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;Z)Lio/github/suqi8/coui/kmp/basic/DropdownItem;
+	public final synthetic fun copy (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;Z)Lio/github/suqi8/coui/kmp/basic/DropdownItem;
+	public final fun copy (Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function0;)Lio/github/suqi8/coui/kmp/basic/DropdownItem;
 	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/basic/DropdownItem;Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;ZILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/DropdownItem;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/basic/DropdownItem;Ljava/lang/String;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function3;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/DropdownItem;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlert ()Z
 	public final fun getChildren ()Ljava/util/List;
@@ -1391,6 +1432,7 @@ public final class io/github/suqi8/coui/kmp/basic/DropdownItem {
 	public final fun getHint ()Lkotlin/jvm/functions/Function2;
 	public final fun getIcon ()Lkotlin/jvm/functions/Function3;
 	public final fun getOnClick ()Lkotlin/jvm/functions/Function0;
+	public final fun getOnLongClick ()Lkotlin/jvm/functions/Function0;
 	public final fun getSelected ()Z
 	public final fun getSummary ()Ljava/lang/String;
 	public final fun getText ()Ljava/lang/String;
@@ -1403,7 +1445,8 @@ public final class io/github/suqi8/coui/kmp/basic/DropdownKt {
 	public static final fun DropdownHeaderItem-cf5BqRc (Ljava/lang/String;Landroidx/compose/ui/Modifier;JZLandroidx/compose/runtime/Composer;II)V
 	public static final fun DropdownImpl (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILio/github/suqi8/coui/kmp/basic/DropdownColors;ZZZZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 	public static final fun DropdownImpl (Ljava/lang/String;IZILio/github/suqi8/coui/kmp/basic/DropdownColors;ZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
-	public static final fun DropdownImpl--7soICU (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILandroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/DropdownColors;ZZZZZLkotlin/jvm/functions/Function1;Ljava/lang/Object;ILandroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun DropdownImpl--7soICU (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILandroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/DropdownColors;ZZZZZLkotlin/jvm/functions/Function1;Ljava/lang/Object;ILandroidx/compose/runtime/Composer;III)V
+	public static final fun DropdownImpl-Yi6KwRg (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILandroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/DropdownColors;ZZZZZLkotlin/jvm/functions/Function1;Ljava/lang/Object;ILkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;III)V
 	public static final fun SpinnerItemImpl (Lio/github/suqi8/coui/kmp/basic/DropdownItem;IZILio/github/suqi8/coui/kmp/basic/DropdownColors;ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -1511,10 +1554,14 @@ public final class io/github/suqi8/coui/kmp/basic/FloatingActionButtonDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/FloatingActionButtonDefaults;
 	public static final field NATIVE_BLUR_RADIUS_PX F
+	public static final field PRESS_DURATION I
+	public static final field RELEASE_DURATION I
 	public final fun fabBlurColors-DxMtmZc (JZ)Ljava/util/List;
 	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getMinWidth-D9Ej5fM ()F
+	public final fun getMoveEase ()Landroidx/compose/animation/core/Easing;
 	public final fun getPressedScale ()F
+	public final fun getShadowColor-0d7_KjU ()J
 	public final fun getShadowElevation-D9Ej5fM ()F
 }
 
@@ -1616,13 +1663,20 @@ public final class io/github/suqi8/coui/kmp/basic/FloatingToolbarKt {
 public final class io/github/suqi8/coui/kmp/basic/FlowLayoutDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/FlowLayoutDefaults;
+	public final fun getExpandButtonAppearDurationMillis ()I
+	public final fun getHiddenViewsAppearDelayMillis ()I
+	public final fun getHiddenViewsAppearDurationMillis ()I
+	public final fun getHiddenViewsDisappearDurationMillis ()I
 	public final fun getItemSpacing-D9Ej5fM ()F
 	public final fun getLineSpacing-D9Ej5fM ()F
+	public final fun getMaxRowFolded ()I
+	public final fun getMaxRowUnfolded ()I
 	public final fun getMaxRows ()I
 }
 
 public final class io/github/suqi8/coui/kmp/basic/FlowLayoutKt {
-	public static final fun FlowLayout-o3XDK20 (Landroidx/compose/ui/Modifier;FFILkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun FlowLayout-H2JDbgA (Landroidx/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;ZIILkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun FlowLayout-o3XDK20 (Landroidx/compose/ui/Modifier;FFILkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/FullPagePullToRefreshColors {
@@ -1826,6 +1880,7 @@ public final class io/github/suqi8/coui/kmp/basic/GridSpringChainDefaults {
 	public final fun getChainLadderTranslation ()Lio/github/suqi8/coui/kmp/basic/GridSpringChainTranslation;
 	public final fun getChainMarginVertical ()F
 	public final fun getDefaultTranslationFactor ()F
+	public final fun getGridAttachmentTension ()F
 	public final fun getGridMainFriction ()F
 	public final fun getGridMainTension ()F
 	public final fun getMainFriction ()F
@@ -1856,6 +1911,7 @@ public final class io/github/suqi8/coui/kmp/basic/HighlightedIconButtonDefaults 
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/HighlightedIconButtonDefaults;
 	public static final field NATIVE_BLUR_RADIUS_PX F
+	public static final field TOP_BAR_BLUR_SIGMA_PX F
 	public final fun fillCenter-vNxB06k (Z)J
 	public final fun fillEdge-vNxB06k (Z)J
 	public final fun getDarkHaloColor-0d7_KjU ()J
@@ -1867,6 +1923,8 @@ public final class io/github/suqi8/coui/kmp/basic/HighlightedIconButtonDefaults 
 	public final fun getFillEdgeDark-0d7_KjU ()J
 	public final fun getFillEdgeLight-0d7_KjU ()J
 	public final fun getFillEdgeStop ()F
+	public final fun getIconMenuMinHeight-D9Ej5fM ()F
+	public final fun getIconMenuMinWidth-D9Ej5fM ()F
 	public final fun getLightHaloColor-0d7_KjU ()J
 	public final fun getLightHaloOffsetY-D9Ej5fM ()F
 	public final fun getLightHaloRadius-D9Ej5fM ()F
@@ -1940,12 +1998,14 @@ public final class io/github/suqi8/coui/kmp/basic/IconButtonDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/IconButtonDefaults;
 	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getIconPadding-D9Ej5fM ()F
 	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getMinWidth-D9Ej5fM ()F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/IconButtonKt {
-	public static final fun IconButton-0xlP5wg (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun IconButton-0xlP5wg (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun IconButton-NKP4n5s (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/IconKt {
@@ -2012,6 +2072,7 @@ public final class io/github/suqi8/coui/kmp/basic/InputViewDefaults {
 	public final fun getMultiCountFontSize-XSAIIZE ()J
 	public final fun getMultiCountMarginBottom-D9Ej5fM ()F
 	public final fun getMultiCountSpacing-D9Ej5fM ()F
+	public final fun getMultiFieldHeight-D9Ej5fM ()F
 	public final fun getMultiFieldPadding-D9Ej5fM ()F
 	public final fun getTitleMinHeight-D9Ej5fM ()F
 	public final fun getTitlePaddingBottom-D9Ej5fM ()F
@@ -2108,12 +2169,17 @@ public final class io/github/suqi8/coui/kmp/basic/IntentSeekBarColors {
 
 public final class io/github/suqi8/coui/kmp/basic/IntentSeekBarDefaults {
 	public static final field $stable I
+	public static final field CONE_LIGHT_ALPHA F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/IntentSeekBarDefaults;
+	public static final field LOADING_GRADIENT_LENGTH_RATIO F
+	public static final field LOADING_GRADIENT_MID_ALPHA F
+	public static final field LOADING_SWEEP_MILLIS I
 	public final fun colors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;
 	public final fun fallbackColors-jRlVdoo (JJJJ)Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;
 	public static synthetic fun fallbackColors-jRlVdoo$default (Lio/github/suqi8/coui/kmp/basic/IntentSeekBarDefaults;JJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;
 	public final fun fixedColors-jRlVdoo (JJJJ)Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;
 	public static synthetic fun fixedColors-jRlVdoo$default (Lio/github/suqi8/coui/kmp/basic/IntentSeekBarDefaults;JJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;
+	public final fun getCONE_LIGHT_SPAN_PX ()F
 	public final fun getConicLightColor ()J
 	public final fun getFixedBackgroundColor-0d7_KjU ()J
 	public final fun getFixedProgressColor-0d7_KjU ()J
@@ -2122,7 +2188,19 @@ public final class io/github/suqi8/coui/kmp/basic/IntentSeekBarDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/IntentSeekBarKt {
-	public static final fun IntentSeekBar (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;FILkotlin/jvm/functions/Function0;ZZLio/github/suqi8/coui/kmp/basic/IntentSeekBarSize;Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun IntentSeekBar (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;FILkotlin/jvm/functions/Function0;ZZLio/github/suqi8/coui/kmp/basic/IntentSeekBarSize;Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;Landroidx/compose/runtime/Composer;III)V
+	public static final fun IntentSeekBar (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;FILkotlin/jvm/functions/Function0;ZZLio/github/suqi8/coui/kmp/basic/IntentSeekBarSize;Lio/github/suqi8/coui/kmp/basic/IntentSeekBarColors;Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;Landroidx/compose/runtime/Composer;III)V
+}
+
+public final class io/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState : java/lang/Enum {
+	public static final field Idle Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;
+	public static final field LoadingBuffering Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;
+	public static final field LoadingInitial Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;
+	public static final field Paused Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;
+	public static final field Playing Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/basic/IntentSeekBarPlaybackState;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/IntentSeekBarSize : java/lang/Enum {
@@ -2517,18 +2595,25 @@ public final class io/github/suqi8/coui/kmp/basic/LunarDatePickerDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/LunarDatePickerDefaults;
 	public final fun getColumnWidth-D9Ej5fM ()F
 	public final fun getDayLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getDayLongPressInterval-UwyO8pc ()J
+	public final fun getIgnoredYear ()I
+	public final fun getIgnoredYearMonthCount ()I
+	public final fun getIgnoredYearReference ()I
 	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getLeapPrefix ()Ljava/lang/String;
 	public final fun getLeapYearMonthCount ()I
 	public final fun getMonthLabel ()Lkotlin/jvm/functions/Function2;
+	public final fun getMonthLongPressInterval-UwyO8pc ()J
 	public final fun getMonthNames ()Ljava/util/List;
 	public final fun getNormalMonthCount ()I
 	public final fun getYearLabel ()Lkotlin/jvm/functions/Function1;
+	public final fun getYearLongPressInterval-UwyO8pc ()J
 	public final fun getYearRange ()Lkotlin/ranges/IntRange;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/LunarDatePickerKt {
-	public static final fun LunarDatePicker-n3Udp38 (Lio/github/suqi8/coui/kmp/utils/LunarDateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;FFFLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/runtime/Composer;III)V
+	public static final fun LunarDatePicker-35H1V-0 (Lio/github/suqi8/coui/kmp/utils/LunarDateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;FFFLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/foundation/layout/PaddingValues;ZLandroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun LunarDatePicker-n3Udp38 (Lio/github/suqi8/coui/kmp/utils/LunarDateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;FFFLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/MarqueeTextDefaults {
@@ -2589,6 +2674,7 @@ public final class io/github/suqi8/coui/kmp/basic/MaterialStrokeParams {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/MaterialStrokeParams$Companion {
+	public final fun contentCapsule4 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun contentCapsule5 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule1 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule13 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
@@ -2596,6 +2682,7 @@ public final class io/github/suqi8/coui/kmp/basic/MaterialStrokeParams$Companion
 	public final fun frameworkCapsule8 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCircle1 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getContentCapsule4 ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getContentCapsule4Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getContentCapsule5Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getContentCapsule5Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule13Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
@@ -2680,6 +2767,10 @@ public final class io/github/suqi8/coui/kmp/basic/MetaBallSurfaceKt {
 public final class io/github/suqi8/coui/kmp/basic/NavigationBarDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/NavigationBarDefaults;
+	public final fun blurColors (Z)Ljava/util/List;
+	public final fun blurRadius (Landroidx/compose/runtime/Composer;I)F
+	public final fun getBlurColorsDark ()Ljava/util/List;
+	public final fun getBlurColorsLight ()Ljava/util/List;
 	public final fun getHorizontalPadding-D9Ej5fM ()F
 	public final fun getIconFadeDurationMillis ()I
 	public final fun getIconSize-D9Ej5fM ()F
@@ -2815,6 +2906,8 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarColors {
 public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarDefaults;
+	public static final field SWIPE_DISTANCE_DIVISOR I
+	public static final field SWIPE_SLIDE_SPEED F
 	public final fun actionStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun colors-zjMxDiM (JJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarColors;
 	public final fun getActionMaxWidth-D9Ej5fM ()F
@@ -2837,6 +2930,7 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarDefaults {
 	public final fun getMinDurationMillis ()J
 	public final fun getReturnSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getSubContentTopPadding-D9Ej5fM ()F
+	public final fun getSwipeSlideEasing ()Landroidx/compose/animation/core/Easing;
 	public final fun iconHeight-u2uoSUM (Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarImageType;)F
 	public final fun iconWidth-u2uoSUM (Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarImageType;)F
 	public final fun subtitleStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
@@ -2860,7 +2954,8 @@ public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarImageType 
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NotificationSnackBarKt {
-	public static final fun NotificationSnackBar-tJlDC5Y (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarImageType;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/NotificationSnackBarColors;Landroidx/compose/runtime/Composer;II)V
+	public static final fun NotificationSnackBar-Wu8B24Y (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarImageType;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/NotificationSnackBarColors;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun NotificationSnackBar-tJlDC5Y (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarImageType;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/NotificationSnackBarColors;Landroidx/compose/runtime/Composer;II)V
 	public static final fun NotificationSnackBarHost (Lio/github/suqi8/coui/kmp/basic/NotificationSnackBarHostState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -2978,11 +3073,24 @@ public final class io/github/suqi8/coui/kmp/basic/NumberPickerDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/NumberPickerDefaults;
 	public final fun colors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/NumberPickerColors;
+	public final fun getFocusTextSize-D9Ej5fM ()F
+	public final fun getIgnoreBarHeight-D9Ej5fM ()F
+	public final fun getIgnoreBarSpacing-D9Ej5fM ()F
+	public final fun getIgnoreBarWidth-D9Ej5fM ()F
+	public final fun getIgnoredValue ()I
 	public final fun getItemHeight-D9Ej5fM ()F
+	public final fun getLongPressUpdateInterval-UwyO8pc ()J
+	public final fun getMaxFlingVelocity ()F
+	public final fun getMaxWidth-D9Ej5fM ()F
+	public final fun getMinFlingVelocity ()F
+	public final fun getNormalTextSize-D9Ej5fM ()F
+	public final fun getSelectionDividerInset-D9Ej5fM ()F
+	public final fun getSelectionDividerRadius-D9Ej5fM ()F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NumberPickerKt {
-	public static final fun NumberPicker-yKJFJhA (ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;IZLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/runtime/Composer;III)V
+	public static final fun NumberPicker-xRpbttU (ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;IZLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FZFFFLio/github/suqi8/coui/kmp/utils/CouiVibrateLevel;JLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun NumberPicker-yKJFJhA (ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;Lkotlin/jvm/functions/Function1;IZLio/github/suqi8/coui/kmp/basic/NumberPickerColors;Landroidx/compose/ui/text/TextStyle;FLandroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NumericKeyboardColors {
@@ -3067,10 +3175,14 @@ public final class io/github/suqi8/coui/kmp/basic/NumericKeyboardDefaults {
 	public final fun getNumberColor-0d7_KjU ()J
 	public final fun getNumberOffsetY-D9Ej5fM ()F
 	public final fun getNumberTextSize-XSAIIZE ()J
+	public final fun getNumberTextSizeDp-D9Ej5fM ()F
 	public final fun getNumbers ()Ljava/util/List;
 	public final fun getOuterGradientColor1-0d7_KjU ()J
 	public final fun getOuterGradientColor2-0d7_KjU ()J
 	public final fun getOuterGradientColor3-0d7_KjU ()J
+	public final fun getPasswordDialGridPadding-D9Ej5fM ()F
+	public final fun getPasswordDialKeyBackground-0d7_KjU ()J
+	public final fun getPasswordDialNumberTextSize-D9Ej5fM ()F
 	public final fun getPressColor-0d7_KjU ()J
 	public final fun getPressEndScale ()F
 	public final fun getPressFadeDurationMillis ()I
@@ -3089,7 +3201,8 @@ public final class io/github/suqi8/coui/kmp/basic/NumericKeyboardDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NumericKeyboardKt {
-	public static final fun NumericKeyboard (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardSideStyle;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardSideStyle;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardColors;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardPressEffect;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun NumericKeyboard (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardSideStyle;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardSideStyle;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardColors;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardPressEffect;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final fun NumericKeyboard-s7GosP0 (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardSideStyle;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardSideStyle;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardColors;Lio/github/suqi8/coui/kmp/basic/NumericKeyboardPressEffect;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JFFFLandroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NumericKeyboardPressEffect : java/lang/Enum {
@@ -3131,7 +3244,11 @@ public final class io/github/suqi8/coui/kmp/basic/NumericKeyboardSideType : java
 
 public final class io/github/suqi8/coui/kmp/basic/PageIndicatorDefaults {
 	public static final field $stable I
+	public static final field COLOR_FACTOR_THRESHOLD F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/PageIndicatorDefaults;
+	public static final field LADDER_SLOTS I
+	public static final field MINIMUM_VISIBLE_CHANGE F
+	public static final field POSITION_STIFFNESS F
 	public final fun getDotSize-D9Ej5fM ()F
 	public final fun getDotSizeMedium-D9Ej5fM ()F
 	public final fun getDotSizeSmall-D9Ej5fM ()F
@@ -3140,7 +3257,8 @@ public final class io/github/suqi8/coui/kmp/basic/PageIndicatorDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/PageIndicatorKt {
-	public static final fun PageIndicator-jA1GFJw (IILandroidx/compose/ui/Modifier;JJLandroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun PageIndicator-jA1GFJw (IILandroidx/compose/ui/Modifier;JJLandroidx/compose/runtime/Composer;II)V
+	public static final fun PageIndicator-jB83MbM (IILandroidx/compose/ui/Modifier;JJLjava/lang/String;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/PinnedTopAppBarDefaults {
@@ -3152,6 +3270,8 @@ public final class io/github/suqi8/coui/kmp/basic/PinnedTopAppBarDefaults {
 	public final fun getHeight-D9Ej5fM ()F
 	public final fun getNavigationIconGap-D9Ej5fM ()F
 	public final fun getStartPadding-D9Ej5fM ()F
+	public final fun getTextActionMaxLines ()I
+	public final fun getTextActionMaxWidth-D9Ej5fM ()F
 	public final fun getTitleActionGap-D9Ej5fM ()F
 	public final fun titleStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 }
@@ -3159,6 +3279,7 @@ public final class io/github/suqi8/coui/kmp/basic/PinnedTopAppBarDefaults {
 public final class io/github/suqi8/coui/kmp/basic/PinnedTopAppBarKt {
 	public static final fun PinnedScrollBehavior (Lio/github/suqi8/coui/kmp/basic/TopAppBarState;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;
 	public static final fun PinnedTopAppBar-VfO1hwQ (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZJJLandroidx/compose/ui/text/TextStyle;Lio/github/suqi8/coui/kmp/blur/Backdrop;FFFLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun PinnedTopAppBarTextAction-FHprtrg (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZJLandroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/PopupBarrierDefaults {
@@ -3507,6 +3628,7 @@ public final class io/github/suqi8/coui/kmp/basic/SearchBarDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/SearchBarDefaults;
 	public static final field NATIVE_BLUR_SIGMA_PX F
+	public static final field NATIVE_TOP_BAR_BLUR_SIGMA_PX F
 	public final fun causticGlowColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
 	public final fun getInputFieldFontSize-XSAIIZE ()J
 	public final fun getInputFieldMinHeight-D9Ej5fM ()F
@@ -3604,6 +3726,8 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults {
 	public static final field CANCEL_TEXT Ljava/lang/String;
 	public static final field CLAMP_ANIMATION_PERCENT F
 	public static final field FADE_DURATION_MILLIS I
+	public static final field ICON_ROTATION_DURATION_MILLIS I
+	public static final field ICON_ROTATION_Y F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults;
 	public static final field NON_INSTANT_BUTTON_ALPHA_DURATION_MILLIS I
 	public static final field PRESS_FEEDBACK_DURATION_MILLIS I
@@ -3620,6 +3744,7 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults {
 	public final fun getCancelTextSize-XSAIIZE ()J
 	public final fun getCollapsePercent ()F
 	public final fun getCollapsedMinHeight-D9Ej5fM ()F
+	public final fun getCollapsedMinHeightPx ()F
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getDividerHeight-D9Ej5fM ()F
 	public final fun getDividerWidth-D9Ej5fM ()F
@@ -3854,6 +3979,7 @@ public final class io/github/suqi8/coui/kmp/basic/SimpleLockViewDefaults {
 	public final fun colors (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/SimpleLockViewColors;
 	public final fun darkColors ()Lio/github/suqi8/coui/kmp/basic/SimpleLockViewColors;
 	public final fun fallDelays (Lio/github/suqi8/coui/kmp/basic/SimpleLockType;)[F
+	public final fun getAccessDescription ()Lkotlin/jvm/functions/Function2;
 	public final fun getAddSpec ()Landroidx/compose/animation/core/TweenSpec;
 	public final fun getCircleMaxScale ()F
 	public final fun getCornerRadius-D9Ej5fM ()F
@@ -3900,10 +4026,14 @@ public final class io/github/suqi8/coui/kmp/basic/SliderColors {
 
 public final class io/github/suqi8/coui/kmp/basic/SliderDefaults {
 	public static final field $stable I
+	public static final field FLING_PROJECTION_SECONDS F
+	public static final field FLING_VELOCITY_LIMIT F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/SliderDefaults;
 	public final fun getDefaultHapticEffect ()Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;
 	public final fun getKeyPointRadius-D9Ej5fM ()F
 	public final fun getMinHeight-D9Ej5fM ()F
+	public final fun getMinTouchHeight-D9Ej5fM ()F
+	public final fun getPercentRange ()Lkotlin/ranges/ClosedFloatingPointRange;
 	public final synthetic fun sliderColors-oq7We08 (JJJJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/SliderColors;
 	public final fun sliderColors-q0g_0yA (JJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lio/github/suqi8/coui/kmp/basic/SliderColors;
 }
@@ -3918,12 +4048,14 @@ public final class io/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEff
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SliderKt {
-	public static final fun RangeSlider-uuZZ4FU (Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;Landroidx/compose/runtime/Composer;III)V
+	public static final fun RangeSlider-RnoHquI (Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;ZZLandroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun RangeSlider-xKBSf-U (Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;FLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLandroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun Slider-9UqVb8Q (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLandroidx/compose/runtime/Composer;III)V
-	public static final fun Slider-fs30GE4 (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun Slider-Dccq62U (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;ZZLandroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun Slider-fs30GE4 (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;Landroidx/compose/runtime/Composer;III)V
+	public static final fun Slider-ybDOyaQ (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;Lio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;ZZZZLandroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun VerticalSlider-fs30GE4 (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;ZLio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLandroidx/compose/runtime/Composer;III)V
-	public static final fun VerticalSlider-uYRUAWA (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;ZLio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;Landroidx/compose/runtime/Composer;III)V
+	public static final fun VerticalSlider-n745XfY (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;ZFLio/github/suqi8/coui/kmp/basic/SliderColors;ZLio/github/suqi8/coui/kmp/basic/SliderDefaults$SliderHapticEffect;ZLjava/util/List;FLjava/lang/Float;ZZLandroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SmallTitleDefaults {
@@ -4221,6 +4353,7 @@ public final class io/github/suqi8/coui/kmp/basic/TabRowDefaults {
 	public final fun getTabRowCornerRadius-D9Ej5fM ()F
 	public final fun getTabRowHeight-D9Ej5fM ()F
 	public final fun getTabRowMaxWidth-D9Ej5fM ()F
+	public final fun getTabRowMinHeight-D9Ej5fM ()F
 	public final fun getTabRowMinWidth-D9Ej5fM ()F
 	public final fun getTabRowWithContourCornerRadius-D9Ej5fM ()F
 	public final fun getTabRowWithContourHeight-D9Ej5fM ()F
@@ -4275,7 +4408,8 @@ public final class io/github/suqi8/coui/kmp/basic/TagViewDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TagViewKt {
-	public static final fun TagView-3GLzNTs (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;FFLio/github/suqi8/coui/kmp/basic/TagViewColors;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun TagView-3GLzNTs (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;FFLio/github/suqi8/coui/kmp/basic/TagViewColors;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TagView-istoVbw (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/graphics/vector/ImageVector;FFFFFFLio/github/suqi8/coui/kmp/basic/TagViewColors;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TextButtonColors {
@@ -4298,8 +4432,11 @@ public final class io/github/suqi8/coui/kmp/basic/TextButtonColors {
 
 public final class io/github/suqi8/coui/kmp/basic/TextFieldColors {
 	public static final field $stable I
+	public synthetic fun <init> (JJJJJJJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-0d7_KjU ()J
+	public final fun component10-0d7_KjU ()J
 	public final fun component2-0d7_KjU ()J
 	public final fun component3-0d7_KjU ()J
 	public final fun component4-0d7_KjU ()J
@@ -4307,16 +4444,21 @@ public final class io/github/suqi8/coui/kmp/basic/TextFieldColors {
 	public final fun component6-0d7_KjU ()J
 	public final fun component7-0d7_KjU ()J
 	public final fun component8-0d7_KjU ()J
-	public final fun copy-FD3wquc (JJJJJJJJ)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
+	public final fun component9-0d7_KjU ()J
+	public final fun copy--K518z4 (JJJJJJJJJJ)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
+	public static synthetic fun copy--K518z4$default (Lio/github/suqi8/coui/kmp/basic/TextFieldColors;JJJJJJJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
+	public final synthetic fun copy-FD3wquc (JJJJJJJJ)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
 	public static synthetic fun copy-FD3wquc$default (Lio/github/suqi8/coui/kmp/basic/TextFieldColors;JJJJJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBackgroundColor-0d7_KjU ()J
 	public final fun getBorderColor-0d7_KjU ()J
 	public final fun getCounterColor-0d7_KjU ()J
+	public final fun getDisabledBorderColor-0d7_KjU ()J
 	public final fun getDisabledTextColor-0d7_KjU ()J
 	public final fun getErrorColor-0d7_KjU ()J
 	public final fun getIconColor-0d7_KjU ()J
 	public final fun getLabelColor-0d7_KjU ()J
+	public final fun getLabelCutoutColor-0d7_KjU ()J
 	public final fun getUnfocusedBorderColor-0d7_KjU ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -4329,9 +4471,12 @@ public final class io/github/suqi8/coui/kmp/basic/TextFieldDefaults {
 	public final fun getCounterFontSize-XSAIIZE ()J
 	public final fun getInsideMargin-MYxV2XQ ()J
 	public final fun getLineInsideMargin-MYxV2XQ ()J
+	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getNoneInsideMargin-MYxV2XQ ()J
+	public final fun getRectangleEndInsideMargin-D9Ej5fM ()F
 	public final fun insideMargin-Gh9hcWk (Lio/github/suqi8/coui/kmp/basic/TextFieldMode;)J
-	public final fun textFieldColors-oq7We08 (JJJJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
+	public final synthetic fun textFieldColors-oq7We08 (JJJJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
+	public final fun textFieldColors-q0g_0yA (JJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lio/github/suqi8/coui/kmp/basic/TextFieldColors;
 	public final fun textStyle (Lio/github/suqi8/coui/kmp/basic/TextFieldMode;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 }
 
@@ -4362,9 +4507,12 @@ public final class io/github/suqi8/coui/kmp/basic/TimePickerDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/TimePickerDefaults;
 	public final fun getAmLabel ()Ljava/lang/String;
 	public final fun getAmPmColumnWidth-D9Ej5fM ()F
+	public final fun getAmPmFirst ()Z
+	public final fun getAmPmNormalTextSize-D9Ej5fM ()F
 	public final fun getHourColumnWidth-D9Ej5fM ()F
 	public final fun getHourUnit ()Ljava/lang/String;
 	public final fun getInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getLongPressInterval-UwyO8pc ()J
 	public final fun getMinuteColumnWidth-D9Ej5fM ()F
 	public final fun getMinuteUnit ()Ljava/lang/String;
 	public final fun getPmLabel ()Ljava/lang/String;
@@ -4440,7 +4588,14 @@ public final class io/github/suqi8/coui/kmp/basic/TooltipDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/TooltipDefaults;
 	public final fun caretShape ()Landroidx/compose/ui/graphics/Shape;
+	public final fun getCaretEdgeExtraDistance-D9Ej5fM ()F
+	public final fun getCaretEdgeHeight-D9Ej5fM ()F
+	public final fun getCaretEdgeWidth-D9Ej5fM ()F
+	public final fun getCaretEmbedDistance-D9Ej5fM ()F
+	public final fun getCaretHeight-D9Ej5fM ()F
+	public final fun getCaretPadding-D9Ej5fM ()F
 	public final fun getCaretSize-MYxV2XQ ()J
+	public final fun getCaretWidth-D9Ej5fM ()F
 	public final fun getHorizontalEdgeMargin-D9Ej5fM ()F
 	public final fun getPlainTooltipContainerColor (Landroidx/compose/runtime/Composer;I)J
 	public final fun getPlainTooltipContentColor (Landroidx/compose/runtime/Composer;I)J
@@ -4619,17 +4774,25 @@ public final class io/github/suqi8/coui/kmp/basic/TopTipsStyle : java/lang/Enum 
 
 public final class io/github/suqi8/coui/kmp/basic/TouchSearchViewColors {
 	public static final field $stable I
+	public synthetic fun <init> (JJJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-0d7_KjU ()J
 	public final fun component2-0d7_KjU ()J
 	public final fun component3-0d7_KjU ()J
 	public final fun component4-0d7_KjU ()J
-	public final fun copy-jRlVdoo (JJJJ)Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;
+	public final fun component5-0d7_KjU ()J
+	public final fun component6-0d7_KjU ()J
+	public final synthetic fun copy-jRlVdoo (JJJJ)Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;
 	public static synthetic fun copy-jRlVdoo$default (Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;JJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;
+	public final fun copy-tNS2XkQ (JJJJJJ)Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;
+	public static synthetic fun copy-tNS2XkQ$default (Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;JJJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getPopupBackgroundColor-0d7_KjU ()J
 	public final fun getPopupTextColor-0d7_KjU ()J
 	public final fun getPressedTextColor-0d7_KjU ()J
+	public final fun getSecondPopupBackgroundColor-0d7_KjU ()J
+	public final fun getSecondPopupTextColor-0d7_KjU ()J
 	public final fun getTextColor-0d7_KjU ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -4638,7 +4801,7 @@ public final class io/github/suqi8/coui/kmp/basic/TouchSearchViewColors {
 public final class io/github/suqi8/coui/kmp/basic/TouchSearchViewDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/TouchSearchViewDefaults;
-	public final fun colors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;
+	public final fun colors-5tl4gsc (JJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;
 	public final fun getBackgroundWidth-D9Ej5fM ()F
 	public final fun getCharOffset-D9Ej5fM ()F
 	public final fun getDefaultHeight-D9Ej5fM ()F
@@ -4653,9 +4816,19 @@ public final class io/github/suqi8/coui/kmp/basic/TouchSearchViewDefaults {
 	public final fun getNormalKeys ()Ljava/util/List;
 	public final fun getPaddingBottom-D9Ej5fM ()F
 	public final fun getPaddingTop-D9Ej5fM ()F
+	public final fun getPopupAppearDurationMillis ()I
+	public final fun getPopupDisappearDurationMillis ()I
 	public final fun getPopupEndMargin-D9Ej5fM ()F
+	public final fun getPopupScaleMin ()F
 	public final fun getPopupSize-D9Ej5fM ()F
 	public final fun getPopupTextSize-XSAIIZE ()J
+	public final fun getSecondPopupCornerRadius-D9Ej5fM ()F
+	public final fun getSecondPopupMargin-D9Ej5fM ()F
+	public final fun getSecondPopupMaxHeight-D9Ej5fM ()F
+	public final fun getSecondPopupOffset-D9Ej5fM ()F
+	public final fun getSecondPopupWidth-D9Ej5fM ()F
+	public final fun getSecondRowHeight-D9Ej5fM ()F
+	public final fun getSecondTextSize-XSAIIZE ()J
 	public final fun getSpecialKeys ()Ljava/util/List;
 	public final fun getStarCharacter ()Ljava/lang/String;
 	public final fun getTouchEndGap-D9Ej5fM ()F
@@ -4664,7 +4837,8 @@ public final class io/github/suqi8/coui/kmp/basic/TouchSearchViewDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TouchSearchViewKt {
-	public static final fun TouchSearchView (Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun TouchSearchView (Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TouchSearchView (Ljava/util/List;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLio/github/suqi8/coui/kmp/basic/TouchSearchViewColors;Ljava/util/Map;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/color/api/ExtensionsKt {
@@ -4889,6 +5063,7 @@ public final class io/github/suqi8/coui/kmp/layout/BottomSheetDefaults {
 	public final fun getActionButtonSpacing-D9Ej5fM ()F
 	public final fun getBlurColorsDark ()Ljava/util/List;
 	public final fun getBlurColorsLight ()Ljava/util/List;
+	public final fun getContentChangeSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getCornerWeight ()F
 	public final fun getHeaderHeight-D9Ej5fM ()F
@@ -4897,6 +5072,7 @@ public final class io/github/suqi8/coui/kmp/layout/BottomSheetDefaults {
 	public final fun getMaxWidth-D9Ej5fM ()F
 	public final fun getNativeBlurRadiusPx ()F
 	public final fun getOutsideMargin-MYxV2XQ ()J
+	public final fun getPanelPaddingBottom-D9Ej5fM ()F
 	public final fun stroke (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 }
 
@@ -4965,9 +5141,11 @@ public final class io/github/suqi8/coui/kmp/layout/DialogDefaults {
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getCornerWeight ()F
 	public final fun getInsideMargin-MYxV2XQ ()J
+	public final fun getMaxHeight-D9Ej5fM ()F
 	public final fun getMaxWidth-D9Ej5fM ()F
 	public final fun getNativeBlurRadiusPx ()F
 	public final fun getOutsideMargin-MYxV2XQ ()J
+	public final fun getOutsideMarginWithNavigationBar-D9Ej5fM ()F
 	public final fun stroke (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun summaryColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
 	public final fun titleColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
@@ -5004,6 +5182,7 @@ public final class io/github/suqi8/coui/kmp/layout/ProgressDialogDefaults {
 	public final fun getCardMinHeight-D9Ej5fM ()F
 	public final fun getCardWidth-D9Ej5fM ()F
 	public final fun getContentHorizontalPadding-D9Ej5fM ()F
+	public final fun getContentVerticalPadding-D9Ej5fM ()F
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getProgressBarHeight-D9Ej5fM ()F
 	public final fun getTextMarginTop-D9Ej5fM ()F
@@ -5038,6 +5217,10 @@ public final class io/github/suqi8/coui/kmp/layout/SecurityDialogDefaults {
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayAlertDialogKt {
 	public static final fun OverlayAlertDialog-wvzaQgU (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/github/suqi8/coui/kmp/layout/AlertDialogColors;ZLkotlin/jvm/functions/Function0;ZLandroidx/compose/ui/unit/Dp;FLio/github/suqi8/coui/kmp/basic/TextButtonColors;Lio/github/suqi8/coui/kmp/basic/TextButtonColors;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+}
+
+public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomAssignmentDialogKt {
+	public static final fun OverlayBottomAssignmentDialog-H9sqO8Q (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Lio/github/suqi8/coui/kmp/layout/AlertDialogColors;ZLkotlin/jvm/functions/Function0;ZLandroidx/compose/ui/unit/Dp;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomSheetKt {
@@ -5178,14 +5361,20 @@ public final class io/github/suqi8/coui/kmp/theme/ColorSchemeMode : java/lang/En
 
 public final class io/github/suqi8/coui/kmp/theme/Colors {
 	public static final field $stable I
-	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun copy-6PHUIhw (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static synthetic fun copy-6PHUIhw$default (Lio/github/suqi8/coui/kmp/theme/Colors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public final synthetic fun copy-IKK4sMI (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static synthetic fun copy-IKK4sMI$default (Lio/github/suqi8/coui/kmp/theme/Colors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public final synthetic fun copy-KOU1aag (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static synthetic fun copy-KOU1aag$default (Lio/github/suqi8/coui/kmp/theme/Colors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
-	public final fun copy-t94DPes (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
-	public static synthetic fun copy-t94DPes$default (Lio/github/suqi8/coui/kmp/theme/Colors;JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getBar-0d7_KjU ()J
+	public final fun getContainerTheme-0d7_KjU ()J
+	public final fun getControls-0d7_KjU ()J
 	public final fun getDisabledOnPrimary-0d7_KjU ()J
 	public final fun getDisabledOnPrimaryButton-0d7_KjU ()J
 	public final fun getDisabledOnSecondary-0d7_KjU ()J
@@ -5199,7 +5388,10 @@ public final class io/github/suqi8/coui/kmp/theme/Colors {
 	public final fun getDividerLine-0d7_KjU ()J
 	public final fun getError-0d7_KjU ()J
 	public final fun getErrorContainer-0d7_KjU ()J
+	public final fun getFocus-0d7_KjU ()J
+	public final fun getFocusOutline-0d7_KjU ()J
 	public final fun getLabelPrimaryVariant-0d7_KjU ()J
+	public final fun getLabelTertiary-0d7_KjU ()J
 	public final fun getOnBackground-0d7_KjU ()J
 	public final fun getOnBackgroundVariant-0d7_KjU ()J
 	public final fun getOnError-0d7_KjU ()J
@@ -5221,9 +5413,11 @@ public final class io/github/suqi8/coui/kmp/theme/Colors {
 	public final fun getOnSurfaceVariantSummary-0d7_KjU ()J
 	public final fun getOnTertiaryContainer-0d7_KjU ()J
 	public final fun getOutline-0d7_KjU ()J
+	public final fun getPressBackground-0d7_KjU ()J
 	public final fun getPrimary-0d7_KjU ()J
 	public final fun getPrimaryContainer-0d7_KjU ()J
 	public final fun getPrimaryVariant-0d7_KjU ()J
+	public final fun getQuarternaryNeutral-0d7_KjU ()J
 	public final fun getSecondary-0d7_KjU ()J
 	public final fun getSecondaryContainer-0d7_KjU ()J
 	public final fun getSecondaryContainerVariant-0d7_KjU ()J
@@ -5242,14 +5436,14 @@ public final class io/github/suqi8/coui/kmp/theme/Colors {
 }
 
 public final class io/github/suqi8/coui/kmp/theme/ColorsKt {
+	public static final fun darkColorScheme-6PHUIhw (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static synthetic fun darkColorScheme-6PHUIhw$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static final synthetic fun darkColorScheme-KOU1aag (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static synthetic fun darkColorScheme-KOU1aag$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
-	public static final fun darkColorScheme-t94DPes (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
-	public static synthetic fun darkColorScheme-t94DPes$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static final fun lightColorScheme-6PHUIhw (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
+	public static synthetic fun lightColorScheme-6PHUIhw$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static final synthetic fun lightColorScheme-KOU1aag (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
 	public static synthetic fun lightColorScheme-KOU1aag$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
-	public static final fun lightColorScheme-t94DPes (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ)Lio/github/suqi8/coui/kmp/theme/Colors;
-	public static synthetic fun lightColorScheme-t94DPes$default (JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJIILjava/lang/Object;)Lio/github/suqi8/coui/kmp/theme/Colors;
 }
 
 public final class io/github/suqi8/coui/kmp/theme/ContentColorKt {
@@ -5369,7 +5563,8 @@ public final class io/github/suqi8/coui/kmp/theme/ThemePaletteStyle : java/lang/
 
 public final class io/github/suqi8/coui/kmp/utils/COUIIndication : androidx/compose/foundation/IndicationNodeFactory {
 	public static final field $stable I
-	public synthetic fun <init> (JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJLandroidx/compose/ui/graphics/Shape;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJLandroidx/compose/ui/graphics/Shape;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun create (Landroidx/compose/foundation/interaction/InteractionSource;)Landroidx/compose/ui/node/DelegatableNode;
 	public fun equals (Ljava/lang/Object;)Z
@@ -5484,6 +5679,14 @@ public final class io/github/suqi8/coui/kmp/utils/ComposableSingletons$COUIPopup
 }
 
 public final class io/github/suqi8/coui/kmp/utils/CouiHapticEffect : java/lang/Enum {
+	public static final field EdgeList Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
+	public static final field EdgeShort Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
+	public static final field EdgeSqueeze Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
+	public static final field Keyboard Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
+	public static final field Long Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
+	public static final field Short Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
+	public static final field ShortTriple Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
+	public static final field Stepping Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
 	public static final field Strength Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
 	public static final field Switch Lio/github/suqi8/coui/kmp/utils/CouiHapticEffect;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
@@ -5493,6 +5696,19 @@ public final class io/github/suqi8/coui/kmp/utils/CouiHapticEffect : java/lang/E
 
 public final class io/github/suqi8/coui/kmp/utils/CouiHaptic_desktopKt {
 	public static final fun rememberCouiHaptic (Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function1;
+}
+
+public final class io/github/suqi8/coui/kmp/utils/CouiPickerFeedbackKt {
+	public static final fun rememberCouiPickerClick (Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function0;
+	public static final fun rememberCouiPickerHaptic (Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function2;
+}
+
+public final class io/github/suqi8/coui/kmp/utils/CouiVibrateLevel : java/lang/Enum {
+	public static final field Crisp Lio/github/suqi8/coui/kmp/utils/CouiVibrateLevel;
+	public static final field Soft Lio/github/suqi8/coui/kmp/utils/CouiVibrateLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/utils/CouiVibrateLevel;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/utils/CouiVibrateLevel;
 }
 
 public final class io/github/suqi8/coui/kmp/utils/GalleryDensityDefaults {
@@ -5593,6 +5809,7 @@ public final class io/github/suqi8/coui/kmp/utils/SinkFeedback : androidx/compos
 	public fun <init> ()V
 	public fun <init> (FLandroidx/compose/animation/core/AnimationSpec;)V
 	public synthetic fun <init> (FLandroidx/compose/animation/core/AnimationSpec;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FLandroidx/compose/animation/core/AnimationSpec;Landroidx/compose/animation/core/AnimationSpec;)V
 	public final fun component1 ()F
 	public final fun component2 ()Landroidx/compose/animation/core/AnimationSpec;
 	public final fun copy (FLandroidx/compose/animation/core/AnimationSpec;)Lio/github/suqi8/coui/kmp/utils/SinkFeedback;
@@ -5600,9 +5817,11 @@ public final class io/github/suqi8/coui/kmp/utils/SinkFeedback : androidx/compos
 	public fun create (Landroidx/compose/foundation/interaction/InteractionSource;)Landroidx/compose/ui/node/DelegatableNode;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAnimationSpec ()Landroidx/compose/animation/core/AnimationSpec;
+	public final fun getReleaseAnimationSpec ()Landroidx/compose/animation/core/AnimationSpec;
 	public final fun getSinkAmount ()F
 	public fun hashCode ()I
 	public fun rememberUpdatedInstance (Landroidx/compose/foundation/interaction/InteractionSource;Landroidx/compose/runtime/Composer;I)Landroidx/compose/foundation/IndicationInstance;
+	public final fun setReleaseAnimationSpec (Landroidx/compose/animation/core/AnimationSpec;)V
 	public fun toString ()Ljava/lang/String;
 }
 
