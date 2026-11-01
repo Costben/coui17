@@ -3429,12 +3429,13 @@ public final class io/github/suqi8/coui/kmp/basic/PullToRefreshDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/PullToRefreshDefaults;
 	public final fun getCircleSize-D9Ej5fM ()F
 	public final fun getColor-0d7_KjU ()J
+	public final fun getHeaderBottomGap-D9Ej5fM ()F
 	public final fun getRefreshTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public final fun getRefreshTexts ()Ljava/util/List;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/PullToRefreshKt {
-	public static final fun PullToRefresh-2DWL1XU (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/PullToRefreshState;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;JFLjava/util/List;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun PullToRefresh-5TuWfxk (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/PullToRefreshState;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;JFLjava/util/List;Landroidx/compose/ui/text/TextStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun rememberPullToRefreshState (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/PullToRefreshState;
 }
 

@@ -22,9 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,6 +36,7 @@ import appstate.LocalIsWideScreen
 import appstate.LocalNavigator
 import component.BackNavigationIcon
 import i18n.str
+import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.PullToRefresh
@@ -48,8 +47,6 @@ import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.interfaces.ExperimentalScrollBarApi
-import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
-import io.github.suqi8.coui.kmp.preference.WindowDropdownPreference
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.delay
@@ -59,8 +56,10 @@ import utils.pageContentPadding
 import utils.pageScrollModifiers
 import utils.rememberBlurBackdrop
 
-private val DropdownListTopShape = SquircleShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 0.dp, bottomStart = 0.dp)
-private val DropdownListBottomShape = SquircleShape(topStart = 0.dp, topEnd = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp)
+private const val ITEM_COUNT = 20
+private const val REFRESH_DURATION_MILLIS = 1500L
+private val ListTopShape = SquircleShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 0.dp, bottomStart = 0.dp)
+private val ListBottomShape = SquircleShape(topStart = 0.dp, topEnd = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp)
 
 @Composable
 fun PullToRefreshPage(
@@ -75,14 +74,9 @@ fun PullToRefreshPage(
 
     val backdrop = rememberBlurBackdrop()
 
-    val dropdownOptions = remember { listOf("Option 1", "Option 2", "Option 3", "Option 4") }
-    var dropdownSelectedOption by remember { mutableIntStateOf(0) }
-    var dropdownCount by remember { mutableIntStateOf(6) }
-
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            delay(200)
-            dropdownCount += 6
+            delay(REFRESH_DURATION_MILLIS)
             isRefreshing = false
         }
     }
@@ -137,14 +131,14 @@ fun PullToRefreshPage(
                         contentPadding = contentPadding,
                     ) {
                         items(
-                            count = dropdownCount,
-                            key = { "dropdown_$it" },
+                            count = ITEM_COUNT,
+                            key = { "refresh_item_$it" },
                         ) { i ->
                             val isFirst = i == 0
-                            val isLast = i == dropdownCount - 1
+                            val isLast = i == ITEM_COUNT - 1
                             val shape = when {
-                                isFirst -> DropdownListTopShape
-                                isLast -> DropdownListBottomShape
+                                isFirst -> ListTopShape
+                                isLast -> ListBottomShape
                                 else -> RectangleShape
                             }
                             Column(
@@ -154,25 +148,7 @@ fun PullToRefreshPage(
                                     .clip(shape)
                                     .background(COUITheme.colorScheme.surfaceContainer),
                             ) {
-                                if (i % 2 == 0) {
-                                    OverlayDropdownPreference(
-                                        title = "OverlayDropdownPref ${i + 1}",
-                                        items = dropdownOptions,
-                                        selectedIndex = dropdownSelectedOption,
-                                        onSelectedIndexChange = { newOption ->
-                                            dropdownSelectedOption = newOption
-                                        },
-                                    )
-                                } else {
-                                    WindowDropdownPreference(
-                                        title = "WindowDropdownPref ${i + 1}",
-                                        items = dropdownOptions,
-                                        selectedIndex = dropdownSelectedOption,
-                                        onSelectedIndexChange = { newOption ->
-                                            dropdownSelectedOption = newOption
-                                        },
-                                    )
-                                }
+                                BasicComponent(title = str("Item {}", i + 1))
                                 if (!isLast) {
                                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                                 }

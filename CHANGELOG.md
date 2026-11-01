@@ -232,6 +232,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Changed
 
+- `PullToRefresh` now follows ColorOS 17 list refresh: the 26dp COUI loading spinner on the content's top edge with no text by default, a threshold of twice the indicator size (52dp), 2.5 damping and a 500ms return. `PullToRefreshDefaults.circleSize` is now 26.dp, `refreshTexts` defaults to an empty list, and an unspecified `color` falls back to onSurface at 85% opacity instead of primary. The indicator block keeps an 8dp empty band above the content (`PullToRefreshDefaults.HeaderBottomGap`) so it never sits flush against the list.
 - `LoadProgressButton` now draws through `InstallLoadProgress`: pills use the system capsule curve and only `BigRound` / `Large` is accent filled at rest, the `Circle` tier is the 30dp smooth-corner disk, and `LoadProgressButtonDefaults.colors()` defaults to the same track and white label-over-fill colours.
 - `Text` and `MarqueeText` draw at 15sp, the size `TextAppearance.COUI` gives a bare `TextView` under `Theme.COUI`, instead of the 17sp inherited from Miuix. The `main` and `paragraph` roles keep 17sp.
 - A pressed `Card` stacks `couiColorCardPressed` over its fill instead of interpolating the fill towards it, as `COUIMaskEffectDrawable` stacks its mask layers. A night card keeps its translucent fill while pressed instead of turning into a 20% white wash, and the press, hover and focus masks are clipped by the card's squircle. The focus mask is now `couiColorFocus`.

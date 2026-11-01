@@ -3,19 +3,13 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -24,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -34,48 +27,39 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.anim.COUIMoveEase
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.LocalOverScrollState
 import io.github.suqi8.coui.kmp.utils.OverScrollState
-import io.github.suqi8.coui.kmp.utils.SpringEngine
-import io.github.suqi8.coui.kmp.utils.SpringMath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.sign
-import kotlin.math.sin
+import kotlin.math.roundToInt
 
 /**
  * A container that supports the "pull-to-refresh" gesture.
@@ -98,10 +82,13 @@ import kotlin.math.sin
  * @param topAppBarScrollBehavior An optional [ScrollBehavior] for a `TopAppBar` to coordinate
  * scrolling between the app bar and the pull-to-refresh gesture.
  * @param color The color of the refresh indicator. If [Color.Unspecified], the theme
- * primary color is used.
- * @param circleSize The size of the refresh indicator's animated circle.
- * @param refreshTexts A list of strings representing the text shown in different states.
+ * onSurface color at 85% opacity is used.
+ * @param circleSize The size of the refresh indicator. The refresh threshold is twice this size.
+ * @param refreshTexts The text shown below the indicator for the pulling, threshold reached,
+ * refreshing and complete states. ColorOS list refresh shows no text, so this defaults to empty.
  * @param refreshTextStyle The [TextStyle] for the refresh indicator text.
+ * @param headerBottomGap The empty band kept between the indicator block and the top of the
+ * content, so the indicator never sits flush against the list.
  * @param content The content to be displayed inside the container.
  */
 @Composable
@@ -116,14 +103,20 @@ fun PullToRefresh(
     circleSize: Dp = PullToRefreshDefaults.circleSize,
     refreshTexts: List<String> = PullToRefreshDefaults.refreshTexts,
     refreshTextStyle: TextStyle = PullToRefreshDefaults.refreshTextStyle,
+    headerBottomGap: Dp = PullToRefreshDefaults.HeaderBottomGap,
     content: @Composable () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val overScrollState = LocalOverScrollState.current
     val currentOnRefresh by rememberUpdatedState(onRefresh)
 
-    // The indicator follows COUILoadingView theming (couiLoadingViewColor = couiColorPrimary).
-    val indicatorColor = color.takeOrElse { COUITheme.colorScheme.primary }
+    // pull_down_loading.json strokes black at 85% opacity, its night copy white at 85%.
+    val indicatorColor = color.takeOrElse { COUITheme.colorScheme.onSurface.copy(alpha = 0.85f) }
+
+    // DefaultHeader: dragDistanceThreshold = 2 * loadingViewHeight.
+    val density = LocalDensity.current
+    pullToRefreshState.indicatorHeightPx = with(density) { circleSize.toPx() }
+    pullToRefreshState.refreshThresholdOffset = pullToRefreshState.indicatorHeightPx * 2f
 
     LaunchedEffect(isRefreshing) {
         if (!isRefreshing && pullToRefreshState.refreshState == RefreshState.Refreshing) {
@@ -168,6 +161,7 @@ fun PullToRefresh(
     ) {
         val boxModifier = remember(modifier, nestedScrollConnection, pointerModifier) {
             modifier
+                .onSizeChanged { pullToRefreshState.maxDragDistancePx = it.height.toFloat() }
                 .nestedScroll(nestedScrollConnection)
                 .then(pointerModifier)
         }
@@ -180,6 +174,7 @@ fun PullToRefresh(
                     color = indicatorColor,
                     refreshTexts = refreshTexts,
                     refreshTextStyle = refreshTextStyle,
+                    bottomGap = headerBottomGap,
                     modifier = Modifier.offset(y = contentPadding.calculateTopPadding()),
                 )
                 content()
@@ -203,16 +198,9 @@ fun rememberPullToRefreshState(): PullToRefreshState {
 
     // The state object is created using `remember` as it's a runtime UI state manager.
     // The logical `isRefreshing` state, which survives process death, is hoisted.
-    val state = remember {
+    return remember {
         PullToRefreshState(coroutineScope)
     }
-
-    // Update context-dependent properties on the state instance to ensure it's always current.
-    val windowInfo = LocalWindowInfo.current
-    state.maxDragDistancePx = windowInfo.containerSize.height.toFloat()
-    state.refreshThresholdOffset = windowInfo.containerSize.height.toFloat() * MAX_DRAWRATIO * THRESHOLD_RADIO
-
-    return state
 }
 
 /** Represents the various visual states of the pull-to-refresh indicator. */
@@ -237,6 +225,10 @@ class PullToRefreshState(
 ) {
     internal var maxDragDistancePx: Float = 0f
     internal var refreshThresholdOffset: Float = 0f
+    internal var indicatorHeightPx: Float = 0f
+
+    /** The indicator's rotation when the refresh started, kept for as long as it spins. */
+    internal var heldIndicatorRotation: Float = 0f
 
     /** The drag offset in pixels. */
     var dragOffset by mutableFloatStateOf(0f)
@@ -258,77 +250,36 @@ class PullToRefreshState(
         }
     }
 
-    internal var currentTouch by mutableFloatStateOf(0f)
-
     internal var isRefreshing by mutableStateOf(false)
     internal var isTouching by mutableStateOf(false)
     internal var isRebounding by mutableStateOf(false)
     private var isProcessingRelease = false
-    private val refreshCompleteAnimProgressState = mutableFloatStateOf(1f)
-    internal val refreshCompleteAnimProgress: Float get() = refreshCompleteAnimProgressState.floatValue
-
-    // Physics Engine for rebound
-    private val springEngine = SpringEngine()
     internal var animationJob: Job? = null
 
     /**
-     * Drives the dragOffset using SpringEngine physics.
-     * Runs the animation loop directly in the caller's coroutine context,
-     * so cancellation of the caller naturally stops the animation.
+     * Scrolls [dragOffset] to [targetValue] the way `PullLayout` drives its Scroller: 500 ms on the
+     * COUI move ease, whatever the distance. Cancelling the job hands the offset back to the finger.
      */
-    internal suspend fun animateToSpring(targetValue: Float) {
+    internal suspend fun animateOffsetTo(targetValue: Float) {
         animationJob?.cancel()
-
-        springEngine.start(
-            startValue = dragOffset,
-            targetValue = targetValue,
-            initialVel = 0f,
-        )
-
         val currentJob = currentCoroutineContext()[Job]
         animationJob = currentJob
-
-        var lastFrameTimeNanos = -1L
-        var isFinished = false
-
         try {
-            while (currentCoroutineContext().isActive) {
-                isFinished = withFrameNanos { frameTimeNanos ->
-                    if (lastFrameTimeNanos == -1L) {
-                        lastFrameTimeNanos = frameTimeNanos
-                        return@withFrameNanos false
-                    }
-                    val dt = (frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f
-                    lastFrameTimeNanos = frameTimeNanos
-
-                    val finished = springEngine.step(dt)
-                    val newOffset = springEngine.currentPos.toFloat()
-
-                    // Directly update the state
-                    dragOffset = newOffset
-
-                    // Crucial: Update currentTouch using inverse damping so that if user catches
-                    // the list mid-animation, the touch tracking is consistent with visual position.
-                    currentTouch = SpringMath.obtainTouchDistance(newOffset, maxDragDistancePx)
-
-                    finished
-                }
-                if (isFinished) break
+            Animatable(dragOffset).animateTo(
+                targetValue = targetValue,
+                animationSpec = tween(REFRESH_SCROLL_MILLIS, easing = COUIMoveEase),
+            ) {
+                dragOffset = value
             }
         } finally {
             if (animationJob == currentJob) animationJob = null
-            if (isFinished) {
-                // Ensure we land exactly on target after normal completion
-                dragOffset = targetValue
-                currentTouch = SpringMath.obtainTouchDistance(targetValue, maxDragDistancePx)
-            }
         }
     }
 
     /**
-     * Starts the pull-to-refresh animation without a gesture: the indicator springs down to the
+     * Starts the pull-to-refresh animation without a gesture: the indicator scrolls down to the
      * threshold and then runs [onRefresh]. Lets shortcuts such as "back to top" show the same
-     * ball the user would get by pulling.
+     * indicator the user would get by pulling.
      */
     fun startRefresh(onRefresh: () -> Unit) {
         coroutineScope.launch { startRefreshing(onRefresh) }
@@ -339,13 +290,13 @@ class PullToRefreshState(
      */
     internal suspend fun startRefreshing(onRefresh: () -> Unit) {
         if (!isRefreshing) {
+            // DefaultHeader stops turning the view on release and plays the animation from there.
+            heldIndicatorRotation = indicatorRotation()
             isRefreshing = true
             try {
-                // Enter the pull state first: the header height is derived from the state, so
-                // leaving it Idle would keep the ball invisible while the offset springs down.
+                // Enter the pull state first so a refresh without a gesture reads as one in progress.
                 if (!isTouching) internalRefreshState = RefreshState.Pulling
-                // Use spring to move to threshold
-                animateToSpring(refreshThresholdOffset)
+                animateOffsetTo(refreshThresholdOffset)
             } finally {
                 if (!isTouching) {
                     internalRefreshState = RefreshState.Refreshing
@@ -365,7 +316,8 @@ class PullToRefreshState(
         if (isRefreshing) {
             isRefreshing = false
             internalRefreshState = RefreshState.RefreshComplete
-            startManualRefreshCompleteAnimation()
+            animateOffsetTo(0f)
+            internalRefreshState = RefreshState.Idle
         }
     }
 
@@ -380,10 +332,10 @@ class PullToRefreshState(
                 // If pulled past threshold, will then call startRefreshing().
                 startRefreshing(onRefresh)
             } else {
-                // If not pulled past threshold, rebound to the resting state using spring.
+                // If not pulled past threshold, rebound to the resting state.
                 try {
                     isRebounding = true
-                    animateToSpring(0f)
+                    animateOffsetTo(0f)
                 } finally {
                     isRebounding = false
                     resetToIdle()
@@ -394,23 +346,12 @@ class PullToRefreshState(
         }
     }
 
-    private suspend fun startManualRefreshCompleteAnimation() {
-        refreshCompleteAnimProgressState.floatValue = 0f
-        val animatedValue = Animatable(0f)
-        animatedValue.animateTo(
-            targetValue = 1f,
-            animationSpec = tween<Float>(durationMillis = 200, easing = CubicBezierEasing(0f, 0f, 0f, 0.37f)),
-        ) {
-            refreshCompleteAnimProgressState.floatValue = this.value
-        }
-        internalResetState()
-    }
-
-    private suspend fun internalResetState() {
-        internalRefreshState = RefreshState.Idle
-        // Animate back to 0 using Spring
-        animateToSpring(0f)
-    }
+    /** The rotation `DefaultHeader` gives the indicator at the current [dragOffset]. */
+    internal fun indicatorRotation(): Float = pullToRefreshIndicatorRotation(
+        offset = dragOffset,
+        begin = indicatorHeightPx,
+        threshold = refreshThresholdOffset,
+    )
 
     /** Resets the refresh state to [RefreshState.Idle]. */
     internal fun resetToIdle() {
@@ -430,12 +371,7 @@ class PullToRefreshState(
             object : NestedScrollConnection {
                 private fun applyDrag(delta: Float) {
                     if (delta == 0f) return
-                    currentTouch += delta
-                    currentTouch = currentTouch.coerceIn(-maxDragDistancePx, maxDragDistancePx)
-
-                    val normalized = min(abs(currentTouch) / maxDragDistancePx, 1.0f)
-                    val dampedDist = SpringMath.obtainDampingDistance(normalized, maxDragDistancePx)
-                    dragOffset = sign(currentTouch) * dampedDist
+                    dragOffset = pullToRefreshDragStep(dragOffset, delta, maxDragDistancePx)
 
                     when {
                         refreshThresholdOffset > 0f && dragOffset >= refreshThresholdOffset -> RefreshState.ThresholdReached
@@ -457,7 +393,7 @@ class PullToRefreshState(
                     }
 
                     // When pulling up while the indicator is visible, consume the scroll to hide it.
-                    if (source == NestedScrollSource.UserInput && available.y < 0 && (dragOffset > 0f || currentTouch > 0f)) {
+                    if (source == NestedScrollSource.UserInput && available.y < 0 && dragOffset > 0f) {
                         isTouching = true
                         animationJob?.cancel()
                         applyDrag(available.y)
@@ -556,7 +492,7 @@ private fun createPullToRefreshConnection(
             ) {
                 try {
                     pullToRefreshState.isRebounding = true
-                    pullToRefreshState.animateToSpring(0f)
+                    pullToRefreshState.animateOffsetTo(0f)
                 } finally {
                     pullToRefreshState.isRebounding = false
                     pullToRefreshState.resetToIdle()
@@ -568,6 +504,10 @@ private fun createPullToRefreshConnection(
     }
 }
 
+/**
+ * The header sits on the top edge of the content and travels with it: `PullLayout` scrolls both, so
+ * the indicator is clipped until the offset has revealed all of it.
+ */
 @Composable
 private fun RefreshHeader(
     pullToRefreshState: PullToRefreshState,
@@ -575,10 +515,10 @@ private fun RefreshHeader(
     color: Color,
     refreshTexts: List<String>,
     refreshTextStyle: TextStyle,
+    bottomGap: Dp,
     modifier: Modifier = Modifier,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
-    val density = LocalDensity.current
 
     LaunchedEffect(pullToRefreshState.refreshState) {
         if (pullToRefreshState.refreshState == RefreshState.ThresholdReached) {
@@ -590,73 +530,10 @@ private fun RefreshHeader(
         derivedStateOf {
             when (pullToRefreshState.refreshState) {
                 RefreshState.Idle -> ""
-
-                RefreshState.Pulling -> {
-                    if (pullToRefreshState.pullProgress > 0.5) refreshTexts.getOrElse(0) { "" } else ""
-                }
-
+                RefreshState.Pulling -> refreshTexts.getOrElse(0) { "" }
                 RefreshState.ThresholdReached -> refreshTexts.getOrElse(1) { "" }
-
                 RefreshState.Refreshing -> refreshTexts.getOrElse(2) { "" }
-
                 RefreshState.RefreshComplete -> refreshTexts.getOrElse(3) { "" }
-            }
-        }
-    }
-
-    val refreshTextAlpha by remember(pullToRefreshState) {
-        derivedStateOf {
-            when (pullToRefreshState.refreshState) {
-                RefreshState.Idle -> 0f
-
-                RefreshState.Pulling -> {
-                    val progress = pullToRefreshState.pullProgress
-                    if (progress > 0.6f) (progress - 0.5f) * 2f else 0f
-                }
-
-                RefreshState.ThresholdReached, RefreshState.Refreshing -> 1f
-
-                RefreshState.RefreshComplete -> {
-                    (1f - pullToRefreshState.refreshCompleteAnimProgress * 1.95f).coerceAtLeast(0f)
-                }
-            }
-        }
-    }
-
-    val indicatorHeight by remember(pullToRefreshState, circleSize, density) {
-        derivedStateOf {
-            when (pullToRefreshState.refreshState) {
-                RefreshState.Idle -> 0.dp
-
-                RefreshState.Pulling -> circleSize * pullToRefreshState.pullProgress
-
-                RefreshState.ThresholdReached -> {
-                    val offsetDp = with(density) { (pullToRefreshState.dragOffset - pullToRefreshState.refreshThresholdOffset).toDp() }
-                    circleSize + offsetDp
-                }
-
-                RefreshState.Refreshing -> circleSize
-
-                RefreshState.RefreshComplete -> circleSize * (1 - pullToRefreshState.refreshCompleteAnimProgress)
-            }
-        }
-    }
-
-    val headerHeight by remember(pullToRefreshState, circleSize, density) {
-        derivedStateOf {
-            when (pullToRefreshState.refreshState) {
-                RefreshState.Idle -> 0.dp
-
-                RefreshState.Pulling -> (circleSize + 36.dp) * pullToRefreshState.pullProgress
-
-                RefreshState.ThresholdReached -> {
-                    val offsetDp = with(density) { (pullToRefreshState.dragOffset - pullToRefreshState.refreshThresholdOffset).toDp() }
-                    (circleSize + 36.dp) + offsetDp
-                }
-
-                RefreshState.Refreshing -> circleSize + 36.dp
-
-                RefreshState.RefreshComplete -> (circleSize + 36.dp) * (1 - pullToRefreshState.refreshCompleteAnimProgress)
             }
         }
     }
@@ -664,22 +541,32 @@ private fun RefreshHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(headerHeight),
+            .clipToBounds()
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(
+                    constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity),
+                )
+                val height = pullToRefreshState.dragOffset.roundToInt().coerceAtLeast(0)
+                layout(placeable.width, height) {
+                    placeable.place(0, height - placeable.height)
+                }
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
     ) {
         RefreshIndicator(
             pullToRefreshState = pullToRefreshState,
             circleSize = circleSize,
             color = color,
-            modifier = Modifier.height(indicatorHeight),
         )
-        Text(
-            text = refreshText,
-            style = refreshTextStyle,
-            color = color,
-            modifier = Modifier.padding(top = 6.dp).graphicsLayer { alpha = refreshTextAlpha },
-        )
+        if (refreshTexts.isNotEmpty()) {
+            Text(
+                text = refreshText,
+                style = refreshTextStyle,
+                color = color,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+        Spacer(Modifier.height(bottomGap))
     }
 }
 
@@ -688,205 +575,99 @@ private fun RefreshIndicator(
     pullToRefreshState: PullToRefreshState,
     circleSize: Dp,
     color: Color,
-    modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        // Only create rotation animation when actually refreshing to save resources
-        val rotationState = if (pullToRefreshState.refreshState == RefreshState.Refreshing) {
-            animateRotation()
-        } else {
-            null
+    val spinning = pullToRefreshState.isRefreshing ||
+        pullToRefreshState.refreshState == RefreshState.RefreshComplete
+    val cycle = remember { Animatable(0f) }
+
+    LaunchedEffect(spinning) {
+        if (!spinning) {
+            cycle.snapTo(0f)
+            return@LaunchedEffect
         }
-        Canvas(modifier = Modifier.size(circleSize)) {
-            val ringStrokeWidthPx = circleSize.toPx() / 11
-            val indicatorRadiusPx = max(size.minDimension / 2, circleSize.toPx() / 3.5f)
-            val center = Offset(circleSize.toPx() / 2, circleSize.toPx() / 1.8f)
+        delay(SPINNER_START_DELAY_MILLIS)
+        while (true) {
+            cycle.animateTo(1f, tween(RotatingSpinnerCycleMillis, easing = LinearEasing))
+            cycle.snapTo(0f)
+        }
+    }
 
-            when (pullToRefreshState.refreshState) {
-                RefreshState.Idle -> return@Canvas
-
-                RefreshState.Pulling -> {
-                    val alpha = (pullToRefreshState.pullProgress - 0.2f).coerceAtLeast(0f)
-                    drawPullingIndicator(center, indicatorRadiusPx, ringStrokeWidthPx, color, alpha)
-                }
-
-                RefreshState.ThresholdReached -> {
-                    drawThresholdIndicator(
-                        center,
-                        indicatorRadiusPx,
-                        ringStrokeWidthPx,
-                        color,
-                        pullToRefreshState.dragOffset,
-                        pullToRefreshState.refreshThresholdOffset,
-                        pullToRefreshState.maxDragDistancePx,
-                    )
-                }
-
-                RefreshState.Refreshing -> {
-                    drawRefreshingIndicator(
-                        center,
-                        indicatorRadiusPx,
-                        ringStrokeWidthPx,
-                        color,
-                        rotationState?.value ?: 0f,
-                    )
-                }
-
-                RefreshState.RefreshComplete -> {
-                    drawRefreshCompleteIndicator(
-                        center,
-                        indicatorRadiusPx,
-                        ringStrokeWidthPx,
-                        color,
-                        pullToRefreshState.refreshCompleteAnimProgress,
-                    )
-                }
-            }
+    Canvas(modifier = Modifier.size(circleSize)) {
+        val rotation = if (spinning) {
+            pullToRefreshState.heldIndicatorRotation
+        } else {
+            pullToRefreshState.indicatorRotation()
+        }
+        // The layer's `s: [-100, -100, 100]` is half a turn. A running spinner can ignore that
+        // phase, but this one rests on frame 0, so the gap has to land where the asset puts it.
+        rotate(rotation + 180f) {
+            drawRotatingSpinner(
+                cycle = cycle.value,
+                color = color,
+                diameterPx = size.minDimension * SPINNER_RING_RATIO,
+                strokeWidthPx = size.minDimension * SPINNER_STROKE_RATIO,
+            )
         }
     }
 }
 
-@Composable
-private fun animateRotation(): State<Float> {
-    val infiniteTransition = rememberInfiniteTransition()
-    val initialRotation = remember { (0..360).random().toFloat() }
-    // COUILoadingView rotates one full turn per 1000 ms with a linear interpolator
-    // ((uptimeMillis % 1000) * 360 / 1000 in onDraw).
-    return infiniteTransition.animateFloat(
-        initialValue = initialRotation,
-        targetValue = initialRotation + 360f,
-        animationSpec = infiniteRepeatable<Float>(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-    )
+/**
+ * One drag event: `PullLayout` divides [delta] by `2.5 / (1 - offset / height)`, so the page resists
+ * harder the further it has travelled, and clamps the result to the container.
+ */
+internal fun pullToRefreshDragStep(offset: Float, delta: Float, height: Float): Float {
+    if (height <= 0f) return offset
+    val resistance = 1f - (offset / height).coerceIn(0f, 1f)
+    return (offset + delta * resistance / REFRESH_DAMPING).coerceIn(0f, height)
 }
 
-private fun DrawScope.drawPullingIndicator(
-    center: Offset,
-    radius: Float,
-    strokeWidth: Float,
-    color: Color,
-    alpha: Float,
-) {
-    drawCircle(
-        color = color.copy(alpha = alpha),
-        radius = radius,
-        center = center,
-        style = Stroke(strokeWidth, cap = StrokeCap.Round),
-    )
+/**
+ * The indicator's rotation at [offset], from `DefaultHeader`: it rests at 270 degrees until it is
+ * fully revealed at [begin], turns a quarter to [threshold], then keeps turning with the finger.
+ */
+internal fun pullToRefreshIndicatorRotation(offset: Float, begin: Float, threshold: Float): Float = when {
+    offset >= threshold -> (offset - threshold) / 2f
+    offset > begin -> (offset - begin) / (threshold - begin) * 90f + 270f
+    else -> 270f
 }
 
-private fun DrawScope.drawThresholdIndicator(
-    center: Offset,
-    radius: Float,
-    strokeWidth: Float,
-    color: Color,
-    dragOffset: Float,
-    thresholdOffset: Float,
-    maxDrag: Float,
-) {
-    val lineLength = (dragOffset - thresholdOffset).coerceIn(0f, maxDrag - thresholdOffset)
-    val topY = center.y
-    val bottomY = center.y + lineLength
-    drawArc(
-        color = color,
-        startAngle = 180f,
-        sweepAngle = 180f,
-        useCenter = false,
-        topLeft = Offset(center.x - radius, topY - radius),
-        size = Size(radius * 2, radius * 2),
-        style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-    )
-    drawArc(
-        color = color,
-        startAngle = 0f,
-        sweepAngle = 180f,
-        useCenter = false,
-        topLeft = Offset(center.x - radius, bottomY - radius),
-        size = Size(radius * 2, radius * 2),
-        style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-    )
-    drawLine(
-        color = color,
-        start = Offset(center.x - radius, topY),
-        end = Offset(center.x - radius, bottomY),
-        strokeWidth = strokeWidth,
-        cap = StrokeCap.Round,
-    )
-    drawLine(
-        color = color,
-        start = Offset(center.x + radius, topY),
-        end = Offset(center.x + radius, bottomY),
-        strokeWidth = strokeWidth,
-        cap = StrokeCap.Round,
-    )
-}
+/** `PullLayout.dampingCoefficient`. */
+private const val REFRESH_DAMPING = 2.5f
 
-private fun DrawScope.drawRefreshingIndicator(
-    center: Offset,
-    radius: Float,
-    strokeWidth: Float,
-    color: Color,
-    rotation: Float,
-) {
-    drawCircle(
-        color = color,
-        radius = radius,
-        center = center,
-        style = Stroke(strokeWidth, cap = StrokeCap.Round),
-    )
-    val orbitRadius = radius - 2 * strokeWidth
-    val angle = rotation * PI / 180.0
-    val dotCenter = center + Offset(
-        x = (orbitRadius * cos(angle)).toFloat(),
-        y = (orbitRadius * sin(angle)).toFloat(),
-    )
-    drawCircle(color = color, radius = strokeWidth, center = dotCenter)
-}
+/** The duration of every `PullLayout` Scroller run. */
+private const val REFRESH_SCROLL_MILLIS = 500
 
-private fun DrawScope.drawRefreshCompleteIndicator(
-    center: Offset,
-    radius: Float,
-    strokeWidth: Float,
-    color: Color,
-    progress: Float,
-) {
-    val animatedRadius = radius * (1f - progress).coerceAtLeast(0.9f)
-    val alphaColor = color.copy(alpha = (1f - progress - 0.35f).coerceAtLeast(0f))
-    val y = center.y - radius - strokeWidth + animatedRadius
-    drawCircle(
-        color = alphaColor,
-        radius = animatedRadius,
-        center = Offset(center.x, y),
-        style = Stroke(strokeWidth, cap = StrokeCap.Round),
-    )
-}
+/** `DefaultHeader` posts its loading start this long after the finger lifts. */
+private const val SPINNER_START_DELAY_MILLIS = 100L
 
-private const val MAX_DRAWRATIO = 1 / 6f
-private const val THRESHOLD_RADIO = 1 / 4f
+/** pull_down_loading.json: 26 units at 300% group scale on an 84-unit comp. */
+private const val SPINNER_RING_RATIO = 78f / 84f
+
+/** pull_down_loading.json: a 2-unit stroke at 300% group scale on an 84-unit comp. */
+private const val SPINNER_STROKE_RATIO = 6f / 84f
 
 internal val LocalPullToRefreshState = staticCompositionLocalOf<PullToRefreshState?> { null }
 
 /** Default values for the [PullToRefresh] component. */
 object PullToRefreshDefaults {
     /**
-     * The default color of the refresh indicator. [Color.Unspecified] makes [PullToRefresh]
-     * fall back to the theme primary color (COUI `couiLoadingViewColor` = couiColorPrimary).
+     * The default color of the refresh indicator. [Color.Unspecified] makes [PullToRefresh] fall
+     * back to the theme onSurface color at 85% opacity, the stroke of `pull_down_loading.json`.
      */
     val color: Color = Color.Unspecified
 
-    /** The default size of the refresh indicator circle (COUI coui_loading_view_refresh_width/height). */
-    val circleSize: Dp = 19.dp
-    val refreshTexts = listOf(
-        "Pull down to refresh",
-        "Release to refresh",
-        "Refreshing...",
-        "Refreshed successfully",
-    )
+    /** The default size of the refresh indicator (`default_header_loading_height`). */
+    val circleSize: Dp = 26.dp
+
+    /** ColorOS list refresh shows only the indicator. */
+    val refreshTexts: List<String> = emptyList()
+
+    /**
+     * The empty band kept between the indicator block and the top of the content, so the
+     * indicator never sits flush against the list.
+     */
+    val HeaderBottomGap: Dp = 8.dp
+
     val refreshTextStyle = TextStyle(
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,

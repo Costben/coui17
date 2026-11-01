@@ -77,10 +77,11 @@ PullToRefresh has the following states:
 | pullToRefreshState      | PullToRefreshState     | PullToRefresh state            | rememberPullToRefreshState()           | No       |
 | contentPadding          | PaddingValues          | Content padding                | PaddingValues(0.dp)                    | No       |
 | topAppBarScrollBehavior | ScrollBehavior         | Top app bar scroll behavior    | null                                   | No       |
-| color                   | Color                  | Indicator color (Unspecified falls back to theme primary) | PullToRefreshDefaults.color            | No       |
+| color                   | Color                  | Indicator color (Unspecified falls back to theme onSurface at 85% opacity) | PullToRefreshDefaults.color            | No       |
 | circleSize              | Dp                     | Indicator circle size          | PullToRefreshDefaults.circleSize       | No       |
 | refreshTexts            | List\<String>          | Text list for different states | PullToRefreshDefaults.refreshTexts     | No       |
 | refreshTextStyle        | TextStyle              | Refresh text style             | PullToRefreshDefaults.refreshTextStyle | No       |
+| headerBottomGap         | Dp                     | Empty band between the indicator block and the content top | PullToRefreshDefaults.HeaderBottomGap  | No       |
 | content                 | @Composable () -> Unit | Scrollable content composable  | None                                   | Yes      |
 
 ### PullToRefreshState Class
@@ -99,9 +100,10 @@ PullToRefreshDefaults provides default values for the component.
 
 | Property Name    | Type          | Description             | Default Value                                                                             |
 | ---------------- | ------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
-| color            | Color         | Default indicator color | Color.Unspecified (falls back to the theme primary color)                                 |
-| circleSize       | Dp            | Default indicator size  | 19.dp                                                                                     |
-| refreshTexts     | List\<String> | Default text list       | ["Pull down to refresh", "Release to refresh", "Refreshing...", "Refreshed successfully"] |
+| color            | Color         | Default indicator color | Color.Unspecified (falls back to theme onSurface at 85% opacity)                                 |
+| circleSize       | Dp            | Default indicator size  | 26.dp                                                                                     |
+| refreshTexts     | List\<String> | Default text list       | emptyList() |
+| HeaderBottomGap  | Dp            | Empty band between the indicator block and the content top | 8.dp |
 | refreshTextStyle | TextStyle     | Default text style      | TextStyle(fontSize = 14.sp, fontWeight = Bold, color = color)                             |
 
 ## Advanced Usage
@@ -119,6 +121,8 @@ PullToRefresh(
 
 ### Custom Refresh Texts
 
+ColorOS list refresh shows only the indicator, so there is no text by default. To add text, pass it in the order pulling, threshold reached, refreshing, complete:
+
 ```kotlin
 PullToRefresh(
     refreshTexts = listOf(
@@ -132,6 +136,12 @@ PullToRefresh(
     // Content
 }
 ```
+
+### Header Spacing
+
+The header keeps an 8.dp empty band between the indicator block and the top of the content, so the
+indicator never sits flush against the list. The band belongs to the header itself, so it slides in
+with the rest of the block during the pull and stays visible while refreshing.
 
 ### Coordinating with a TopAppBar
 

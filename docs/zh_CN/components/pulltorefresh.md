@@ -77,10 +77,11 @@ PullToRefresh 组件有以下几种状态：
 | pullToRefreshState      | PullToRefreshState     | 下拉刷新状态控制器       | rememberPullToRefreshState()           | 否       |
 | contentPadding          | PaddingValues          | 内容区的内边距           | PaddingValues(0.dp)                    | 否       |
 | topAppBarScrollBehavior | ScrollBehavior         | 顶部应用栏滚动行为       | null                                   | 否       |
-| color                   | Color                  | 刷新指示器的颜色（Unspecified 回退到主题主色） | PullToRefreshDefaults.color            | 否       |
-| circleSize              | Dp                     | 刷新指示器圆圈的大小     | PullToRefreshDefaults.circleSize       | 否       |
+| color                   | Color                  | 刷新指示器的颜色（Unspecified 回退到主题 onSurface 85% 不透明度） | PullToRefreshDefaults.color            | 否       |
+| circleSize              | Dp                     | 刷新指示器大小，触发阈值是它的 2 倍 | PullToRefreshDefaults.circleSize       | 否       |
 | refreshTexts            | List\<String>          | 不同状态下显示的文本列表 | PullToRefreshDefaults.refreshTexts     | 否       |
 | refreshTextStyle        | TextStyle              | 刷新文本的样式           | PullToRefreshDefaults.refreshTextStyle | 否       |
+| headerBottomGap         | Dp                     | 指示器块与内容顶部之间的空白 | PullToRefreshDefaults.HeaderBottomGap  | 否       |
 | content                 | @Composable () -> Unit | 可滚动内容的可组合函数   | 无                                     | 是       |
 
 ### PullToRefreshState 类
@@ -101,9 +102,10 @@ PullToRefreshDefaults 提供下拉刷新组件的默认值。
 
 | 属性名           | 类型          | 说明                 | 默认值                                                                                    |
 | ---------------- | ------------- | -------------------- | ----------------------------------------------------------------------------------------- |
-| color            | Color         | 刷新指示器的默认颜色 | Color.Unspecified（回退到主题主色）                                                       |
-| circleSize       | Dp            | 指示器圆圈的默认大小 | 19.dp                                                                                     |
-| refreshTexts     | List\<String> | 默认的刷新文本列表   | ["Pull down to refresh", "Release to refresh", "Refreshing...", "Refreshed successfully"] |
+| color            | Color         | 刷新指示器的默认颜色 | Color.Unspecified（回退到主题 onSurface 85% 不透明度）                                                       |
+| circleSize       | Dp            | 指示器的默认大小 | 26.dp                                                                                     |
+| refreshTexts     | List\<String> | 默认的刷新文本列表   | emptyList() |
+| HeaderBottomGap  | Dp            | 指示器块与内容顶部之间的空白 | 8.dp |
 | refreshTextStyle | TextStyle     | 默认的文本样式       | TextStyle(fontSize = 14.sp, fontWeight = Bold, color = color)                             |
 
 ## 进阶用法
@@ -123,6 +125,8 @@ PullToRefresh(
 
 ### 自定义刷新文本
 
+ColorOS 的列表下拉刷新只显示指示器，默认没有文字。需要文字时按拉动、达到阈值、刷新中、完成的顺序传入：
+
 ```kotlin
 PullToRefresh(
     isRefreshing = isRefreshing,
@@ -138,6 +142,11 @@ PullToRefresh(
     // 内容
 }
 ```
+
+### 刷新头间距
+
+刷新头在指示器块与内容顶部之间固定留 8dp 空白，指示器不会贴着列表顶边。这段空白属于刷新头本身，
+下拉时随整块一起滑入，刷新过程中保持可见。
 
 ### 与 TopAppBar 协同滚动
 

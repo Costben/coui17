@@ -402,30 +402,47 @@ fun RotatingProgressIndicator(
             .semantics { progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate }
             .size(size),
     ) {
-        val strokeWidthPx = strokeWidth.toPx()
-        val diameterPx = ringDiameter.toPx()
-        val inset = (this.size.minDimension - diameterPx) / 2
-
-        // `Trim Paths 1` pins `end` at 100% and animates `start`, so the arc's trailing edge is
-        // fixed while its leading edge swings; both the sweep and the start angle derive from it.
-        val trimStart = rotatingSpinnerTrimStart(cycle)
-
-        drawArc(
+        drawRotatingSpinner(
+            cycle = cycle,
             color = color,
-            startAngle = rotatingSpinnerStartAngle(cycle, trimStart),
-            sweepAngle = 360f - trimStart,
-            useCenter = false,
-            topLeft = Offset(inset, inset),
-            size = Size(diameterPx, diameterPx),
-            // Stroke 1 declares lc = 1, i.e. a butt/flat cap (not the round cap the other COUI
-            // progress indicators use), and lj = 1 (miter, irrelevant for a single open arc).
-            style = Stroke(width = strokeWidthPx, cap = StrokeCap.Butt),
+            diameterPx = ringDiameter.toPx(),
+            strokeWidthPx = strokeWidth.toPx(),
         )
     }
 }
 
+/**
+ * Draws the frame of [RotatingProgressIndicator] at normalized time [cycle], centered in this scope.
+ * Pull to refresh holds frame 0 while the finger is down, so the frame is shared rather than the
+ * animated composable.
+ */
+internal fun DrawScope.drawRotatingSpinner(
+    cycle: Float,
+    color: Color,
+    diameterPx: Float,
+    strokeWidthPx: Float,
+) {
+    val inset = (size.minDimension - diameterPx) / 2
+
+    // `Trim Paths 1` pins `end` at 100% and animates `start`, so the arc's trailing edge is
+    // fixed while its leading edge swings; both the sweep and the start angle derive from it.
+    val trimStart = rotatingSpinnerTrimStart(cycle)
+
+    drawArc(
+        color = color,
+        startAngle = rotatingSpinnerStartAngle(cycle, trimStart),
+        sweepAngle = 360f - trimStart,
+        useCenter = false,
+        topLeft = Offset(inset, inset),
+        size = Size(diameterPx, diameterPx),
+        // Stroke 1 declares lc = 1, i.e. a butt/flat cap (not the round cap the other COUI
+        // progress indicators use), and lj = 1 (miter, irrelevant for a single open arc).
+        style = Stroke(width = strokeWidthPx, cap = StrokeCap.Butt),
+    )
+}
+
 /** The cycle duration of [RotatingProgressIndicator] (coui_rotating_loading.json: 76 frames at 60 fps). */
-private val RotatingSpinnerCycleMillis = 1250
+internal val RotatingSpinnerCycleMillis = 1250
 
 /** The normalized time at which the arc is shortest (coui_rotating_loading.json keyframe t = 37 of 75). */
 private val RotatingSpinnerBreakpoint = 37f / 75f
