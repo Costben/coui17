@@ -597,13 +597,12 @@ private fun createFullPagePullToRefreshConnection(
         return appBarConsumed + Offset(0f, dragConsumed)
     }
 
-    override suspend fun onPreFling(available: Velocity): Velocity =
-        if (state.refreshState == FullPageRefreshState.Idle) {
-            Velocity.Zero
-        } else {
-            // 只吞纵向速度，横向留给外层 Pager：回弹 / 刷新过程中仍能左右翻页。
-            Velocity(0f, available.y)
-        }
+    override suspend fun onPreFling(available: Velocity): Velocity = if (state.refreshState == FullPageRefreshState.Idle) {
+        Velocity.Zero
+    } else {
+        // 只吞纵向速度，横向留给外层 Pager：回弹 / 刷新过程中仍能左右翻页。
+        Velocity(0f, available.y)
+    }
 
     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
         if (state.refreshState != FullPageRefreshState.Idle) {
