@@ -686,8 +686,12 @@ object DialogDefaults {
      * targets once a three-key navigation bar sits under the dialog. `updateDialogBottomMargin()`
      * insets by `60dp - navigationBarHeight`, so the gap from the dialog to the screen edge is 60dp
      * rather than the 32dp of [outsideMargin].
+     *
+     * Held at 36dp instead (60dp cut by two fifths) so every dialog sits closer to the bottom edge;
+     * this is the only number that moves them all at once, since a call site's `outsideMargin.height`
+     * is ignored as soon as a navigation bar inset exists.
      */
-    val OutsideMarginWithNavigationBar = 60.dp
+    val OutsideMarginWithNavigationBar = 36.dp
 
     /**
      * `dimen/coui_dialog_max_height` = 632dp, the `maxHeight` of `style/COUIAlertDialogLayoutStyle`.
