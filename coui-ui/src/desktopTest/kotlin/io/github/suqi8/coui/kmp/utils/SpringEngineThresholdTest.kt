@@ -7,9 +7,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * `SpringOverScroller` runs two rebound curves, and the library picks between them by entry point:
- * `springBack` after the finger lets go ([SpringMath.SPRING_BACK]) and the fling interpolator when a
- * fling runs into the boundary ([SpringMath.FLING_REBOUND]).
+ * Both rebound curves `SpringOverScroller` defines. Overscroll now uses [SpringMath.SPRING_BACK]
+ * from both entry points; [SpringMath.FLING_REBOUND] stays as `SpringEngine`'s default, so its end
+ * conditions are still worth pinning.
  */
 class SpringEngineThresholdTest {
 

@@ -183,12 +183,12 @@ class COUIOverscrollEffect : OverscrollEffect {
     }
 
     /**
-     * @param params [SpringMath.SPRING_BACK] when the finger lets go, [SpringMath.FLING_REBOUND] when
-     *   a fling runs into the boundary.
+     * @param params The rebound curve; both entry points use [SpringMath.SPRING_BACK], so a fling
+     *   that runs into the boundary and a finger-up release come back at the same speed.
      */
     private fun startSpringAnimationX(
         initialVelocity: Float = 0f,
-        params: SpringParams = SpringMath.FLING_REBOUND,
+        params: SpringParams = SpringMath.SPRING_BACK,
     ) {
         if (abs(offsetX) <= offsetThreshold && initialVelocity == 0f) {
             resetStateX()
@@ -213,7 +213,7 @@ class COUIOverscrollEffect : OverscrollEffect {
     /** @see startSpringAnimationX */
     private fun startSpringAnimationY(
         initialVelocity: Float = 0f,
-        params: SpringParams = SpringMath.FLING_REBOUND,
+        params: SpringParams = SpringMath.SPRING_BACK,
     ) {
         if (abs(offsetY) <= offsetThreshold && initialVelocity == 0f) {
             resetStateY()
@@ -369,14 +369,14 @@ class COUIOverscrollEffect : OverscrollEffect {
         val consumed = performFling(performVelocity)
         val remaining = performVelocity - consumed
 
-        // Post-fling: the fling has run into the boundary and decelerates on
-        // `COUISpringInterpolator(40, 1.15)` (mirrors onPostFling). An axis that was already
-        // overscrolled when the finger left keeps settling on `SPRING_BACK` instead.
+        // Post-fling: a fling that runs into the boundary settles on `SPRING_BACK` like a finger-up
+        // release. The fling curve's tail grows with the leftover velocity, which made the same
+        // gesture come back in 0.2s or 2s depending on how hard it was thrown.
         if (!bypassY && !springBackY) {
-            startSpringAnimationY(remaining.y / 1.53333f, SpringMath.FLING_REBOUND)
+            startSpringAnimationY(remaining.y / 1.53333f, SpringMath.SPRING_BACK)
         }
         if (!springBackX) {
-            startSpringAnimationX(remaining.x / 1.53333f, SpringMath.FLING_REBOUND)
+            startSpringAnimationX(remaining.x / 1.53333f, SpringMath.SPRING_BACK)
         }
 
         updateOverScrollState()

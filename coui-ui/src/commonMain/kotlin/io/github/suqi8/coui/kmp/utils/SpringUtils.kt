@@ -71,6 +71,14 @@ internal object SpringMath {
      * An angular frequency of `sqrt(40) = 6.3246` rad/s (a 0.9935s natural period) with a damping
      * ratio of 1.15. The fling ends when it loses the velocity `getSplineMinVelocity()` asks for
      * (`REST_SPEED_THRESHOLD` 5px/s), or when it is within `mDisplacementFromRestThreshold` 0.05px.
+     *
+     * That end condition is why overscroll no longer uses this curve. The settle is bounded by the
+     * velocity, so its length follows the speed the fling still had when it hit the edge: about
+     * 0.15s at 300px/s, 0.9s at 6 000px/s, and close to 2s at 20 000px/s. A list thrown from one end
+     * to the other arrives with the large values, so the same gesture bounced back quickly or took
+     * seconds depending on how hard it was thrown. [SPRING_BACK] stops on displacement instead and
+     * is back in about 0.9s from any velocity a fling can leave, which is why both overscroll entry
+     * points now use it; this pair is kept as [SpringEngine]'s default and for the desktop tests.
      */
     val FLING_REBOUND = SpringParams(
         tension = 40.0,
@@ -154,9 +162,9 @@ internal class SpringEngine {
     }
 
     /**
-     * @param params Which of `SpringOverScroller`'s two rebound curves drives this settle:
-     *   [SpringMath.SPRING_BACK] after the finger lets go, [SpringMath.FLING_REBOUND] when a fling
-     *   runs into the boundary.
+     * @param params Which rebound curve drives this settle. Overscroll passes
+     *   [SpringMath.SPRING_BACK] from both entry points; the default is the fling curve, which only
+     *   the desktop tests exercise.
      */
     fun start(
         startValue: Float,

@@ -210,13 +210,12 @@ private class OverscrollNode(
     }
 
     /**
-     * @param params [SpringMath.SPRING_BACK] when the finger lets go, [SpringMath.FLING_REBOUND] when
-     *   a fling runs into the boundary: `COUINestedScrollView` springs back on `ACTION_UP` with
-     *   `ReboundOverScroller.springBack`, while a fling decelerates on `COUISpringInterpolator(40, 1.15)`.
+     * @param params The rebound curve; both entry points use [SpringMath.SPRING_BACK], so a fling
+     *   that runs into the boundary and a finger-up release come back at the same speed.
      */
     private fun startSpringAnimation(
         initialVelocity: Float = 0f,
-        params: SpringParams = SpringMath.FLING_REBOUND,
+        params: SpringParams = SpringMath.SPRING_BACK,
     ) {
         if (abs(offset) <= offsetThreshold && initialVelocity == 0f) {
             resetState()
@@ -423,8 +422,7 @@ private class OverscrollNode(
             return dispatcher.dispatchPostFling(consumed, available)
         }
 
-        // A rebound the finger-up started in `onPreFling` is already settling on `SPRING_BACK`;
-        // only a fling that runs into the boundary decelerates on `COUISpringInterpolator(40, 1.15)`.
+        // A rebound the finger-up started in `onPreFling` is already settling on `SPRING_BACK`.
         val springingBack = animationJob?.isActive == true
         if (!springingBack) animationJob?.cancel()
 
@@ -438,8 +436,11 @@ private class OverscrollNode(
 
         val realAvailable = available - parentConsumed
         val velocity = (if (isVertical) realAvailable.y else realAvailable.x) / 1.53333f // attenuation speed
-        // The fling has run into the boundary: decelerate on `COUISpringInterpolator(40, 1.15)`.
-        startSpringAnimation(velocity, SpringMath.FLING_REBOUND)
+        // A fling that runs into the boundary also settles on `SPRING_BACK`. The fling curve
+        // (`COUISpringInterpolator(40, 1.15)`) shortens as the leftover velocity drops, so the same
+        // gesture came back in 0.2s or 2s depending on how hard it was thrown; the finger-up curve
+        // is back in about 0.9s from anything a fling can leave.
+        startSpringAnimation(velocity, SpringMath.SPRING_BACK)
 
         return parentConsumed + if (isVertical) Velocity(0f, velocity) else Velocity(velocity, 0f)
     }
