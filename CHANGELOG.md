@@ -138,6 +138,7 @@ All notable user-visible changes are documented here. The format follows
 - `CheckboxPreferenceDefaults.SwitchActionLabel` (`coui_accessibility_switch`, the row's click action) and `CheckboxPreferenceDefaults.CheckboxEndMargin` (6dp); `CheckBoxWithDividerPreferenceDefaults.CheckboxEndMargin` (16dp); `RadioButtonPreferenceDefaults.SelectActionLabel` (`coui_accessibility_select`).
 - `DropdownItem` takes `onLongClick`, and `DropdownDefaults.LongPressTimeoutMillis` is the 650ms `COUIPopupListWindow` region-based long press: holding a popup row delivers its long click, a submenu trigger expands on the hold as well, the submenu header collapses the submenu when held, and a row with neither keeps its plain tap.
 - A cascading popup's submenu survives a drag inside the main menu for 500ms (`COUIPopupMenuRootView.MAIN_AREA_DISMISS_DELAY_MS`) before it collapses, so sliding back into the submenu or lifting keeps it open; a tap still collapses at once.
+- `MetaBallSurface` takes `blurColors` and `continuousCurve`, the two knobs its internal overload already had. A non-null `blurColors` — normally `BottomFloatingNavigationBarDefaults.blurColors(isDark)` — tints the blur with the material's blend-mode layers instead of one flat `color` layer, which replaces most of a dark backdrop with grey; `continuousCurve` draws the silhouette on COUI's continuous-curvature SDF.
 
 
 ### Fixed

@@ -151,6 +151,10 @@ object MetaBallDefaults {
  * @param bottomGlowColor A directional light that diffuses below the silhouette, or `null` to skip it.
  *   It uses the native caustic SDF and vertical attenuation, with per-component layout profiles.
  * @param bottomGlowBlur Retained for source compatibility; native caustic profiles determine the falloff.
+ * @param blurColors Blend-mode layers tinting the blur, normally a material's own list such as
+ *   `BottomFloatingNavigationBarDefaults.blurColors(isDark)`. `null` keeps the flat [color] layer,
+ *   which cannot follow a dark backdrop: it replaces it with grey in both themes.
+ * @param continuousCurve Draw the silhouette with COUI's continuous-curvature SDF.
  * @param content The content drawn on top of the silhouette.
  */
 @Composable
@@ -169,11 +173,13 @@ fun MetaBallSurface(
     rimBottomScale: Float = 0f,
     bottomGlowColor: Color? = null,
     bottomGlowBlur: Dp = 8.dp,
+    blurColors: List<BlendColorEntry>? = null,
+    continuousCurve: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     MetaBallSurface(
         particles = particles,
-        blurColors = null,
+        blurColors = blurColors,
         modifier = modifier,
         color = color,
         backdrop = backdrop,
@@ -186,6 +192,7 @@ fun MetaBallSurface(
         rimBlur = rimBlur,
         rimBottomScale = rimBottomScale,
         bottomGlowColor = bottomGlowColor,
+        continuousCurve = continuousCurve,
         content = content,
     )
 }

@@ -1226,7 +1226,7 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$MetaBallS
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$MetaBallSurfaceKt;
 	public fun <init> ()V
 	public final fun getLambda$-445604643$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda$501321855$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-5034317$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$PinnedTopAppBarKt {
@@ -2761,7 +2761,7 @@ public final class io/github/suqi8/coui/kmp/basic/MetaBallParticle$Companion {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/MetaBallSurfaceKt {
-	public static final fun MetaBallSurface-qmZ5skE (Ljava/util/List;Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FFFFFLandroidx/compose/ui/graphics/Color;FFLandroidx/compose/ui/graphics/Color;FLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
+	public static final fun MetaBallSurface-HT4VeuU (Ljava/util/List;Landroidx/compose/ui/Modifier;JLio/github/suqi8/coui/kmp/blur/Backdrop;FFFFFLandroidx/compose/ui/graphics/Color;FFLandroidx/compose/ui/graphics/Color;FLjava/util/List;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/NavigationBarDefaults {
