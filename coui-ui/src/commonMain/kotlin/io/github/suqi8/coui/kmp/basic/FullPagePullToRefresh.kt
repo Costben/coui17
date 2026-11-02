@@ -12,6 +12,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -84,12 +86,17 @@ import kotlin.math.roundToInt
  * Releasing past [refreshThreshold] commits the refresh; releasing earlier plays the same
  * decelerating rebound as the original implementation. When the hoisted [isRefreshing] flag flips
  * back to `false`, the success hint stays on screen for [completeHoldDurationMillis] before the
- * page returns to its resting position. The return trip runs on its own timing — 45% of the
- * downward settle, capped at 220ms — so the page snaps back instead of gliding up.
+ * page returns to its resting position. The return trip runs on its own timing — 30% of the
+ * downward settle, capped at 120ms — so the page snaps back instead of gliding up.
  *
  * The content must be scrollable and should consume [contentPadding] at its top. That padding is
  * also used as the immersive height: the visible band of the hint starts at the top padding line,
  * exactly like the market page where the hint appears below the status bar.
+ *
+ * Only vertical velocity is consumed while the page is being pulled, rebounding or refreshing;
+ * horizontal gestures keep flowing to an enclosing pager, so the reader can still swipe between
+ * pages during the rebound. A touch that never turns into a vertical drag does not interrupt the
+ * rebound either.
  *
  * @param isRefreshing The hoisted refresh state. Set it to `true` in [onRefresh] and back to
  * `false` when loading finishes.
@@ -205,12 +212,16 @@ fun FullPagePullToRefresh(
             modifier = Modifier.align(Alignment.TopCenter),
         )
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset { IntOffset(0, state.dragOffset.roundToInt()) },
-        ) {
-            content()
+        // 整页位移已经由 dragOffset 负责，列表再叠一层弹簧式的 overscroll 拉伸，松手后会多出
+        // 一段几百毫秒的缓回，看起来像卡在半路。这里把内层的 overscroll 关掉，回弹只走一个动画。
+        CompositionLocalProvider(LocalOverscrollFactory provides null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset { IntOffset(0, state.dragOffset.roundToInt()) },
+            ) {
+                content()
+            }
         }
     }
 }
@@ -277,6 +288,13 @@ class FullPagePullToRefreshState internal constructor(
     internal var completionJob: Job? = null
 
     /**
+     * Whether the current touch actually pulled the page down. A tap or a horizontal swipe must not
+     * restart the rebound, otherwise every touch freezes the page mid-way and replays the animation
+     * when the finger lifts.
+     */
+    private var pulledInTouch = false
+
+    /**
      * Starts a refresh without a gesture, animating the page down to the threshold and then
      * invoking [onRefresh]. The caller is still responsible for raising the hoisted flag.
      */
@@ -299,25 +317,21 @@ class FullPagePullToRefreshState internal constructor(
     internal fun onTouchStart() {
         if (isTouching) return
         isTouching = true
-        when (refreshState) {
-            FullPageRefreshState.Pulling, FullPageRefreshState.ThresholdReached -> {
-                animationJob?.cancel()
-                animationJob = null
-                rawDragPx = dragOffset / PULL_DAMPING
-            }
-
-            FullPageRefreshState.RefreshComplete -> {
-                completionJob?.cancel()
-                completionJob = null
-                rebound()
-            }
-
-            else -> Unit
+        pulledInTouch = false
+        // 按下本身不打断回弹：只有真的产生纵向拖动时，滚动回调才接管。
+        // 否则回弹过程中随手一碰（包括左右翻页）就会把页面冻在半路，松手还要再回一次。
+        if (refreshState == FullPageRefreshState.RefreshComplete) {
+            completionJob?.cancel()
+            completionJob = null
+            rebound()
         }
     }
 
     internal fun onTouchRelease(onRefresh: () -> Unit) {
         isTouching = false
+        val pulled = pulledInTouch
+        pulledInTouch = false
+        if (!pulled) return
         when (refreshState) {
             FullPageRefreshState.Pulling, FullPageRefreshState.ThresholdReached -> {
                 release(onRefresh)
@@ -415,6 +429,7 @@ class FullPagePullToRefreshState internal constructor(
         rawDragPx = dragOffset / PULL_DAMPING
         val consumed = (-rawDragPx).coerceAtLeast(availableY)
         applyDrag(consumed)
+        pulledInTouch = true
         return consumed
     }
 
@@ -431,6 +446,7 @@ class FullPagePullToRefreshState internal constructor(
             rawDragPx = dragOffset / PULL_DAMPING
         }
         applyDrag(availableY)
+        pulledInTouch = true
         return availableY
     }
 
@@ -579,7 +595,13 @@ private fun createFullPagePullToRefreshConnection(
         return appBarConsumed + Offset(0f, dragConsumed)
     }
 
-    override suspend fun onPreFling(available: Velocity): Velocity = if (state.refreshState != FullPageRefreshState.Idle) available else Velocity.Zero
+    override suspend fun onPreFling(available: Velocity): Velocity =
+        if (state.refreshState == FullPageRefreshState.Idle) {
+            Velocity.Zero
+        } else {
+            // 只吞纵向速度，横向留给外层 Pager：回弹 / 刷新过程中仍能左右翻页。
+            Velocity(0f, available.y)
+        }
 
     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
         if (state.refreshState != FullPageRefreshState.Idle) {
@@ -588,7 +610,7 @@ private fun createFullPagePullToRefreshConnection(
             ) {
                 state.release(onRefresh)
             }
-            return available
+            return Velocity(0f, available.y)
         }
         return topAppBarScrollBehavior
             ?.nestedScrollConnection
@@ -785,10 +807,10 @@ fun fullPagePullToRefreshColors(
 private const val PULL_DAMPING = 0.5f
 
 /** How much of the reference 500ms-per-threshold timing the rebound to rest keeps. */
-private const val REBOUND_DURATION_SCALE = 0.45f
+private const val REBOUND_DURATION_SCALE = 0.3f
 
 /** The longest the rebound to rest may take, no matter how far the page was pulled. */
-private const val REBOUND_MAX_DURATION_MILLIS = 220
+private const val REBOUND_MAX_DURATION_MILLIS = 120
 
 private val DecelerateQuadEasing = Easing { fraction ->
     1f - (1f - fraction) * (1f - fraction)

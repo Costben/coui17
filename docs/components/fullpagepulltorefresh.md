@@ -129,9 +129,11 @@ The defaults reproduce the market implementation:
 
 - Damping: linear, `dragOffset = fingerDistance * 0.5`
 - Release to threshold: `DecelerateInterpolator(2)`-style curve, duration scaled by distance up to 500ms
-- Rebound when released below the threshold: same curve, duration scaled by distance up to 500ms
+- Rebound when released below the threshold: same curve, 30% of the reference timing capped at 120ms
 - Success hint: visible for 800ms after `isRefreshing` becomes `false`, then the page rebounds
 - A new touch during the 800ms hold cancels it and rebounds immediately
+- Horizontal gestures keep flowing to an enclosing pager while the page is pulled, rebounding or refreshing; only vertical velocity is consumed. A touch that never turns into a vertical drag does not interrupt the rebound.
+- The overscroll of scrollables inside `content` is disabled: the page offset is owned by `dragOffset` alone, otherwise a spring-based overscroll settle keeps sliding the content for a few hundred milliseconds after release.
 
 ## Notes
 
