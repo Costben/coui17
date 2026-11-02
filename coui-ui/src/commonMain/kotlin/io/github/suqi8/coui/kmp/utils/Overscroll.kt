@@ -423,13 +423,18 @@ private class OverscrollNode(
             return dispatcher.dispatchPostFling(consumed, available)
         }
 
-        animationJob?.cancel()
+        // A rebound the finger-up started in `onPreFling` is already settling on `SPRING_BACK`;
+        // only a fling that runs into the boundary decelerates on `COUISpringInterpolator(40, 1.15)`.
+        val springingBack = animationJob?.isActive == true
+        if (!springingBack) animationJob?.cancel()
 
         val parentConsumed = if (nestedScrollToParent) {
             dispatcher.dispatchPostFling(consumed, available)
         } else {
             Velocity.Zero
         }
+
+        if (springingBack) return parentConsumed
 
         val realAvailable = available - parentConsumed
         val velocity = (if (isVertical) realAvailable.y else realAvailable.x) / 1.53333f // attenuation speed

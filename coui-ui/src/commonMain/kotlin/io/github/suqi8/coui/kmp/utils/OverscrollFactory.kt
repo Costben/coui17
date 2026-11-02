@@ -339,41 +339,45 @@ class COUIOverscrollEffect : OverscrollEffect {
         animationJobX?.cancel()
 
         var performVelocity = velocity
+        var springBackY = false
+        var springBackX = false
 
         // Y-axis: when overscrolled, spring absorbs velocity before scroll.
         // The finger is up while the content is held past the edge: `ReboundOverScroller.springBack`.
-        if (!bypassY && isActiveY && velocity.y != 0f) {
-            if (sign(velocity.y) == sign(offsetY)) {
-                // Same direction fling: spring absorbs all velocity, scroll gets nothing
-                startSpringAnimationY(velocity.y, SpringMath.SPRING_BACK)
-                performVelocity = Velocity(performVelocity.x, 0f)
-            } else {
-                // Opposite direction fling: spring starts with full velocity, scroll gets attenuated
-                startSpringAnimationY(velocity.y, SpringMath.SPRING_BACK)
-                performVelocity = Velocity(performVelocity.x, velocity.y / 2.13333f)
-            }
+        // A slow release carries no velocity at all and still has to settle on that spring.
+        if (!bypassY && isActiveY) {
+            springBackY = true
+            startSpringAnimationY(velocity.y, SpringMath.SPRING_BACK)
+            performVelocity = Velocity(
+                performVelocity.x,
+                // Same direction fling: spring absorbs all velocity, scroll gets nothing.
+                // Opposite direction fling: spring starts with full velocity, scroll gets attenuated.
+                if (sign(velocity.y) == sign(offsetY)) 0f else velocity.y / 2.13333f,
+            )
         }
 
         // X-axis: same logic
-        if (isActiveX && velocity.x != 0f) {
-            if (sign(velocity.x) == sign(offsetX)) {
-                startSpringAnimationX(velocity.x, SpringMath.SPRING_BACK)
-                performVelocity = Velocity(0f, performVelocity.y)
-            } else {
-                startSpringAnimationX(velocity.x, SpringMath.SPRING_BACK)
-                performVelocity = Velocity(velocity.x / 2.13333f, performVelocity.y)
-            }
+        if (isActiveX) {
+            springBackX = true
+            startSpringAnimationX(velocity.x, SpringMath.SPRING_BACK)
+            performVelocity = Velocity(
+                if (sign(velocity.x) == sign(offsetX)) 0f else velocity.x / 2.13333f,
+                performVelocity.y,
+            )
         }
 
         val consumed = performFling(performVelocity)
         val remaining = performVelocity - consumed
 
         // Post-fling: the fling has run into the boundary and decelerates on
-        // `COUISpringInterpolator(40, 1.15)` (mirrors onPostFling)
-        if (!bypassY) {
+        // `COUISpringInterpolator(40, 1.15)` (mirrors onPostFling). An axis that was already
+        // overscrolled when the finger left keeps settling on `SPRING_BACK` instead.
+        if (!bypassY && !springBackY) {
             startSpringAnimationY(remaining.y / 1.53333f, SpringMath.FLING_REBOUND)
         }
-        startSpringAnimationX(remaining.x / 1.53333f, SpringMath.FLING_REBOUND)
+        if (!springBackX) {
+            startSpringAnimationX(remaining.x / 1.53333f, SpringMath.FLING_REBOUND)
+        }
 
         updateOverScrollState()
     }

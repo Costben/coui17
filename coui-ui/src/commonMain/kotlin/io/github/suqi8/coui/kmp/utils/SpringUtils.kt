@@ -54,10 +54,15 @@ internal object SpringMath {
      * (`COUINestedScrollView`, `COUIScrollView`) then calls `setSpringBackTensionMultiple(2.15)`, so
      * the pair that actually runs is `friction = (12.19 - 8) * 3 + 25 = 37.57` and
      * `tension = (2.15 * 16 - 30) * 3.62 + 194 = 209.93`. That is an angular frequency of 14.49
-     * rad/s (a 0.434s natural period) with a damping ratio of 1.30, and it stops on displacement
+     * rad/s (a 0.434s natural period) with a damping ratio of 1.30, which settles noticeably slower
+     * than the system Settings app on the reference device.
+     *
+     * Fitting the release curves measured there gives an angular frequency of 14.0 rad/s and a
+     * damping ratio of 1.08, so both values are overridden to match that feel: a 493px overscroll is
+     * back in place about 20% sooner than the 209.93 / 37.57 pair. It still stops on displacement
      * alone: `SPRING_BACK_STOP_THRESHOLD` 0.25px.
      */
-    val SPRING_BACK = SpringParams(tension = 209.93, friction = 37.57, restDisplacement = 0.25, restSpeed = 0.0)
+    val SPRING_BACK = SpringParams(tension = 195.9, friction = 30.23, restDisplacement = 0.25, restSpeed = 0.0)
 
     /**
      * The deceleration of a fling that runs into the boundary:
