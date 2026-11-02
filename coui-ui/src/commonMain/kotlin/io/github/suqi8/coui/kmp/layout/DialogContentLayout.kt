@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.tappableElement
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -498,17 +499,29 @@ internal fun DialogContent(
 }
 
 /**
- * The margin under a dialog: [DialogDefaults.OutsideMarginWithNavigationBar] less the navigation
- * bar inset COUI already skips over, or [DialogDefaults.outsideMargin]'s height when the dialog sits
- * above the screen edge on its own.
+ * The margin under a dialog, on top of the navigation bar inset the dialog layout already skips.
+ *
+ * COUI keeps two targets for the gap between the panel and the screen's bottom edge:
+ * [DialogDefaults.outsideMargin]'s 32dp normally, and
+ * [DialogDefaults.OutsideMarginWithNavigationBar] (60dp) once a three-button bar sits under the
+ * dialog — `updateDialogBottomMargin()` sets the margin to `60dp - navigationBarHeight`, so the
+ * inset plus this margin adds back up to 60dp. The gesture handle takes the first target: it
+ * reports a navigation bar inset too, but COUI keeps the plain 32dp under it. The two are told
+ * apart the same way `BottomFloatingNavigationBarDefaults.navigationBarPadding()` does it — only a
+ * three-button bar is tappable.
  */
 @Composable
 private fun dialogBottomOutsideMargin(outsideMargin: DpSize): Dp {
-    val navigationBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    return if (navigationBarInset > 0.dp) {
-        (DialogDefaults.OutsideMarginWithNavigationBar - navigationBarInset).coerceAtLeast(0.dp)
-    } else {
-        outsideMargin.height
+    val density = LocalDensity.current
+    val navigationBarInset = with(density) { WindowInsets.navigationBars.getBottom(density).toDp() }
+    return when {
+        WindowInsets.tappableElement.getBottom(density) > 0 ->
+            (DialogDefaults.OutsideMarginWithNavigationBar - navigationBarInset).coerceAtLeast(0.dp)
+
+        navigationBarInset > 0.dp ->
+            (outsideMargin.height - navigationBarInset).coerceAtLeast(0.dp)
+
+        else -> outsideMargin.height
     }
 }
 
@@ -683,15 +696,11 @@ object DialogDefaults {
 
     /**
      * `dimen/coui_dialog_layout_margin_bottom_with_navigation_bar` = 60dp: the bottom margin COUI
-     * targets once a three-key navigation bar sits under the dialog. `updateDialogBottomMargin()`
+     * targets once a three-button navigation bar sits under the dialog. `updateDialogBottomMargin()`
      * insets by `60dp - navigationBarHeight`, so the gap from the dialog to the screen edge is 60dp
-     * rather than the 32dp of [outsideMargin].
-     *
-     * Held at 36dp instead (60dp cut by two fifths) so every dialog sits closer to the bottom edge;
-     * this is the only number that moves them all at once, since a call site's `outsideMargin.height`
-     * is ignored as soon as a navigation bar inset exists.
+     * rather than the 32dp of [outsideMargin]. Under the gesture handle the gap stays 32dp.
      */
-    val OutsideMarginWithNavigationBar = 36.dp
+    val OutsideMarginWithNavigationBar = 60.dp
 
     /**
      * `dimen/coui_dialog_max_height` = 632dp, the `maxHeight` of `style/COUIAlertDialogLayoutStyle`.

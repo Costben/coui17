@@ -225,6 +225,7 @@ All notable user-visible changes are documented here. The format follows
 - The list popup highlight uses the native hover tint (`coui_color_hover`, #14000000 light / #26FFFFFF dark) instead of the darker press colour, and the hairlines around the finger stay put during a drag instead of fading in and out.
 - A cascading submenu header keeps its final row height and trailing icon position while expanding instead of morphing from the anchor row's measurements.
 - A `TabRowWithContour` indicator keeps its material rim on the capsule at every position; the rim used to stay anchored to the row's top-left corner, so every segment after the first lost it.
+- A dialog ends 32dp above the screen's bottom edge under the gesture handle, the `coui_dialog_layout_margin_vertical` gap the system's own dialogs keep, and 60dp under a three-button bar, the `coui_dialog_layout_margin_bottom_with_navigation_bar` one. The gesture handle was read as a navigation bar, so every dialog floated 60dp up.
 
 ### Deprecated
 
