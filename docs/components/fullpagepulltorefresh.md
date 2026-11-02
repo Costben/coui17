@@ -58,7 +58,7 @@ Pass the same top padding to the scrollable content that you pass as `contentPad
 2. `Pulling`: the page follows the finger with 0.5 linear damping
 3. `ThresholdReached`: the pull passed the refresh threshold
 4. `Refreshing`: the page is held at the threshold and the spinner rotates
-5. `RefreshComplete`: the success hint is shown for 800ms before the page rebounds
+5. `RefreshComplete`: the success hint crossfades in over half the hold (capped at 400ms, i.e. 400ms at the 800ms default), stays for `completeHoldDurationMillis`, then the page rebounds
 
 ## Properties
 

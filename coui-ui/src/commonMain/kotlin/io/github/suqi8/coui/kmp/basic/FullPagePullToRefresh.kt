@@ -87,7 +87,9 @@ import kotlin.math.roundToInt
  * decelerating rebound as the original implementation. When the hoisted [isRefreshing] flag flips
  * back to `false`, the success hint stays on screen for [completeHoldDurationMillis] before the
  * page returns to its resting position. The return trip runs on its own timing — 30% of the
- * downward settle, capped at 120ms — so the page snaps back instead of gliding up.
+ * downward settle, capped at 120ms — so the page snaps back instead of gliding up. The hint
+ * crossfades in over the first half of the hold, the reference proportion, so a hold shorter than
+ * the default still leaves the hint readable before the page leaves.
  *
  * The content must be scrollable and should consume [contentPadding] at its top. That padding is
  * also used as the immersive height: the visible band of the hint starts at the top padding line,
@@ -671,7 +673,11 @@ private fun RefreshHint(
     ) {
         Crossfade(
             targetState = state.refreshState == FullPageRefreshState.RefreshComplete,
-            animationSpec = tween(400),
+            // Half the hold, the reference proportion. A fixed 400ms fade outlives any hold shorter
+            // than that, so the page starts leaving while the hint is still half transparent.
+            animationSpec = tween(
+                ((state.completeHoldDurationMillis / 2).coerceIn(0L, 400L)).toInt(),
+            ),
             modifier = Modifier.fillMaxWidth(),
             label = "fullPageRefreshHint",
         ) { complete ->

@@ -58,7 +58,7 @@ FullPagePullToRefresh(
 2. `Pulling`：页面以 0.5 线性阻尼跟随手指
 3. `ThresholdReached`：下拉距离已超过刷新阈值
 4. `Refreshing`：页面停在阈值处，加载弧线旋转
-5. `RefreshComplete`：成功提示停留 800ms，随后页面回弹
+5. `RefreshComplete`：成功提示先淡入（停留时长的一半，上限 400ms，800ms 默认值下即 400ms），停满 `completeHoldDurationMillis` 后页面回弹
 
 ## 属性
 
