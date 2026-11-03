@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -33,6 +35,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
@@ -254,6 +258,16 @@ fun BasicComponent(
     // title and summary text itself.
     val textMetrics = LocalPreferenceTextMetrics.current
 
+    // The vertical inside margin belongs to the text block, not to the whole row: a leading icon
+    // carries its own top and bottom margins, and those already size the row when they are taller
+    // than the text. Padding the icon as well stacked 20dp on top of it — a 24dp icon row came out
+    // 68.4dp where the ColorOS 17 Settings list draws 52dp, and a title-only row with an icon looked
+    // half again as tall as the 48dp row of a page whose items have no icon.
+    val layoutDirection = LocalLayoutDirection.current
+    val verticalInsidePadding =
+        insideMargin.calculateTopPadding() + insideMargin.calculateBottomPadding()
+    val verticalInsidePaddingPx = with(LocalDensity.current) { verticalInsidePadding.roundToPx() }
+
     Column(
         modifier = modifier
             .heightIn(min = BasicComponentDefaults.MinHeight + extraPaddingTop + extraPaddingBottom)
@@ -275,12 +289,16 @@ fun BasicComponent(
                     Modifier
                 },
             )
-            .padding(insideMargin)
+            .padding(
+                start = insideMargin.calculateStartPadding(layoutDirection),
+                end = insideMargin.calculateEndPadding(layoutDirection),
+            )
             .padding(top = extraPaddingTop, bottom = extraPaddingBottom),
         verticalArrangement = Arrangement.Center,
     ) {
         if (startAction == null && endActions == null) {
             Column(
+                modifier = Modifier.padding(vertical = verticalInsidePadding),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start,
                 content = content,
@@ -359,7 +377,13 @@ fun BasicComponent(
                 }
                 val startBlockHeight = startHeight + iconMarginPx * 2
                 val endHeight = endPlaceable?.height ?: 0
-                val rowHeight = maxOf(startBlockHeight, centerPlaceable.height, endHeight)
+                // The text and the trailing actions keep the row's vertical inside margin; the
+                // leading icon does not, because its margins are already part of its block.
+                val rowHeight = maxOf(
+                    startBlockHeight,
+                    centerPlaceable.height + verticalInsidePaddingPx,
+                    endHeight + verticalInsidePaddingPx,
+                )
                 val layoutHeight = rowHeight
                     .coerceIn(constraints.minHeight, maxHeight.takeIf { it != Constraints.Infinity } ?: rowHeight)
 
@@ -391,8 +415,10 @@ fun BasicComponent(
         }
 
         if (bottomAction != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            bottomAction()
+            Column(modifier = Modifier.padding(vertical = verticalInsidePadding)) {
+                Spacer(modifier = Modifier.height(8.dp))
+                bottomAction()
+            }
         }
     }
 }
