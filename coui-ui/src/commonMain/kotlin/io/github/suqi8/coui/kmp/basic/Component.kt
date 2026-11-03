@@ -95,13 +95,18 @@ fun BasicComponent(
 ) {
     // `COUICustomListSelectedLinearLayout` re-measures its icon once the title and summary have been
     // laid out, because both the icon's margins and its top offset depend on how many lines the text
-    // block wraps to. Compose learns the same geometry from `onTextLayout`; the first frame lays the
-    // icon out as a one-line row and the second settles it.
+    // block wraps to. Compose learns the same geometry from `onTextLayout`, which runs inside the text
+    // measure, so the row reads it there too: publishing the value as a composition local made the row
+    // recompose once the text had settled, and the frame before that recomposition was a one-line row
+    // with the icon centred.
     val titleGeometry = remember { mutableStateOf(TextLineGeometry()) }
     val summaryGeometry = remember { mutableStateOf(TextLineGeometry()) }
-    CompositionLocalProvider(
-        LocalPreferenceTextMetrics provides PreferenceTextMetrics(titleGeometry.value, summaryGeometry.value),
-    ) {
+    val metricsSource = remember {
+        PreferenceTextMetricsSource {
+            PreferenceTextMetrics(titleGeometry.value, summaryGeometry.value)
+        }
+    }
+    CompositionLocalProvider(LocalPreferenceTextMetrics provides metricsSource) {
         BasicComponent(
             startAction = startAction,
             endActions = endActions,
@@ -254,9 +259,10 @@ fun BasicComponent(
     val drawDivider = cardListPosition.drawsRowDivider(showDivider)
     val dividerColor = COUITheme.colorScheme.dividerLine
 
-    // The line geometry the leading icon aligns against, published by the overload that renders the
-    // title and summary text itself.
-    val textMetrics = LocalPreferenceTextMetrics.current
+    // Where the leading icon aligns against the text, published by the overload that renders the title
+    // and summary itself. Read in measure rather than here: the geometry only exists once the text has
+    // been measured, and reading it here would recompose the row for it.
+    val textMetricsSource = LocalPreferenceTextMetrics.current
 
     // The vertical inside margin belongs to the text block, not to the whole row: a leading icon
     // carries its own top and bottom margins, and those already size the row when they are taller
@@ -365,6 +371,10 @@ fun BasicComponent(
                 val centerPlaceable = centerMeasurable.measure(
                     looseConstraints.copy(maxWidth = widthForCenter),
                 )
+
+                // Read after the text block: `onTextLayout` has already run inside that measure, so this
+                // is the geometry of the frame being laid out, not of the one before it.
+                val textMetrics = textMetricsSource?.read()
 
                 val startHeight = startPlaceable?.height ?: 0
                 // COUICustomListSelectedLinearLayout.setIconCenterInParent gives the icon equal top and
@@ -572,11 +582,19 @@ internal data class PreferenceTextMetrics(
 }
 
 /**
+ * Where a row's text geometry comes from, read on demand so the caller can take it inside a measure
+ * block instead of recomposing when the text settles.
+ */
+internal fun interface PreferenceTextMetricsSource {
+    fun read(): PreferenceTextMetrics
+}
+
+/**
  * The text geometry of the enclosing row. [BasicComponent]'s string overload publishes it once the
  * title and summary have been laid out; rows that build their own content leave it `null`, and their
  * leading icon stays centred.
  */
-internal val LocalPreferenceTextMetrics = compositionLocalOf<PreferenceTextMetrics?> { null }
+internal val LocalPreferenceTextMetrics = compositionLocalOf<PreferenceTextMetricsSource?> { null }
 
 /**
  * The distance from the top of the text block to the centre of its first two lines, or `null` when
