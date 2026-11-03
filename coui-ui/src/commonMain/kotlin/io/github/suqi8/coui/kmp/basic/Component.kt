@@ -56,6 +56,9 @@ import kotlin.math.roundToInt
  * @param summary The summary of the [BasicComponent].
  * @param summaryColor The color of the summary.
  * @param startAction The [Composable] content on the start side of the [BasicComponent].
+ * @param centerStartAction Whether the leading [startAction] stays on the row's centre line even when
+ *   the text block wraps to three or more lines. The default mirrors COUI's `setIconTopInParent`,
+ *   which anchors the icon to the centre of the first two lines once the text outgrows them.
  * @param endActions The [Composable] content on the end side of the [BasicComponent].
  * @param bottomAction The [Composable] content at the bottom of the [BasicComponent].
  * @param insideMargin The margin inside the [BasicComponent].
@@ -81,6 +84,7 @@ fun BasicComponent(
     summary: String? = null,
     summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
     startAction: @Composable (() -> Unit)? = null,
+    centerStartAction: Boolean = false,
     endActions: @Composable (RowScope.() -> Unit)? = null,
     bottomAction: (@Composable () -> Unit)? = null,
     insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
@@ -109,6 +113,7 @@ fun BasicComponent(
     CompositionLocalProvider(LocalPreferenceTextMetrics provides metricsSource) {
         BasicComponent(
             startAction = startAction,
+            centerStartAction = centerStartAction,
             endActions = endActions,
             bottomAction = bottomAction,
             modifier = modifier,
@@ -193,6 +198,9 @@ fun BasicComponent(
  *
  * @param modifier The modifier to be applied to the [BasicComponent].
  * @param startAction The [Composable] content on the start side of the [BasicComponent].
+ * @param centerStartAction Whether the leading [startAction] stays on the row's centre line even when
+ *   the text block wraps to three or more lines. The default mirrors COUI's `setIconTopInParent`,
+ *   which anchors the icon to the centre of the first two lines once the text outgrows them.
  * @param endActions The [Composable] content on the end side of the [BasicComponent].
  * @param bottomAction The [Composable] content at the bottom of the [BasicComponent].
  * @param insideMargin The margin inside the [BasicComponent].
@@ -216,6 +224,7 @@ fun BasicComponent(
 fun BasicComponent(
     modifier: Modifier = Modifier,
     startAction: @Composable (() -> Unit)? = null,
+    centerStartAction: Boolean = false,
     endActions: @Composable (RowScope.() -> Unit)? = null,
     bottomAction: (@Composable () -> Unit)? = null,
     insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
@@ -399,11 +408,17 @@ fun BasicComponent(
 
                 // Three or more lines of text switch the icon from centred to top-anchored on the
                 // first two lines, and setIconTopInParent drops both margins; see [preferenceIconTopPx].
-                val topAnchoredStartTop = preferenceIconTopPx(
-                    metrics = textMetrics,
-                    iconHeightPx = startHeight,
-                    marginBetweenLinePx = BasicComponentDefaults.MarginBetweenLine.roundToPx(),
-                )
+                // Callers that want the icon on the row's centre line regardless of text length opt
+                // out with [centerStartAction].
+                val topAnchoredStartTop = if (centerStartAction) {
+                    null
+                } else {
+                    preferenceIconTopPx(
+                        metrics = textMetrics,
+                        iconHeightPx = startHeight,
+                        marginBetweenLinePx = BasicComponentDefaults.MarginBetweenLine.roundToPx(),
+                    )
+                }
 
                 layout(width = maxWidth, height = layoutHeight) {
                     val startTop = topAnchoredStartTop

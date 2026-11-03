@@ -39,6 +39,9 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param summary The summary of the [ArrowPreference].
  * @param summaryColor The color of the summary.
  * @param startAction The [Composable] content on the start side of the [ArrowPreference].
+ * @param centerStartAction Whether the leading [startAction] stays on the row's centre line even when
+ *   the text block wraps to three or more lines. The default mirrors COUI's `setIconTopInParent`,
+ *   which anchors the icon to the centre of the first two lines once the text outgrows them.
  * @param endActions The [Composable] content on the end side of the [ArrowPreference].
  * @param bottomAction The [Composable] content at the bottom of the [ArrowPreference].
  * @param modifier The modifier to be applied to the [ArrowPreference].
@@ -63,6 +66,7 @@ fun ArrowPreference(
     summary: String? = null,
     summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
     startAction: @Composable (() -> Unit)? = null,
+    centerStartAction: Boolean = false,
     endActions: @Composable RowScope.() -> Unit = {},
     bottomAction: (@Composable () -> Unit)? = null,
     insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
@@ -82,6 +86,7 @@ fun ArrowPreference(
         summary = summary,
         summaryColor = summaryColor,
         startAction = startAction,
+        centerStartAction = centerStartAction,
         endActions = {
             Row(
                 modifier = Modifier
