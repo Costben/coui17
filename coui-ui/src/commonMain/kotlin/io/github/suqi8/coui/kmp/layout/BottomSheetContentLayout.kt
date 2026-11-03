@@ -132,6 +132,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param allowDismiss Whether to allow dismissing the sheet via drag or back gesture.
  * @param enableNestedScroll Whether to enable nested scrolling for the content.
  * @param topInset Optional top inset override. If null, calculated from window insets.
+ * @param panelPaddingBottom The padding the panel adds under its content on top of
+ *   [insideMargin.height], as `COUIBottomSheetDialog.updatePaddingBottom()` does. It is dropped
+ *   while the IME is up, where it would only read as dead space above the keyboard. Pass `0.dp`
+ *   for a panel that sizes its own foot gap and must not change height when the keyboard leaves.
  * @param content The content of the bottom sheet.
  */
 @Suppress("ktlint:compose:modifier-not-used-at-root")
@@ -157,6 +161,7 @@ internal fun BottomSheetContentLayout(
     allowDismiss: Boolean = true,
     enableNestedScroll: Boolean = true,
     topInset: Dp? = null,
+    panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     content: @Composable () -> Unit,
 ) {
     val animationProgress = remember { Animatable(0f, visibilityThreshold = 0.0001f) }
@@ -340,6 +345,7 @@ internal fun BottomSheetContentLayout(
                 },
                 modifier = sheetModifier,
                 topInset = topInset,
+                panelPaddingBottom = panelPaddingBottom,
                 enableNestedScroll = enableNestedScroll,
                 startAction = startAction?.let { action ->
                     { CompositionLocalProvider(LocalDismissState provides requestDismiss) { action() } }
@@ -377,6 +383,7 @@ internal fun BottomSheetContent(
     onDismissRequest: (() -> Unit)?,
     modifier: Modifier = Modifier,
     topInset: Dp? = null,
+    panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     enableNestedScroll: Boolean = true,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
@@ -588,6 +595,7 @@ internal fun BottomSheetContent(
         allowDismiss = allowDismiss,
         windowHeight = windowHeight,
         topInset = calculatedTopInset,
+        panelPaddingBottom = panelPaddingBottom,
         enableNestedScroll = enableNestedScroll,
         sheetHeightPx = sheetHeightPx,
         dragOffsetY = dragOffsetY,
@@ -618,6 +626,7 @@ private fun BottomSheetColumn(
     allowDismiss: Boolean,
     windowHeight: Dp,
     topInset: Dp,
+    panelPaddingBottom: Dp,
     enableNestedScroll: Boolean,
     sheetHeightPx: MutableIntState,
     dragOffsetY: Animatable<Float, *>,
@@ -710,8 +719,12 @@ private fun BottomSheetColumn(
                 )
                 .padding(horizontal = insideMargin.width)
                 .padding(
+                    // The foot gap only exists while the keyboard is away; above the IME the same
+                    // 60dp would read as dead space, so it is dropped. A caller that sizes its own
+                    // foot gap passes 0dp, which also keeps the panel from changing height — and
+                    // jumping — on the frame the IME finishes leaving.
                     bottom = insideMargin.height +
-                        if (imeInsets.getBottom(density) > 0) 0.dp else BottomSheetDefaults.PanelPaddingBottom,
+                        if (imeInsets.getBottom(density) > 0) 0.dp else panelPaddingBottom,
                 ),
         ) {
             DragHandleArea(

@@ -42,6 +42,9 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  * @param renderInRootScaffold Whether to render the bottom sheet in the root (outermost) Scaffold.
  *   When true (default), the bottom sheet covers the full screen. When false, it renders within the
  *   current Scaffold's bounds.
+ * @param panelPaddingBottom The extra foot padding the panel adds under its content, on top of
+ *   `insideMargin.height`, while the keyboard is away. Defaults to the platform's 60dp; pass `0.dp`
+ *   when the caller already sizes the foot gap and the panel must not grow when the IME leaves.
  * @param content The [Composable] content of the [OverlayBottomSheet].
  */
 @Composable
@@ -65,6 +68,7 @@ fun OverlayBottomSheet(
     allowDismiss: Boolean = true,
     enableNestedScroll: Boolean = true,
     renderInRootScaffold: Boolean = true,
+    panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     content: @Composable () -> Unit,
 ) {
     BottomSheetContentLayout(
@@ -100,6 +104,7 @@ fun OverlayBottomSheet(
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
         allowDismiss = allowDismiss,
         enableNestedScroll = enableNestedScroll,
+        panelPaddingBottom = panelPaddingBottom,
         content = content,
     )
 }
