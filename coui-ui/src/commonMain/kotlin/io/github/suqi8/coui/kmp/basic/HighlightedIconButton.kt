@@ -142,9 +142,9 @@ fun HighlightedIconButton(
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         Box(
             modifier = modifier
-                // COUIActionMenuItemView sets minWidth coui_action_menu_item_min_width (48dp) and
-                // minHeight coui_action_menu_item_min_height (40dp), so the touch target is wider
-                // than the 40dp disc it draws.
+                // COUIActionMenuItemView sizes each action to coui_action_menu_item_min_width and
+                // _min_height, which are the 40dp square the disc draws: the touch target is the
+                // key, and the toolbar spaces keys apart instead of padding them.
                 .defaultMinSize(
                     minWidth = HighlightedIconButtonDefaults.IconMenuMinWidth,
                     minHeight = HighlightedIconButtonDefaults.IconMenuMinHeight,
@@ -153,8 +153,8 @@ fun HighlightedIconButton(
                     enabled = enabled,
                     motionState = touchMotion,
                     pressScaleEnabled = false,
-                    // The light belongs to the disc; a plain circle clip on the wider touch target
-                    // would light a pill around it.
+                    // The light belongs to the disc; a plain circle clip on the pressed box would
+                    // light a pill around it.
                     shape = lightShape,
                     lightParams = SpotLightDefaults.circleParams1(isDark),
                     lightEnabled = spotLightEnabled,
@@ -304,12 +304,17 @@ object HighlightedIconButtonDefaults {
     val Size = 40.dp
 
     /**
-     * `dimen/coui_action_menu_item_min_width` = 48dp: `COUIActionMenuItemView` gives the 40dp disc
-     * a touch target 8dp wider than it draws.
+     * The action box of a toolbar icon, `dimen/coui_action_menu_item_min_width`: 40dp, the same
+     * square the disc draws, so a key never carries a touch target wider than the shape it shows.
+     *
+     * Keys in one toolbar sit [TopAppBarDefaults.ActionMenuItemSpacing] (10dp) apart and the last
+     * one keeps the toolbar's 16dp end margin — two 40dp keys show a 10dp gap, and the row ends
+     * 16dp from the window edge. Space the keys with that token rather than with the box, which is
+     * the key itself.
      */
-    val IconMenuMinWidth = 48.dp
+    val IconMenuMinWidth = 40.dp
 
-    /** `dimen/coui_action_menu_item_min_height` = 40dp. */
+    /** The action box height, `dimen/coui_action_menu_item_min_height`: 40dp, so the box is square. */
     val IconMenuMinHeight = 40.dp
 
     /**

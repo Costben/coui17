@@ -804,16 +804,15 @@ object TopAppBarDefaults {
     val ActionIconGap = 4.dp
 
     /**
-     * The spacing between action menu items.
-     * COUI `coui_actionbar_menuitemview_item_spacing`, 0dp in `values/` and 10dp in `values-v37/`.
+     * The spacing between action menu items, `coui_actionbar_menuitemview_item_spacing`: 10dp.
+     * Two 40dp keys in one toolbar show a 10dp gap.
      */
     val ActionMenuItemSpacing = 10.dp
 
     /**
-     * The minimum width of a toolbar action item. COUI `coui_action_menu_item_min_width`, 48dp in
-     * `values/` and 40dp in `values-v37/`; the ColorOS 17 Settings toolbar applies the 40dp value —
-     * `coui_toolbar_back_view` and `coui_toolbar_more_view` both measure 155 x 155px =
-     * 40.00 x 40.00dp with 16.00dp margins.
+     * The width of a toolbar action item, `coui_action_menu_item_min_width`: 40dp, the same square
+     * the icon disc draws. `coui_toolbar_back_view` and `coui_toolbar_more_view` measure
+     * 155 x 155px = 40.00 x 40.00dp with 16.00dp margins.
      */
     val ActionItemMinWidth = 40.dp
 
@@ -868,15 +867,16 @@ object TopAppBarDefaults {
 }
 
 /**
- * Sizes a top app bar action item to the ColorOS 17 action box (`coui_action_menu_item_min_width`,
- * 40dp under `values-v37/`).
+ * Sizes a top app bar action item to the toolbar's action box, `coui_action_menu_item_min_width`
+ * (40dp).
  *
  * COUI's `COUIToolbar` applies the token to the action views it hosts, so it never has to reach the
  * caller. This port takes the actions slot as a plain [RowScope] lambda and does not own those views,
  * so the toolbar cannot impose the width the way the native container does — apply this modifier to
- * each icon-only action item instead. The ColorOS 17 Settings toolbar shows the native result:
- * `coui_toolbar_back_view` and `coui_toolbar_more_view` both measure 155 x 155px = 40.00 x 40.00dp
- * with 16.00dp margins.
+ * each icon-only action item instead, and space the keys with
+ * [TopAppBarDefaults.ActionMenuItemSpacing] (10dp). `coui_toolbar_back_view` and
+ * `coui_toolbar_more_view` on the Settings toolbar measure 155 x 155px = 40.00 x 40.00dp with
+ * 16.00dp margins.
  *
  * This is an exact size rather than a floor on purpose: [IconButton] carries its own 48dp
  * `defaultMinSize`, and a floor cannot lower a floor. A caller that passes wider content (a text
