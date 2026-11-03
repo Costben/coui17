@@ -709,7 +709,10 @@ private fun BottomSheetColumn(
                     shadowStyle = InnerShadowStyle.SHADOW_STYLE_2,
                 )
                 .padding(horizontal = insideMargin.width)
-                .padding(bottom = insideMargin.height + BottomSheetDefaults.PanelPaddingBottom),
+                .padding(
+                    bottom = insideMargin.height +
+                        if (imeInsets.getBottom(density) > 0) 0.dp else BottomSheetDefaults.PanelPaddingBottom,
+                ),
         ) {
             DragHandleArea(
                 dragHandleColor = dragHandleColor,
