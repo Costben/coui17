@@ -212,8 +212,7 @@ while the material is on, so it cannot cut across the fade.
 With a `scrollBehavior` the material is invisible at rest and reaches full strength after 30dp of
 content has scrolled under the bar. Without a `scrollBehavior` it is always on.
 
-It needs the same `LocalBackdrop` as the uniform material; without one — or without runtime shader
-support — the bar falls back to the gradient colour fill alone.
+It needs the same `LocalBackdrop` as the uniform material. When blur is disabled (`LocalBlurEnabled` is `false`, system power-saving switches blur off, or runtime shaders are unsupported), the bar reverts to an opaque `color` surface and restores its scroll divider; when blur remains enabled without a `LocalBackdrop`, it paints the gradient colour fill alone.
 
 ```kotlin
 CompositionLocalProvider(LocalBackdrop provides backdrop) {

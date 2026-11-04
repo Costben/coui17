@@ -47,7 +47,7 @@ Box(Modifier.fillMaxSize()) {
 }
 ```
 
-overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背景层的位置，或传 `backdrop = null` 只保留剖面。平台无法运行 runtime shader 时（Android 13 以下）模糊同样会被跳过，只绘制剖面。
+overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背景层的位置，或传 `backdrop = null` 只保留剖面。当模糊被禁用（`LocalBlurEnabled` 置为 `false`、系统处于省电模式或关闭材质模糊、或平台低于 Android 13 无法运行 runtime shader）时，overlay 不再在外延 `extraHeight` 带上绘制半透明渐变，而是在导航栏自身高度内回退为不透明的 `containerColor` 纯色填充（仍受 `scrollFraction` 驱动），避免滚动文字透过未模糊的渐变叠在标题下方。
 
 在 OplusView 子 SDK 不低于 33.34 的 ColorOS 设备上，overlay 完全不使用 `backdrop`，而是承载一个与原生 helper 相同的系统视图：背景是同一条渐变剖面，再挂上系统的渐进模糊背景效果（30px 到 0px，速度 3），由系统渲染线程直接模糊视图后方已经画好的内容。效果只设置一次，滚动时只改视图的透明度，透明度为 0 时隐藏视图。其他平台继续使用 COUI 自己的模糊。
 

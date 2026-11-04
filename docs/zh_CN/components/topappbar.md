@@ -203,7 +203,7 @@ SmallTopAppBar(
 配合 `scrollBehavior` 使用时，材质在静止时不可见，内容滚过顶栏 30dp 后达到满强度；不配
 `scrollBehavior` 时材质始终开启。
 
-它和均匀材质一样需要 `LocalBackdrop`；没有 backdrop 或不支持 runtime shader 时，只保留渐变颜色填充。
+它和均匀材质一样需要 `LocalBackdrop`；模糊被禁用（`LocalBlurEnabled` 为 `false`、系统省电模式关闭模糊，或不支持 runtime shader）时，顶栏会自动回退为不透明的 `color` 纯色表面并恢复滚动分割线；显式不传 `LocalBackdrop` 而模糊仍开启时则保留渐变颜色填充。
 
 ```kotlin
 CompositionLocalProvider(LocalBackdrop provides backdrop) {

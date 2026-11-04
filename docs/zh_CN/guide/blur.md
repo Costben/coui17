@@ -64,6 +64,21 @@ val backdropScaffoldSupported = isRenderEffectSupported()
 val blurAndBlendSupported = isRuntimeShaderSupported()
 ```
 
+### 全局开关
+
+`LocalBlurEnabled`（默认 `true`）门控本模块全部模糊修饰符（`textureBlur`、`textureEffect`、`progressiveTextureBlur`、`drawBackdrop`）以及 `coui-ui` 中的玻璃材质组件。在根节点提供 `false` 即可一行关闭全应用的模糊效果，无需手动把 `LocalBackdrop` 置空或在各处包裹 `layerBackdrop`：
+
+```kotlin
+import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+
+CompositionLocalProvider(LocalBlurEnabled provides enableBlur) {
+    AppContent()
+}
+```
+
+`isBlurEnabled()` 将 `LocalBlurEnabled.current`、系统省电模式 / ColorOS 系统材质模糊开关与 `isRuntimeShaderSupported()` 合并为单次读取。当没有任何活跃的模糊消费者采样某个 `LayerBackdrop` 时（包括模糊开关关闭、系统进入省电模式，或弹窗未打开的空闲时段），`Modifier.layerBackdrop` 会自动跳过离屏图层录制。
+
 ## 基本用法
 
 应用背景模糊分为三步：

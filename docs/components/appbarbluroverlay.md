@@ -47,7 +47,7 @@ Box(Modifier.fillMaxSize()) {
 }
 ```
 
-The overlay needs the content it samples through `LocalBackdrop`; place it where a backdrop is provided, or pass `backdrop = null` for the plain ramp alone. When the platform cannot run runtime shaders (everything below Android 13) the blur is skipped as well, and only the ramp is painted.
+The overlay needs the content it samples through `LocalBackdrop`; place it where a backdrop is provided, or pass `backdrop = null` for the plain ramp alone. When blur is disabled (`LocalBlurEnabled` set to `false`, system power-saving mode or material blur switched off, or below Android 13 without runtime shaders), the overlay stops painting into the `extraHeight` band and falls back to an opaque `containerColor` fill inside the bar's own height (still modulated by `scrollFraction`), preventing sharp scrolling text from bleeding through an unblurred translucent ramp.
 
 On ColorOS devices whose OplusView sub-SDK is 33.34 or later, the overlay does not use `backdrop` at all. It hosts the same platform view the native helper dresses: the gradient drawable as its background, and the framework's gradient-blur backdrop effect (30px to 0px, speed 3), which the system renderer applies to whatever is already drawn behind the view. The effect is set once; scrolling only changes the view's alpha, and the view is hidden at exactly 0. Every other platform keeps COUI's own blur.
 

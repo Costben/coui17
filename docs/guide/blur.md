@@ -69,6 +69,21 @@ val backdropScaffoldSupported = isRenderEffectSupported()
 val blurAndBlendSupported = isRuntimeShaderSupported()
 ```
 
+### Global Toggle
+
+`LocalBlurEnabled` (default `true`) gates every blur modifier in this module (`textureBlur`, `textureEffect`, `progressiveTextureBlur`, `drawBackdrop`) as well as the glass surfaces in `coui-ui`. Provide `false` at the root to disable blur across the whole tree in one line, without clearing `LocalBackdrop` or wrapping `layerBackdrop` call sites:
+
+```kotlin
+import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+
+CompositionLocalProvider(LocalBlurEnabled provides enableBlur) {
+    AppContent()
+}
+```
+
+`isBlurEnabled()` combines `LocalBlurEnabled.current`, the host OS's power-saving / ColorOS material blur switches, and `isRuntimeShaderSupported()` into a single read. Whenever no active blur consumer samples a `LayerBackdrop` (including while blur is disabled, during power-saving mode, or while overlay popups are closed), `Modifier.layerBackdrop` automatically skips recording into its graphics layer.
+
 ## Basic Usage
 
 Applying a backdrop blur involves three steps:
