@@ -76,7 +76,7 @@ public final class io/github/suqi8/coui/kmp/preference/ArrowPreferenceDefaults {
 
 public final class io/github/suqi8/coui/kmp/preference/ArrowPreferenceKt {
 	public static final synthetic fun ArrowPreference (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;ZZLandroidx/compose/runtime/Composer;III)V
-	public static final fun ArrowPreference (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;ZZLjava/lang/String;ZLandroidx/compose/runtime/Composer;III)V
+	public static final fun ArrowPreference (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;ZZLjava/lang/String;ZLandroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/preference/BottomPreferenceDefaults {
@@ -278,7 +278,7 @@ public final class io/github/suqi8/coui/kmp/preference/ComposableSingletons$Arro
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/preference/ComposableSingletons$ArrowPreferenceKt;
 	public fun <init> ()V
 	public final fun getLambda$-1063291561$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda$-1781449408$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$910201956$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/preference/ComposableSingletons$ButtonPreferenceKt {
