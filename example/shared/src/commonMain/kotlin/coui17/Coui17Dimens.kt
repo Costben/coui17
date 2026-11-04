@@ -101,8 +101,14 @@ object Coui17Dimens {
     /** Heading text inset inside the 16dp card-aligned heading container. */
     val ListTextIndent = 16.dp
 
-    /** The measured gap from a section heading's text baseline box to its first card. */
-    val ListHeadingContentGap = 3.5.dp
+    /**
+     * The vertical padding of a group title row.
+     *
+     * `Widget.COUI.List.Category.Title` sets `coui_common_category_text_padding_top` and `_bottom` to
+     * 8dp, and the 12sp text sits in a `coui_preference_category_text_height` 16dp line box, so the
+     * row is 32dp tall and the card under it starts flush against the row's bottom margin.
+     */
+    val ListGroupTitlePadding = 8.dp
 
     /** How far a list row's card is inset from the screen edge: 62px (the card spans x 62..1210px). */
     val ListCardInset = 16.dp

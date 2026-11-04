@@ -106,6 +106,7 @@ import component.VerticalSliderDemo
 import component.WindowDialogVariantsDemo
 import component.WindowIconMenuVariantsDemo
 import i18n.str
+import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
@@ -321,9 +322,6 @@ private fun Coui17SectionTitle(title: String) {
  */
 private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> Unit) {
     item(key = "title:$title") { Coui17GroupTitle(title) }
-    item(key = "heading-gap:$title") {
-        Spacer(modifier = Modifier.height(Coui17Dimens.ListHeadingContentGap))
-    }
     item(key = "content:$title") {
         Column(
             modifier = Modifier
@@ -336,7 +334,12 @@ private fun LazyListScope.coui17Entry(title: String, content: @Composable () -> 
 }
 
 /**
- * A compact Settings section heading aligned with the text inside its card.
+ * A compact Settings group title: `SmallTitle` at 12sp in `onBackgroundVariant`, aligned with the
+ * text inside its card.
+ *
+ * The row reproduces `Widget.COUI.List.Category.Title` — 8dp of padding above and below a 16dp line
+ * box, no gap after the row — and the 16dp between it and the card above comes from that card's own
+ * bottom spacing, so a titled group reads like the Settings list.
  *
  * [title] is the English source string; the heading resolves it here, so the entry list above stays
  * a plain list of keys and the language can change under it.
@@ -346,15 +349,14 @@ private fun Coui17GroupTitle(title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Coui17Dimens.ListCardInset)
-            .height(Coui17Dimens.ListRowHeight),
-        contentAlignment = Alignment.CenterStart,
+            .padding(horizontal = Coui17Dimens.ListCardInset),
     ) {
-        Text(
+        SmallTitle(
             text = str(title),
-            modifier = Modifier.padding(start = Coui17Dimens.ListTextIndent),
-            style = COUITheme.textStyles.headline2,
-            color = COUITheme.colorScheme.onSurface,
+            insideMargin = PaddingValues(
+                horizontal = Coui17Dimens.ListTextIndent,
+                vertical = Coui17Dimens.ListGroupTitlePadding,
+            ),
         )
     }
 }
