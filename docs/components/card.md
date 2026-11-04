@@ -56,7 +56,7 @@ The CardDefaults object provides default values and color configurations for the
 | ------------- | ------------- | ------------------ | ------------------- |
 | CornerRadius      | Dp    | Corner radius of a standalone card (`COUICardView`), drawn at Lp 3.0 | 17.dp |
 | Weight            | Float | Corner weight of a standalone card                                   | SquircleDefaults.WeightLarge (3.0) |
-| GroupCornerRadius | Dp    | Corner radius of the card that holds a preference group (`couiRoundCornerXL`), drawn at Lp 2.5 | 20.dp |
+| GroupCornerRadius | Dp    | Corner radius of the card that holds a preference group (`couiRoundCornerXL`, drawn at Lp 2.5) | 24.dp |
 | GroupWeight       | Float | Corner weight of the card that holds a preference group              | SquircleDefaults.WeightNormal (2.5) |
 | InsideMargin  | PaddingValues | Card inner padding | PaddingValues(0.dp) |
 

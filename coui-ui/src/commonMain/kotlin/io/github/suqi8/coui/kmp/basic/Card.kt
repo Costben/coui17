@@ -437,10 +437,16 @@ object CardDefaults {
      * The corner radius of the card that holds a preference group.
      *
      * `COUICardListSelectedItemLayout` defaults `couiCardRadius` to `?attr/couiRoundCornerXL` →
-     * `coui_round_corner_xl` = 20dp and draws it through `addSmoothRoundRect(..., 2.5f)`, i.e. one
-     * step softer than the standalone card. Use it together with [GroupWeight].
+     * `coui_round_corner_xl` = 20dp, then `getInnerRadius` swaps in
+     * `coui_round_corner_xl_radius_normal_16_1` = 24dp whenever the device draws smooth corners, and
+     * draws it through `addSmoothRoundRect(..., 2.5f)`. This library always draws the smooth
+     * silhouette, so the drawn radius is the 24dp one; 20dp only survives on a device with smoothing
+     * switched off.
+     *
+     * Measured against the Settings brightness page: the 24dp Lp-2.5 curve reproduces the native
+     * corner to within a pixel at every offset from the corner.
      */
-    val GroupCornerRadius = 20.dp
+    val GroupCornerRadius = 24.dp
 
     /**
      * The corner weight of the card that holds a preference group: `COUICardListSelectedItemLayout`

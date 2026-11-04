@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Chip
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
@@ -37,6 +38,8 @@ fun ChipDemo() {
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
     ) {
         MultiSelectChipsDemo()
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))

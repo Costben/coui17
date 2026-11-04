@@ -57,7 +57,7 @@ CardDefaults 对象提供了卡片组件的默认值和颜色配置。
 | ------------ | ------------- | -------------- | ------------------- |
 | CornerRadius      | Dp    | 独立卡片(`COUICardView`)的圆角半径,按 Lp 3.0 绘制 | 17.dp |
 | Weight            | Float | 独立卡片的圆角权重                                | SquircleDefaults.WeightLarge (3.0) |
-| GroupCornerRadius | Dp    | 承载偏好分组的卡片圆角(`couiRoundCornerXL`),按 Lp 2.5 绘制 | 20.dp |
+| GroupCornerRadius | Dp    | 承载偏好分组的卡片圆角(`couiRoundCornerXL`,按 Lp 2.5 绘制) | 24.dp |
 | GroupWeight       | Float | 承载偏好分组的卡片圆角权重                        | SquircleDefaults.WeightNormal (2.5) |
 | InsideMargin | PaddingValues | 卡片的内部边距 | PaddingValues(0.dp) |
 
