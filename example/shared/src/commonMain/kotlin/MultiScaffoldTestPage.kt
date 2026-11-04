@@ -31,16 +31,13 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
-import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
-import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import utils.AdaptiveTopAppBar
-import utils.WallpaperState
-import utils.drawWallpaperBackdrop
 import utils.pageContainerColor
+import utils.rememberBlurBackdrop
 
 @Composable
 fun MultiScaffoldTestPage(
@@ -48,16 +45,7 @@ fun MultiScaffoldTestPage(
 ) {
     val appState = LocalAppState.current
     val isWideScreen = LocalIsWideScreen.current
-    val blurSupported = isRuntimeShaderSupported()
-    val surfaceColor = pageContainerColor()
-    val backdrop = if (blurSupported && appState.enableBlur) {
-        rememberLayerBackdrop {
-            drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
-            drawContent()
-        }
-    } else {
-        null
-    }
+    val backdrop = rememberBlurBackdrop()
     val topAppBarScrollBehavior = COUIScrollBehavior()
     val navigator = LocalNavigator.current
 

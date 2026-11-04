@@ -48,9 +48,7 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.VerticalScrollBar
 import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
-import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
-import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Edit
 import io.github.suqi8.coui.kmp.interfaces.ExperimentalScrollBarApi
@@ -60,11 +58,10 @@ import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
 import navigation3.Route
 import utils.AdaptiveTopAppBar
-import utils.WallpaperState
-import utils.drawWallpaperBackdrop
 import utils.pageContainerColor
 import utils.pageContentPadding
 import utils.pageScrollModifiers
+import utils.rememberBlurBackdrop
 import kotlin.random.Random
 
 private val TopBarPopupItems = listOf("Window 1", "Window 2", "Window 3")
@@ -76,16 +73,7 @@ fun NavTestPage(
 ) {
     val appState = LocalAppState.current
     val isWideScreen = LocalIsWideScreen.current
-    val blurSupported = isRuntimeShaderSupported()
-    val surfaceColor = pageContainerColor()
-    val backdrop = if (blurSupported && appState.enableBlur) {
-        rememberLayerBackdrop {
-            drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
-            drawContent()
-        }
-    } else {
-        null
-    }
+    val backdrop = rememberBlurBackdrop()
     val topAppBarScrollBehavior = COUIScrollBehavior()
     val navigator = LocalNavigator.current
 

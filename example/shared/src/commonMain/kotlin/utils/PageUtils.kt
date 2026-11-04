@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import appstate.LocalAppState
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
@@ -122,8 +121,7 @@ fun AdaptiveTopAppBar(
 
 @Composable
 fun rememberBlurBackdrop(): LayerBackdrop? {
-    val appState = LocalAppState.current
-    if (!appState.enableBlur || !isRuntimeShaderSupported()) return null
+    if (!isRuntimeShaderSupported()) return null
     val surfaceColor = AppBarBlurOverlayDefaults.containerColor()
     return rememberLayerBackdrop {
         drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)

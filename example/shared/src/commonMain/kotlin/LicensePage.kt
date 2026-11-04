@@ -35,20 +35,17 @@ import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.VerticalScrollBar
 import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
-import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
-import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.interfaces.ExperimentalScrollBarApi
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import utils.AdaptiveTopAppBar
 import utils.Library
 import utils.SimpleJsonParser
-import utils.WallpaperState
-import utils.drawWallpaperBackdrop
 import utils.pageContainerColor
 import utils.pageContentPadding
 import utils.pageScrollModifiers
+import utils.rememberBlurBackdrop
 
 @Composable
 fun LicensePage(
@@ -56,16 +53,7 @@ fun LicensePage(
 ) {
     val appState = LocalAppState.current
     val isWideScreen = LocalIsWideScreen.current
-    val blurSupported = isRuntimeShaderSupported()
-    val surfaceColor = pageContainerColor()
-    val backdrop = if (blurSupported && appState.enableBlur) {
-        rememberLayerBackdrop {
-            drawWallpaperBackdrop(surfaceColor, WallpaperState.bitmap)
-            drawContent()
-        }
-    } else {
-        null
-    }
+    val backdrop = rememberBlurBackdrop()
     val topAppBarScrollBehavior = COUIScrollBehavior()
     val navigator = LocalNavigator.current
 

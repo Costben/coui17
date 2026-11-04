@@ -61,6 +61,7 @@ import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.basic.TopAppBarDefaults
 import io.github.suqi8.coui.kmp.basic.rememberTopAppBarState
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleEnabled
@@ -173,6 +174,7 @@ fun Coui17App(
             LocalAppState provides appState,
             LocalUpdateAppState provides updateAppState,
             LocalSquircleEnabled provides appState.enableSquircle,
+            LocalBlurEnabled provides appState.enableBlur,
             // One provider for the whole app: every screen resolves its copy through this, so
             // changing the language in the settings page recomposes all of them at once.
             LocalAppStrings provides appState.language.strings,
@@ -428,7 +430,6 @@ private fun Coui17Frame(
     bars: @Composable BoxScope.() -> Unit,
     overlays: @Composable BoxScope.() -> Unit = {},
 ) {
-    val appState = LocalAppState.current
     val wallpaper = rememberWallpaper()
     val surfaceColor = COUITheme.colorScheme.surface
     // The page's own background, and the colour the app bar material is drawn in. The device resolves
@@ -445,7 +446,7 @@ private fun Coui17Frame(
     // bar out to near-white as soon as the ramp lets the blur through. The light ramp hides that
     // (its top alpha is 1, so only the base colour shows) but the dark one does not (0.4), and there
     // the bar came out at ~175 over the device's 48.
-    val barBackdrop = rememberLayerBackdrop {
+    val barBackdrop = rememberLayerBackdrop(upstream = pageBackdrop) {
         drawRect(pageColor)
         drawLayer(pageBackdrop.graphicsLayer)
     }
@@ -456,7 +457,7 @@ private fun Coui17Frame(
     // The three modifiers sit on the same node and draw outside in, so the page layer is recorded
     // before either of the two that blit it, and neither blit costs a second `drawContent()` — a
     // second call would draw the whole pager again for every layer on every frame.
-    val backdrop = rememberLayerBackdrop {
+    val backdrop = rememberLayerBackdrop(upstream = pageBackdrop) {
         drawWallpaper(surfaceColor, wallpaper.image)
         drawLayer(pageBackdrop.graphicsLayer)
     }
@@ -474,7 +475,7 @@ private fun Coui17Frame(
     // the replicas match the screens they copy there and scale with the display-size setting on
     // every other device instead of pinning one phone's px/dp.
     CompositionLocalProvider(
-        LocalBackdrop provides if (appState.enableBlur) backdrop else null,
+        LocalBackdrop provides backdrop,
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -486,7 +487,7 @@ private fun Coui17Frame(
             snackbarHost = { SnackbarHost(state = snackbarHostState) },
             // The overlay host is a sibling of the recorded screen, so a panel never samples itself.
             popupHost = {
-                CompositionLocalProvider(LocalBackdrop provides if (appState.enableBlur) screenBackdrop else null) {
+                CompositionLocalProvider(LocalBackdrop provides screenBackdrop) {
                     COUIPopupHost()
                 }
             },
@@ -508,7 +509,7 @@ private fun Coui17Frame(
                 // wallpaper layer, where the page has no content of its own the blur read straight
                 // through to the wallpaper the user cannot see behind the bar, so its capsules and
                 // accessory balls came out at the wallpaper's own brightness instead of the page's.
-                CompositionLocalProvider(LocalBackdrop provides if (appState.enableBlur) barBackdrop else null) {
+                CompositionLocalProvider(LocalBackdrop provides barBackdrop) {
                     bars()
                 }
                 overlays()
