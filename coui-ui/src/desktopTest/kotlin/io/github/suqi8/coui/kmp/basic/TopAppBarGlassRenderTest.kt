@@ -25,8 +25,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
+import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.theme.darkColorScheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.test.Test
@@ -259,6 +262,85 @@ class TopAppBarGlassRenderTest {
             abs(slot.centerX - bar.center.x) <= 2f,
             "the segment slot must be centred, got slot=$slot bar=$bar",
         )
+    }
+
+    /**
+     * Turning `LocalBlurEnabled` off must drop both the uniform blur (`gradientGlass = false`) and
+     * the gradient-glass material (`gradientGlass = true`) back to an opaque solid container fill
+     * inside the bar's own bounds, even in dark mode where the gradient ramp's 0.4 top alpha would
+     * otherwise let content bleed through.
+     */
+    @Test
+    fun disablingBlurRevertsUniformAndGradientAppBarsToOpaqueSolidFill() {
+        val solidBarColor = Color(0xFF1E1E1E)
+        for (gradient in listOf(false, true)) {
+            runSkikoComposeUiTest(
+                size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+                density = Density(1f),
+            ) {
+                setContent {
+                    COUITheme(colors = darkColorScheme()) {
+                        val backdrop = rememberLayerBackdrop {
+                            drawRect(Color.Black)
+                            drawContent()
+                        }
+                        Box(Modifier.fillMaxSize()) {
+                            Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                                Canvas(Modifier.fillMaxSize()) {
+                                    val half = size.width / 2f
+                                    drawRect(BackdropLeftColor, size = Size(half, size.height))
+                                    drawRect(
+                                        color = BackdropRightColor,
+                                        topLeft = Offset(half, 0f),
+                                        size = Size(size.width - half, size.height),
+                                    )
+                                }
+                            }
+                            Box(Modifier.fillMaxSize().background(CoverColor))
+                            CompositionLocalProvider(
+                                LocalBackdrop provides backdrop,
+                                LocalEdgeToEdge provides true,
+                                LocalBlurEnabled provides false,
+                            ) {
+                                SmallTopAppBar(
+                                    title = APP_BAR_TITLE,
+                                    modifier = Modifier.fillMaxWidth().testTag(APP_BAR_TAG),
+                                    color = solidBarColor,
+                                    gradientGlass = gradient,
+                                    showDivider = false,
+                                    defaultWindowInsetsPadding = false,
+                                )
+                            }
+                        }
+                    }
+                }
+                waitForIdle()
+
+                val (left, right) = captureAppBarSamples()
+                assertEquals(
+                    left.toArgb(),
+                    right.toArgb(),
+                    "gradient=$gradient: disabled blur must not sample the split backdrop",
+                )
+                assertTrue(
+                    maxChannelDelta(left, solidBarColor) <= 2,
+                    "gradient=$gradient: bar must fall back to opaque solid color, got ${left.argbHex()}",
+                )
+
+                val bar = appBarBounds()
+                val pixels = onRoot().captureToImage().toPixelMap()
+                val bottomInside = pixels[pixels.width / 4, bar.bottom.roundToInt() - 2]
+                val belowBar = pixels[pixels.width / 4, bar.bottom.roundToInt() + 4]
+                assertTrue(
+                    maxChannelDelta(bottomInside, solidBarColor) <= 2,
+                    "gradient=$gradient: bottom of bar must stay opaque, got ${bottomInside.argbHex()}",
+                )
+                assertTrue(
+                    maxChannelDelta(belowBar, CoverColor) <= 2,
+                    "gradient=$gradient: nothing may paint into ExtraHeight when blur is off, got ${belowBar.argbHex()}",
+                )
+            }
+        }
     }
 }
 

@@ -79,6 +79,7 @@ import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.shader.asBrush
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -395,8 +396,8 @@ private fun SegmentButtonRow(
     }
     val hasContainerSurface = contourPadding > 0.dp && containerColor.alpha > 0f
     val blurScale = rememberToolbarAttenuatedBlurScale()
-    val glassActive = hasContainerSurface && backdrop != null && isRuntimeShaderSupported()
-    val containerGlassModifier = if (hasContainerSurface && backdrop != null) {
+    val glassActive = hasContainerSurface && backdrop != null && isBlurEnabled()
+    val containerGlassModifier = if (glassActive) {
         Modifier.couiGlassSurface(
             backdrop = backdrop,
             shape = containerShape,
@@ -422,7 +423,7 @@ private fun SegmentButtonRow(
                 pressScaleEnabled = true,
                 consumeDrag = false,
                 // COUISegmentButtonLayout only lights up under setMaterialEffectEnabled.
-                lightEnabled = hasContainerSurface && (backdrop != null || indicatorMaterial != null),
+                lightEnabled = hasContainerSurface && (glassActive || indicatorMaterial != null),
                 shape = containerShape.takeIf { hasContainerSurface },
                 lightParams = SpotLightDefaults.capsuleParams2(isDarkTheme),
             ),

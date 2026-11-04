@@ -33,6 +33,7 @@ import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.RuntimeShader
 import io.github.suqi8.coui.kmp.blur.asBrush
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -227,7 +228,7 @@ internal fun MetaBallSurface(
 ) {
     val runsShader = isRuntimeShaderSupported()
     val shader = rememberMetaBallShader(runsShader)
-    val glass = backdrop != null && shader != null && SystemMaterialState.blurEnabled
+    val glass = backdrop != null && shader != null && isBlurEnabled()
     val pathCaches = remember { List(META_BALL_MAX_PARTICLES) { SegmentCapsulePathCache() } }
 
     Box(modifier = modifier) {

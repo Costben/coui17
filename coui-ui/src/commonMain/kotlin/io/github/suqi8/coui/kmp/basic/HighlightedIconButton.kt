@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
-import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 
@@ -122,7 +122,7 @@ fun HighlightedIconButton(
     }
     // Opt-in TYPE_FRAMEWORK_TOP_BAR_BLUR: only the blur is sampled, since the measured radial fill
     // above already carries the preset's colour layers.
-    val glassDiscModifier = if (backdrop != null && isRuntimeShaderSupported()) {
+    val glassDiscModifier = if (backdrop != null && isBlurEnabled()) {
         Modifier.couiGlassSurface(
             backdrop = backdrop,
             shape = CircleShape,

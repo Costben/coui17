@@ -82,6 +82,7 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
@@ -554,7 +555,7 @@ private fun BottomFloatingNavigationBarMeltBall(
                     // The merged outline gets the glass rim; without a backdrop the blob is opaque and
                     // the native component draws no stroke either. TYPE_FRAMEWORK_CAPSULE_3's near and
                     // far ramps draw a sharp upper line and a weaker lower one.
-                    rimColor = if (backdrop != null) {
+                    rimColor = if (backdrop != null && isBlurEnabled()) {
                         Color.White.copy(
                             alpha = if (isDark) {
                                 BottomFloatingNavigationBarDefaults.RIM_ALPHA_DARK

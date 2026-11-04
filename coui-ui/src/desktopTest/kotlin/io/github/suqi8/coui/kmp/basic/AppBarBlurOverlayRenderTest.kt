@@ -26,8 +26,11 @@ import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
+import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.theme.darkColorScheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.test.Test
@@ -255,6 +258,68 @@ class AppBarBlurOverlayRenderTest {
         assertTrue(
             maxChannelDelta(pixel, ContentColor) <= 2,
             "the content must not ride the material's alpha: got ${pixel.argbHex()}",
+        )
+    }
+
+    /**
+     * When blur is disabled (`LocalBlurEnabled = false` or power-saving mode), drawing the dark
+     * ramp (`0.4 -> 0.0` alpha) without blur lets scrolling text bleed sharply through the bar.
+     * The overlay must fall back to an opaque `containerColor` inside the bar's own bounds and
+     * leave the `ExtraHeight` band below the bar untouched.
+     */
+    @Test
+    fun disablingBlurPaintsOpaqueContainerColorInsideTheBarOnly() = runSkikoComposeUiTest(
+        size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+        density = TestDensity,
+    ) {
+        val barContainerColor = AppBarBlurOverlayDefaults.DarkContainerColor
+        setContent {
+            COUITheme(colors = darkColorScheme()) {
+                val backdrop = rememberLayerBackdrop {
+                    drawRect(Color.Black)
+                    drawContent()
+                }
+                Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                        Canvas(Modifier.fillMaxSize()) { drawRect(Color.White) }
+                    }
+                    CompositionLocalProvider(
+                        LocalBackdrop provides backdrop,
+                        LocalEdgeToEdge provides true,
+                        LocalBlurEnabled provides false,
+                    ) {
+                        AppBarBlurOverlay(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(BarHeight)
+                                .testTag(OVERLAY_TAG),
+                            containerColor = barContainerColor,
+                            scrollFraction = 1f,
+                        )
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        val overlay = overlayBounds()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        val x = pixels.width / 4
+        val topInside = pixels[x, overlay.top.roundToInt() + 2]
+        val bottomInside = pixels[x, overlay.bottom.roundToInt() - 2]
+        val belowBar = pixels[x, overlay.bottom.roundToInt() + 4]
+
+        assertTrue(
+            maxChannelDelta(topInside, barContainerColor) <= 2,
+            "top of the bar must be opaque containerColor, got ${topInside.argbHex()}",
+        )
+        assertTrue(
+            maxChannelDelta(bottomInside, barContainerColor) <= 2,
+            "bottom of the bar must stay opaque containerColor instead of fading to 0, got ${bottomInside.argbHex()}",
+        )
+        assertTrue(
+            maxChannelDelta(belowBar, Color.White) <= 2,
+            "extraHeight band below the bar must not be painted when blur is off, got ${belowBar.argbHex()}",
         )
     }
 }

@@ -51,8 +51,8 @@ import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurColors
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.textureBlur
-import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
@@ -258,7 +258,7 @@ fun BottomFloatingToolbarGroup(
 
     // COUIBottomFloatingToolbarMenuView.setRenderEffect / updateSmoothRoundPath: the blur sits under
     // the edge, and both fill the capsule's own silhouette.
-    val blurSurface = if (backdrop != null && isRuntimeShaderSupported() && SystemMaterialState.blurEnabled) {
+    val blurSurface = if (backdrop != null && isBlurEnabled()) {
         Modifier.textureBlur(
             backdrop = backdrop,
             shape = shape,

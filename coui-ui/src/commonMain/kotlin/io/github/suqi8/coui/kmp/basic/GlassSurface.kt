@@ -21,9 +21,9 @@ import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.ProgressiveBlur
 import io.github.suqi8.coui.kmp.blur.highlight.Highlight
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.progressiveTextureBlur
 import io.github.suqi8.coui.kmp.blur.textureBlur
-import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -97,8 +97,9 @@ fun rememberGlassHighlight(
     backdrop: Backdrop? = LocalBackdrop.current,
 ): Highlight? {
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    return remember(container, isDark, backdrop) {
-        if (backdrop == null) {
+    val blurEnabled = isBlurEnabled()
+    return remember(container, isDark, backdrop, blurEnabled) {
+        if (backdrop == null || !blurEnabled) {
             null
         } else {
             when (container) {
@@ -122,9 +123,10 @@ fun rememberGlassHighlight(
  * The ColorOS 17 light-sensing glass background.
  *
  * Draws [containerColor] over the blurred [backdrop] and lights the rim with [highlight], producing
- * the frosted surface ColorOS uses for bars, popups and sheets. When [backdrop] is `null` — or the
- * platform cannot run runtime shaders, which is everything below Android 13 — the effect is
- * skipped and [fallback] is used instead, so hosts without a backdrop keep their opaque rendering.
+ * the frosted surface ColorOS uses for bars, popups and sheets. When [backdrop] is `null`, blur is
+ * disabled via [io.github.suqi8.coui.kmp.blur.LocalBlurEnabled] / system power-saving settings, or
+ * the platform cannot run runtime shaders (below Android 13), the effect is skipped and [fallback]
+ * is used instead, so hosts without blur keep their opaque rendering.
  *
  * @param backdrop The content to blur, normally [LocalBackdrop]'s value.
  * @param shape The silhouette of the surface, used to clip the blur.
@@ -153,7 +155,7 @@ fun Modifier.couiGlassSurface(
     highlight: Highlight? = null,
     enclosingLayerBlock: (GraphicsLayerScope.() -> Unit)? = null,
 ): Modifier {
-    if (backdrop == null || !isRuntimeShaderSupported() || !SystemMaterialState.blurEnabled) return this.then(fallback)
+    if (backdrop == null || !isBlurEnabled()) return this.then(fallback)
     return textureBlur(
         backdrop = backdrop,
         shape = shape,
@@ -186,7 +188,7 @@ fun Modifier.couiGlassSurface(
     blendColors: List<BlendColorEntry>? = null,
     highlight: Highlight? = null,
 ): Modifier {
-    if (backdrop == null || !isRuntimeShaderSupported() || !SystemMaterialState.blurEnabled) return this.then(fallback)
+    if (backdrop == null || !isBlurEnabled()) return this.then(fallback)
     return textureBlur(
         backdrop = backdrop,
         shape = shape,
@@ -209,9 +211,9 @@ fun Modifier.couiGlassSurface(
  * that band as roughly 60–80px (about 18dp on a 560dpi device) and reported a smooth edge with no
  * visible seam; [GlassDefaults.HeaderFadeHeight] is the default here.
  *
- * When [backdrop] is `null` — or the platform cannot run runtime shaders, which is everything below
- * Android 13 — the blur is skipped and the node is filled with the opaque [containerColor], so a
- * host without a backdrop keeps its existing solid header.
+ * When [backdrop] is `null`, blur is disabled, or the platform cannot run runtime shaders (below
+ * Android 13), the blur is skipped and the node is filled with the opaque [containerColor], so a
+ * host without blur keeps its solid header.
  *
  * @param backdrop The content to blur, normally [LocalBackdrop]'s value.
  * @param containerColor The colour held above the fade band and faded out across it.
@@ -224,7 +226,7 @@ fun Modifier.couiGlassHeader(
     containerColor: Color,
     fadeHeight: Dp = GlassDefaults.HeaderFadeHeight,
 ): Modifier {
-    if (backdrop == null || !isRuntimeShaderSupported()) return background(containerColor)
+    if (backdrop == null || !isBlurEnabled()) return background(containerColor)
     return progressiveTextureBlur(
         backdrop = backdrop,
         shape = RectangleShape,

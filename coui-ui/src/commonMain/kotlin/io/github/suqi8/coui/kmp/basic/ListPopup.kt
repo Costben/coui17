@@ -110,6 +110,7 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
@@ -1957,7 +1958,8 @@ fun ListPopupContent(
     content: @Composable () -> Unit,
 ) {
     val backgroundColor = popupSurfaceColor()
-    val glassBackdrop = if (enableGlass) LocalBackdrop.current else null
+    val blurEnabled = isBlurEnabled()
+    val glassBackdrop = if (enableGlass && blurEnabled) LocalBackdrop.current else null
     val squircleEnabled = isSquircleEnabled()
     val glassShape = remember(squircleEnabled) { popupCornerShape(squircleEnabled) }
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
@@ -1966,7 +1968,7 @@ fun ListPopupContent(
     // Where the panel sits in its own window, needed to put a captured page back where it was.
     var panelOriginInWindow by remember { mutableStateOf(Offset.Zero) }
     // A snapshot only stands in for the backdrop when there is no live one to sample.
-    val snapshotBackdrop = staticBackdrop?.takeIf { glassBackdrop == null }
+    val snapshotBackdrop = if (blurEnabled) staticBackdrop?.takeIf { glassBackdrop == null } else null
     val surfaceAlpha =
         if (snapshotBackdrop != null) POPUP_GLASS_SURFACE_ALPHA else POPUP_SOLID_SURFACE_ALPHA
     // `RoundFrameLayout.updateMaterialEffectsState()` turns both shaders off whenever the popup is

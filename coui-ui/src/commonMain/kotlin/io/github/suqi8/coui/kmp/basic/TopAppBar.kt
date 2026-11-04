@@ -69,8 +69,8 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.textureBlur
-import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
 import io.github.suqi8.coui.kmp.utils.COUIWindowSizeClass
@@ -161,7 +161,7 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
     // really reaches the top of the window — see [LocalEdgeToEdge].
     if (!LocalEdgeToEdge.current) return background(color)
     val backdrop: Backdrop? = LocalBackdrop.current
-    if (backdrop == null || !isRuntimeShaderSupported()) return background(color)
+    if (backdrop == null || !isBlurEnabled()) return background(color)
     val alpha = if (color.luminance() < 0.5f) {
         AppBarGlassDefaults.BackgroundAlphaDark
     } else {
@@ -183,8 +183,8 @@ private fun Modifier.appBarSurface(color: Color): Modifier {
  *
  * The material child is outside the bar content's bounds, so it can paint over the list in the
  * extra band; the bar content keeps its own size and insets, and is not clipped so icon halos are
- * not cut off at the bar's edge. Without `gradientGlass` the material child is simply omitted, and
- * [appBarSurface] paints the bar the old way.
+ * not cut off at the bar's edge. Without `gradientGlass` — or when blur is disabled — the material
+ * child is omitted, and [appBarSurface] paints the bar as an opaque fill.
  *
  * `showDivider` is suppressed whenever the material is on, the way
  * `AppBarBlurHelper.syncAppBarDividerWithMaterialBlur` suppresses `COUIDividerAppBarLayout`'s
@@ -217,12 +217,12 @@ private fun AppBarMaterialScaffold(
         }
     }
     // The material blurs what is drawn underneath the bar, so it only makes sense when the content
-    // scrolls behind it. A scaffold that pads the content below the bar leaves nothing to sample
-    // there: the blur clamps to the first content row and paints a flat band with a hard edge under
-    // the bar. Refuse the material instead of drawing that, and keep the plain container colour.
+    // scrolls behind it and blur is active. Refuse the material otherwise and keep the plain
+    // container colour + scroll divider (`AppBarBlurHelper.syncAppBarDividerWithMaterialBlur`).
     val edgeToEdge = LocalEdgeToEdge.current
+    val blurEnabled = isBlurEnabled()
     AppBarMaterialLayout(
-        materialEnabled = gradientGlass && edgeToEdge,
+        materialEnabled = gradientGlass && edgeToEdge && blurEnabled,
         containerColor = color,
         backdrop = LocalBackdrop.current,
         extraHeight = AppBarBlurOverlayDefaults.ExtraHeight,
@@ -1308,9 +1308,10 @@ private fun TopAppBarLayout(
         animationSpec = tween(durationMillis = 50),
     )
 
-    // The material is only painted for edge-to-edge content (see [LocalEdgeToEdge]); when it is
-    // refused, the bar has to paint itself and keep its divider, or it would be left transparent.
-    val materialOn = gradientGlass && LocalEdgeToEdge.current
+    // The material is only painted for edge-to-edge content while blur is active (see
+    // [LocalEdgeToEdge] and [isBlurEnabled]); when refused, the bar paints itself and keeps its
+    // divider instead of rendering a translucent ramp without blur.
+    val materialOn = gradientGlass && LocalEdgeToEdge.current && isBlurEnabled()
 
     Layout(
         {
@@ -1655,9 +1656,10 @@ private fun SmallTopAppBarLayout(
         { -(scrollBehavior?.state?.contentOffset ?: 0f) }
     }
 
-    // The material is only painted for edge-to-edge content (see [LocalEdgeToEdge]); when it is
-    // refused, the bar has to paint itself and keep its divider, or it would be left transparent.
-    val materialOn = gradientGlass && LocalEdgeToEdge.current
+    // The material is only painted for edge-to-edge content while blur is active (see
+    // [LocalEdgeToEdge] and [isBlurEnabled]); when refused, the bar paints itself and keeps its
+    // divider instead of rendering a translucent ramp without blur.
+    val materialOn = gradientGlass && LocalEdgeToEdge.current && isBlurEnabled()
 
     Layout(
         {

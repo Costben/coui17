@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
-import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -95,7 +95,7 @@ fun FloatingActionButton(
         }
     }
 
-    val glass = backdrop != null && isRuntimeShaderSupported()
+    val glass = backdrop != null && isBlurEnabled()
     val glassModifier = if (glass) {
         val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
         val layers = remember(containerColor, isDark) { FloatingActionButtonDefaults.fabBlurColors(containerColor, isDark) }
