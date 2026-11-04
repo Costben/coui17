@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -279,9 +277,17 @@ fun BasicComponent(
     // 68.4dp where the ColorOS 17 Settings list draws 52dp, and a title-only row with an icon looked
     // half again as tall as the 48dp row of a page whose items have no icon.
     val layoutDirection = LocalLayoutDirection.current
-    val verticalInsidePadding =
-        insideMargin.calculateTopPadding() + insideMargin.calculateBottomPadding()
-    val verticalInsidePaddingPx = with(LocalDensity.current) { verticalInsidePadding.roundToPx() }
+    val topInsidePadding = insideMargin.calculateTopPadding()
+    val bottomInsidePadding = insideMargin.calculateBottomPadding()
+    val density = LocalDensity.current
+
+    // A bottom action sits directly under the text: the action's own height — a 36dp slider touch
+    // target around a 20dp track — already leaves the control 8dp below the title, so the text block
+    // drops its bottom inset and the row's bottom inset moves below the action. Keeping both put 40dp
+    // between a slider preference's title and its track where ColorOS 17 draws 8dp.
+    val contentBottomPadding = if (bottomAction == null) bottomInsidePadding else 0.dp
+    val topInsidePaddingPx = with(density) { topInsidePadding.roundToPx() }
+    val contentBottomPaddingPx = with(density) { contentBottomPadding.roundToPx() }
 
     Column(
         modifier = modifier
@@ -313,7 +319,7 @@ fun BasicComponent(
     ) {
         if (startAction == null && endActions == null) {
             Column(
-                modifier = Modifier.padding(vertical = verticalInsidePadding),
+                modifier = Modifier.padding(top = topInsidePadding, bottom = contentBottomPadding),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start,
                 content = content,
@@ -396,12 +402,15 @@ fun BasicComponent(
                 }
                 val startBlockHeight = startHeight + iconMarginPx * 2
                 val endHeight = endPlaceable?.height ?: 0
-                // The text and the trailing actions keep the row's vertical inside margin; the
-                // leading icon does not, because its margins are already part of its block.
+                // The text and the trailing actions keep the row's top inset. The bottom inset is
+                // dropped while a bottom action follows, because that action owns the space under
+                // the text; the leading icon keeps neither inset, since its margins are already part
+                // of its block.
+                val contentHeight = topInsidePaddingPx + contentBottomPaddingPx
                 val rowHeight = maxOf(
                     startBlockHeight,
-                    centerPlaceable.height + verticalInsidePaddingPx,
-                    endHeight + verticalInsidePaddingPx,
+                    centerPlaceable.height + contentHeight,
+                    endHeight + contentHeight,
                 )
                 val layoutHeight = rowHeight
                     .coerceIn(constraints.minHeight, maxHeight.takeIf { it != Constraints.Infinity } ?: rowHeight)
@@ -423,8 +432,14 @@ fun BasicComponent(
                 layout(width = maxWidth, height = layoutHeight) {
                     val startTop = topAnchoredStartTop
                         ?: ((rowHeight - startBlockHeight).coerceAtLeast(0) / 2 + iconMarginPx)
-                    val centerTop = (rowHeight - centerPlaceable.height) / 2
-                    val endTop = (rowHeight - endHeight).coerceAtLeast(0) / 2
+                    // With a bottom action the text keeps only its top inset instead of being
+                    // centred in the row, so the action starts right below it.
+                    val centerTop = if (bottomAction == null) {
+                        (rowHeight - centerPlaceable.height) / 2
+                    } else {
+                        topInsidePaddingPx
+                    }
+                    val endTop = (centerTop + (centerPlaceable.height - endHeight) / 2).coerceAtLeast(0)
 
                     startPlaceable?.placeRelative(0, startTop)
 
@@ -440,8 +455,7 @@ fun BasicComponent(
         }
 
         if (bottomAction != null) {
-            Column(modifier = Modifier.padding(vertical = verticalInsidePadding)) {
-                Spacer(modifier = Modifier.height(8.dp))
+            Column(modifier = Modifier.padding(bottom = bottomInsidePadding)) {
                 bottomAction()
             }
         }

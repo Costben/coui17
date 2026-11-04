@@ -143,6 +143,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Fixed
 
+- `BasicComponent` stacks a bottom action directly under the text instead of padding it away by the row's vertical inside margin. A slider row was showing 40dp between its title and its track — the row's bottom inset, the action's own inset, an 8dp spacer and the track centred in its 36dp touch target, all counted at once — where ColorOS 17 draws 8dp. `SliderPreference` and every other preference that takes a `bottomAction` now keep the inside margin only above the text and below the action.
 - `BasicComponent` no longer adds the row's vertical inside margin on top of the leading icon's own margins. A 24dp icon carries 12dp above and below, so the icon block already made the row 48dp; padding it again put every icon row at 68.4dp, where the ColorOS 17 Settings list measures 52dp on a row with an icon and 48dp on the icon-less pages. The margin now belongs to the text block, so a title-only row with an icon is 48dp again and a title with a two-line summary keeps its height.
 - List popups ignore a bottom floating bar that ends above their anchor, so a bar scrolling with the page no longer throws the menu to the top of the window.
 - `Button` / `TextButton`: a default capsule keeps deriving its radius from the height, so a wrapped label no longer leaves the rim on the single-line corner over a taller fill.
