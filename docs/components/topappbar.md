@@ -79,6 +79,22 @@ TopAppBar(
 )
 ```
 
+## Title Sizes
+
+`TopAppBar` and `SmallTopAppBar` use the same fixed `dp` sizes as the native app bar:
+
+| Element | Size | Weight |
+| :--- | :--- | :--- |
+| Expanded large title | 32dp | SemiBold 600 |
+| Collapsed title | 24dp (18dp with a subtitle) | SemiBold 600 |
+| `SmallTopAppBar` title | 18dp | `FontWeight(550)` |
+
+A keyless top-level page uses `TopAppBar` or `PinnedTopAppBar` and owns the large title. A page
+with a back key is a second-level page: it uses `SmallTopAppBar`, whose title is the 18dp one.
+
+The top bar does not use the `sp` scale (`title1` / `title4`), so these sizes do not follow the
+system font size. See [Implementation Specification § Top Bar Title Sizes](../guide/specification#top-bar-title-sizes).
+
 ## Large TopAppBar Scroll Behavior (Using Scaffold)
 
 TopAppBar supports changing its display state when content scrolls:
@@ -295,13 +311,13 @@ The TopAppBarDefaults object provides default values for TopAppBar and SmallTopA
 | NavigationIconPadding      | Dp   | Start padding of the navigation icon              | 16.dp         |
 | ActionIconPadding          | Dp   | End padding of the action icons                   | 16.dp         |
 | CollapsedHeight            | Dp   | Collapsed height of the TopAppBar                 | 52.dp         |
-| ExpandedHeight             | Dp   | Minimum expanded height of the TopAppBar without a subtitle | 107.dp |
+| ExpandedHeight             | Dp   | Minimum expanded height of the TopAppBar without a subtitle | 110.dp |
 | SmallTopAppBarCenterHeight | Dp   | Vertical center height for SmallTopAppBar layout  | 52.dp         |
 | LargeTitleBottomPadding    | Dp   | Bottom padding below the large title block when expanded (interpolates to 0.dp as the bar collapses) | 12.dp |
 | SubtitleBottomPadding      | Dp   | Bottom padding below the subtitle when it overflows the collapsed bar | 8.dp  |
 | SubtitleMarginTop          | Dp   | Vertical gap between the title and the subtitle   | 3.5.dp        |
-| NavigationIconGap          | Dp   | Horizontal gap between the navigation icon and the collapsed title | 4.dp |
-| ActionIconGap              | Dp   | Horizontal gap between the title and the action icons | 8.dp      |
+| NavigationIconGap          | Dp   | Horizontal gap between the navigation icon and the collapsed title (`values-v37/`; 4dp on older API levels) | 10.dp |
+| ActionIconGap              | Dp   | Horizontal gap between the title and the action icons | 4.dp      |
 | ActionMenuItemSpacing      | Dp   | Spacing between action menu items                  | 10.dp         |
 | CenterTitleMarginCompat    | Dp   | Centred title's horizontal margin, `compat` tier (below 600dp) | 16.dp |
 | CenterTitleMarginMedium    | Dp   | Centred title's horizontal margin, `medium` tier (600–840dp) | 24.dp |

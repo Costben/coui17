@@ -77,6 +77,20 @@ TopAppBar(
 )
 ```
 
+## 标题字号
+
+`TopAppBar` 与 `SmallTopAppBar` 和原生顶栏一样使用固定 `dp`：
+
+| 元素 | 字号 | 字重 |
+| :--- | :--- | :--- |
+| 展开态大标题 | 32dp | SemiBold 600 |
+| 折叠态标题 | 24dp（有副标题时 18dp） | SemiBold 600 |
+| `SmallTopAppBar` 标题 | 18dp | `FontWeight(550)` |
+
+无按钮的一级页用 `TopAppBar` 或 `PinnedTopAppBar`，拥有大标题。有返回键即二级页：用 `SmallTopAppBar`，标题是 18dp 那一档。
+
+顶栏不使用 `sp` 梯度（`title1` / `title4`），因此不跟随系统字体大小。详见[实现规范 · 顶栏标题字号](../guide/specification#顶栏标题字号)。
+
 ## 大标题顶部栏滚动行为（使用脚手架）
 
 TopAppBar 支持随内容滚动时改变其显示状态：
@@ -289,13 +303,13 @@ TopAppBarDefaults 对象提供了 TopAppBar 和 SmallTopAppBar 组件的默认�
 | NavigationIconPadding      | Dp   | 导航图标的起始边距               | 16.dp  |
 | ActionIconPadding          | Dp   | 操作图标的末尾边距               | 16.dp  |
 | CollapsedHeight            | Dp   | TopAppBar 折叠时的高度           | 52.dp  |
-| ExpandedHeight             | Dp   | 无副标题时 TopAppBar 展开态的最小高度 | 107.dp |
+| ExpandedHeight             | Dp   | 无副标题时 TopAppBar 展开态的最小高度 | 110.dp |
 | SmallTopAppBarCenterHeight | Dp   | SmallTopAppBar 布局的垂直中心高度 | 52.dp  |
 | LargeTitleBottomPadding    | Dp   | 展开态大标题区块下方的底部边距（折叠时渐变至 0.dp） | 12.dp   |
 | SubtitleBottomPadding      | Dp   | 副标题溢出折叠栏时其下方的底部边距 | 8.dp   |
 | SubtitleMarginTop          | Dp   | 标题与副标题之间的垂直间距        | 3.5.dp |
-| NavigationIconGap          | Dp   | 导航图标与折叠态标题之间的水平间距 | 4.dp   |
-| ActionIconGap              | Dp   | 标题与操作图标之间的水平间距      | 8.dp   |
+| NavigationIconGap          | Dp   | 导航图标与折叠态标题之间的水平间距（`values-v37/`；旧 API 为 4dp） | 10.dp   |
+| ActionIconGap              | Dp   | 标题与操作图标之间的水平间距      | 4.dp   |
 | ActionMenuItemSpacing      | Dp   | 操作菜单项之间的间距              | 10.dp  |
 | CenterTitleMarginCompat    | Dp   | 居中标题的水平留白，compat 档（低于 600dp） | 16.dp |
 | CenterTitleMarginMedium    | Dp   | 居中标题的水平留白，medium 档（600–840dp） | 24.dp |

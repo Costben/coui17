@@ -61,7 +61,7 @@ PinnedTopAppBar(
 
 ### 标题样式
 
-标题使用 `COUITheme.textStyles.title1`（32sp）。标题字重在设备上没有量过，因此不强加字重；需要时通过 `titleStyle` 覆盖：
+标题使用固定 32dp（`coui_appbar_title_expanded_text_size`），在 `title1` 的字重与行高上把字号钉住；`title1` 的 SemiBold 600 就是原生的 `sans-serif-semibold`。原生标题是 dp 而不是 sp：132 上把系统字体调到 1.3，相册「照片」的墨迹高度不变。需要时通过 `titleStyle` 覆盖：
 
 ```kotlin
 PinnedTopAppBar(
@@ -118,7 +118,7 @@ val scrollBehavior = PinnedScrollBehavior(state = rememberTopAppBarState())
 | TitleActionGap | Dp | 4.dp | `TopAppBarDefaults.ActionIconGap` |
 | TextActionMaxWidth | Dp | 104.dp | `coui_action_bar_text_menu_item_max_width` |
 | TextActionMaxLines | Int | 2 | `COUIActionMenuView.MAX_TEXT_MENU_ITEM_LINE` |
-| titleStyle() | TextStyle | `title1`（32sp） | 「照片」墨迹高 29.2dp、两字宽 59dp；字重未实测 |
+| titleStyle() | TextStyle | `title1` 的字重/行高 + 固定 32dp | `coui_appbar_title_expanded_text_size`；「照片」墨迹高 29.2dp、两字宽 59dp；SemiBold 600 即原生 `sans-serif-semibold` |
 
 `PinnedTopAppBarTextAction(text, onClick)` 是纯图标操作的文字版：宽度上限 `TextActionMaxWidth`，最多折 `TextActionMaxLines` 行，超出省略，对应 `COUIActionMenuView` 对文字型 `COUIActionMenuItemView` 的测量。
 

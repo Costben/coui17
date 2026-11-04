@@ -765,6 +765,26 @@ object TopAppBarDefaults {
     val ExpandedHeight = 110.dp
 
     /**
+     * COUI `coui_appbar_title_expanded_text_size` (32dp), the expanded large title.
+     *
+     * A dp size, not sp: the native title does not follow the system font size. On the test
+     * device (132 / PKT110) the Gallery "照片" ink stays 102px at font scale 1.3, and the
+     * secondary toolbar's 18dp title stays 51px.
+     */
+    val LargeTitleTextSize = 32.dp
+
+    /** COUI `coui_appbar_title_collapsed_text_size` (24dp), the collapsed title without a subtitle. */
+    val CollapsedTitleTextSize = 24.dp
+
+    /** COUI `coui_appbar_title_collapsed_with_subtitle_text_size` (18dp), the collapsed title with a subtitle. */
+    val CollapsedTitleWithSubtitleTextSize = 18.dp
+
+    /** COUI `TextAppearance.COUI.Toolbar.SecondTitle`, the small toolbar's title. Declared at 18sp
+     * in resources, but the rendered title does not follow the system font size, so it is fixed
+     * at 18dp. */
+    val ToolbarTitleTextSize = 18.dp
+
+    /**
      * The top padding of the expanded large title, measured from the top of the bar.
      * COUI `coui_appbar_title_expanded_margin_top` (54dp).
      */
@@ -1248,9 +1268,24 @@ private fun TopAppBarLayout(
     // CollapsingTextHelper lerps the text size from the expanded 32dp down to the collapsed
     // 24dp, or 18dp when a subtitle is present; replicated as a scale factor around the title's
     // top-start corner.
-    val largeTitleFontSize = with(density) { LargeTitleTextSize.toSp() }
+    val largeTitleFontSize = with(density) { TopAppBarDefaults.LargeTitleTextSize.toSp() }
+    // COUIAppbarTitleStyle.Expanded sets lineSpacingMultiplier 1.4 and the native title is laid
+    // out with expandedTitleGravity = start|top, so the extra line space falls below the glyphs.
+    // What the line box has to fill is the room between the 54dp top and 12dp bottom paddings of
+    // the 110dp expanded height; a 1.4 multiplier over the font's natural line height is that
+    // same box. Taking it from the height keeps the bar at exactly 110dp.
+    val largeTitleLineHeight = with(density) {
+        (
+            TopAppBarDefaults.ExpandedHeight - TopAppBarDefaults.LargeTitleTopPadding -
+                TopAppBarDefaults.LargeTitleBottomPadding
+            ).toSp()
+    }
     val collapsedTitleSize =
-        if (subtitle.isNotEmpty()) CollapsedTitleWithSubtitleTextSize else CollapsedTitleTextSize
+        if (subtitle.isNotEmpty()) {
+            TopAppBarDefaults.CollapsedTitleWithSubtitleTextSize
+        } else {
+            TopAppBarDefaults.CollapsedTitleTextSize
+        }
     val collapsedTitleFontSize = with(density) { collapsedTitleSize.toSp() }
     val collapsedTitleScale = remember(largeTitleFontSize, collapsedTitleFontSize) {
         if (largeTitleFontSize.value > 0f) {
@@ -1287,13 +1322,14 @@ private fun TopAppBarLayout(
                 navigationIcon()
             }
             // Collapsed title: only shown once the bar is fully collapsed; until then the
-            // large title morphs into it.
+            // large title morphs into it. COUIAppbarTitleStyle keeps sans-serif-semibold in
+            // both states, so the weight does not change as the bar collapses.
             Box(Modifier.layoutId("title")) {
                 Text(
                     text = title,
                     color = animatedTitleColor,
                     fontSize = collapsedTitleFontSize,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     softWrap = false,
@@ -1307,13 +1343,16 @@ private fun TopAppBarLayout(
                 actions()
             }
             // Expanded title: position and scale are driven by the collapse fraction in the
-            // placement pass (CollapsingTextHelper SCALE mode).
+            // placement pass (CollapsingTextHelper SCALE mode). COUIAppbarTitleStyle.Expanded
+            // carries lineSpacingMultiplier 1.4; with the top gravity of the native title the
+            // extra line space sits below the glyphs, so this sets the box height only.
             Box(Modifier.layoutId("largeTitle")) {
                 Text(
                     text = largeTitle,
                     color = animatedLargeTitleColor,
                     fontSize = largeTitleFontSize,
                     fontWeight = FontWeight.SemiBold,
+                    lineHeight = largeTitleLineHeight,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     softWrap = false,
@@ -1636,15 +1675,15 @@ private fun SmallTopAppBarLayout(
                     segmentButton()
                 }
             }
-            // Title: TextAppearance.COUI.Toolbar.SecondTitle, the same 18dp as
-            // coui_appbar_title_collapsed_with_subtitle_text_size (medium, viewStart alignment).
+            // Title: TextAppearance.COUI.Toolbar.SecondTitle (18dp, sans-serif-medium at
+            // textFontWeight 550, viewStart alignment).
             Box(Modifier.layoutId("title")) {
                 Text(
                     text = title,
                     color = animatedTitleColor,
                     maxLines = 1,
-                    fontSize = with(LocalDensity.current) { CollapsedTitleWithSubtitleTextSize.toSp() },
-                    fontWeight = FontWeight.Medium,
+                    fontSize = with(LocalDensity.current) { TopAppBarDefaults.ToolbarTitleTextSize.toSp() },
+                    fontWeight = FontWeight(550),
                     overflow = TextOverflow.Ellipsis,
                     softWrap = false,
                 )
@@ -1907,15 +1946,6 @@ private fun SmallTopAppBarLayout(
         }
     }
 }
-
-/** COUI `coui_appbar_title_expanded_text_size` (32dp), the expanded large title. */
-private val LargeTitleTextSize = 32.dp
-
-/** COUI `coui_appbar_title_collapsed_text_size` (24dp, sans-serif-medium). */
-private val CollapsedTitleTextSize = 24.dp
-
-/** COUI `coui_appbar_title_collapsed_with_subtitle_text_size` (18dp). */
-private val CollapsedTitleWithSubtitleTextSize = 18.dp
 
 /**
  * COUIEaseInterpolator: cubic-bezier(0.33, 0, 0.67, 1), applied to the collapsing title's

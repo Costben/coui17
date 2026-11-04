@@ -61,7 +61,7 @@ PinnedTopAppBar(
 
 ### Title Style
 
-The title uses `COUITheme.textStyles.title1` (32sp). Its font weight was not measured on the device, so none is imposed; pass `titleStyle` to override:
+The title uses a fixed 32dp (`coui_appbar_title_expanded_text_size`), with `title1`'s weight and line height and its font size pinned. `title1`'s SemiBold 600 is the native `sans-serif-semibold`. The native title is a dp size, not sp: on device 132 the "照片" ink height is unchanged at font scale 1.3. Pass `titleStyle` to override:
 
 ```kotlin
 PinnedTopAppBar(
@@ -118,7 +118,7 @@ Handed to a `TopAppBar` it keeps that bar fully expanded, and the bar's divider 
 | TitleActionGap | Dp | 4.dp | `TopAppBarDefaults.ActionIconGap` |
 | TextActionMaxWidth | Dp | 104.dp | `coui_action_bar_text_menu_item_max_width` |
 | TextActionMaxLines | Int | 2 | `COUIActionMenuView.MAX_TEXT_MENU_ITEM_LINE` |
-| titleStyle() | TextStyle | `title1` (32sp) | Title ink "照片" is 29.2dp tall, two glyphs 59dp wide; weight not measured |
+| titleStyle() | TextStyle | `title1` weight/line height + fixed 32dp | `coui_appbar_title_expanded_text_size`; title ink "照片" is 29.2dp tall, two glyphs 59dp wide; SemiBold 600 matches the native `sans-serif-semibold` |
 
 `PinnedTopAppBarTextAction(text, onClick)` is the text counterpart of an icon-only action: it fills
 `TextActionMaxWidth`, wraps to `TextActionMaxLines`, and ellipsizes past that, the way

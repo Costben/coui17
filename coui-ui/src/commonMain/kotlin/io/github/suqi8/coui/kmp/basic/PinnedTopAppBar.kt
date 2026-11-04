@@ -106,14 +106,19 @@ object PinnedTopAppBarDefaults {
     val TextActionMaxLines = 2
 
     /**
-     * The title text style: `COUITheme.textStyles.title1` (couiTextAppearanceHeadline1, 32sp).
+     * The title text style: `COUITheme.textStyles.title1` with its font size pinned to
+     * [TopAppBarDefaults.LargeTitleTextSize] (32dp, `coui_appbar_title_expanded_text_size`).
      *
      * Gallery's "照片" title ink spans x 63..271 and y 181..283 at 3.53125 px/dp, i.e. 29.2dp of
-     * ink height and two glyphs 59dp wide, consistent with a 32dp headline. The font weight was
-     * not measured, so none is imposed here; pass a `titleStyle` with a weight to override.
+     * ink height and two glyphs 59dp wide, consistent with a 32dp headline. The native title is a
+     * dp size, not sp: on the test device (132 / PKT110) the ink height is unchanged at font scale
+     * 1.3. `title1` alone is 32sp and would scale, so only its weight and line height are kept.
+     * Its SemiBold 600 matches the native `sans-serif-semibold`; pass a `titleStyle` to override.
      */
     @Composable
-    fun titleStyle(): TextStyle = COUITheme.textStyles.title1
+    fun titleStyle(): TextStyle = COUITheme.textStyles.title1.copy(
+        fontSize = with(LocalDensity.current) { TopAppBarDefaults.LargeTitleTextSize.toSp() },
+    )
 }
 
 /**

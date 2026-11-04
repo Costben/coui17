@@ -34,6 +34,12 @@ COUI 没有 17sp 这一档 text appearance，`main` / `paragraph` 保留从 Miui
 所有样式都带 `LineHeightStyle(alignment = Top, trim = None)`，以对应 Android `lineSpacingMultiplier` 的行为：额外行距落在文字下方且不被裁剪。Compose 默认会把行距居中并在首尾行裁掉，那样单行文本上的行高设置会完全失效。
 :::
 
+::: tip 顶栏标题使用固定 dp
+`TopAppBar`、`SmallTopAppBar` 与 `PinnedTopAppBar` 的标题不使用 `sp` 梯度：大标题 32dp，
+折叠态 24dp（有副标题时 18dp），小工具栏 18dp，都不跟随系统字体大小。详见
+[实现规范 · 顶栏标题字号](./specification#顶栏标题字号)。
+:::
+
 ## 使用示例
 
 ```kotlin

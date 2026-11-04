@@ -50,6 +50,13 @@ text appearance pass their own style.
 
 :::
 
+::: tip Top bar titles use fixed dp
+`TopAppBar`, `SmallTopAppBar` and `PinnedTopAppBar` do not use the `sp` scale for their titles.
+The large title is 32dp, the collapsed title 24dp (18dp with a subtitle), and the small toolbar
+title 18dp; none of them follows the system font size. See
+[Implementation Specification § Top Bar Title Sizes](./specification#top-bar-title-sizes).
+:::
+
 ## Usage
 
 ```kotlin

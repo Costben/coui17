@@ -130,10 +130,12 @@ ColorOS = **灰底 + 白卡**；miuix 现状 = 白底 + 浅灰面。已确认 mi
 | :-- | :-- | :-- | :-- | :-- |
 | `Button` | 17sp | **16sp** | 按钮文字 | 中 |
 | `Title1` | 32sp | ✓ | 展开态大标题 | 高 |
-| `Title4` | 18sp | ✓ | 折叠态标题 | 中 |
+| `Title4` | 18sp | ✓ | 折叠态标题 / 二级页工具栏标题 | 中 |
 | `Main` | 17sp | (可选)16sp | 设置页标题字号 — Main 用途广，改前评估 | 低·flag |
 | `Body2`/summary | 14sp | (可选)12sp | 设置页摘要字号 | 低·flag |
 | `Subtitle` | 14sp Bold | 评估 Medium(500) | ColorOS 子标题偏 medium | 低·flag |
+
+> 顶栏标题不走上表：`TopAppBar` / `SmallTopAppBar` / `PinnedTopAppBar` 使用固定 dp（32 / 24 / 18 / 18），不跟随系统字体缩放。详见 `docs/guide/specification.md` 的「顶栏标题字号」。
 
 ## 6. 关键控件（改 §2 色值即自动生效，无需改组件代码）
 
