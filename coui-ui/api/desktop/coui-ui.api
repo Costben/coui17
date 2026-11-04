@@ -1193,8 +1193,8 @@ public final class io/github/suqi8/coui/kmp/basic/CompleteStateStatus : java/lan
 public final class io/github/suqi8/coui/kmp/basic/ComponentKt {
 	public static final synthetic fun BasicComponent-FKrtxEo (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun BasicComponent-NHrqhKs (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
-	public static final fun BasicComponent-TUO5cB0 (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
-	public static final fun BasicComponent-w3w8Ouo (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final fun BasicComponent-Yzta2Ww (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final fun BasicComponent-rMlfJ_U (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/ui/semantics/Role;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$AppBarBlurOverlayKt {
@@ -4654,8 +4654,11 @@ public final class io/github/suqi8/coui/kmp/basic/TopAppBarDefaults {
 	public final fun getCenterTitleMarginMedium-D9Ej5fM ()F
 	public final fun getCenterTitlePadding-D9Ej5fM ()F
 	public final fun getCollapsedHeight-D9Ej5fM ()F
+	public final fun getCollapsedTitleTextSize-D9Ej5fM ()F
+	public final fun getCollapsedTitleWithSubtitleTextSize-D9Ej5fM ()F
 	public final fun getExpandedHeight-D9Ej5fM ()F
 	public final fun getLargeTitleBottomPadding-D9Ej5fM ()F
+	public final fun getLargeTitleTextSize-D9Ej5fM ()F
 	public final fun getLargeTitleTopPadding-D9Ej5fM ()F
 	public final fun getNavigationIconGap-D9Ej5fM ()F
 	public final fun getNavigationIconPadding-D9Ej5fM ()F
@@ -4668,6 +4671,7 @@ public final class io/github/suqi8/coui/kmp/basic/TopAppBarDefaults {
 	public final fun getSubtitleBottomPadding-D9Ej5fM ()F
 	public final fun getSubtitleMarginTop-D9Ej5fM ()F
 	public final fun getTitlePadding-D9Ej5fM ()F
+	public final fun getToolbarTitleTextSize-D9Ej5fM ()F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TopAppBarKt {
@@ -5225,7 +5229,7 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomAssignmentDialo
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomSheetKt {
-	public static final fun OverlayBottomSheet-swdjXLM (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun OverlayBottomSheet-tWO_s_M (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZZZFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayCascadingListPopupKt {
