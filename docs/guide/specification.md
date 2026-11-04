@@ -19,7 +19,7 @@ Follow this workflow when implementing any screen:
 | System Screen Element | System Node ID / Type | Standard COUI Component Combination | Target Density |
 | :--- | :--- | :--- | :--- |
 | Main tab title bar and action keys | `toolbar`, `action_main_tab_search` | `PinnedTopAppBar` or `TopAppBar(gradientGlass = true)` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | Gallery density |
-| Secondary settings back and overflow keys | `coui_toolbar_back_view`, `coui_toolbar_more_view` | `TopAppBar` / `SmallTopAppBar` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | App density |
+| Secondary settings back and overflow keys | `coui_toolbar_back_view`, `coui_toolbar_more_view` | `SmallTopAppBar` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | App density |
 | Toolbar overflow popup menu | `coui_popup_wrapper`, `coui_popup_list_view` | `OverlayListPopup` + `ListPopupColumn` + `DropdownImpl(role = Role.Button)` | Panel physical density (switched automatically) |
 | Floating bottom navigation capsule | `TYPE_FRAMEWORK_BOTTOM_BAR` | `BottomFloatingNavigationBar` | Gallery density |
 | Floating bottom bar with side accessory balls | `TYPE_FRAMEWORK_BOTTOM_BAR` (accessory form) | `BottomFloatingAccessoryNavigationBar` | Gallery density |
@@ -52,6 +52,23 @@ A single ColorOS 17 screen operates across three distinct density baselines. Eac
    - **Wrap only `HighlightedIconButton`**: The action key remains `141px`, while the toolbar row height and title typography continue to scale with the user's *Display size* setting.
 4. **Popup menus are invariant to outer Gallery density**: Placing `OverlayListPopup` inside a Gallery-density scope is safe because `popupPhysicalDensity` always converts from the base density to the physical panel density.
 5. **Pixel-to-dp conversion baselines**: Divide pixel measurements by `3.53125` for Gallery-density chrome, by `3.5` for popup menus, and by `3.875` for standard app-density layouts on the reference device.
+
+### Top Bar Title Sizes
+
+A top bar title has two usage cases, and both are fixed `dp` sizes — they do not follow the system font size:
+
+| Case | Leading button | Size | Source |
+| :--- | :--- | :--- | :--- |
+| Top-level page / main tab, large title | none | **32dp** expanded; 24dp collapsed (18dp with a subtitle) | `coui_appbar_title_expanded_text_size`, `_collapsed_text_size`, `_collapsed_with_subtitle_text_size` |
+| Second-level page, small toolbar | back | **18dp** | `TextAppearance.COUI.Toolbar.SecondTitle` |
+
+- `PinnedTopAppBar` and `TopAppBar` both render the large title at 32dp. Do not use `textStyles.title1`'s 32sp for a top bar: sp follows the system font size.
+- `SmallTopAppBar` is fixed at 18dp; `TopAppBar` collapses to 24dp, or 18dp when a subtitle is present.
+- A back key means a second-level page, so it wears `SmallTopAppBar` and the 18dp title; `TopAppBar`'s large title belongs to the keyless top level alone.
+- Weight is a separate axis. The native large title is `sans-serif-semibold` (600) in both expanded and collapsed states, so it does not change weight as the bar collapses; `TextAppearance.COUI.Toolbar.SecondTitle` is `sans-serif-medium` at `textFontWeight` 550. The library renders the expanded and collapsed titles at SemiBold 600 and the small toolbar title at `FontWeight(550)`.
+- `TextAppearance.COUI.Toolbar.SecondTitle` is declared at 18sp in resources, yet the rendered toolbar title does not follow the system font size, so the library keeps 18dp.
+- Line spacing: `COUIAppbarTitleStyle.Expanded` sets `lineSpacingMultiplier` 1.4 and the native title is laid out with `expandedTitleGravity = start|top`, so the extra line space falls below the glyphs and the title's top edge stays at the 54dp `coui_appbar_title_expanded_margin_top`. The 110dp `coui_appbar_title_expanded_height` is that 54dp, the line box, and the 12dp `coui_appbar_start_padding_bottom`, which puts the line box at 44dp. The library sets the large title's line height from the same three numbers, so the bar stays at 110dp. The collapsed title's appearance sets no multiplier, so the library leaves its line height alone.
+- Verified on the test device (132 / PKT110, 2026-11-03) at 560dpi. With the system font scale at 1.0 and then 1.3, the toolbar title ink stayed 212×51px and the Gallery "照片" ink stayed 207×102px, while the control row "WLAN 助理" grew from 320×56px to 403×71px — so the font scale was live and only the top bar refused it. The Settings home title is an app-specific exception: its ink is 289×142px, larger than a 32dp title, and it also ignores font scale; its token is still 32dp, and the library keeps the token value.
 
 ---
 
@@ -338,7 +355,9 @@ fun SettingsPage(onBack: () -> Unit, onOverflow: () -> Unit) {
 
 **Implementation Requirements**:
 - **Use default app density**: Native ColorOS *Settings* renders toolbar keys at the system display density (`40dp = 155px` on PLK110); do **not** wrap secondary settings toolbars in `rememberGalleryDensity()`.
-- **Read card corner radius from theme dimens**: Always reference `COUITheme.dimens.card.cornerRadius` (`17dp` on ColorOS 17) rather than hard-coding corner radii.
+- **Read card corner radius from theme dimens**: A standalone card uses `COUITheme.dimens.card.cornerRadius` (`17dp` on ColorOS 17); a card that holds a preference group uses `CardDefaults.GroupCornerRadius` (`24dp`) with `CardDefaults.GroupWeight` (`Lp 2.5`). Never hard-code a corner radius. 24dp is the radius the system actually draws: `COUICardListSelectedItemLayout` starts from `couiRoundCornerXL` 20dp and swaps in `coui_round_corner_xl_radius_normal_16_1` 24dp whenever smooth corners are on.
+- **Group titles are `SmallTitle`**: 12sp `Medium` in `onBackgroundVariant` (54% black), indented `16dp` inside the card's `16dp` edge so the text aligns with the card's content. The row keeps `8dp` above and below a `16dp` line box, so it is `32dp` tall and the card below starts flush against it. Measured on the device against *Settings · Brightness*: `27.4dp` from the previous card's bottom edge to the glyph ink, `10.3dp` from the ink to the next card — the `16dp` above the row is the previous card's own bottom spacing.
+- **Do not draw a gap after a group title**: the under-card `16dp` inset belongs to that card, not to the heading; adding a spacer after the title pushes the card down and breaks the `32dp` row rhythm.
 
 ### 6.5 Segmented Controls, Search Fields & Pull-to-Refresh
 
@@ -355,7 +374,7 @@ fun SettingsPage(onBack: () -> Unit, onOverflow: () -> Unit) {
 COUI 17 draws three distinct corner families. Pick the one the native control uses; do not assume every capsule ends in a circle.
 
 - **System capsule curve** (`SearchBar`, `InputField`, `Button`, `TextButton`, `SearchBarActionButton`, `TabRow`, `InstallLoadProgress`, the four `BottomFloating*` bars, `Chip`): a circular arc joined to a `1.5R` easing tail. The native call is `OplusPathAdapter.addSmoothRoundRect(rect, r, r, dir)` without a weight. When the radius reaches half the shorter side that overload forwards weight `1.0`, but the on-screen result is this curve, not a circle: the bare-process `Path` output is a plain arc, while the rendered control follows the measured easing tail. The model is `addSegmentCapsule` in `basic/SegmentCapsule.kt`. Screen pixels on the reference device (132) confirm this: the 56dp floating bottom bar (Clock) fits the segment transition with an RMS of 0.042px against 0.534px for circle; the 28dp Chip (File Manager) fits with an RMS of 0.110px against 0.314px for circle; 44dp buttons fit to an RMS of about 0.08px against about 0.6px for circular ends and about 4px for `n = 2.5` superellipses; the 40dp search bar fits the segment transition with an RMS of 0.124px against 0.415px for circle, and its rim highlight matches the fill contour within 0.0024R max deviation. `CapsuleOutlineShape` selects this family at a full radius and keeps the squircle for a smaller caller-supplied radius; vertical capsules (`height > width`) fall back to circular ends to keep bounds within the node. The search bar (`SearchBar` / `InputField`) unifies its background fill, clip, material rim highlight, and caustic glow cutout onto this curve, with `MaterialShadowEdge` applying the continuous-curvature delta to wide capsule rims so the rim and fill share identical silhouettes.
-- **Lp squircle** (`ListPopup` and the cascading panel, the multi-line `TopTips`): `n = weight`, with the corner tile at the radius. Popup panels keep a fixed `28dp` radius as an `n ≈ 2.5` superellipse all the way to the capsule ends; a single `56dp` row is exactly twice the radius and still reads as a rounded rectangle, not a stadium. The multi-line `TopTips` also stays at `n ≈ 2.5`: the system's `3.0` has no equivalent here yet. `SquircleShape(..., capsuleCircleBlend = false)` selects the popup family.
+- **Lp squircle** (`ListPopup` and the cascading panel, the multi-line `TopTips`, the preference group card): `n = weight`, with the corner tile at the radius. Popup panels keep a fixed `28dp` radius as an `n ≈ 2.5` superellipse all the way to the capsule ends; a single `56dp` row is exactly twice the radius and still reads as a rounded rectangle, not a stadium. The multi-line `TopTips` also stays at `n ≈ 2.5`: the system's `3.0` has no equivalent here yet. The group card is `24dp` at `n = 2.5` and matches the system silhouette within `1px` at every offset from the corner (`CardDefaults.GroupCornerRadius` / `GroupWeight`). `SquircleShape(..., capsuleCircleBlend = false)` selects the popup family.
 - **True circle**: a full-radius control drawn through the Outline path with weight `≤ 2`, because the Outline clamps `n = max(weight, 2) = 2`. The single-line `TopTips` is this case (`setSmoothRoundRect(rect, radius, 1.0)` plus `setClipToOutline(true)`). The single-line `Snackbar` follows its measured height (`getHeight() / 2`); its curve source is not established, so it keeps the squircle family at that radius. Note: single-line `TopTips` and single-line `Snackbar` currently have no isolated system screen pixel measurements, only decompiled source evidence.
 - **Circular controls** (`IconButton`, `HighlightedIconButton`, `FloatingActionButton`, the floating button): a true circle, as measured on the reference device.
 

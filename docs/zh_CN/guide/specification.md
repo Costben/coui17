@@ -19,7 +19,7 @@
 | 系统界面元素 | 系统节点标识 / 类型 | COUI 标准组件组合 | 适用密度 |
 | :--- | :--- | :--- | :--- |
 | 主 Tab 页标题栏与操作按钮 | `toolbar`、`action_main_tab_search` | `PinnedTopAppBar` 或 `TopAppBar(gradientGlass = true)` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | 相册密度 |
-| 二级设置页返回键与更多键 | `coui_toolbar_back_view`、`coui_toolbar_more_view` | `TopAppBar` / `SmallTopAppBar` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | 应用密度 |
+| 二级设置页返回键与更多键 | `coui_toolbar_back_view`、`coui_toolbar_more_view` | `SmallTopAppBar` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | 应用密度 |
 | 顶栏三点弹出菜单 | `coui_popup_wrapper`、`coui_popup_list_view` | `OverlayListPopup` + `ListPopupColumn` + `DropdownImpl(role = Role.Button)` | 面板物理密度（组件内部自动切换） |
 | 底部悬浮导航胶囊 | `TYPE_FRAMEWORK_BOTTOM_BAR` | `BottomFloatingNavigationBar` | 相册密度 |
 | 带两侧独立圆钮的底部悬浮栏 | `TYPE_FRAMEWORK_BOTTOM_BAR`（配件形态） | `BottomFloatingAccessoryNavigationBar` | 相册密度 |
@@ -52,6 +52,23 @@ ColorOS 17 的同一屏幕中同时存在三种密度基准。不同区域必须
    - **仅将 `HighlightedIconButton` 置入相册密度**：按钮本体保持 `141px` 标准尺寸，标题字号与顶栏行高继续跟随系统「显示大小」缩放。
 4. **弹出菜单不受外层相册密度影响**：将 `OverlayListPopup` 置于相册密度作用域内是安全的，组件内部始终按物理面板密度独立换算。
 5. **像素与 dp 换算基准**：度量相册密度区域时按 `3.53125 px/dp` 换算，度量弹出菜单时按 `3.5 px/dp` 换算，度量常规应用区域时按 `3.875 px/dp` 换算。
+
+### 顶栏标题字号
+
+顶栏标题按使用场景只有两种，字号都是固定 dp，不跟随系统字体大小：
+
+| 场景 | 左上角 | 字号 | 来源 |
+| :--- | :--- | :--- | :--- |
+| 一级页 / 主 Tab，大标题 | 无按钮 | **32dp** 展开；24dp 折叠（有副标题时 18dp） | `coui_appbar_title_expanded_text_size`、`_collapsed_text_size`、`_collapsed_with_subtitle_text_size` |
+| 二级页，小工具栏 | 有返回按钮 | **18dp** | `TextAppearance.COUI.Toolbar.SecondTitle` |
+
+- `PinnedTopAppBar` 与 `TopAppBar` 的大标题都按 32dp 渲染。不要把 `textStyles.title1` 的 32sp 直接用于顶栏：sp 会跟随系统字体大小。
+- `SmallTopAppBar` 固定 18dp；`TopAppBar` 折叠后为 24dp，有副标题时 18dp。
+- 有返回键即二级页，用 `SmallTopAppBar` 与 18dp 标题；`TopAppBar` 的大标题只属于无按钮的一级页。
+- 字重是另一条轴：原生大标题展开态与折叠态都是 `sans-serif-semibold`（600），折叠过程中不会掉粗细；`TextAppearance.COUI.Toolbar.SecondTitle` 是 `sans-serif-medium`、`textFontWeight` 550。库的展开态与折叠态都是 SemiBold 600，小工具栏标题为 `FontWeight(550)`。
+- `TextAppearance.COUI.Toolbar.SecondTitle` 在资源里声明为 18sp，但实际渲染不跟随系统字体大小，因此库按 18dp 实现。
+- 行距：`COUIAppbarTitleStyle.Expanded` 设了 `lineSpacingMultiplier` 1.4，原生标题用 `expandedTitleGravity = start|top` 排版，多出来的行距落在字形下方，标题顶边始终停在 `coui_appbar_title_expanded_margin_top` 的 54dp。110dp 的 `coui_appbar_title_expanded_height` 就是 54dp、行盒、再加 `coui_appbar_start_padding_bottom` 的 12dp，反推出行盒是 44dp。库用同样这三个数推标题行高，所以整条栏仍是 110dp。折叠态的字形样式没有设倍率，库不额外指定行高。
+- 132（PKT110，2026-11-03）在 560dpi 下实测：系统字体 1.0 与 1.3 两轮，工具栏标题墨迹始终 212×51px，相册「照片」始终 207×102px；对照行「WLAN 助理」从 320×56px 涨到 403×71px，说明字体缩放确实生效，只是顶栏不吃。设置首页是 app 自身的例外：墨迹 289×142px，比 32dp 标题大，同样不随字体缩放，而它的 token 仍是 32dp；库按 token 的 32dp 实现。
 
 ---
 
@@ -338,7 +355,9 @@ fun SettingsPage(onBack: () -> Unit, onOverflow: () -> Unit) {
 
 **实现要求**：
 - **使用默认应用密度**：系统「设置」的顶栏按钮按系统显示密度渲染（参照机 `40dp = 155px`），二级设置页**不包裹** `rememberGalleryDensity()`。
-- **卡片圆角读取主题 Token**：自定义容器需要与 `Card` 对齐圆角时，读取 `COUITheme.dimens.card.cornerRadius`（ColorOS 17 标准值为 `17dp`），不硬编码圆角常数。
+- **卡片圆角读取主题 Token**：自定义容器需要与 `Card` 对齐圆角时，读取 `COUITheme.dimens.card.cornerRadius`（ColorOS 17 标准值为 `17dp`）；承载偏好分组的卡片改用 `CardDefaults.GroupCornerRadius`（`24dp`）配 `CardDefaults.GroupWeight`（`Lp 2.5`），不硬编码圆角常数。24dp 是系统真正绘制的半径：`COUICardListSelectedItemLayout` 以 `couiRoundCornerXL` 20dp 为起点，一旦开启平滑圆角就换成 `coui_round_corner_xl_radius_normal_16_1` 24dp。
+- **分组小标题用 `SmallTitle`**：12sp `Medium`、`onBackgroundVariant`（54% 黑），在卡片 16dp 边距之内再缩进 16dp，与卡片正文左对齐。整行由 16dp 行高上下各 8dp 组成，共 32dp，下方卡片紧贴行底、不留额外间隙。参照机「设置 · 亮度」实测：上一张卡底边到字形墨迹 `27.4dp`，墨迹到下一张卡 `10.3dp`；行上方那 16dp 来自上一张卡自身的底部间距。
+- **标题后不要补间隙**：卡片下方的 16dp 属于卡片自身，不属于标题；在标题后加 Spacer 会把卡片推下去，破坏 32dp 的行节奏。
 
 ### 6.5 分段控件、搜索框与下拉刷新
 
@@ -355,7 +374,7 @@ fun SettingsPage(onBack: () -> Unit, onOverflow: () -> Unit) {
 COUI 17 使用三种不同的圆角族。按系统控件实际使用的那一种来选，不要默认所有胶囊都以正圆收尾。
 
 - **系统胶囊曲线**（`SearchBar`、`InputField`、`Button`、`TextButton`、`SearchBarActionButton`、`TabRow`、`InstallLoadProgress`、四个 `BottomFloating*` 底栏、`Chip`）：正圆弧接 `1.5R` 过渡段。系统调用是 `OplusPathAdapter.addSmoothRoundRect(rect, r, r, dir)` 的无 weight 重载。半径达到较短边一半时该重载会转发 weight `1.0`，但屏幕上的结果仍是这条曲线而不是正圆：裸进程里 `Path` 输出的是圆弧，实际渲染的控件走的是实测的缓入过渡段。模型为 `basic/SegmentCapsule.kt` 的 `addSegmentCapsule`。参考机（132）实测像素证实：时钟 56dp 悬浮底栏在过渡段对 segment RMS 0.042px、对圆 0.534px；文件管理 28dp Chip 对 segment RMS 0.110px、对圆 0.314px；44dp 按钮对 segment 约 0.08px、对正圆端约 0.6px、对 `n = 2.5` 超椭圆约 4px；40dp 搜索栏背景对 segment RMS 0.124px、对圆 0.415px，高光对 segment RMS 0.127px、对圆 0.472px，高光与填充轮廓偏差仅 0.0009R RMS（最大 0.0024R）。`CapsuleOutlineShape` 在满半径时选择这一族，调用方传入更小半径时仍走 squircle；纵向胶囊（高度 > 宽度）回退正圆端头保证轮廓不越界。搜索栏（`SearchBar` / `InputField`）已将背景填充、裁剪、材质高光 rim、焦散光挖空全线统一至系统胶囊曲线；`MaterialShadowEdge` 对宽胶囊施加相同的 $\delta$ 距离场修正（`couiSegmentCapsuleDelta`），彻底解决控件内高光走连续曲率而背景走正圆跑道形导致的轮廓割裂问题。
-- **Lp 超椭圆**（`ListPopup` 与级联面板、多行 `TopTips`）：`n = weight`，角的切点等于半径。弹出面板固定 `28dp` 半径，按 `n ≈ 2.5` 超椭圆一直画到胶囊端头；单行 `56dp` 恰好是半径的两倍，视觉上仍是圆角矩形而不是跑道形。多行 `TopTips` 也仍是 `n ≈ 2.5`：系统的 `3.0` 目前没有对应实现。弹出面板由 `SquircleShape(..., capsuleCircleBlend = false)` 选择。
+- **Lp 超椭圆**（`ListPopup` 与级联面板、多行 `TopTips`、偏好分组卡片）：`n = weight`，角的切点等于半径。弹出面板固定 `28dp` 半径，按 `n ≈ 2.5` 超椭圆一直画到胶囊端头；单行 `56dp` 恰好是半径的两倍，视觉上仍是圆角矩形而不是跑道形。多行 `TopTips` 也仍是 `n ≈ 2.5`：系统的 `3.0` 目前没有对应实现。分组卡片为 `24dp`、`n = 2.5`（`CardDefaults.GroupCornerRadius` / `GroupWeight`），与系统轮廓在四角各个偏移处误差均不超过 `1px`。弹出面板由 `SquircleShape(..., capsuleCircleBlend = false)` 选择。
 - **正圆**：满半径且走 Outline 路径、权重 `≤ 2` 的控件——Outline 会把权重钳制为 `n = max(weight, 2) = 2`。单行 `TopTips` 属于这一类（`setSmoothRoundRect(rect, radius, 1.0)` 加 `setClipToOutline(true)`）。单行 `Snackbar` 的半径跟随实测高度（`getHeight() / 2`）；其曲线来源尚未确认，因此在该半径下继续使用 squircle 族。注：单行 `TopTips` 与单行 `Snackbar` 目前仍没有系统截图像素实测，依据来自系统源码反编译。
 - **圆形控件**（`IconButton`、`HighlightedIconButton`、`FloatingActionButton`、悬浮按钮）：参照机实测为正圆。
 
