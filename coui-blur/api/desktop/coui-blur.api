@@ -185,6 +185,7 @@ public final class io/github/suqi8/coui/kmp/blur/LayerBackdrop : io/github/suqi8
 
 public final class io/github/suqi8/coui/kmp/blur/LayerBackdropKt {
 	public static final fun rememberLayerBackdrop (Landroidx/compose/ui/graphics/layer/GraphicsLayer;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/LayerBackdrop;
+	public static final fun rememberLayerBackdrop (Lio/github/suqi8/coui/kmp/blur/LayerBackdrop;Landroidx/compose/ui/graphics/layer/GraphicsLayer;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/LayerBackdrop;
 }
 
 public final class io/github/suqi8/coui/kmp/blur/LayerBackdropModifierKt {
@@ -193,6 +194,11 @@ public final class io/github/suqi8/coui/kmp/blur/LayerBackdropModifierKt {
 
 public final class io/github/suqi8/coui/kmp/blur/LocalBackdropKt {
 	public static final fun getLocalBackdrop ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/LocalBlurEnabledKt {
+	public static final fun getLocalBlurEnabled ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun isBlurEnabled (Landroidx/compose/runtime/Composer;I)Z
 }
 
 public final class io/github/suqi8/coui/kmp/blur/ProgressiveBlur {

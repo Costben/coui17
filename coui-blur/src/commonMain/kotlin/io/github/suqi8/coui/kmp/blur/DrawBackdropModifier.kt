@@ -34,6 +34,7 @@ import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.ObserverModifierNode
 import androidx.compose.ui.node.currentValueOf
+import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.node.invalidateMeasurement
 import androidx.compose.ui.node.observeReads
 import androidx.compose.ui.node.requireGraphicsContext
@@ -180,7 +181,7 @@ private class DrawBackdropElement(
     )
 
     override fun update(node: DrawBackdropNode) {
-        val enabledChanged = node.enabled != enabled
+        val wasActive = node.isEffectivelyEnabled
         val gradientCleared = node.progressiveGradient != null && progressiveGradient == null
         node.backdrop = backdrop
         node.updateShape(shape)
@@ -197,13 +198,7 @@ private class DrawBackdropElement(
         if (gradientCleared) {
             node.releaseCompositeResources()
         }
-        if (enabledChanged) {
-            if (!enabled) {
-                node.releaseGraphicsLayers()
-            }
-            node.invalidateMeasurement()
-        }
-        node.invalidateDrawCache()
+        node.observeNodeState(notifyLayoutAndDraw = true, wasActive = wasActive)
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -266,6 +261,22 @@ private class DrawBackdropNode(
     GlobalPositionAwareModifierNode,
     ObserverModifierNode,
     CompositionLocalConsumerModifierNode {
+
+    private var blurAllowed: Boolean = true
+
+    val isEffectivelyEnabled: Boolean
+        get() = enabled && blurAllowed
+
+    private var registeredBackdrop: LayerBackdrop? = null
+
+    private fun syncBackdropRegistration(active: Boolean) {
+        val target = if (active) backdrop as? LayerBackdrop else null
+        val current = registeredBackdrop
+        if (current === target) return
+        current?.releaseConsumer()
+        registeredBackdrop = target
+        target?.acquireConsumer()
+    }
 
     private val shapeProvider: ShapeProvider = ShapeProvider(shape)
 
@@ -581,7 +592,7 @@ private class DrawBackdropNode(
     ): MeasureResult {
         val placeable = measurable.measure(constraints)
         return layout(placeable.width, placeable.height) {
-            if (enabled) {
+            if (isEffectivelyEnabled) {
                 placeable.placeWithLayer(IntOffset.Zero, layerBlock = layoutLayerBlock)
             } else {
                 placeable.place(IntOffset.Zero)
@@ -712,7 +723,7 @@ private class DrawBackdropNode(
     }
 
     override fun ContentDrawScope.draw() {
-        if (!enabled) {
+        if (!isEffectivelyEnabled) {
             drawContent()
             return
         }
@@ -768,19 +779,38 @@ private class DrawBackdropNode(
     }
 
     override fun onObservedReadsChanged() {
-        invalidateDrawCache()
+        observeNodeState(notifyLayoutAndDraw = true)
     }
 
-    fun invalidateDrawCache() {
-        observeEffects()
-    }
-
-    private fun observeEffects() {
-        observeReads { updateEffects() }
+    fun observeNodeState(
+        notifyLayoutAndDraw: Boolean,
+        wasActive: Boolean = isEffectivelyEnabled,
+    ) {
+        if (!isAttached) return
+        observeReads {
+            blurAllowed = currentValueOf(LocalBlurEnabled) && readSystemBlurEnabled()
+            if (enabled && blurAllowed) {
+                primary.ensureMain()
+                updateEffects()
+            }
+        }
+        val nowActive = isEffectivelyEnabled
+        syncBackdropRegistration(nowActive)
+        if (wasActive != nowActive) {
+            if (!nowActive) {
+                releaseGraphicsLayers()
+            }
+            if (notifyLayoutAndDraw) {
+                invalidateMeasurement()
+                invalidateDraw()
+            }
+        } else if (nowActive && notifyLayoutAndDraw) {
+            invalidateDraw()
+        }
     }
 
     private fun updateEffects() {
-        if (!enabled) return
+        if (!isEffectivelyEnabled) return
         primary.ensureMain()
 
         // Gradient mode: progressiveBlur() records radii + downscale and splits the chain; the
@@ -1027,10 +1057,7 @@ private class DrawBackdropNode(
 
     override fun onAttach() {
         effectScope.runtimeShaderCache = currentValueOf(LocalRuntimeShaderCache)
-        if (enabled) {
-            primary.ensureMain()
-            observeEffects()
-        }
+        observeNodeState(notifyLayoutAndDraw = false)
     }
 
     /**
@@ -1165,6 +1192,7 @@ private class DrawBackdropNode(
     }
 
     override fun onDetach() {
+        syncBackdropRegistration(active = false)
         releaseGraphicsLayers()
         layoutCoordinates = null
     }

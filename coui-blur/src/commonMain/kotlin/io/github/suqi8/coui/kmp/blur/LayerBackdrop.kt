@@ -3,6 +3,8 @@
 package io.github.suqi8.coui.kmp.blur
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +54,40 @@ fun rememberLayerBackdrop(
 }
 
 /**
+ * Creates and remembers a [LayerBackdrop] whose [onDraw] composites [upstream]'s
+ * [LayerBackdrop.graphicsLayer] (for example, tinting or layering a wallpaper behind a shared page
+ * recording).
+ *
+ * Declaring [upstream] propagates active blur consumer counts from this backdrop to [upstream]:
+ * [upstream] stays idle while nothing samples either backdrop, and automatically starts recording as
+ * soon as a blur surface consumes this backdrop.
+ *
+ * @param upstream Another [LayerBackdrop] drawn inside [onDraw].
+ * @param graphicsLayer The graphics layer to record content into.
+ * @param onDraw Custom draw logic for the layer content.
+ */
+@Composable
+fun rememberLayerBackdrop(
+    upstream: LayerBackdrop,
+    graphicsLayer: GraphicsLayer = rememberGraphicsLayer(),
+    onDraw: ContentDrawScope.() -> Unit = DefaultOnDraw,
+): LayerBackdrop {
+    val currentOnDraw by rememberUpdatedState(onDraw)
+    val backdrop = remember(graphicsLayer) {
+        LayerBackdrop(graphicsLayer, upstream = upstream) { currentOnDraw() }
+    }
+    SideEffect {
+        backdrop.setUpstream(upstream)
+    }
+    DisposableEffect(backdrop) {
+        onDispose {
+            backdrop.setUpstream(null)
+        }
+    }
+    return backdrop
+}
+
+/**
  * A [Backdrop] that draws from a captured [GraphicsLayer].
  * The layer content is captured via [Modifier.layerBackdrop][layerBackdrop].
  *
@@ -62,11 +98,15 @@ fun rememberLayerBackdrop(
  * clear it when they detach). In particular, do not attach one backdrop to every page of a pager;
  * record once on the container that wraps the whole pager.
  *
+ * Recording is demand-driven: [layerBackdrop] skips recording into [graphicsLayer] while no active
+ * blur modifier consumes this backdrop (or a downstream backdrop linked via [rememberLayerBackdrop]).
+ *
  * @property graphicsLayer The [GraphicsLayer] holding the captured content drawn as the backdrop.
  */
 @Stable
 class LayerBackdrop internal constructor(
     val graphicsLayer: GraphicsLayer,
+    private var upstream: LayerBackdrop? = null,
     internal val onDraw: ContentDrawScope.() -> Unit,
 ) : Backdrop {
 
@@ -86,6 +126,53 @@ class LayerBackdrop internal constructor(
 
     /** The number of [layerBackdrop] nodes currently attached; anything above 1 is a misuse. */
     internal val attachedNodeCount: Int get() = attachedNodes.size
+
+    /** Number of active blur consumers (direct [drawBackdrop] nodes + active downstream backdrops). */
+    internal var consumerCount: Int = 0
+        private set
+
+    /** Whether at least one active blur consumer currently samples this backdrop. */
+    internal val hasConsumers: Boolean
+        get() = consumerCount > 0
+
+    internal fun acquireConsumer() {
+        val wasIdle = consumerCount == 0
+        consumerCount++
+        if (wasIdle) {
+            upstream?.acquireConsumer()
+            owner?.invalidateDraw()
+        }
+    }
+
+    internal fun releaseConsumer() {
+        if (consumerCount <= 0) return
+        consumerCount--
+        if (consumerCount == 0) {
+            upstream?.releaseConsumer()
+        }
+    }
+
+    internal fun setUpstream(newUpstream: LayerBackdrop?) {
+        val resolved = newUpstream?.takeUnless { wouldCreateCycle(it) }
+        if (upstream === resolved) return
+        if (consumerCount > 0) {
+            upstream?.releaseConsumer()
+            resolved?.acquireConsumer()
+        }
+        upstream = resolved
+        if (consumerCount > 0) {
+            owner?.invalidateDraw()
+        }
+    }
+
+    private fun wouldCreateCycle(candidate: LayerBackdrop): Boolean {
+        var cursor: LayerBackdrop? = candidate
+        while (cursor != null) {
+            if (cursor === this) return true
+            cursor = cursor.upstream
+        }
+        return false
+    }
 
     internal fun attachNode(node: LayerBackdropNode) {
         attachedNodes.remove(node)

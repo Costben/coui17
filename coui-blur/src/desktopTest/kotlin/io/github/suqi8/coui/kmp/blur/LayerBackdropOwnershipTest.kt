@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
@@ -38,12 +39,14 @@ class LayerBackdropOwnershipTest {
         var showOther by mutableStateOf(true)
         var showOwner by mutableStateOf(false)
         setContent {
-            backdrop = rememberLayerBackdrop()
+            val currentBackdrop = rememberLayerBackdrop()
+            backdrop = currentBackdrop
             Box {
                 // Declared first so it draws first: the non-owner then draws last and would win the
                 // layer if recording were not restricted to the owner.
-                if (showOwner) Box(Modifier.size(50.dp).layerBackdrop(backdrop!!))
-                if (showOther) Box(Modifier.size(100.dp).layerBackdrop(backdrop!!))
+                if (showOwner) Box(Modifier.size(50.dp).layerBackdrop(currentBackdrop))
+                if (showOther) Box(Modifier.size(100.dp).layerBackdrop(currentBackdrop))
+                Box(Modifier.size(10.dp).textureBlur(currentBackdrop, RectangleShape))
             }
         }
         waitForIdle()
@@ -128,10 +131,12 @@ class LayerBackdropOwnershipTest {
         var backdrop: LayerBackdrop? = null
         var showOwner by mutableStateOf(false)
         setContent {
-            backdrop = rememberLayerBackdrop()
+            val currentBackdrop = rememberLayerBackdrop()
+            backdrop = currentBackdrop
             Box {
-                if (showOwner) Box(Modifier.size(50.dp).layerBackdrop(backdrop!!))
-                Box(Modifier.size(100.dp).layerBackdrop(backdrop!!))
+                if (showOwner) Box(Modifier.size(50.dp).layerBackdrop(currentBackdrop))
+                Box(Modifier.size(100.dp).layerBackdrop(currentBackdrop))
+                Box(Modifier.size(10.dp).textureBlur(currentBackdrop, RectangleShape))
             }
         }
         waitForIdle()

@@ -94,7 +94,7 @@ internal class LayerBackdropNode(
     override fun ContentDrawScope.draw() {
         drawContent()
         val backdrop = backdrop
-        if (backdrop.owner === this@LayerBackdropNode) {
+        if (backdrop.owner === this@LayerBackdropNode && backdrop.hasConsumers) {
             recordLayer(backdrop.graphicsLayer) { backdrop.onDraw(this@draw) }
         }
     }
