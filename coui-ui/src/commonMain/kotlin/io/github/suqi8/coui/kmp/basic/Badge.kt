@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.theme.LocalTextStyles
 
 /**
  * A [Badge] component with COUI style.
@@ -165,6 +167,21 @@ private fun CountBadge(
     }
     val density = LocalDensity.current
     val fontSize = with(density) { BadgeDefaults.TextSize.toSp() }
+    // The badge draws the count on its own line box. Inheriting the 17sp `main` style keeps its
+    // 1.158em leading, Top alignment and font padding, which push a 10dp digit below the capsule's
+    // centre - the number reads as sitting on the bottom edge. Pin the line box to the digits and
+    // centre it instead.
+    val themeTextStyle = LocalTextStyles.current.main
+    val countTextStyle = remember(fontSize, themeTextStyle) {
+        themeTextStyle.copy(
+            fontSize = fontSize,
+            lineHeight = fontSize,
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center,
+                trim = LineHeightStyle.Trim.Both,
+            ),
+        )
+    }
     Box(
         modifier = modifier
             .size(width = width, height = height)
@@ -188,6 +205,7 @@ private fun CountBadge(
                         fontSize = fontSize,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
+                        style = countTextStyle,
                     )
                 } else {
                     BadgeEllipsis(colors.contentColor)
