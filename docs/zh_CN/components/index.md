@@ -40,6 +40,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [CalendarView](../components/calendarview)                 | 带星期表头的月历网格   | 日期选择、按月浏览   |
 | [FloatingButton](../components/floatingbutton)             | 快速拨号浮动按钮       | 快捷操作、功能入口   |
 | [ExpandableList](../components/expandablelist)             | 可展开的分组列表       | 设置分组、分组内容   |
+| [SlideView](../components/slideview)                       | 侧滑露出操作的列表行   | 侧滑删除列表项       |
 | [LockPatternView](../components/lockpatternview)           | 3x3 图案解锁九宫格     | 图案解锁、手势密码   |
 | [NumericKeyboard](../components/numerickeyboard)           | 数字 PIN 键盘          | PIN 输入、密码弹窗   |
 | [SimpleLockView](../components/simplelockview)             | 锁屏 PIN 圆点指示行       | 锁屏 PIN 输入     |

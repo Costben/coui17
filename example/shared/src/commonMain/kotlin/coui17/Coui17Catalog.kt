@@ -61,6 +61,7 @@ import component.RangeSliderDemo
 import component.RecommendedPreferenceDemo
 import component.SearchHistoryViewDemoContent
 import component.SearchViewAnimateDemo
+import component.SlideViewDemo
 import component.SliderDemo
 import component.SnackbarDemo
 import component.SpinnerDemo
@@ -147,6 +148,7 @@ internal val Coui17Catalog: List<Coui17Category> = buildList {
             demo("Folded FlowLayout") { FoldedFlowLayoutDemo() }
         }
         single("ExpandableList") { ExpandableListDemoContent() }
+        single("SlideView") { SlideViewDemo() }
     }
     category("Buttons & actions") {
         component("Button") {

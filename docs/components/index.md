@@ -40,6 +40,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [CalendarView](../components/calendarview)                 | Month calendar grid with a weekday header  | Date selection, month browsing        |
 | [FloatingButton](../components/floatingbutton)             | Speed-dial floating button                 | Quick actions, shortcuts              |
 | [ExpandableList](../components/expandablelist)             | Collapsible group list                     | Settings sections, grouped content    |
+| [SlideView](../components/slideview)                       | List row that slides aside to reveal actions | Swipe-to-delete list rows           |
 | [LockPatternView](../components/lockpatternview)           | 3x3 pattern unlock grid                    | Pattern unlock, gesture password      |
 | [NumericKeyboard](../components/numerickeyboard)           | Numeric PIN pad                            | PIN entry, passcode dialogs           |
 | [SimpleLockView](../components/simplelockview)             | Row of PIN dots that fill as you type      | PIN entry, passcode status            |

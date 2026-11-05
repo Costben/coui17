@@ -10,6 +10,15 @@ package i18n
  * keep meeting English halfway down every card.
  */
 internal val zhComponents: Map<String, String> = mapOf(
+    // SlideView demo
+    "Custom reminders (tap Delete)" to "自定义提醒（点删除）",
+    "Recordings (slide far to delete)" to "录音（滑到底直接删除）",
+    "3 hours before" to "3 小时前",
+    "4 hours before" to "4 小时前",
+    "6 hours before" to "6 小时前",
+    "3 days before" to "3 天前",
+    "Pin" to "置顶",
+    "Pinned {}" to "已置顶 {}",
     "Swipe left to reveal notification actions" to "左滑通知，显示设置与删除按钮",
     "Drag slowly to see the melt separate" to "缓慢拖动，观察融合连接逐渐分离",
     "Notification deleted" to "通知已删除",

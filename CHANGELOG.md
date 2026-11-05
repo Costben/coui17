@@ -8,6 +8,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Added
 
+- `SlideView` (experimental): the ColorOS 17 swipe-to-delete list row. Swiping reveals full-height actions behind the content, with the native drag damping past the menu, release spring and delete animation; `SlideViewState.delete()` slides the row out and collapses it, and `fastDeleteEnabled` deletes on a long slide.
 - `LocalBlurEnabled` and `isBlurEnabled()` in `coui-blur` provide a global one-line toggle for backdrop blur (symmetric with `LocalSquircleEnabled` / `isSquircleEnabled()`), combined with Android's system material-blur and power-saving state. `LayerBackdrop` now tracks active blur consumers (including chained `rememberLayerBackdrop(upstream = ...)` layers) and skips `layerBackdrop` recording whenever nothing samples it; disabling blur also reverts `TopAppBar`, `SmallTopAppBar`, and `AppBarBlurOverlay` to opaque container fills instead of translucent unblurred gradients.
 - `Colors.containerTheme` (`couiColorContainerTheme`, `#0080FF` / `#1A8CFF`) and the `focus` / `focusOutline` mask and ring the COUI state drawables use (`#1F0080FF` / `#331A8CFF` and `#660080FF` / `#665C9DFF`); the 1.1.0 constructor and `copy` stay as hidden overloads that fall back to `secondaryContainer`.
 - `COUIIndication` draws the focus ring `COUIStrokeDrawable` draws — 3dp of `focusOutline` stroked on the control's edge — and takes `focusOutline` and the `shape` the ring follows.

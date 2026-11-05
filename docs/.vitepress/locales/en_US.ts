@@ -106,6 +106,7 @@ export default defineConfig({
                         { text: "CalendarView", link: "/components/calendarview" },
                         { text: "FloatingButton", link: "/components/floatingbutton" },
                         { text: "ExpandableList", link: "/components/expandablelist" },
+                        { text: "SlideView", link: "/components/slideview" },
                         { text: "SearchHistoryView", link: "/components/searchhistoryview" },
                         { text: "TouchSearchView", link: "/components/touchsearchview" },
                         { text: "IntentSeekBar", link: "/components/intentseekbar" },
