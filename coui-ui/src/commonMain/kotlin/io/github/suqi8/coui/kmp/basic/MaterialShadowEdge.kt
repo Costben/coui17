@@ -1038,11 +1038,13 @@ float smoothSDF_D(float2 p, float2 b, float corner, float weight, inout float aa
             rectSdf = sdCapsule( p, b, zoneCap, transitionPixels);
             d_corner_zone = zoneCap;
         }
+        // The easing tail belongs to the round-ended capsule only. A superellipse panel whose
+        // radius happens to reach half its height (a one-row popup: 28dp on 56dp) keeps its curve.
+        rectSdf += couiSegmentCapsuleDelta(p, b, corner);
     } else {
         rectSdf = sdRoundRect( p, b, corner, weight, q_rect);
         d_corner_zone = min(q_rect.x, q_rect.y);
     }
-    rectSdf += couiSegmentCapsuleDelta(p, b, corner);
     // 计算抗锯齿因子 (注意区间：从直线区走向圆角区)
     aaFactor = smoothstep(-transitionPixels - 2.0, -transitionPixels * 0.2, d_corner_zone);
     return rectSdf;
