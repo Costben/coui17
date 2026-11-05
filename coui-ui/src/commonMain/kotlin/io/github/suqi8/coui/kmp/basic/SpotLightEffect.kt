@@ -173,6 +173,22 @@ object SpotLightDefaults {
         noise = 0.1f,
     )
 
+    /** `COUISpotLightEffect.TYPE_OPAQUE_MEDIUM_1`, the light `SpotLightEffectRenderer` hands `COUISeekBar`. */
+    val OpaqueMedium1Light: SpotLightParams = SpotLightParams(
+        blendMode = BlendMode.Overlay,
+        startIntensity = 0f,
+        endIntensity = 0.6f,
+        startRadius = 100f,
+        endRadius = 500f,
+        lightHeight = 200f,
+        ambientStrength = 0.4f,
+        diffuseStrength = 0.4f,
+        ditherN = 0f,
+        noise = 0.08f,
+    )
+
+    val OpaqueMedium1Dark: SpotLightParams = OpaqueMedium1Light.copy(endIntensity = 0.8f)
+
     /** `COUISpotLightEffect.TYPE_OPAQUE_MEDIUM_2`, used by the COS17 bottom navigation capsule. */
     val OpaqueMedium2Light: SpotLightParams = SpotLightParams(
         blendMode = BlendMode.Overlay,
@@ -339,6 +355,8 @@ object SpotLightDefaults {
     /** Resolves `CAPSULE_PARAMS_2_LIGHT` / `_DARK` by night mode. */
     fun capsuleParams2(isDark: Boolean): SpotLightParams = if (isDark) CapsuleParams2Dark else CapsuleParams2Light
 
+    fun opaqueMedium1(isDark: Boolean): SpotLightParams = if (isDark) OpaqueMedium1Dark else OpaqueMedium1Light
+
     fun opaqueMedium2(isDark: Boolean): SpotLightParams = if (isDark) OpaqueMedium2Dark else OpaqueMedium2Light
 
     /** Resolves `CIRCLE_PARAMS_1_LIGHT` / `_DARK` by night mode. */
@@ -417,30 +435,18 @@ fun Modifier.spotLight(
         val width = size.width
         val height = size.height
         if (width <= 0f || height <= 0f) return@drawWithCache onDrawBehind {}
-        val radiusPx = radius.toPx()
-
-        shader.setFloatUniform("resolution", width, height)
-        // u_lightPosAndHeight = [position.x * width, position.y * height, radius * level, intensity * level]
-        shader.setFloatUniform(
-            "u_lightPosAndHeight",
-            position.x * width,
-            position.y * height,
-            radiusPx * SpotLightDefaults.Level,
-            intensity * SpotLightDefaults.Level,
-        )
-        shader.setFloatUniform(
-            "u_lightColorAndAmbient",
-            lightColor.red,
-            lightColor.green,
-            lightColor.blue,
-            ambientStrength,
-        )
-        shader.setFloatUniform(
-            "u_lightingParams",
-            diffuseStrength,
-            lightHeight.toPx(),
-            noise,
-            dither,
+        shader.setSpotLightUniforms(
+            width = width,
+            height = height,
+            lightPx = Offset(position.x * width, position.y * height),
+            radiusPx = radius.toPx(),
+            intensity = intensity,
+            lightColor = lightColor,
+            lightHeightPx = lightHeight.toPx(),
+            ambientStrength = ambientStrength,
+            diffuseStrength = diffuseStrength,
+            noise = noise,
+            dither = dither,
         )
         val lightBrush = shader.asBrush()
         val lightPath = clipShape?.createOutline(size, layoutDirection, this)?.toPath()
@@ -462,9 +468,38 @@ private fun Outline.toPath(): Path = when (this) {
     is Outline.Generic -> path
 }
 
+/**
+ * Pushes one frame of the light into [SPOT_LIGHT_SHADER], packed the way `SpotLightShader` does:
+ * `u_lightPosAndHeight = [x, y, radius * level, intensity * level]` in the painted area's pixels.
+ */
+internal fun RuntimeShader.setSpotLightUniforms(
+    width: Float,
+    height: Float,
+    lightPx: Offset,
+    radiusPx: Float,
+    intensity: Float,
+    lightColor: Color,
+    lightHeightPx: Float,
+    ambientStrength: Float,
+    diffuseStrength: Float,
+    noise: Float,
+    dither: Float,
+) {
+    setFloatUniform("resolution", width, height)
+    setFloatUniform(
+        "u_lightPosAndHeight",
+        lightPx.x,
+        lightPx.y,
+        radiusPx * SpotLightDefaults.Level,
+        intensity * SpotLightDefaults.Level,
+    )
+    setFloatUniform("u_lightColorAndAmbient", lightColor.red, lightColor.green, lightColor.blue, ambientStrength)
+    setFloatUniform("u_lightingParams", diffuseStrength, lightHeightPx, noise, dither)
+}
+
 /** Compiles (and remembers) the spotlight shader; `null` when runtime shaders are unavailable. */
 @Composable
-private fun rememberSpotLightShader(enabled: Boolean): RuntimeShader? {
+internal fun rememberSpotLightShader(enabled: Boolean): RuntimeShader? {
     if (!enabled) return null
     return remember { runCatching { RuntimeShader(SPOT_LIGHT_SHADER) }.getOrNull() }
 }

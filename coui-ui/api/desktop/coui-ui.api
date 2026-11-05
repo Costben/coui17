@@ -4216,6 +4216,8 @@ public final class io/github/suqi8/coui/kmp/basic/SpotLightDefaults {
 	public final fun getLightHeight ()F
 	public final fun getLightRadius ()F
 	public final fun getMoveSpring ()Landroidx/compose/animation/core/SpringSpec;
+	public final fun getOpaqueMedium1Dark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
+	public final fun getOpaqueMedium1Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getOpaqueMedium2Dark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getOpaqueMedium2Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getRoundRectParams1Dark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
@@ -4224,6 +4226,7 @@ public final class io/github/suqi8/coui/kmp/basic/SpotLightDefaults {
 	public final fun getSwitchParamsLight ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getTranslucentLarge1Dark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getTranslucentLarge1Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
+	public final fun opaqueMedium1 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun opaqueMedium2 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun roundRectParams1 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun switchParams (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
