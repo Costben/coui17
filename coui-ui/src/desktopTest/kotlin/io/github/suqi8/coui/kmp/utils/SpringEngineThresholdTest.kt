@@ -31,11 +31,11 @@ class SpringEngineThresholdTest {
         val release = settleFrames(SpringMath.SPRING_BACK, startValue = 100f) * frame
         val fling = settleFrames(SpringMath.FLING_REBOUND, startValue = 100f) * frame
 
-        // `springBack` (omega 14.0 rad/s, zeta 1.08, stops at 0.25px) is back in about 0.80s from
+        // `springBack` (omega 14.0 rad/s, zeta 1.05, stops at 0.25px) is back in about 0.67s from
         // 100px; the fling curve (omega 6.32, zeta 1.15, stops once it is slower than 5px/s) needs
-        // about 1.37s.
-        assertTrue(release in 0.70f..0.90f, "the finger-up rebound should take ~0.80s, took ${release}s")
-        assertTrue(fling in 1.15f..1.50f, "the fling rebound should take ~1.37s, took ${fling}s")
+        // about 1.35s.
+        assertTrue(release in 0.60f..0.75f, "the finger-up rebound should take ~0.67s, took ${release}s")
+        assertTrue(fling in 1.25f..1.45f, "the fling rebound should take ~1.35s, took ${fling}s")
     }
 
     @Test
@@ -87,7 +87,7 @@ class SpringEngineThresholdTest {
         var frames = 0
         while (frames < 300 && !engine.step(frame)) frames++
 
-        assertTrue(frames < 60, "a 2px spring back is over in about 0.3s, took $frames frames")
+        assertTrue(frames < 60, "a 2px spring back is over in about 0.28s, took $frames frames")
         assertEquals(0.0, engine.currentPos)
     }
 }

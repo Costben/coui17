@@ -6,6 +6,7 @@ import androidx.compose.foundation.OverscrollEffect
 import androidx.compose.foundation.OverscrollFactory
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasureResult
@@ -14,7 +15,7 @@ import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.currentValueOf
-import androidx.compose.ui.node.invalidatePlacement
+import androidx.compose.ui.node.updateLayerBlock
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.WindowInfo
@@ -25,12 +26,14 @@ import io.github.suqi8.coui.kmp.basic.LocalPullToRefreshState
 import io.github.suqi8.coui.kmp.basic.PullToRefreshState
 import io.github.suqi8.coui.kmp.basic.RefreshState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.abs
-import kotlin.math.min
 import kotlin.math.round
 import kotlin.math.sign
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * A COUI implementation of [OverscrollFactory] that creates [OverscrollEffect] instances
@@ -58,7 +61,7 @@ object COUIOverscrollFactory : OverscrollFactory {
 class COUIOverscrollEffect : OverscrollEffect {
     private val offsetThreshold = 1f
 
-    // Placement pixel-snaps via round(), so only re-place when the whole-pixel value changes.
+    // Placement pixel-snaps via round(), so only refresh when the whole-pixel value changes.
     private var lastPlacedOffsetX = 0f
     internal var offsetX = 0f
         private set(value) {
@@ -67,7 +70,7 @@ class COUIOverscrollEffect : OverscrollEffect {
                 val rounded = round(value)
                 if (rounded != lastPlacedOffsetX) {
                     lastPlacedOffsetX = rounded
-                    invalidateNodePlacement?.invoke()
+                    invalidateNodeLayer?.invoke()
                 }
             }
         }
@@ -80,13 +83,13 @@ class COUIOverscrollEffect : OverscrollEffect {
                 val rounded = round(value)
                 if (rounded != lastPlacedOffsetY) {
                     lastPlacedOffsetY = rounded
-                    invalidateNodePlacement?.invoke()
+                    invalidateNodeLayer?.invoke()
                 }
             }
         }
 
     // Injected by COUIOverscrollEffectNode when attached
-    internal var invalidateNodePlacement: (() -> Unit)? = null
+    internal var invalidateNodeLayer: (() -> Unit)? = null
 
     private var rawTouchAccumulationX = 0f
     private var rawTouchAccumulationY = 0f
@@ -103,6 +106,9 @@ class COUIOverscrollEffect : OverscrollEffect {
     internal var launchAnimation: ((suspend CoroutineScope.() -> Unit) -> Job)? = null
     internal var getPullToRefreshState: (() -> PullToRefreshState?)? = null
     internal var getOverScrollState: (() -> OverScrollState?)? = null
+
+    /** When the finger last moved the content; the settle is dated from here, not from the fling. */
+    private var lastUserInputAt: TimeMark? = null
 
     override val isInProgress: Boolean
         get() = abs(offsetX) > offsetThreshold || abs(offsetY) > offsetThreshold
@@ -137,26 +143,24 @@ class COUIOverscrollEffect : OverscrollEffect {
     private fun applyDragX(delta: Float) {
         if (delta == 0f || scrollRangeH == 0f) return
         rawTouchAccumulationX += delta
-        rawTouchAccumulationX = rawTouchAccumulationX.coerceIn(-scrollRangeH, scrollRangeH)
-        val normalized = min(abs(rawTouchAccumulationX) / scrollRangeH, 1.0f)
-        offsetX = sign(rawTouchAccumulationX) * SpringMath.obtainDampingDistance(normalized, scrollRangeH)
+        // `COUIPhysicalAnimationUtil.calcRealOverScrollDist`: the curve saturates towards the scroll
+        // range on its own, so the accumulation needs no clamp.
+        offsetX = SpringMath.obtainOverScrollOffset(rawTouchAccumulationX, scrollRangeH)
     }
 
     private fun applyDragY(delta: Float) {
         if (delta == 0f || scrollRangeV == 0f) return
         rawTouchAccumulationY += delta
-        rawTouchAccumulationY = rawTouchAccumulationY.coerceIn(-scrollRangeV, scrollRangeV)
-        val normalized = min(abs(rawTouchAccumulationY) / scrollRangeV, 1.0f)
-        offsetY = sign(rawTouchAccumulationY) * SpringMath.obtainDampingDistance(normalized, scrollRangeV)
+        offsetY = SpringMath.obtainOverScrollOffset(rawTouchAccumulationY, scrollRangeV)
     }
 
     // Inverse of the damping curve: re-derive raw accumulation from offset when a drag takes over a spring.
     private fun syncRawAccumulationFromOffsetX() {
-        rawTouchAccumulationX = sign(offsetX) * SpringMath.obtainTouchDistance(offsetX, scrollRangeH)
+        rawTouchAccumulationX = SpringMath.obtainOverScrollTouchDistance(offsetX, scrollRangeH)
     }
 
     private fun syncRawAccumulationFromOffsetY() {
-        rawTouchAccumulationY = sign(offsetY) * SpringMath.obtainTouchDistance(offsetY, scrollRangeV)
+        rawTouchAccumulationY = SpringMath.obtainOverScrollTouchDistance(offsetY, scrollRangeV)
     }
 
     // Reclaims a stale offset once the child can scroll again in the accumulated direction (e.g. pagination); otherwise applyToFling swallows the next fling.
@@ -183,12 +187,14 @@ class COUIOverscrollEffect : OverscrollEffect {
     }
 
     /**
-     * @param params The rebound curve; both entry points use [SpringMath.SPRING_BACK], so a fling
-     *   that runs into the boundary and a finger-up release come back at the same speed.
+     * @param params The rebound curve; both entry points use the horizontal `springBack` pair, so a
+     *   fling that runs into the boundary and a finger-up release come back at the same speed.
+     * @param startedAt When the gesture ended, so the first frame steps the real elapsed time.
      */
     private fun startSpringAnimationX(
         initialVelocity: Float = 0f,
-        params: SpringParams = SpringMath.SPRING_BACK,
+        params: SpringParams = SpringMath.SPRING_BACK_HORIZONTAL,
+        startedAt: TimeMark = TimeSource.Monotonic.markNow(),
     ) {
         if (abs(offsetX) <= offsetThreshold && initialVelocity == 0f) {
             resetStateX()
@@ -200,6 +206,7 @@ class COUIOverscrollEffect : OverscrollEffect {
                 startValue = offsetX,
                 initialVelocity = initialVelocity,
                 params = params,
+                startedAt = startedAt,
                 onFrame = { currentPos ->
                     offsetX = currentPos
                 },
@@ -214,6 +221,7 @@ class COUIOverscrollEffect : OverscrollEffect {
     private fun startSpringAnimationY(
         initialVelocity: Float = 0f,
         params: SpringParams = SpringMath.SPRING_BACK,
+        startedAt: TimeMark = TimeSource.Monotonic.markNow(),
     ) {
         if (abs(offsetY) <= offsetThreshold && initialVelocity == 0f) {
             resetStateY()
@@ -225,6 +233,7 @@ class COUIOverscrollEffect : OverscrollEffect {
                 startValue = offsetY,
                 initialVelocity = initialVelocity,
                 params = params,
+                startedAt = startedAt,
                 onFrame = { currentPos ->
                     offsetY = currentPos
                 },
@@ -256,6 +265,10 @@ class COUIOverscrollEffect : OverscrollEffect {
             updateOverScrollState()
             return consumed
         }
+
+        // The gesture's last movement. `applyToFling` is dispatched a frame after the pointer lifts,
+        // so the settle has to be dated from here to land on the same frame the reference does.
+        lastUserInputAt = TimeSource.Monotonic.markNow()
 
         val bypassY = shouldBypassForPullToRefreshY()
 
@@ -335,6 +348,10 @@ class COUIOverscrollEffect : OverscrollEffect {
         val isActiveX = abs(offsetX) > offsetThreshold
         val bypassY = shouldBypassForPullToRefreshY() && !isActiveY
 
+        // The gesture ends here; the first frame has to count from the last finger movement, which is
+        // a frame earlier than this callback.
+        val gestureEnd = lastUserInputAt ?: TimeSource.Monotonic.markNow()
+
         animationJobY?.cancel()
         animationJobX?.cancel()
 
@@ -342,16 +359,16 @@ class COUIOverscrollEffect : OverscrollEffect {
         var springBackY = false
         var springBackX = false
 
-        // Y-axis: when overscrolled, spring absorbs velocity before scroll.
-        // The finger is up while the content is held past the edge: `ReboundOverScroller.springBack`.
-        // A slow release carries no velocity at all and still has to settle on that spring.
+        // Y-axis: the finger is up while the content is held past the edge, i.e.
+        // `ReboundOverScroller.springBack`. That call springs from the current displacement alone —
+        // it never reads a velocity — so a fast release does not carry the content further out.
         if (!bypassY && isActiveY) {
             springBackY = true
-            startSpringAnimationY(velocity.y, SpringMath.SPRING_BACK)
+            startSpringAnimationY(0f, startedAt = gestureEnd)
             performVelocity = Velocity(
                 performVelocity.x,
-                // Same direction fling: spring absorbs all velocity, scroll gets nothing.
-                // Opposite direction fling: spring starts with full velocity, scroll gets attenuated.
+                // Same direction fling: the spring owns the overscroll, scroll gets nothing.
+                // Opposite direction fling: scroll gets an attenuated share.
                 if (sign(velocity.y) == sign(offsetY)) 0f else velocity.y / 2.13333f,
             )
         }
@@ -359,7 +376,7 @@ class COUIOverscrollEffect : OverscrollEffect {
         // X-axis: same logic
         if (isActiveX) {
             springBackX = true
-            startSpringAnimationX(velocity.x, SpringMath.SPRING_BACK)
+            startSpringAnimationX(0f, startedAt = gestureEnd)
             performVelocity = Velocity(
                 if (sign(velocity.x) == sign(offsetX)) 0f else velocity.x / 2.13333f,
                 performVelocity.y,
@@ -373,10 +390,10 @@ class COUIOverscrollEffect : OverscrollEffect {
         // release. The fling curve's tail grows with the leftover velocity, which made the same
         // gesture come back in 0.2s or 2s depending on how hard it was thrown.
         if (!bypassY && !springBackY) {
-            startSpringAnimationY(remaining.y / 1.53333f, SpringMath.SPRING_BACK)
+            startSpringAnimationY(remaining.y / 1.53333f, startedAt = gestureEnd)
         }
         if (!springBackX) {
-            startSpringAnimationX(remaining.x / 1.53333f, SpringMath.SPRING_BACK)
+            startSpringAnimationX(remaining.x / 1.53333f, startedAt = gestureEnd)
         }
 
         updateOverScrollState()
@@ -389,13 +406,28 @@ private class COUIOverscrollEffectNode(
     CompositionLocalConsumerModifierNode,
     LayoutModifierNode {
 
+    /**
+     * The content's translation, applied to the layer the child is placed with. It is a single
+     * stable lambda so the offsets can refresh the layer through [updateLayerBlock] instead of a
+     * placement pass: moving the content is a layer property change, and re-placing the subtree for
+     * it costs a full traversal of the scrollable on every frame of the drag and the rebound.
+     */
+    private val layerBlock: GraphicsLayerScope.() -> Unit = {
+        translationX = round(effect.offsetX)
+        translationY = round(effect.offsetY)
+        clip = true
+    }
+
     override fun onAttach() {
         super.onAttach()
         updateScrollRange()
-        effect.launchAnimation = { block -> coroutineScope.launch(block = block) }
+        // `UNDISPATCHED` so the settle registers its frame callback inside the gesture callback
+        // instead of waiting for the next frame to dispatch the coroutine: a dispatched launch costs
+        // the release a whole frame before the spring moves at all.
+        effect.launchAnimation = { block -> coroutineScope.launch(start = CoroutineStart.UNDISPATCHED, block = block) }
         effect.getPullToRefreshState = { currentValueOf(LocalPullToRefreshState) }
         effect.getOverScrollState = { currentValueOf(LocalOverScrollState) }
-        effect.invalidateNodePlacement = { invalidatePlacement() }
+        effect.invalidateNodeLayer = { if (isAttached) updateLayerBlock(layerBlock) }
     }
 
     override fun onDetach() {
@@ -403,7 +435,7 @@ private class COUIOverscrollEffectNode(
         effect.launchAnimation = null
         effect.getPullToRefreshState = null
         effect.getOverScrollState = null
-        effect.invalidateNodePlacement = null
+        effect.invalidateNodeLayer = null
         effect.resetAll()
     }
 
@@ -426,11 +458,7 @@ private class COUIOverscrollEffectNode(
         updateScrollRange()
         val placeable = measurable.measure(constraints)
         return layout(placeable.width, placeable.height) {
-            placeable.placeWithLayer(0, 0) {
-                translationX = round(effect.offsetX)
-                translationY = round(effect.offsetY)
-                clip = true
-            }
+            placeable.placeWithLayer(0, 0, layerBlock = layerBlock)
         }
     }
 }
