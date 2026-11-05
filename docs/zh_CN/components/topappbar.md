@@ -195,7 +195,9 @@ SmallTopAppBar(
 ### 渐变玻璃
 
 `gradientGlass = true` 会把顶栏材质从均匀模糊换成 COUI 的渐变形态。材质并不画在顶栏本身上：
-它是一层材质，测量为顶栏加上 `AppBarBlurOverlayDefaults.ExtraHeight`（24dp），画在顶栏内容之后；
+它是一层材质，测量为顶栏加上一段额外带子——没有 `scrollBehavior` 时取
+`AppBarBlurOverlayDefaults.ExtraHeight`（8dp），有 `scrollBehavior` 时取 `ScrollDrivenExtraHeight`（24dp），
+这正是 `AppBarBlurOverlayView.computeExtraHeightPx` 的配对——画在顶栏内容之后；
 布局只报告顶栏自身的高度，因此材质会越过顶栏的下边缘，却不改变顶栏占用的空间。背景在顶边模糊最强，
 顶栏的下边缘仍保留一些模糊与表面 alpha，它们在额外的那段带子上淡出。材质开启时会隐藏分割线，
 避免分割线切过淡出区域。
@@ -262,7 +264,7 @@ Scaffold(edgeToEdge = true, topBar = { SmallTopAppBar(title = "标题", gradient
 | titlePadding          | Dp                              | 水平内容边距                   | TopAppBarDefaults.TitlePadding | 否       |
 | navigationIconPadding      | Dp                              | 导航图标的起始边距             | TopAppBarDefaults.NavigationIconPadding | 否       |
 | actionIconPadding          | Dp                              | 操作图标的末尾边距             | TopAppBarDefaults.ActionIconPadding | 否       |
-| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质而非均匀模糊；材质越过顶栏下边缘 `AppBarBlurOverlayDefaults.ExtraHeight`（24dp），顶栏高度不变，并隐藏分割线；配合 `scrollBehavior` 时在滚动 30dp 后出现（见「渐变玻璃」）；需要 `Scaffold(edgeToEdge = true)`，否则降级为纯色 | false | 否 |
+| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质而非均匀模糊；材质越过顶栏下边缘一段带子（无 `scrollBehavior` 时 `AppBarBlurOverlayDefaults.ExtraHeight` 8dp，有则 `ScrollDrivenExtraHeight` 24dp），顶栏高度不变，并隐藏分割线；配合 `scrollBehavior` 时在滚动 30dp 后出现（见「渐变玻璃」）；需要 `Scaffold(edgeToEdge = true)`，否则降级为纯色 | false | 否 |
 | bottomContent              | @Composable () -> Unit          | 显示在标题栏下方的可组合内容 | {}                                | 否       |
 
 ### SmallTopAppBar 属性
@@ -284,7 +286,7 @@ Scaffold(edgeToEdge = true, topBar = { SmallTopAppBar(title = "标题", gradient
 | centerTitle                | Boolean                         | 是否让标题在两个图标槽之间居中（对应 COUI `setIsTitleCenterStyle`）；该形态下下方三个边距会被 `centerTitleMargin` 取代 | false | 否 |
 | centerTitleMargin          | Dp                              | 居中标题两端保留的水平留白     | 按当前窗口宽度取档位值 | 否 |
 | segmentButton              | (@Composable () -> Unit)?       | 嵌入在导航图标与标题之间的分段控件槽位；`centerTitle` 为 true 时不参与布局 | null | 否 |
-| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质而非均匀模糊；材质越过顶栏下边缘 `AppBarBlurOverlayDefaults.ExtraHeight`（24dp），顶栏高度不变，并隐藏分割线；配合 `scrollBehavior` 时在滚动 30dp 后出现（见「渐变玻璃」）；需要 `Scaffold(edgeToEdge = true)`，否则降级为纯色 | false | 否 |
+| gradientGlass              | Boolean                         | 是否改用 ColorOS 渐变模糊顶栏材质而非均匀模糊；材质越过顶栏下边缘一段带子（无 `scrollBehavior` 时 `AppBarBlurOverlayDefaults.ExtraHeight` 8dp，有则 `ScrollDrivenExtraHeight` 24dp），顶栏高度不变，并隐藏分割线；配合 `scrollBehavior` 时在滚动 30dp 后出现（见「渐变玻璃」）；需要 `Scaffold(edgeToEdge = true)`，否则降级为纯色 | false | 否 |
 | titlePadding          | Dp                              | 水平内容边距             | TopAppBarDefaults.TitlePadding | 否       |
 | navigationIconPadding      | Dp                              | 导航图标的起始边距       | TopAppBarDefaults.NavigationIconPadding | 否       |
 | actionIconPadding          | Dp                              | 操作图标的末尾边距       | TopAppBarDefaults.ActionIconPadding | 否       |

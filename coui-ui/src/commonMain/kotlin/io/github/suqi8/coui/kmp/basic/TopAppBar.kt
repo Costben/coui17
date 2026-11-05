@@ -225,7 +225,14 @@ private fun AppBarMaterialScaffold(
         materialEnabled = gradientGlass && edgeToEdge && blurEnabled,
         containerColor = color,
         backdrop = LocalBackdrop.current,
-        extraHeight = AppBarBlurOverlayDefaults.ExtraHeight,
+        // `AppBarBlurOverlayView.computeExtraHeightPx` pairs the band with the alpha mode: a
+        // scroll-driven overlay gets 24dp, one whose alpha never moves gets 8dp. The bar here is
+        // scroll driven exactly when it has a scroll behavior to follow.
+        extraHeight = if (scrollBehavior == null) {
+            AppBarBlurOverlayDefaults.ExtraHeight
+        } else {
+            AppBarBlurOverlayDefaults.ScrollDrivenExtraHeight
+        },
         scrollFraction = scrollFraction,
         modifier = modifier,
         content = { content() },

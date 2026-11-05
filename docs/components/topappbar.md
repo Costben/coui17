@@ -203,7 +203,9 @@ SmallTopAppBar(
 
 `gradientGlass = true` switches the app bar material from the uniform blur to COUI's gradient
 shape. The material is not painted on the bar itself: it is a material layer measured to the bar
-plus `AppBarBlurOverlayDefaults.ExtraHeight` (24dp) and drawn behind the bar content, while the
+plus an extra band — `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) for a bar without a
+`scrollBehavior`, `ScrollDrivenExtraHeight` (24dp) with one, the pair
+`AppBarBlurOverlayView.computeExtraHeightPx` uses — and drawn behind the bar content, while the
 layout reports only the bar's height, so the material reaches past the bar's bottom edge without
 changing the space the bar takes. The blur is strongest at the top edge, and the bar's bottom edge
 keeps some blur and surface alpha that fade out over that extra band. The divider is suppressed

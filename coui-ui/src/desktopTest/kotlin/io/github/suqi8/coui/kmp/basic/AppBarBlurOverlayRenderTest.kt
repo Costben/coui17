@@ -89,9 +89,13 @@ class AppBarBlurOverlayRenderTest {
         assertTrue(redChannel(top) >= 200, "the material's top edge is the painted surface, got $top")
 
         val barEdge = pixels[x, overlay.bottom.roundToInt() - 1]
+        // The node is `bar + ExtraHeight` tall and its ramp reaches 0 at the node's bottom edge, so
+        // the bar's own bottom edge sits `ExtraHeight / nodeHeight` of the way up the light ramp:
+        // 0.7 * 8 / 88 / 0.4 = 16% alpha, the value the reference device's ramp holds there.
+        val barEdgeAlpha = 0.7f * ((materialBottom - (overlay.bottom.roundToInt() - 1)) / nodeHeightPx) / 0.4f
         assertTrue(
-            redChannel(barEdge) >= 60,
-            "the bar's own bottom edge must still carry surface colour: got $barEdge",
+            abs(redChannel(barEdge) - 255f * barEdgeAlpha) <= 6f,
+            "the bar's own bottom edge carries the ramp: got $barEdge, expected alpha $barEdgeAlpha",
         )
 
         val lastRed = assertRampDoesNotClimb(pixels, x, overlay.top.roundToInt() + 1, materialBottom)
@@ -103,6 +107,41 @@ class AppBarBlurOverlayRenderTest {
             maxChannelDelta(clear, BackdropColor) <= 8,
             "the material must be gone at its bottom edge: y=${materialBottom - 1} got ${clear.argbHex()}",
         )
+    }
+
+    /**
+     * The ramp is a plain `LinearGradient` between the stops — `GradientBackgroundDrawable` builds
+     * one shader and fills the bounds with it — so alpha is 0 at the material's bottom edge, 0.7 at
+     * 40% up and 1 at the top, straight in between.
+     *
+     * The earlier port of that drawable put a monotone cubic through the same stops, which reads
+     * 0.85 at 40% instead of 0.70; the reference device's own ramp fits the linear model to within
+     * 0.02 at every sample.
+     */
+    @Test
+    fun rampIsLinearBetweenTheStops() = runSkikoComposeUiTest(
+        size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+        density = TestDensity,
+    ) {
+        setContent { OverlayScene(scrollFraction = 1f, withBackdrop = true) }
+        waitForIdle()
+
+        val overlay = overlayBounds()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        val x = pixels.width / 4
+        val materialBottom = (overlay.bottom + ExtraHeightPx).roundToInt()
+        val nodeHeight = materialBottom - overlay.top
+
+        val samples = listOf(0.2f to 0.35f, 0.4f to 0.70f, 0.6f to 0.80f, 0.8f to 0.90f)
+        for ((position, alpha) in samples) {
+            val y = (materialBottom - position * nodeHeight).roundToInt()
+            val red = redChannel(pixels[x, y])
+            val expected = 255f * alpha
+            assertTrue(
+                abs(red - expected) <= 6f,
+                "at $position of the material alpha must be $alpha: y=$y red=$red expected=${"%.1f".format(expected)}",
+            )
+        }
     }
 
     /**
@@ -128,9 +167,13 @@ class AppBarBlurOverlayRenderTest {
         assertTrue(redChannel(top) >= 200, "the material's top edge is the painted surface, got $top")
 
         val barEdge = pixels[x, overlay.bottom.roundToInt() - 1]
+        // The node is `bar + ExtraHeight` tall and its ramp reaches 0 at the node's bottom edge, so
+        // the bar's own bottom edge sits `ExtraHeight / nodeHeight` of the way up the light ramp:
+        // 0.7 * 8 / 88 / 0.4 = 16% alpha, the value the reference device's ramp holds there.
+        val barEdgeAlpha = 0.7f * ((materialBottom - (overlay.bottom.roundToInt() - 1)) / nodeHeightPx) / 0.4f
         assertTrue(
-            redChannel(barEdge) >= 60,
-            "the bar's own bottom edge must still carry surface colour: got $barEdge",
+            abs(redChannel(barEdge) - 255f * barEdgeAlpha) <= 6f,
+            "the bar's own bottom edge carries the ramp: got $barEdge, expected alpha $barEdgeAlpha",
         )
 
         val lastRed = assertRampDoesNotClimb(pixels, x, overlay.top.roundToInt() + 1, materialBottom)

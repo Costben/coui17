@@ -16,11 +16,11 @@ import io.github.suqi8.coui.kmp.basic.couiGlassHeader
 
 ## Native Origin
 
-The overlay view is inflated at `layout_height=0dp` under a layout behavior that measures it to `appBar.top .. appBar.bottom + extraHeightPx` — the app bar's own bounds plus the scroll-driven overlay's extra height, 24dp, which is `AppBarBlurOverlayDefaults.ExtraHeight`. (The settings homepage inflates its non-scroll-driven overlay with `homepage_appbar_blur_extra_height` = 14dp instead; the scroll-driven form uses the taller band, which is the one that leaves a visible fade under a collapsed bar.) The view carries no `onDraw` and no `onSizeChanged`: it is a canvas that a helper dresses.
+The overlay view is inflated at `layout_height=0dp` under a layout behavior that measures it to `appBar.top .. appBar.bottom + extraHeightPx` — the app bar's own bounds plus an extra band. `AppBarBlurOverlayView.computeExtraHeightPx` pairs that band with the alpha mode: **8dp** (`EXTRA_HEIGHT_DP_FIXED`, `AppBarBlurOverlayDefaults.ExtraHeight`) when the overlay's alpha is not scroll driven, **24dp** (`EXTRA_HEIGHT_DP_SCROLL_DRIVEN`, `AppBarBlurOverlayDefaults.ScrollDrivenExtraHeight`) when it is. (The settings homepage inflates its non-scroll-driven overlay with `homepage_appbar_blur_extra_height` = 14dp instead.) The taller band exists only so a collapsed bar keeps a visible fade under its own bottom edge; using it with a fixed alpha stretches the ramp three times further down the page than the framework does. The view carries no `onDraw` and no `onSizeChanged`: it is a canvas that a helper dresses.
 
 The material's background resolves into a gradient drawable and its blur into a `RenderEffect`; the sibling overlay is preferred over the app bar itself, which is why the host hollows the bar out. The material's gradient lives in the overlay's background drawable rather than in the `RenderEffect`, so the ramp is painted even where no blur can run.
 
-The gradient is built bottom-to-top, i.e. the ramp's positions are measured **from the node's bottom edge upward** (the gradient drawable builds `LinearGradient(0, height, 0, 0, …)`). Because the node is `bar + extraHeight` tall, the ramp is alpha 0 on the node's bottom edge, 0.7 at 40% up, and 1 at the top in the light theme (0 up to 0.4 in the dark theme). The bar's own bottom edge therefore still carries some surface colour, and the colour fades to nothing over the extra band.
+The gradient is built bottom-to-top, i.e. the ramp's positions are measured **from the node's bottom edge upward** (the gradient drawable builds `LinearGradient(0, height, 0, 0, …)`). Because the node is `bar + extraHeight` tall, the ramp is alpha 0 on the node's bottom edge, 0.7 at 40% up, and 1 at the top in the light theme (0 up to 0.4 in the dark theme). The bar's own bottom edge therefore still carries some surface colour — 0.7 × 8 / 96 / 0.4 ≈ 15% on a 88dp bar with the fixed band — and the colour fades to nothing over the extra band. The ramp interpolates **linearly** between the stops, exactly as `LinearGradient` does: a spline through the same stops reads 0.85 at 40% up instead of 0.70, and the reference device's ramp fits the linear model to within 0.02 at every sample.
 
 The framework's uniform path — a normal blur background with `normalBlurRadiusPx` and `normalBackgroundAlphaFraction` — is dead code: it has no caller in ColorOS 17, so it is deliberately not implemented.
 
@@ -133,7 +133,7 @@ Box(Modifier.fillMaxSize()) {
 | modifier       | Modifier                   | Applied to the overlay; the node reports the bar's height, so pass `Modifier.height(barHeight)` or no height | Modifier                             | No       |
 | containerColor | Color                      | The base colour the alpha ramp is drawn in; light `#f0f1f2`, dark `#303030` (see Recovered Tokens) | AppBarBlurOverlayDefaults.containerColor() | No       |
 | backdrop       | Backdrop?                  | The content to sample; `null` skips the blur and paints the ramp only                       | LocalBackdrop.current                | No       |
-| extraHeight    | Dp                         | How far the overlay reaches past the app bar's bottom edge                                  | AppBarBlurOverlayDefaults.ExtraHeight | No       |
+| extraHeight    | Dp                         | How far the overlay reaches past the app bar's bottom edge; the scroll-driven overload defaults to the 24dp band, the fixed-alpha one to 8dp | AppBarBlurOverlayDefaults.ExtraHeight (8dp) / ScrollDrivenExtraHeight (24dp) | No       |
 | scrollFraction | Float                      | The scroll-driven alpha, `min(1, scrollPx / 30dp)`; at `0` the overlay draws nothing         | 1f                                   | No       |
 | content        | @Composable BoxScope.() -> Unit | The app bar content the caller hollows out; it is not part of the material            | {}                                   | No       |
 
@@ -147,7 +147,8 @@ The producer overload takes the same parameters, with `scrollFraction: () -> Flo
 
 | Constant / Function   | Type  | Description                                                            | Value / Source |
 | --------------------- | ----- | ---------------------------------------------------------------------- | -------------- |
-| ExtraHeight           | Dp    | How far the overlay reaches past the bar's bottom edge                 | 24.dp (the scroll-driven overlay's extra height) |
+| ExtraHeight           | Dp    | How far the overlay reaches past the bar's bottom edge when its alpha is not scroll driven | 8.dp (`EXTRA_HEIGHT_DP_FIXED`) |
+| ScrollDrivenExtraHeight | Dp  | How far a scroll-driven overlay reaches past the bar's bottom edge                      | 24.dp (`EXTRA_HEIGHT_DP_SCROLL_DRIVEN`) |
 | ScrollAlphaThresholdDp | Float | The scroll distance over which the overlay's alpha ramps from 0 to 1   | 30f |
 | DarkContainerColor    | Color | The dark-theme material base colour: the platform's own dark background, and the colour the dark page renders as | `#303030` (`background_material_dark` → `material_grey_850`) |
 | containerColor()      | Color | The base colour for the current theme: the light theme's `surface`, the dark theme's `DarkContainerColor` | `#f0f1f2` / `#303030` |
@@ -162,7 +163,8 @@ Every value below is taken from the ColorOS 17 material's defaults or its resour
 
 | Token | Value | Source |
 | :--- | :--- | :--- |
-| `ExtraHeight` | 24dp | The scroll-driven overlay's extra height |
+| `ExtraHeight` | 8dp | `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_FIXED`, the band a non-scroll-driven overlay gets |
+| `ScrollDrivenExtraHeight` | 24dp | `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_SCROLL_DRIVEN`, the band a scroll-driven overlay gets |
 | `ScrollAlphaThresholdDp` | 30 | ColorOS 17 scroll threshold |
 | `startBlurRadius` | 30px | ColorOS 17 start blur radius |
 | `endBlurRadius` | 0px | ColorOS 17 end blur radius |

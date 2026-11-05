@@ -38,16 +38,36 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 object AppBarBlurOverlayDefaults {
 
     /**
-     * How far the material reaches past the app bar's bottom edge.
+     * How far the material reaches past the app bar's bottom edge when the overlay's alpha is **not**
+     * scroll driven.
      *
-     * `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_SCROLL_DRIVEN` (24dp). `AppBarBlurOverlayBehavior`
-     * measures the overlay to `appBar.top .. appBar.bottom + extraHeightPx`, so the bar's bottom
-     * edge keeps some blur and surface alpha, and both fade out over this band instead of stopping
-     * on the bar's own edge. (The settings homepage inflates its non-scroll-driven overlay with
-     * `homepage_appbar_blur_extra_height` = 14dp — measured 54px at 620dpi — but its scroll-driven
-     * form uses 24dp; the taller band is the one that leaves a visible fade under a collapsed bar.)
+     * `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_FIXED` (8dp), picked by
+     * `AppBarBlurOverlayView.computeExtraHeightPx(context, scrollDrivenAlphaEnabled)`. The behavior
+     * lays the overlay out to `appBar.top .. appBar.bottom + extraHeightPx`
+     * (`AppBarBlurOverlayBehavior.updateOverlayBounds`), so the material node is the bar plus this
+     * band and `GradientBackgroundDrawable`'s ramp — anchored to the node's bottom edge — fades out
+     * across the band instead of ending on the bar's own edge.
+     *
+     * This is the pair the framework uses for a bar whose material never fades with scroll: 8dp of
+     * band with `alpha = 1`. The scroll-driven form pairs 24dp with
+     * `min(1, scroll / 30dp)`; see [ScrollDrivenExtraHeight]. Taking the taller band with a
+     * non-scroll-driven alpha stretches the ramp 3x further down the page than the framework does,
+     * which is what the reference device shows: the native settings bar's ramp spans 95.5dp for a
+     * bar of about 88dp — status bar, toolbar and this 8dp band — while the same bar with 24dp of
+     * band would span 112dp.
      */
-    val ExtraHeight = 24.dp
+    val ExtraHeight = 8.dp
+
+    /**
+     * How far the material reaches past the app bar's bottom edge when the overlay's alpha **is**
+     * scroll driven.
+     *
+     * `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_SCROLL_DRIVEN` (24dp), the value
+     * `computeExtraHeightPx` returns for `scrollDrivenAlphaEnabled = true`. Pair it with
+     * [scrollAlpha], never with a constant `1f`: the taller band only exists so a collapsed bar
+     * keeps a visible fade under its own bottom edge.
+     */
+    val ScrollDrivenExtraHeight = 24.dp
 
     /**
      * `AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`: the scroll distance over which the overlay's
@@ -201,6 +221,10 @@ fun AppBarBlurOverlay(
  *
  * The `scrollFraction` overload with a [Float] forwards to this one.
  *
+ * @param extraHeight How far the material reaches past the bar's bottom edge. Defaults to
+ *   [AppBarBlurOverlayDefaults.ScrollDrivenExtraHeight], the band
+ *   `AppBarBlurOverlayView.computeExtraHeightPx` picks for `scrollDrivenAlphaEnabled = true`. A
+ *   caller whose alpha never moves should pass [AppBarBlurOverlayDefaults.ExtraHeight] (8dp).
  * @param platformRenderer When the platform has its own backdrop blur (ColorOS, or Android 16), use
  *   it. It samples
  *   the window content, so a material whose **size changes every frame** — an app bar whose content
@@ -215,7 +239,7 @@ fun AppBarBlurOverlay(
     modifier: Modifier = Modifier,
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
-    extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    extraHeight: Dp = AppBarBlurOverlayDefaults.ScrollDrivenExtraHeight,
     platformRenderer: Boolean = true,
     content: @Composable BoxScope.() -> Unit = {},
 ) {

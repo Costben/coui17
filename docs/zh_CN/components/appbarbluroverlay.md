@@ -16,11 +16,11 @@ import io.github.suqi8.coui.kmp.basic.couiGlassHeader
 
 ## 设备实现
 
-`AppBarBlurOverlayView` 以 `layout_height=0dp` inflate，并声明布局行为 `AppBarBlurOverlayBehavior`，由后者测量为 `appBar.top .. appBar.bottom + extraHeightPx` —— 即 app bar 自身的边界加上滚动驱动形态的 extra height，24dp，也就是 `AppBarBlurOverlayDefaults.ExtraHeight`。（设置首页的非滚动驱动 overlay 则以 `homepage_appbar_blur_extra_height` = 14dp inflate；滚动驱动形态取的是更高的那段带子，正是它在折叠的导航栏下方留下可见渐隐。）该视图没有 `onDraw`、也没有 `onSizeChanged`：它只是被 Helper 装扮的画布。
+`AppBarBlurOverlayView` 以 `layout_height=0dp` inflate，并声明布局行为 `AppBarBlurOverlayBehavior`，由后者测量为 `appBar.top .. appBar.bottom + extraHeightPx` —— 即 app bar 自身的边界加上一段额外带子。`AppBarBlurOverlayView.computeExtraHeightPx` 把带子与 alpha 形态配对：**8dp**（`EXTRA_HEIGHT_DP_FIXED`，`AppBarBlurOverlayDefaults.ExtraHeight`）用于 alpha 不随滚动变化的 overlay，**24dp**（`EXTRA_HEIGHT_DP_SCROLL_DRIVEN`，`AppBarBlurOverlayDefaults.ScrollDrivenExtraHeight`）用于滚动驱动形态。（设置首页的非滚动驱动 overlay 另以 `homepage_appbar_blur_extra_height` = 14dp inflate。）更高的那段带子只是为了让折叠后的导航栏在自己下边缘之下仍留有可见渐隐；把它用在固定 alpha 上，会把剖面沿着页面往下多拉长三倍。该视图没有 `onDraw`、也没有 `onSizeChanged`：它只是被 Helper 装扮的画布。
 
 `AppBarBlurHelper` 把材质的背景解析成一个 `GradientBackgroundDrawable`、把模糊解析成一个 `RenderEffect`；`blurViewForAppBar()` 优先返回同级的 overlay 而不是 app bar 自身，这正是宿主把导航栏掏空的原因。材质的渐变画在 overlay 自己的背景 drawable 里而不是 `RenderEffect` 里，因此即使无法运行模糊，剖面依然会被绘制。
 
-`GradientBackgroundDrawable` 构造的是自下而上的 `LinearGradient`（`LinearGradient(0, height, 0, 0, …)`），也就是说剖面的位置是**从节点下边缘向上**量起的。节点高度是 `bar + extraHeight`，因此剖面在节点下边缘为 alpha 0，向上 40% 处为 0.7，顶边为 1（浅色主题；深色主题为 0 到 0.4）。导航栏自身的下边缘因此仍带有一些表面色，颜色在额外带子上逐渐淡到零。
+`GradientBackgroundDrawable` 构造的是自下而上的 `LinearGradient`（`LinearGradient(0, height, 0, 0, …)`），也就是说剖面的位置是**从节点下边缘向上**量起的。节点高度是 `bar + extraHeight`，因此剖面在节点下边缘为 alpha 0，向上 40% 处为 0.7，顶边为 1（浅色主题；深色主题为 0 到 0.4）。导航栏自身的下边缘因此仍带有一些表面色——88dp 高的导航栏配固定带子时是 `0.7 × 8 / 96 / 0.4 ≈ 15%`——颜色在额外带子上逐渐淡到零。剖面在档位之间是**线性**插值的，与 `LinearGradient` 完全一致：用同样档位做样条会在 40% 处读出 0.85 而不是 0.70，而参考机实测剖面在每个采样点都与线性模型吻合到 0.02 以内。
 
 框架的均匀路径 —— `setUpNormalBlurBackground` 配 `normalBlurRadiusPx` 与 `normalBackgroundAlphaFraction` —— 是死代码：在本移植所依据的 ColorOS 17 产物里没有任何调用点，因此有意不实现。
 
@@ -133,7 +133,7 @@ Box(Modifier.fillMaxSize()) {
 | modifier       | Modifier                   | 应用于 overlay；节点报告导航栏高度，因此传 `Modifier.height(barHeight)` 或不传高度 | Modifier                              | 否       |
 | containerColor | Color                      | alpha 剖面的基色；浅色 `#f0f1f2`、深色 `#303030`（见「取值溯源」）        | AppBarBlurOverlayDefaults.containerColor() | 否       |
 | backdrop       | Backdrop?                  | 待采样的内容；`null` 时跳过模糊，只绘制剖面                              | LocalBackdrop.current                 | 否       |
-| extraHeight    | Dp                         | overlay 越过导航栏下边缘的距离                                           | AppBarBlurOverlayDefaults.ExtraHeight | 否       |
+| extraHeight    | Dp                         | overlay 越过导航栏下边缘的距离；滚动驱动重载默认取 24dp 带子，固定 alpha 重载取 8dp | AppBarBlurOverlayDefaults.ExtraHeight（8dp）/ ScrollDrivenExtraHeight（24dp） | 否       |
 | scrollFraction | Float                      | 滚动驱动的 alpha，`min(1, scrollPx / 30dp)`；为 `0` 时 overlay 不绘制任何内容 | 1f                                | 否       |
 | content        | @Composable BoxScope.() -> Unit | 调用方掏空的导航栏内容；它不属于材质                                  | {}                                    | 否       |
 
@@ -149,7 +149,8 @@ producer 重载的参数相同，只是第一个且必填的参数 `scrollFracti
 
 | 常量 / 函数           | 类型  | 说明                                                 | 值 / 来源 |
 | --------------------- | ----- | ---------------------------------------------------- | --------- |
-| ExtraHeight           | Dp    | overlay 越过导航栏下边缘的距离                       | 24.dp（滚动驱动形态的 extra height） |
+| ExtraHeight           | Dp    | alpha 不随滚动变化时 overlay 越过导航栏下边缘的距离   | 8.dp（`EXTRA_HEIGHT_DP_FIXED`） |
+| ScrollDrivenExtraHeight | Dp  | 滚动驱动 overlay 越过导航栏下边缘的距离              | 24.dp（`EXTRA_HEIGHT_DP_SCROLL_DRIVEN`） |
 | ScrollAlphaThresholdDp | Float | overlay 的 alpha 从 0 升到 1 所跨过的滚动距离        | 30f（`AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`） |
 | DarkContainerColor    | Color | 深色主题的材质基色：平台自身的深色背景，也是深色页面实际渲染出的颜色 | `#303030`（`background_material_dark` → `material_grey_850`） |
 | containerColor()      | Color | 当前主题的基色：浅色取 `surface`、深色取 `DarkContainerColor` | `#f0f1f2` / `#303030` |
@@ -164,7 +165,8 @@ producer 重载的参数相同，只是第一个且必填的参数 `scrollFracti
 
 | Token | 值 | 来源 |
 | :--- | :--- | :--- |
-| `ExtraHeight` | 24dp | 滚动驱动形态的 extra height |
+| `ExtraHeight` | 8dp | `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_FIXED`，非滚动驱动 overlay 的带子 |
+| `ScrollDrivenExtraHeight` | 24dp | `AppBarBlurOverlayView.EXTRA_HEIGHT_DP_SCROLL_DRIVEN`，滚动驱动 overlay 的带子 |
 | `ScrollAlphaThresholdDp` | 30 | `AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP` |
 | `startBlurRadius` | 30px | `AppBarBlurParams.startBlurRadius` |
 | `endBlurRadius` | 0px | `AppBarBlurParams.endBlurRadius` |
