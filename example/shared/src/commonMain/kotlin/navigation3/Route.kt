@@ -35,4 +35,8 @@ sealed interface Route : NavKey {
     /** A second-level page of the ColorOS 17 gallery, reached from its overflow panel; [page] names it. */
     @Serializable
     data class Panel(val page: String) : Route
+
+    /** A component's page in the ColorOS 17 gallery, opened from its home list; [id] names it. */
+    @Serializable
+    data class Component(val id: String) : Route
 }

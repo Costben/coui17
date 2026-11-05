@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,104 +29,7 @@ import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.menu.WindowIconCascadingDropdownMenu
 import io.github.suqi8.coui.kmp.menu.WindowIconDropdownMenu
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
-import io.github.suqi8.coui.kmp.window.WindowAlertDialog
 import io.github.suqi8.coui.kmp.window.WindowCascadingListPopup
-import io.github.suqi8.coui.kmp.window.WindowLoadingDialog
-import io.github.suqi8.coui.kmp.window.WindowProgressDialog
-import io.github.suqi8.coui.kmp.window.WindowSecurityDialog
-import kotlinx.coroutines.delay
-
-/**
- * The window-hosted dialog composables: platform-`Dialog`-hosted siblings of the `Overlay*Dialog`
- * family that the "Dialog" entry already covers — [WindowLoadingDialog], [WindowAlertDialog],
- * [WindowProgressDialog] and [WindowSecurityDialog]. They share the content layouts and only differ
- * in the host, so this entry exists to keep both hosts demonstrated.
- */
-@Composable
-fun WindowDialogVariantsDemo() {
-    var showLoading by remember { mutableStateOf(false) }
-    var showSecurity by remember { mutableStateOf(false) }
-    var showAlert by remember { mutableStateOf(false) }
-    var showProgress by remember { mutableStateOf(false) }
-    var progressValue by remember { mutableStateOf<Float?>(null) }
-
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
-        ArrowPreference(
-            title = str("WindowLoadingDialog"),
-            summary = str("Platform Dialog host for the loading content"),
-            onClick = { showLoading = true },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("WindowAlertDialog"),
-            summary = str("Centered warning dialog in a platform Dialog"),
-            onClick = { showAlert = true },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("WindowProgressDialog"),
-            summary = str("Horizontal progress dialog in a platform Dialog"),
-            onClick = { showProgress = true },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("WindowSecurityDialog"),
-            summary = str("Statement, link and checkbox in a platform Dialog"),
-            onClick = { showSecurity = true },
-        )
-    }
-
-    WindowLoadingDialog(
-        show = showLoading,
-        text = str("Loading..."),
-        onDismissRequest = { showLoading = false },
-    )
-    WindowAlertDialog(
-        show = showAlert,
-        onConfirm = { showAlert = false },
-        onCancel = { showAlert = false },
-        title = str("Delete this backup?"),
-        summary = str("The backup will be removed from the cloud and from every synced device."),
-        confirmText = str("Delete"),
-        cancelText = str("Cancel"),
-    )
-
-    // Run the progress dialog through its indefinite and determinate modes like a real download.
-    LaunchedEffect(showProgress) {
-        if (showProgress) {
-            progressValue = null
-            delay(1200)
-            repeat(40) { step ->
-                progressValue = step / 40f
-                delay(60)
-            }
-            progressValue = 1f
-            delay(400)
-            showProgress = false
-        }
-    }
-    WindowProgressDialog(
-        show = showProgress,
-        progress = progressValue,
-        text = if (progressValue == null) str("Connecting...") else str("Downloading..."),
-        onDismissRequest = { showProgress = false },
-    )
-
-    WindowSecurityDialog(
-        show = showSecurity,
-        title = str("Security Notice"),
-        summary = str("This feature needs to connect to the network."),
-        statement = str("Tap and view Privacy Policy for more information."),
-        statementLinkText = str("Privacy Policy"),
-        onLinkClick = { },
-        onConfirm = { _ -> showSecurity = false },
-        onCancel = { showSecurity = false },
-    )
-}
 
 /**
  * The `Window` icon-menu family: [WindowIconDropdownMenu] for a flat popup,

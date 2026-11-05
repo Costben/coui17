@@ -187,6 +187,9 @@ fun Coui17App(
                     padding = PaddingValues(0.dp),
                     modifier = Modifier.fillMaxSize(),
                     panelPage = { route -> Coui17PanelPage.of(route)?.let { Coui17PanelScreen(it) } },
+                    componentPage = { route ->
+                        coui17ComponentOf(route.id)?.let { Coui17ComponentScreen(it) }
+                    },
                 ) {
                     Coui17Root()
                 }
@@ -312,7 +315,6 @@ private fun Coui17Root() {
                 ) { pagePadding ->
                     when (Coui17Page.entries[page]) {
                         Coui17Page.Home -> Coui17HomePage(
-                            snackbarHostState = snackbarHostState,
                             contentPadding = pagePadding,
                             modifier = Modifier.fillMaxSize(),
                         )
@@ -405,6 +407,52 @@ private fun Coui17PanelScreen(page: Coui17PanelPage) {
                 onPanelSelect = { target ->
                     panelOpen = false
                     if (target != page) navigator.replace(target.route)
+                },
+                onPanelDismiss = { panelOpen = false },
+                scrollBehavior = scrollBehavior,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        },
+    )
+}
+
+/**
+ * A component's page, pushed from its home row: the demos under the same pinned toolbar the panel
+ * pages wear, so a page is left with the back key and the overflow panel still reaches its entries.
+ */
+@Composable
+private fun Coui17ComponentScreen(component: Coui17Component) {
+    val navigator = LocalNavigator.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scrollBehavior = COUIScrollBehavior()
+    var panelOpen by remember { mutableStateOf(false) }
+    val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navigationBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    Coui17Frame(
+        snackbarHostState = snackbarHostState,
+        pages = {
+            Coui17PageContent(
+                scrollBehavior = scrollBehavior,
+                contentTop = statusBar + TopAppBarDefaults.SmallTopAppBarCenterHeight,
+                contentBottom = navigationBar,
+            ) { pagePadding ->
+                Coui17ComponentPage(
+                    component = component,
+                    snackbarHostState = snackbarHostState,
+                    contentPadding = pagePadding,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        },
+        bars = {
+            Coui17SecondaryTopAppBar(
+                title = str(component.title),
+                onBack = { navigator.pop() },
+                panelOpen = panelOpen,
+                onOpenPanel = { panelOpen = true },
+                onPanelSelect = { target ->
+                    panelOpen = false
+                    navigator.push(target.route)
                 },
                 onPanelDismiss = { panelOpen = false },
                 scrollBehavior = scrollBehavior,
