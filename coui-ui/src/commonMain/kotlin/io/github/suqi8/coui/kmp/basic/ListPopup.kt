@@ -986,19 +986,28 @@ private fun DrawScope.drawPopupItemHighlight(
     val width = (size.width - inset * 2f).coerceAtLeast(0f)
     if (width <= 0f) return
 
+    // COUI tests `height == 2 * vertical_mask_radius` in whole pixels, and at densities where the
+    // two dimensions round apart (3.875 px/dp: 155 vs 156) a one-line row misses it and draws the
+    // 28dp weight-3.0 squircle instead of the stadium. The tolerance keeps the stadium the gallery
+    // shows; rows that really are taller still take the 16.1 radius.
     val singleLine = height <= PopupItemPressMaskRadius.toPx() * 2f + 1f
-    val radius = PopupItemPressMaskRadius
     val path = Path()
-    path.addSquircleRect(
-        width = width,
-        height = height,
-        cornerRadius = radius.toPx(),
-        // COUI asks for weight 1.0 on a stadium row, which is a plain arc; the taller rows
-        // take weight 3.0 (MixedPopupListAdapter.MASK_SMOOTH_ROUND_CORNER_WEIGHT_DEFAULT) and
-        // follow the squircle silhouette.
-        squircleEnabled = squircleEnabled && !singleLine,
-        weight = SquircleDefaults.WeightLarge,
-    )
+    if (singleLine && squircleEnabled) {
+        // COUI hands a stadium row to OplusPathAdapter.addSmoothRoundRect with
+        // RoundCornerUtil.OS_16_1_FULL_ROUND_SMOOTH_WEIGHT (1.0), which draws the same arc-plus-
+        // easing-tail capsule as the buttons, not a semicircle joined to two straight edges.
+        path.addSegmentCapsule(Rect(0f, 0f, width, height))
+    } else {
+        val radius = if (singleLine) PopupItemPressMaskRadius else PopupItemPressMaskRadiusTall
+        path.addSquircleRect(
+            width = width,
+            height = height,
+            cornerRadius = radius.toPx(),
+            // Taller rows take weight 3.0 (MixedPopupListAdapter.MASK_SMOOTH_ROUND_CORNER_WEIGHT_DEFAULT).
+            squircleEnabled = squircleEnabled,
+            weight = SquircleDefaults.WeightLarge,
+        )
+    }
     translate(left = inset, top = top) {
         drawPath(path, color = color, alpha = alpha.coerceIn(0f, 1f))
     }
