@@ -3,5 +3,6 @@
         <activity android:name=".PopupShadowComparisonActivity" android:exported="true" android:screenOrientation="portrait" />
         <activity android:name=".MetaBallComparisonActivity" android:exported="true" android:screenOrientation="portrait" />
         <activity android:name=".NotificationSwipeComparisonActivity" android:exported="true" android:screenOrientation="portrait" />
+        <activity android:name=".EffectsProbeActivity" android:exported="true" android:screenOrientation="portrait" />
     </application>
 </manifest>
