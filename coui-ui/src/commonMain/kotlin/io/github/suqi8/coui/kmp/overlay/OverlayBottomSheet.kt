@@ -43,8 +43,8 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  *   When true (default), the bottom sheet covers the full screen. When false, it renders within the
  *   current Scaffold's bounds.
  * @param panelPaddingBottom The extra foot padding the panel adds under its content, on top of
- *   `insideMargin.height`, while the keyboard is away. Defaults to the platform's 60dp; pass `0.dp`
- *   when the caller already sizes the foot gap and the panel must not grow when the IME leaves.
+ *   `insideMargin.height`, while the keyboard is away. None by default: ColorOS 17's 60dp panel
+ *   foot hangs below the screen edge, so the content ends flush with it.
  * @param content The [Composable] content of the [OverlayBottomSheet].
  */
 @Composable

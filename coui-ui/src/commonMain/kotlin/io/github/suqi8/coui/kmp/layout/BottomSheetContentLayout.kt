@@ -132,10 +132,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param allowDismiss Whether to allow dismissing the sheet via drag or back gesture.
  * @param enableNestedScroll Whether to enable nested scrolling for the content.
  * @param topInset Optional top inset override. If null, calculated from window insets.
- * @param panelPaddingBottom The padding the panel adds under its content on top of
- *   [insideMargin.height], as `COUIBottomSheetDialog.updatePaddingBottom()` does. It is dropped
- *   while the IME is up, where it would only read as dead space above the keyboard. Pass `0.dp`
- *   for a panel that sizes its own foot gap and must not change height when the keyboard leaves.
+ * @param panelPaddingBottom Extra padding the panel adds under its content on top of
+ *   [insideMargin.height]. None by default, as on ColorOS 17, where the platform's 60dp foot sits
+ *   below the screen edge. It is dropped while the IME is up, where it would only read as dead
+ *   space above the keyboard.
  * @param content The content of the bottom sheet.
  */
 @Suppress("ktlint:compose:modifier-not-used-at-root")
@@ -719,10 +719,8 @@ private fun BottomSheetColumn(
                 )
                 .padding(horizontal = insideMargin.width)
                 .padding(
-                    // The foot gap only exists while the keyboard is away; above the IME the same
-                    // 60dp would read as dead space, so it is dropped. A caller that sizes its own
-                    // foot gap passes 0dp, which also keeps the panel from changing height — and
-                    // jumping — on the frame the IME finishes leaving.
+                    // An extra foot gap only exists while the keyboard is away; above the IME it
+                    // would read as dead space, so it is dropped.
                     bottom = insideMargin.height +
                         if (imeInsets.getBottom(density) > 0) 0.dp else panelPaddingBottom,
                 ),
@@ -1228,11 +1226,16 @@ object BottomSheetDefaults {
     val insideMargin = DpSize(24.dp, 0.dp)
 
     /**
-     * `dimen/coui_panel_padding_bottom` = 60dp: the padding `COUIBottomSheetDialog.updatePaddingBottom()`
-     * puts under the panel's content, on top of [insideMargin]. A panel that fills the height
-     * (`getRatio() == 2.0`) drops it.
+     * The visible padding the panel adds under its content, on top of [insideMargin]: none.
+     *
+     * `COUIBottomSheetDialog.updatePaddingBottom()` does pad the sheet frame by
+     * `dimen/coui_panel_padding_bottom` = 60dp on phones, but `COUIBottomSheetBehavior` places the
+     * frame at `parentHeight - (height - panelPaddingBottom)` (`fitToContentsOffset`), so those
+     * 60dp hang below the screen edge and the content ends flush with it. Measured on ColorOS 17,
+     * the frame overruns the screen by exactly 60dp. This sheet fills a pull-up with its own
+     * backdrop instead, so it has nothing to hang off-screen.
      */
-    val PanelPaddingBottom = 60.dp
+    val PanelPaddingBottom = 0.dp
 
     /**
      * The height of the title row, `coui_list_dialog_toolbar_height` = 50dp.
