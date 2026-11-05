@@ -1438,8 +1438,44 @@ private fun popupCornerShape(squircleEnabled: Boolean): SquircleShape = Squircle
 internal val PopupStrokeLight = MaterialStrokeParams(edgeAlpha = 0.9f, edgeWidth = 4.dp, shadowFadeIn = 0.9f)
 internal val PopupStrokeDark = MaterialStrokeParams(edgeAlpha = 0.4f, edgeWidth = 2.dp, shadowFadeIn = 0.1f)
 
-/** RoundFrameLayout.DEFAULT_BLUR_RADIUS_PX, authored in physical pixels. */
-private const val POPUP_BLUR_RADIUS_PX = 160f
+/**
+ * The popup blur as the compositor renders it: Gaussian-equivalent sigma in pixels.
+ *
+ * `RoundFrameLayout.DEFAULT_BLUR_RADIUS_PX = 160` is **not** a Gaussian radius. `RoundFrameLayout
+ * .applyBlurColorParams()` hands it to `COUIBackgroundBlurBuilder.setBlurRadius`, which ends in
+ * `ViewRootManager.setBlurRadius` → `BackgroundBlurDrawable.setBlurRadius` — the
+ * **window-compositor** blur. A popup is its own window and the page it floats over belongs to
+ * another surface, so only the compositor can sample it; nothing in the app's own canvas sees that
+ * backdrop.
+ *
+ * The engine behind that radius is a Kawase ladder, not a Gaussian. `OplusKawaseBlurEffect::
+ * KawaseBlur` (libhwui.so, ColorOS 17) turns a radius `r` into `n = min(ceil(r / 9), 10)`
+ * quarter-resolution 5-tap passes: `OplusKawaseBlurShader::get_kawase_blur_effect()` is
+ * `c + 4 corners at (±offset, ±offset)`, and `apply_kawase_blur_passes` walks
+ * `offset = (r / 9) / n · i` for `i = 1..n` (the `0.25` in the pass loop is the quarter-resolution
+ * scale). That kernel's variance is `0.8 · step² · Σi²` — 31px at `r = 160`, not Skia's
+ * `ConvertRadiusToSigma(160) = 92px` and not the 72px our engine produced when the raw 160 was fed
+ * in as a radius.
+ *
+ * The rendered blur measures 25px on the reference device (ColorOS 17, 3.875 px/dp; 2D Gaussian
+ * fit against the unblurred page, residual 1.23/255). The 20% gap to the ladder model is the
+ * Kawase-vs-Gaussian kernel shape; the rendered value is what the panel has to look like, so it is
+ * the constant here.
+ *
+ * COUI's engine takes a radius and derives its sigma with [TEXTURE_BLUR_SIGMA_SCALE], so the value
+ * handed to `textureBlur` is [popupEngineBlurRadiusPx].
+ */
+private const val POPUP_BLUR_SIGMA_PX = 25f
+
+/**
+ * [POPUP_BLUR_SIGMA_PX] expressed as the radius COUI's engine takes for the same sigma.
+ *
+ * The engine's own radius-to-sigma slope is [TEXTURE_BLUR_SIGMA_SCALE], so feeding the raw
+ * `DEFAULT_BLUR_RADIUS_PX = 160` in as a radius asked for a 72px sigma — 2.9x what the compositor
+ * renders. This conversion is the whole fix; it is a function so the constant cannot drift from the
+ * value `textureBlur` is given.
+ */
+internal fun popupEngineBlurRadiusPx(): Float = POPUP_BLUR_SIGMA_PX / TEXTURE_BLUR_SIGMA_SCALE
 
 /** Gallery's weight_16_1_normal, shared by the popup silhouette and its NEW_G2 material rim. */
 private const val POPUP_CORNER_WEIGHT = 2.5f
@@ -1508,7 +1544,7 @@ internal fun popupGlassBlendColors(): List<BlendColorEntry> = if (COUITheme.colo
 }
 
 /**
- * Drop shadow of the popup container, derived from COUI SHADOW_LV4's Oplus light-source geometry.
+ * Drop shadow of the popup container.
  *
  * `RoundFrameLayout.setClipMode(1)` calls `ShadowUtils.setElevationToView(this, 3)`, which on an
  * OPlus-view-elevation SDK (`checkOPlusViewSubSDK(34, 2)`) resolves SHADOW_LV4 and hands five
@@ -1523,42 +1559,44 @@ internal fun popupGlassBlendColors(): List<BlendColorEntry> = if (COUITheme.colo
  * | light radius | 2000dp | `coui_shadow_light_r_level4` |
  * | extra blur radius | 0dp | `coui_shadow_blur_r_level4` |
  *
- * The call lands on `RenderNode.nSetOverrideLightSourceGeometry` (native), and hwui renders the
- * caster through Skia's spot-shadow metrics — `SkDrawShadowMetrics::GetSpotParams` in
- * `src/core/SkDrawShadowInfo.h`, the same model `ReorderBarrierDrawables::drawShadow` feeds into
- * `SkShadowUtils::DrawShadow`. There is therefore no closed-form
- * `Shadow(radius, color, offset, spread)`; the values below are the engineering approximation that
- * model produces:
+ * **The values below are not that model's output.** Reading them off Skia is wrong on two counts,
+ * and the reference device shows both:
  *
- * ```
- * zRatio     = clamp(elevation / (lightZ - elevation), 0, 0.95) = 180 / 9820     = 0.01833
- * offset     = (-zRatio * lightX, -zRatio * lightY)                             = (0.02, +3.67) dp
- * blurRadius = lightRadius * zRatio                                             = 36.66 dp
- * scale      = clamp(lightZ / (lightZ - elevation), 1, 1.95)                    = 1.018
- * ```
+ * 1. `SkDrawShadowMetrics::GetSpotParams` (`src/core/SkDrawShadowInfo.h`) would give
+ *    `blurRadius = 36.66dp`, `offset = +3.67dp`, `alpha = 48/255 = 0.188`. Skia does not blur that
+ *    radius with a Gaussian, though: `SkShadowTessellator::SkSpotShadowTessellator` tessellates the
+ *    penumbra as a **linear** ramp between an inner ring inset by `blurRadius` and an outer ring
+ *    outset by it (`computeConvexShadow`, `inset = outset`), which is a triangle of half-width
+ *    36.66dp. Compose's `Modifier.dropShadow` can only draw a Gaussian, so a 1:1 radius transfer
+ *    (what this file used to do) produces a tail that is both longer and shaped differently.
+ * 2. The native panel's shadow does not have that triangle's shape either. Measuring the rendered
+ *    menu on the reference device (ColorOS 17, 3.875 px/dp) and fitting
+ *    `alpha(s) = A · Φ((d − s) / σ)` — `s` the distance outside the panel edge, `Φ` the normal CDF
+ *    — reproduces all four sides to **0.2 percentage points** with
  *
- * Direction: lightY is negative, i.e. the light sits above the panel, so the cast shadow runs
- * downward; lightX is the literal -1 passed by COUI, so it is horizontally centred.
+ *    ```
+ *    A = 0.145   σ = 16.6dp   d = 6.4dp        (fit residual 0.2pp)
+ *    ```
  *
- * `radius` transfers 1:1 because both sides convert a radius to a Gaussian sigma with the same
- * rule: Skia's `SkBlurMask::ConvertRadiusToSigma` (`0.57735r + 0.5`) for the spot shadow, and
- * `BlurEffect.convertRadiusToSigma` in Compose's shadow painter.
+ *    whereas the Skia spot model (`A = 0.188`, `σ = 0.577·36.66 + 0.5 = 21.7dp`, `d = 3.67dp`)
+ *    reads 1.5pp too dark on the top edge and 1.8dp too long on the bottom half-decay. A Gaussian
+ *    fit this clean also rules out the 90dp, alpha-0.078 ambient halo
+ *    `SkShadowUtils::DrawShadow` would add (`AmbientBlurRadius`/`AmbientRecipAlpha` in
+ *    `SkDrawShadowInfo.h`): it would put ~4.6% alpha 90dp above the panel, and the measurement is
+ *    at 0 there past 19dp. The popup therefore renders through OPPO's own elevated-shadow path,
+ *    not through Skia's spot/ambient pair.
  *
- * Two parts of the native result a single Compose [Shadow] cannot carry, documented rather than
- * guessed:
- *  - hwui draws an additional omni-directional **ambient** shadow from the same colour: outset
- *    `min(0.5 * elevation, 150dp)` = 90dp at `alpha / AmbientRecipAlpha(180dp)` ≈ 0.078.
- *    `Modifier.dropShadow` renders one shadow only, so this softer halo is dropped.
- *  - the spot silhouette is uniformly scaled by 1.018, a ~1.5dp outset on a 168dp panel that is
- *    well below the blur radius and not a constant, so `spread` stays 0.
+ * So the parameters are the rendered profile. Compose's `BlurEffect.convertRadiusToSigma` is
+ * `0.57735·r + 0.5`, so the radius that lands on `σ = 16.58dp` is `(16.58 − 0.5) / 0.57735 =
+ * 27.85dp`; the offset is the fit's. `spread` stays 0: the fit needs no silhouette outset.
  *
  * Shared with the cascading popup surfaces so main and cascading menus cast identical shadows.
  */
 internal val PopupShadow: Shadow = Shadow(
-    radius = 36.66.dp,
-    color = Color.Black.copy(alpha = 48f / 255f),
+    radius = 27.85.dp,
+    color = Color.Black.copy(alpha = 0.145f),
     spread = 0.dp,
-    offset = DpOffset(0.dp, 3.67.dp),
+    offset = DpOffset(0.dp, 6.42.dp),
 )
 
 /**
@@ -1964,7 +2002,7 @@ fun ListPopupContent(
     val glassShape = remember(squircleEnabled) { popupCornerShape(squircleEnabled) }
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val density = LocalDensity.current
-    val blurRadius = with(density) { POPUP_BLUR_RADIUS_PX.toDp().value }
+    val blurRadius = with(density) { popupEngineBlurRadiusPx().toDp().value }
     // Where the panel sits in its own window, needed to put a captured page back where it was.
     var panelOriginInWindow by remember { mutableStateOf(Offset.Zero) }
     // A snapshot only stands in for the backdrop when there is no live one to sample.
