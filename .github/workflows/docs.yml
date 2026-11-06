@@ -1,16 +1,9 @@
 name: Build Docs Page
 
 on:
+  # Manual only: cloud minutes are billed, and CI builds nothing but the Android demo APK
+  # (example.yml). Run this by hand when it is really needed.
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "docs/**"
-      - "coui-ui/src/**"
-      - "coui-preference/src/**"
-      - "example/shared/src/**"
-      - "example/web/src/**"
-      - ".github/workflows/docs.yml"
 
 permissions:
   contents: read

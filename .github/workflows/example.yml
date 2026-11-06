@@ -16,44 +16,17 @@ on:
       - "THIRD-PARTY-LICENSES.md"
       - "docs/**"
 
+# Cloud minutes are billed, so CI only builds the Android demo APK. Desktop, macOS, iOS and web
+# builds, tests and publishing run locally or on the self-hosted Windows build machine instead.
+concurrency:
+  group: example-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env:
       SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-26, ubuntu-latest, ubuntu-24.04-arm, windows-latest]
-        include:
-          - os: macos-26
-            platform: macos arm64
-            build-command: ./gradlew packageDmgNativeReleaseMacosArm64
-            artifact-path: example/macos/build/compose/binaries/main/native-macosArm64-release-dmg/*.dmg
-            artifact-name: COUI-darwin-arm64-dmg.dmg
-            archive: false
-          - os: ubuntu-latest
-            platform: linux x64
-            platformEx: android universal
-            build-command: ./gradlew createReleaseDistributable
-            build-commandEx: ./gradlew assembleDebug && ./gradlew assembleRelease
-            artifact-path: example/desktop/build/compose/binaries/main-release/app/COUI
-            artifact-pathEx: example/android/build/outputs/apk/release/*.apk
-            artifact-name: COUI-linux-x64-bin
-            artifact-nameEx: COUI-android-universal-apk.apk
-            archive: true
-          - os: ubuntu-24.04-arm
-            platform: linux arm64
-            build-command: ./gradlew createReleaseDistributable
-            artifact-path: example/desktop/build/compose/binaries/main-release/app/COUI
-            artifact-name: COUI-linux-arm64-bin
-            archive: true
-          - os: windows-latest
-            platform: windows x64
-            build-command: ./gradlew createReleaseDistributable
-            artifact-path: example/desktop/build/compose/binaries/main-release/app/COUI
-            artifact-name: COUI-windows-x64-exe
-            archive: true
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v7
@@ -72,69 +45,26 @@ jobs:
           {
             echo "org.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8"
             echo "kotlin.daemon.jvmargs=-Xmx6g"
-            echo "kotlin.native.jvmArgs=-Xmx6g"
           } >> gradle.properties
       - name: Decode android signing key
-        if: matrix.platformEx == 'android universal' && env.SIGNING_KEY != ''
+        if: env.SIGNING_KEY != ''
         shell: bash
         run: echo "$SIGNING_KEY" | base64 -d > keystore.jks
-      - name: Build ${{ matrix.platform }} platform
-        run: ${{ matrix.build-command }}
-      - name: Build ${{ matrix.platformEx }} platform
-        if: matrix.platformEx == 'android universal'
-        run: ${{ matrix.build-commandEx }}
+      - name: Build android release APK
+        run: ./gradlew :example:android:assembleRelease
         env:
           KEYSTORE_PATH: ${{ env.SIGNING_KEY != '' && '../../keystore.jks' || '' }}
           KEYSTORE_PASS: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      - name: Rename ${{ matrix.platform }} artifact
-        run: mv ${{ matrix.artifact-path }} ${{ matrix.artifact-name }}
+      - name: Rename android artifact
         shell: bash
-      - name: Rename ${{ matrix.platformEx }} artifact
-        if: matrix.platformEx == 'android universal'
-        run: mv ${{ matrix.artifact-pathEx }} ${{ matrix.artifact-nameEx }}
-        shell: bash
-      - name: Upload COUI ${{ matrix.platform }} artifact
+        run: mv example/android/build/outputs/apk/release/*.apk COUI-android-universal-apk.apk
+      - name: Upload COUI android artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.artifact-name }}
-          path: ${{ matrix.artifact-name }}
-          archive: ${{ matrix.archive }}
-      - name: Upload COUI ${{ matrix.platformEx }} artifact
-        if: matrix.platformEx == 'android universal'
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.artifact-nameEx }}
-          path: ${{ matrix.artifact-nameEx }}
-          archive: false
-      - name: Build unsigned iOS IPA
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          ./gradlew :example:shared:generateVersionInfo
-          xcodebuild archive \
-            -project example/ios/iosApp.xcodeproj \
-            -scheme 'example [ios]' \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -archivePath "$RUNNER_TEMP/COUI.xcarchive" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGN_ENTITLEMENTS="" \
-            DEVELOPMENT_TEAM=""
-          APP=$(find "$RUNNER_TEMP/COUI.xcarchive/Products/Applications" -maxdepth 1 -name '*.app' -print -quit)
-          mkdir -p "$RUNNER_TEMP/Payload"
-          cp -R "$APP" "$RUNNER_TEMP/Payload/"
-          ( cd "$RUNNER_TEMP" && zip -r -y "$GITHUB_WORKSPACE/COUI-ios-arm64-unsigned.ipa" Payload )
-      - name: Upload unsigned iOS IPA artifact
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v7
-        with:
-          name: COUI-ios-arm64-unsigned.ipa
-          path: COUI-ios-arm64-unsigned.ipa
+          name: COUI-android-universal-apk.apk
+          path: COUI-android-universal-apk.apk
           archive: false
 
   post_telegram:
