@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -56,7 +57,41 @@ fun SearchBarActionButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
     containerColor: Color = SearchBarDefaults.searchBarColors().backgroundColor,
-    glowColor: Color? = SearchBarDefaults.causticGlowColor(),
+    glowColor: Color? = null,
+    content: @Composable () -> Unit,
+) {
+    SearchBarActionButtonSurface(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        containerColor = containerColor,
+        glowColor = glowColor,
+        stroke = SearchBarDefaults.searchBarStroke(),
+        content = content,
+    )
+}
+
+/**
+ * [SearchBarActionButton] without the public colour defaults, so a caller that paints the material
+ * itself can switch the capsule's own fill, rim and caustic off.
+ *
+ * The fused [SearchBar] chains this button and the field into one melt ball: the merged surface
+ * carries one fill and one rim along the union's outline, so the button contributes only its label
+ * and its touch motion.
+ *
+ * @param stroke the material rim drawn over the capsule, or `null` to draw no rim.
+ */
+@Composable
+internal fun SearchBarActionButtonSurface(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    motionState: COUITouchMotionState? = null,
+    containerColor: Color = SearchBarDefaults.searchBarColors().backgroundColor,
+    glowColor: Color? = null,
+    stroke: MaterialStrokeParams? = SearchBarDefaults.searchBarStroke(),
     content: @Composable () -> Unit,
 ) {
     val actualInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
@@ -66,6 +101,11 @@ fun SearchBarActionButton(
         { width, height ->
             if (width == height) MaterialShadowEdgeDefaults.CapsuleCornerWeight else MaterialShadowEdgeDefaults.CornerWeight
         }
+    }
+    val edgeModifier = if (stroke != null) {
+        Modifier.materialShadowEdgeBySize(stroke = stroke, cornerWeightFor = cornerWeightFor)
+    } else {
+        Modifier
     }
     Box(modifier = modifier.height(SearchBarActionButtonDefaults.Height)) {
         if (glowColor != null) {
@@ -87,13 +127,11 @@ fun SearchBarActionButton(
                 .fillMaxHeight()
                 .clip(SegmentCapsuleShape)
                 .background(color = containerColor)
-                .materialShadowEdgeBySize(
-                    stroke = SearchBarDefaults.searchBarStroke(),
-                    cornerWeightFor = cornerWeightFor,
-                )
+                .then(edgeModifier)
                 .couiTouchMotion(
                     enabled = enabled,
                     shape = SegmentCapsuleShape,
+                    motionState = motionState,
                 )
                 .clickable(
                     interactionSource = actualInteractionSource,
@@ -143,28 +181,37 @@ fun SearchBarActionButton(
     interactionSource: MutableInteractionSource? = null,
     containerColor: Color = SearchBarDefaults.searchBarColors().backgroundColor,
     contentColor: Color = SearchBarActionButtonDefaults.contentColor(),
-    glowColor: Color? = SearchBarDefaults.causticGlowColor(),
+    glowColor: Color? = null,
 ) {
-    SearchBarActionButton(
+    SearchBarActionButtonSurface(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         interactionSource = interactionSource,
         containerColor = containerColor,
         glowColor = glowColor,
+        stroke = SearchBarDefaults.searchBarStroke(),
     ) {
-        Box(
-            modifier = Modifier.padding(horizontal = SearchBarActionButtonDefaults.HorizontalPadding),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = text,
-                style = COUITheme.textStyles.body2.copy(fontWeight = FontWeight.Medium),
-                color = contentColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        SearchBarActionLabel(text = text, contentColor = contentColor)
+    }
+}
+
+/** The "取消"/"Cancel" label of [SearchBarActionButton], with its 16dp horizontal inset. */
+@Composable
+internal fun SearchBarActionLabel(text: String, contentColor: Color) {
+    Box(
+        modifier = Modifier
+            .widthIn(max = SearchBarActionButtonDefaults.MaxWidth)
+            .padding(horizontal = SearchBarActionButtonDefaults.HorizontalPadding),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = COUITheme.textStyles.body2.copy(fontWeight = FontWeight.Medium),
+            color = contentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -172,6 +219,14 @@ fun SearchBarActionButton(
 object SearchBarActionButtonDefaults {
     /** The capsule height, COUI `coui_search_bar_normal_background_height` (40dp). */
     val Height = 40.dp
+
+    /**
+     * The widest the capsule may become, COUI `coui_search_bar_functional_button_max_width`
+     * (152dp). `COUISearchBar.measureFunctionalButton` measures the button with
+     * `MeasureSpec.makeMeasureSpec(mFunctionButtonMaxWidth, AT_MOST)`, so a longer label
+     * ellipsizes instead of pushing the field off the bar.
+     */
+    val MaxWidth = 152.dp
 
     /** The horizontal label inset, COUI `coui_search_bar_functional_button_text_padding_horizontal`. */
     val HorizontalPadding = 16.dp

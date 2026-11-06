@@ -1,7 +1,6 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,16 +16,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.BasicComponentDefaults
-import io.github.suqi8.coui.kmp.basic.InputField
 import io.github.suqi8.coui.kmp.basic.SearchBar
-import io.github.suqi8.coui.kmp.basic.Text
-import io.github.suqi8.coui.kmp.theme.COUITheme
 
 @Composable
 fun SearchBarDemo() {
@@ -47,34 +40,18 @@ fun SearchBarDemo() {
             var searchValue by remember { mutableStateOf("") }
             var expanded by remember { mutableStateOf(false) }
             SearchBar(
-                inputField = {
-                    InputField(
-                        query = searchValue,
-                        onQueryChange = { searchValue = it },
-                        onSearch = { expanded = false },
-                        expanded = expanded,
-                        onExpandedChange = { expanded = it },
-                        label = "Search",
-                    )
-                },
-                outsideEndAction = {
-                    // COUI functional button: 14sp sans-serif-medium, accent blue.
-                    Text(
-                        modifier = Modifier
-                            .clickable(
-                                interactionSource = null,
-                                indication = null,
-                            ) {
-                                expanded = false
-                                searchValue = ""
-                            },
-                        text = "Cancel",
-                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium),
-                        color = COUITheme.colorScheme.primary,
-                    )
-                },
-                expanded = expanded,
+                query = searchValue,
+                onQueryChange = { searchValue = it },
+                onSearch = { expanded = false },
                 onExpandedChange = { expanded = it },
+                expanded = expanded,
+                label = "Search",
+                // The cancel capsule melts out of the field while the bar expands.
+                cancelText = "Cancel",
+                onCancel = {
+                    expanded = false
+                    searchValue = ""
+                },
             ) {
                 Column(
                     Modifier.fillMaxSize(),

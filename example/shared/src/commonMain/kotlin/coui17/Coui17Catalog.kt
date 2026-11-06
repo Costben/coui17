@@ -59,6 +59,7 @@ import component.ProgressIndicatorDemo
 import component.RadioButtonDemo
 import component.RangeSliderDemo
 import component.RecommendedPreferenceDemo
+import component.SearchBarDemo
 import component.SearchHistoryViewDemoContent
 import component.SearchViewAnimateDemo
 import component.SlideViewDemo
@@ -189,6 +190,7 @@ internal val Coui17Catalog: List<Coui17Category> = buildList {
             demo("CodeTextField (security)") { CodeTextFieldSecurityDemo(LocalFocusManager.current) }
         }
         component("Search") {
+            demo("SearchBar") { SearchBarDemo() }
             demo("SearchViewAnimate") { SearchViewAnimateDemo() }
             demo("SearchHistoryView") { SearchHistoryViewDemoContent() }
             demo("TouchSearchView") { TouchSearchViewDemoContent() }

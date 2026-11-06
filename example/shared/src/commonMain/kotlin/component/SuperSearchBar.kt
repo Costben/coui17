@@ -8,28 +8,26 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -38,20 +36,17 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import i18n.str
-import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.InputField
-import io.github.suqi8.coui.kmp.basic.SearchBarActionButton
-import io.github.suqi8.coui.kmp.basic.SearchBarActionButtonDefaults
+import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.SearchBar
 import io.github.suqi8.coui.kmp.basic.SearchBarDefaults
-import io.github.suqi8.coui.kmp.icon.COUIIcons
-import io.github.suqi8.coui.kmp.icon.basic.Search
-import io.github.suqi8.coui.kmp.icon.basic.SearchCleanup
+import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.search_cancel
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -61,9 +56,6 @@ import utils.SearchStatus
 
 /** COUIMoveEaseInterpolator: PathInterpolator(0.3f, 0f, 0.1f, 1f). */
 private val MoveEase = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)
-
-/** The functional button's spring: COUI response 0.5s, bounce 0.25. */
-private val ButtonSpring = spring<Float>(dampingRatio = 0.75f, stiffness = 400f)
 
 // Search Pager Composable
 
@@ -91,9 +83,6 @@ fun SearchStatus.SearchPager(
     defaultResult: @Composable () -> Unit,
     dockedBarTop: Dp = barTop,
     surfaceColor: Color = COUITheme.colorScheme.surface,
-    expandBar: @Composable (SearchStatus, (SearchStatus) -> Unit) -> Unit = { searchStatus, onStatusChange ->
-        SearchBar(searchStatus, onStatusChange)
-    },
     result: LazyListScope.() -> Unit,
 ) {
     val searchStatus = this
@@ -175,7 +164,7 @@ fun SearchStatus.SearchPager(
             visibleState = contentVisible,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = dockedBarTop + SearchBarActionButtonDefaults.Height)
+                .padding(top = dockedBarTop + SearchBarDefaults.InputFieldMinHeight + SearchBarDefaults.InsideMargin.height * 2)
                 .zIndex(1f),
             enter = fadeIn(tween(250)),
             exit = fadeOut(tween(250)),
@@ -204,7 +193,10 @@ fun SearchStatus.SearchPager(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(modifier = Modifier.weight(1f)) {
-                    expandBar(searchStatus, onSearchStatusChange)
+                    SearchStatusBar(
+                        searchStatus = searchStatus,
+                        onSearchStatusChange = onSearchStatusChange,
+                    )
                 }
             }
         }
@@ -212,157 +204,120 @@ fun SearchStatus.SearchPager(
 }
 
 /**
- * The expanded search bar: the field capsule plus the "取消" capsule, laid out the way
- * `COUISearchBar` arranges them in its edit state.
+ * The expanded search page's bar: the library [SearchBar] with the device's "取消" capsule, so the
+ * field and the button merge into one melt ball while the page opens.
  *
- * The field is the flexible child, so growing the cancel capsule's slot shrinks the field exactly
- * like the device's `doWidthChangedAnimate` (450ms). The cancel capsule itself scales up from 0.5
- * with COUI's fun-button spring and fades in over 350ms.
+ * `updateDropShadow` is driven by the edit progress and `mNoShadowInNormalState` zeroes it while the
+ * bar is collapsed, so the caustic light only exists on the search page: +18 grey levels under the
+ * capsule, gone by 4.4dp. It ramps in with the expand animation rather than snapping on.
  */
 @Composable
-fun SearchBar(
+private fun SearchStatusBar(
     searchStatus: SearchStatus,
     onSearchStatusChange: (SearchStatus) -> Unit,
 ) {
     val onSearchStatusChangeUpdated = rememberUpdatedState(onSearchStatusChange)
     val searchStatusUpdated = rememberUpdatedState(searchStatus)
-    val onClearSearch = remember {
-        { onSearchStatusChangeUpdated.value(searchStatusUpdated.value.copy(searchText = "")) }
+    // The page composes this bar already expanded, so start it collapsed for one frame and let the
+    // spring run: that is what makes the cancel capsule grow out of the field instead of popping in
+    // with the page. Cancelling collapses it again while the page slides away.
+    var barExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { barExpanded = true }
+    LaunchedEffect(searchStatus.current) {
+        if (searchStatus.current == SearchStatus.Status.COLLAPSING) barExpanded = false
     }
-    val onCancelSearch = remember {
-        {
+    val cancelLabel = stringResource(Res.string.search_cancel)
+    SearchBar(
+        query = searchStatus.searchText,
+        onQueryChange = { onSearchStatusChange(searchStatus.copy(searchText = it)) },
+        onSearch = {},
+        onExpandedChange = { expanded ->
+            if (!expanded) {
+                onSearchStatusChangeUpdated.value(
+                    searchStatusUpdated.value.copy(
+                        searchText = "",
+                        current = SearchStatus.Status.COLLAPSING,
+                    ),
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth(),
+        expanded = barExpanded,
+        label = searchStatus.label,
+        glowColor = null,
+        cancelText = cancelLabel,
+        clearContentDescription = str("Clear"),
+        onCancel = {
             onSearchStatusChangeUpdated.value(
                 searchStatusUpdated.value.copy(
                     searchText = "",
                     current = SearchStatus.Status.COLLAPSING,
                 ),
             )
-        }
-    }
-    // `updateDropShadow` is driven by the edit progress and `mNoShadowInNormalState` zeroes it while
-    // the bar is collapsed, so the light only exists on the search page: +18 grey levels under the
-    // capsule, gone by 4.4dp. It ramps in with the expand animation rather than snapping on.
-    val expandProgress by animateFloatAsState(
-        targetValue = if (searchStatus.shouldExpand()) 1f else 0f,
-        animationSpec = tween(300),
-        label = "SearchBarGlow",
+        },
     )
-    val glowColor = SearchBarDefaults.causticGlowColor().let {
-        it.copy(alpha = it.alpha * expandProgress)
-    }
-    // The page is composed the moment the search opens, so a plain `visible` flag would start this
-    // already true and skip the enter transition. Starting from `false` makes the cancel capsule
-    // grow out of the end edge and the field shrink beside it, as the device's
-    // `doWidthChangedAnimate` does.
-    val cancelVisible = remember { MutableTransitionState(false) }
-    cancelVisible.targetState = searchStatus.shouldExpand()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+}
+
+/**
+ * The gallery's [SearchBar] entry: the collapsed field on its own, and the same field with the
+ * cancel capsule that melts out of it.
+ */
+@Composable
+fun SearchBarDemo() {
+    var query by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    var submitted by remember { mutableStateOf("") }
+    SearchBar(
+        query = query,
+        onQueryChange = { query = it },
+        onSearch = { submitted = it },
+        onExpandedChange = { expanded = it },
+        modifier = Modifier.fillMaxWidth(),
+        expanded = expanded,
+        label = str("Search settings"),
+        cancelText = str("Cancel"),
+        clearContentDescription = str("Clear"),
     ) {
-        InputField(
-            query = searchStatus.searchText,
-            onQueryChange = { onSearchStatusChange(searchStatus.copy(searchText = it)) },
-            label = searchStatus.label,
-            leadingIcon = {
-                // The device's leading slot is 40dp, 36dp of it the icon view; the glyph reads
-                // 17.5dp. Same numbers as the collapsed home pill.
-                Icon(
-                    imageVector = COUIIcons.Basic.Search,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .padding(start = 10.dp, end = 7.dp),
-                    tint = COUITheme.colorScheme.onSurfaceContainerHigh,
+        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text(
+                    text = str("query: \"{}\"", query),
+                    style = COUITheme.textStyles.footnote1,
                 )
-            },
-            trailingIcon = {
-                AnimatedVisibility(
-                    searchStatus.searchText.isNotEmpty(),
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut(),
-                ) {
-                    Icon(
-                        imageVector = COUIIcons.Basic.SearchCleanup,
-                        tint = COUITheme.colorScheme.onSurface,
-                        contentDescription = str("Clean"),
-                        modifier = Modifier
-                            .size(44.dp)
-                            .padding(start = 8.dp, end = 16.dp)
-                            .clickable(
-                                interactionSource = null,
-                                indication = null,
-                                onClick = onClearSearch,
-                            ),
+                if (submitted.isNotEmpty()) {
+                    Text(
+                        text = str("Searched") + ": " + submitted,
+                        style = COUITheme.textStyles.footnote1,
                     )
                 }
-            },
-            colors = SearchBarDefaults.searchBarColors(),
-            stroke = SearchBarDefaults.searchBarStroke(),
-            glowColor = glowColor,
-            modifier = Modifier.weight(1f),
-            onSearch = {},
-            expanded = true,
-            onExpandedChange = { },
-        )
-        AnimatedVisibility(
-            visibleState = cancelVisible,
-            enter = fadeIn(tween(350)) +
-                expandHorizontally(
-                    animationSpec = tween(450, easing = MoveEase),
-                    expandFrom = Alignment.End,
-                ) +
-                scaleIn(initialScale = 0.5f, animationSpec = ButtonSpring),
-            exit = fadeOut(tween(350)) +
-                shrinkHorizontally(
-                    animationSpec = tween(450, easing = MoveEase),
-                    shrinkTowards = Alignment.End,
-                ) +
-                scaleOut(targetScale = 0.5f, animationSpec = ButtonSpring),
-        ) {
-            // The gap rides inside the animated slot, so the field is full width whenever the
-            // button is gone.
-            Box(modifier = Modifier.padding(start = SearchBarActionButtonDefaults.StartGap)) {
-                SearchBarActionButton(
-                    text = stringResource(Res.string.search_cancel),
-                    onClick = onCancelSearch,
-                    glowColor = glowColor,
-                )
             }
         }
     }
 }
 
+/**
+ * A collapsed search pill: the library [SearchBar] without a cancel capsule, so the gallery's
+ * collapsed stand-ins share the expanded bar's field style.
+ */
 @Composable
 fun SearchBarFake(
     label: String,
     searchBarTopPadding: Dp = 12.dp,
 ) {
-    InputField(
+    SearchBar(
         query = "",
         onQueryChange = { },
-        label = label,
-        // A collapsed stand-in: the device's unedited search bar casts no caustic light.
-        glowColor = null,
-        leadingIcon = {
-            Icon(
-                imageVector = COUIIcons.Basic.Search,
-                contentDescription = str("Search"),
-                modifier = Modifier
-                    .size(44.dp)
-                    .padding(start = 16.dp, end = 8.dp),
-                tint = COUITheme.colorScheme.onSurfaceContainerHigh,
-            )
-        },
+        onSearch = { },
+        onExpandedChange = { },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = searchBarTopPadding, bottom = 6.dp),
-        onSearch = { },
-        enabled = false,
+            .padding(top = searchBarTopPadding),
         expanded = false,
-        onExpandedChange = { },
+        label = label,
+        enabled = false,
+        // A collapsed stand-in: the device's unedited search bar casts no caustic light.
+        glowColor = null,
+        insideMargin = DpSize(16.dp, 6.dp),
+        cancelText = null,
     )
 }

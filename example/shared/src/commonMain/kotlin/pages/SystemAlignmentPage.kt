@@ -51,7 +51,7 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.FloatingActionButton
 import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.InputField
+import io.github.suqi8.coui.kmp.basic.SearchBar
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.TabRowWithContour
 import io.github.suqi8.coui.kmp.basic.Text
@@ -331,25 +331,18 @@ private fun SearchStage() {
     var submitted by remember { mutableStateOf("") }
     SmallTitle(text = str("Floating search field"))
     Stage(height = 120.dp) { backdrop ->
-        Row(
+        SearchBar(
+            query = query,
+            onQueryChange = { query = it },
+            onSearch = { submitted = it },
+            onExpandedChange = { expanded = it },
             modifier = Modifier.align(Alignment.Center).padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            InputField(
-                query = query,
-                onQueryChange = { query = it },
-                onSearch = { submitted = it },
-                expanded = expanded,
-                onExpandedChange = { expanded = it },
-                modifier = Modifier.weight(1f),
-                label = str("Search"),
-                backdrop = backdrop,
-            )
-            if (expanded) {
-                TextButton(text = str("Cancel"), onClick = { expanded = false }, backdrop = backdrop)
-            }
-        }
+            expanded = expanded,
+            label = str("Search"),
+            backdrop = backdrop,
+            cancelText = str("Cancel"),
+            onCancel = { expanded = false },
+        )
     }
     Note(
         if (submitted.isEmpty()) {

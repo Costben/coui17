@@ -5,6 +5,7 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -59,14 +60,19 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
@@ -75,6 +81,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -82,6 +89,7 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 import io.github.suqi8.coui.kmp.utils.hasFocusReassignBug
 import kotlinx.coroutines.delay
+import kotlin.math.PI
 
 /**
  * A [SearchBar] component with COUI style.
@@ -172,6 +180,435 @@ fun SearchBar(
 }
 
 /**
+ * A [SearchBar] that owns its own [InputField] and its edit-state "cancel" capsule, and melts the
+ * two together with COUI's melt ball while the bar is being edited.
+ *
+ * `COUISearchBar.changeStateWithAnimation` calls `setBallChain()` before it starts the transition:
+ * the search capsule and the functional button join one metaball chain
+ * (`OplusMaterialMetaBallParams(1, 0, 4dp, 1.5f, 2.0f)` for the field, index 2 for the button), so
+ * the button grows out of the capsule's trailing end instead of sliding in beside it. The chain is
+ * only built when the material is on — `mUseMaterialEffectAttr != 0 && isSupportBlur() &&
+ * isBlurEnable()` — so a bar whose blur is off falls back to two separate capsules, which is what
+ * [metaBallFusion] selects.
+ *
+ * The geometry is the native one: `measureBackground` shrinks the capsule to
+ * `width - buttonWidth - coui_search_bar_functional_button_start_gap`, `doWidthChangedAnimate`
+ * lerps that back to the full width over the edit progress, and the button scales from
+ * `StateChangedToEditParamsHigh.functionalButtonInitScale` (0.5) with `translationX` running from
+ * `mFunctionalButtonOffsetX` to zero. All three tracks ride one spring, response 0.5s / bounce
+ * 0.25 (`StateChangedToEditParamsHigh` and `StateChangedToNormalParamsHigh` carry the same pair).
+ *
+ * @param query the query text to be shown in the input field.
+ * @param onQueryChange the callback to be invoked when the input service updates the query.
+ * @param onSearch the callback invoked when the input service triggers the [ImeAction.Search] action.
+ * @param onExpandedChange the callback to be invoked when the bar's expanded state is changed.
+ * @param modifier the [Modifier] to be applied to the bar.
+ * @param expanded whether the bar is expanded and showing search results.
+ * @param label the hint shown while [query] is empty.
+ * @param enabled the enabled state of the input field.
+ * @param textStyle Style configuration applied at character level to the input text.
+ * @param colors the colors of the field and of the cancel capsule.
+ * @param stroke the material rim of the capsules, or `null` for no rim. On the fused path the rim
+ *   follows the merged outline, so both capsules share one edge.
+ * @param leadingIcon the leading icon of the input field.
+ * @param trailingIcon the trailing icon of the input field.
+ * @param interactionSource an optional hoisted [MutableInteractionSource] for the input field.
+ * @param glowColor the caustic light cast below the capsules, or `null` to disable it. See
+ *   [SearchBarDefaults.causticGlowColor]: the system gates it behind a material feature that the
+ *   reference devices report off, so it is `null` by default.
+ * @param backdrop the backdrop blurred under the capsules, or `null` for a flat fill.
+ * @param insideMargin the margin around the bar's content, `(16dp, 6dp)` by default: the 40dp
+ *   capsule inside the 52dp search band.
+ * @param cancelText the label of the cancel capsule, or `null` for a bar without one.
+ * @param onCancel the callback invoked when the cancel capsule is clicked; collapses by default.
+ * @param metaBallFusion whether the cancel capsule may merge with the field. Defaults to the
+ *   system's condition, [SearchBarDefaults.metaBallFusion]; pass `false` for the two-capsule form.
+ * @param clearContentDescription the accessibility label of the default clear button. COUI reads
+ *   it from `R.string.coui_search_clear_button_description`; a library has no string resources, so
+ *   the caller passes its own localized copy here.
+ * @param content the content to be shown when the bar is expanded.
+ */
+@Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false,
+    label: String = "",
+    enabled: Boolean = true,
+    textStyle: TextStyle? = null,
+    colors: SearchBarColors = SearchBarDefaults.searchBarColors(),
+    stroke: MaterialStrokeParams? = SearchBarDefaults.searchBarStroke(),
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
+    glowColor: Color? = null,
+    backdrop: Backdrop? = null,
+    insideMargin: DpSize = SearchBarDefaults.InsideMargin,
+    cancelText: String? = null,
+    onCancel: () -> Unit = { onExpandedChange(false) },
+    metaBallFusion: Boolean = SearchBarDefaults.metaBallFusion(),
+    clearContentDescription: String = SearchBarDefaults.ClearContentDescription,
+    content: @Composable ColumnScope.() -> Unit = {},
+) {
+    val field: @Composable (Boolean) -> Unit = { fillOwnSurface ->
+        InputField(
+            query = query,
+            onQueryChange = onQueryChange,
+            onSearch = onSearch,
+            expanded = expanded,
+            onExpandedChange = onExpandedChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = label,
+            enabled = enabled,
+            textStyle = textStyle,
+            // The fused path paints the merged silhouette itself, so the field contributes only its
+            // content: a transparent fill, no rim and no caustic of its own.
+            colors = if (fillOwnSurface) colors else colors.copy(backgroundColor = Color.Transparent),
+            stroke = if (fillOwnSurface) stroke else null,
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
+            interactionSource = interactionSource,
+            glowColor = if (fillOwnSurface) glowColor else null,
+            backdrop = null,
+            clearContentDescription = clearContentDescription,
+        )
+    }
+    if (cancelText == null || !metaBallFusion) {
+        SearchBar(
+            inputField = { field(true) },
+            onExpandedChange = onExpandedChange,
+            modifier = modifier,
+            insideMargin = insideMargin,
+            expanded = expanded,
+            outsideEndAction = if (cancelText == null) {
+                null
+            } else {
+                {
+                    SearchBarActionButton(
+                        text = cancelText,
+                        onClick = onCancel,
+                        containerColor = colors.backgroundColor,
+                    )
+                }
+            },
+            content = content,
+        )
+        return
+    }
+
+    val currentOnExpandedChange by rememberUpdatedState(onExpandedChange)
+    val navigationEventState = rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
+    val progress = remember { Animatable(if (expanded) 1f else 0f) }
+    LaunchedEffect(expanded) {
+        progress.animateTo(if (expanded) 1f else 0f, MetaBallSpring)
+    }
+    // The particles are a function of the measured sizes, so the measure pass publishes them and
+    // the layer above the children draws them.
+    var geometry by remember { mutableStateOf<SearchBarMetaBallGeometry?>(null) }
+    // `COUIViewTouchAnimator` deforms the whole button view, so a press shrinks the capsule's
+    // outline together with its label. The merged silhouette is painted outside the button, so the
+    // press scale has to reach the particle as well as the content.
+    val cancelMotionState = rememberCOUITouchMotionState()
+    val squircleEnabled = isSquircleEnabled()
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+
+    Column(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = insideMargin.width, vertical = insideMargin.height),
+        ) {
+            geometry?.let { measured ->
+                SearchBarMetaBallLayer(
+                    geometry = measured,
+                    progress = { progress.value },
+                    cancelMotionScale = cancelMotionState.scaleX,
+                    colors = colors,
+                    stroke = stroke,
+                    glowColor = glowColor,
+                    backdrop = backdrop,
+                    continuousCurve = squircleEnabled,
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
+            Layout(
+                content = {
+                    // Before the first measure there is no silhouette to merge, so the field paints
+                    // its own capsule for that one frame instead of leaving the bar blank.
+                    field(geometry == null)
+                    SearchBarActionButtonSurface(
+                        onClick = onCancel,
+                        modifier = Modifier.graphicsLayer {
+                            val value = progress.value
+                            val scale = searchBarCancelScale(value)
+                            scaleX = scale
+                            scaleY = scale
+                            alpha = searchBarCancelAlpha(value)
+                            val slide = geometry?.let { searchBarCancelTranslationX(it.cancelSlide, value) } ?: 0.dp
+                            translationX = if (rtl) -slide.value else slide.value
+                        },
+                        // `setVisibility(8)` while collapsed: the capsule is still laid out so the
+                        // melt ball has its silhouette, but it must not take taps from the field.
+                        enabled = expanded,
+                        motionState = cancelMotionState,
+                        // The merged silhouette below carries the fill, the rim and the caustic.
+                        containerColor = Color.Transparent,
+                        glowColor = null,
+                        stroke = null,
+                    ) {
+                        Box(
+                            // `setFunctionalButtonTextAlpha(progress)`: the label keeps its own
+                            // linear alpha on top of the view's remapped one.
+                            modifier = Modifier.graphicsLayer { alpha = progress.value },
+                        ) {
+                            SearchBarActionLabel(
+                                text = cancelText,
+                                contentColor = SearchBarActionButtonDefaults.contentColor(),
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { measurables, constraints ->
+                val totalWidth = constraints.maxWidth
+                val cancelPlaceable = measurables[1].measure(Constraints())
+                val gapPx = SearchBarActionButtonDefaults.StartGap.roundToPx()
+                val restingWidth = (totalWidth - cancelPlaceable.width - gapPx).coerceAtLeast(0)
+                // Deferred read: the field spans the drawn capsule, not the resting one, so a tap
+                // anywhere on the visible silhouette reaches it.
+                val capsuleWidth = searchBarCapsuleWidth(totalWidth.toDp(), restingWidth.toDp(), progress.value).roundToPx()
+                val fieldPlaceable = measurables[0].measure(
+                    Constraints(
+                        minWidth = capsuleWidth,
+                        maxWidth = capsuleWidth,
+                        minHeight = constraints.minHeight,
+                        maxHeight = constraints.maxHeight,
+                    ),
+                )
+                val barHeight = maxOf(fieldPlaceable.height, cancelPlaceable.height)
+                val measured = SearchBarMetaBallGeometry(
+                    barWidth = totalWidth.toDp(),
+                    barHeight = barHeight.toDp(),
+                    restingCapsuleWidth = restingWidth.toDp(),
+                    cancelWidth = cancelPlaceable.width.toDp(),
+                    cancelHeight = cancelPlaceable.height.toDp(),
+                    cancelGap = SearchBarActionButtonDefaults.StartGap,
+                    cancelSlide = SearchBarDefaults.CancelSlidePx.toDp(),
+                )
+                if (measured != geometry) geometry = measured
+                layout(totalWidth, barHeight) {
+                    fieldPlaceable.placeRelative(0, (barHeight - fieldPlaceable.height) / 2)
+                    cancelPlaceable.placeRelative(restingWidth + gapPx, (barHeight - cancelPlaceable.height) / 2)
+                }
+            }
+        }
+
+        AnimatedVisibility(visible = expanded) {
+            content()
+        }
+    }
+
+    NavigationBackHandler(
+        state = navigationEventState,
+        isBackEnabled = expanded,
+        onBackCompleted = {
+            currentOnExpandedChange(false)
+        },
+    )
+}
+
+/**
+ * Draws the merged silhouette of the search capsule and its cancel capsule behind the bar's
+ * content.
+ *
+ * `COUISearchBar.setBallChain` hands the system's material chain two `OplusMaterialMetaBallParams`
+ * with `extension` 4dp and factors 1.5 / 2.0, which is exactly [MetaBallDefaults]: the fold radius
+ * is `extension * length(factor * u)`, so two capsules side by side bridge gaps below 6dp. The
+ * native `coui_search_bar_functional_button_start_gap` is 12dp, so the resting capsules meet but do
+ * not overlap; the bridge only shows while the button is still travelling in.
+ *
+ * The union is stroked with [searchBarMetaBallRim] rather than with the bottom bar's 2.5dp
+ * `TYPE_FRAMEWORK_CAPSULE_3` rim: both chained views resolve `TYPE_FRAMEWORK_CAPSULE_8`, whose
+ * `edgeWidthDp` is 1.8dp.
+ */
+@Composable
+private fun SearchBarMetaBallLayer(
+    geometry: SearchBarMetaBallGeometry,
+    progress: () -> Float,
+    cancelMotionScale: Float,
+    colors: SearchBarColors,
+    stroke: MaterialStrokeParams?,
+    glowColor: Color?,
+    backdrop: Backdrop?,
+    continuousCurve: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val value = progress()
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val particles = remember(geometry, value, rtl, cancelMotionScale) {
+        geometry.particles(value, rtl, cancelMotionScale)
+    }
+    val rim = searchBarMetaBallRim(stroke)
+    val density = LocalDensity.current
+    val blurScale = rememberToolbarAttenuatedBlurScale()
+    MetaBallSurfaceWithRim(
+        particles = particles,
+        blurColors = if (backdrop == null) null else materialBarBlendColors(),
+        // A merged chain draws the stroke once, along the union's outline.
+        rimColor = rim.color,
+        rimLineWidth = rim.lineWidth,
+        rimLineAngle = rim.lineAngle,
+        modifier = modifier,
+        color = colors.backgroundColor,
+        backdrop = backdrop,
+        blurRadius = with(density) { (SearchBarDefaults.NATIVE_TOP_BAR_BLUR_SIGMA_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value } * blurScale(),
+        extension = MetaBallDefaults.Extension,
+        extensionFactorX = MetaBallDefaults.EXTENSION_FACTOR_X,
+        extensionFactorY = MetaBallDefaults.EXTENSION_FACTOR_Y,
+        rimBottomScale = 1f,
+        // `updateDropShadow(progress)` ramps the caustic with the edit progress and
+        // `mNoShadowInNormalState` leaves the resting pill unlit, so a collapsed bar casts none.
+        bottomGlowColor = glowColor?.let { it.copy(alpha = it.alpha * value) },
+        continuousCurve = continuousCurve,
+        // `COUISearchBar` strokes its capsule with the view-level `COUIMaterialStrokeEffect`
+        // (`TYPE_FRAMEWORK_CAPSULE_8`), not with the metaball chain's own edge: the chain only
+        // merges the two silhouettes. The two blends differ on dark material — see
+        // `Modifier.nativeMaterialEdge`.
+        plainRim = true,
+    )
+}
+
+/**
+ * The stroke of the merged search silhouette, resolved from the bar's own material instead of from
+ * the bottom bar's preset.
+ *
+ * @property color the rim colour, or `null` when the caller paints the outline itself.
+ * @property lineWidth the rim width in dp, `StrokeEffectParams.edgeWidthDp`.
+ * @property lineAngle the rim angle in radians, `StrokeEffectParams.edgeAngle`.
+ */
+@Immutable
+internal data class SearchBarMetaBallRim(
+    val color: Color?,
+    val lineWidth: Dp,
+    val lineAngle: Float,
+)
+
+/**
+ * `COUISearchBar` resolves the capsule's stroke through
+ * `ToolbarMaterialEffectResolver.getCapsuleStrokeEffectTypeInWindow` — `TYPE_FRAMEWORK_CAPSULE_9`
+ * for preset 1, `TYPE_FRAMEWORK_CAPSULE_8` otherwise (`ToolbarMaterialEffectResolver.java:32-33`;
+ * the background view asks for it at `SearchBarBackgroundView.java:1282`, the cancel button at
+ * `SearchBarFunctionButton.java:452`) — so both chained views wear the same stroke and the union
+ * draws it once.
+ *
+ * `FRAMEWORK_CAPSULE_PARAMS_8_LIGHT` / `_DARK` (`COUIMaterialStrokeEffect.java:59` / `:96`) are
+ * `(strokeType 1, edgeAlpha, edgeWidthDp, edgeAngle, shadowFadeIn, shadowFadeOut, shadowFadeScale)`
+ * = `(1, 0.8f, 1.8f, 0f, 0.1f, 0f, 1f)` light and `(1, 0.15f, 1.8f, 0f, 0.01f, 0f, 1f)` dark. The
+ * 1.8dp width is why the merged outline must not inherit the bottom bar's
+ * `TYPE_FRAMEWORK_CAPSULE_3` 2.5dp (`:32` / `:70`); the alphas and the zero angle are already what
+ * [SearchBarDefaults.searchBarStroke] carries.
+ *
+ * The preset's shadow fade-in / fade-out belong to the inner shadow `setShadowParams` paints inside
+ * the capsule, which the merged silhouette does not draw — neither does it for the bottom bar — so
+ * only the edge half of the tuple reaches the shader. A `null` [stroke] means the caller paints the
+ * outline elsewhere; the width then only has to keep a valid value.
+ */
+internal fun searchBarMetaBallRim(stroke: MaterialStrokeParams?): SearchBarMetaBallRim = SearchBarMetaBallRim(
+    color = stroke?.let { Color.White.copy(alpha = it.edgeAlpha) },
+    lineWidth = stroke?.edgeWidth ?: META_BALL_RIM_LINE_WIDTH,
+    lineAngle = stroke?.edgeAngle ?: 0f,
+)
+
+/**
+ * The measured geometry of the edit-state transition, in the bar's content box.
+ *
+ * @param barWidth the full width the capsule occupies while collapsed.
+ * @param barHeight the height of the taller of the two capsules.
+ * @param restingCapsuleWidth the capsule's width in the edit state, `barWidth - cancelWidth - cancelGap`.
+ * @param cancelWidth the cancel capsule's width.
+ * @param cancelHeight the cancel capsule's height.
+ * @param cancelGap the gap between the capsules at rest, `coui_search_bar_functional_button_start_gap`.
+ * @param cancelSlide the button's starting offset, `mFunctionalButtonOffsetX`.
+ */
+@Immutable
+internal data class SearchBarMetaBallGeometry(
+    val barWidth: Dp,
+    val barHeight: Dp,
+    val restingCapsuleWidth: Dp,
+    val cancelWidth: Dp,
+    val cancelHeight: Dp,
+    val cancelGap: Dp,
+    val cancelSlide: Dp,
+) {
+    /**
+     * The two silhouettes at edit progress [progress], with `true` mirroring them for RTL.
+     *
+     * [cancelPressScale] is the button's live touch scale: `COUIViewTouchAnimator` shrinks the whole
+     * view on press, so the melted capsule has to shrink with it.
+     */
+    fun particles(
+        progress: Float,
+        rtl: Boolean = false,
+        cancelPressScale: Float = 1f,
+    ): List<MetaBallParticle> {
+        val capsuleWidth = searchBarCapsuleWidth(barWidth, restingCapsuleWidth, progress)
+        val scale = searchBarCancelScale(progress)
+        val cancelCentre = restingCapsuleWidth + cancelGap + cancelWidth / 2 +
+            searchBarCancelTranslationX(cancelSlide, progress)
+        return listOf(
+            MetaBallParticle(
+                centerX = if (rtl) barWidth - capsuleWidth / 2 else capsuleWidth / 2,
+                centerY = barHeight / 2,
+                width = capsuleWidth,
+                height = barHeight,
+                cornerRadius = barHeight / 2,
+            ),
+            MetaBallParticle(
+                centerX = if (rtl) barWidth - cancelCentre else cancelCentre,
+                centerY = barHeight / 2,
+                width = cancelWidth,
+                height = cancelHeight,
+                cornerRadius = cancelHeight / 2,
+                scaleX = scale * cancelPressScale,
+                scaleY = scale * cancelPressScale,
+                alpha = progress,
+            ),
+        )
+    }
+}
+
+/**
+ * `SearchBarBackgroundView.doWidthChangedAnimate`: the drawn capsule runs from the full width to the
+ * edit-state width over the transition progress.
+ */
+internal fun searchBarCapsuleWidth(barWidth: Dp, restingCapsuleWidth: Dp, progress: Float): Dp = barWidth + (restingCapsuleWidth - barWidth) * progress
+
+/**
+ * `COUISearchBar.e(...)`: `scale = functionalButtonInitScale + (1 - initScale) * progress`, with
+ * `StateChangedToEditParamsHigh.functionalButtonInitScale` = 0.5.
+ */
+internal fun searchBarCancelScale(progress: Float): Float = SearchBarDefaults.CancelInitialScale +
+    (1f - SearchBarDefaults.CancelInitialScale) * progress
+
+/**
+ * `COUISearchBar.updateFunctionalButtonAlpha`: `setAlpha(remapAlphaProgress(progress, 0.2f))`, where
+ * `remapAlphaProgress(v, 0.2f)` is `v / 0.2` below the knee and 1 above it. The capsule is therefore
+ * fully opaque once the spring passes 20% of its travel, while the label keeps its own linear alpha.
+ */
+internal fun searchBarCancelAlpha(progress: Float): Float {
+    val clamped = progress.coerceIn(0f, 1f)
+    return if (clamped < SEARCH_BAR_BUTTON_ALPHA_KNEE) clamped / SEARCH_BAR_BUTTON_ALPHA_KNEE else 1f
+}
+
+private const val SEARCH_BAR_BUTTON_ALPHA_KNEE = 0.2f
+
+/** `COUISearchBar.e(...)`: `translationX = mFunctionalButtonOffsetX * (1 - progress)`. */
+internal fun searchBarCancelTranslationX(cancelSlide: Dp, progress: Float): Dp = cancelSlide * (1f - progress)
+
+/**
  * A text field to input a query in a search bar with COUI style.
  *
  * @param query the query text to be shown in the input field.
@@ -202,14 +639,19 @@ fun SearchBar(
  *   appearance or preview the search bar in different states. Note that if `null` is provided,
  *   interactions will still happen internally.
  * @param glowColor the caustic light cast below the capsule, or `null` to disable it. COUI paints
- *   it through `COUIMaterialEffect.setOutlineCausticShadowColor` with `coui_caustic_color_1`; the
- *   light is clipped to the outside of the capsule, so it never brightens the translucent fill.
- *   The device only lights the capsule up while the search bar is being edited — its collapsed
- *   pill on the settings home casts no light at all — so a collapsed stand-in should pass `null`.
+ *   it through `COUIMaterialEffect.setOutlineCausticShadowColor` with `coui_caustic_color_1`, but
+ *   only when the system material feature reports it on: `isCausticShadowEnable()` is
+ *   `mSystemCausticShadowState && ...`, and the only writer of that flag is
+ *   `onMaterialStateChange(8, enabled)`. Both reference devices report it off, and neither the
+ *   expanded search bar nor the settings home pill shows a light band under the capsule on either
+ *   theme, so the default is `null`; pass [SearchBarDefaults.causticGlowColor] to opt in.
+ *   The light is clipped to the outside of the capsule, so it never brightens the translucent fill.
  * @param backdrop the backdrop blurred under the capsule, or `null` for a flat fill. `COUISearchBar`
  *   blurs nothing by default because the app bar under it already does; pass a backdrop for a field
  *   that floats over content, the blurred preset (`TYPE_FRAMEWORK_TOP_BAR_BLUR`), or a list scrolled
  *   under it shows straight through the translucent fill.
+ * @param clearContentDescription the accessibility label of the default clear button,
+ *   `R.string.coui_search_clear_button_description` on the device. Pass a localized copy.
  *
  * Submitting a search from the keyboard hides the keyboard and keeps [query]; collapsing the bar
  * (cancel or back) is what clears it.
@@ -230,8 +672,9 @@ fun InputField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
-    glowColor: Color? = SearchBarDefaults.causticGlowColor(),
+    glowColor: Color? = null,
     backdrop: Backdrop? = null,
+    clearContentDescription: String = SearchBarDefaults.ClearContentDescription,
 ) {
     val currentOnQueryChange by rememberUpdatedState(onQueryChange)
     val currentOnSearch by rememberUpdatedState(onSearch)
@@ -269,7 +712,7 @@ fun InputField(
                     .size(SearchBarDefaults.TrailingIconTouchTargetSize)
                     .clip(CircleShape)
                     .clickable { currentOnQueryChange("") }
-                    .semantics { contentDescription = "Search Cleanup" },
+                    .semantics { contentDescription = clearContentDescription },
                 contentAlignment = Alignment.Center,
             ) {
                 Canvas(modifier = Modifier.size(SearchBarDefaults.TrailingIconVisualSize)) {
@@ -453,6 +896,50 @@ fun InputField(
     }
 }
 
+/** Binary-compatibility bridge for the [InputField] overload that predates `clearContentDescription`. */
+@Deprecated(
+    message = "Migrated to the overload that adds clearContentDescription.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun InputField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "",
+    enabled: Boolean = true,
+    textStyle: TextStyle? = null,
+    colors: SearchBarColors = SearchBarDefaults.searchBarColors(),
+    stroke: MaterialStrokeParams? = SearchBarDefaults.searchBarStroke(),
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
+    glowColor: Color? = null,
+    backdrop: Backdrop? = null,
+) {
+    InputField(
+        query = query,
+        onQueryChange = onQueryChange,
+        onSearch = onSearch,
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = modifier,
+        label = label,
+        enabled = enabled,
+        textStyle = textStyle,
+        colors = colors,
+        stroke = stroke,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        interactionSource = interactionSource,
+        glowColor = glowColor,
+        backdrop = backdrop,
+    )
+}
+
 /** Binary-compatibility bridge for the [InputField] overload that predates `backdrop`. */
 @Deprecated(
     message = "Migrated to the overload that adds backdrop.",
@@ -557,17 +1044,25 @@ private fun materialBarBlendColors(): List<BlendColorEntry> = if (COUITheme.colo
 }
 
 /**
- * The single fill the capsule keeps when the material cannot be applied:
- * `coui_search_bar_no_blur_solid`, `#64FFFFFF` by day and `#28767676` at night.
+ * The single fill the capsule keeps when the material layers cannot be applied.
  *
- * `COUISearchBar` asks `ToolbarMaterialEffectResolver` for the toolbar background instead, which
- * returns the `COUIMaterialBlurEffect` top-bar layers (see [materialBarBlendColors]), not this solid.
+ * `COUISearchBar` asks `ToolbarMaterialEffectResolver` for the toolbar background, which returns the
+ * `COUIMaterialBlurEffect` top-bar layers (see [materialBarBlendColors]); this collapses them into
+ * one translucent colour. It is not `coui_search_bar_no_blur_solid` (`#28767676` at night), which
+ * reads 12 levels brighter than the page where the system capsule reads 7 levels darker.
  */
 @Composable
 private fun materialBarColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
-    Color(0x28767676)
+    // `FRAMEWORK_TOP_BAR_PARAMS_DARK` layer 1. The preset's second layer is `#B37F7F7F` with
+    // `OVERLAY`, which maps a mid-grey blend colour onto the backdrop unchanged, so this single
+    // `SrcOver` layer is the whole dark fill. It is translucent like the system material: over the
+    // black settings home it lands on 30, over the `#2E2E2E` page on 40 (measured 39 on the device).
+    MaterialBarDark
 } else {
-    Color(0x64FFFFFF)
+    // `FRAMEWORK_TOP_BAR_PARAMS_LIGHT` is `#66333333` / `COLOR_DODGE` over the backdrop and then
+    // `#99F5F5F5` / `LUMINOSITY`, which lands a light page on a flat near-white: measured 247 over
+    // the settings page's 235, i.e. 60% white. A 40% white reproduced only 242 over the same page.
+    Color(0x99FFFFFF)
 }
 
 /** Contains default values used by [SearchBar] and [InputField]. */
@@ -662,6 +1157,17 @@ object SearchBarDefaults {
     }
 
     /**
+     * The accessibility label of the default clear button when the caller passes none.
+     *
+     * `SearchBarBackgroundView.ensureQuickDeleteButton` labels the system button with
+     * `R.string.coui_search_clear_button_description`, which is localized per device language. A
+     * multiplatform library ships no string resources, so [InputField] takes the copy as a
+     * parameter; this value only keeps the previous English default.
+     */
+    @Suppress("ktlint:standard:property-naming")
+    const val ClearContentDescription = "Search Cleanup"
+
+    /**
      * The edge ColorOS draws on the search capsule: `TYPE_FRAMEWORK_CAPSULE_8`. On the material path
      * `COUISearchBar` resolves the rim through `getCapsuleStrokeEffectTypeInWindow`, which returns the
      * in-window capsule (`FRAMEWORK_CAPSULE_PARAMS_8_DARK`, edge alpha 0.15) instead of
@@ -674,11 +1180,14 @@ object SearchBarDefaults {
     /**
      * The caustic light under the capsule, COUI `coui_caustic_color_1`: `#2EFFFFFF` in the light
      * theme and `#33FFFFFF` at night. `COUISearchBar.setCausticShadow` passes it to
-     * `COUIMaterialEffect.setOutlineCausticShadowColor` at full strength.
+     * `COUIMaterialEffect.setOutlineCausticShadowColor`.
      *
-     * The device only shows it on the edited search bar: the collapsed pill on the settings home
-     * casts no light, and the band under the edit-state capsule measures +18 grey levels over the
-     * page, fading out within 4.4dp.
+     * The system only reaches that call when `isCausticShadowEnable()` is true, and the flag behind
+     * it (`mSystemCausticShadowState`) starts `false` and is only written by
+     * `onMaterialStateChange(8, enabled)`. Both reference devices report it off: neither the
+     * expanded search bar nor the settings home pill shows a light band under the capsule in either
+     * theme (`#262626` capsule over a black page reads 30 under the bottom rim, with no lift below
+     * it). [SearchBar] therefore takes `null` by default; pass this colour to opt in.
      */
     @Composable
     fun causticGlowColor(): Color = if (COUITheme.colorScheme.background.luminance() < 0.5f) {
@@ -686,6 +1195,51 @@ object SearchBarDefaults {
     } else {
         Color(0x2EFFFFFF)
     }
+
+    /**
+     * `COUISearchBar`'s edit-state spring: `StateChangedToEditParamsHigh.getResponse()` and
+     * `getBounce()`. The capsule width, the cancel capsule's scale and its offset all ride it, and
+     * `StateChangedToNormalParamsHigh` carries the same pair for the collapse.
+     *
+     * The four `const val`s here keep the object's existing naming (`InsideMargin`,
+     * `InputFieldMinHeight` and friends) rather than SCREAMING_SNAKE_CASE: renaming a published
+     * `const val` removes its recorded API field, so they are suppressed instead.
+     */
+    @Suppress("ktlint:standard:property-naming")
+    const val MetaBallSpringResponse = 0.5f
+
+    /** See [MetaBallSpringResponse]; `COUISpringForce.setBounce` sets `dampingRatio = 1 - bounce`. */
+    @Suppress("ktlint:standard:property-naming")
+    const val MetaBallSpringBounce = 0.25f
+
+    /**
+     * `StateChangedToEditParamsHigh.getFunctionalButtonInitScale()`: the cancel capsule grows from
+     * half size while the bar expands.
+     */
+    @Suppress("ktlint:standard:property-naming")
+    const val CancelInitialScale = 0.5f
+
+    /**
+     * `COUISearchBar.mFunctionalButtonOffsetX`: `handleStateChangedAnimation`
+     * (`COUISearchBar.java:972`, LTR branch) lays the background view out
+     * `max(maxWidth, minWidth) + left + 20` wide, and the offset is that view's right edge minus
+     * the button's (`:988-991`).
+     *
+     * The 20 is a **raw pixel** count, not dp: the native value goes straight to `View.layout`
+     * without `applyDimension`, so on the reference 3.875× device it is 5.2dp while at 1× it is
+     * 20dp. It is kept as-is to stay identical to the system rather than normalised by density.
+     */
+    @Suppress("ktlint:standard:property-naming")
+    const val CancelSlidePx = 20f
+
+    /**
+     * Whether the cancel capsule may merge with the field, `COUISearchBar.setBallChain`'s
+     * `mUseMaterialEffectAttr != 0 && isSupportBlur() && isBlurEnable()`. [isBlurEnabled] is this
+     * library's equivalent: the local blur switch, the platform's, and a runtime shader to draw the
+     * union. A bar without it draws two separate capsules.
+     */
+    @Composable
+    fun metaBallFusion(): Boolean = isBlurEnabled()
 }
 
 /**
@@ -706,6 +1260,16 @@ data class SearchBarColors(
 
 /** COUIMoveEaseInterpolator: PathInterpolator(0.3f, 0f, 0.1f, 1f). */
 private val MoveEase = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)
+
+/**
+ * `COUISearchBar`'s edit-state spring. `COUISpringForce.setResponse(r)` sets the natural frequency
+ * to `2π / r` and `setBounce(b)` sets `dampingRatio = 1 - b`; Compose's `spring` derives the same
+ * frequency from `sqrt(stiffness)`.
+ */
+private val MetaBallSpring = spring<Float>(
+    dampingRatio = 1f - SearchBarDefaults.MetaBallSpringBounce,
+    stiffness = (2f * PI.toFloat() / SearchBarDefaults.MetaBallSpringResponse).let { it * it },
+)
 
 /** COUISearchBar DEFAULT_SEARCH_VIEW_OFFSET/SCALE_CHANGE_DURATION (450ms). */
 private val BackgroundResizeDurationMillis = 450

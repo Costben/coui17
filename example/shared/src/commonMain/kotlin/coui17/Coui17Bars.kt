@@ -40,6 +40,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import component.searchBarShadow
 import i18n.str
@@ -52,10 +53,10 @@ import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.InputField
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
+import io.github.suqi8.coui.kmp.basic.SearchBar
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TopAppBar
@@ -335,31 +336,20 @@ private fun Coui17SearchPill(
                 }
                 .dropShadow(shape = CircleShape, shadow = searchBarShadow(scrollFraction)),
         )
-        InputField(
+        SearchBar(
             query = "",
             onQueryChange = {},
             onSearch = {},
-            expanded = false,
             onExpandedChange = {},
             modifier = Modifier.fillMaxSize(),
+            expanded = false,
             label = label,
             enabled = false,
             // The device's collapsed pill casts a drop shadow but no caustic light; the light only
             // appears once the bar is being edited.
             glowColor = null,
-            leadingIcon = {
-                Icon(
-                    imageVector = COUIIcons.Basic.Search,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(Coui17Dimens.SearchLeadingIconSlot)
-                        .padding(
-                            start = Coui17Dimens.SearchLeadingIconIndent,
-                            end = Coui17Dimens.SearchLeadingIconEndGap,
-                        ),
-                    tint = COUITheme.colorScheme.onSurfaceContainerHigh,
-                )
-            },
+            insideMargin = DpSize(0.dp, 0.dp),
+            cancelText = null,
         )
     }
 }

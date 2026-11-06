@@ -381,6 +381,7 @@ internal val zhComponents: Map<String, String> = mapOf(
     // Search demos
     "Search apps and files" to "搜索应用和文件",
     "Search messages" to "搜索消息",
+    "Clear" to "清除文本",
     "History cleared" to "历史已清除",
     "Restore" to "恢复",
     "Recent searches" to "最近搜索",
