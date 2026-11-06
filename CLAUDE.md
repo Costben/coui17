@@ -40,13 +40,7 @@ Compose Multiplatform UI component library. Targets Android, iOS, Desktop (JVM),
 | Run iOS demo          | Open `example/ios/iosApp.xcodeproj` in Xcode and run             |
 | Docs site             | `cd docs && corepack yarn docs:build` (needs `./gradlew :docs:iconGen:generateIcons` first) |
 
-Before committing, run `./gradlew spotlessCheck`; only run `./gradlew spotlessApply` if the check reports violations.
-
-**Cloud CI is Android-only.** GitHub Actions minutes are billed, so a push to `main` only builds the
-Android demo APK (`example.yml`). Tests, `spotlessCheck`, `apiCheck`, desktop/Apple/web compiles,
-docs, snapshot publishing and releases do not run in the cloud — run them locally or on the Windows
-build machine (`winbuild`). The other workflows are `workflow_dispatch`-only; do not add push, pull
-request, tag or schedule triggers back, and do not trigger them by hand without the owner's go-ahead.
+Before committing, run `./gradlew spotlessCheck`; only run `./gradlew spotlessApply` if the check reports violations. CI will reject formatting violations.
 
 ## Repository Structure
 
