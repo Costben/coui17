@@ -77,19 +77,23 @@ WindowAlertDialog(
 | summary           | String?                   | 对话框消息                                                  | null                                     | 否       |
 | confirmText       | String                    | 确认（肯定）按钮的文案                                      | AlertDialogDefaults.ConfirmText          | 否       |
 | cancelText        | String                    | 取消（否定）按钮的文案                                      | AlertDialogDefaults.CancelText           | 否       |
+| neutralText       | String?                   | 可选第三个（中性）按钮的文案                                | null                                     | 否       |
+| onNeutral         | (() -> Unit)?             | 点击中性按钮时触发                                          | null                                     | 否       |
+| recommendedButton | AlertDialogButton?        | 作为推荐（实心主色）按钮的动作                              | null                                     | 否       |
+| style             | AlertDialogStyle          | Center 家族构建样式：`Center` 或 `CenterTiny`               | AlertDialogStyle.Center                  | 否       |
 | colors            | AlertDialogColors         | 标题、消息与面板的颜色配置                                  | AlertDialogDefaults.alertDialogColors()  | 否       |
 | enableWindowDim   | Boolean                   | 是否启用遮罩层                                              | true                                     | 否       |
 | onDismissFinished | (() -> Unit)?             | 关闭动画完成后调用                                          | null                                     | 否       |
 | cornerRadius      | Dp?                       | 圆角半径覆写；为 null 时使用 `AlertDialogDefaults.CornerRadius` | null                                 | 否       |
-| maxWidth          | Dp                        | 对话框最大宽度                                              | AlertDialogDefaults.MaxWidth             | 否       |
+| maxWidth          | Dp                        | 对话框窗口的最大宽度；面板在两侧各内缩 16dp                  | AlertDialogDefaults.MaxWidth             | 否       |
 | content           | (@Composable () -> Unit)? | 按钮行上方的可选自定义正文                                  | null                                     | 否       |
 
 ### AlertDialogDefaults 对象
 
-默认值与 `OverlayAlertDialog` 共用，完整表格见 [OverlayAlertDialog](./overlayalertdialog)；`ConfirmText`、`CancelText`、`CornerRadius`、`MaxWidth`、`ButtonBarMarginTop` 以及 `alertDialogColors()` 工厂均相同。
+默认值与 `OverlayAlertDialog` 共用，完整表格见 [OverlayAlertDialog](./overlayalertdialog)；`ConfirmText`、`CancelText`、`CornerRadius`、`MaxWidth`、`ButtonBarMarginTop`、Tiny 系列尺寸以及 `alertDialogColors()` / `tinyButtonColors()` 工厂均相同。
 
 ## 行为
 
-- 呈现方式与 `OverlayAlertDialog` 完全一致：始终居中，使用 COUI 居中对话框的缩放 + 淡入淡出动效，并带 `DialogButtonBar` 按钮行。
+- 呈现方式与 `OverlayAlertDialog` 完全一致：始终居中，使用 COUI 居中对话框的缩放 + 淡入淡出动效，并带 `DialogButtonBar` 按钮行。`style = AlertDialogStyle.CenterTiny` 切换到底部吸附的紧凑面板。
 - 平台对话框会清除默认背景、遮罩与动画效果，因此只绘制 COUI 的圆角面板。
 - 点击平台窗口外部与返回手势都会通过 `onCancel` 上报否定选择。

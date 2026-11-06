@@ -134,8 +134,9 @@ Every inset of the horizontal bar is derived from a `COUIButtonBarLayout` field 
 | dynamicLayout   | Boolean                | Allow the bar to stack; false pins it horizontal | true                                        | No       |
 | showDivider     | Boolean                | Kept for source compatibility, draws nothing     | true                                        | No       |
 | hasContentAbove | Boolean                | Whether a title, body or custom panel sits above | true                                        | No       |
-| colors          | TextButtonColors       | Colors of the non-recommended buttons            | ButtonDefaults.textButtonColorsBorderless() | No       |
-| recommendColors | TextButtonColors       | Colors of the button marked `recommended`        | ButtonDefaults.textButtonColorsPrimary()    | No       |
+| tiny            | Boolean                | Draw the alert dialog's tiny tier instead: full-width stacked capsules with the fixed `#E6E6E6` fill | false | No       |
+| colors          | TextButtonColors       | Colors of the non-recommended buttons; ignored when `tiny` | ButtonDefaults.textButtonColorsBorderless() | No |
+| recommendColors | TextButtonColors       | Colors of the button marked `recommended`; ignored when `tiny` | ButtonDefaults.textButtonColorsPrimary() | No |
 | dividerColor    | Color                  | Kept for source compatibility, draws nothing     | COUITheme.colorScheme.dividerLine           | No       |
 | textStyle       | TextStyle              | Label style, also used to measure the labels     | COUITheme.textStyles.button                 | No       |
 
@@ -143,6 +144,10 @@ Every inset of the horizontal bar is derived from a `COUIButtonBarLayout` field 
 `hasContentAbove` only moves spacing: with nothing above the bar, COUI adds 0dp of extra top padding to the top stacked button
 (`coui_bottom_alert_dialog_vertical_button_padding_top_extra_new`) and 0dp of extra top margin to the stacked bar
 (`coui_bottom_alert_dialog_buttonbar_margintop`). Keep the default `true` for an ordinary dialog with a title or body.
+:::
+
+::: tip
+`tiny = true` replaces the whole `COUIButtonBarLayout` with `coui_center_alert_dialog_button_panel_tiny.xml`: neutral / positive / negative full-width capsules, 16dp in from the panel sides, 4dp apart, 12dp above the panel bottom edge, painted with `COUIAlertDialogTinyButton.Normal`'s fixed `coui_alert_dialog_button_color_tiny` fill and black label. `AlertDialogDefaults.tinyButtonColors()` carries that recipe.
 :::
 
 ### DialogButtonBarAction Properties

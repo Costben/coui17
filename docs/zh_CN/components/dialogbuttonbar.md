@@ -134,13 +134,18 @@ ColorOS 17 的对话框按钮栏不画分割线。`coui_center_alert_dialog_butt
 | dynamicLayout   | Boolean                | 是否允许自动纵排，false 则锁定横排               | true                                        | 否   |
 | showDivider     | Boolean                | 仅为源码兼容保留，不画分割线                     | true                                        | 否   |
 | hasContentAbove | Boolean                | 栏上方是否有标题、正文或自定义面板               | true                                        | 否   |
-| colors          | TextButtonColors       | 非推荐按钮的配色                                 | ButtonDefaults.textButtonColorsBorderless() | 否   |
-| recommendColors | TextButtonColors       | 标记 `recommended` 的按钮的配色                  | ButtonDefaults.textButtonColorsPrimary()    | 否   |
+| tiny            | Boolean                | 改为绘制警示对话框的 Tiny 栏：全宽纵排胶囊，固定 `#E6E6E6` 底色 | false                       | 否   |
+| colors          | TextButtonColors       | 非推荐按钮的配色，`tiny` 为 true 时忽略          | ButtonDefaults.textButtonColorsBorderless() | 否   |
+| recommendColors | TextButtonColors       | 标记 `recommended` 的按钮的配色，`tiny` 为 true 时忽略 | ButtonDefaults.textButtonColorsPrimary() | 否   |
 | dividerColor    | Color                  | 仅为源码兼容保留，不画分割线                     | COUITheme.colorScheme.dividerLine           | 否   |
 | textStyle       | TextStyle              | 文案样式，同时用于纵排判定时测量文案             | COUITheme.textStyles.button                 | 否   |
 
 ::: warning
 `hasContentAbove` 影响间距：栏上方什么都没有时，COUI 给最上面那个纵排按钮加 0dp 额外上内边距（`coui_bottom_alert_dialog_vertical_button_padding_top_extra_new`），给纵排栏加 0dp 额外上边距（`coui_bottom_alert_dialog_buttonbar_margintop`）。带标题或正文的普通对话框保持 `true` 即可。
+:::
+
+::: tip
+`tiny = true` 会把整个 `COUIButtonBarLayout` 换成 `coui_center_alert_dialog_button_panel_tiny.xml`：中性 / 肯定 / 否定三个全宽胶囊，距面板两侧 16dp、彼此间隔 4dp、距面板底边 12dp，使用 `COUIAlertDialogTinyButton.Normal` 固定的 `coui_alert_dialog_button_color_tiny` 底色与黑色文字。配色由 `AlertDialogDefaults.tinyButtonColors()` 提供。
 :::
 
 ### DialogButtonBarAction 属性

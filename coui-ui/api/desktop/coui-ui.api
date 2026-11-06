@@ -5100,6 +5100,15 @@ public final class io/github/suqi8/coui/kmp/interfaces/HoldDownInteractionKt {
 	public static final fun collectIsHeldDownAsState (Landroidx/compose/foundation/interaction/InteractionSource;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 }
 
+public final class io/github/suqi8/coui/kmp/layout/AlertDialogButton : java/lang/Enum {
+	public static final field Negative Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;
+	public static final field Neutral Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;
+	public static final field Positive Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;
+}
+
 public final class io/github/suqi8/coui/kmp/layout/AlertDialogColors {
 	public static final field $stable I
 	public synthetic fun <init> (JJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -5126,8 +5135,28 @@ public final class io/github/suqi8/coui/kmp/layout/AlertDialogDefaults {
 	public final fun getConfirmText ()Ljava/lang/String;
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getMaxWidth-D9Ej5fM ()F
+	public final fun getTinyButtonBarPaddingBottom-D9Ej5fM ()F
+	public final fun getTinyButtonFill-0d7_KjU ()J
+	public final fun getTinyButtonMarginVertical-D9Ej5fM ()F
+	public final fun getTinyButtonTextColor-0d7_KjU ()J
+	public final fun getTinyInsideMargin-MYxV2XQ ()J
+	public final fun getTinyMaxHeight-D9Ej5fM ()F
+	public final fun getTinyMessageFontSize-XSAIIZE ()J
+	public final fun getTinyMessageMarginBottom-D9Ej5fM ()F
+	public final fun getTinyMessageMarginTop-D9Ej5fM ()F
+	public final fun getTinyTitleFontSize-XSAIIZE ()J
+	public final fun getTinyTitleMarginBottom-D9Ej5fM ()F
 	public final fun summaryColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
+	public final fun tinyButtonColors (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/TextButtonColors;
 	public final fun titleColor-WaAFU9c (Landroidx/compose/runtime/Composer;I)J
+}
+
+public final class io/github/suqi8/coui/kmp/layout/AlertDialogStyle : java/lang/Enum {
+	public static final field Center Lio/github/suqi8/coui/kmp/layout/AlertDialogStyle;
+	public static final field CenterTiny Lio/github/suqi8/coui/kmp/layout/AlertDialogStyle;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/layout/AlertDialogStyle;
+	public static fun values ()[Lio/github/suqi8/coui/kmp/layout/AlertDialogStyle;
 }
 
 public final class io/github/suqi8/coui/kmp/layout/BottomSheetContentLayoutKt {
@@ -5208,6 +5237,7 @@ public final class io/github/suqi8/coui/kmp/layout/DialogButtonBarDefaults {
 public final class io/github/suqi8/coui/kmp/layout/DialogButtonBarKt {
 	public static final fun DialogButtonBar-FItCLgY (Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;ZZZLio/github/suqi8/coui/kmp/basic/TextButtonColors;JLandroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun DialogButtonBar-bZJ3-2A (Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;ZZZLio/github/suqi8/coui/kmp/basic/TextButtonColors;Lio/github/suqi8/coui/kmp/basic/TextButtonColors;JLandroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;III)V
+	public static final fun DialogButtonBar-ygcbOzY (Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/layout/DialogButtonBarAction;ZZZZLio/github/suqi8/coui/kmp/basic/TextButtonColors;Lio/github/suqi8/coui/kmp/basic/TextButtonColors;JLandroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/layout/DialogDefaults {
@@ -5302,6 +5332,7 @@ public final class io/github/suqi8/coui/kmp/layout/SecurityDialogDefaults {
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayAlertDialogKt {
 	public static final fun OverlayAlertDialog-wvzaQgU (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/github/suqi8/coui/kmp/layout/AlertDialogColors;ZLkotlin/jvm/functions/Function0;ZLandroidx/compose/ui/unit/Dp;FLio/github/suqi8/coui/kmp/basic/TextButtonColors;Lio/github/suqi8/coui/kmp/basic/TextButtonColors;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun OverlayAlertDialog-ztpPeek (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;Lio/github/suqi8/coui/kmp/layout/AlertDialogStyle;Lio/github/suqi8/coui/kmp/layout/AlertDialogColors;ZLkotlin/jvm/functions/Function0;ZLandroidx/compose/ui/unit/Dp;FLio/github/suqi8/coui/kmp/basic/TextButtonColors;Lio/github/suqi8/coui/kmp/basic/TextButtonColors;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomAssignmentDialogKt {
@@ -5977,6 +6008,7 @@ public final class io/github/suqi8/coui/kmp/window/GuidePage {
 }
 
 public final class io/github/suqi8/coui/kmp/window/WindowAlertDialogKt {
+	public static final fun WindowAlertDialog-3ymEOxU (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;Lio/github/suqi8/coui/kmp/layout/AlertDialogStyle;Lio/github/suqi8/coui/kmp/layout/AlertDialogColors;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/unit/Dp;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun WindowAlertDialog-qnJfdMQ (ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/github/suqi8/coui/kmp/layout/AlertDialogColors;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/unit/Dp;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 

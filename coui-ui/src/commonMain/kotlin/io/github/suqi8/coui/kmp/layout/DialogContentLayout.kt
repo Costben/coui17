@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.tappableElement
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.navigationevent.NavigationEventInfo
@@ -104,13 +107,32 @@ import kotlinx.coroutines.launch
  * @param defaultWindowInsetsPadding Whether to apply default window insets padding.
  * @param forceCentered When true, the dialog is centered with the center-dialog transitions
  *   regardless of window size (COUI Center-style dialogs, e.g. the rotating loading dialog).
- * @param maxWidth The maximum width of the dialog.
+ * @param maxWidth The maximum width of the dialog *window*, the COUI `contentMaxWidth`: the panel
+ *   is drawn [outsideMargin]'s width inside it, so the panel itself is at most
+ *   `maxWidth - 2 * outsideMargin.width` wide, exactly like `coui_alert_dialog_builder_background`'s
+ *   16dp left/right inset inside a window clamped to `coui_dialog_max_width`.
  * @param largeScreen Optional override for the large-screen presentation (centered scale/fade
  *   instead of bottom slide-in). If null, detected from the window size.
  * @param cornerRadius Optional corner radius override. If null, [DialogDefaults.CornerRadius].
  * @param cornerWeight The smooth corner weight the panel silhouette is drawn at. Defaults to the
  *   alert panel's weight; a dialog that keeps a `*_radius_normal_16_1` radius passes
  *   [SquircleDefaults.WeightNormal] instead.
+ * @param bottomCornerRadius Optional radius override for the two bottom corners. If null both take
+ *   [cornerRadius]. The alert dialog's tiny tier passes 0dp: its panel is pinned to the bottom edge
+ *   and only its top edge is rounded (`COUIAlertDialogMaxLinearLayout.setOutLineProviderInternal`
+ *   extends a tiny panel's outline by the radius past the window bottom, so the bottom corners are
+ *   clipped away).
+ * @param maxHeight The maximum height of the dialog *window* for the centered presentations — the
+ *   panel itself stops `outsideMargin.height` short of it, exactly like
+ *   `COUIAlertDialogMaxLinearLayout` subtracting `coui_dialog_layout_margin_vertical` from
+ *   `coui_dialog_max_height` (632dp → a 600dp panel). The bottom-anchored presentations take it as
+ *   a panel height instead, which is why the alert dialog's tiny tier passes its own 320dp cap.
+ * @param titleFontSize The font size of the built-in title.
+ * @param messageFontSize The font size of the built-in message.
+ * @param titleBottomMargin The bottom margin of the built-in title.
+ * @param messageTopPadding Optional override for the gap above the built-in message. If null, the
+ *   gap follows whether the dialog has a title.
+ * @param messageBottomPadding Optional override for the gap below the built-in message.
  * @param topInset Optional top inset override. If null, calculated from window insets.
  * @param content The content of the dialog.
  */
@@ -137,6 +159,13 @@ internal fun DialogContentLayout(
     largeScreen: Boolean? = null,
     cornerRadius: Dp? = null,
     cornerWeight: Float = DialogDefaults.CornerWeight,
+    bottomCornerRadius: Dp? = null,
+    maxHeight: Dp = DialogDefaults.MaxHeight,
+    titleFontSize: TextUnit = COUITheme.textStyles.title4.fontSize,
+    messageFontSize: TextUnit = COUITheme.textStyles.footnote1.fontSize,
+    titleBottomMargin: Dp? = null,
+    messageTopPadding: Dp? = null,
+    messageBottomPadding: Dp? = null,
     topInset: Dp? = null,
     content: @Composable () -> Unit,
 ) {
@@ -292,6 +321,13 @@ internal fun DialogContentLayout(
             largeScreen = largeScreen,
             cornerRadius = cornerRadius,
             cornerWeight = cornerWeight,
+            bottomCornerRadius = bottomCornerRadius,
+            maxHeight = maxHeight,
+            titleFontSize = titleFontSize,
+            messageFontSize = messageFontSize,
+            titleBottomMargin = titleBottomMargin,
+            messageTopPadding = messageTopPadding,
+            messageBottomPadding = messageBottomPadding,
             topInset = topInset,
             content = {
                 CompositionLocalProvider(LocalDismissState provides requestDismiss) {
@@ -323,14 +359,18 @@ internal fun DialogContent(
     largeScreen: Boolean? = null,
     cornerRadius: Dp? = null,
     cornerWeight: Float = DialogDefaults.CornerWeight,
+    bottomCornerRadius: Dp? = null,
+    maxHeight: Dp = DialogDefaults.MaxHeight,
+    titleFontSize: TextUnit = COUITheme.textStyles.title4.fontSize,
+    messageFontSize: TextUnit = COUITheme.textStyles.footnote1.fontSize,
+    titleBottomMargin: Dp? = null,
+    messageTopPadding: Dp? = null,
+    messageBottomPadding: Dp? = null,
     topInset: Dp? = null,
     content: @Composable () -> Unit,
 ) {
     val resolvedCornerRadius = cornerRadius ?: DialogDefaults.CornerRadius
     val density = LocalDensity.current
-    val windowInfo = LocalWindowInfo.current
-    // Converted at our density, not the platform's: see `BottomSheetContentLayout`.
-    val windowHeight = with(density) { windowInfo.containerSize.height.toDp() }
     val isCentered = forceCentered || (largeScreen ?: DialogDefaults.isLargeScreen())
     val contentAlignment = remember(isCentered) {
         if (isCentered) Alignment.Center else Alignment.BottomCenter
@@ -359,8 +399,15 @@ internal fun DialogContent(
         if (isCentered) 0f else with(density) { (bottomPadding + bottomOutsideMargin).toPx() }
     }
 
-    val dialogShape = remember(resolvedCornerRadius, cornerWeight) {
-        SquircleShape(resolvedCornerRadius, weight = cornerWeight)
+    val resolvedBottomCornerRadius = bottomCornerRadius ?: resolvedCornerRadius
+    val dialogShape = remember(resolvedCornerRadius, resolvedBottomCornerRadius, cornerWeight) {
+        SquircleShape(
+            topStart = resolvedCornerRadius,
+            topEnd = resolvedCornerRadius,
+            bottomEnd = resolvedBottomCornerRadius,
+            bottomStart = resolvedBottomCornerRadius,
+            weight = cornerWeight,
+        )
     }
     val dialogSurface = Modifier.couiGlassSurface(
         backdrop = LocalBackdrop.current,
@@ -368,16 +415,36 @@ internal fun DialogContent(
         containerColor = backgroundColor,
         fallback = Modifier.squircleSurface(
             color = backgroundColor,
-            cornerRadius = resolvedCornerRadius,
+            topStart = resolvedCornerRadius,
+            topEnd = resolvedCornerRadius,
+            bottomEnd = resolvedBottomCornerRadius,
+            bottomStart = resolvedBottomCornerRadius,
             weight = cornerWeight,
         ),
         blurRadius = DialogDefaults.blurRadius(),
         blendColors = DialogDefaults.blurColors(),
     )
 
+    // `setWindowWidth` clamps the *window* to `contentMaxWidth`, and the panel background
+    // (`coui_alert_dialog_builder_background`) is inset by `coui_dialog_layout_margin_horizontal` on
+    // both sides, so the painted panel is at most `maxWidth - 2 * outsideMargin.width`.
+    val panelMaxWidth = (maxWidth - outsideMargin.width * 2).coerceAtLeast(0.dp)
+
+    // `COUIAlertDialogMaxLinearLayout.resolveAvailableHeight()` caps the panel at
+    // `min(visibleHeight - verticalMargins, coui_dialog_max_height - verticalMargins)`. The window
+    // insets and the outside margin above already enforce the first term (the Box padding around
+    // the panel), so what is left to apply is `maxHeight` minus the same vertical margin — the
+    // panel a 632dp window paints is 600dp, not 632dp. The bottom-anchored tiers keep their own
+    // `maxHeight`, which is already a panel height.
+    val panelMaxHeight = if (isCentered) {
+        (maxHeight - outsideMargin.height).coerceAtLeast(0.dp)
+    } else {
+        maxHeight
+    }
+
     val contentModifier = modifier
-        .widthIn(max = maxWidth)
-        .heightIn(max = if (isCentered) windowHeight * (2f / 3f) else Dp.Unspecified)
+        .widthIn(max = panelMaxWidth)
+        .heightIn(max = if (isCentered) panelMaxHeight else Dp.Unspecified)
         .onGloballyPositioned { coordinates ->
             dialogHeightPx.intValue = coordinates.size.height
         }
@@ -448,7 +515,7 @@ internal fun DialogContent(
     ) {
         Column(
             modifier = contentModifier
-                .heightIn(max = DialogDefaults.MaxHeight)
+                .heightIn(max = panelMaxHeight)
                 .align(contentAlignment),
         ) {
             val titleMultiline = remember { mutableStateOf(false) }
@@ -458,16 +525,18 @@ internal fun DialogContent(
             // the gap above the message is the title's own
             // `coui_alert_dialog_title_margin_bottom` (6dp); with no title the scroller supplies
             // `coui_alert_dialog_scroll_padding_top_message_no_title` (22dp) instead.
-            val messageTopPadding = if (title == null) MessageTopPaddingNoTitle else MessageTopPadding
-            val messageBottomPadding = if (title == null) MessageBottomPaddingNoTitle else MessageBottomPadding
+            val resolvedMessageTopPadding = messageTopPadding
+                ?: if (title == null) MessageTopPaddingNoTitle else MessageTopPadding
+            val resolvedMessageBottomPadding = messageBottomPadding
+                ?: if (title == null) MessageBottomPaddingNoTitle else MessageBottomPadding
             title?.let {
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = insideMargin.width)
-                        .padding(top = insideMargin.height, bottom = TitleMarginBottom),
+                        .padding(top = insideMargin.height, bottom = titleBottomMargin ?: TitleMarginBottom),
                     text = it,
-                    fontSize = COUITheme.textStyles.title4.fontSize,
+                    fontSize = titleFontSize,
                     // COUIDialogTextAppearance.Title overrides couiTextHeadlineS with
                     // sans-serif-semibold.
                     fontWeight = FontWeight.SemiBold,
@@ -482,10 +551,19 @@ internal fun DialogContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = insideMargin.width)
-                        .padding(top = messageTopPadding, bottom = messageBottomPadding),
+                        .padding(top = resolvedMessageTopPadding)
+                        // The message is the panel's elastic region. In
+                        // `coui_center_alert_dialog_layout.xml` it lives in `contentPanel`, which
+                        // carries `layout_weight=1` inside a `COUIMaxHeightNestedScrollView`, so a
+                        // long message shrinks and scrolls while the title and the button bar keep
+                        // their own heights. Weighting the message alone reproduces that split: it
+                        // is measured after the fixed children and takes what is left.
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = resolvedMessageBottomPadding),
                     text = it,
                     // COUIAlertDialogMessageStyle inherits `couiTextBodyS` (13sp).
-                    fontSize = COUITheme.textStyles.footnote1.fontSize,
+                    fontSize = messageFontSize,
                     // COUI centers a single-line message and start-aligns once it wraps.
                     textAlign = if (summaryMultiline.value) TextAlign.Start else TextAlign.Center,
                     lineHeight = DialogLineHeight,
@@ -682,8 +760,14 @@ object DialogDefaults {
     }
 
     /**
-     * The default upper bound on dialog content width. Keeps dialogs from stretching across
+     * The default upper bound on the dialog *window* width. Keeps dialogs from stretching across
      * tablet / desktop windows. COUI `coui_dialog_max_width`.
+     *
+     * `COUIAlertDialogBuilder.setWindowWidth` sets the window to `min(screenWidthDp,
+     * contentMaxWidth)`, and `coui_alert_dialog_builder_background` insets the painted panel by
+     * `coui_dialog_layout_margin_horizontal` on both sides, so the panel itself tops out at
+     * `MaxWidth - 2 * outsideMargin.width` = 360dp. A 320dp-wide device shows the measured 288dp
+     * panel, a wide window the 360dp cap.
      */
     val MaxWidth = 392.dp
 
@@ -704,6 +788,8 @@ object DialogDefaults {
 
     /**
      * `dimen/coui_dialog_max_height` = 632dp, the `maxHeight` of `style/COUIAlertDialogLayoutStyle`.
+     * Like [MaxWidth] it bounds the *window*: the panel background carries the 32dp vertical inset,
+     * so a panel never paints taller than 600dp.
      */
     val MaxHeight = 632.dp
 

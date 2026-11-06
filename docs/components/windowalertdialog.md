@@ -77,19 +77,23 @@ WindowAlertDialog(
 | summary           | String?                   | Dialog message                                                | null                                     | No       |
 | confirmText       | String                    | Label of the confirm (positive) button                        | AlertDialogDefaults.ConfirmText          | No       |
 | cancelText        | String                    | Label of the cancel (negative) button                         | AlertDialogDefaults.CancelText           | No       |
+| neutralText       | String?                   | Label of the optional third (neutral) button                  | null                                     | No       |
+| onNeutral         | (() -> Unit)?             | Called when the neutral button is clicked                     | null                                     | No       |
+| recommendedButton | AlertDialogButton?        | Action drawn as the recommend (filled primary) button         | null                                     | No       |
+| style             | AlertDialogStyle          | Center-family build style: `Center` or `CenterTiny`           | AlertDialogStyle.Center                  | No       |
 | colors            | AlertDialogColors         | Colors of the title, message and panel                        | AlertDialogDefaults.alertDialogColors()  | No       |
 | enableWindowDim   | Boolean                   | Whether to enable the dimming layer                           | true                                     | No       |
 | onDismissFinished | (() -> Unit)?             | Invoked after the hide animation completes                    | null                                     | No       |
 | cornerRadius      | Dp?                       | Corner radius override; when null, `AlertDialogDefaults.CornerRadius` is used | null        | No       |
-| maxWidth          | Dp                        | Maximum width of the dialog                                   | AlertDialogDefaults.MaxWidth             | No       |
+| maxWidth          | Dp                        | Maximum width of the dialog window; the panel is 16dp narrower per side | AlertDialogDefaults.MaxWidth  | No       |
 | content           | (@Composable () -> Unit)? | Optional extra body above the button row                      | null                                     | No       |
 
 ### AlertDialogDefaults Object
 
-The defaults are shared with `OverlayAlertDialog`, so see [OverlayAlertDialog](./overlayalertdialog) for the full table; `ConfirmText`, `CancelText`, `CornerRadius`, `MaxWidth`, `ButtonBarMarginTop` and the `alertDialogColors()` factory are the same.
+The defaults are shared with `OverlayAlertDialog`, so see [OverlayAlertDialog](./overlayalertdialog) for the full table; `ConfirmText`, `CancelText`, `CornerRadius`, `MaxWidth`, `ButtonBarMarginTop`, the tiny metrics and the `alertDialogColors()` / `tinyButtonColors()` factories are the same.
 
 ## Behavior
 
-- Identical presentation to `OverlayAlertDialog`: always centered, with the COUI center-dialog scale + fade transitions and a `DialogButtonBar` row.
+- Identical presentation to `OverlayAlertDialog`: always centered, with the COUI center-dialog scale + fade transitions and a `DialogButtonBar` row. `style = AlertDialogStyle.CenterTiny` switches to the bottom-pinned tiny panel.
 - The platform dialog clears its default background, dim and animation effects, so only the COUI squircle panel is drawn.
 - Tapping outside the platform window and the back gesture report the negative selection through `onCancel`.

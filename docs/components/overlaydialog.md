@@ -89,7 +89,7 @@ The DialogDefaults object provides default settings for the OverlayDialog compon
 | Property Name | Type   | Description                             |
 | ------------- | ------ | --------------------------------------- |
 | CornerRadius  | Dp     | Dialog panel corner radius (19.dp)      |
-| MaxWidth      | Dp     | Maximum dialog content width (392.dp)   |
+| MaxWidth      | Dp     | Maximum dialog *window* width (392.dp); the panel is 32dp narrower |
 | outsideMargin | DpSize | Default dialog external margin (16, 24) |
 | insideMargin  | DpSize | Default margin for the built-in title/summary texts (24, 24); the content slot is unpadded |
 | ButtonBarMinHeight | Dp | Min height of a horizontal dialog button bar (58.dp) |

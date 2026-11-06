@@ -139,6 +139,13 @@ data class DialogButtonBarAction(
  *   COUI adds [DialogButtonBarDefaults.StackedButtonPaddingTopExtra] to the top-most stacked button
  *   only when nothing sits above it; that dimen is 0dp in ColorOS 17, so the flag no longer moves
  *   the bar.
+ * @param tiny Draw the alert dialog's tiny tier instead of [COUIButtonBarLayout]: the full-width
+ *   capsules of `coui_center_alert_dialog_button_panel_tiny.xml`, stacked neutral / positive /
+ *   negative, 4dp apart, 16dp in from the panel sides and 12dp above the panel's bottom edge.
+ *   `tiny` ignores [colors] / [recommendColors]: those capsules are `COUIAlertDialogTinyButton.Normal`
+ *   and take the fixed `coui_alert_dialog_button_color_tiny` fill with a black label, which ColorOS
+ *   also keeps when the button is disabled. `COUIAlertDialogBuilder.initSingleContentPadding` never
+ *   reaches `setRecommendButtonId` on this path, so no tiny button is highlighted.
  * @param colors The [TextButtonColors] of the non-recommended buttons.
  * @param recommendColors The [TextButtonColors] of the recommended button.
  * @param dividerColor Retained for source compatibility; the alert-dialog bar draws no dividers.
@@ -153,12 +160,23 @@ fun DialogButtonBar(
     dynamicLayout: Boolean = true,
     showDivider: Boolean = true,
     hasContentAbove: Boolean = true,
+    tiny: Boolean = false,
     colors: TextButtonColors = DialogButtonBarDefaults.buttonColors(),
     recommendColors: TextButtonColors = ButtonDefaults.textButtonColorsPrimary(),
     dividerColor: Color = COUITheme.colorScheme.dividerLine,
     textStyle: TextStyle = COUITheme.textStyles.button,
 ) {
     if (negative == null && positive == null && neutral == null) return
+    if (tiny) {
+        TinyButtonBar(
+            negative = negative,
+            positive = positive,
+            neutral = neutral,
+            modifier = modifier,
+            textStyle = textStyle,
+        )
+        return
+    }
 
     BoxWithConstraints(modifier) {
         val textMeasurer = rememberTextMeasurer()
@@ -249,6 +267,40 @@ fun DialogButtonBar(
         // `recommendColors` exists only on the primary overload; passing it pins this forward to the
         // primary instead of re-selecting this same overload (which would recurse forever).
         recommendColors = ButtonDefaults.textButtonColorsPrimary(),
+        dividerColor = dividerColor,
+        textStyle = textStyle,
+    )
+}
+
+/**
+ * The signature from before the `tiny` tier existed, kept so callers written against the earlier
+ * shape still compile and link.
+ */
+@Composable
+fun DialogButtonBar(
+    negative: DialogButtonBarAction?,
+    positive: DialogButtonBarAction?,
+    modifier: Modifier = Modifier,
+    neutral: DialogButtonBarAction? = null,
+    dynamicLayout: Boolean = true,
+    showDivider: Boolean = true,
+    hasContentAbove: Boolean = true,
+    colors: TextButtonColors = DialogButtonBarDefaults.buttonColors(),
+    recommendColors: TextButtonColors = ButtonDefaults.textButtonColorsPrimary(),
+    dividerColor: Color = COUITheme.colorScheme.dividerLine,
+    textStyle: TextStyle = COUITheme.textStyles.button,
+) {
+    DialogButtonBar(
+        negative = negative,
+        positive = positive,
+        modifier = modifier,
+        neutral = neutral,
+        dynamicLayout = dynamicLayout,
+        showDivider = showDivider,
+        hasContentAbove = hasContentAbove,
+        tiny = false,
+        colors = colors,
+        recommendColors = recommendColors,
         dividerColor = dividerColor,
         textStyle = textStyle,
     )
@@ -423,6 +475,59 @@ private fun StackedButtonBar(
         }
     }
 }
+
+/**
+ * The tiny tier of the alert-dialog bar: `coui_center_alert_dialog_button_panel_tiny.xml`.
+ *
+ * A plain vertical `LinearLayout` with 12dp `paddingBottom` and three `COUIButton`s in the native
+ * id order `button3` / `button1` / `button2`, i.e. neutral, positive, negative — the same order
+ * `COUIButtonBarLayout.resortButton` produces for the stacked tier. Each button is
+ * `COUIAlertDialogTinyButton.Normal`: `Widget.COUI.Button.Large.TinyFull`, so it spans the bar
+ * minus a 16dp `layout_marginStart` / `layout_marginEnd`, carries a 4dp
+ * `coui_tiny_dialog_btn_margin_vertical` above and below, a stadium `drawableRadius`
+ * (`coui_btn_drawable_radius_large_tiny` = -1dp) and the fixed `coui_alert_dialog_button_color_tiny`
+ * fill with a `coui_alert_dialog_button_text_color_tiny` label.
+ */
+@OptIn(ExperimentalCOUIApi::class)
+@Composable
+private fun TinyButtonBar(
+    negative: DialogButtonBarAction?,
+    positive: DialogButtonBarAction?,
+    neutral: DialogButtonBarAction?,
+    textStyle: TextStyle,
+    modifier: Modifier = Modifier,
+) {
+    val actions = listOfNotNull(neutral, positive, negative)
+    val tinyColors = AlertDialogDefaults.tinyButtonColors()
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = AlertDialogDefaults.TinyButtonBarPaddingBottom),
+    ) {
+        actions.forEach { action ->
+            TextButton(
+                text = action.text,
+                onClick = action.onClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = TinyButtonHorizontalMargin)
+                    .padding(vertical = AlertDialogDefaults.TinyButtonMarginVertical)
+                    .heightIn(min = DialogButtonBarDefaults.ButtonHeight),
+                enabled = action.enabled,
+                pressScaleEnabled = true,
+                cornerRadius = DialogButtonBarDefaults.ButtonHeight / 2,
+                minWidth = 0.dp,
+                minHeight = DialogButtonBarDefaults.ButtonHeight,
+                colors = tinyColors,
+                insideMargin = DialogButtonBarDefaults.ButtonInsideMargin,
+                textStyle = textStyle,
+            )
+        }
+    }
+}
+
+/** `Widget.COUI.Button.Large.TinyFull`'s 16dp `layout_marginStart` / `layout_marginEnd`. */
+private val TinyButtonHorizontalMargin = 16.dp
 
 /**
  * One capsule of a [DialogButtonBar], shared by both tiers.

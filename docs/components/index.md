@@ -139,7 +139,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [OverlayIconCascadingDropdownMenu](../components/overlayiconcascadingdropdownmenu) | Icon-button cascading two-level menu (uses COUIPopupUtils; requires `Scaffold`)         | Toolbar actions with submenus          |
 | [OverlayBottomSheet](../components/overlaybottomsheet)         | Bottom sheet based on BasicComponent (uses COUIPopupUtils; requires `Scaffold`)         | Bottom drawer, additional options      |
 | [OverlayDialog](../components/overlaydialog)                   | Dialog window based on BasicComponent (uses COUIPopupUtils; requires `Scaffold`)        | Prompts, action confirmation           |
-| [OverlayAlertDialog](../components/overlayalertdialog)         | Centred warning dialog variant (uses COUIPopupUtils; requires `Scaffold`)                | Destructive or blocking warnings      |
+| [OverlayAlertDialog](../components/overlayalertdialog)         | Centred warning dialog variant, with a bottom-pinned `CenterTiny` tier (uses COUIPopupUtils; requires `Scaffold`) | Destructive or blocking warnings |
 | [OverlayProgressDialog](../components/overlayprogressdialog)   | Horizontal progress dialog variant with a determinate bar                                | Progress of a long-running operation  |
 | [LoadingDialog](../components/loadingdialog)                   | Loading dialog with spinner (Overlay and Window variants)                                | Blocking loading feedback              |
 | [SecurityDialog](../components/securitydialog)                 | Security statement dialog (Overlay and Window variants)                                  | Privacy statement, security confirmation |

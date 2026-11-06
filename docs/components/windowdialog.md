@@ -71,7 +71,7 @@ WindowDialog(
 | outsideMargin              | DpSize                 | Outer margin (window edges)                                   | DialogDefaults.outsideMargin     | No       |
 | insideMargin               | DpSize                 | Margin for the built-in title/summary texts (width = horizontal padding, height = padding above the title); the content slot is unpadded | DialogDefaults.insideMargin      | No       |
 | defaultWindowInsetsPadding | Boolean                | Apply default insets padding (IME, nav, caption)              | true                                   | No       |
-| maxWidth                   | Dp                     | Maximum dialog content width                                  | DialogDefaults.MaxWidth          | No       |
+| maxWidth                   | Dp                     | Maximum dialog window width; the panel is 16dp narrower per side | DialogDefaults.MaxWidth        | No       |
 | largeScreen                | Boolean?               | Override for the large-screen presentation (centered scale/fade instead of bottom slide-in); if null, detected from the window size | null | No       |
 | cornerRadius               | Dp?                    | Corner radius override; if null, DialogDefaults.CornerRadius for the centered presentation, or derived from the screen corner radius (clamped to 32dp..48dp) when bottom-attached | null | No       |
 | content                    | @Composable () -> Unit | Dialog content                                                | -                                      | Yes      |
@@ -83,7 +83,7 @@ WindowDialog(
 | Name          | Type   | Description                               |
 | ------------- | ------ | ----------------------------------------- |
 | CornerRadius  | Dp     | Dialog panel corner radius (19.dp)        |
-| MaxWidth      | Dp     | Maximum dialog content width (392.dp)     |
+| MaxWidth      | Dp     | Maximum dialog window width (392.dp); the panel is 32dp narrower |
 | outsideMargin | DpSize | Default outer margin for dialog (16, 24)  |
 | insideMargin  | DpSize | Default margin for the built-in title/summary texts (24, 24); the content slot is unpadded |
 | ButtonBarMinHeight | Dp | Min height of a horizontal dialog button bar (58.dp) |

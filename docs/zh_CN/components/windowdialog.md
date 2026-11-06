@@ -71,7 +71,7 @@ WindowDialog(
 | outsideMargin              | DpSize                 | 相对窗口边缘的外部边距                         | DialogDefaults.outsideMargin     | 否       |
 | insideMargin               | DpSize                 | 内置标题/摘要文本的边距（宽 = 水平内边距，高 = 标题上方内边距）；content 插槽不加内边距 | DialogDefaults.insideMargin      | 否       |
 | defaultWindowInsetsPadding | Boolean                | 是否应用默认窗口插入内边距（输入法/导航/标题） | true                                   | 否       |
-| maxWidth                   | Dp                     | 对话框内容最大宽度                             | DialogDefaults.MaxWidth          | 否       |
+| maxWidth                   | Dp                     | 对话框窗口最大宽度，面板两侧各内缩 16dp         | DialogDefaults.MaxWidth          | 否       |
 | largeScreen                | Boolean?               | 大屏呈现方式覆写（居中缩放/淡入替代底部滑入）；为 null 时根据窗口尺寸自动判断 | null | 否       |
 | cornerRadius               | Dp?                    | 圆角半径覆写；为 null 时，居中呈现使用 DialogDefaults.CornerRadius，底部吸附时由屏幕圆角推导（限制在 32dp..48dp） | null | 否       |
 | content                    | @Composable () -> Unit | 对话框内容                                     | -                                      | 是       |
@@ -83,7 +83,7 @@ WindowDialog(
 | 属性名        | 类型   | 说明                         |
 | ------------- | ------ | ---------------------------- |
 | CornerRadius  | Dp     | 对话框面板圆角（19.dp）      |
-| MaxWidth      | Dp     | 对话框内容最大宽度（392.dp） |
+| MaxWidth      | Dp     | 对话框窗口最大宽度（392.dp），面板比它窄 32dp |
 | outsideMargin | DpSize | 对话框外部默认边距（16, 24） |
 | insideMargin  | DpSize | 内置标题/摘要文本的默认边距（24, 24）；content 插槽不加内边距 |
 | ButtonBarMinHeight | Dp | 横向对话框按钮栏的最小高度（58.dp） |

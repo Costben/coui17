@@ -1,5 +1,6 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
 @file:OptIn(ExperimentalCOUIApi::class)
 
 package component
@@ -21,6 +22,8 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.layout.AlertDialogButton
+import io.github.suqi8.coui.kmp.layout.AlertDialogStyle
 import io.github.suqi8.coui.kmp.layout.DialogButtonBar
 import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
@@ -57,6 +60,14 @@ fun DialogDemo() {
     var progressDialogValue by remember { mutableStateOf<Float?>(null) }
     var showSingleInputDialog by remember { mutableStateOf(false) }
     var singleInputDialogHoldDown by remember { mutableStateOf(false) }
+    var showNeutralAlertDialog by remember { mutableStateOf(false) }
+    var neutralAlertDialogHoldDown by remember { mutableStateOf(false) }
+    var showTinyAlertDialog by remember { mutableStateOf(false) }
+    var tinyAlertDialogHoldDown by remember { mutableStateOf(false) }
+    var showRecommendedAlertDialog by remember { mutableStateOf(false) }
+    var recommendedAlertDialogHoldDown by remember { mutableStateOf(false) }
+    var showLongTextAlertDialog by remember { mutableStateOf(false) }
+    var longTextAlertDialogHoldDown by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -153,6 +164,76 @@ fun DialogDemo() {
             holdDownState = singleInputDialogHoldDown,
         )
     }
+
+    // The Center family's remaining tiers: a third action, the recommend marker, and the tiny
+    // bottom-pinned variant. Grouped in their own card so the centered presentation is visible as a
+    // set rather than one row among the bottom dialogs.
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        ArrowPreference(
+            title = str("Alert Dialog (O) · 3 actions"),
+            summary = str("Cancel / Never / OK stacked because three actions never fit one row"),
+            onClick = {
+                showNeutralAlertDialog = true
+                neutralAlertDialogHoldDown = true
+            },
+            holdDownState = neutralAlertDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = str("Alert Dialog (O) · recommended"),
+            summary = str("The confirm action is the bar's recommend button"),
+            onClick = {
+                showRecommendedAlertDialog = true
+                recommendedAlertDialogHoldDown = true
+            },
+            holdDownState = recommendedAlertDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = str("Alert Dialog (O) · tiny"),
+            summary = str("Center.Tiny: a compact panel pinned to the bottom edge"),
+            onClick = {
+                showTinyAlertDialog = true
+                tinyAlertDialogHoldDown = true
+            },
+            holdDownState = tinyAlertDialogHoldDown,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        ArrowPreference(
+            title = str("Alert Dialog (O) · long text"),
+            summary = str("The panel caps its height and the message scrolls"),
+            onClick = {
+                showLongTextAlertDialog = true
+                longTextAlertDialogHoldDown = true
+            },
+            holdDownState = longTextAlertDialogHoldDown,
+        )
+    }
+
+    NeutralAlertDialogDemo(
+        show = showNeutralAlertDialog,
+        onDismissRequest = { showNeutralAlertDialog = false },
+        onDismissFinished = { neutralAlertDialogHoldDown = false },
+    )
+    RecommendedAlertDialogDemo(
+        show = showRecommendedAlertDialog,
+        onDismissRequest = { showRecommendedAlertDialog = false },
+        onDismissFinished = { recommendedAlertDialogHoldDown = false },
+    )
+    TinyAlertDialogDemo(
+        show = showTinyAlertDialog,
+        onDismissRequest = { showTinyAlertDialog = false },
+        onDismissFinished = { tinyAlertDialogHoldDown = false },
+    )
+    LongTextAlertDialogDemo(
+        show = showLongTextAlertDialog,
+        onDismissRequest = { showLongTextAlertDialog = false },
+        onDismissFinished = { longTextAlertDialogHoldDown = false },
+    )
 
     SingleInputDialogDemo(
         show = showSingleInputDialog,
@@ -374,5 +455,118 @@ private fun RecommendedButtonBarDialogDemo(
                 ),
             )
         },
+    )
+}
+
+/**
+ * The neutral (third) action of the centered alert dialog: `COUIAlertDialogBuilder`'s
+ * `setNeutralButton`. Three actions drop `COUIButtonBarLayout` out of its horizontal tier, so the
+ * capsules stack neutral / positive / negative.
+ */
+@Composable
+private fun NeutralAlertDialogDemo(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    onDismissFinished: () -> Unit,
+) {
+    OverlayAlertDialog(
+        show = show,
+        onConfirm = onDismissRequest,
+        onCancel = onDismissRequest,
+        title = str("Clear browsing data?"),
+        summary = str("Cookies, cache and history are removed from every synced device."),
+        neutralText = str("Never"),
+        onNeutral = onDismissRequest,
+        confirmText = str("Clear"),
+        cancelText = str("Cancel"),
+        onDismissFinished = onDismissFinished,
+    )
+}
+
+/** The centered alert dialog with its confirm action marked as the bar's recommend button. */
+@Composable
+private fun RecommendedAlertDialogDemo(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    onDismissFinished: () -> Unit,
+) {
+    OverlayAlertDialog(
+        show = show,
+        onConfirm = onDismissRequest,
+        onCancel = onDismissRequest,
+        title = str("Update available"),
+        summary = str("Install the update now, or keep using this version for a while."),
+        recommendedButton = AlertDialogButton.Positive,
+        confirmText = str("Install"),
+        cancelText = str("Later"),
+        onDismissFinished = onDismissFinished,
+    )
+}
+
+/** `AlertDialogStyle.CenterTiny`: the compact panel `AlertDialogBuildStyle.Center.Tiny` draws. */
+@Composable
+private fun TinyAlertDialogDemo(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    onDismissFinished: () -> Unit,
+) {
+    OverlayAlertDialog(
+        show = show,
+        onConfirm = onDismissRequest,
+        onCancel = onDismissRequest,
+        style = AlertDialogStyle.CenterTiny,
+        title = str("Turn on location?"),
+        summary = str("Weather needs your location to show the forecast for this area."),
+        confirmText = str("Turn on"),
+        cancelText = str("Not now"),
+        onDismissFinished = onDismissFinished,
+    )
+}
+
+/**
+ * The height-capped tier: the message is far longer than the panel is allowed to grow, so it has
+ * to scroll inside the panel the way COUI's `COUIMaxHeightNestedScrollView` body does, while the
+ * title and the button bar keep their own heights.
+ */
+@Composable
+private fun LongTextAlertDialogDemo(
+    show: Boolean,
+    onDismissRequest: () -> Unit,
+    onDismissFinished: () -> Unit,
+) {
+    OverlayAlertDialog(
+        show = show,
+        onConfirm = onDismissRequest,
+        onCancel = onDismissRequest,
+        title = str("User Agreement"),
+        summary = str(
+            "Welcome to the ColorOS user experience programme. Before you continue, please read " +
+                "the following terms carefully. This agreement describes what we collect, why we " +
+                "collect it and how long we keep it, and it explains the choices you have at every " +
+                "step. Participation is entirely optional: you can decline now and change your mind " +
+                "at any time from Settings, System and updates, User experience programme. " +
+                "We collect two kinds of information. Usage statistics record how often a feature " +
+                "is opened, how long it takes to respond and whether it succeeds, without any " +
+                "content you type, save or share. Diagnostic reports are collected only after a " +
+                "problem occurs and contain the state of the system at the moment it happened, " +
+                "including the model name, the software version and a list of running services. " +
+                "Nothing in either category identifies you personally, and neither category " +
+                "includes your messages, photographs, contacts, calendar entries, call history or " +
+                "the contents of any file. Reports travel over an encrypted connection, are stored " +
+                "for no longer than thirty days and are deleted afterwards without further notice. " +
+                "You may review every report before it is sent, refuse to send an individual report " +
+                "or stop sending them altogether. If you decline, the device continues to work " +
+                "exactly as it does today; the only difference is that we learn about a problem " +
+                "from somewhere else, which usually takes longer. If you accept, you can withdraw " +
+                "consent at any time and the change takes effect immediately, with no effect on " +
+                "the reports already sent. We never sell this data, we never share it with " +
+                "advertisers, and we share it with a third party only when a component of the " +
+                "system is maintained by that party and only for the purpose described above. " +
+                "Questions about this agreement can be sent to the privacy team from the feedback " +
+                "entry in Settings, and a written answer will follow within fifteen working days.",
+        ),
+        confirmText = str("Agree"),
+        cancelText = str("Cancel"),
+        onDismissFinished = onDismissFinished,
     )
 }
