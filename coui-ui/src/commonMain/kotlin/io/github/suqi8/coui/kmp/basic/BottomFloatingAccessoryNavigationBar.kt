@@ -3,7 +3,6 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -45,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
@@ -75,6 +76,15 @@ import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
  * [BottomFloatingNavigationBarDefaults.ItemMaxWidth] while they fit, and squeezed into the width the
  * accessories leave over when they do not.
  *
+ * On ColorOS 17 the bar hands the whole material to the system instead of painting it in Compose:
+ * `OplusViewBackgroundRenderEffect.setBackgroundRenderEffect` blurs the backdrop, `setCornerParams`
+ * / `setEdgeParams` / `setShadowParams` draw the `TYPE_FRAMEWORK_CAPSULE_3` stroke and its fade
+ * band, the outline caustic shadow (or the `level3b` spot shadow) casts the lift, and
+ * `setMetaBallChain` melts the three silhouettes together. Every other platform, and any device
+ * missing one of those APIs, falls back to the [MetaBallSurface] renderer above.
+ * [LocalPlatformBottomBarMaterialEnabled] (default on) and
+ * [io.github.suqi8.coui.kmp.blur.LocalBlurEnabled] together decide which one runs.
+ *
  * @param modifier The modifier to be applied to the bar.
  * @param containerColor The background color of the capsule and of the merged blob.
  * @param backdrop The content blurred behind the bar, defaulting to [LocalBackdrop]. `null` keeps it
@@ -98,12 +108,18 @@ fun BottomFloatingAccessoryNavigationBar(
     endAccessory: (@Composable BoxScope.() -> Unit)? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
+    // The system material blurs the backdrop itself, so it only replaces the Compose engine while
+    // blur is on: with LocalBlurEnabled off the native RenderEffect would keep blurring anyway.
+    val usePlatform = LocalPlatformBottomBarMaterialEnabled.current && LocalBlurEnabled.current
+    val platform = if (usePlatform) rememberPlatformBottomBarBackdropRenderer() else null
+
     if (startAccessory == null && endAccessory == null) {
         // No chain to melt: COUI leaves the menu view's own background in place.
         BottomFloatingAccessoryNavigationBarCapsule(
             modifier = modifier,
             containerColor = containerColor,
             backdrop = backdrop,
+            platform = platform,
             content = content,
         )
         return
@@ -189,121 +205,236 @@ fun BottomFloatingAccessoryNavigationBar(
                 // capsule and the two accessories each get a shadow layer of their own, under the
                 // blob that MetaBallSurface paints over them.
                 val barShadow = BottomFloatingAccessoryNavigationBarDefaults.BarShadow
-                Box(modifier = Modifier.matchParentSize()) {
-                    if (capsuleWidthPx > 0) {
-                        Box(
-                            modifier = Modifier
-                                .offset(x = reserve, y = 0.dp)
-                                .size(capsuleWidth, barHeight)
-                                .graphicsLayer {
-                                    translationX = menuTouchState.translation.x
-                                    translationY = menuTouchState.translation.y
-                                    scaleX = menuTouchState.scaleX
-                                    scaleY = menuTouchState.scaleY
-                                }
-                                .dropShadow(
-                                    shape = shape,
-                                    shadow = barShadow,
-                                ),
-                        )
-                    }
-                    if (barWidthPx > 0 && startAccessory != null) {
-                        val diameter = accessorySize * startExpansion.scale
-                        Box(
-                            modifier = Modifier
-                                .offset(
-                                    x = accessorySize / 2 + startTuck - diameter / 2,
-                                    y = (barHeight - diameter) / 2,
-                                )
-                                .size(diameter)
-                                // The shadow rides the same touch transform as the particle the blob
-                                // draws, so a dragged ball keeps its shadow under it instead of
-                                // leaving it behind on the resting position.
-                                .graphicsLayer {
-                                    translationX = startTouchState?.translation?.x ?: 0f
-                                    translationY = startTouchState?.translation?.y ?: 0f
-                                    scaleX = startTouchState?.scaleX ?: 1f
-                                    scaleY = startTouchState?.scaleY ?: 1f
-                                }
-                                .dropShadow(shape = CircleShape, shadow = barShadow),
-                        )
-                    }
-                    if (barWidthPx > 0 && endAccessory != null) {
-                        val diameter = accessorySize * endExpansion.scale
-                        Box(
-                            modifier = Modifier
-                                .offset(
-                                    x = barWidth - accessorySize / 2 - endTuck - diameter / 2,
-                                    y = (barHeight - diameter) / 2,
-                                )
-                                .size(diameter)
-                                .graphicsLayer {
-                                    translationX = endTouchState?.translation?.x ?: 0f
-                                    translationY = endTouchState?.translation?.y ?: 0f
-                                    scaleX = endTouchState?.scaleX ?: 1f
-                                    scaleY = endTouchState?.scaleY ?: 1f
-                                }
-                                .dropShadow(shape = CircleShape, shadow = barShadow),
-                        )
-                    }
-                }
-                MetaBallSurface(
-                    particles = buildList {
+                    .takeUnless { platform?.drawsOwnShadow == true }
+                if (barShadow != null) {
+                    Box(modifier = Modifier.matchParentSize()) {
                         if (capsuleWidthPx > 0) {
-                            add(
-                                MetaBallParticle(
-                                    centerX = reserve + capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
-                                    centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
-                                    width = capsuleWidth,
-                                    height = barHeight,
-                                    scaleX = menuTouchState.scaleX,
-                                    scaleY = menuTouchState.scaleY,
-                                    cornerRadius = cornerRadius,
-                                ),
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = reserve, y = 0.dp)
+                                    .size(capsuleWidth, barHeight)
+                                    .graphicsLayer {
+                                        translationX = menuTouchState.translation.x
+                                        translationY = menuTouchState.translation.y
+                                        scaleX = menuTouchState.scaleX
+                                        scaleY = menuTouchState.scaleY
+                                    }
+                                    .dropShadow(
+                                        shape = shape,
+                                        shadow = barShadow,
+                                    ),
                             )
                         }
                         if (barWidthPx > 0 && startAccessory != null) {
-                            add(
-                                MetaBallParticle(
-                                    centerX = accessorySize / 2 + startTuck + with(density) { startTouchState?.translation?.x?.toDp() ?: 0.dp },
-                                    centerY = barHeight / 2 + with(density) { startTouchState?.translation?.y?.toDp() ?: 0.dp },
-                                    width = accessorySize * startExpansion.scale,
-                                    height = accessorySize * startExpansion.scale,
-                                    scaleX = startTouchState?.scaleX ?: 1f,
-                                    scaleY = startTouchState?.scaleY ?: 1f,
-                                    cornerRadius = accessorySize * startExpansion.scale / 2,
-                                ),
+                            val diameter = accessorySize * startExpansion.scale
+                            Box(
+                                modifier = Modifier
+                                    .offset(
+                                        x = accessorySize / 2 + startTuck - diameter / 2,
+                                        y = (barHeight - diameter) / 2,
+                                    )
+                                    .size(diameter)
+                                    // The shadow rides the same touch transform as the particle the blob
+                                    // draws, so a dragged ball keeps its shadow under it instead of
+                                    // leaving it behind on the resting position.
+                                    .graphicsLayer {
+                                        translationX = startTouchState?.translation?.x ?: 0f
+                                        translationY = startTouchState?.translation?.y ?: 0f
+                                        scaleX = startTouchState?.scaleX ?: 1f
+                                        scaleY = startTouchState?.scaleY ?: 1f
+                                    }
+                                    .dropShadow(shape = CircleShape, shadow = barShadow),
                             )
                         }
                         if (barWidthPx > 0 && endAccessory != null) {
-                            add(
-                                MetaBallParticle(
-                                    centerX = barWidth - accessorySize / 2 - endTuck + with(density) { endTouchState?.translation?.x?.toDp() ?: 0.dp },
-                                    centerY = barHeight / 2 + with(density) { endTouchState?.translation?.y?.toDp() ?: 0.dp },
-                                    width = accessorySize * endExpansion.scale,
-                                    height = accessorySize * endExpansion.scale,
-                                    scaleX = endTouchState?.scaleX ?: 1f,
-                                    scaleY = endTouchState?.scaleY ?: 1f,
-                                    cornerRadius = accessorySize * endExpansion.scale / 2,
-                                ),
+                            val diameter = accessorySize * endExpansion.scale
+                            Box(
+                                modifier = Modifier
+                                    .offset(
+                                        x = barWidth - accessorySize / 2 - endTuck - diameter / 2,
+                                        y = (barHeight - diameter) / 2,
+                                    )
+                                    .size(diameter)
+                                    .graphicsLayer {
+                                        translationX = endTouchState?.translation?.x ?: 0f
+                                        translationY = endTouchState?.translation?.y ?: 0f
+                                        scaleX = endTouchState?.scaleX ?: 1f
+                                        scaleY = endTouchState?.scaleY ?: 1f
+                                    }
+                                    .dropShadow(shape = CircleShape, shadow = barShadow),
                             )
                         }
-                    },
-                    modifier = Modifier.matchParentSize(),
-                    color = containerColor,
-                    backdrop = backdrop,
-                    // COUIBottomFloatingAccessoryView.updateBlurEffect: TYPE_FRAMEWORK_BOTTOM_BAR, the
-                    // same material as the plain floating bar.
-                    blurColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
-                    blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
-                    containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
-                    // Both the bar and accessory views request TYPE_FRAMEWORK_CAPSULE_3.
-                    // Its native near/far ramps draw a sharp upper line and a weaker lower line.
-                    rimColor = Color.White.copy(alpha = if (isDark) 0.8f else 0.25f),
-                    bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
-                    rimBottomScale = 1f,
-                    continuousCurve = true,
-                )
+                    }
+                }
+                if (platform != null) {
+                    val barHeightPx = with(density) { barHeight.toPx() }
+                    val accessoryPx = with(density) { accessorySize.toPx() }
+                    val menuGeometry = BottomBarMeltBallChild(
+                        leftPx = with(density) { reserve.toPx() },
+                        topPx = 0f,
+                        widthPx = capsuleWidthPx.toFloat(),
+                        heightPx = barHeightPx,
+                        scaleX = menuTouchState.scaleX,
+                        scaleY = menuTouchState.scaleY,
+                        visible = capsuleWidthPx > 0,
+                    )
+                    fun accessoryGeometry(
+                        centerX: Float,
+                        expansion: AccessoryExpansion,
+                        motion: COUITouchMotionState?,
+                        configured: Boolean,
+                    ): BottomBarMeltBallChild? {
+                        if (!configured) return null
+                        val cx = centerX + (motion?.translation?.x ?: 0f)
+                        val cy = barHeightPx / 2 + (motion?.translation?.y ?: 0f)
+                        return BottomBarMeltBallChild(
+                            leftPx = cx - accessoryPx / 2,
+                            topPx = cy - accessoryPx / 2,
+                            widthPx = accessoryPx,
+                            heightPx = accessoryPx,
+                            scaleX = expansion.scale * (motion?.scaleX ?: 1f),
+                            scaleY = expansion.scale * (motion?.scaleY ?: 1f),
+                            visible = expansion.alpha > 0.01f,
+                        )
+                    }
+                    val startGeometry = accessoryGeometry(
+                        centerX = with(density) { (accessorySize / 2 + startTuck).toPx() },
+                        expansion = startExpansion,
+                        motion = startTouchState,
+                        configured = startAccessory != null,
+                    )
+                    val endGeometry = accessoryGeometry(
+                        centerX = barWidthPx - with(density) { (accessorySize / 2 + endTuck).toPx() },
+                        expansion = endExpansion,
+                        motion = endTouchState,
+                        configured = endAccessory != null,
+                    )
+                    if (platform.supportsMeltBall) {
+                        // One host keeps the three silhouettes under a single parent, which is what
+                        // `OplusMaterialUtil.setMetaBallChain` needs to melt them together.
+                        platform.MeltBallHost(
+                            geometry = BottomBarMeltBallGeometry(
+                                menu = menuGeometry,
+                                start = startGeometry,
+                                end = endGeometry,
+                                chainActive = startAccessoryVisible || endAccessoryVisible ||
+                                    startExpansion.alpha > 0.01f || endExpansion.alpha > 0.01f,
+                                extensionPx = with(density) { 4.dp.roundToPx() },
+                            ),
+                            isDark = isDark,
+                            modifier = Modifier.matchParentSize(),
+                        )
+                    } else {
+                        if (capsuleWidthPx > 0) {
+                            platform.CapsuleMaterial(
+                                isDark = isDark,
+                                modifier = Modifier
+                                    .offset(x = reserve, y = 0.dp)
+                                    .size(capsuleWidth, barHeight)
+                                    .graphicsLayer {
+                                        translationX = menuTouchState.translation.x
+                                        translationY = menuTouchState.translation.y
+                                        scaleX = menuTouchState.scaleX
+                                        scaleY = menuTouchState.scaleY
+                                    },
+                            )
+                        }
+                        if (barWidthPx > 0 && startAccessory != null) {
+                            val diameter = accessorySize * startExpansion.scale
+                            platform.AccessoryMaterial(
+                                isDark = isDark,
+                                modifier = Modifier
+                                    .offset(
+                                        x = accessorySize / 2 + startTuck - diameter / 2,
+                                        y = (barHeight - diameter) / 2,
+                                    )
+                                    .size(diameter)
+                                    .graphicsLayer {
+                                        translationX = startTouchState?.translation?.x ?: 0f
+                                        translationY = startTouchState?.translation?.y ?: 0f
+                                        scaleX = startTouchState?.scaleX ?: 1f
+                                        scaleY = startTouchState?.scaleY ?: 1f
+                                    },
+                            )
+                        }
+                        if (barWidthPx > 0 && endAccessory != null) {
+                            val diameter = accessorySize * endExpansion.scale
+                            platform.AccessoryMaterial(
+                                isDark = isDark,
+                                modifier = Modifier
+                                    .offset(
+                                        x = barWidth - accessorySize / 2 - endTuck - diameter / 2,
+                                        y = (barHeight - diameter) / 2,
+                                    )
+                                    .size(diameter)
+                                    .graphicsLayer {
+                                        translationX = endTouchState?.translation?.x ?: 0f
+                                        translationY = endTouchState?.translation?.y ?: 0f
+                                        scaleX = endTouchState?.scaleX ?: 1f
+                                        scaleY = endTouchState?.scaleY ?: 1f
+                                    },
+                            )
+                        }
+                    }
+                } else {
+                    MetaBallSurface(
+                        particles = buildList {
+                            if (capsuleWidthPx > 0) {
+                                add(
+                                    MetaBallParticle(
+                                        centerX = reserve + capsuleWidth / 2 + with(density) { menuTouchState.translation.x.toDp() },
+                                        centerY = barHeight / 2 + with(density) { menuTouchState.translation.y.toDp() },
+                                        width = capsuleWidth,
+                                        height = barHeight,
+                                        scaleX = menuTouchState.scaleX,
+                                        scaleY = menuTouchState.scaleY,
+                                        cornerRadius = cornerRadius,
+                                    ),
+                                )
+                            }
+                            if (barWidthPx > 0 && startAccessory != null) {
+                                add(
+                                    MetaBallParticle(
+                                        centerX = accessorySize / 2 + startTuck + with(density) { startTouchState?.translation?.x?.toDp() ?: 0.dp },
+                                        centerY = barHeight / 2 + with(density) { startTouchState?.translation?.y?.toDp() ?: 0.dp },
+                                        width = accessorySize * startExpansion.scale,
+                                        height = accessorySize * startExpansion.scale,
+                                        scaleX = startTouchState?.scaleX ?: 1f,
+                                        scaleY = startTouchState?.scaleY ?: 1f,
+                                        cornerRadius = accessorySize * startExpansion.scale / 2,
+                                    ),
+                                )
+                            }
+                            if (barWidthPx > 0 && endAccessory != null) {
+                                add(
+                                    MetaBallParticle(
+                                        centerX = barWidth - accessorySize / 2 - endTuck + with(density) { endTouchState?.translation?.x?.toDp() ?: 0.dp },
+                                        centerY = barHeight / 2 + with(density) { endTouchState?.translation?.y?.toDp() ?: 0.dp },
+                                        width = accessorySize * endExpansion.scale,
+                                        height = accessorySize * endExpansion.scale,
+                                        scaleX = endTouchState?.scaleX ?: 1f,
+                                        scaleY = endTouchState?.scaleY ?: 1f,
+                                        cornerRadius = accessorySize * endExpansion.scale / 2,
+                                    ),
+                                )
+                            }
+                        },
+                        modifier = Modifier.matchParentSize(),
+                        color = containerColor,
+                        backdrop = backdrop,
+                        // COUIBottomFloatingAccessoryView.updateBlurEffect: TYPE_FRAMEWORK_BOTTOM_BAR, the
+                        // same material as the plain floating bar.
+                        blurColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
+                        blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
+                        containerAlpha = BottomFloatingAccessoryNavigationBarDefaults.containerAlpha(isDark),
+                        // Both the bar and accessory views request TYPE_FRAMEWORK_CAPSULE_3.
+                        // Its native near/far ramps draw a sharp upper line and a weaker lower line.
+                        rimColor = Color.White.copy(alpha = if (isDark) 0.8f else 0.25f),
+                        bottomGlowColor = Color.White.copy(alpha = 66f / 255f),
+                        rimBottomScale = BottomFloatingNavigationBarDefaults.rimBottomScale(isDark),
+                        continuousCurve = true,
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (startAccessory != null) {
                         AccessorySlot(
@@ -431,6 +562,7 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
     containerColor: Color,
     backdrop: Backdrop?,
     modifier: Modifier = Modifier,
+    platform: BottomBarBackdropRenderer? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     val cornerRadius = BottomFloatingNavigationBarDefaults.CornerRadius
@@ -438,9 +570,10 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
     val shape = remember(cornerRadius, squircleEnabled) {
         CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
-    val highlight = rememberGlassHighlight(GlassContainer.Medium, backdrop)
     val touchState = rememberCOUITouchMotionState()
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val density = LocalDensity.current
+    val barHeight = BottomFloatingNavigationBarDefaults.BarHeight
 
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth().wrapContentHeight(Alignment.Bottom),
@@ -460,24 +593,73 @@ private fun BottomFloatingAccessoryNavigationBarCapsule(
                 .padding(horizontal = horizontalPadding),
             contentAlignment = Alignment.Center,
         ) {
-            // `couiGlassSurface` returns its own chain instead of appending to the receiver, so the
-            // row is measured inside a wrapper rather than carrying the layout on its own chain.
+            var capsuleWidthPx by remember { mutableIntStateOf(0) }
+            val capsuleWidth = with(density) { capsuleWidthPx.toDp() }
+            // Same renderer as the accessory form: one silhouette carrying the
+            // `TYPE_FRAMEWORK_CAPSULE_3` rim and the caustic light under the lower edge.
             Box {
+                if (platform != null) {
+                    platform.CapsuleMaterial(
+                        isDark = isDark,
+                        modifier = Modifier.matchParentSize().graphicsLayer {
+                            translationX = touchState.translation.x
+                            translationY = touchState.translation.y
+                            scaleX = touchState.scaleX
+                            scaleY = touchState.scaleY
+                        },
+                    )
+                } else {
+                    MetaBallSurface(
+                        particles = if (capsuleWidthPx > 0) {
+                            listOf(
+                                MetaBallParticle(
+                                    centerX = capsuleWidth / 2 + with(density) { touchState.translation.x.toDp() },
+                                    centerY = barHeight / 2 + with(density) { touchState.translation.y.toDp() },
+                                    width = capsuleWidth,
+                                    height = barHeight,
+                                    scaleX = touchState.scaleX,
+                                    scaleY = touchState.scaleY,
+                                    cornerRadius = cornerRadius,
+                                ),
+                            )
+                        } else {
+                            emptyList()
+                        },
+                        modifier = Modifier.matchParentSize(),
+                        color = containerColor,
+                        backdrop = backdrop,
+                        blurColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
+                        blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
+                        rimColor = if (backdrop != null && isBlurEnabled()) {
+                            Color.White.copy(
+                                alpha = if (isDark) {
+                                    BottomFloatingNavigationBarDefaults.RIM_ALPHA_DARK
+                                } else {
+                                    BottomFloatingNavigationBarDefaults.RIM_ALPHA_LIGHT
+                                },
+                            )
+                        } else {
+                            null
+                        },
+                        rimBottomScale = BottomFloatingNavigationBarDefaults.rimBottomScale(isDark),
+                        bottomGlowColor = BottomFloatingNavigationBarDefaults.CausticColor,
+                        continuousCurve = true,
+                    )
+                }
                 FloatingCapsuleRow(
                     modifier = Modifier
+                        .onSizeChanged { capsuleWidthPx = it.width }
                         .couiTouchMotion(
                             shape = shape,
                             lightParams = SpotLightDefaults.opaqueMedium2(isDark),
                             motionState = touchState,
-                            surface = Modifier.couiGlassSurface(
-                                backdrop = backdrop,
-                                shape = shape,
-                                containerColor = containerColor,
-                                fallback = Modifier.background(color = containerColor, shape = shape),
-                                blurRadius = BottomFloatingNavigationBarDefaults.blurRadius(),
-                                blendColors = BottomFloatingNavigationBarDefaults.blurColors(isDark),
-                                highlight = highlight,
-                            ),
+                            // AOSP Android 16 has the backdrop RenderEffect but not the vendor
+                            // edge params; keep the Compose rim there.
+                            surface = if (platform != null && !platform.drawsOwnStroke) {
+                                Modifier.glassRim(shape, isDark)
+                            } else {
+                                Modifier
+                            },
                         ),
                     content = content,
                 )

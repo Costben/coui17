@@ -248,6 +248,10 @@ public final class io/github/suqi8/coui/kmp/basic/BasicComponentDefaults {
 	public final fun titleColor-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;
 }
 
+public final class io/github/suqi8/coui/kmp/basic/BottomBarBackdropRendererKt {
+	public static final fun getLocalPlatformBottomBarMaterialEnabled ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/BottomFloatingAccessoryNavigationBarDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/BottomFloatingAccessoryNavigationBarDefaults;
@@ -328,6 +332,7 @@ public final class io/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarDef
 	public final fun navigationBarPadding-chRvn1I (Landroidx/compose/runtime/Composer;I)F
 	public final fun pressColor-l2rxGTc (J)J
 	public final fun pressScale-YgX7TsA (FF)F
+	public final fun rimBottomScale (Z)F
 }
 
 public final class io/github/suqi8/coui/kmp/basic/BottomFloatingNavigationBarKt {

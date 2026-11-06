@@ -21,6 +21,14 @@ internal expect fun RuntimeShader.nativeMaterialEdgeEffect(): RenderEffect
  * Samples the actual painted material before applying the framework edge. In the glass path,
  * [tint] is applied here so the native edge still sees the untinted backdrop as rawColor.
  * Content/icons and exterior caustics must be siblings, outside this surface-only effect.
+ *
+ * @param plainRim selects the line blend of the view-level stroke (`ShadowStroke`, the shader
+ *   [Modifier.materialShadowEdge] ports) instead of `OplusMaterialEffectShader::blendEdge`. The two
+ *   differ on dark material: `blendEdge` maps the line to `2 * improvedColor`, so a rim over a dark
+ *   fill tops out at roughly twice that fill, while the view stroke composites the line colour
+ *   itself. A surface whose stroke comes from `COUIMaterialStrokeEffect` — the search capsule's
+ *   `TYPE_FRAMEWORK_CAPSULE_8` — must pass `true`; the melt ball of the bottom bars keeps the
+ *   metaball blend.
  */
 @Composable
 internal fun Modifier.nativeMaterialEdge(
@@ -29,11 +37,13 @@ internal fun Modifier.nativeMaterialEdge(
     bottomScale: Float = 1f,
     tint: Color = Color.Transparent,
     edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
-    lineWidth: Dp = 2.5.dp,
+    lineWidth: Dp = META_BALL_RIM_LINE_WIDTH,
+    lineAngle: Float = 0f,
     extension: Dp = MetaBallDefaults.Extension,
     factorX: Float = MetaBallDefaults.EXTENSION_FACTOR_X,
     factorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
     continuousCurve: Boolean = false,
+    plainRim: Boolean = false,
 ): Modifier {
     if (!isRuntimeShaderSupported()) return this
     val shader = remember { RuntimeShader(META_BALL_NATIVE_EDGE_SHADER) }
@@ -51,9 +61,11 @@ internal fun Modifier.nativeMaterialEdge(
             rimBottomScale = bottomScale,
             edgeStyle = edgeStyle,
             lineWidth = lineWidth,
+            lineAngle = lineAngle,
             continuousCurve = continuousCurve,
         )
         shader.setFloatUniform("in_tint", tint.red, tint.green, tint.blue, tint.alpha)
+        shader.setFloatUniform("in_plainRim", if (plainRim) 1f else 0f)
         layer.renderEffect = shader.nativeMaterialEdgeEffect()
         onDrawWithContent {
             layer.record { this@onDrawWithContent.drawContent() }

@@ -30,6 +30,8 @@ data class AppState(
     val enableSquircle: Boolean = true,
     // Blur
     val enableBlur: Boolean = true,
+    // Platform bottom bar material (ColorOS native material prototype, off by default)
+    val enablePlatformBottomBarMaterial: Boolean = true,
 )
 
 val LocalAppState = compositionLocalOf<AppState> {

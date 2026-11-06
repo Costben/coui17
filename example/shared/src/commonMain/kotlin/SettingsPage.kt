@@ -171,6 +171,13 @@ private fun SettingsContent(
                                 checked = appState.enableBlur,
                                 onCheckedChange = { updateAppState { state -> state.copy(enableBlur = it) } },
                             )
+                            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                            SwitchPreference(
+                                title = str("Enable Native Bottom Bar Material"),
+                                summary = str("Use ColorOS system material for bottom bar capsule"),
+                                checked = appState.enablePlatformBottomBarMaterial,
+                                onCheckedChange = { updateAppState { state -> state.copy(enablePlatformBottomBarMaterial = it) } },
+                            )
                         }
                     }
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))

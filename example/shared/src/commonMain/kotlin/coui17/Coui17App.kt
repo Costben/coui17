@@ -54,6 +54,7 @@ import i18n.str
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
+import io.github.suqi8.coui.kmp.basic.LocalPlatformBottomBarMaterialEnabled
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
 import io.github.suqi8.coui.kmp.basic.SnackbarHost
@@ -146,7 +147,9 @@ private val PageFadeInSpec = folmeSpring(damping = 1f, response = 0.2f, visibili
 fun Coui17App(
     onColorModeChange: ((Int) -> Unit)? = null,
 ) {
-    var appState by remember { mutableStateOf(AppState(showTopAppBar = false)) }
+    var appState by remember {
+        mutableStateOf(AppState(showTopAppBar = false))
+    }
     // The pages are the coui16 ones and would each draw their own app bar, so the flag is pinned
     // off: ColorOS 17 gives every page the bar built here instead.
     val updateAppState: ((AppState) -> AppState) -> Unit = remember {
@@ -175,6 +178,7 @@ fun Coui17App(
             LocalUpdateAppState provides updateAppState,
             LocalSquircleEnabled provides appState.enableSquircle,
             LocalBlurEnabled provides appState.enableBlur,
+            LocalPlatformBottomBarMaterialEnabled provides appState.enablePlatformBottomBarMaterial,
             // One provider for the whole app: every screen resolves its copy through this, so
             // changing the language in the settings page recomposes all of them at once.
             LocalAppStrings provides appState.language.strings,

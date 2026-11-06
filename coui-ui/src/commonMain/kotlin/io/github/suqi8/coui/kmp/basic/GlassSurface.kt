@@ -7,11 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -244,4 +247,25 @@ fun Modifier.couiGlassHeader(
             ),
         )
     }
+}
+
+/**
+ * The Compose fallback for the vendor `TYPE_FRAMEWORK_CAPSULE_3` edge.
+ *
+ * A ColorOS build draws that stroke itself (`OplusMaterialUtil.setEdgeParams`). An AOSP Android 16
+ * build has the platform backdrop effect but no material stroke, so the bar keeps a lit rim the way
+ * it did before the platform renderer existed.
+ */
+internal fun Modifier.glassRim(shape: Shape, dark: Boolean): Modifier = drawWithContent {
+    drawContent()
+    val outline = shape.createOutline(size, layoutDirection, this)
+    drawOutline(
+        outline = outline,
+        brush = Brush.verticalGradient(
+            0f to Color.White.copy(alpha = if (dark) 0.6f else 0.35f),
+            0.55f to Color.White.copy(alpha = if (dark) 0.18f else 0.1f),
+            1f to Color.Transparent,
+        ),
+        style = Stroke(width = 1.dp.toPx()),
+    )
 }

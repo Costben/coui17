@@ -112,6 +112,17 @@ object MetaBallDefaults {
 }
 
 /**
+ * Width of the light traced along a merged outline, in dp.
+ *
+ * `FRAMEWORK_CAPSULE_PARAMS_3_LIGHT` / `_DARK`'s `edgeWidthDp`
+ * (`COUIMaterialStrokeEffect.java:32` / `:70`): the stroke `BaseBottomFloatingMenuView
+ * .updateStrokeEffect` requests as `TYPE_FRAMEWORK_CAPSULE_3`. A caller whose own material resolves
+ * a different capsule passes that preset's width instead — `SearchBar`'s
+ * `TYPE_FRAMEWORK_CAPSULE_8` is 1.8dp (`:59` / `:96`).
+ */
+internal val META_BALL_RIM_LINE_WIDTH = 2.5.dp
+
+/**
  * The ColorOS 17 **melt ball** surface: several silhouettes that merge as one while their fields
  * overlap, the way two droplets of liquid pull together before they touch.
  *
@@ -178,7 +189,7 @@ fun MetaBallSurface(
     continuousCurve: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
-    MetaBallSurface(
+    MetaBallSurfaceImpl(
         particles = particles,
         blurColors = blurColors,
         modifier = modifier,
@@ -192,6 +203,8 @@ fun MetaBallSurface(
         rimColor = rimColor,
         rimBlur = rimBlur,
         rimBottomScale = rimBottomScale,
+        rimLineWidth = META_BALL_RIM_LINE_WIDTH,
+        rimLineAngle = 0f,
         bottomGlowColor = bottomGlowColor,
         continuousCurve = continuousCurve,
         content = content,
@@ -226,6 +239,118 @@ internal fun MetaBallSurface(
     continuousCurve: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
+    MetaBallSurfaceImpl(
+        particles = particles,
+        blurColors = blurColors,
+        modifier = modifier,
+        color = color,
+        backdrop = backdrop,
+        blurRadius = blurRadius,
+        containerAlpha = containerAlpha,
+        extension = extension,
+        extensionFactorX = extensionFactorX,
+        extensionFactorY = extensionFactorY,
+        rimColor = rimColor,
+        rimBlur = rimBlur,
+        rimBottomScale = rimBottomScale,
+        rimLineWidth = META_BALL_RIM_LINE_WIDTH,
+        rimLineAngle = 0f,
+        bottomGlowColor = bottomGlowColor,
+        continuousCurve = continuousCurve,
+        content = content,
+    )
+}
+
+/**
+ * [MetaBallSurface] for a caller whose own material strokes the merged outline with a preset other
+ * than the bottom bar's `TYPE_FRAMEWORK_CAPSULE_3`.
+ *
+ * The rim parameters are required and this entry point has no lambda default on purpose: a default
+ * lambda becomes a getter on the file's `ComposableSingletons` class, which is part of the published
+ * API surface, and this entry point exists to keep the two [MetaBallSurface] overloads' signatures —
+ * and therefore their generated singletons — byte-identical to what they were before the rim width
+ * became configurable.
+ *
+ * @param rimColor the rim colour, or `null` to draw no rim.
+ * @param rimLineWidth the rim width in dp, the preset's `edgeWidthDp`.
+ * @param rimLineAngle the rim angle in radians, the preset's `edgeAngle`.
+ * @param plainRim whether the rim is the view-level stroke rather than the metaball blend; see
+ *   [Modifier.nativeMaterialEdge].
+ */
+@Composable
+internal fun MetaBallSurfaceWithRim(
+    particles: List<MetaBallParticle>,
+    blurColors: List<BlendColorEntry>?,
+    rimColor: Color?,
+    rimLineWidth: Dp,
+    rimLineAngle: Float,
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.bar,
+    backdrop: Backdrop? = LocalBackdrop.current,
+    blurRadius: Float = GlassDefaults.BlurRadius,
+    extension: Dp = MetaBallDefaults.Extension,
+    extensionFactorX: Float = MetaBallDefaults.EXTENSION_FACTOR_X,
+    extensionFactorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
+    rimBottomScale: Float = 0f,
+    bottomGlowColor: Color? = null,
+    continuousCurve: Boolean = false,
+    plainRim: Boolean = false,
+) {
+    MetaBallSurfaceImpl(
+        particles = particles,
+        blurColors = blurColors,
+        modifier = modifier,
+        color = color,
+        backdrop = backdrop,
+        blurRadius = blurRadius,
+        containerAlpha = GlassDefaults.ContainerAlpha,
+        extension = extension,
+        extensionFactorX = extensionFactorX,
+        extensionFactorY = extensionFactorY,
+        rimColor = rimColor,
+        rimBlur = MetaBallDefaults.RimBlur,
+        rimBottomScale = rimBottomScale,
+        rimLineWidth = rimLineWidth,
+        rimLineAngle = rimLineAngle,
+        bottomGlowColor = bottomGlowColor,
+        continuousCurve = continuousCurve,
+        plainRim = plainRim,
+    )
+}
+
+/**
+ * The one implementation both [MetaBallSurface] overloads delegate to.
+ *
+ * They cannot call each other by name: the two signatures differ only in parameter order, so which
+ * one an overload-resolution pass picks is not stable, and one of the two choices makes the public
+ * overload call itself forever. A third, private name removes the choice.
+ *
+ * Its [content] slot is nullable and defaults to `null` instead of `{}`: an empty lambda literal
+ * would be hoisted into the file's `ComposableSingletons` class, which the API dump publishes, and a
+ * caller that only draws the silhouette — [MetaBallSurfaceWithRim] — has nothing to pass.
+ */
+@Composable
+private fun MetaBallSurfaceImpl(
+    particles: List<MetaBallParticle>,
+    blurColors: List<BlendColorEntry>?,
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.bar,
+    backdrop: Backdrop? = LocalBackdrop.current,
+    blurRadius: Float = GlassDefaults.BlurRadius,
+    containerAlpha: Float = GlassDefaults.ContainerAlpha,
+    extension: Dp = MetaBallDefaults.Extension,
+    extensionFactorX: Float = MetaBallDefaults.EXTENSION_FACTOR_X,
+    extensionFactorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
+    rimColor: Color? = Color.White.copy(alpha = 0.55f),
+    rimBlur: Dp = MetaBallDefaults.RimBlur,
+    rimBottomScale: Float = 0f,
+    rimLineWidth: Dp = META_BALL_RIM_LINE_WIDTH,
+    rimLineAngle: Float = 0f,
+    bottomGlowColor: Color? = null,
+    continuousCurve: Boolean = false,
+    plainRim: Boolean = false,
+    content: (@Composable BoxScope.() -> Unit)? = null,
+) {
     val runsShader = isRuntimeShaderSupported()
     val shader = rememberMetaBallShader(runsShader)
     val glass = backdrop != null && shader != null && isBlurEnabled()
@@ -256,10 +381,13 @@ internal fun MetaBallSurface(
                             rim = rimColor ?: Color.Transparent,
                             bottomScale = rimBottomScale,
                             tint = if (blurColors == null) color.copy(alpha = containerAlpha) else Color.Transparent,
+                            lineWidth = rimLineWidth,
+                            lineAngle = rimLineAngle,
                             extension = extension,
                             factorX = extensionFactorX,
                             factorY = extensionFactorY,
                             continuousCurve = continuousCurve,
+                            plainRim = plainRim,
                         )
                         .textureBlur(
                             backdrop = backdrop,
@@ -291,10 +419,13 @@ internal fun MetaBallSurface(
                         particles = paintedParticles,
                         rim = rimColor ?: Color.Transparent,
                         bottomScale = rimBottomScale,
+                        lineWidth = rimLineWidth,
+                        lineAngle = rimLineAngle,
                         extension = extension,
                         factorX = extensionFactorX,
                         factorY = extensionFactorY,
                         continuousCurve = continuousCurve,
+                        plainRim = plainRim,
                     ),
                     shader = shader,
                     body = color,
@@ -317,7 +448,7 @@ internal fun MetaBallSurface(
                 }
             }
         }
-        content()
+        content?.invoke(this)
     }
 }
 
@@ -416,7 +547,8 @@ internal fun Density.setMetaBallUniforms(
     rimBlur: Dp,
     rimBottomScale: Float,
     edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
-    lineWidth: Dp = 2.5.dp,
+    lineWidth: Dp = META_BALL_RIM_LINE_WIDTH,
+    lineAngle: Float = 0f,
     continuousCurve: Boolean = false,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
@@ -444,7 +576,7 @@ internal fun Density.setMetaBallUniforms(
             height = particle.height.toPx(),
             lineWidth = lineWidth.toPx(),
             lineAlpha = rim.alpha,
-            lineAngle = 0f,
+            lineAngle = lineAngle,
             density = density,
         ).copyInto(edgeArrays, i * 16)
     }
@@ -723,6 +855,7 @@ half4 main(float2 xy) {
 internal val META_BALL_NATIVE_EDGE_SHADER = META_BALL_SHADER.substringBefore("half4 main(float2 xy)") + """
 uniform shader child;
 uniform float4 in_tint;
+uniform float in_plainRim;
 """ + NATIVE_MATERIAL_EDGE_BLEND + META_BALL_SHADER.substringAfter("$META_BALL_EDGE_OWNER_DISPATCH").substringBefore("    // TYPE_FRAMEWORK_CAPSULE_3") + """
     half4 inputColor = child.eval(xy);
     if (inputColor.a <= 0.000001) return inputColor;
@@ -730,7 +863,27 @@ uniform float4 in_tint;
     half3 materialColor = mix(rawColor, half3(in_tint.rgb), half(in_tint.a));
     float bottomWeight = localPos.y > 0.0 ? in_rimBottom : 1.0;
     float lineAlpha = couiOwnerEdgeAlpha(float2(localPos.x, -localPos.y), nearestHalf, d, owner) * bottomWeight;
-    half3 result = couiNativeEdgeBlend(materialColor, rawColor, half3(in_rim.rgb), lineAlpha);
+    half3 result;
+    if (in_plainRim > 0.5) {
+        // The view-level stroke (ShadowStroke) composites the line colour itself; blendEdge's
+        // 2 * improvedColor doubles a dark fill instead of reaching the line colour.
+        //
+        // ShadowStroke paints the line as a layer of its own *over* the already composited body:
+        // out = bodyOverPage * (1 - lineA) + line * lineA. Returning a single layer whose alpha is
+        // the body alpha instead applies the body's own transparency to the line as well, so a
+        // #CC262626 body attenuated the rim by its 0.8 alpha and the capsule's top edge read 65
+        // where the system reads 72. Blend in premultiplied space with an outer alpha that keeps
+        // both coverage terms, so the result is identical for an opaque and a translucent body:
+        // outPremul = bodyPremul * (1 - lineA) + line * lineA, outA = bodyA + lineA * (1 - bodyA).
+        // The view stroke belongs to the fade too: a member the caller is fading out (the cancel
+        // capsule, whose view alpha the system animates) must not keep a full-strength rim.
+        half lineA = half(clamp(lineAlpha * opacity, 0.0, 1.0));
+        half bodyA = inputColor.a;
+        half outA = bodyA + lineA * (1.0 - bodyA);
+        half3 outPremul = materialColor * bodyA * (1.0 - lineA) + half3(in_rim.rgb) * lineA;
+        return half4(outPremul, outA);
+    }
+    result = couiNativeEdgeBlend(materialColor, rawColor, half3(in_rim.rgb), lineAlpha);
     // The child already carries silhouette coverage and member alpha: never apply them twice.
     return half4(result * inputColor.a, inputColor.a);
 }

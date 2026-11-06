@@ -11,7 +11,7 @@
 1. **确定对标系统界面**：先明确目标界面在 ColorOS 17 系统应用中的对应形态（主 Tab 页对标系统「相册 · 照片」，二级配置页对标系统「设置」，确认弹窗对标系统确认对话框）。
 2. **拆解系统控件映射**：通过 `uiautomator dump` 核对系统节点树的 `resource-id` 与控件层级，按下表映射为 COUI 组件。
 3. **划分密度作用域**：按区域确定采用应用密度、相册密度或面板物理密度（见第二节）。
-4. **接入玻璃材质**：凡对标界面含实时模糊材质的区域，完整接入录制、提供、采样三要素（见第三节）。
+4. **接入玻璃材质**：凡对标界面含实时模糊材质的区域，完整接入录制、提供、采样三要素（见第三节）。两个底部悬浮栏默认走系统材质：`LocalPlatformBottomBarMaterialEnabled`（默认 `true`）开启时，设备暴露 `COUIMaterialEffect` 时模糊、`TYPE_FRAMEWORK_CAPSULE_3` 描边、焦散阴影与 `setMetaBallChain` 融合都交给平台 View，且描边与焦散跟随系统自身的 `system_material_stroke_enable`、`low_power`、`super_powersave_mode_state`、`coui_blur_enable` / `is_immersive_theme` 与 `persist.sys.oplus.anim_level` 状态。它每帧比 Compose 自绘多 0.7–1.5ms 但不掉帧，可置 `false` 关闭，详见 `components/bottomfloatingaccessorynavigationbar.md`。
 5. **同屏剖面校验**：在参照设备上使用统一采样脚本对比系统界面与实现界面的几何与光学剖面（见第八节）。
 
 ### 系统控件与库组件标准映射表
