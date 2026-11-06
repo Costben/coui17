@@ -203,13 +203,19 @@ SmallTopAppBar(
 
 `gradientGlass = true` switches the app bar material from the uniform blur to COUI's gradient
 shape. The material is not painted on the bar itself: it is a material layer measured to the bar
-plus an extra band — `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) for a bar without a
-`scrollBehavior`, `ScrollDrivenExtraHeight` (24dp) with one, the pair
-`AppBarBlurOverlayView.computeExtraHeightPx` uses — and drawn behind the bar content, while the
-layout reports only the bar's height, so the material reaches past the bar's bottom edge without
-changing the space the bar takes. The blur is strongest at the top edge, and the bar's bottom edge
-keeps some blur and surface alpha that fade out over that extra band. The divider is suppressed
-while the material is on, so it cannot cut across the fade.
+plus an extra band — `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) unless the caller passes a taller
+`gradientGlassExtraHeight` — and drawn behind the bar content, while the layout reports only the
+bar's height, so the material reaches past the bar's bottom edge without changing the space the bar
+takes. The blur is strongest at the top edge, and the bar's bottom edge keeps some blur and surface
+alpha that fade out over that extra band. The divider is suppressed while the material is on, so it
+cannot cut across the fade.
+
+The band is a per-page value on ColorOS 17, not a constant: measured system pages reach 8dp (File
+manager, Clock), 14dp (Settings home, `homepage_appbar_blur_extra_height`) and 16dp (Notes) past the
+bar's bottom edge. Pass the page's own height as `gradientGlassExtraHeight`; do not add a spacer to
+`bottomContent` for it, because the spacer would also push the list down by the same amount. The
+framework's `EXTRA_HEIGHT_DP_SCROLL_DRIVEN` (24dp) has no system page behind it and is not
+reproduced.
 
 With a `scrollBehavior` the material is invisible at rest and reaches full strength after 30dp of
 content has scrolled under the bar. Without a `scrollBehavior` it is always on.
@@ -271,7 +277,8 @@ and `gradientGlass` degrades together with the uniform blur.
 | titlePadding          | Dp                              | Horizontal content padding                     | TopAppBarDefaults.TitlePadding | No       |
 | navigationIconPadding      | Dp                              | Start padding of the navigation icon           | TopAppBarDefaults.NavigationIconPadding | No       |
 | actionIconPadding          | Dp                              | End padding of the action icons                | TopAppBarDefaults.ActionIconPadding | No       |
-| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `AppBarBlurOverlayDefaults.ExtraHeight` (24dp) past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass). Requires `Scaffold(edgeToEdge = true)`, otherwise it degrades to the plain colour | false | No |
+| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `gradientGlassExtraHeight` past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass). Requires `Scaffold(edgeToEdge = true)`, otherwise it degrades to the plain colour | false | No |
+| gradientGlassExtraHeight   | Dp                              | How far the material reaches past the bar's bottom edge when `gradientGlass` is on; pass the page's own band (Settings home 14dp) instead of adding a spacer to `bottomContent` | AppBarBlurOverlayDefaults.ExtraHeight (8dp) | No |
 | bottomContent              | @Composable () -> Unit          | Composable content displayed below the title bar area | {} | No |
 
 ### SmallTopAppBar Properties
@@ -293,7 +300,8 @@ and `gradientGlass` degrades together with the uniform blur.
 | centerTitle                | Boolean                         | Centre the title between the two icon slots (COUI `setIsTitleCenterStyle`); replaces the three paddings below with `centerTitleMargin` | false | No |
 | centerTitleMargin          | Dp                              | Horizontal margin the centred title reserves at each end | tier for the current window width | No |
 | segmentButton              | (@Composable () -> Unit)?       | Segmented control slotted between the navigation icon and the title; ignored while `centerTitle` is set | null | No |
-| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `AppBarBlurOverlayDefaults.ExtraHeight` (24dp) past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass). Requires `Scaffold(edgeToEdge = true)`, otherwise it degrades to the plain colour | false | No |
+| gradientGlass              | Boolean                         | Paint the ColorOS gradient-blur app bar material instead of the uniform one; it reaches `gradientGlassExtraHeight` past the bar's bottom edge while the bar keeps its height, and the divider is hidden. With `scrollBehavior` it appears after 30dp of scroll (see Gradient Glass). Requires `Scaffold(edgeToEdge = true)`, otherwise it degrades to the plain colour | false | No |
+| gradientGlassExtraHeight   | Dp                              | How far the material reaches past the bar's bottom edge when `gradientGlass` is on; pass the page's own band (Settings home 14dp) instead of adding a spacer to `bottomContent` | AppBarBlurOverlayDefaults.ExtraHeight (8dp) | No |
 | titlePadding          | Dp                              | Horizontal content padding                     | TopAppBarDefaults.TitlePadding | No       |
 | navigationIconPadding      | Dp                              | Start padding of the navigation icon           | TopAppBarDefaults.NavigationIconPadding | No       |
 | actionIconPadding          | Dp                              | End padding of the action icons                | TopAppBarDefaults.ActionIconPadding | No       |

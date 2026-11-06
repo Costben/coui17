@@ -195,6 +195,7 @@ private fun AppBarMaterialScaffold(
     gradientGlass: Boolean,
     color: Color,
     modifier: Modifier = Modifier,
+    extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
     scrollBehavior: ScrollBehavior? = null,
     content: @Composable () -> Unit,
 ) {
@@ -225,14 +226,11 @@ private fun AppBarMaterialScaffold(
         materialEnabled = gradientGlass && edgeToEdge && blurEnabled,
         containerColor = color,
         backdrop = LocalBackdrop.current,
-        // `AppBarBlurOverlayView.computeExtraHeightPx` pairs the band with the alpha mode: a
-        // scroll-driven overlay gets 24dp, one whose alpha never moves gets 8dp. The bar here is
-        // scroll driven exactly when it has a scroll behavior to follow.
-        extraHeight = if (scrollBehavior == null) {
-            AppBarBlurOverlayDefaults.ExtraHeight
-        } else {
-            AppBarBlurOverlayDefaults.ScrollDrivenExtraHeight
-        },
+        // One band only: `AppBarBlurOverlayView` reaches a fixed 8dp past the bar unless the page
+        // inflates its own overlay with a taller `homepage_appbar_blur_extra_height` (the settings
+        // home's 14dp, Notes' 16dp). The framework's unused 24dp scroll-driven band is not a second
+        // band to add — measured system pages never show it.
+        extraHeight = extraHeight,
         scrollFraction = scrollFraction,
         modifier = modifier,
         content = { content() },
@@ -288,12 +286,17 @@ internal fun appBarMaterialAlpha(contentOffset: Float, collapsedFraction: Float,
  * @param actionIconPadding The end padding of the action icons.
  * @param gradientGlass Whether to paint the ColorOS gradient-blur app bar material
  *   (`AppBarBlurHelper`'s gradient shape) instead of the uniform one. The material is measured to
- *   the bar plus [AppBarBlurOverlayDefaults.ExtraHeight] and drawn behind the bar, so the bar's
- *   bottom edge keeps some blur and surface alpha that fade out over that band; the layout still
- *   reports only the bar's height. The divider is suppressed while the material is on.
+ *   the bar plus [gradientGlassExtraHeight] and drawn behind the bar, so the bar's bottom edge keeps
+ *   some blur and surface alpha that fade out over that band; the layout still reports only the
+ *   bar's height. The divider is suppressed while the material is on.
  *   Requires [LocalEdgeToEdge] — the material blurs the content behind the bar, so it is only
  *   painted when the enclosing [Scaffold] was built with `edgeToEdge = true`; otherwise the bar
  *   falls back to its plain container colour.
+ * @param gradientGlassExtraHeight How far the material reaches past the bar's bottom edge. Defaults
+ *   to [AppBarBlurOverlayDefaults.ExtraHeight] (8dp), the band the framework pairs with every app
+ *   bar. Pass the page's own `homepage_appbar_blur_extra_height` instead when it is taller — the
+ *   settings home uses 14dp, Notes 16dp — rather than adding a spacer to [bottomContent], which
+ *   would push the list down by the same amount.
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -314,6 +317,7 @@ fun TopAppBar(
     showDivider: Boolean = true,
     hideSubtitleOnCollapse: Boolean = true,
     gradientGlass: Boolean = false,
+    gradientGlassExtraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
     titlePadding: Dp = TopAppBarDefaults.TitlePadding,
     navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
     actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
@@ -338,6 +342,7 @@ fun TopAppBar(
         gradientGlass = gradientGlass,
         color = color,
         modifier = modifier,
+        extraHeight = gradientGlassExtraHeight,
         scrollBehavior = scrollBehavior,
     ) {
         // Compose a Surface with a TopAppBarLayout content.
@@ -450,6 +455,10 @@ fun TopAppBar(
  * @param gradientGlass Whether to paint the ColorOS gradient-blur app bar material
  *   (`AppBarBlurHelper`'s gradient shape) instead of the uniform one.
  *   Requires [LocalEdgeToEdge] — only painted when the enclosing [Scaffold] is `edgeToEdge = true`.
+ * @param gradientGlassExtraHeight How far the material reaches past the bar's bottom edge when
+ *   [gradientGlass] is on. Defaults to [AppBarBlurOverlayDefaults.ExtraHeight] (8dp); pass the
+ *   page's own `homepage_appbar_blur_extra_height` (14dp for the settings home) instead of adding a
+ *   spacer to [bottomContent].
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -470,6 +479,7 @@ fun SmallTopAppBar(
     centerTitleMargin: Dp = rememberCenterTitleMargin(),
     segmentButton: (@Composable () -> Unit)? = null,
     gradientGlass: Boolean = false,
+    gradientGlassExtraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
     titlePadding: Dp = TopAppBarDefaults.TitlePadding,
     navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
     actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
@@ -502,6 +512,7 @@ fun SmallTopAppBar(
         gradientGlass = gradientGlass,
         color = color,
         modifier = modifier,
+        extraHeight = gradientGlassExtraHeight,
         scrollBehavior = scrollBehavior,
     ) {
         // Compose a Surface with a SmallTopAppBarLayout content.

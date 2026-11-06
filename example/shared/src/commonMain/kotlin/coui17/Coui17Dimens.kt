@@ -31,7 +31,11 @@ object Coui17Dimens {
 
     /**
      * The app-bar material's extra height: how far the material overlay reaches past the bar's bottom
-     * edge. The overlay measures 397px = 343px + 54px on the device.
+     * edge. The device's `blur_overlay` measures 397px = 343px + 54px, so the band is 54px = 14dp over
+     * a 343px `app_bar_layout`.
+     *
+     * It is handed to the bar as `gradientGlassExtraHeight`, so it is material only: the list starts at
+     * the bar's own bottom edge, the way `app_bar_layout` does on the device.
      */
     val AppBarBlurExtra = 14.dp
 
@@ -45,8 +49,7 @@ object Coui17Dimens {
      *
      * The device's `blur_overlay` is 54px (14dp) taller than `app_bar_layout`, and it is drawn as a
      * sibling *over* the whole 343px bar, so the extra 14dp reaches 14dp past the search band's bottom
-     * edge. The band is therefore what the material actually covers — the pill's own 40dp plus the
-     * 14dp of extra material below it.
+     * edge. The band itself is the pill's own 40dp plus the 12.13dp the device has no content for.
      */
     val HomeTitleBandHeight = HomeAppBarBottom - HomeSearchBandHeight
 

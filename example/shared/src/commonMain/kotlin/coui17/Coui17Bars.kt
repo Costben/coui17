@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import component.searchBarShadow
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
+import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarDefaults
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
@@ -128,6 +129,11 @@ fun Coui17TopAppBar(
         modifier = modifier.fillMaxWidth(),
         scrollBehavior = scrollBehavior,
         gradientGlass = true,
+        gradientGlassExtraHeight = if (showSearchField) {
+            Coui17Dimens.AppBarBlurExtra
+        } else {
+            AppBarBlurOverlayDefaults.ExtraHeight
+        },
         defaultWindowInsetsPadding = true,
         // ColorOS 17's home bar carries no hairline: the material ramps out on its own, and the
         // library's line would otherwise fade in under the search pill as soon as the page scrolls.
@@ -159,27 +165,24 @@ fun Coui17TopAppBar(
         },
         bottomContent = {
             if (showSearchField) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(Coui17Dimens.HomeSearchBandHeight),
-                        contentAlignment = Alignment.TopCenter,
-                    ) {
-                        Coui17SearchPill(
-                            label = searchLabel,
-                            onClick = onSearch,
-                            scrollFraction = scrollBehavior.state.collapsedFraction,
-                            visible = searchPillVisible,
-                            onPositioned = onSearchPillPositioned,
-                        )
-                    }
-                    // The device's `blur_overlay` runs `homepage_appbar_blur_extra_height` past
-                    // `app_bar_layout`'s bottom edge. That band is empty material, but it is also the
-                    // room the collapsed pill's shadow falls into: without it the bar's own layer ends
-                    // a few px under the pill and the shadow is cut off flat along the bar's bottom
-                    // edge instead of fading out.
-                    Spacer(modifier = Modifier.height(Coui17Dimens.AppBarBlurExtra))
+                // The device's `blur_overlay` runs `homepage_appbar_blur_extra_height` past
+                // `app_bar_layout`'s bottom edge. That band is material, not layout: it is handed to
+                // the bar as `gradientGlassExtraHeight` (from the call above), so the list still
+                // starts at the bar's own bottom edge the way `app_bar_layout` does on the device.
+                // It is also the room the collapsed pill's shadow falls into.
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Coui17Dimens.HomeSearchBandHeight),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    Coui17SearchPill(
+                        label = searchLabel,
+                        onClick = onSearch,
+                        scrollFraction = scrollBehavior.state.collapsedFraction,
+                        visible = searchPillVisible,
+                        onPositioned = onSearchPillPositioned,
+                    )
                 }
             }
         },

@@ -24,6 +24,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
@@ -194,6 +196,87 @@ class TopAppBarGlassRenderTest {
         assertTrue(
             maxChannelDelta(top, bottom) <= 2,
             "the uniform surface must not vary with height, got top=$top bottom=$bottom",
+        )
+    }
+
+    /**
+     * A bar driven by a [COUIScrollBehavior] gets the same 8dp band as one whose alpha never moves.
+     * It used to get `EXTRA_HEIGHT_DP_SCROLL_DRIVEN` (24dp) on top, which stacked a second band
+     * under the material: no ColorOS 17 page reaches that far past its bar — six measured pages end
+     * 8, 14 or 16dp below it.
+     *
+     * The scene scrolls the bar past the 30dp alpha threshold, so the material is fully opaque. The
+     * pixel just past the 8dp band must be the flat cover again (nothing painted), and the pixel
+     * inside the band must still carry the ramp, proving the material is on rather than absent.
+     */
+    @Test
+    fun scrollDrivenBarKeepsTheSingleEightDpBand() = runSkikoComposeUiTest(
+        size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+        density = Density(1f),
+    ) {
+        setContent { GlassScene(withBackdrop = true, gradient = true, scrollDriven = true) }
+        waitForIdle()
+
+        val bar = appBarBounds()
+        val image = onRoot().captureToImage()
+        val pixels = image.toPixelMap()
+        val x = image.width / 4
+        val bandBottom = bar.bottom + ExtraHeightPx
+        val insideBar = pixels[x, (bar.bottom - 2).roundToInt()]
+        val beyondBand = pixels[x, (bandBottom + 12).roundToInt()]
+
+        assertTrue(
+            redChannel(insideBar) >= 30,
+            "the material must be on at the bar's bottom edge, got $insideBar at y=${bar.bottom - 2}",
+        )
+        assertTrue(
+            maxChannelDelta(beyondBand, CoverColor) <= 8,
+            "the material must end at the 8dp band: y=${bandBottom + 12} got ${beyondBand.argbHex()}",
+        )
+    }
+
+    /**
+     * A page whose `blur_overlay` reaches further past the bar (Settings home's 14dp, Notes' 16dp)
+     * passes its band through `gradientGlassExtraHeight`; the material stretches across that band
+     * while the bar reports the same layout height, so the list below is not pushed down.
+     */
+    @Test
+    fun customGradientGlassExtraHeightReachesFurtherWithoutGrowingTheBar() = runSkikoComposeUiTest(
+        size = Size(SURFACE_WIDTH_DP, 200f),
+        density = Density(1f),
+    ) {
+        val customBand = 24.dp
+        setContent { GlassScene(withBackdrop = true, gradient = true, scrollDriven = true) }
+        waitForIdle()
+        val defaultBar = appBarBounds()
+
+        setContent {
+            GlassScene(
+                withBackdrop = true,
+                gradient = true,
+                scrollDriven = true,
+                extraHeight = customBand,
+            )
+        }
+        waitForIdle()
+
+        val bar = appBarBounds()
+        assertEquals(defaultBar.height, bar.height, 0.5f, "gradientGlassExtraHeight must not change the bar's layout height")
+
+        val pixels = onRoot().captureToImage().toPixelMap()
+        val x = pixels.width / 4
+        // y = bar.bottom + 12 sits past the 8dp default band (proven clear in the test above) and
+        // well inside the 24dp custom band.
+        val pastDefaultBand = pixels[x, (bar.bottom + 12).roundToInt()]
+        val beyondCustomBand = pixels[x, (bar.bottom + 24 + 8).roundToInt()]
+
+        assertTrue(
+            redChannel(pastDefaultBand) >= 30,
+            "the custom band must still paint at y=${bar.bottom + 12}, got $pastDefaultBand",
+        )
+        assertTrue(
+            maxChannelDelta(beyondCustomBand, CoverColor) <= 8,
+            "the material must end past the custom band: y=${bar.bottom + 32} got ${beyondCustomBand.argbHex()}",
         )
     }
 
@@ -381,6 +464,8 @@ private fun GlassScene(
     withBackdrop: Boolean,
     gradient: Boolean = false,
     edgeToEdge: Boolean = true,
+    scrollDriven: Boolean = false,
+    extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
 ) {
     val backdrop = rememberLayerBackdrop {
         drawRect(Color.Black)
@@ -409,16 +494,25 @@ private fun GlassScene(
         )
         if (withBackdrop) {
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
-                GlassAppBar(gradient, edgeToEdge)
+                GlassAppBar(gradient, edgeToEdge, scrollDriven, extraHeight)
             }
         } else {
-            GlassAppBar(gradient, edgeToEdge)
+            GlassAppBar(gradient, edgeToEdge, scrollDriven, extraHeight)
         }
     }
 }
 
 @Composable
-private fun GlassAppBar(gradient: Boolean = false, edgeToEdge: Boolean = true) {
+private fun GlassAppBar(
+    gradient: Boolean = false,
+    edgeToEdge: Boolean = true,
+    scrollDriven: Boolean = false,
+    extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+) {
+    // 30dp at density 1 puts a scroll-driven bar past its alpha threshold, so the material is at
+    // full strength; `rememberTopAppBarState(initialContentOffset = ...)` seeds it without a scroll.
+    val state = rememberTopAppBarState(initialContentOffset = if (scrollDriven) -30f else 0f)
+    val scrollBehavior = if (scrollDriven) COUIScrollBehavior(state = state) else null
     // The material only paints when the content behind the bar is edge to edge. The scenes here
     // draw a backdrop over the whole surface, so they declare it instead of wrapping each one.
     CompositionLocalProvider(LocalEdgeToEdge provides edgeToEdge) {
@@ -426,7 +520,9 @@ private fun GlassAppBar(gradient: Boolean = false, edgeToEdge: Boolean = true) {
             title = APP_BAR_TITLE,
             modifier = Modifier.fillMaxWidth().testTag(APP_BAR_TAG),
             color = Color.White,
+            scrollBehavior = scrollBehavior,
             gradientGlass = gradient,
+            gradientGlassExtraHeight = extraHeight,
             defaultWindowInsetsPadding = false,
         )
     }

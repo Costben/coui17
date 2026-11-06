@@ -235,7 +235,7 @@ Miuix 的视觉语言**高度集中在 `theme/` 层**，组件全部走 `COUIThe
 
 | 组件 | 说明 |
 | :--- | :--- |
-| `AppBarBlurOverlay` | 顶栏材质叠加层：节点由调用方定尺寸为「顶栏高 + `ExtraHeight`」，剖面锚定在**栏底**而非节点底，整体 alpha 由滚动驱动（`scrollAlpha(scrollPx, density)` = `min(1, scrollPx / 30dp)`，为 0 时不绘制）。配 `AppBarBlurOverlayDefaults`（`ExtraHeight` 14dp / `ScrollAlphaThresholdDp` 30f / `scrollAlpha` / `containerColor()`：浅色 `surface` `#f0f1f2`、深色 `DarkContainerColor` `#333333`） |
+| `AppBarBlurOverlay` | 顶栏材质叠加层：节点由调用方定尺寸为「顶栏高 + `ExtraHeight`」，剖面锚定在节点底边，整体 alpha 由滚动驱动（`scrollAlpha(scrollPx, density)` = `min(1, scrollPx / 30dp)`，为 0 时不绘制）。配 `AppBarBlurOverlayDefaults`（`ExtraHeight` 8dp、带子更高的页面由调用方经 `extraHeight` 显式传入 / `ScrollAlphaThresholdDp` 30f / `scrollAlpha` / `containerColor()`：浅色 `surface` `#f0f1f2`、深色 `DarkContainerColor` `#333333`） |
 | `HighlightedIconButton` | 工具栏返回键 / 三点菜单键的高亮按钮：正圆 40dp（非 squircle），径向填充（深色 `#1e1e1e`→`#242424`、浅色 249→251，alpha 0.78），按角度分布的白描边走 `Modifier.materialShadowEdge`（`GradientStrokeStyle.EDGE_STYLE_1` + `InnerShadowStyle.SHADOW_STYLE_1`），深色只在 60°–120° 下半弧有外辉光、浅色为对称暗晕。按下时整块弹到 0.89 并淡出描边与光晕。配 `HighlightedIconButtonDefaults` |
 | `FloatingCapsuleRow`（`internal`） | 胶囊内容行：定宽测量——`totalItemMax = n * 70 + 2 * 12 + (n - 1) * 8`，放得下即胶囊宽 `totalItemMax`、每项 70dp，放不下则胶囊取满可用宽度、每项 `(available - 24 - (n - 1) * 8) / n` 截断到整像素，子项精确定宽并放在 `x = 12 + i * (itemWidth + 8)`。`BottomFloatingNavigationBar` 与 `BottomFloatingAccessoryNavigationBar` 共用，父级可用 `trailingReserve` 扣掉展开视图 / 配件的占位 |
 | `BottomFloatingNavigationBarDefaults.MenuToScreenNaviDistance` | 胶囊与导航栏盒子下边缘之间的间距，8dp。组件内部已自带这 8dp，调用方只需再叠 `navigationBarsPadding()`；静止时胶囊底距屏底 = `navigationBars` inset + 8dp。`BottomFloatingNavigationBar` 与 `BottomFloatingAccessoryNavigationBar` 的两种形态（普通胶囊 / 熔球组）都按它抬起 |
@@ -305,7 +305,7 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
 | 常量 | 值 | 说明 |
 | :--- | :--- | :--- |
 | `HomeAppBarBottom` | 88.52dp | 设置主页顶栏底边 |
-| `AppBarBlurExtra` | 14dp | 顶栏材质叠加层的额外高度 |
+| `AppBarBlurExtra` | 14dp | 顶栏材质叠加层的额外高度，经 `gradientGlassExtraHeight` 传入（不再用 `bottomContent` 里的 `Spacer`） |
 | `HomeSearchBandHeight` | 52.13dp | 首页搜索带高 |
 | `SearchPillHeight` / `BarHorizontalPadding` | 40dp / 16dp | 搜索胶囊高 / 水平内边距 |
 | `CompactToolbarHeight` | 52.13dp | 二级页工具栏高 |
