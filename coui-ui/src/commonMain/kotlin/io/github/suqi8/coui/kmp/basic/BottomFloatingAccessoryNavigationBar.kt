@@ -277,6 +277,8 @@ fun BottomFloatingAccessoryNavigationBar(
                         scaleX = menuTouchState.scaleX,
                         scaleY = menuTouchState.scaleY,
                         visible = capsuleWidthPx > 0,
+                        translationX = menuTouchState.translation.x,
+                        translationY = menuTouchState.translation.y,
                     )
                     fun accessoryGeometry(
                         centerX: Float,
@@ -285,8 +287,8 @@ fun BottomFloatingAccessoryNavigationBar(
                         configured: Boolean,
                     ): BottomBarMeltBallChild? {
                         if (!configured) return null
-                        val cx = centerX + (motion?.translation?.x ?: 0f)
-                        val cy = barHeightPx / 2 + (motion?.translation?.y ?: 0f)
+                        val cx = centerX
+                        val cy = barHeightPx / 2
                         return BottomBarMeltBallChild(
                             leftPx = cx - accessoryPx / 2,
                             topPx = cy - accessoryPx / 2,
@@ -295,6 +297,8 @@ fun BottomFloatingAccessoryNavigationBar(
                             scaleX = expansion.scale * (motion?.scaleX ?: 1f),
                             scaleY = expansion.scale * (motion?.scaleY ?: 1f),
                             visible = expansion.alpha > 0.01f,
+                            translationX = motion?.translation?.x ?: 0f,
+                            translationY = motion?.translation?.y ?: 0f,
                         )
                     }
                     val startGeometry = accessoryGeometry(

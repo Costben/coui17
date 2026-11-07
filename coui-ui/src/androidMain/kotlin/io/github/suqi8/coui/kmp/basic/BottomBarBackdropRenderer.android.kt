@@ -17,6 +17,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.util.ArraySet
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
@@ -25,8 +26,11 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -473,6 +477,9 @@ private class BottomBarMaterialView(
     private var stroke: Boolean = true
     private var effectApplied = false
 
+    /** Callback invoked whenever the material view updates its size, effect, or invalidates. */
+    var onInvalidated: (() -> Unit)? = null
+
     /** Melt-ball type: 0 when the view is not chained, 1 for the capsule, 2 for an accessory. */
     var meltKind: Int = 0
 
@@ -505,6 +512,15 @@ private class BottomBarMaterialView(
         }
     }
 
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean = false
+    override fun onTouchEvent(event: MotionEvent): Boolean = false
+
+    fun ensureEffectApplied() {
+        if (!effectApplied && width > 0 && height > 0) {
+            applyEffect()
+        }
+    }
+
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         if (!effectApplied && width > 0 && height > 0) {
@@ -518,13 +534,17 @@ private class BottomBarMaterialView(
             // The corner radius follows the measured height, exactly like the native views.
             effectApplied = false
             applyEffect()
+            onInvalidated?.invoke()
         }
     }
 
     private fun applyEffect() {
         val dark = isDark ?: return
         runCatching { api.apply(this, dark, shape, stroke) }
-            .onSuccess { effectApplied = true }
+            .onSuccess {
+                effectApplied = true
+                onInvalidated?.invoke()
+            }
             .onFailure { Log.w(TAG, "Native bottom bar material could not be applied", it) }
     }
 
@@ -548,12 +568,22 @@ private class MeltBallHostView(
     val endView = BottomBarMaterialView(context, api, BottomBarShape.Circle).apply { meltKind = 2 }
     val menuView = BottomBarMaterialView(context, api, BottomBarShape.Capsule).apply { meltKind = 1 }
 
+    var onInvalidated: (() -> Unit)? = null
+        set(value) {
+            field = value
+            startView.onInvalidated = value
+            endView.onInvalidated = value
+            menuView.onInvalidated = value
+        }
+
     private var chainState: Boolean? = null
     private var chainKey: List<Int>? = null
     private var extensionPx = 0
 
     init {
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        isClickable = false
+        isFocusable = false
         clipChildren = false
         clipToPadding = false
         outlineProvider = EmptyOutline
@@ -563,6 +593,10 @@ private class MeltBallHostView(
         runCatching { material?.expandClip(this) }
             .onFailure { Log.d(TAG, "Oplus clip expansion unavailable", it) }
     }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean = false
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean = false
+    override fun onTouchEvent(event: MotionEvent): Boolean = false
 
     fun update(geometry: BottomBarMeltBallGeometry, isDark: Boolean, stroke: Boolean) {
         place(startView, geometry.start)
@@ -576,9 +610,13 @@ private class MeltBallHostView(
 
     private fun place(view: BottomBarMaterialView, child: BottomBarMeltBallChild?) {
         if (child == null || !child.visible || child.widthPx < 1f || child.heightPx < 1f) {
-            view.visibility = GONE
+            if (view.visibility != GONE) {
+                view.visibility = GONE
+                onInvalidated?.invoke()
+            }
             return
         }
+        val wasGone = view.visibility != VISIBLE
         view.visibility = VISIBLE
         val width = child.widthPx.roundToInt().coerceAtLeast(1)
         val height = child.heightPx.roundToInt().coerceAtLeast(1)
@@ -590,12 +628,16 @@ private class MeltBallHostView(
             // LayoutParams alone leaves a new view at 0x0 until the next traversal.
             view.layout(0, 0, width, height)
         }
-        view.x = child.leftPx
-        view.y = child.topPx
+        view.x = child.leftPx + child.translationX
+        view.y = child.topPx + child.translationY
         view.pivotX = width / 2f
         view.pivotY = height / 2f
         view.scaleX = child.scaleX
         view.scaleY = child.scaleY
+        if (wasGone) {
+            view.ensureEffectApplied()
+            onInvalidated?.invoke()
+        }
     }
 
     private fun updateChain(geometry: BottomBarMeltBallGeometry) {
@@ -624,6 +666,7 @@ private class MeltBallHostView(
                 material.clearMetaBallParams(endView)
                 material.clearMetaBallParams(menuView)
             }
+            onInvalidated?.invoke()
         }.onFailure { Log.w(TAG, "Melt ball chain update failed", it) }
     }
 
@@ -806,10 +849,15 @@ private class AndroidBottomBarBackdropRenderer(private val api: BottomBarBackdro
     @Composable
     override fun CapsuleMaterial(isDark: Boolean, modifier: Modifier) {
         val stroke = rememberSystemStrokeEnabled()
-        TouchTransparentInterop(modifier) {
+        var viewInvalidateTick by remember { mutableIntStateOf(0) }
+        TouchTransparentInterop(modifier, drawTrigger = viewInvalidateTick) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx -> BottomBarMaterialView(ctx, api, BottomBarShape.Capsule) },
+                factory = { ctx ->
+                    BottomBarMaterialView(ctx, api, BottomBarShape.Capsule).apply {
+                        onInvalidated = { viewInvalidateTick++ }
+                    }
+                },
                 onRelease = { it.release() },
                 update = { view -> view.setMode(isDark, stroke) },
             )
@@ -819,10 +867,15 @@ private class AndroidBottomBarBackdropRenderer(private val api: BottomBarBackdro
     @Composable
     override fun AccessoryMaterial(isDark: Boolean, modifier: Modifier) {
         val stroke = rememberSystemStrokeEnabled()
-        TouchTransparentInterop(modifier) {
+        var viewInvalidateTick by remember { mutableIntStateOf(0) }
+        TouchTransparentInterop(modifier, drawTrigger = viewInvalidateTick) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { BottomBarMaterialView(it, api, BottomBarShape.Circle) },
+                factory = { ctx ->
+                    BottomBarMaterialView(ctx, api, BottomBarShape.Circle).apply {
+                        onInvalidated = { viewInvalidateTick++ }
+                    }
+                },
                 onRelease = { it.release() },
                 update = { view -> view.setMode(isDark, stroke) },
             )
@@ -832,10 +885,15 @@ private class AndroidBottomBarBackdropRenderer(private val api: BottomBarBackdro
     @Composable
     override fun MeltBallHost(geometry: BottomBarMeltBallGeometry, isDark: Boolean, modifier: Modifier) {
         val stroke = rememberSystemStrokeEnabled()
-        TouchTransparentInterop(modifier) {
+        var viewInvalidateTick by remember { mutableIntStateOf(0) }
+        TouchTransparentInterop(modifier, drawTrigger = Pair(geometry, viewInvalidateTick)) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { ctx -> MeltBallHostView(ctx, api, material) },
+                factory = { ctx ->
+                    MeltBallHostView(ctx, api, material).apply {
+                        onInvalidated = { viewInvalidateTick++ }
+                    }
+                },
                 onRelease = { it.release() },
                 update = { host -> host.update(geometry, isDark, stroke) },
             )

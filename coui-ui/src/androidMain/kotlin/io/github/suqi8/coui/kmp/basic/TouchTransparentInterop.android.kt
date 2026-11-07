@@ -24,10 +24,15 @@ import androidx.compose.ui.unit.LayoutDirection
  * shadow or material host, which reaches well past the capsule. Clipping the host to nothing takes
  * it out of hit testing; its drawing is recorded inside the clip and drawn again outside it, so it
  * still shows exactly where it was.
+ *
+ * [drawTrigger] is any value whose change must re-record the view, such as its geometry or a tick
+ * bumped when the view turns visible; without it the first, still empty recording sticks until
+ * something else redraws the bar.
  */
 @Composable
 internal fun TouchTransparentInterop(
     modifier: Modifier = Modifier,
+    drawTrigger: Any? = null,
     content: @Composable () -> Unit,
 ) {
     val picture = rememberGraphicsLayer()
@@ -39,7 +44,11 @@ internal fun TouchTransparentInterop(
                     clip = true
                     shape = OutOfReach
                 }
-                .drawWithContent { picture.record { this@drawWithContent.drawContent() } },
+                .drawWithContent {
+                    // Read so a new trigger value rebuilds this lambda and re-records the view.
+                    drawTrigger.hashCode()
+                    picture.record { this@drawWithContent.drawContent() }
+                },
         ) {
             content()
         }

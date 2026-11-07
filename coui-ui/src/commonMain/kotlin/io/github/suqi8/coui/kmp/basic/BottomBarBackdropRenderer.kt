@@ -39,6 +39,8 @@ internal data class BottomBarMeltBallChild(
     val scaleX: Float,
     val scaleY: Float,
     val visible: Boolean,
+    val translationX: Float = 0f,
+    val translationY: Float = 0f,
 )
 
 /**

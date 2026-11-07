@@ -77,4 +77,43 @@ class BottomFloatingNavigationBarMaterialTest {
             BottomFloatingNavigationBarDefaults.BlurColorsDark.map { it.mode },
         )
     }
+
+    @Test
+    fun meltBallChildPreservesTouchMotionTranslationAndScale() {
+        val child = BottomBarMeltBallChild(
+            leftPx = 20f,
+            topPx = 10f,
+            widthPx = 200f,
+            heightPx = 56f,
+            scaleX = 1.05f,
+            scaleY = 0.95f,
+            visible = true,
+            translationX = 12f,
+            translationY = -4f,
+        )
+        assertEquals(20f, child.leftPx)
+        assertEquals(10f, child.topPx)
+        assertEquals(200f, child.widthPx)
+        assertEquals(56f, child.heightPx)
+        assertEquals(1.05f, child.scaleX)
+        assertEquals(0.95f, child.scaleY)
+        assertEquals(true, child.visible)
+        assertEquals(12f, child.translationX)
+        assertEquals(-4f, child.translationY)
+    }
+
+    @Test
+    fun meltBallChildDefaultTranslationIsZero() {
+        val child = BottomBarMeltBallChild(
+            leftPx = 0f,
+            topPx = 0f,
+            widthPx = 100f,
+            heightPx = 48f,
+            scaleX = 1f,
+            scaleY = 1f,
+            visible = true,
+        )
+        assertEquals(0f, child.translationX)
+        assertEquals(0f, child.translationY)
+    }
 }

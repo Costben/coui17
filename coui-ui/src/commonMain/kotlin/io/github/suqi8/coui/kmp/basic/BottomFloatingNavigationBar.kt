@@ -608,16 +608,20 @@ private fun BottomFloatingNavigationBarMeltBall(
                         scaleX = menuTouchState.scaleX,
                         scaleY = menuTouchState.scaleY,
                         visible = capsuleWidthPx > 0,
+                        translationX = menuTouchState.translation.x,
+                        translationY = menuTouchState.translation.y,
                     )
                     val expansionGeometry = if (expansionPx > 1f) {
                         BottomBarMeltBallChild(
-                            leftPx = capsuleWidthPx + gapPx + expansionTouchState.translation.x,
-                            topPx = (barHeightPx - expansionPx) / 2 + expansionTouchState.translation.y,
+                            leftPx = capsuleWidthPx + gapPx,
+                            topPx = (barHeightPx - expansionPx) / 2,
                             widthPx = expansionPx,
                             heightPx = expansionPx,
                             scaleX = expansionTouchState.scaleX,
                             scaleY = expansionTouchState.scaleY,
                             visible = true,
+                            translationX = expansionTouchState.translation.x,
+                            translationY = expansionTouchState.translation.y,
                         )
                     } else {
                         null
