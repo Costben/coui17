@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(InternalCouiBlurApi::class)
+
 package io.github.suqi8.coui.kmp.basic
 
 import android.content.Context
@@ -34,7 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import io.github.suqi8.coui.kmp.blur.InternalCouiBlurApi
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.blur.onEnclosingBackdropSampling
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import kotlin.math.roundToInt
 
@@ -579,6 +583,18 @@ private class MeltBallHostView(
     private var chainState: Boolean? = null
     private var chainKey: List<Int>? = null
     private var extensionPx = 0
+    private var lastGeometry: BottomBarMeltBallGeometry? = null
+
+    // While a backdrop enclosing the bar is sampled, the three views are drawn a second time into
+    // that layer, under the consumer's downscale. The system melt solver reads the chained views'
+    // geometry from every draw, so the first such frame shrinks all three silhouettes toward their
+    // centres and springs them back — the bar flashes as a dialog or popup opens. At rest the
+    // shapes sit beyond the 8dp melt band and the chain draws nothing, so it is dropped meanwhile.
+    private var chainSuspended = false
+    private val resumeChain = Runnable {
+        chainSuspended = false
+        lastGeometry?.let(::updateChain)
+    }
 
     init {
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
@@ -599,6 +615,7 @@ private class MeltBallHostView(
     override fun onTouchEvent(event: MotionEvent): Boolean = false
 
     fun update(geometry: BottomBarMeltBallGeometry, isDark: Boolean, stroke: Boolean) {
+        lastGeometry = geometry
         place(startView, geometry.start)
         place(endView, geometry.end)
         place(menuView, geometry.menu)
@@ -647,7 +664,7 @@ private class MeltBallHostView(
             if (endView.visibility == VISIBLE) add(endView)
             if (menuView.visibility == VISIBLE) add(menuView)
         }
-        val chain = geometry.chainActive && visible.size >= 2
+        val chain = geometry.chainActive && visible.size >= 2 && !chainSuspended
         val key = visible.map { System.identityHashCode(it) }
         if (chainState == chain && extensionPx == geometry.extensionPx && chainKey == key) return
         chainState = chain
@@ -670,7 +687,24 @@ private class MeltBallHostView(
         }.onFailure { Log.w(TAG, "Melt ball chain update failed", it) }
     }
 
+    /**
+     * Called from the consumer's draw pass, before the frame that first samples the bar is handed to
+     * the renderer, so the chain is gone for that frame. Restoring waits for the next frame, when
+     * the backdrop is no longer drawn.
+     */
+    fun setBackdropSampled(sampled: Boolean) {
+        removeCallbacks(resumeChain)
+        if (sampled) {
+            if (chainSuspended) return
+            chainSuspended = true
+            lastGeometry?.let(::updateChain)
+        } else if (chainSuspended) {
+            postOnAnimation(resumeChain)
+        }
+    }
+
     fun release() {
+        removeCallbacks(resumeChain)
         runCatching {
             material?.let {
                 it.clearMetaBallParams(startView)
@@ -681,6 +715,26 @@ private class MeltBallHostView(
         startView.release()
         endView.release()
         menuView.release()
+    }
+}
+
+/** Routes [onEnclosingBackdropSampling] to whichever [MeltBallHostView] currently exists. */
+private class BackdropSampling {
+    private var view: MeltBallHostView? = null
+    private var sampled = false
+
+    val onChanged: (Boolean) -> Unit = { value ->
+        sampled = value
+        view?.setBackdropSampled(value)
+    }
+
+    fun attach(host: MeltBallHostView) {
+        view = host
+        if (sampled) host.setBackdropSampled(true)
+    }
+
+    fun detach(host: MeltBallHostView) {
+        if (view === host) view = null
     }
 }
 
@@ -886,15 +940,23 @@ private class AndroidBottomBarBackdropRenderer(private val api: BottomBarBackdro
     override fun MeltBallHost(geometry: BottomBarMeltBallGeometry, isDark: Boolean, modifier: Modifier) {
         val stroke = rememberSystemStrokeEnabled()
         var viewInvalidateTick by remember { mutableIntStateOf(0) }
-        TouchTransparentInterop(modifier, drawTrigger = Pair(geometry, viewInvalidateTick)) {
+        val sampling = remember { BackdropSampling() }
+        TouchTransparentInterop(
+            modifier.onEnclosingBackdropSampling(sampling.onChanged),
+            drawTrigger = Pair(geometry, viewInvalidateTick),
+        ) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     MeltBallHostView(ctx, api, material).apply {
                         onInvalidated = { viewInvalidateTick++ }
+                        sampling.attach(this)
                     }
                 },
-                onRelease = { it.release() },
+                onRelease = {
+                    sampling.detach(it)
+                    it.release()
+                },
                 update = { host -> host.update(geometry, isDark, stroke) },
             )
         }

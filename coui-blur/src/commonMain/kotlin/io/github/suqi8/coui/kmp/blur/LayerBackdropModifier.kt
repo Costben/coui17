@@ -10,6 +10,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.GlobalPositionAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.TraversableNode
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
 import io.github.suqi8.coui.kmp.blur.internal.recordLayer
@@ -70,7 +71,10 @@ internal class LayerBackdropNode(
     var backdrop: LayerBackdrop,
 ) : Modifier.Node(),
     DrawModifierNode,
-    GlobalPositionAwareModifierNode {
+    GlobalPositionAwareModifierNode,
+    TraversableNode {
+
+    override val traverseKey: Any get() = LayerBackdropTraverseKey
 
     /** The latest attached coordinates of this node, kept so it can publish them when promoted to owner. */
     private var lastCoordinates: LayoutCoordinates? = null
@@ -121,3 +125,6 @@ internal class LayerBackdropNode(
         backdrop.detachNode(this)
     }
 }
+
+/** The [TraversableNode.traverseKey] every [LayerBackdropNode] shares. */
+internal object LayerBackdropTraverseKey

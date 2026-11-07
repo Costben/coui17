@@ -148,12 +148,31 @@ class LayerBackdrop internal constructor(
     internal val hasConsumers: Boolean
         get() = consumerCount > 0
 
+    // Told synchronously when this backdrop starts or stops being sampled; see
+    // [onEnclosingBackdropSampling]. Only touched on the UI thread.
+    private val samplingListeners = ArrayList<(Boolean) -> Unit>(0)
+
+    internal fun addSamplingListener(listener: (Boolean) -> Unit) {
+        samplingListeners.add(listener)
+    }
+
+    internal fun removeSamplingListener(listener: (Boolean) -> Unit) {
+        samplingListeners.remove(listener)
+    }
+
+    private fun notifySampling(sampled: Boolean) {
+        if (samplingListeners.isEmpty()) return
+        // A listener may detach its node, and with it unregister, while being notified.
+        samplingListeners.toTypedArray().forEach { it(sampled) }
+    }
+
     internal fun acquireConsumer() {
         val wasIdle = consumerCount == 0
         consumerCount++
         if (wasIdle) {
             upstream?.acquireConsumer()
             owner?.invalidateDraw()
+            notifySampling(true)
         }
     }
 
@@ -162,6 +181,7 @@ class LayerBackdrop internal constructor(
         consumerCount--
         if (consumerCount == 0) {
             upstream?.releaseConsumer()
+            notifySampling(false)
         }
     }
 
