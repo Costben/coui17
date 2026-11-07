@@ -21,6 +21,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.interfaces.HoldDownObserver
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -260,11 +262,17 @@ fun BasicComponent(
     val extraPaddingTop = cardListPosition.extraPaddingTop
     val extraPaddingBottom = cardListPosition.extraPaddingBottom
 
-    // COUIPreferenceItemDecoration draws coui_list_divider_height of couiColorDivider between rows,
-    // inset by coui_preference_divider_default_horizontal_padding on both sides. The decoration sits
-    // in the gap between items, so the hairline does not add to the row height.
+    // COUIPreferenceItemDecoration draws coui_list_divider_height of couiColorDivider between rows.
+    // getDividerInsetStart lines the hairline up with the title view (getDividerStartAlignView), so a
+    // leading icon pushes it along with the text; the end falls back to
+    // coui_preference_divider_default_horizontal_padding, 32dp from the screen edge, which is the
+    // row's 16dp end margin inside a card that is itself inset 16dp. The decoration sits in the gap
+    // between items, so the hairline does not add to the row height.
     val drawDivider = cardListPosition.drawsRowDivider(showDivider)
     val dividerColor = COUITheme.colorScheme.dividerLine
+    // Where the text block starts inside the padded content, written by the layout below and read
+    // only in the draw phase, so a moving icon re-draws the hairline without recomposing the row.
+    val textStartPx = remember { mutableIntStateOf(0) }
 
     // Where the leading icon aligns against the text, published by the overload that renders the title
     // and summary itself. Read in measure rather than here: the geometry only exists once the text has
@@ -298,12 +306,15 @@ fun BasicComponent(
                 if (drawDivider) {
                     Modifier.drawWithContent {
                         drawContent()
-                        val inset = BasicComponentDefaults.DividerHorizontalPadding.toPx()
+                        val startInset = insideMargin.calculateStartPadding(layoutDirection).toPx() +
+                            textStartPx.intValue
+                        val endInset = insideMargin.calculateEndPadding(layoutDirection).toPx()
                         val thickness = BasicComponentDefaults.DividerHeight.toPx()
+                        val left = if (layoutDirection == LayoutDirection.Rtl) endInset else startInset
                         drawRect(
                             color = dividerColor,
-                            topLeft = Offset(inset, size.height - thickness),
-                            size = Size((size.width - inset * 2f).coerceAtLeast(0f), thickness),
+                            topLeft = Offset(left, size.height - thickness),
+                            size = Size((size.width - startInset - endInset).coerceAtLeast(0f), thickness),
                         )
                     }
                 } else {
@@ -318,6 +329,7 @@ fun BasicComponent(
         verticalArrangement = Arrangement.Center,
     ) {
         if (startAction == null && endActions == null) {
+            textStartPx.intValue = 0
             Column(
                 modifier = Modifier.padding(top = topInsidePadding, bottom = contentBottomPadding),
                 verticalArrangement = Arrangement.Center,
@@ -444,6 +456,7 @@ fun BasicComponent(
                     startPlaceable?.placeRelative(0, startTop)
 
                     val centerX = startWidth + startSpacerWidth
+                    textStartPx.intValue = centerX
                     centerPlaceable.placeRelative(centerX, centerTop)
 
                     endPlaceable?.let {
@@ -527,10 +540,13 @@ object BasicComponentDefaults {
     val DividerHeight = 0.33.dp
 
     /**
-     * The horizontal inset of that hairline on both sides, COUI
-     * `coui_preference_divider_default_horizontal_padding` (32dp).
+     * The end inset of that hairline inside a card, and its start inset on a row without a leading
+     * icon: the row's 16dp margin, which puts it under the title. COUI's
+     * `coui_preference_divider_default_horizontal_padding` (32dp) measures the same line from the
+     * screen edge, through the card's own 16dp inset. A row with a leading icon starts the hairline
+     * at its title instead, like `COUIPreferenceItemDecoration.getDividerInsetStart`.
      */
-    val DividerHorizontalPadding = 32.dp
+    val DividerHorizontalPadding = 16.dp
 
     /**
      * The gap COUI counts between the title and the summary when it measures the leading icon,

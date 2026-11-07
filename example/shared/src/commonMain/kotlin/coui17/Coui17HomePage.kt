@@ -19,7 +19,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
@@ -57,7 +56,6 @@ fun Coui17HomePage(
                 ) {
                     val last = category.components.lastIndex
                     category.components.forEachIndexed { index, component ->
-                        if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                         ArrowPreference(
                             title = str(component.title),
                             onClick = { navigator.push(Route.Component(component.title)) },

@@ -78,11 +78,15 @@ object DividerDefaults {
     val DividerColor @Composable get() = COUITheme.colorScheme.dividerLine
 
     /**
-     * Recommended horizontal inset for a [HorizontalDivider] placed between rows inside a [Card]
-     * (COUI `coui_preference_divider_default_horizontal_padding`, 32dp). For rows with a leading
-     * icon, align the start inset with the title text start instead.
+     * Recommended horizontal inset for a [HorizontalDivider] placed between rows inside a [Card]:
+     * 16dp, flush with the row text. COUI's `coui_preference_divider_default_horizontal_padding`
+     * (32dp) is the same line measured from the screen edge, through the card's 16dp inset. For rows
+     * with a leading icon, align the start inset with the title text start instead.
+     *
+     * Rows given a [CardListPosition] already draw this hairline themselves; do not add a second
+     * one between them.
      *
      * Usage: `HorizontalDivider(Modifier.padding(horizontal = DividerDefaults.CardInset))`.
      */
-    val CardInset = 32.dp
+    val CardInset = 16.dp
 }

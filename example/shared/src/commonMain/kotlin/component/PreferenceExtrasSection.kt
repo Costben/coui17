@@ -15,7 +15,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.cardListPositionOf
 import io.github.suqi8.coui.kmp.preference.ButtonPreference
 import io.github.suqi8.coui.kmp.preference.MarkPreference
@@ -57,7 +56,6 @@ fun SwitchLoadingPreferenceDemo() {
             isLoading = isLoading.value,
             cardListPosition = CardListPosition.Head,
         )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         SwitchLoadingPreference(
             checked = true,
             onCheckedChange = {},
@@ -89,7 +87,6 @@ fun MarkPreferenceDemo() {
             .padding(bottom = 16.dp),
     ) {
         markOptions.forEachIndexed { index, option ->
-            if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
             MarkPreference(
                 title = option,
                 checked = selectedMark.intValue == index,
@@ -150,7 +147,6 @@ fun ButtonPreferenceDemo() {
             onButtonClick = { signInCount.intValue++ },
             cardListPosition = CardListPosition.Head,
         )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ButtonPreference(
             title = str("Disabled Row"),
             summary = str("Button and row are disabled"),
