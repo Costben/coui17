@@ -174,13 +174,21 @@ public final class io/github/suqi8/coui/kmp/blur/DrawBackdropModifierKt {
 	public static synthetic fun drawBackdrop-lyzyEkw$default (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILio/github/suqi8/coui/kmp/blur/ProgressiveBlur;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
 }
 
+public abstract interface annotation class io/github/suqi8/coui/kmp/blur/InternalCouiBlurApi : java/lang/annotation/Annotation {
+}
+
 public final class io/github/suqi8/coui/kmp/blur/LayerBackdrop : io/github/suqi8/coui/kmp/blur/Backdrop {
 	public static final field $stable I
+	public static final field Companion Lio/github/suqi8/coui/kmp/blur/LayerBackdrop$Companion;
 	public fun drawBackdrop (Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/layout/LayoutCoordinates;Lkotlin/jvm/functions/Function1;I)V
 	public final fun getGraphicsLayer ()Landroidx/compose/ui/graphics/layer/GraphicsLayer;
 	public fun getOffsetResidualX ()F
 	public fun getOffsetResidualY ()F
 	public fun isCoordinatesDependent ()Z
+}
+
+public final class io/github/suqi8/coui/kmp/blur/LayerBackdrop$Companion {
+	public final fun isRecording ()Z
 }
 
 public final class io/github/suqi8/coui/kmp/blur/LayerBackdropKt {

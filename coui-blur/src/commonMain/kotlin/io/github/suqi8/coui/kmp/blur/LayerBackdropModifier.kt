@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(InternalCouiBlurApi::class)
+
 package io.github.suqi8.coui.kmp.blur
 
 import androidx.compose.ui.Modifier
@@ -95,7 +97,13 @@ internal class LayerBackdropNode(
         drawContent()
         val backdrop = backdrop
         if (backdrop.owner === this@LayerBackdropNode && backdrop.hasConsumers) {
-            recordLayer(backdrop.graphicsLayer) { backdrop.onDraw(this@draw) }
+            val wasRecording = LayerBackdrop.isRecording
+            LayerBackdrop.isRecording = true
+            try {
+                recordLayer(backdrop.graphicsLayer) { backdrop.onDraw(this@draw) }
+            } finally {
+                LayerBackdrop.isRecording = wasRecording
+            }
         }
     }
 

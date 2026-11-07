@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(InternalCouiBlurApi::class)
+
 package io.github.suqi8.coui.kmp.blur
 
 import androidx.compose.foundation.layout.Box
@@ -8,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -17,8 +20,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * A [LayerBackdrop] is owned by the most recently attached `layerBackdrop` node. Other nodes must
@@ -173,5 +178,33 @@ class LayerBackdropOwnershipTest {
 
         assertEquals(0, backdrop!!.attachedNodeCount)
         assertNull(backdrop!!.layerCoordinates)
+    }
+
+    @Test
+    fun recordingFlagIsSetOnlyWhileTheBackdropRecords() = runSkikoComposeUiTest(
+        size = Size(400f, 400f),
+        density = Density(1f),
+    ) {
+        val observed = mutableListOf<Boolean>()
+        setContent {
+            val backdrop = rememberLayerBackdrop()
+            Box {
+                Box(
+                    Modifier.size(100.dp)
+                        .layerBackdrop(backdrop)
+                        .drawWithContent {
+                            observed += LayerBackdrop.isRecording
+                            drawContent()
+                        },
+                )
+                Box(Modifier.size(10.dp).textureBlur(backdrop, RectangleShape))
+            }
+        }
+        waitForIdle()
+
+        // The content is drawn once into the backdrop layer and once onto the window.
+        assertTrue(true in observed, "content was never drawn into the backdrop layer: $observed")
+        assertTrue(false in observed, "content was never drawn outside the backdrop layer: $observed")
+        assertFalse(LayerBackdrop.isRecording)
     }
 }

@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:OptIn(InternalCouiBlurApi::class)
+
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.foundation.layout.Box
@@ -15,6 +17,8 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import io.github.suqi8.coui.kmp.blur.InternalCouiBlurApi
+import io.github.suqi8.coui.kmp.blur.LayerBackdrop
 
 /**
  * Draws [content] — a purely decorative platform view — without letting it take touches.
@@ -24,6 +28,11 @@ import androidx.compose.ui.unit.LayoutDirection
  * shadow or material host, which reaches well past the capsule. Clipping the host to nothing takes
  * it out of hit testing; its drawing is recorded inside the clip and drawn again outside it, so it
  * still shows exactly where it was.
+ *
+ * The recorded drawing is left out of [LayerBackdrop] recording passes. The view carries a ColorOS
+ * window-surface background effect, and drawing it into a backdrop layer too made the effect lose
+ * its blur for a few frames whenever that backdrop stopped recording — the bar flashed each time a
+ * popup or dialog reading the backdrop closed.
  *
  * [drawTrigger] is any value whose change must re-record the view, such as its geometry or a tick
  * bumped when the view turns visible; without it the first, still empty recording sticks until
@@ -36,7 +45,11 @@ internal fun TouchTransparentInterop(
     content: @Composable () -> Unit,
 ) {
     val picture = rememberGraphicsLayer()
-    Box(modifier.drawWithContent { drawLayer(picture) }) {
+    Box(
+        modifier.drawWithContent {
+            if (!LayerBackdrop.isRecording) drawLayer(picture)
+        },
+    ) {
         Box(
             Modifier
                 .matchParentSize()

@@ -110,6 +110,19 @@ class LayerBackdrop internal constructor(
     internal val onDraw: ContentDrawScope.() -> Unit,
 ) : Backdrop {
 
+    companion object {
+        /**
+         * Whether the draw pass running on the UI thread is recording into a [LayerBackdrop] layer.
+         *
+         * A platform view carrying a ColorOS window-surface background effect must not be drawn into
+         * that offscreen layer as well: once the last consumer goes away and recording stops, the
+         * system drops the effect's blur for a few frames and the view flashes.
+         */
+        @InternalCouiBlurApi
+        var isRecording: Boolean = false
+            internal set
+    }
+
     override val isCoordinatesDependent: Boolean = true
 
     internal var layerCoordinates: LayoutCoordinates? by mutableStateOf(null)
