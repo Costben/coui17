@@ -3746,10 +3746,12 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults {
 	public static final field BUTTON_ALPHA_DURATION_MILLIS I
 	public static final field CANCEL_TEXT Ljava/lang/String;
 	public static final field CLAMP_ANIMATION_PERCENT F
+	public static final field CLEAR_TEXT Ljava/lang/String;
 	public static final field FADE_DURATION_MILLIS I
 	public static final field ICON_ROTATION_DURATION_MILLIS I
 	public static final field ICON_ROTATION_Y F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults;
+	public static final field INSTANT_BUTTON_ALPHA_DELAY_MILLIS I
 	public static final field NON_INSTANT_BUTTON_ALPHA_DURATION_MILLIS I
 	public static final field PRESS_FEEDBACK_DURATION_MILLIS I
 	public static final field REVEAL_DURATION_MILLIS I
@@ -3757,12 +3759,16 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults {
 	public final fun getAnimateHeight-D9Ej5fM ()F
 	public final fun getButtonDividerMarginStart-D9Ej5fM ()F
 	public final fun getCancelButtonBackgroundRadius-D9Ej5fM ()F
+	public final fun getCancelButtonMaxWidth-D9Ej5fM ()F
 	public final fun getCancelButtonMinHeight-D9Ej5fM ()F
 	public final fun getCancelButtonPaddingHorizontal-D9Ej5fM ()F
 	public final fun getCancelButtonPaddingVertical-D9Ej5fM ()F
 	public final fun getCancelMarginLarge-D9Ej5fM ()F
 	public final fun getCancelMarginSmall-D9Ej5fM ()F
 	public final fun getCancelTextSize-XSAIIZE ()J
+	public final fun getClearButtonDiscSize-D9Ej5fM ()F
+	public final fun getClearButtonGlyphSize-D9Ej5fM ()F
+	public final fun getClearButtonSize-D9Ej5fM ()F
 	public final fun getCollapsePercent ()F
 	public final fun getCollapsedMinHeight-D9Ej5fM ()F
 	public final fun getCollapsedMinHeightPx ()F
@@ -3770,7 +3776,9 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults {
 	public final fun getDividerHeight-D9Ej5fM ()F
 	public final fun getDividerWidth-D9Ej5fM ()F
 	public final fun getEase ()Landroidx/compose/animation/core/Easing;
+	public final fun getIconInputGap-D9Ej5fM ()F
 	public final fun getIconSize-D9Ej5fM ()F
+	public final fun getInputEndPadding-D9Ej5fM ()F
 	public final fun getInputTextSize-XSAIIZE ()J
 	public final fun getMoveEase ()Landroidx/compose/animation/core/Easing;
 	public final fun getSearchIconMargin-D9Ej5fM ()F
