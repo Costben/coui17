@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
+import io.github.suqi8.coui.kmp.basic.LocalButtonPressTintEnabled
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.SpotLightDefaults
 import io.github.suqi8.coui.kmp.basic.TextButton
@@ -105,12 +107,14 @@ data class DialogButtonBarAction(
  *    than the `?couiColorContainer8` the style names.
  * 2. **光效层** — `COUIButton.isSpotlightEffectEnabled()` clips a `COUISpotLightEffectDrawable` to
  *    the button path, and `COUIShadowEdgeDrawable` (edge style 0 / shadow style 0, corner type 2,
- *    weight 2.0) paints the rim. Only the recommend button (`PRIMARY`) gets the spotlight: it is
- *    [TextButton]'s `spotLight`, driven by `pressSpotLight` with `CAPSULE_PARAMS_1`, the default of
- *    `COUISpotLightEffect`. The rim is the capsule's `edgeStroke`; the panel's own
- *    `materialShadowEdge` is a separate, larger outline around the whole dialog.
- * 3. **交互层** — `COUITouchMotionAnimator` scales the capsule down while pressed and
- *    `COUIMaskEffectDrawable` washes it. Both live in [TextButton].
+ *    weight 2.0) paints the rim. Every capsule carries the spotlight as [TextButton]'s `spotLight`,
+ *    picked by `setSpotLightEffectAttrs` from the type `getBlurWindowButtonType` assigns: the
+ *    recommend button (`PRIMARY`) takes `TYPE_OPAQUE_MEDIUM_1`, every other button (`SECONDARY`)
+ *    `TYPE_OPAQUE_MEDIUM_2`. The rim is the capsule's `edgeStroke`;
+ *    the panel's own `materialShadowEdge` is a separate, larger outline around the whole dialog.
+ * 3. **交互层** — `COUITouchMotionAnimator` scales the capsule down while pressed. There is no
+ *    darkening wash: `COUIButton.applyBlurEffect` turns `COUIMaskEffectDrawable`'s pressed state
+ *    off over a blur window, so a held capsule brightens under its spotlight instead of greying.
  *
  * The geometry is the part that has to be exact, and it is *not* "buttons fill the bar": the
  * capsule is inset from its cell on all four sides, which is what makes the two buttons read as two
@@ -498,6 +502,9 @@ private fun TinyButtonBar(
     modifier: Modifier = Modifier,
 ) {
     val actions = listOfNotNull(neutral, positive, negative)
+    // coui_center_alert_dialog_button_panel_tiny is a plain LinearLayout, not a COUIButtonBarLayout,
+    // so setBlurBackgroundWindow never gives these buttons a type: they keep the couiColorPress wash
+    // and carry no spotlight.
     val tinyColors = AlertDialogDefaults.tinyButtonColors()
     Column(
         modifier = modifier
@@ -564,28 +571,38 @@ private fun DialogBarButton(
     } else {
         MaterialStrokeParams.contentCapsule5(isDark)
     }
-    TextButton(
-        text = action.text,
-        onClick = action.onClick,
-        modifier = modifier.heightIn(min = minHeight),
-        enabled = action.enabled,
-        // `Widget.COUI.Button` leaves `scaleEnable` at its default, so the capsule takes the
-        // COUITouchMotion press scale as well as the press wash.
-        pressScaleEnabled = true,
-        // `drawableRadius=-1.0dp` makes COUIButtonDrawable clamp the radius to half the measured
-        // height, so the capsule stays a stadium when a wrapped label grows it to 56dp.
-        cornerRadius = minHeight / 2,
-        // The cell already fixes the width; a min width would only fight the equal-weight split.
-        minWidth = 0.dp,
-        minHeight = minHeight,
-        colors = if (action.recommended) recommendColors else colors,
-        insideMargin = DialogButtonBarDefaults.ButtonInsideMargin,
-        textStyle = textStyle,
-        edgeStroke = edgeStroke,
-        // `COUIButton.isSpotlightEffectEnabled()`: only the PRIMARY (recommend) button carries the
-        // light. It is painted under the label and follows the finger while the capsule is held.
-        spotLight = if (action.recommended) SpotLightDefaults.capsuleParams1(isDark) else null,
-    )
+    // A dialog button sits on a blur window, where COUIButton.applyBlurEffect switches the
+    // COUIMaskEffectDrawable press wash off: the capsule does not darken when held, it brightens
+    // under the spotlight instead.
+    CompositionLocalProvider(LocalButtonPressTintEnabled provides false) {
+        TextButton(
+            text = action.text,
+            onClick = action.onClick,
+            modifier = modifier.heightIn(min = minHeight),
+            enabled = action.enabled,
+            // `Widget.COUI.Button` leaves `scaleEnable` at its default, so the capsule takes the
+            // COUITouchMotion press scale.
+            pressScaleEnabled = true,
+            // `drawableRadius=-1.0dp` makes COUIButtonDrawable clamp the radius to half the measured
+            // height, so the capsule stays a stadium when a wrapped label grows it to 56dp.
+            cornerRadius = minHeight / 2,
+            // The cell already fixes the width; a min width would only fight the equal-weight split.
+            minWidth = 0.dp,
+            minHeight = minHeight,
+            colors = if (action.recommended) recommendColors else colors,
+            insideMargin = DialogButtonBarDefaults.ButtonInsideMargin,
+            textStyle = textStyle,
+            edgeStroke = edgeStroke,
+            // `COUIButtonBarLayout.setBlurBackgroundWindow` turns every capsule's spotlight on, and
+            // setSpotLightEffectAttrs picks the light by button type: TYPE_OPAQUE_MEDIUM_1 for the
+            // PRIMARY recommend button, TYPE_OPAQUE_MEDIUM_2 for a SECONDARY one.
+            spotLight = if (action.recommended) {
+                SpotLightDefaults.opaqueMedium1(isDark)
+            } else {
+                SpotLightDefaults.opaqueMedium2(isDark)
+            },
+        )
+    }
 }
 
 object DialogButtonBarDefaults {

@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -172,7 +173,8 @@ fun Button(
         }
     }
     val pressTint = if (isDark) PressedTintDark else PressedTintLight
-    val fillColor = if (tintProgress.value > 0f && containerColor.alpha > 0f) {
+    val pressTintEnabled = LocalButtonPressTintEnabled.current
+    val fillColor = if (pressTintEnabled && tintProgress.value > 0f && containerColor.alpha > 0f) {
         pressTint.copy(alpha = pressTint.alpha * tintProgress.value).compositeOver(containerColor)
     } else {
         containerColor
@@ -979,6 +981,15 @@ private val PressedTintLight = Color(0x1F000000)
 
 /** couiColorPress in dark themes (coui_color_press_dark #33FFFFFF). */
 private val PressedTintDark = Color(0x33FFFFFF)
+
+/**
+ * Whether a [Button] washes its fill with `couiColorPress` while pressed.
+ *
+ * `COUIButton.applyBlurEffect` calls `COUIMaskEffectDrawable.enablePressedState(false)` on a button
+ * drawn over a blur window, so such a button gives no darkening wash at all and its press feedback
+ * is the scale plus the spotlight. Surfaces that host blur-window buttons provide `false`.
+ */
+internal val LocalButtonPressTintEnabled = staticCompositionLocalOf { true }
 
 /** The minimum press tint progress before a release may fade out (COUIMaskEffectDrawable). */
 private val PressedTintMinVisibleProgress = 0.7f
