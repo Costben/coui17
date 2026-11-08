@@ -98,6 +98,10 @@ fun OverlayBottomAssignmentDialog(
         largeScreen = false,
         maxWidth = maxWidth,
         cornerRadius = cornerRadius,
+        // The body is `setView` content (the assignment list plus its own button row), so
+        // `initContentSpacing` leaves only the 4dp `..._has_title_in_assignment` gap under the
+        // message instead of the 16dp a bar-only dialog keeps.
+        hasCustomContent = true,
         content = content,
     )
 }

@@ -133,6 +133,12 @@ import kotlinx.coroutines.launch
  * @param messageTopPadding Optional override for the gap above the built-in message. If null, the
  *   gap follows whether the dialog has a title.
  * @param messageBottomPadding Optional override for the gap below the built-in message.
+ * @param hasCustomContent Whether the [content] slot holds a custom view (COUI's `setView`)
+ *   rather than the dialog's own button bar. `COUIAlertDialogBuilder.initContentSpacing` drops the
+ *   message scroller's bottom padding to
+ *   `coui_alert_dialog_scroll_padding_bottom_message_has_title_in_assignment` (4dp) in that case,
+ *   because the custom view brings its own inset; a dialog whose slot only carries the button bar
+ *   keeps the full `coui_alert_dialog_scroll_padding_bottom_message` (16dp).
  * @param topInset Optional top inset override. If null, calculated from window insets.
  * @param content The content of the dialog.
  */
@@ -166,6 +172,7 @@ internal fun DialogContentLayout(
     titleBottomMargin: Dp? = null,
     messageTopPadding: Dp? = null,
     messageBottomPadding: Dp? = null,
+    hasCustomContent: Boolean = false,
     topInset: Dp? = null,
     content: @Composable () -> Unit,
 ) {
@@ -328,6 +335,7 @@ internal fun DialogContentLayout(
             titleBottomMargin = titleBottomMargin,
             messageTopPadding = messageTopPadding,
             messageBottomPadding = messageBottomPadding,
+            hasCustomContent = hasCustomContent,
             topInset = topInset,
             content = {
                 CompositionLocalProvider(LocalDismissState provides requestDismiss) {
@@ -366,6 +374,7 @@ internal fun DialogContent(
     titleBottomMargin: Dp? = null,
     messageTopPadding: Dp? = null,
     messageBottomPadding: Dp? = null,
+    hasCustomContent: Boolean = false,
     topInset: Dp? = null,
     content: @Composable () -> Unit,
 ) {
@@ -527,8 +536,19 @@ internal fun DialogContent(
             // `coui_alert_dialog_scroll_padding_top_message_no_title` (22dp) instead.
             val resolvedMessageTopPadding = messageTopPadding
                 ?: if (title == null) MessageTopPaddingNoTitle else MessageTopPadding
+            // `initContentSpacing` drops the gap to
+            // `coui_alert_dialog_scroll_padding_bottom_message_has_title_in_assignment` (4dp) as soon
+            // as the dialog also carries a custom view or a list: whatever sits below the message
+            // brings its own inset (`coui_single_edit_bottom_alert_dialog_layout`'s input row has
+            // 18dp under it, `customPanel` 8dp), so the full 16dp would stack on top of it.
             val resolvedMessageBottomPadding = messageBottomPadding
-                ?: if (title == null) MessageBottomPaddingNoTitle else MessageBottomPadding
+                ?: if (hasCustomContent) {
+                    MessageBottomPaddingWithCustomContent
+                } else if (title == null) {
+                    MessageBottomPaddingNoTitle
+                } else {
+                    MessageBottomPadding
+                }
             title?.let {
                 Text(
                     modifier = Modifier
@@ -802,6 +822,21 @@ object DialogDefaults {
     val insideMargin = DpSize(24.dp, 24.dp)
 
     /**
+     * The gap below the message when the dialog's content slot holds a custom view instead of the
+     * button bar.
+     *
+     * `COUIAlertDialogBuilder.initContentSpacing` only keeps
+     * `coui_alert_dialog_scroll_padding_bottom_message` (16dp) for a message that is the last thing
+     * above the button panel. As soon as the dialog also carries `setView` content or a list it
+     * swaps in `coui_alert_dialog_scroll_padding_bottom_message_has_title_in_assignment` (4dp),
+     * because the custom view brings its own inset — `coui_single_edit_bottom_alert_dialog_layout`
+     * gives the input row 18dp underneath, `coui_center_alert_dialog_layout.xml` gives `customPanel`
+     * 8dp. Pass it as `OverlayDialog(messageBottomPadding = ...)` when the slot holds a custom view;
+     * a slot that only carries a `DialogButtonBar` keeps the 16dp default.
+     */
+    val MessageBottomPaddingWithCustomContent = 4.dp
+
+    /**
      * The min height of a horizontal dialog button bar. COUI `coui_alert_dialog_button_height`
      * (44dp, `mHorButPanelMinHeight`), the height COUI gives each bar button.
      */
@@ -865,8 +900,16 @@ private val BottomExitDurationMillis = 250
 /** COUI coui_center_dialog_exit alpha duration. */
 private val CenterExitDurationMillis = 150
 
-/** COUI dialog title/message lineSpacingMultiplier 1.1, resolved against sans-serif font metrics. */
-private val DialogLineHeight = 1.29f.em
+/**
+ * COUI dialog title/message lineSpacingMultiplier 1.1, resolved against sans-serif font metrics.
+ *
+ * The multiplier scales the font's own line box (ascent + descent), not the font size: on the
+ * reference build that box is 1.245em, so the resolved leading is 1.37em. A two-line message
+ * measures a 68px line pitch at 620dpi (17.5dp at the 13sp body size) against the 63.5px a 1.29em
+ * value produced, and the 93px title box the real panel draws matches the same 1.37em at the 18sp
+ * title size.
+ */
+private val DialogLineHeight = 1.37f.em
 
 /** COUI coui_no_message_alert_dialog_title_margin_bottom, applied for every non-tiny dialog. */
 private val TitleMarginBottom = 6.dp
@@ -876,6 +919,12 @@ private val MessageTopPadding = 0.dp
 
 /** `coui_alert_dialog_scroll_padding_bottom_message` (16dp), shared by every titled dialog. */
 private val MessageBottomPadding = 16.dp
+
+/**
+ * `coui_alert_dialog_scroll_padding_bottom_message_has_title_in_assignment` (4dp): the gap under
+ * the message once the dialog also carries a custom view or a list, which supply their own inset.
+ */
+private val MessageBottomPaddingWithCustomContent = 4.dp
 
 /**
  * `coui_alert_dialog_scroll_padding_top_message_no_title` (22dp) — a dialog without a title still

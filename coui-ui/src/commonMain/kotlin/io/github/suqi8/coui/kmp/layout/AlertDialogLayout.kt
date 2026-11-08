@@ -169,6 +169,11 @@ internal fun AlertDialogContentLayout(
         titleBottomMargin = if (tiny) AlertDialogDefaults.TinyTitleMarginBottom else null,
         messageTopPadding = if (tiny) AlertDialogDefaults.TinyMessageMarginTop else null,
         messageBottomPadding = if (tiny) AlertDialogDefaults.TinyMessageMarginBottom else null,
+        // `initContentSpacing` drops the message's 16dp bottom padding to the 4dp
+        // `..._has_title_in_assignment` value once the dialog carries `setView` content, and the
+        // custom panel's own `coui_alert_dialog_customer_layout_padding_bottom` (8dp, applied below
+        // through `ButtonBarMarginTop`) supplies the rest of the gap to the bar.
+        hasCustomContent = content != null,
         topInset = topInset,
     ) {
         content?.invoke()

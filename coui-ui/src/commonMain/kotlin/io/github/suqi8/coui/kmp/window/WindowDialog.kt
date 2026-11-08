@@ -40,6 +40,10 @@ import io.github.suqi8.coui.kmp.utils.platformDialogProperties
  * @param onDismissFinished The callback when the [WindowDialog] is completely dismissed.
  * @param outsideMargin The margin outside the [WindowDialog].
  * @param insideMargin The margin inside the [WindowDialog].
+ * @param messageBottomPadding The gap below the summary. If null it stays at the 16dp
+ *   `coui_alert_dialog_scroll_padding_bottom_message`; pass
+ *   [DialogDefaults.MessageBottomPaddingWithCustomContent] (4dp) when the content slot holds a
+ *   custom view rather than the button bar, which is what `initContentSpacing` does.
  * @param defaultWindowInsetsPadding Whether to apply default window insets padding to the [WindowDialog].
  * @param maxWidth The maximum width of the [WindowDialog].
  * @param largeScreen Optional override for the large-screen presentation (centered scale/fade
@@ -62,6 +66,7 @@ fun WindowDialog(
     onDismissFinished: (() -> Unit)? = null,
     outsideMargin: DpSize = DialogDefaults.outsideMargin,
     insideMargin: DpSize = DialogDefaults.insideMargin,
+    messageBottomPadding: Dp? = null,
     defaultWindowInsetsPadding: Boolean = true,
     maxWidth: Dp = DialogDefaults.MaxWidth,
     largeScreen: Boolean? = null,
@@ -84,6 +89,7 @@ fun WindowDialog(
         backgroundColor = backgroundColor,
         outsideMargin = outsideMargin,
         insideMargin = insideMargin,
+        messageBottomPadding = messageBottomPadding,
         popupHost = { visible, hostContent ->
             if (visible) {
                 Dialog(

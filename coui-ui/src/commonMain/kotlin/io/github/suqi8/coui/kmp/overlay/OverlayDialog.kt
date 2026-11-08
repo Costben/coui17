@@ -32,6 +32,11 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  * @param insideMargin The margin for the built-in texts: width is the horizontal padding of
  *   the title and summary, height is the top padding above the title. The [content] slot is
  *   left unpadded so COUI-style button bars can span the full panel width.
+ * @param messageBottomPadding The gap below the summary. If null it follows the slot's contents the
+ *   way `COUIAlertDialogBuilder.initContentSpacing` does: 16dp when the slot carries the button
+ *   bar, and [DialogDefaults.MessageBottomPaddingWithCustomContent] (4dp) when it carries a custom
+ *   view, which brings its own inset. Pass that constant when the slot holds anything other than a
+ *   `DialogButtonBar`.
  * @param defaultWindowInsetsPadding Whether to apply default window insets padding to the [OverlayDialog].
  * @param renderInRootScaffold Whether to render the dialog in the root (outermost) Scaffold.
  *   When true (default), the dialog covers the full screen. When false, it renders within the
@@ -60,6 +65,7 @@ fun OverlayDialog(
     onDismissFinished: (() -> Unit)? = null,
     outsideMargin: DpSize = DialogDefaults.outsideMargin,
     insideMargin: DpSize = DialogDefaults.insideMargin,
+    messageBottomPadding: Dp? = null,
     defaultWindowInsetsPadding: Boolean = true,
     renderInRootScaffold: Boolean = true,
     maxWidth: Dp = DialogDefaults.MaxWidth,
@@ -74,6 +80,7 @@ fun OverlayDialog(
         backgroundColor = backgroundColor,
         outsideMargin = outsideMargin,
         insideMargin = insideMargin,
+        messageBottomPadding = messageBottomPadding,
         popupHost = { visible, hostContent ->
             val visibleState = remember { mutableStateOf(false) }
             visibleState.value = visible

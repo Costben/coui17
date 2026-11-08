@@ -61,6 +61,7 @@ import io.github.suqi8.coui.kmp.basic.Button
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.layout.DialogButtonBar
 import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
+import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -144,6 +145,10 @@ fun SingleInputDialog(
         modifier = modifier,
         title = title,
         summary = message,
+        // The input row is the dialog's custom view, so the message scroller keeps only the 4dp
+        // `coui_alert_dialog_scroll_padding_bottom_message_has_title_in_assignment` under it; the
+        // row's own 18dp bottom margin is the whole gap to the button bar.
+        messageBottomPadding = DialogDefaults.MessageBottomPaddingWithCustomContent,
         // The field opens focused, so the keyboard comes up with the dialog; the IME padding keeps
         // the panel above it, as the native dialog rises to sit 16dp over the keyboard.
         defaultWindowInsetsPadding = true,
@@ -158,8 +163,8 @@ fun SingleInputDialog(
                 maxCount = maxCount,
                 focusRequester = focusRequester,
                 autoFocus = show,
-                // 24dp side inset like the title; 18dp below plus the bar's own 4dp top padding
-                // keeps the measured 22dp between the row and the buttons.
+                // 24dp side inset like the title, flush under the message; 18dp below plus the
+                // bar's own 4dp top padding keeps the measured 22dp between the row and the buttons.
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 18.dp),
             )
             DialogButtonBar(

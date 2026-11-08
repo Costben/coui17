@@ -73,6 +73,7 @@ Scaffold {
 | onDismissFinished          | (() -> Unit)?          | 关闭动画完成后调用；若关闭过程被中途取消（例如 `show` 被设回 true），则不会触发 | null     | 否       |
 | outsideMargin              | DpSize                 | 对话框外部边距                               | DialogDefaults.outsideMargin     | 否       |
 | insideMargin               | DpSize                 | 内置标题/摘要文本的边距（宽 = 水平内边距，高 = 标题上方内边距）；content 插槽不加内边距 | DialogDefaults.insideMargin      | 否       |
+| messageBottomPadding       | Dp?                    | 摘要下方的间距。为 null 时按内容槽决定，与 `COUIAlertDialogBuilder.initContentSpacing` 一致：放按钮栏时 16dp，放自定义视图时取 `DialogDefaults.MessageBottomPaddingWithCustomContent`（4dp），因为自定义视图自带下边距 | null | 否       |
 | defaultWindowInsetsPadding | Boolean                | 是否应用默认窗口插入内边距                   | true                                  | 否       |
 | renderInRootScaffold       | Boolean                | 是否在根（最外层）Scaffold 中渲染对话框。为 true 时，对话框覆盖全屏。为 false 时，在当前 Scaffold 的范围内渲染 | true | 否 |
 | maxWidth                   | Dp                     | 对话框的最大宽度                             | DialogDefaults.MaxWidth          | 否       |
@@ -90,6 +91,7 @@ Scaffold {
 | MaxWidth      | Dp     | 对话框窗口最大宽度（392.dp），面板比它窄 32dp |
 | outsideMargin | DpSize | 对话框外部默认边距（16, 24）   |
 | insideMargin  | DpSize | 内置标题/摘要文本的默认边距（24, 24）；content 插槽不加内边距 |
+| MessageBottomPaddingWithCustomContent | Dp | 内容槽放自定义视图时摘要下方的间距（4.dp，`coui_alert_dialog_scroll_padding_bottom_message_has_title_in_assignment`） |
 | ButtonBarMinHeight | Dp | 横向对话框按钮栏的最小高度（58.dp） |
 | ButtonBarInsideMargin | PaddingValues | 横向按钮栏中按钮的内边距（水平 24dp、上 12dp、下 22dp）；面板底部留白由按钮自身承担 |
 | ButtonBarDividerThickness | Dp | 横向按钮栏分割线的粗细（1.dp） |

@@ -73,6 +73,7 @@ Scaffold {
 | onDismissFinished          | (() -> Unit)?          | Invoked after the hide animation completes; not invoked if the hide is cancelled mid-flight (e.g., `show` toggled back to true) | null              | No       |
 | outsideMargin              | DpSize                 | Dialog external margin                                        | DialogDefaults.outsideMargin     | No       |
 | insideMargin               | DpSize                 | Margin for the built-in title/summary texts (width = horizontal padding, height = padding above the title); the content slot is unpadded | DialogDefaults.insideMargin      | No       |
+| messageBottomPadding       | Dp?                    | Gap below the summary. When null it follows the content slot the way `COUIAlertDialogBuilder.initContentSpacing` does: 16dp for a button bar, `DialogDefaults.MessageBottomPaddingWithCustomContent` (4dp) for a custom view, which brings its own inset | null | No       |
 | defaultWindowInsetsPadding | Boolean                | Whether to apply default window insets padding                | true                                  | No       |
 | renderInRootScaffold       | Boolean                | Whether to render the dialog in the root (outermost) Scaffold. When true, the dialog covers the full screen. When false, it renders within the current Scaffold's bounds | true | No |
 | maxWidth                   | Dp                     | Maximum width of the dialog                                   | DialogDefaults.MaxWidth          | No       |
@@ -92,6 +93,7 @@ The DialogDefaults object provides default settings for the OverlayDialog compon
 | MaxWidth      | Dp     | Maximum dialog *window* width (392.dp); the panel is 32dp narrower |
 | outsideMargin | DpSize | Default dialog external margin (16, 24) |
 | insideMargin  | DpSize | Default margin for the built-in title/summary texts (24, 24); the content slot is unpadded |
+| MessageBottomPaddingWithCustomContent | Dp | Gap below the message once the content slot holds a custom view (4.dp, `coui_alert_dialog_scroll_padding_bottom_message_has_title_in_assignment`) |
 | ButtonBarMinHeight | Dp | Min height of a horizontal dialog button bar (58.dp) |
 | ButtonBarInsideMargin | PaddingValues | Paddings of a button in a horizontal bar (24dp horizontal, 12dp top, 22dp bottom); the panel bottom inset is carried by the buttons |
 | ButtonBarDividerThickness | Dp | Thickness of the divider between horizontal bar buttons (1.dp) |
