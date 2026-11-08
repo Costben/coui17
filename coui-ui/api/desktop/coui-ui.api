@@ -913,15 +913,18 @@ public final class io/github/suqi8/coui/kmp/basic/ChipTabDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ChipTabDefaults;
 	public final fun countTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
-	public final fun getCheckedStrokeWidth-D9Ej5fM ()F
+	public final fun getCheckedShadow ()Landroidx/compose/ui/graphics/shadow/Shadow;
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getCountStartMargin-D9Ej5fM ()F
+	public final fun getElevationOutset-D9Ej5fM ()F
 	public final fun getEndPadding-D9Ej5fM ()F
 	public final fun getEndPaddingWithRedDot-D9Ej5fM ()F
 	public final fun getFadeWidth-D9Ej5fM ()F
 	public final fun getGroupSpacing-D9Ej5fM ()F
 	public final fun getHeight-D9Ej5fM ()F
 	public final fun getIconEndPadding-D9Ej5fM ()F
+	public final fun getIconOnlyIconSize-D9Ej5fM ()F
+	public final fun getIconOnlyPadding-D9Ej5fM ()F
 	public final fun getIconSize-D9Ej5fM ()F
 	public final fun getLayerSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getMaxWidth-D9Ej5fM ()F
@@ -938,7 +941,7 @@ public final class io/github/suqi8/coui/kmp/basic/ChipTabDefaults {
 
 public final class io/github/suqi8/coui/kmp/basic/ChipTabKt {
 	public static final fun ChipTab (Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/vector/ImageVector;ZZLjava/lang/Integer;Landroidx/compose/runtime/Composer;II)V
-	public static final fun ChipTabGroup (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ChipTabGroup (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/CircularProgressState : java/lang/Enum {
@@ -5189,6 +5192,7 @@ public final class io/github/suqi8/coui/kmp/layout/AlertDialogStyle : java/lang/
 
 public final class io/github/suqi8/coui/kmp/layout/BottomSheetContentLayoutKt {
 	public static final fun SheetActionButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SheetCloseCapsule (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLandroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/layout/BottomSheetDefaults {
@@ -5215,6 +5219,10 @@ public final class io/github/suqi8/coui/kmp/layout/BottomSheetDefaults {
 	public final fun getNativeBlurRadiusPx ()F
 	public final fun getOutsideMargin-MYxV2XQ ()J
 	public final fun getPanelPaddingBottom-D9Ej5fM ()F
+	public final fun getTitleBottomGap-D9Ej5fM ()F
+	public final fun getTitleHeight-D9Ej5fM ()F
+	public final fun getTitleTopGap-D9Ej5fM ()F
+	public final fun getToolbarButtonStroke ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun stroke (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 }
 
@@ -5286,6 +5294,7 @@ public final class io/github/suqi8/coui/kmp/layout/DialogDefaults {
 	public final fun getInsideMargin-MYxV2XQ ()J
 	public final fun getMaxHeight-D9Ej5fM ()F
 	public final fun getMaxWidth-D9Ej5fM ()F
+	public final fun getMessageBottomPaddingWithCustomContent-D9Ej5fM ()F
 	public final fun getNativeBlurRadiusPx ()F
 	public final fun getOutsideMargin-MYxV2XQ ()J
 	public final fun getOutsideMarginWithNavigationBar-D9Ej5fM ()F
@@ -5377,7 +5386,7 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlayCascadingListPopupKt 
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayDialogKt {
-	public static final fun OverlayDialog-K9l846I (ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Ljava/lang/String;JLjava/lang/String;JJZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZZFLjava/lang/Boolean;Landroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun OverlayDialog-SJunhy0 (ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Ljava/lang/String;JLjava/lang/String;JJZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJLandroidx/compose/ui/unit/Dp;ZZFLjava/lang/Boolean;Landroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayListPopupKt {
@@ -6049,7 +6058,7 @@ public final class io/github/suqi8/coui/kmp/window/WindowCascadingListPopupKt {
 }
 
 public final class io/github/suqi8/coui/kmp/window/WindowDialogKt {
-	public static final fun WindowDialog-LDIEPSc (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;JLjava/lang/String;JJZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZFLjava/lang/Boolean;Landroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun WindowDialog-DKp1B6s (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;JLjava/lang/String;JJZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJLandroidx/compose/ui/unit/Dp;ZFLjava/lang/Boolean;Landroidx/compose/ui/unit/Dp;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/window/WindowGuideDialogKt {
