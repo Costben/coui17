@@ -13,9 +13,9 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -38,6 +37,7 @@ import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.anim.BezierGravityPathGeometry
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
+import io.github.suqi8.coui.kmp.basic.DropdownHeaderItem
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.GlassContainer
@@ -50,6 +50,7 @@ import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.popupGlassBlendColors
 import io.github.suqi8.coui.kmp.basic.rememberGlassHighlight
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 
@@ -155,6 +156,16 @@ private fun CascadingPrimaryColumn(
                     val lastItemIdx = entry.items.lastIndex
                     val isFirstEntry = entryIndex == 0
                     val isLastEntry = entryIndex == lastEntryIdx
+                    val header = entry.title
+                    if (header != null) {
+                        key(entryIndex, "header") {
+                            DropdownHeaderItem(
+                                text = header,
+                                color = dropdownColors.headerColor,
+                                isFirst = isFirstEntry,
+                            )
+                        }
+                    }
                     entry.items.forEachIndexed { itemIndex, item ->
                         key(entry, item) {
                             CascadingPrimaryRow(
@@ -162,7 +173,7 @@ private fun CascadingPrimaryColumn(
                                 optionSize = entry.items.size,
                                 index = itemIndex,
                                 entryEnabled = entry.enabled,
-                                isFirst = isFirstEntry && itemIndex == 0,
+                                isFirst = isFirstEntry && header == null && itemIndex == 0,
                                 isLast = isLastEntry && itemIndex == lastItemIdx,
                                 dropdownColors = dropdownColors,
                                 groupKey = entryIndex,
@@ -289,8 +300,21 @@ internal fun CascadingSecondaryContent(
     val squircleEnabled = isSquircleEnabled()
     val backdrop = if (enableGlass) LocalBackdrop.current else null
     val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
-    // Equality is by value, which is what the glass surface's outline cache reads — re-emitting an
-    // unchanged fraction keeps the cached outline, a moved one invalidates it.
+    // The blurred surface keeps the card's own silhouette for the whole transition. COUI blurs the
+    // sub menu as a plain `RoundFrameLayout` and reveals it through a moving outline; re-shaping the
+    // blurred surface every frame would instead invalidate its outline cache — and its backdrop
+    // sampling — on every frame of the spring. The band reveal is the layer clip below.
+    val cardShape = remember(squircleEnabled) {
+        SquircleShape(
+            cornerRadius = CascadingPopupCornerRadius,
+            squircleEnabled = squircleEnabled,
+            capsuleCircleBlend = false,
+        )
+    }
+    // Rebuilt from the current progress on every layer update: the outline is compared by value, so
+    // an unchanged fraction keeps the previous clip and a moved one updates only the RenderNode's
+    // outline. That is how `RoundFrameLayout.setOverrideOutline` moves a sub menu — the recorded
+    // content is never replayed.
     val bandShape = {
         SecondaryBandShape(
             progress = progress(),
@@ -318,23 +342,15 @@ internal fun CascadingSecondaryContent(
             )
             .graphicsLayer {
                 translationY = (1f - progress()) * translateStartPx
-            }
-            // Silhouette clip: the glass surface's own shape only clips its content layer, so the
-            // blurred backdrop — and the fallback fill when glass is off — are cut here, in draw
-            // phase, where the band fraction is current.
-            .drawWithCache {
-                onDrawWithContent {
-                    clipPath(bandShape().path) {
-                        this@onDrawWithContent.drawContent()
-                    }
-                }
+                // Silhouette clip in the layer rather than in a draw modifier: a `clipPath` inside
+                // `onDrawWithContent` re-records the whole list on every frame of the spring, while a
+                // layer clip is a RenderNode outline applied at composite time.
+                clip = true
+                shape = bandShape()
             }
             .couiGlassSurface(
                 backdrop = backdrop,
-                // Re-emitted per outline request: the blur's outline cache compares by value, so a
-                // moved fraction invalidates it and the silhouette tracks the band instead of
-                // freezing at the anchor rect.
-                shape = bandShape,
+                shape = cardShape,
                 containerColor = surfaceColor,
                 fallback = Modifier.drawBehind { drawRect(surfaceColor) },
                 blendColors = popupGlassBlendColors(),
@@ -400,8 +416,9 @@ internal fun CascadingSecondaryColumn(
  * moves from the list's inner padding to 0 and whose bottom edge grows from the anchor row's
  * height to the card's full height (COUI `RoundFrameLayout.setOverrideOutline`).
  *
- * Equality is by value, which is what the glass surface's outline cache reads — re-emitting an
- * unchanged fraction keeps the cached outline, a moved one invalidates it.
+ * Used as the sub menu layer's clip shape. Equality is by value, which is what the layer's outline
+ * comparison reads — re-emitting an unchanged fraction keeps the previous outline, a moved one
+ * updates it.
  */
 private class SecondaryBandShape(
     private val progress: Float,
@@ -429,7 +446,7 @@ private class SecondaryBandShape(
     private val radiusPx: Float
         get() = minOf(cornerPx, rect.width / 2f, rect.height / 2f)
 
-    /** Rebuilt per frame: the mask below is wiped between hits and the geometry is moving. */
+    /** Rebuilt per outline request: the geometry moves with the spring, and the layer copies it. */
     val path: Path
         get() {
             val r = radiusPx

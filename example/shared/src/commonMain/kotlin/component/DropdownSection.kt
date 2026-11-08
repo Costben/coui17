@@ -314,6 +314,46 @@ fun DropdownItemVariants() {
         )
     }
 
+    var lastTriggered by remember { mutableStateOf("") }
+
+    val cascadingRowEntries = remember(s, lastTriggered) {
+        listOf(
+            DropdownEntry(
+                title = s["Selection & submenu"],
+                items = listOf(
+                    DropdownItem(
+                        text = s["Pinned"],
+                        selected = lastTriggered == s["Pinned"],
+                        onClick = { lastTriggered = s["Pinned"] },
+                    ),
+                    DropdownItem(
+                        text = s["Standard mode"],
+                        selected = lastTriggered == s["Standard mode"],
+                        onClick = { lastTriggered = s["Standard mode"] },
+                    ),
+                    DropdownItem(
+                        text = s["Submenu"],
+                        children = listOf(s["Option 1"], s["Option 2"], s["Option 3"]).map { text ->
+                            DropdownItem(
+                                text = text,
+                                selected = lastTriggered == text,
+                                onClick = { lastTriggered = text },
+                            )
+                        },
+                    ),
+                ),
+            ),
+            DropdownEntry(
+                items = listOf(
+                    DropdownItem(
+                        text = s["Clear"],
+                        onClick = { lastTriggered = "" },
+                    ),
+                ),
+            ),
+        )
+    }
+
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -345,6 +385,20 @@ fun DropdownItemVariants() {
             title = str("Group headers (W)"),
             summary = str("Headers plus group dividers"),
             collapseOnSelection = false,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        OverlayDropdownMenu(
+            entries = cascadingRowEntries,
+            title = str("Overlay Cascading Menu"),
+            summary = str("Tap row to expand menu with submenu"),
+            collapseOnSelection = true,
+        )
+        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+        WindowDropdownMenu(
+            entries = cascadingRowEntries,
+            title = str("Window Cascading Menu"),
+            summary = str("Window-layer row menu with submenu"),
+            collapseOnSelection = true,
         )
     }
 }

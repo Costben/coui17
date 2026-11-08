@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -324,7 +325,7 @@ private fun CascadingListPopupLayoutImpl(
     onDismissFinished: (() -> Unit)? = null,
     popupPositionProvider: PopupPositionProvider = ListPopupDefaults.DropdownPositionProvider,
     alignment: PopupPositionProvider.Align = PopupPositionProvider.Align.End,
-    enableWindowDim: Boolean = true,
+    enableWindowDim: Boolean = false,
     maxHeight: Dp? = null,
     minWidth: Dp = ListPopupDefaults.MinWidth,
     collapseOnSelection: Boolean = true,
@@ -343,9 +344,14 @@ private fun CascadingListPopupLayoutImpl(
     // Outlives [expandedItem] until the collapse spring settles so the secondary stays subcomposed.
     var displayedItem by remember { mutableStateOf<DropdownItem?>(null) }
     val popupContentBounds = remember { PopupContentBounds() }
-    val expandFraction = remember { Animatable(0f) }
-    val primaryScale = remember { Animatable(1f) }
-    val primaryAlpha = remember { Animatable(1f) }
+    // One spring drives the whole sub-menu transition. COUI's `SubMenuTransitionUnit` and
+    // `MenuTransitionUnit` are both a `SpringProgressUnit` whose `onProgressUpdate` lerps every
+    // property — sub-menu clip band and translateY, main-menu scale, content alpha and upward
+    // shift — from that single 0..1 progress. Running one spring per property instead makes each
+    // one carry its own velocity in its own unit, so an interrupted transition (tapping a second
+    // row, or collapsing before the enter settles) desynchronises the two menus and reads as a
+    // stutter.
+    val subMenuSpring = remember { Animatable(0f) }
     // COUIPopupMenuRootView.mMainAreaDismissRunnablePosted: the main-area dismiss is armed while a
     // drag keeps the finger inside the main menu, and disarmed by sliding back or lifting.
     var mainAreaDismissPending by remember { mutableStateOf(false) }
@@ -370,7 +376,13 @@ private fun CascadingListPopupLayoutImpl(
             internalVisible.value = true
             backEnterProgress.snapTo(0f)
             backExpandProgress.snapTo(0f)
-            launch { dimProgress.animateTo(1f, ListPopupDefaults.DimEnterAnimationSpec) }
+            // A freshly opened popup has no sub menu, so the transition starts from rest even if the
+            // previous one was dismissed while its collapse was still settling.
+            subMenuSpring.snapTo(0f)
+            displayedItem = null
+            if (enableWindowDim) {
+                launch { dimProgress.animateTo(1f, ListPopupDefaults.DimEnterAnimationSpec) }
+            }
             snapshotFlow { primarySize to hostMeasured }
                 .first { (size, ready) -> size != IntSize.Zero && ready }
             // COUI runs three independent waves open (runOpenWaves): path t, scale and alpha.
@@ -382,7 +394,9 @@ private fun CascadingListPopupLayoutImpl(
             expandedItem = null
             launch { enterPath.animateTo(0f, ListPopupDefaults.PathExitAnimationSpec) }
             launch { enterFraction.animateTo(0f, ListPopupDefaults.FractionExitAnimationSpec) }
-            launch { dimProgress.animateTo(0f, ListPopupDefaults.DimExitAnimationSpec) }
+            if (enableWindowDim) {
+                launch { dimProgress.animateTo(0f, ListPopupDefaults.DimExitAnimationSpec) }
+            }
             enterAlpha.animateTo(0f, ListPopupDefaults.AlphaExitAnimationSpec)
             enterPath.snapTo(0f)
             enterFraction.snapTo(0f)
@@ -406,31 +420,21 @@ private fun CascadingListPopupLayoutImpl(
             backExpandProgress.snapTo(0f)
         }
         val target = if (item != null) 1f else 0f
-        // COUI SmallScreenAnimationController drives both menus with bounce 0 / response 0.35.
-        val mainSpec = folmeSpring<Float>(SUBMENU_SPRING_DAMPING, SUBMENU_SPRING_RESPONSE)
-        launch {
-            expandFraction.animateTo(target, mainSpec)
-            if (target == 0f) {
-                displayedItem = null
-                // Only after the collapse settles — clearing earlier jumps the effective values.
-                backExpandProgress.snapTo(0f)
-            }
-        }
-        launch {
-            primaryScale.animateTo(
-                if (target == 1f) PRIMARY_SHRUNK_SCALE else 1f,
-                mainSpec,
-            )
-        }
-        // COUI SmallScreenAnimationController.startSubMenuEnter animates the main menu content to
-        // mMainMenuAlphaPercent; the card material itself stays opaque.
-        launch {
-            primaryAlpha.animateTo(
-                if (target == 1f) shrunkAlpha else 1f,
-                mainSpec,
-            )
+        // COUI SmallScreenAnimationController: `startSubMenuEnter` / `startSubMenuExit` both call
+        // `startAnimation(bounce = 0, response = 0.35)` on the two units, so the enter and the exit
+        // are the same spring run in opposite directions from wherever it currently is.
+        val spec = folmeSpring<Float>(SUBMENU_SPRING_DAMPING, SUBMENU_SPRING_RESPONSE)
+        subMenuSpring.animateTo(target, spec)
+        if (target == 0f) {
+            displayedItem = null
+            // Only after the collapse settles — clearing earlier jumps the effective values.
+            backExpandProgress.snapTo(0f)
         }
     }
+
+    // Effective progress of the transition: the spring, scaled down while a predictive-back
+    // preview drives the collapse (COUI previews the same transition from the gesture's progress).
+    val subMenuProgress: () -> Float = { subMenuSpring.value * (1f - backExpandProgress.value) }
 
     // COUIPopupMenuRootView.mMainAreaDismissRunnable: `hideSubMenu(true)` — the submenu, not the
     // whole popup — once the grace period passes. Re-checked on fire because the submenu may have
@@ -699,7 +703,7 @@ private fun CascadingListPopupLayoutImpl(
                         .mainAreaDelayedDismiss(
                             bounds = popupContentBounds,
                             enabled = expandedItem != null && !passTouches,
-                            subMenuEntered = { expandFraction.value >= 1f },
+                            subMenuEntered = { subMenuSpring.value >= 1f },
                             onPost = { mainAreaDismissPending = true },
                             onCancel = { mainAreaDismissPending = false },
                         ),
@@ -752,9 +756,12 @@ private fun CascadingListPopupLayoutImpl(
                             enterAlpha = { enterAlpha.value * (1f - backEnterProgress.value) },
                             enterPath = { enterPath.value * (1f - backEnterProgress.value) },
                             gravityPath = gravityPath,
-                            primaryScale = { 1f + (primaryScale.value - 1f) * (1f - backExpandProgress.value) },
-                            primaryAlpha = { 1f + (primaryAlpha.value - 1f) * (1f - backExpandProgress.value) },
-                            expandFraction = { expandFraction.value * (1f - backExpandProgress.value) },
+                            // Every sub-menu property is `UIUtil.getConvertedFraction(start, end, p)`
+                            // of the one spring — exactly how MenuTransitionUnit and
+                            // SubMenuTransitionUnit derive theirs.
+                            primaryScale = { lerp(1f, PRIMARY_SHRUNK_SCALE, subMenuProgress()) },
+                            primaryAlpha = { lerp(1f, shrunkAlpha, subMenuProgress()) },
+                            expandFraction = subMenuProgress,
                             primaryShift = primaryShift,
                             layoutInfo = layoutInfo,
                             layoutDirection = layoutDirection,
