@@ -262,6 +262,7 @@ fun TopBarActions() {
         alignment = PopupPositionProvider.Align.TopEnd,
         onDismissRequest = {
             showTopPopup.value = false
+            topPopupHoldDown.value = false
         },
         onDismissFinished = {
             topPopupHoldDown.value = false
