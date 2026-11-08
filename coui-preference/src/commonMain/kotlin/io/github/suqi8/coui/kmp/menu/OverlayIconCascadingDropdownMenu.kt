@@ -90,6 +90,9 @@ fun OverlayIconCascadingDropdownMenu(
         { expanded ->
             if (isDropdownExpanded.value != expanded) {
                 isDropdownExpanded.value = expanded
+                if (!expanded) {
+                    isHoldDown.value = false
+                }
                 currentOnExpandedChange.value?.invoke(expanded)
             }
         }

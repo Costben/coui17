@@ -182,6 +182,9 @@ fun WindowSpinnerPreference(
         { expanded ->
             if (isDropdownExpanded.value != expanded) {
                 isDropdownExpanded.value = expanded
+                if (!expanded) {
+                    isHoldDown.value = false
+                }
                 currentOnExpandedChange.value?.invoke(expanded)
             }
         }
@@ -420,6 +423,9 @@ fun WindowSpinnerPreference(
         { expanded ->
             if (isDropdownExpanded.value != expanded) {
                 isDropdownExpanded.value = expanded
+                if (!expanded) {
+                    isHoldDown.value = false
+                }
                 currentOnExpandedChange.value?.invoke(expanded)
             }
         }

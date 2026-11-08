@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -18,11 +19,13 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
+import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.overlay.OverlayCascadingListPopup
 import io.github.suqi8.coui.kmp.overlay.OverlayDialog
 import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 
@@ -62,6 +65,8 @@ fun OverlayDropdownPopup(
  * Overlay dropdown popup for one or more [DropdownEntry] groups.
  *
  * Groups are separated by dividers. Entries without selection state can be used as action menus.
+ * When any [DropdownItem] carries [DropdownItem.children], the whole list is handed to
+ * [OverlayCascadingListPopup] so those rows open a submenu instead of acting as leaves.
  */
 @Composable
 fun OverlayDropdownPopup(
@@ -91,23 +96,66 @@ fun OverlayDropdownPopup(
             }
         }
     }
-    OverlayListPopup(
-        show = show,
-        alignment = PopupPositionProvider.Align.End,
-        onDismissRequest = onDismiss,
-        onDismissFinished = onDismissFinished,
-        maxHeight = maxHeight,
-        renderInRootScaffold = renderInRootScaffold,
-        preciseClickState = preciseClickState,
-    ) {
-        ListPopupColumn {
-            DropdownEntriesPopupContent(
-                entries = entries,
-                dropdownColors = dropdownColors,
-                onItemClick = onItemClicked,
-            )
+    val hasSubmenus = entries.any { entry -> entry.items.any { !it.children.isNullOrEmpty() } }
+    val hapticEntries = remember(entries, hapticFeedback) {
+        entries.withSelectionHaptics(hapticFeedback)
+    }
+    if (hasSubmenus) {
+        OverlayCascadingListPopup(
+            show = show,
+            entries = hapticEntries,
+            onDismissRequest = onDismiss,
+            onDismissFinished = onDismissFinished,
+            alignment = PopupPositionProvider.Align.End,
+            maxHeight = maxHeight,
+            renderInRootScaffold = renderInRootScaffold,
+            dropdownColors = dropdownColors,
+            collapseOnSelection = collapseOnSelection,
+        )
+    } else {
+        OverlayListPopup(
+            show = show,
+            alignment = PopupPositionProvider.Align.End,
+            onDismissRequest = onDismiss,
+            onDismissFinished = onDismissFinished,
+            maxHeight = maxHeight,
+            renderInRootScaffold = renderInRootScaffold,
+            preciseClickState = preciseClickState,
+        ) {
+            ListPopupColumn {
+                DropdownEntriesPopupContent(
+                    entries = entries,
+                    dropdownColors = dropdownColors,
+                    onItemClick = onItemClicked,
+                )
+            }
         }
     }
+}
+
+/**
+ * Returns these entries with a [HapticFeedbackType.Confirm] emitted before the click handler of
+ * every leaf row. The cascading layer invokes [DropdownItem.onClick] itself instead of routing
+ * clicks through a list-level listener, so the confirmation has to travel on the callback.
+ */
+internal fun List<DropdownEntry>.withSelectionHaptics(
+    hapticFeedback: HapticFeedback,
+): List<DropdownEntry> = map { entry ->
+    entry.copy(items = entry.items.map { item -> item.withSelectionHaptics(hapticFeedback) })
+}
+
+private fun DropdownItem.withSelectionHaptics(hapticFeedback: HapticFeedback): DropdownItem {
+    val submenu = children
+    if (!submenu.isNullOrEmpty()) {
+        return copy(children = submenu.map { child -> child.withSelectionHaptics(hapticFeedback) })
+    }
+    val click = onClick
+    return copy(
+        onClick = {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
+            click?.invoke()
+        },
+    )
 }
 
 /**

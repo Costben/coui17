@@ -18,12 +18,14 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
+import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
+import io.github.suqi8.coui.kmp.window.WindowCascadingListPopup
 import io.github.suqi8.coui.kmp.window.WindowDialog
 import io.github.suqi8.coui.kmp.window.WindowListPopup
 
@@ -61,6 +63,8 @@ fun WindowDropdownPopup(
  * Window-layer dropdown popup for one or more [DropdownEntry] groups.
  *
  * Groups are separated by dividers. Entries without selection state can be used as action menus.
+ * When any [DropdownItem] carries [DropdownItem.children], the whole list is handed to
+ * [WindowCascadingListPopup] so those rows open a submenu instead of acting as leaves.
  */
 @Composable
 fun WindowDropdownPopup(
@@ -77,33 +81,50 @@ fun WindowDropdownPopup(
     val currentEntries by rememberUpdatedState(entries)
     val currentCollapseOnSelection by rememberUpdatedState(collapseOnSelection)
     val currentHapticFeedback by rememberUpdatedState(hapticFeedback)
-    WindowListPopup(
-        show = show,
-        alignment = PopupPositionProvider.Align.End,
-        onDismissRequest = onDismiss,
-        onDismissFinished = onDismissFinished,
-        maxHeight = maxHeight,
-        preciseClickState = preciseClickState,
-    ) {
-        val dismiss = LocalDismissState.current
-        val currentDismiss by rememberUpdatedState(dismiss)
-        val onItemClicked: (Int, Int) -> Unit = remember {
-            { entryIdx, itemIdx ->
-                currentHapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
-                currentEntries.getOrNull(entryIdx)?.let { entry ->
-                    entry.items.getOrNull(itemIdx)?.onClick?.invoke()
-                }
-                if (currentCollapseOnSelection) {
-                    currentDismiss?.invoke()
+    val hasSubmenus = entries.any { entry -> entry.items.any { !it.children.isNullOrEmpty() } }
+    val hapticEntries = remember(entries, hapticFeedback) {
+        entries.withSelectionHaptics(hapticFeedback)
+    }
+    if (hasSubmenus) {
+        WindowCascadingListPopup(
+            show = show,
+            entries = hapticEntries,
+            onDismissRequest = onDismiss,
+            onDismissFinished = onDismissFinished,
+            alignment = PopupPositionProvider.Align.End,
+            maxHeight = maxHeight,
+            dropdownColors = dropdownColors,
+            collapseOnSelection = collapseOnSelection,
+        )
+    } else {
+        WindowListPopup(
+            show = show,
+            alignment = PopupPositionProvider.Align.End,
+            onDismissRequest = onDismiss,
+            onDismissFinished = onDismissFinished,
+            maxHeight = maxHeight,
+            preciseClickState = preciseClickState,
+        ) {
+            val dismiss = LocalDismissState.current
+            val currentDismiss by rememberUpdatedState(dismiss)
+            val onItemClicked: (Int, Int) -> Unit = remember {
+                { entryIdx, itemIdx ->
+                    currentHapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
+                    currentEntries.getOrNull(entryIdx)?.let { entry ->
+                        entry.items.getOrNull(itemIdx)?.onClick?.invoke()
+                    }
+                    if (currentCollapseOnSelection) {
+                        currentDismiss?.invoke()
+                    }
                 }
             }
-        }
-        ListPopupColumn {
-            DropdownEntriesPopupContent(
-                entries = entries,
-                dropdownColors = dropdownColors,
-                onItemClick = onItemClicked,
-            )
+            ListPopupColumn {
+                DropdownEntriesPopupContent(
+                    entries = entries,
+                    dropdownColors = dropdownColors,
+                    onItemClick = onItemClicked,
+                )
+            }
         }
     }
 }
