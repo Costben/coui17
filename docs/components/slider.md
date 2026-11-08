@@ -172,8 +172,8 @@ The SliderDefaults object provides default configurations for the Slider compone
 | MinHeight           | Dp                 | 20.dp                   | Default height of the slider |
 | MinTouchHeight      | Dp                 | 36.dp                   | Minimum touch target height (`couiSeekBarMinHeight`) |
 | PercentRange        | ClosedFloatingPointRange\<Float\> | 0f..100f  | The COUI 0..100 progress range |
-| FLING_VELOCITY_LIMIT | Float             | 100f                    | Release speed above which the thumb keeps sliding |
-| FLING_PROJECTION_SECONDS | Float          | 0.35f                   | Fling travel per px/s, in seconds |
+| FLING_VELOCITY_LIMIT | Float             | 100f                    | Release speed above which the thumb keeps sliding; a slider with `steps` snaps instead |
+| FLING_PROJECTION_SECONDS | Float          | 0.0667f (1/15)          | Fling travel per px/s, in seconds |
 | KeyPointRadius      | Dp                 | 3.0.dp                  | Default radius of key points |
 | DefaultHapticEffect | SliderHapticEffect | SliderHapticEffect.Edge | Default haptic feedback type |
 

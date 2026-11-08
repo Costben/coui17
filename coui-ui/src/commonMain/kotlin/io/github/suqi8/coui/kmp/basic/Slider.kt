@@ -5,6 +5,7 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.annotation.IntRange
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -69,8 +70,10 @@ import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -158,6 +161,25 @@ fun Slider(
     val isPressed by interactionSource.collectIsPressedAsState()
     val scope = rememberCoroutineScope()
     val flingPosition = remember { Animatable(0f) }
+    var flingJob by remember { mutableStateOf<Job?>(null) }
+    // COUISectionSeekBar keeps a second thumb position while dragging a stepped slider: the thumb
+    // trails the finger instead of jumping tick to tick. See [startSectionSnap] for the model.
+    val sectionCount = steps + 1
+    var sectionAnchorIndex by remember { mutableIntStateOf(0) }
+    var sectionAnchorX by remember { mutableFloatStateOf(0f) }
+    var sectionValueIndex by remember { mutableIntStateOf(0) }
+    var sectionDragDirection by remember { mutableIntStateOf(0) }
+    var sectionLastFingerX by remember { mutableFloatStateOf(0f) }
+    var sectionDelta by remember { mutableFloatStateOf(0f) }
+    var sectionAnimStartX by remember { mutableFloatStateOf(0f) }
+    var sectionAnimEndX by remember { mutableFloatStateOf(0f) }
+    var sectionThumbFraction by remember { mutableFloatStateOf(0f) }
+    var sectionReleaseFrom by remember { mutableFloatStateOf(0f) }
+    var sectionReleaseTo by remember { mutableFloatStateOf(0f) }
+    var sectionReleasing by remember { mutableStateOf(false) }
+    val sectionSnap = remember { Animatable(0f) }
+    var sectionSnapJob by remember { mutableStateOf<Job?>(null) }
+    var sectionReleaseJob by remember { mutableStateOf<Job?>(null) }
     val glitter = remember { SliderGlitter() }
     val pressLight = remember { SliderPressLight() }
 
@@ -213,16 +235,66 @@ fun Slider(
         }
     }
 
+    fun sectionValue(index: Int): Float = valueRange.start + (valueRange.endInclusive - valueRange.start) * index / sectionCount
+
+    // SectionAnimationHandler blends 40% of the snapped offset with 60% of the raw finger offset,
+    // so the thumb trails the finger by at most 0.6 of a section.
+    fun applySectionThumb(width: Float) {
+        val thumb = (sectionAnchorX + sectionSnap.value * SECTION_DRAG_MOVE_RATIO + sectionDelta * (1f - SECTION_DRAG_MOVE_RATIO))
+            .coerceIn(0f, width)
+        sectionThumbFraction = thumb / width
+    }
+
+    // The value only moves when the blended thumb crosses a section: `round` while dragging
+    // towards the end, `ceil` towards the start, so a reversed direction never re-reports a tick.
+    fun applySectionThumbAndProgress(width: Float) {
+        applySectionThumb(width)
+        val sections = sectionThumbFraction * width / (width / sectionCount)
+        val index = when {
+            sectionAnimEndX > sectionAnimStartX -> sections.roundToInt()
+            sectionAnimEndX < sectionAnimStartX -> ceil(sections).toInt()
+            else -> return
+        }.coerceIn(0, sectionCount)
+        if (index != sectionValueIndex) {
+            sectionValueIndex = index
+            val newValue = sectionValue(index)
+            onValueChangeState(newValue)
+            hapticState.handleHapticFeedback(
+                newValue,
+                valueRange,
+                hapticEffect,
+                hapticFeedback,
+                allKeyPointFractions,
+                hasCustomKeyPoints = keyPoints != null,
+            )
+        }
+    }
+
+    fun startSectionSnap(targetDelta: Float, width: Float) {
+        sectionAnimStartX = sectionAnchorX
+        sectionAnimEndX = sectionAnchorX + targetDelta
+        val start = sectionSnap.value
+        sectionSnapJob?.cancel()
+        sectionSnapJob = scope.launch {
+            sectionSnap.snapTo(start)
+            sectionSnap.animateTo(targetDelta, SectionSnapSpec) {
+                applySectionThumbAndProgress(width)
+            }
+            applySectionThumbAndProgress(width)
+        }
+    }
+
     val currentLayoutWidth = layoutWidth
     val currentLayoutHeight = layoutHeight
     // COUISeekBar PhysicsAnimationHandler: the thumb keeps sliding after a fast release and settles
     // on a spring, reporting every intermediate value.
     val flingTarget: (Float, Float, Float) -> Unit = { target, from, velocity ->
-        scope.launch {
+        flingJob?.cancel()
+        flingJob = scope.launch {
             flingPosition.snapTo(from)
             var lastFraction = if (effectiveReverseDirection) 1f - from else from
             flingPosition.animateTo(target, TrackGrowAnimationSpec) {
-                val fraction = if (effectiveReverseDirection) 1f - value else value
+                val fraction = if (effectiveReverseDirection) 1f - flingPosition.value else flingPosition.value
                 onValueChangeState(fractionToValue(fraction))
                 glitter.onFling(scope, fraction, lastFraction, velocity, bothEdges = startFromMiddle)
                 lastFraction = fraction
@@ -283,24 +355,67 @@ fun Slider(
                                 deformationRaw = (abs(dragAmount) / MAX_MOVING_DISTANCE).coerceIn(0f, 1f)
                                 val visualFraction = horizontalVisualFraction(dragOffset, layoutWidth, restingInsetPx)
                                 val fractionForValue = if (effectiveReverseDirection) 1f - visualFraction else visualFraction
-                                val calculatedValue = fractionToValue(fractionForValue)
-                                onValueChangeState(calculatedValue)
+                                if (steps > 0) {
+                                    val width = (layoutWidth - 2f * restingInsetPx).coerceAtLeast(1f)
+                                    val fingerX = fractionForValue * width
+                                    val pixelsPerSection = width / sectionCount
+                                    val direction = when {
+                                        fingerX > sectionLastFingerX + 0.5f -> 1
+                                        fingerX < sectionLastFingerX - 0.5f -> -1
+                                        else -> 0
+                                    }
+                                    if (direction != 0 && direction == -sectionDragDirection) {
+                                        // Reversing re-anchors on the current value, so the value reacts
+                                        // as soon as the finger comes back rather than after undoing
+                                        // the whole outward travel.
+                                        sectionDragDirection = direction
+                                        sectionSnapJob?.cancel()
+                                        if (sectionAnchorIndex != sectionValueIndex) {
+                                            sectionAnchorIndex = sectionValueIndex
+                                            sectionAnchorX = sectionValueIndex * pixelsPerSection
+                                            scope.launch { sectionSnap.snapTo(0f) }
+                                        }
+                                    }
+                                    val delta = fingerX - sectionAnchorX
+                                    // The ±0.1px nudge keeps a finger resting on a section boundary
+                                    // from flickering between the two neighbours.
+                                    val snappedSections =
+                                        ((if (delta >= 0f) delta + 0.1f else delta - 0.1f) / pixelsPerSection).toInt()
+                                    val targetDelta = snappedSections * pixelsPerSection
+                                    sectionDelta = delta
+                                    if ((sectionAnchorIndex + snappedSections).coerceIn(0, sectionCount) != sectionValueIndex) {
+                                        startSectionSnap(targetDelta, width)
+                                    } else if (sectionSnapJob?.isActive != true) {
+                                        val thumb = (
+                                            sectionAnchorX + targetDelta +
+                                                (delta - targetDelta) * (1f - SECTION_DRAG_MOVE_RATIO)
+                                            ).coerceIn(0f, width)
+                                        sectionThumbFraction = thumb / width
+                                    }
+                                    sectionLastFingerX = fingerX
+                                } else {
+                                    val calculatedValue = fractionToValue(fractionForValue)
+                                    onValueChangeState(calculatedValue)
+                                    hapticState.handleHapticFeedback(
+                                        calculatedValue,
+                                        valueRange,
+                                        hapticEffect,
+                                        hapticFeedback,
+                                        allKeyPointFractions,
+                                        hasCustomKeyPoints = keyPoints != null,
+                                    )
+                                }
                                 glitter.onDrag(
                                     scope = scope,
                                     fraction = fractionForValue,
                                     delta = if (effectiveReverseDirection) -dragAmount else dragAmount,
                                     bothEdges = startFromMiddle,
                                 )
-                                hapticState.handleHapticFeedback(
-                                    calculatedValue,
-                                    valueRange,
-                                    hapticEffect,
-                                    hapticFeedback,
-                                    allKeyPointFractions,
-                                    hasCustomKeyPoints = keyPoints != null,
-                                )
                             },
                             onDragStarted = { offset ->
+                                // A new touch owns the value: a fling still running from the previous
+                                // release would otherwise keep writing its own target every frame.
+                                flingJob?.cancel()
                                 val capInset = restingInsetPx
                                 val availableWidth = (layoutWidth - 2f * capInset).coerceAtLeast(0f)
                                 val fraction = (animatedValueState.value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
@@ -314,22 +429,84 @@ fun Slider(
                                 dragOffset = if (moveByFinger) thumbX else offset.x
                                 val visualFraction = horizontalVisualFraction(offset.x, layoutWidth, capInset)
                                 val fractionForValue = if (effectiveReverseDirection) 1f - visualFraction else visualFraction
-                                val calculatedValue = fractionToValue(fractionForValue)
-                                onValueChangeState(calculatedValue)
-                                hapticState.reset(calculatedValue)
+                                if (steps > 0) {
+                                    // SectionAnimationHandler.initDragAnchor: the press itself already
+                                    // resolves the value to the section under the finger, and that
+                                    // section becomes the anchor every later offset is measured from.
+                                    val width = (layoutWidth - 2f * restingInsetPx).coerceAtLeast(1f)
+                                    val pixelsPerSection = width / sectionCount
+                                    // Anchored in the same space the moves accumulate in, so a
+                                    // `moveByFinger` press does not shift the anchor off the thumb.
+                                    val pressed = horizontalVisualFraction(dragOffset, layoutWidth, capInset)
+                                    val fingerX = (if (effectiveReverseDirection) 1f - pressed else pressed) * width
+                                    val anchorIndex = (fingerX / pixelsPerSection).roundToInt().coerceIn(0, sectionCount)
+                                    sectionAnchorIndex = anchorIndex
+                                    sectionAnchorX = anchorIndex * pixelsPerSection
+                                    sectionValueIndex = anchorIndex
+                                    sectionDragDirection = if (fingerX < sectionAnchorX) -1 else 1
+                                    sectionLastFingerX = fingerX
+                                    sectionDelta = 0f
+                                    sectionAnimStartX = sectionAnchorX
+                                    sectionAnimEndX = sectionAnchorX
+                                    sectionThumbFraction = sectionAnchorX / width
+                                    sectionSnapJob?.cancel()
+                                    sectionReleaseJob?.cancel()
+                                    sectionReleasing = false
+                                    scope.launch { sectionSnap.snapTo(0f) }
+                                    val anchorValue = sectionValue(anchorIndex)
+                                    onValueChangeState(anchorValue)
+                                    hapticState.reset(anchorValue)
+                                } else {
+                                    val calculatedValue = fractionToValue(fractionForValue)
+                                    onValueChangeState(calculatedValue)
+                                    hapticState.reset(calculatedValue)
+                                }
                             },
                             onDragStopped = { velocity ->
                                 isDragging = false
                                 isThumbGrabbed = false
-                                val from = horizontalVisualFraction(dragOffset, layoutWidth, restingInsetPx)
-                                // COUISeekBar physics: a release faster than PHYSICAL_VELOCITY_LIMIT
-                                // keeps sliding (PhysicsAnimationHandler) instead of stopping dead.
-                                val projected = (from + velocity * SliderDefaults.FLING_PROJECTION_SECONDS / layoutWidth)
-                                    .coerceIn(0f, 1f)
-                                if (abs(velocity) >= SliderDefaults.FLING_VELOCITY_LIMIT && projected != from) {
-                                    flingTarget(projected, from, velocity)
-                                } else {
+                                if (steps > 0) {
+                                    // COUISectionSeekBar.handleMotionEventUp: no physics fling, the
+                                    // release snaps to the section nearest the last finger position
+                                    // and glides the thumb there over RELEASE_SNAP_DURATION.
+                                    val width = (layoutWidth - 2f * restingInsetPx).coerceAtLeast(1f)
+                                    val pixelsPerSection = width / sectionCount
+                                    val index = (sectionLastFingerX / pixelsPerSection).roundToInt().coerceIn(0, sectionCount)
+                                    sectionSnapJob?.cancel()
+                                    if (index != sectionValueIndex) {
+                                        sectionValueIndex = index
+                                        onValueChangeState(sectionValue(index))
+                                    }
+                                    sectionReleaseJob?.cancel()
+                                    sectionReleaseFrom = sectionThumbFraction
+                                    sectionReleaseTo = index.toFloat() / sectionCount
+                                    sectionReleasing = true
+                                    sectionReleaseJob = scope.launch {
+                                        animate(0f, 1f, animationSpec = tween(150)) { fraction, _ ->
+                                            sectionThumbFraction = lerp(sectionReleaseFrom, sectionReleaseTo, fraction)
+                                        }
+                                        sectionThumbFraction = sectionReleaseTo
+                                        sectionReleasing = false
+                                    }
                                     onValueChangeFinishedState?.invoke()
+                                } else {
+                                    val from = horizontalVisualFraction(dragOffset, layoutWidth, restingInsetPx)
+                                    // COUISeekBar physics: a release faster than PHYSICAL_VELOCITY_LIMIT
+                                    // keeps sliding (PhysicsAnimationHandler) instead of stopping dead.
+                                    // A fling under linear damping travels `velocity / damping` pixels, and
+                                    // FlingBehavior is built over the view's full length, not the cap-inset
+                                    // span, so the fraction it adds is that distance over the layout width.
+                                    val projected = if (layoutWidth == 0) {
+                                        from
+                                    } else {
+                                        (from + velocity * SliderDefaults.FLING_PROJECTION_SECONDS / layoutWidth)
+                                            .coerceIn(0f, 1f)
+                                    }
+                                    if (abs(velocity) >= SliderDefaults.FLING_VELOCITY_LIMIT && projected != from) {
+                                        flingTarget(projected, from, velocity)
+                                    } else {
+                                        onValueChangeFinishedState?.invoke()
+                                    }
                                 }
                             },
                         )
@@ -360,6 +537,11 @@ fun Slider(
             keyPointForegroundColor = colors.keyPointForegroundColor(),
             valueProvider = { animatedValueState.value },
             valueRange = valueRange,
+            thumbFractionProvider = if (steps > 0) {
+                { if (isDragging || sectionReleasing) sectionThumbFraction else null }
+            } else {
+                null
+            },
             isDragging = isDragging || pressLight.isPressed,
             isVertical = false,
             enabled = enabled,
@@ -445,6 +627,8 @@ fun VerticalSlider(
     val scope = rememberCoroutineScope()
     val glitter = remember { SliderGlitter() }
     val pressLight = remember { SliderPressLight() }
+    val flingPosition = remember { Animatable(0f) }
+    var flingJob by remember { mutableStateOf<Job?>(null) }
 
     val coercedValue = value.coerceIn(valueRange.start, valueRange.endInclusive)
 
@@ -488,6 +672,24 @@ fun VerticalSlider(
                 allKeyPointFractions = allKeyPointFractions,
                 magnetThreshold = magnetThreshold,
             )
+        }
+    }
+
+    // COUIVerticalSeekBar runs the same PhysicsAnimationHandler fling as the horizontal bar:
+    // a release faster than PHYSICAL_VELOCITY_LIMIT travels `velocity / 15` pixels along the
+    // view's full height.
+    val flingTarget: (Float, Float, Float) -> Unit = { target, from, velocity ->
+        flingJob?.cancel()
+        flingJob = scope.launch {
+            flingPosition.snapTo(from)
+            var lastFraction = if (reverseDirection) from else 1f - from
+            flingPosition.animateTo(target, TrackGrowAnimationSpec) {
+                val fraction = if (reverseDirection) flingPosition.value else 1f - flingPosition.value
+                onValueChangeState(fractionToValueVertical(fraction))
+                glitter.onFling(scope, fraction, lastFraction, velocity, bothEdges = false)
+                lastFraction = fraction
+            }
+            onValueChangeFinishedState?.invoke()
         }
     }
 
@@ -559,6 +761,9 @@ fun VerticalSlider(
                                 )
                             },
                             onDragStarted = { offset ->
+                                // A new touch owns the value: a fling still running from the previous
+                                // release would otherwise keep writing its own target every frame.
+                                flingJob?.cancel()
                                 val capInset = layoutWidth * TrackCapInsetRatio
                                 val availableHeight = (layoutHeight - 2f * capInset).coerceAtLeast(0f)
                                 val fraction = (animatedValueState.value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
@@ -574,10 +779,28 @@ fun VerticalSlider(
                                 onValueChangeState(calculatedValue)
                                 hapticState.reset(calculatedValue)
                             },
-                            onDragStopped = {
+                            onDragStopped = { velocity ->
                                 isDragging = false
                                 isThumbGrabbed = false
-                                onValueChangeFinishedState?.invoke()
+                                val from = verticalVisualFraction(dragOffset, layoutHeight, layoutWidth)
+                                val projected = if (layoutHeight == 0) {
+                                    from
+                                } else {
+                                    (from + velocity * SliderDefaults.FLING_PROJECTION_SECONDS / layoutHeight)
+                                        .coerceIn(0f, 1f)
+                                }
+                                // Same section rule as the horizontal bar: only a stepped slider maps to
+                                // COUISectionSeekBar, which snaps instead of running the physics fling.
+                                // Custom key points are magnet targets on a continuous bar, so they
+                                // keep the fling.
+                                if (steps == 0 &&
+                                    abs(velocity) >= SliderDefaults.FLING_VELOCITY_LIMIT &&
+                                    projected != from
+                                ) {
+                                    flingTarget(projected, from, velocity)
+                                } else {
+                                    onValueChangeFinishedState?.invoke()
+                                }
                             },
                         )
                         .indication(interactionSource, null)
@@ -676,6 +899,11 @@ fun RangeSlider(
     val isRtl = layoutDirection == LayoutDirection.Rtl
     val onValueChangeState by rememberUpdatedState(onValueChange)
     val onValueChangeFinishedState by rememberUpdatedState(onValueChangeFinished)
+    val density = LocalDensity.current
+    // The touch target is 36dp tall (couiSeekBarMinHeight) but the track keeps its own height, so
+    // the thumb inset and the value mapping are derived from that thickness, not from the layout.
+    val trackHeightPx = with(density) { height.toPx() }
+    val restingInsetPx = trackHeightPx * TrackCapInsetRatio
     var startDragOffset by remember { mutableFloatStateOf(0f) }
     var endDragOffset by remember { mutableFloatStateOf(0f) }
     var isDraggingStart by remember { mutableStateOf(false) }
@@ -690,7 +918,6 @@ fun RangeSlider(
     val interactionSource = remember { MutableInteractionSource() }
     var lastDraggedIsStart by remember { mutableStateOf(true) }
     var layoutWidth by remember { mutableIntStateOf(0) }
-    var layoutHeight by remember { mutableIntStateOf(0) }
     val isPressed by interactionSource.collectIsPressedAsState()
 
     var currentStartValue by remember { mutableFloatStateOf(value.start) }
@@ -719,7 +946,7 @@ fun RangeSlider(
         rangePressPicksStart(
             touchX = pressLight.touchPosition.x,
             layoutWidth = layoutWidth,
-            capInset = layoutHeight * TrackCapInsetRatio,
+            capInset = restingInsetPx,
             startFraction = (coercedStart - valueRange.start) / (valueRange.endInclusive - valueRange.start),
             endFraction = (coercedEnd - valueRange.start) / (valueRange.endInclusive - valueRange.start),
             isRtl = isRtl,
@@ -762,7 +989,6 @@ fun RangeSlider(
     }
 
     val currentLayoutWidth = layoutWidth
-    val currentLayoutHeight = layoutHeight
     Box(
         modifier = modifier
             .sliderPressLight(pressLight, enabled)
@@ -772,7 +998,6 @@ fun RangeSlider(
                     Modifier
                         .onSizeChanged {
                             layoutWidth = it.width
-                            layoutHeight = it.height
                         }
                         .pointerInput(isRtl, valueRange) {
                             awaitPointerEventScope {
@@ -789,7 +1014,7 @@ fun RangeSlider(
                                         continue
                                     }
 
-                                    val capInset = currentLayoutHeight * TrackCapInsetRatio
+                                    val capInset = restingInsetPx
                                     val availableWidth = (currentLayoutWidth - 2f * capInset).coerceAtLeast(0f)
                                     val hitRadius = capInset
 
@@ -820,7 +1045,7 @@ fun RangeSlider(
                                 if (isDraggingStart) {
                                     lastDraggedIsStart = true
                                     val tentativeStartOffset = startDragOffset + dragAmount
-                                    val visualFractionStart = horizontalVisualFraction(tentativeStartOffset, layoutWidth, layoutHeight)
+                                    val visualFractionStart = horizontalVisualFraction(tentativeStartOffset, layoutWidth, restingInsetPx)
                                     val fractionForValue = if (isRtl) 1f - visualFractionStart else visualFractionStart
                                     val newStart = fractionToValueRange(fractionForValue).coerceAtMost(currentEndValue)
                                     val crossCondition = if (isRtl) dragAmount < 0f else dragAmount > 0f
@@ -833,7 +1058,7 @@ fun RangeSlider(
                                         hapticState.resetEnd(currentEndValue)
                                         hapticState.inheritEndKeyPoint()
 
-                                        val visualFractionEnd = horizontalVisualFraction(endDragOffset, layoutWidth, layoutHeight)
+                                        val visualFractionEnd = horizontalVisualFraction(endDragOffset, layoutWidth, restingInsetPx)
                                         val fractionForValueEnd = if (isRtl) 1f - visualFractionEnd else visualFractionEnd
                                         val newEnd = fractionToValueRange(fractionForValueEnd).coerceAtLeast(currentStartValue)
                                         currentEndValue = newEnd
@@ -862,7 +1087,7 @@ fun RangeSlider(
                                 } else if (isDraggingEnd) {
                                     lastDraggedIsStart = false
                                     val tentativeEndOffset = endDragOffset + dragAmount
-                                    val visualFractionEnd = horizontalVisualFraction(tentativeEndOffset, layoutWidth, layoutHeight)
+                                    val visualFractionEnd = horizontalVisualFraction(tentativeEndOffset, layoutWidth, restingInsetPx)
                                     val fractionForValue = if (isRtl) 1f - visualFractionEnd else visualFractionEnd
                                     val newEnd = fractionToValueRange(fractionForValue).coerceAtLeast(currentStartValue)
                                     val crossCondition = if (isRtl) dragAmount > 0f else dragAmount < 0f
@@ -874,7 +1099,7 @@ fun RangeSlider(
                                         hapticState.resetStart(currentStartValue)
                                         hapticState.inheritStartKeyPoint()
 
-                                        val visualFractionStart = horizontalVisualFraction(startDragOffset, layoutWidth, layoutHeight)
+                                        val visualFractionStart = horizontalVisualFraction(startDragOffset, layoutWidth, restingInsetPx)
                                         val fractionForValueStart = if (isRtl) 1f - visualFractionStart else visualFractionStart
                                         val newStart = fractionToValueRange(fractionForValueStart).coerceAtMost(currentEndValue)
                                         currentStartValue = newStart
@@ -912,7 +1137,7 @@ fun RangeSlider(
                             },
                             onDragStarted = { offset ->
                                 glitter.onDragStarted()
-                                val capInset = layoutHeight * TrackCapInsetRatio
+                                val capInset = restingInsetPx
                                 val availableWidth = (layoutWidth - 2f * capInset).coerceAtLeast(0f)
                                 val startFraction =
                                     (currentStartValue - valueRange.start) / (valueRange.endInclusive - valueRange.start)
@@ -1228,6 +1453,7 @@ private fun SliderTrack(
     keyPointForegroundColor: Color,
     valueProvider: () -> Float,
     valueRange: ClosedFloatingPointRange<Float>,
+    thumbFractionProvider: (() -> Float?)? = null,
     isDragging: Boolean,
     isVertical: Boolean,
     enabled: Boolean,
@@ -1259,7 +1485,10 @@ private fun SliderTrack(
         val barWidth = size.width
         val value = valueProvider()
         val thumbScale = thumbScaleProvider()
-        val fraction = (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
+        // COUISectionSeekBar draws the thumb and the filled track from `sectionThumbX`, which during
+        // a drag is the blended position rather than the value's own section.
+        val fraction = thumbFractionProvider?.invoke()
+            ?: ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start))
 
         if (isVertical) {
             val trackWidth = barWidth
@@ -1903,6 +2132,17 @@ private val ThumbPressedScale = 8f / 6f
 private val TrackGrowAnimationSpec = spring<Float>(dampingRatio = 1f, stiffness = 157.9f)
 
 /**
+ * COUISectionSeekBar SectionAnimationHandler: `DRAG_MOVE_RATIO` 0.4 — the share of the snapped
+ * offset the thumb animates through, with the remaining 0.6 taken straight from the finger.
+ */
+private const val SECTION_DRAG_MOVE_RATIO = 0.4f
+
+/**
+ * SectionAnimationHandler: `DRAG_SNAP_DURATION` 100ms with a cubic-bezier(0, 0, 0.25, 1) curve.
+ */
+private val SectionSnapSpec = tween<Float>(durationMillis = 100, easing = CubicBezierEasing(0f, 0f, 0.25f, 1f))
+
+/**
  * COUISeekBar thumb radius springs: `THUMB_SCALE_SPRING_RESPONSE` 0.5 with
  * `THUMB_SCALE_BOUNCE_ENLARGE` 0.3 when growing and `THUMB_SCALE_BOUNCE_SHRINK` 0 when shrinking.
  */
@@ -2115,12 +2355,13 @@ object SliderDefaults {
     const val FLING_VELOCITY_LIMIT = 100f
 
     /**
-     * How far a fling of one pixel per second travels, in seconds; derived from COUI's
-     * `DEFAULT_FLING_FREQUENCY` 2.8 and `DEFAULT_FLING_LINEAR_DAMPING` 15.
+     * How far a fling of one pixel per second travels, in seconds. COUI's
+     * `PhysicsAnimationHandler` decelerates the fling with `DEFAULT_FLING_LINEAR_DAMPING` 15, so a
+     * released thumb travels `velocity / 15` pixels before it stops.
      *
      * New in 1.2.0.
      */
-    const val FLING_PROJECTION_SECONDS = 0.35f
+    const val FLING_PROJECTION_SECONDS = 1f / 15f
 
     /**
      * The radius of the key points on the [Slider] and [RangeSlider].

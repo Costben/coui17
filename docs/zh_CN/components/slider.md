@@ -172,8 +172,8 @@ SliderDefaults 对象提供了 Slider 组件的默认配置。
 | MinHeight           | Dp                 | 20.dp                   | 滑块的默认高度     |
 | MinTouchHeight      | Dp                 | 36.dp                   | 触摸区最小高度（`couiSeekBarMinHeight`） |
 | PercentRange        | ClosedFloatingPointRange\<Float\> | 0f..100f  | COUI 的 0..100 进度量纲 |
-| FLING_VELOCITY_LIMIT | Float             | 100f                    | 超过该松手速度后继续惯性滑行 |
-| FLING_PROJECTION_SECONDS | Float          | 0.35f                   | 惯性投影系数（每秒每 px/s 的位移） |
+| FLING_VELOCITY_LIMIT | Float             | 100f                    | 超过该松手速度后继续惯性滑行；带 `steps` 的滑块改为吸附关键点 |
+| FLING_PROJECTION_SECONDS | Float          | 0.0667f（1/15）          | 惯性投影系数（每秒每 px/s 的位移） |
 | KeyPointRadius      | Dp                 | 3.0.dp                  | 关键点的默认半径   |
 | DefaultHapticEffect | SliderHapticEffect | SliderHapticEffect.Edge | 默认的触感反馈类型 |
 
