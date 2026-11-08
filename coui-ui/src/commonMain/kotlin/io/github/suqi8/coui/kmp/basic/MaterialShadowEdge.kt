@@ -177,12 +177,13 @@ class InnerShadowStyle(
  * `COUIMaterialStrokeEffect` is a table of `(strokeType, edgeAlpha, edgeWidthDp, edgeAngle,
  * shadowFadeIn, shadowFadeOut, shadowFadeScale)` tuples; the entries needed here are
  * [FrameworkCapsule1Light] / [FrameworkCapsule1Dark] (the search capsule,
- * `TYPE_FRAMEWORK_CAPSULE_1`), [FrameworkCapsule5Light] / [FrameworkCapsule5Dark] (the floating
- * toolbar, `TYPE_FRAMEWORK_CAPSULE_5`), [FrameworkCapsule7] (the in-window search capsule,
- * `TYPE_FRAMEWORK_CAPSULE_7`), [FrameworkCapsule8Light] / [FrameworkCapsule8Dark] (the capsule a
- * toolbar resolves in-window, `TYPE_FRAMEWORK_CAPSULE_8`) and [FrameworkCapsule13Light] /
- * [FrameworkCapsule13Dark] (the runtime-shader `COUIShadowEdgeDrawable` path,
- * `TYPE_FRAMEWORK_CAPSULE_13`).
+ * `TYPE_FRAMEWORK_CAPSULE_1`), `TYPE_FRAMEWORK_CAPSULE_2` (the rim of a checked `COUIChipTab`),
+ * [FrameworkCapsule5Light] /
+ * [FrameworkCapsule5Dark] (the floating toolbar, `TYPE_FRAMEWORK_CAPSULE_5`), [FrameworkCapsule7]
+ * (the in-window search capsule, `TYPE_FRAMEWORK_CAPSULE_7`), [FrameworkCapsule8Light] /
+ * [FrameworkCapsule8Dark] (the capsule a toolbar resolves in-window, `TYPE_FRAMEWORK_CAPSULE_8`) and
+ * [FrameworkCapsule13Light] / [FrameworkCapsule13Dark] (the runtime-shader `COUIShadowEdgeDrawable`
+ * path, `TYPE_FRAMEWORK_CAPSULE_13`).
  *
  * The presets are split by night mode; `getStrokeParamsByType` resolves the pair by
  * `isNightMode`, and `getEdgeWidth(context)` converts [edgeWidth] from dp to px before it reaches

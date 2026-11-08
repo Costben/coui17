@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -39,6 +41,10 @@ internal data class CausticShadowProfile(
         val Toolbar = CausticShadowProfile(4.899994.dp, 9.22998.dp, roundPixels = true)
         val Bar = CausticShadowProfile(4.899994.dp, 10.399994.dp)
         val Accessory = CausticShadowProfile(11.199982.dp, 20.dp)
+
+        // COUIChipTab.setCausticShadow: coui_caustic_layout_b_level1 / coui_caustic_layout_sdf_level1,
+        // both read with getDimensionPixelOffset.
+        val ChipTab = CausticShadowProfile(4.299988.dp, 9.22998.dp)
     }
 }
 
@@ -93,31 +99,79 @@ private fun CausticShadowPaint(particles: List<CausticShadowParticle>, color: Co
         Canvas(modifier) {
             if (shader != null) {
                 particles.forEach { (particle, profile) ->
-                    val half = Size(particle.width.toPx() / 2f, particle.height.toPx() / 2f)
-                    if (half.minDimension > 0f && particle.alpha > 0f) {
-                        val center = Offset(particle.centerX.toPx(), particle.centerY.toPx())
-                        val bottom = profile.pixels(profile.bottomOffset.toPx())
-                        shader.setFloatUniform("in_half", half.width, half.height)
-                        // Native Device::drawCausticShadow takes the magnitude of the RRect radius pair.
-                        shader.setFloatUniform("in_corner", particle.cornerRadius.toPx() * 1.41421356f)
-                        shader.setFloatUniform("in_bottom", bottom)
-                        shader.setFloatUniform("in_sdf", profile.pixels(profile.sdfWidth.toPx()))
-                        shader.setFloatUniform("in_color", color.red, color.green, color.blue, color.alpha * particle.alpha)
-                        shader.setFloatUniform("in_background", background.red, background.green, background.blue)
-                        withTransform({
-                            translate(center.x, center.y)
-                            scale(particle.scaleX, particle.scaleY, pivot = Offset.Zero)
-                            translate(-half.width, -half.height)
-                        }) {
-                            // Layout offsets define the native drawRect. The SDF reaches zero at its bounds.
-                            drawRect(shader.asBrush(), size = Size(half.width * 2f, half.height * 2f + bottom), blendMode = BlendMode.Plus)
-                        }
-                    }
+                    drawCausticShadowParticle(shader, particle, profile, color, background)
                 }
             }
         }
     }
     if (renderer == null) fallback() else renderer.Draw(particles, color, modifier, fallback)
+}
+
+/** Draws one particle of the caustic light with [shader], an instance of [CAUSTIC_SHADOW_SHADER]. */
+private fun DrawScope.drawCausticShadowParticle(
+    shader: RuntimeShader,
+    particle: MetaBallParticle,
+    profile: CausticShadowProfile,
+    color: Color,
+    background: Color,
+) {
+    val half = Size(particle.width.toPx() / 2f, particle.height.toPx() / 2f)
+    if (half.minDimension <= 0f || particle.alpha <= 0f) return
+    val center = Offset(particle.centerX.toPx(), particle.centerY.toPx())
+    val bottom = profile.pixels(profile.bottomOffset.toPx())
+    shader.setFloatUniform("in_half", half.width, half.height)
+    // Native Device::drawCausticShadow takes the magnitude of the RRect radius pair.
+    shader.setFloatUniform("in_corner", particle.cornerRadius.toPx() * 1.41421356f)
+    shader.setFloatUniform("in_bottom", bottom)
+    shader.setFloatUniform("in_sdf", profile.pixels(profile.sdfWidth.toPx()))
+    shader.setFloatUniform("in_color", color.red, color.green, color.blue, color.alpha * particle.alpha)
+    shader.setFloatUniform("in_background", background.red, background.green, background.blue)
+    withTransform({
+        translate(center.x, center.y)
+        scale(particle.scaleX, particle.scaleY, pivot = Offset.Zero)
+        translate(-half.width, -half.height)
+    }) {
+        // Layout offsets define the native drawRect. The SDF reaches zero at its bounds.
+        drawRect(shader.asBrush(), size = Size(half.width * 2f, half.height * 2f + bottom), blendMode = BlendMode.Plus)
+    }
+}
+
+/**
+ * Draws the caustic light of a single capsule behind this node, always through the portable shader.
+ *
+ * For a control that sits inside a scrolled, faded row, where the platform-view renderer of
+ * [MaterialCausticShadow] cannot follow the scroll offset and the fade layer. The light spills
+ * [CausticShadowProfile.bottomOffset] below the node, so no ancestor may clip that band.
+ *
+ * @param color The caustic light colour.
+ * @param profile The native layout and SDF width of the light.
+ * @param cornerRadius The corner radius of the node's outline.
+ * @param alpha Read in the draw phase; scales [color]'s alpha, and nothing is drawn at 0.
+ */
+@Composable
+internal fun Modifier.causticShadowLight(
+    color: Color,
+    profile: CausticShadowProfile,
+    cornerRadius: Dp,
+    alpha: () -> Float,
+): Modifier {
+    val background = COUITheme.colorScheme.background
+    val shader = remember {
+        if (isRuntimeShaderSupported()) RuntimeShader(CAUSTIC_SHADOW_SHADER) else null
+    } ?: return this
+    return drawBehind {
+        val particleAlpha = alpha()
+        if (particleAlpha <= 0f) return@drawBehind
+        val particle = MetaBallParticle(
+            centerX = (size.width / 2f).toDp(),
+            centerY = (size.height / 2f).toDp(),
+            width = size.width.toDp(),
+            height = size.height.toDp(),
+            cornerRadius = cornerRadius,
+            alpha = particleAlpha,
+        )
+        drawCausticShadowParticle(shader, particle, profile, color, background)
+    }
 }
 
 /**
