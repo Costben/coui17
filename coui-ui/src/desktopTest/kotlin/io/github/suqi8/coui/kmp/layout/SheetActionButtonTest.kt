@@ -7,6 +7,8 @@ package io.github.suqi8.coui.kmp.layout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -20,6 +22,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
@@ -158,6 +161,52 @@ class SheetActionButtonTest {
         val column = (centreY - 78..centreY - 40).map { y -> lum(centreX, y) }
         println("RIM COLUMN $column")
         assertTrue(column.max() > column.min(), "the circular rim resolves above the interior: $column")
+    }
+
+    @Test
+    fun theBottomSheetHeaderAlignsButtonsTitleAndCardsAt16DpAndPlacesTitleBelowToolbar() = runSkikoComposeUiTest(
+        size = Size(WIDTH_PX, 400f),
+        density = Density(1f),
+    ) {
+        setContent {
+            COUITheme {
+                BottomSheetContentLayout(
+                    show = true,
+                    backgroundColor = Color.White,
+                    cornerRadius = BottomSheetDefaults.cornerRadius,
+                    sheetMaxWidth = 10_000.dp,
+                    outsideMargin = BottomSheetDefaults.outsideMargin,
+                    insideMargin = BottomSheetDefaults.insideMargin,
+                    dragHandleColor = Color.Gray,
+                    popupHost = { visible, content -> if (visible) content() },
+                    topInset = 0.dp,
+                    title = "Danmaku Settings",
+                    endAction = {
+                        SheetActionButton(onClick = {}, modifier = Modifier.testTag("endBtn")) {
+                            Box(Modifier.size(24.dp))
+                        }
+                    },
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .testTag("card"),
+                    )
+                }
+            }
+        }
+        waitForIdle()
+
+        val card = onNodeWithTag("card").getBoundsInRoot()
+        val endBtn = onNodeWithTag("endBtn").getBoundsInRoot()
+        val titleNode = onNodeWithText("Danmaku Settings").getBoundsInRoot()
+
+        assertEquals(16.dp, card.left)
+        assertEquals((WIDTH_PX - 16).dp, card.right)
+        assertEquals(card.right, endBtn.right)
+        assertEquals(card.left, titleNode.left)
+        assertTrue(titleNode.top >= endBtn.bottom)
     }
 
     private companion object {

@@ -18,6 +18,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.captionBar
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -53,10 +55,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -69,15 +80,19 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -94,6 +109,9 @@ import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.shader.RuntimeShader
+import io.github.suqi8.coui.kmp.shader.asBrush
+import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
@@ -106,6 +124,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.abs
 
 /**
  * Internal shared layout logic for `OverlayBottomSheet` and `WindowBottomSheet`.
@@ -125,6 +144,9 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param startAction Optional [Composable] to display on the start side of the title.
  * @param endAction Optional [Composable] to display on the end side of the title.
  * @param enableWindowDim Whether to dim the window behind the bottom sheet.
+ * @param showDragHandle Whether to draw the drag handle bar at the top of the sheet. ColorOS 17
+ *   panels hide it by default (`false`), keeping a slim transparent strip so the panel stays
+ *   draggable while toolbar actions sit 15–16dp below the top edge.
  * @param onDismissRequest The callback when the user tries to dismiss the bottom sheet.
  * @param onDismissFinished Invoked when the hide animation completes; not invoked if the hide
  *   is cancelled mid-flight (e.g., by [show] toggling back to true).
@@ -154,7 +176,7 @@ internal fun BottomSheetContentLayout(
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
     enableWindowDim: Boolean = true,
-    showDragHandle: Boolean = true,
+    showDragHandle: Boolean = false,
     onDismissRequest: (() -> Unit)? = null,
     onDismissFinished: (() -> Unit)? = null,
     defaultWindowInsetsPadding: Boolean = true,
@@ -374,7 +396,6 @@ internal fun BottomSheetContent(
     insideMargin: DpSize,
     defaultWindowInsetsPadding: Boolean,
     dragHandleColor: Color,
-    showDragHandle: Boolean,
     allowDismiss: Boolean,
     sheetHeightPx: MutableIntState,
     dragOffsetY: Animatable<Float, *>,
@@ -382,6 +403,7 @@ internal fun BottomSheetContent(
     dragSnapChannel: Channel<Float>,
     onDismissRequest: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    showDragHandle: Boolean = false,
     topInset: Dp? = null,
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     enableNestedScroll: Boolean = true,
@@ -605,6 +627,7 @@ internal fun BottomSheetContent(
         onSettle = performSettle,
         onUpdateAlpha = updateDimAlpha,
         modifier = modifier,
+        onDismissRequest = onDismissRequest,
         content = content,
     )
 }
@@ -636,6 +659,7 @@ private fun BottomSheetColumn(
     onSettle: (velocity: Float) -> Unit,
     onUpdateAlpha: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    onDismissRequest: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -741,11 +765,14 @@ private fun BottomSheetColumn(
                 onUpdateAlpha = onUpdateAlpha,
             )
 
-            TitleAndActionsRow(
-                title = title,
-                startAction = startAction,
-                endAction = endAction,
-            )
+            if (title != null || startAction != null || endAction != null) {
+                TitleAndActionsRow(
+                    title = title,
+                    startAction = startAction,
+                    endAction = endAction,
+                    onDismissRequest = onDismissRequest,
+                )
+            }
 
             content()
         }
@@ -976,40 +1003,53 @@ private fun TitleAndActionsRow(
     title: String?,
     startAction: (@Composable () -> Unit)?,
     endAction: (@Composable () -> Unit)?,
+    onDismissRequest: (() -> Unit)? = null,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            // `coui_list_dialog_toolbar_height` = 50dp, the height of the `COUIToolbar` a COUI
-            // panel puts its title and actions in. A 40dp action button then leaves 5dp above and
-            // below it, and the row no longer grows with whatever the caller drops in.
-            .heightIn(min = BottomSheetDefaults.HeaderHeight)
-            .padding(horizontal = BottomSheetDefaults.HeaderHorizontalPadding),
-    ) {
-        // Start action (e.g. close button)
-        Box(modifier = Modifier.align(Alignment.CenterStart)) {
-            startAction?.invoke()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                // `coui_list_dialog_toolbar_height` = 50dp, the height of the `COUIToolbar` a COUI
+                // panel puts its title and actions in. A 40dp action button then leaves 5dp above and
+                // below it, and the row no longer grows with whatever the caller drops in.
+                .heightIn(min = BottomSheetDefaults.HeaderHeight),
+        ) {
+            // Start action (e.g. close button or default close capsule)
+            Box(modifier = Modifier.align(Alignment.CenterStart)) {
+                if (startAction != null) {
+                    startAction()
+                } else {
+                    SheetCloseCapsule(onClick = onDismissRequest ?: {})
+                }
+            }
+
+            // End action (e.g. submit button)
+            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
+                endAction?.invoke()
+            }
         }
 
-        // Title text
-        title?.let {
-            Text(
-                text = it,
-                modifier = Modifier.align(Alignment.Center),
-                // TextAppearance.COUI.AppCompatSupport.Toolbar.Title.Panel: sans-serif-medium
-                // with `android:textFontWeight` 550, capped at two lines.
-                fontSize = COUITheme.textStyles.title4.fontSize,
-                fontWeight = FontWeight(550),
-                textAlign = TextAlign.Center,
-                color = COUITheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        // End action (e.g. submit button)
-        Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-            endAction?.invoke()
+        if (title != null) {
+            Spacer(Modifier.height(BottomSheetDefaults.TitleTopGap))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = BottomSheetDefaults.TitleHeight),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = title,
+                    modifier = Modifier.wrapContentHeight(unbounded = true),
+                    style = TrimmedTitleLineHeightStyle,
+                    fontSize = 28.sp,
+                    lineHeight = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = COUITheme.colorScheme.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.height(BottomSheetDefaults.TitleBottomGap))
         }
     }
 }
@@ -1221,9 +1261,33 @@ object BottomSheetDefaults {
     val outsideMargin = DpSize(0.dp, 0.dp)
 
     /**
-     * The default margin inside the bottom sheet.
+     * The default margin inside the bottom sheet: 16dp on ColorOS 17.
      */
-    val insideMargin = DpSize(24.dp, 0.dp)
+    val insideMargin = DpSize(16.dp, 0.dp)
+
+    /**
+     * Gap between the toolbar and the title: 80px = 3dp.
+     */
+    val TitleTopGap = 3.dp
+
+    /**
+     * Ink height of the 28sp title: 105px = 27dp.
+     */
+    val TitleHeight = 27.dp
+
+    /**
+     * Gap below the title: 29px = 12dp.
+     */
+    val TitleBottomGap = 12.dp
+
+    /**
+     * The toolbar button rim: `MaterialStrokeParams(edgeAlpha = 0.5f, edgeWidth = 2.dp, shadowFadeIn = 0.03f)`.
+     */
+    val ToolbarButtonStroke: MaterialStrokeParams = MaterialStrokeParams(
+        edgeAlpha = 0.5f,
+        edgeWidth = 2.dp,
+        shadowFadeIn = 0.03f,
+    )
 
     /**
      * The visible padding the panel adds under its content, on top of [insideMargin]: none.
@@ -1300,18 +1364,7 @@ object BottomSheetDefaults {
 }
 
 /**
- * A header action button of a COUI panel, i.e. the tick / cross pair at the two ends of the title.
- *
- * The native item is `COUIActionMenuItemView` inside a `COUIToolbar`: a 40dp square with **no
- * resting fill**, a 24dp icon, and a circular press wash (`?couiColorPress`) of radius
- * `min(w, h) / 2` driven by a `response 0.3 / bounce 0` spring. The spot light and the 1.9dp
- * circular stroke that the same delegate owns are gated behind
- * `system_material_blur_enable && com.oplus.appcompat.texture_effect.Enable` and are off on a stock
- * device, so they are not painted here.
- *
- * Use it for [OverlayBottomSheet]'s `startAction` / `endAction` slots instead of a bare
- * [IconButton]: a plain icon button draws a rounded-square ripple and a resting surface, neither of
- * which the panel header has.
+ * A header action button of a COUI panel, i.e. the tick / cross / icon button in the toolbar.
  *
  * @param onClick Invoked when the button is clicked.
  * @param modifier The modifier to be applied to the button.
@@ -1325,6 +1378,89 @@ fun SheetActionButton(
     enabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    SheetToolbarButtonSurface(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+    ) {
+        Box(
+            modifier = Modifier.size(BottomSheetDefaults.ActionButtonSize),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * The capsule close button in the panel toolbar: 40dp height, full radius.
+ *
+ * @param onClick Invoked when the button is clicked.
+ * @param modifier The modifier to be applied to the button.
+ * @param text The button label, defaults to `"关闭"`.
+ * @param enabled Whether the button accepts input.
+ */
+@Composable
+fun SheetCloseCapsule(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    text: String = "关闭",
+    enabled: Boolean = true,
+) {
+    SheetToolbarButtonSurface(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+    ) {
+        Box(
+            modifier = Modifier
+                .height(BottomSheetDefaults.ActionButtonSize)
+                // 16dp a side keeps the capsule at the native 60dp for a two-character label.
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = text,
+                style = TrimmedTitleLineHeightStyle,
+                fontSize = 14.sp,
+                lineHeight = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = COUITheme.colorScheme.onBackground,
+            )
+        }
+    }
+}
+
+/**
+ * The toolbar button surface shared by [SheetActionButton] and [SheetCloseCapsule], with the
+ * ColorOS 17 panel button dress: circular/capsule press wash, material stroke rim, and dithered
+ * halo shadow.
+ */
+@Composable
+internal fun SheetToolbarButtonSurface(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val fill = if (isDark) Color(0x20FFFFFF) else Color.Transparent
+    val halo = if (isDark) {
+        Shadow(
+            radius = 16.dp,
+            color = Color.White,
+            offset = DpOffset(0.dp, 6.dp),
+            alpha = 0.05f,
+        )
+    } else {
+        Shadow(
+            radius = 16.dp,
+            color = Color.Black,
+            offset = DpOffset(0.dp, 6.dp),
+            alpha = 0.12f,
+        )
+    }
+    val haloShader = rememberToolbarHaloShader()
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val wash = remember { Animatable(0f) }
@@ -1335,48 +1471,129 @@ fun SheetActionButton(
         )
     }
     val pressColor = BottomSheetDefaults.actionButtonPressColor()
-    val containerColor = BottomSheetDefaults.actionButtonContainerColor()
     val currentOnClick by rememberUpdatedState(onClick)
-    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    Box(
-        modifier = modifier
-            .size(BottomSheetDefaults.ActionButtonSize)
-            // `min(w, h) / 2` on a square: the wash is a circle, not a rounded rect.
-            .squircleSurface(
-                color = Color.Transparent,
-                cornerRadius = BottomSheetDefaults.ActionButtonSize / 2,
-            )
-            .drawBehind {
-                drawCircle(color = containerColor, radius = size.minDimension / 2f)
-                if (wash.value > 0f) {
-                    drawCircle(color = pressColor, radius = size.minDimension / 2f, alpha = wash.value)
+
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .then(
+                    if (haloShader != null) {
+                        Modifier.ditheredHalo(haloShader, halo)
+                    } else {
+                        Modifier
+                            .drawWithContent {
+                                val capsule = Path().apply {
+                                    addOutline(CircleShape.createOutline(size, layoutDirection, this@drawWithContent))
+                                }
+                                clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
+                            }
+                            .dropShadow(CircleShape, halo)
+                    },
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(fill)
+                .drawBehind {
+                    if (wash.value > 0f) {
+                        drawRect(color = pressColor.copy(alpha = pressColor.alpha * wash.value))
+                    }
                 }
-            }
-            // `TYPE_FRAMEWORK_CIRCLE_1`: `ToolbarMaterialEffectDelegate` gives the item a circular
-            // stroke at 1.9dp / alpha 0.2 (0.6 at night) with `EDGE_STYLE_1` + `SHADOW_STYLE_1`,
-            // `cornerType` 2 and weight 2.0. On this device `system_material_stroke_enable` is 1, so
-            // the real header icons do carry it.
-            .materialShadowEdge(
-                stroke = MaterialStrokeParams.frameworkCircle1(isDark),
-                cornerRadius = BottomSheetDefaults.ActionButtonSize / 2,
-                cornerWeight = 2f,
-                edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
-                shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
-            )
-            .then(
-                if (enabled) {
-                    Modifier.clickable(
-                        role = Role.Button,
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = { currentOnClick() },
-                    )
-                } else {
-                    Modifier
-                },
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
+                .materialShadowEdge(
+                    stroke = BottomSheetDefaults.ToolbarButtonStroke,
+                    edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
+                    shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
+                )
+                .then(
+                    if (enabled) {
+                        Modifier.clickable(
+                            role = Role.Button,
+                            interactionSource = interactionSource,
+                            indication = null,
+                            onClick = { currentOnClick() },
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
     }
 }
+
+@Composable
+private fun rememberToolbarHaloShader(): RuntimeShader? {
+    if (!isRuntimeShaderSupported()) return null
+    return remember { runCatching { RuntimeShader(TOOLBAR_HALO_SHADER) }.getOrNull() }
+}
+
+/** Skia's blur-radius-to-sigma factor, `1 / sqrt(3)`. */
+private const val BLUR_RADIUS_TO_SIGMA = 0.57735f
+
+private const val TOOLBAR_HALO_SHADER = """
+    uniform float2 size;
+    uniform float2 offset;
+    uniform float sigma;
+    uniform float aa;
+    uniform float4 color;
+
+    float sdCapsule(float2 p, float2 halfSize) {
+        float r = min(halfSize.x, halfSize.y);
+        float2 q = abs(p) - halfSize + r;
+        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+    }
+
+    float erfApprox(float x) {
+        float x2 = x * x;
+        float t = 0.147 * x2;
+        float v = sqrt(1.0 - exp(-x2 * (1.2732395 + t) / (1.0 + t)));
+        return x < 0.0 ? -v : v;
+    }
+
+    float ign(float2 p) {
+        return fract(52.9829189 * fract(dot(p, float2(0.06711056, 0.00583715))));
+    }
+
+    half4 main(float2 xy) {
+        float2 halfSize = size * 0.5;
+        float shadow = 0.5 - 0.5 * erfApprox(sdCapsule(xy - halfSize - offset, halfSize) / (sigma * 1.41421356));
+        float outside = smoothstep(-aa, aa, sdCapsule(xy - halfSize, halfSize));
+        float a = shadow * outside * color.a;
+        // Dither only where the halo is, so the noise never lifts the panel around it.
+        a += (ign(xy) - 0.5) * (2.0 / 255.0) * step(0.5 / 255.0, a);
+        a = clamp(a, 0.0, 1.0);
+        return half4(half3(color.rgb) * a, a);
+    }
+"""
+
+private fun Modifier.ditheredHalo(shader: RuntimeShader, halo: Shadow): Modifier = drawWithCache {
+    val sigma = halo.radius.toPx() * BLUR_RADIUS_TO_SIGMA
+    val offsetX = halo.offset.x.toPx()
+    val offsetY = halo.offset.y.toPx()
+    // Three sigma past the furthest edge, where the Gaussian is below 0.2% of its peak.
+    val extent = 3f * sigma + maxOf(abs(offsetX), abs(offsetY))
+    shader.setFloatUniform("size", size.width, size.height)
+    shader.setFloatUniform("offset", offsetX, offsetY)
+    shader.setFloatUniform("sigma", sigma)
+    shader.setFloatUniform("aa", 1f)
+    shader.setFloatUniform("color", halo.color.red, halo.color.green, halo.color.blue, halo.alpha)
+    val brush = shader.asBrush()
+    onDrawBehind {
+        drawRect(
+            brush = brush,
+            topLeft = Offset(-extent, -extent),
+            size = Size(size.width + 2f * extent, size.height + 2f * extent),
+        )
+    }
+}
+
+private val TrimmedTitleLineHeightStyle: TextStyle = TextStyle(
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both,
+    ),
+)
