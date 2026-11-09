@@ -177,9 +177,9 @@ fun FloatingButton(
         }
         FloatingActionButton(
             onClick = { if (enabled) onExpandedChange(!expanded) },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .graphicsLayer { rotationZ = rotation },
+            // The icon turns, not the disc: mMainFloatingButton is the image inside the wrapper
+            // that carries the material, so the rim and the downward shadow stay put.
+            modifier = Modifier.align(Alignment.BottomEnd),
             shape = CircleShape,
             containerColor = if (enabled) colors.containerColor else colors.disabledContainerColor,
             shadowElevation = if (expanded) {
@@ -190,12 +190,16 @@ fun FloatingButton(
             minWidth = FloatingButtonDefaults.ItemSize,
             minHeight = FloatingButtonDefaults.ItemSize,
             backdrop = backdrop,
+            touchMotionEnabled = enabled,
+            spotLightEnabled = enabled,
         ) {
             Icon(
                 imageVector = mainIcon,
                 contentDescription = null,
                 tint = if (enabled) colors.contentColor else colors.labelDisabledTextColor,
-                modifier = Modifier.size(FloatingButtonDefaults.IconSize),
+                modifier = Modifier
+                    .size(FloatingButtonDefaults.IconSize)
+                    .graphicsLayer { rotationZ = rotation },
             )
         }
     }
@@ -587,11 +591,15 @@ private fun FloatingButtonAction(
             } else {
                 colors.disabledContainerColor
             },
-            // style/FloatingButton.Icon sets fabNeedElevation=false for the child buttons.
+            // style/FloatingButton.Icon sets fabNeedElevation=false for the child buttons, which
+            // also skips the caustic light of setOuterShadowEffect.
             shadowElevation = 0.dp,
             minWidth = FloatingButtonDefaults.ItemSize,
             minHeight = FloatingButtonDefaults.ItemSize,
             backdrop = backdrop,
+            touchMotionEnabled = interactive,
+            spotLightEnabled = enabled && item.enabled,
+            causticShadowEnabled = false,
         ) {
             Icon(
                 imageVector = item.icon,

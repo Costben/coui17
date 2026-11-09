@@ -208,6 +208,26 @@ object SpotLightDefaults {
         endIntensity = 0.15f,
     )
 
+    /**
+     * `COUISpotLightEffect.TYPE_OPAQUE_SMALL_1_LIGHT` — the light `FloatingButtonWrapper` puts on
+     * the floating action button.
+     */
+    val OpaqueSmallParams1Light: SpotLightParams = SpotLightParams(
+        blendMode = BlendMode.Overlay,
+        startIntensity = 0f,
+        endIntensity = 0.6f,
+        startRadius = 100f,
+        endRadius = 500f,
+        lightHeight = 200f,
+        ambientStrength = 0.4f,
+        diffuseStrength = 0.4f,
+        ditherN = 0f,
+        noise = 0.08f,
+    )
+
+    /** `COUISpotLightEffect.TYPE_OPAQUE_SMALL_1_DARK`: [OpaqueSmallParams1Light] at 0.5 intensity. */
+    val OpaqueSmallParams1Dark: SpotLightParams = OpaqueSmallParams1Light.copy(endIntensity = 0.5f)
+
     /** `COUISpotLightEffect.CIRCLE_PARAMS_1_LIGHT` — a circular light, added on top. */
     val CircleParams1Light: SpotLightParams = SpotLightParams(
         blendMode = BlendMode.Plus,
@@ -361,6 +381,9 @@ object SpotLightDefaults {
 
     /** Resolves `CIRCLE_PARAMS_1_LIGHT` / `_DARK` by night mode. */
     fun circleParams1(isDark: Boolean): SpotLightParams = if (isDark) CircleParams1Dark else CircleParams1Light
+
+    /** The `TYPE_OPAQUE_SMALL_1` preset for [isDark]. */
+    fun opaqueSmallParams1(isDark: Boolean): SpotLightParams = if (isDark) OpaqueSmallParams1Dark else OpaqueSmallParams1Light
 
     /** Resolves `ROUNDRECT_PARAMS_1_LIGHT` / `_DARK` by night mode. */
     fun roundRectParams1(isDark: Boolean): SpotLightParams = if (isDark) RoundRectParams1Dark else RoundRectParams1Light

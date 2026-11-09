@@ -459,6 +459,7 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Version" to "版本",
     "Build number" to "版本号",
     "New folder" to "新建文件夹",
+    "Over a wallpaper: blur, rim, spotlight and drag" to "壁纸之上：模糊、描边、聚光与拖动",
     "Add to favorites" to "添加到收藏",
     "Nothing picked yet" to "尚未选择",
     "Alarm set" to "闹钟已设置",

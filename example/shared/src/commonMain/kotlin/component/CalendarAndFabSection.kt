@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.CalendarView
@@ -26,13 +31,20 @@ import io.github.suqi8.coui.kmp.basic.ExpandableList
 import io.github.suqi8.coui.kmp.basic.FloatingButton
 import io.github.suqi8.coui.kmp.basic.FloatingButtonItem
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
+import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Add
 import io.github.suqi8.coui.kmp.icon.extended.AddFolder
 import io.github.suqi8.coui.kmp.icon.extended.Favorites
 import io.github.suqi8.coui.kmp.icon.extended.Tune
+import io.github.suqi8.coui.kmp.shared.generated.resources.Res
+import io.github.suqi8.coui.kmp.shared.generated.resources.blur_test_bg
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import org.jetbrains.compose.resources.painterResource
+import utils.WallpaperState
+import utils.rememberBlurBackdrop
 
 /** Renders the "CalendarView" gallery section content: a card wrapping the calendar demo. */
 @Composable
@@ -49,12 +61,16 @@ fun CalendarViewDemoContent() {
 /** Renders the "FloatingButton" gallery section content: a card wrapping the floating button demo. */
 @Composable
 fun FloatingButtonDemoContent() {
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
-        FloatingButtonDemo()
+    Column {
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+        ) {
+            FloatingButtonDemo()
+        }
+        SmallTitle(str("Over a wallpaper: blur, rim, spotlight and drag"))
+        FloatingButtonOverWallpaperDemo()
     }
 }
 
@@ -135,6 +151,57 @@ private fun FloatingButtonDemo() {
                 false
             },
             mainIcon = COUIIcons.Add,
+        )
+    }
+}
+
+/**
+ * The same button over a picture, so the `TYPE_FRAMEWORK_FAB` blur, the rim, the press light and
+ * the drag deformation are all visible.
+ */
+@Composable
+private fun FloatingButtonOverWallpaperDemo() {
+    var expanded by remember { mutableStateOf(false) }
+    val backdrop = rememberBlurBackdrop()
+    val items = listOf(
+        FloatingButtonItem(icon = COUIIcons.AddFolder, label = str("New folder")),
+        FloatingButtonItem(icon = COUIIcons.Favorites, label = str("Add to favorites")),
+    )
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp)
+            .fillMaxWidth()
+            .height(360.dp)
+            .clip(RoundedCornerShape(16.dp)),
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier),
+        ) {
+            WallpaperState.bitmap?.let { wallpaper ->
+                Image(
+                    bitmap = wallpaper,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } ?: Image(
+                painter = painterResource(Res.drawable.blur_test_bg),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+        FloatingButton(
+            items = items,
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+            onItemClick = { false },
+            mainIcon = COUIIcons.Add,
+            modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
+            backdrop = backdrop,
         )
     }
 }

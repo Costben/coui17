@@ -1570,7 +1570,12 @@ public final class io/github/suqi8/coui/kmp/basic/FloatingActionButtonDefaults {
 	public static final field NATIVE_BLUR_RADIUS_PX F
 	public static final field PRESS_DURATION I
 	public static final field RELEASE_DURATION I
+	public final fun causticColor-l2rxGTc (J)J
 	public final fun fabBlurColors-DxMtmZc (JZ)Ljava/util/List;
+	public final fun getCausticShadowColor-0d7_KjU ()J
+	public final fun getCausticShadowElevation-D9Ej5fM ()F
+	public final fun getContentColor-0d7_KjU ()J
+	public final fun getEdgeStroke ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getMinWidth-D9Ej5fM ()F
 	public final fun getMoveEase ()Landroidx/compose/animation/core/Easing;
@@ -1580,7 +1585,8 @@ public final class io/github/suqi8/coui/kmp/basic/FloatingActionButtonDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/FloatingActionButtonKt {
-	public static final fun FloatingActionButton-I8hh7zM (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;JFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun FloatingActionButton-I8hh7zM (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;JFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun FloatingActionButton-ScGWyC4 (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;JFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lio/github/suqi8/coui/kmp/blur/Backdrop;ZZLio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;ZJLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun FloatingActionButton-SoFnis4 (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/Shape;JFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -4327,6 +4333,8 @@ public final class io/github/suqi8/coui/kmp/basic/SpotLightDefaults {
 	public final fun getOpaqueMedium1Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getOpaqueMedium2Dark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getOpaqueMedium2Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
+	public final fun getOpaqueSmallParams1Dark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
+	public final fun getOpaqueSmallParams1Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getRoundRectParams1Dark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getRoundRectParams1Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun getSwitchParamsDark ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
@@ -4335,6 +4343,7 @@ public final class io/github/suqi8/coui/kmp/basic/SpotLightDefaults {
 	public final fun getTranslucentLarge1Light ()Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun opaqueMedium1 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun opaqueMedium2 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
+	public final fun opaqueSmallParams1 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun roundRectParams1 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun switchParams (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
 	public final fun translucentLarge1 (Z)Lio/github/suqi8/coui/kmp/basic/SpotLightParams;
