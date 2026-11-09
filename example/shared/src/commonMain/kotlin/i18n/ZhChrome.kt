@@ -35,6 +35,7 @@ internal val zhChrome: Map<String, String> = mapOf(
     "RadioButton" to "单选按钮",
     "Switch" to "开关",
     "Arrow" to "箭头",
+    "Multi-line icon rows" to "多行文字图标行",
     "Dialog" to "对话框",
     "GuideDialog" to "引导对话框",
     "PageIndicator" to "页面指示器",

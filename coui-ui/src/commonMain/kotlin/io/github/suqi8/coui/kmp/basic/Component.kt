@@ -442,8 +442,6 @@ fun BasicComponent(
                 }
 
                 layout(width = maxWidth, height = layoutHeight) {
-                    val startTop = topAnchoredStartTop
-                        ?: ((rowHeight - startBlockHeight).coerceAtLeast(0) / 2 + iconMarginPx)
                     // With a bottom action the text keeps only its top inset instead of being
                     // centred in the row, so the action starts right below it.
                     val centerTop = if (bottomAction == null) {
@@ -451,6 +449,11 @@ fun BasicComponent(
                     } else {
                         topInsidePaddingPx
                     }
+                    // [preferenceIconTopPx] measures from the top of the text block, so the anchored
+                    // icon moves with the block; placing it from the row's top edge lifted it by the
+                    // block's top inset, above the first line of a three-line row.
+                    val startTop = topAnchoredStartTop?.let { it + centerTop }
+                        ?: ((rowHeight - startBlockHeight).coerceAtLeast(0) / 2 + iconMarginPx)
                     val endTop = (centerTop + (centerPlaceable.height - endHeight) / 2).coerceAtLeast(0)
 
                     startPlaceable?.placeRelative(0, startTop)

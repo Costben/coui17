@@ -10,6 +10,14 @@ package i18n
  * keep meeting English halfway down every card.
  */
 internal val zhComponents: Map<String, String> = mapOf(
+    "This summary is long on purpose, so it wraps onto a second and a third line and the leading icon has to follow the first two lines" to
+        "这段摘要故意写得很长，好让它换到第二行和第三行，行首图标必须跟着前两行文字走",
+    "Reference: one and two lines" to "对照：一行与两行",
+    "Three or more lines" to "三行及以上",
+    "One line" to "一行",
+    "Two lines" to "两行",
+    "Short summary" to "简短摘要",
+    "On" to "开启",
     // SlideView demo
     "Custom reminders (tap Delete)" to "自定义提醒（点删除）",
     "Recordings (slide far to delete)" to "录音（滑到底直接删除）",

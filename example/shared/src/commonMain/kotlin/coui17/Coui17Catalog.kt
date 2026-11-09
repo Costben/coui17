@@ -46,6 +46,7 @@ import component.MarkPreferenceDemo
 import component.MarkPreferenceStandaloneFullDemo
 import component.MarqueeTextDemo
 import component.MaterialShadowEdgeDemo
+import component.MultiLineIconRowsDemo
 import component.NavigationBarEnterExitDemo
 import component.NavigationPopupMenuDemo
 import component.NotificationSnackBarDemo
@@ -132,6 +133,7 @@ internal val Coui17Catalog: List<Coui17Category> = buildList {
         component("Basic Component") {
             demo("Basic Component") { BasicComponentDemo() }
             demo("Arrow") { ArrowDemo() }
+            demo("Multi-line icon rows") { MultiLineIconRowsDemo() }
         }
         single("Card") { CardDemo() }
         component("Chip") {
