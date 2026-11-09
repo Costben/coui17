@@ -19,7 +19,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.COUIEase
 import io.github.suqi8.coui.kmp.theme.COUITheme
-import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /**
@@ -102,20 +102,6 @@ fun PageIndicator(
         val pitchPx = pitch.toPx()
         val dotPx = PageIndicatorDefaults.DotSize.toPx()
         val centreY = size.height / 2f
-        // The fraction of the way from the previous page to the current one, used for the trace
-        // colour cross-fade (COUIPageIndicator.getColorFactor).
-        val fraction = abs(currentPosition - currentPosition.roundToInt())
-        val traceFactor = when {
-            fraction <= PageIndicatorDefaults.COLOR_FACTOR_THRESHOLD ->
-                fraction / PageIndicatorDefaults.COLOR_FACTOR_THRESHOLD
-
-            fraction >= 1f - PageIndicatorDefaults.COLOR_FACTOR_THRESHOLD ->
-                (1f - fraction) / PageIndicatorDefaults.COLOR_FACTOR_THRESHOLD
-
-            else -> 1f
-        }
-        val activeNow = currentPosition.roundToInt().coerceIn(0, count - 1)
-        val traceColor = lerp(inactiveColor, activeColor, traceFactor.coerceIn(0f, 1f))
         val firstSlot = windowStart.roundToInt() - PageIndicatorDefaults.LADDER_SLOTS
         val lastSlot = (windowStart + visibleCount - 1).roundToInt() + PageIndicatorDefaults.LADDER_SLOTS
         for (index in firstSlot..lastSlot) {
@@ -133,7 +119,11 @@ fun PageIndicator(
             )
             if (radius <= 0f) continue
             drawCircle(
-                color = if (index == activeNow) traceColor else inactiveColor,
+                color = lerp(
+                    inactiveColor,
+                    activeColor,
+                    PageIndicatorDefaults.dotActiveFraction(index, currentPosition),
+                ),
                 radius = radius,
                 center = Offset(centerX, centreY),
             )
@@ -197,6 +187,29 @@ object PageIndicatorDefaults {
 
     /** The trace colour cross-fade threshold (`DEFAULT_COLOR_FACTOR_THRESHOLD`). */
     const val COLOR_FACTOR_THRESHOLD = 0.05f
+
+    /**
+     * How much of the active colour the dot at [index] takes while the indicator sits at
+     * [position], from 0 (inactive) to 1 (active).
+     *
+     * Mirrors COUIPageIndicator.drawTrace: the half of the trace nearer the current offset is always
+     * painted in the full trace colour and only the other half cross-fades through getColorFactor,
+     * so the dot of a page at rest is fully active.
+     */
+    internal fun dotActiveFraction(index: Int, position: Float): Float {
+        val left = floor(position).toInt()
+        val offset = position - left
+        val colorFactor = when {
+            offset <= COLOR_FACTOR_THRESHOLD -> offset / COLOR_FACTOR_THRESHOLD
+            offset >= 1f - COLOR_FACTOR_THRESHOLD -> (1f - offset) / COLOR_FACTOR_THRESHOLD
+            else -> 1f
+        }.coerceIn(0f, 1f)
+        return when (index) {
+            left -> if (offset <= 0.5f) 1f else colorFactor
+            left + 1 -> if (offset <= 0.5f) colorFactor else 1f
+            else -> 0f
+        }
+    }
 
     /**
      * The number of dot slots a dot can travel outside the row before it is gone, i.e. the depth of
