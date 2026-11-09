@@ -19,9 +19,11 @@ import androidx.compose.ui.window.Dialog
 import io.github.suqi8.coui.kmp.layout.BottomSheetContentLayout
 import io.github.suqi8.coui.kmp.layout.BottomSheetDefaults
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
+import io.github.suqi8.coui.kmp.utils.ProvideHostWindowBackdrop
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
+import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
 
 /**
  * A bottom sheet that slides up from the bottom of the screen, rendered at window level without `Scaffold`.
@@ -91,6 +93,8 @@ fun WindowBottomSheet(
         dragHandleColor = dragHandleColor,
         showDragHandle = showDragHandle,
         popupHost = { visible, hostContent ->
+            // Captured here, in the host composition, so the dialog frosts the page it opens over.
+            val hostBackdrop = rememberHostWindowBackdrop(visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = {
@@ -102,7 +106,9 @@ fun WindowBottomSheet(
                 ) {
                     RemovePlatformDialogDefaultEffects()
                     WindowNavigationEventScope {
-                        hostContent()
+                        ProvideHostWindowBackdrop(hostBackdrop.value) {
+                            hostContent()
+                        }
                     }
                 }
             }

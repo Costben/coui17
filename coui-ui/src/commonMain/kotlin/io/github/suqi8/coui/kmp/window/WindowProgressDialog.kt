@@ -18,8 +18,10 @@ import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.layout.ProgressDialogColors
 import io.github.suqi8.coui.kmp.layout.ProgressDialogContentLayout
 import io.github.suqi8.coui.kmp.layout.ProgressDialogDefaults
+import io.github.suqi8.coui.kmp.utils.ProvideHostWindowBackdrop
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
+import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
 
 /**
  * A small always-centered dialog with a deterministic horizontal progress bar and an optional
@@ -69,13 +71,17 @@ fun WindowProgressDialog(
     ProgressDialogContentLayout(
         show = show,
         popupHost = { visible, hostContent ->
+            // Captured here, in the host composition, so the dialog frosts the page it opens over.
+            val hostBackdrop = rememberHostWindowBackdrop(visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value?.invoke() },
                     properties = platformDialogProperties(),
                 ) {
                     RemovePlatformDialogDefaultEffects()
-                    hostContent()
+                    ProvideHostWindowBackdrop(hostBackdrop.value) {
+                        hostContent()
+                    }
                 }
             }
         },

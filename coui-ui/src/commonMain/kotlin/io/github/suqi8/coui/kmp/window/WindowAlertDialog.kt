@@ -19,8 +19,10 @@ import io.github.suqi8.coui.kmp.layout.AlertDialogColors
 import io.github.suqi8.coui.kmp.layout.AlertDialogContentLayout
 import io.github.suqi8.coui.kmp.layout.AlertDialogDefaults
 import io.github.suqi8.coui.kmp.layout.AlertDialogStyle
+import io.github.suqi8.coui.kmp.utils.ProvideHostWindowBackdrop
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
+import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
 
 /**
  * A centered warning dialog rendered at window level without `Scaffold`, matching the COUI
@@ -91,13 +93,17 @@ fun WindowAlertDialog(
     AlertDialogContentLayout(
         show = show,
         popupHost = { visible, hostContent ->
+            // Captured here, in the host composition, so the dialog frosts the page it opens over.
+            val hostBackdrop = rememberHostWindowBackdrop(visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnCancel.value.invoke() },
                     properties = platformDialogProperties(),
                 ) {
                     RemovePlatformDialogDefaultEffects()
-                    hostContent()
+                    ProvideHostWindowBackdrop(hostBackdrop.value) {
+                        hostContent()
+                    }
                 }
             }
         },

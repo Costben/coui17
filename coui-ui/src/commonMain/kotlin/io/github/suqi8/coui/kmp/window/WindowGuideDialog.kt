@@ -63,9 +63,11 @@ import io.github.suqi8.coui.kmp.layout.DialogContentLayout
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.ProvideHostWindowBackdrop
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
+import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.exp
@@ -187,6 +189,8 @@ fun WindowGuideDialog(
         outsideMargin = DialogDefaults.outsideMargin,
         insideMargin = DialogDefaults.insideMargin,
         popupHost = { visible, hostContent ->
+            // Captured here, in the host composition, so the dialog frosts the page it opens over.
+            val hostBackdrop = rememberHostWindowBackdrop(visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest() },
@@ -194,7 +198,9 @@ fun WindowGuideDialog(
                 ) {
                     RemovePlatformDialogDefaultEffects()
                     WindowNavigationEventScope {
-                        hostContent()
+                        ProvideHostWindowBackdrop(hostBackdrop.value) {
+                            hostContent()
+                        }
                     }
                 }
             }

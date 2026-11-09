@@ -16,8 +16,10 @@ import androidx.compose.ui.window.Dialog
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.layout.LoadingDialogContentLayout
 import io.github.suqi8.coui.kmp.layout.LoadingDialogDefaults
+import io.github.suqi8.coui.kmp.utils.ProvideHostWindowBackdrop
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
+import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
 
 /**
  * A small always-centered loading dialog with a rotating spinner and an optional message,
@@ -60,13 +62,17 @@ fun WindowLoadingDialog(
     LoadingDialogContentLayout(
         show = show,
         popupHost = { visible, hostContent ->
+            // Captured here, in the host composition, so the dialog frosts the page it opens over.
+            val hostBackdrop = rememberHostWindowBackdrop(visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value?.invoke() },
                     properties = platformDialogProperties(),
                 ) {
                     RemovePlatformDialogDefaultEffects()
-                    hostContent()
+                    ProvideHostWindowBackdrop(hostBackdrop.value) {
+                        hostContent()
+                    }
                 }
             }
         },

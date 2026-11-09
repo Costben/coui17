@@ -178,6 +178,18 @@ public final class io/github/suqi8/coui/kmp/blur/EnclosingBackdropSamplingKt {
 	public static final fun onEnclosingBackdropSampling (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 }
 
+public final class io/github/suqi8/coui/kmp/blur/ImageBackdrop : io/github/suqi8/coui/kmp/blur/Backdrop {
+	public static final field $stable I
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/ImageBitmap;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun drawBackdrop (Landroidx/compose/ui/graphics/drawscope/DrawScope;Landroidx/compose/ui/unit/Density;Landroidx/compose/ui/layout/LayoutCoordinates;Lkotlin/jvm/functions/Function1;I)V
+	public final fun getImage ()Landroidx/compose/ui/graphics/ImageBitmap;
+	public fun getOffsetResidualX ()F
+	public fun getOffsetResidualY ()F
+	public final fun getSourceOriginOnScreen-F1C5BW0 ()J
+	public final fun getSourceSize-YbymL2g ()J
+	public fun isCoordinatesDependent ()Z
+}
+
 public abstract interface annotation class io/github/suqi8/coui/kmp/blur/InternalCouiBlurApi : java/lang/annotation/Annotation {
 }
 
