@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
@@ -43,12 +42,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -57,7 +56,6 @@ import io.github.suqi8.coui.kmp.basic.Button
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.PageIndicator
 import io.github.suqi8.coui.kmp.basic.Text
-import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.layout.DialogContentLayout
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
@@ -424,28 +422,31 @@ private fun GuideButtonBar(
                 // shows up as the bar stepping down for one frame. The spacer collapses with it so
                 // the primary button can still reach the full row width.
                 //
-                // The label itself is measured unbounded and clipped by this box. Handing the
-                // narrowing width to the button instead lets its text wrap, and a wrapped label is
-                // taller than the 44dp row: the row grew to four lines on the last page, and the
-                // primary button — centred in that taller row — sat 18.6dp above the 8dp bottom
-                // margin it has on every other page. Measured on the device: 32px on pages 1-2,
-                // 104px on page 3, with the panel edge itself unmoved.
-                Box(
+                // `COUIGuideDialogButtonLayout.initButtons()` builds Skip as a filled capsule —
+                // `couiButtonColorfulWhiteStyle` (`Widget.COUI.Button.Large.ButtonNew.Secondary`)
+                // with `ButtonType.SECONDARY` and the drawable material effect — the same family as
+                // the primary button, so it is a secondary [Button], not a text button.
+                //
+                // The label never wraps: a wrapped label is taller than the 44dp row, and the row
+                // grew to four lines on the last page, pushing the primary button — centred in that
+                // taller row — 18.6dp above the 8dp bottom margin it has on every other page.
+                Button(
+                    onClick = onSkip,
                     modifier = Modifier
                         .width(skipWidth)
-                        .height(GuideDialogDefaults.ButtonMinHeight)
-                        .clipToBounds(),
-                    contentAlignment = Alignment.Center,
+                        .graphicsLayer { alpha = skipAlpha },
+                    enabled = skipAlpha > 0f,
+                    pressScaleEnabled = false,
+                    minWidth = 0.dp,
+                    minHeight = GuideDialogDefaults.ButtonMinHeight,
+                    colors = ButtonDefaults.buttonColors(),
                 ) {
-                    TextButton(
+                    Text(
                         text = skipText,
-                        onClick = onSkip,
-                        modifier = Modifier
-                            .wrapContentWidth(unbounded = true)
-                            .graphicsLayer { alpha = skipAlpha },
-                        pressScaleEnabled = false,
-                        minWidth = 0.dp,
-                        minHeight = GuideDialogDefaults.ButtonMinHeight,
+                        style = COUITheme.textStyles.button,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Clip,
                     )
                 }
                 Spacer(
