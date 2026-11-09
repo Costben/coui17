@@ -33,7 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
@@ -46,10 +49,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
@@ -57,8 +63,11 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * A tip banner shown at the top of a page, following the ColorOS top-tips family.
  *
  * The family's card sets a medium corner radius and weight and fills the card with
- * `?attr/couiColorFillThin`, and its show / dismiss animation scales the view on Y from 0 to 1
- * over 250ms. The port keeps that 250ms vertical scale for [visible].
+ * `?attr/couiColorFillThin`. `COUICustomTopTips.showWithAnim` scales that base view on Y, but the
+ * `COUIDefaultTopTips` the system apps use overrides it with `animateExpand` / `animateCollapse`: the
+ * banner keeps its full height while its outline is clipped from 0 to the full height (or back) over
+ * 250ms on `COUIEaseInterpolator`, and its children fade with the same fraction. [visible] plays
+ * that clip.
  *
  * The default variant overrides the background:
  * [TopTipsBackgroundStyle] `White` fills with `?attr/couiColorCard`, `Gray` — the default of
@@ -75,10 +84,8 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * scrolling core is [MarqueeText].
  *
  * Not ported, because the corresponding machinery has no Compose equivalent:
- * - `COUIDefaultTopTips.animateExpand` / `animateCollapse` and the `mClipAnimator` /
- *   `calculateClipHeight` outline clipping that grows and shrinks the banner, plus
- *   `animateWidthChange` / `createSpaceAndFixLayout` and the `Space`-based width cross-fade; the
- *   port shows and hides the banner with `COUICustomTopTips`' scale instead.
+ * - `COUIDefaultTopTips.animateWidthChange` / `createSpaceAndFixLayout` and the `Space`-based
+ *   width cross-fade; the port reflows with `animateContentSize` instead.
  * - `setTipsBackgroundDrawable` / `COUIDefaultTopTips.BackgroundOverlayView` as an Android `View`
  *   that measures 0x0 and is laid out over the card; [backgroundOverlay] is the same slot, drawn
  *   over a transparent fill exactly as `applyBackgroundOverlayState` blanks the card colour.
@@ -109,8 +116,8 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  *   `coui_toptips_view_content_*` margins. Ignored when [content] is non-null; pass an empty
  *   string for a slot-only banner.
  * @param modifier The modifier to be applied to the banner.
- * @param visible Whether the banner is visible. Changing this plays `COUICustomTopTips`'
- *   `showWithAnim` / `dismissWithAnim` scale.
+ * @param visible Whether the banner is visible. Changing this plays `COUIDefaultTopTips`'
+ *   `animateExpand` / `animateCollapse` clip.
  * @param title The optional title above [text]. `COUIDefaultTopTipsView`'s `title`, styled
  *   `couiTextHeadlineXS` (16sp, `sans-serif-medium`) in `?attr/couiColorLabelPrimary`,
  *   `maxLines=2`, with `coui_toptips_view_title_min_height` (22dp). `hasTitle()` is what selects
@@ -185,7 +192,7 @@ fun TopTips(
     val contentStyle = TopTipsDefaults.textStyle()
     val actionStyle = TopTipsDefaults.actionTextStyle()
 
-    BoxWithConstraints(modifier = modifier.graphicsLayer { scaleY = visibility.value }) {
+    BoxWithConstraints(modifier = modifier) {
         val density = LocalDensity.current
         val textMeasurer = rememberTextMeasurer()
         val titleWidthPx = displayTitle?.let { textMeasurer.labelWidthPx(it, titleStyle) } ?: 0
@@ -242,15 +249,81 @@ fun TopTips(
             )
         }
 
-        Box(modifier = Modifier.matchParentSize().then(backgroundModifier)) {
-            backgroundOverlay?.invoke()
+        // COUIDefaultTopTips.animateExpand / animateCollapse: the banner keeps its full height and
+        // only its outline is clipped, from 0 to the full height (or back) over 250ms on COUIEase,
+        // with the rounded silhouette taken at the clipped height; the children fade with the
+        // animated fraction while the background does not.
+        val revealBaseShape = if (singleLine) {
+            topTipsSingleLineShape()
+        } else {
+            SquircleShape(
+                cornerRadius = cornerRadius ?: TopTipsDefaults.CornerRadius,
+                weight = SquircleDefaults.WeightLarge,
+            )
         }
+        Box(
+            modifier = Modifier.graphicsLayer {
+                val fraction = visibility.value
+                if (fraction < 1f) {
+                    clip = true
+                    shape = TopTipsRevealShape(revealBaseShape, fraction)
+                }
+            },
+        ) {
+            Box(modifier = Modifier.matchParentSize().then(backgroundModifier)) {
+                backgroundOverlay?.invoke()
+            }
 
-        // COUIDefaultTopTips.animateWidthChange resizes the banner over 300ms on COUIEase when the
-        // content reflows between the single and the multi-line form.
-        Box(modifier = Modifier.animateContentSize(WIDTH_CHANGE_SPEC)) {
-            if (multiText) {
-                Column(modifier = Modifier.fillMaxWidth()) {
+            // COUIDefaultTopTips.animateWidthChange resizes the banner over 300ms on COUIEase when the
+            // content reflows between the single and the multi-line form.
+            Box(
+                modifier = Modifier
+                    .graphicsLayer { alpha = visibility.value }
+                    .animateContentSize(WIDTH_CHANGE_SPEC),
+            ) {
+                if (multiText) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            TopTipsTextArea(
+                                title = displayTitle,
+                                text = text,
+                                content = content,
+                                startIcon = startIcon,
+                                marqueeEnabled = marqueeEnabled,
+                                titleStyle = titleStyle,
+                                contentStyle = contentStyle,
+                                titleColor = colors.titleColor,
+                                contentColor = colors.contentColor,
+                            )
+                        }
+                        TopTipsTrailing(
+                            action = action,
+                            onAction = onAction,
+                            ignore = ignore,
+                            onIgnore = onIgnore,
+                            onClose = onClose,
+                            layoutMode = layoutMode,
+                            actionStyle = actionStyle,
+                            colors = colors,
+                            expandDualButtons = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    top = BTN_TOP_MARGIN,
+                                    start = CONTENT_END_MARGIN,
+                                    end = CONTENT_END_MARGIN,
+                                    bottom = if (layoutMode == TopTipsLayoutMode.AiPayment && action != null && ignore != null) {
+                                        AI_PAYMENT_DUAL_BTN_BOTTOM_MARGIN
+                                    } else {
+                                        MULTI_BTN_BOTTOM_MARGIN
+                                    },
+                                ),
+                        )
+                    }
+                } else {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -266,58 +339,18 @@ fun TopTips(
                             titleColor = colors.titleColor,
                             contentColor = colors.contentColor,
                         )
+                        TopTipsTrailing(
+                            action = action,
+                            onAction = onAction,
+                            ignore = ignore,
+                            onIgnore = onIgnore,
+                            onClose = onClose,
+                            layoutMode = layoutMode,
+                            actionStyle = actionStyle,
+                            colors = colors,
+                            modifier = Modifier.padding(end = CONTENT_END_MARGIN),
+                        )
                     }
-                    TopTipsTrailing(
-                        action = action,
-                        onAction = onAction,
-                        ignore = ignore,
-                        onIgnore = onIgnore,
-                        onClose = onClose,
-                        layoutMode = layoutMode,
-                        actionStyle = actionStyle,
-                        colors = colors,
-                        expandDualButtons = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                top = BTN_TOP_MARGIN,
-                                start = CONTENT_END_MARGIN,
-                                end = CONTENT_END_MARGIN,
-                                bottom = if (layoutMode == TopTipsLayoutMode.AiPayment && action != null && ignore != null) {
-                                    AI_PAYMENT_DUAL_BTN_BOTTOM_MARGIN
-                                } else {
-                                    MULTI_BTN_BOTTOM_MARGIN
-                                },
-                            ),
-                    )
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TopTipsTextArea(
-                        title = displayTitle,
-                        text = text,
-                        content = content,
-                        startIcon = startIcon,
-                        marqueeEnabled = marqueeEnabled,
-                        titleStyle = titleStyle,
-                        contentStyle = contentStyle,
-                        titleColor = colors.titleColor,
-                        contentColor = colors.contentColor,
-                    )
-                    TopTipsTrailing(
-                        action = action,
-                        onAction = onAction,
-                        ignore = ignore,
-                        onIgnore = onIgnore,
-                        onClose = onClose,
-                        layoutMode = layoutMode,
-                        actionStyle = actionStyle,
-                        colors = colors,
-                        modifier = Modifier.padding(end = CONTENT_END_MARGIN),
-                    )
                 }
             }
         }
@@ -985,14 +1018,11 @@ private val CLOSE_CROSS_ARM = 2.736.dp
 /** The stroke width of the cross in `coui_ic_toptips_close`. */
 private val CLOSE_CROSS_STROKE_WIDTH = 1.6.dp
 
-/** `COUICustomTopTips.showWithAnim` / `dismissWithAnim`: `setDuration(250)`. */
+/** `COUIDefaultTopTips.createClipAnimator`: `setDuration(250L)`. */
 private const val SHOW_DISMISS_DURATION_MILLIS = 250
 
-/**
- * The show/dismiss easing: Android's default `AccelerateDecelerateInterpolator`, closely matched by
- * the symmetric ease-in-out cubic bezier.
- */
-private val SHOW_DISMISS_EASING = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+/** `COUIDefaultTopTips.createClipAnimator`'s `COUIEaseInterpolator`, `cubic-bezier(0.33, 0, 0.67, 1)`. */
+private val SHOW_DISMISS_EASING = CubicBezierEasing(0.33f, 0f, 0.67f, 1f)
 
 /**
  * The reflow animation: `COUIDefaultTopTips.WIDTH_CHANGE_ANIMATION_DURATION` (300ms) through
@@ -1002,3 +1032,12 @@ private val WIDTH_CHANGE_SPEC: FiniteAnimationSpec<IntSize> = tween(
     durationMillis = 300,
     easing = CubicBezierEasing(0.33f, 0f, 0.67f, 1f),
 )
+
+/**
+ * [base] taken at [fraction] of the banner's height from its top edge: the outline
+ * `COUIDefaultTopTips.applyRoundCornerToOutline(outline, width, calculateClipHeight(height))` sets
+ * while the expand / collapse clip runs.
+ */
+internal data class TopTipsRevealShape(private val base: Shape, private val fraction: Float) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline = base.createOutline(Size(size.width, size.height * fraction.coerceIn(0f, 1f)), layoutDirection, density)
+}
