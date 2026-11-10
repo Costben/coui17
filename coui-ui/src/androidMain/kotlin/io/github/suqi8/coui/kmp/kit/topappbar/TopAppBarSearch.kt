@@ -346,7 +346,7 @@ internal fun TopAppBarSearchAction(
                     }
                 }
                 // 在同一次实际放置中抵消操作区移位, 不等全局回调修正首帧。
-                if (state.motion.toolbarAlpha > 0f) {
+                if (!state.motion.expanded && state.motion.toolbarAlpha > 0f) {
                     child.placeWithLayer(0, 0) {
                         translationX = offset.x
                         translationY = offset.y

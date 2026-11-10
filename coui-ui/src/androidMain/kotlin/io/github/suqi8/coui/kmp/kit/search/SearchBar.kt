@@ -138,9 +138,10 @@ internal fun SearchBar(
             }
         }
     }
-    val surfaceHeight = with(density) { CouiSearchBarDefaults.surfaceHeight.roundToPx() }
+    val defaultSurfaceHeight = with(density) { CouiSearchBarDefaults.surfaceHeight.roundToPx() }
     val gap = with(density) { CouiSearchBarDefaults.cancelGap.roundToPx() }
     var boundsSize by remember { mutableStateOf(IntSize.Zero) }
+    val surfaceHeight = if (boundsSize.height in 1 until defaultSurfaceHeight) boundsSize.height else defaultSurfaceHeight
     val shape = CouiSearchBarDefaults.shape
     val bodyLayer = rememberGraphicsLayer()
     val cancelLayer = rememberGraphicsLayer()

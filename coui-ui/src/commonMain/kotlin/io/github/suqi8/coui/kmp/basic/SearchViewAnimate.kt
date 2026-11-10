@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -310,11 +312,18 @@ private fun SearchViewAnimateFunctionalButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
+    val squircleEnabled = isSquircleEnabled()
+    val buttonShape = remember(squircleEnabled) {
+        SquircleShape(
+            cornerRadius = SearchViewAnimateDefaults.CancelButtonBackgroundRadius,
+            squircleEnabled = squircleEnabled,
+        )
+    }
     Box(
         modifier = Modifier
             .defaultMinSize(minHeight = SearchViewAnimateDefaults.CancelButtonMinHeight)
             .widthIn(max = SearchViewAnimateDefaults.CancelButtonMaxWidth)
-            .clip(RoundedCornerShape(SearchViewAnimateDefaults.CancelButtonBackgroundRadius))
+            .clip(buttonShape)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(
                 horizontal = SearchViewAnimateDefaults.CancelButtonPaddingHorizontal,

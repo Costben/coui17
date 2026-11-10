@@ -35,6 +35,7 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
@@ -78,9 +79,10 @@ internal actual fun TopAppBarSearchBarImpl(
 ) {
     val density = LocalDensity.current
     val dark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val localCouiBackdrop = LocalCouiBackdrop.current
+    val effectiveBackdrop = backdrop ?: LocalBackdrop.current
+    val localCouiBackdrop = LocalCouiToolbarBackdrop.current ?: LocalCouiBackdrop.current
     val resolvedBackdrop = localCouiBackdrop
-        ?: backdrop?.let { remember(it, density) { CouiBackdrop(it, density) } }
+        ?: effectiveBackdrop?.let { remember(it, density) { CouiBackdrop(it, density) } }
     resolvedBackdrop?.RetainWhileComposed()
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -251,16 +253,13 @@ internal actual fun TopAppBarSearchBarImpl(
         )
     }
 
-    TopAppBarSurface(
-        modifier = modifier.fillMaxWidth(),
-        backdrop = resolvedBackdrop,
-        gradientColor = gradientColor,
-        dark = dark,
-    ) {
+    val embedded = gradientColor == Color.Transparent
+    val rowHeight = if (embedded) 44.dp else 64.dp
+    val barContent: @Composable () -> Unit = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(rowHeight)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -281,6 +280,7 @@ internal actual fun TopAppBarSearchBarImpl(
                     onFocused = { focusPending = false },
                     enabled = enabled,
                     endPadding = if (extraActions != null) 0.dp else 6.dp,
+                    toolbarHeight = rowHeight,
                     trailingIcon = trailingIcon,
                     action = if (!cancelText.isNullOrEmpty()) {
                         { CouiText(text = cancelText, maxLines = 1, softWrap = false) }
@@ -363,6 +363,28 @@ internal actual fun TopAppBarSearchBarImpl(
                     }
                 }
             }
+        }
+    }
+
+    if (embedded) {
+        SharedTransitionScope { overlayModifier ->
+            CompositionLocalProvider(
+                LocalCouiToolbarBackdrop provides resolvedBackdrop,
+                LocalCouiToolbarOverlay provides this@SharedTransitionScope,
+            ) {
+                Box(modifier = modifier.fillMaxWidth().then(overlayModifier)) {
+                    barContent()
+                }
+            }
+        }
+    } else {
+        TopAppBarSurface(
+            modifier = modifier.fillMaxWidth(),
+            backdrop = resolvedBackdrop,
+            gradientColor = gradientColor,
+            dark = dark,
+        ) {
+            barContent()
         }
     }
 }

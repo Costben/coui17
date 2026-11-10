@@ -229,7 +229,8 @@ private fun Modifier.floatingSurfaces(
         val nodes = surfaces()
         require(nodes.size == renderer.surfaceCount)
         if (target?.isAttached == true && size.width > 0f && size.height > 0f &&
-            nodes.all { it.bounds.width > 0f && it.bounds.height > 0f }
+            nodes.any { it.visible && it.bounds.width > 0f && it.bounds.height > 0f } &&
+            nodes.all { !it.visible || (it.bounds.width > 0f && it.bounds.height > 0f) }
         ) {
             val viewport = target.localBoundingBoxOf(target.findRootCoordinates(), false)
             val commands = mutableListOf<GraphicsLayer>()
@@ -253,20 +254,25 @@ private fun Modifier.floatingSurfaces(
                 commands.add(layer)
             }
             val outlines = nodes.mapIndexed { index, node ->
-                val shape = shapes[index]
-                val outlineSize = node.bounds.size
-                if (shape === CouiCapsuleShape) {
-                    val cached = capsuleOutlines[index]
-                    if (cached?.first == outlineSize) {
-                        cached.second
-                    } else {
-                        shape.createOutline(outlineSize, layoutDirection, this).also {
-                            capsuleOutlines[index] = outlineSize to it
-                        }
-                    }
-                } else {
+                if (!node.visible || node.bounds.width <= 0f || node.bounds.height <= 0f) {
                     capsuleOutlines[index] = null
-                    shape.createOutline(outlineSize, layoutDirection, this)
+                    Outline.Rectangle(Rect.Zero)
+                } else {
+                    val shape = shapes[index]
+                    val outlineSize = node.bounds.size
+                    if (shape === CouiCapsuleShape) {
+                        val cached = capsuleOutlines[index]
+                        if (cached?.first == outlineSize) {
+                            cached.second
+                        } else {
+                            shape.createOutline(outlineSize, layoutDirection, this).also {
+                                capsuleOutlines[index] = outlineSize to it
+                            }
+                        }
+                    } else {
+                        capsuleOutlines[index] = null
+                        shape.createOutline(outlineSize, layoutDirection, this)
+                    }
                 }
             }
             val beforeClips = if (beforeContent != null) {

@@ -104,6 +104,12 @@ internal class CouiSearchMotion(
                     animationRunning = false
                 }
             }
+        } else {
+            addEndListener { _, cancelled, _, _ ->
+                if (!cancelled) {
+                    toolbarAlpha = if (expanded) 0f else 1f
+                }
+            }
         }
     }
 }
