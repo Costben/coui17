@@ -692,4 +692,16 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Manage app permissions and local access logs" to "管理应用权限与本地访问记录",
     "Screen display" to "屏幕显示",
     "Auto" to "自动",
+    "Connect to PC" to "与电脑互联",
+    "Cross-screen connect" to "跨屏互联",
+    "Remote control PC" to "远程控制电脑",
+    "Scroll the page behind the glass segment bar to preview the frosted capsule" to
+        "上下滚动底层内容，预览「与电脑互联」透明毛玻璃胶囊标签栏",
+    "Mirror phone screen, drag files and share clipboard with your PC" to
+        "在电脑上镜像手机屏幕、拖拽互传文件并共享剪贴板",
+    "Control your Windows or Mac desktop remotely from your phone" to
+        "使用手机远程操作 Windows 或 Mac 电脑桌面",
+    "Auto-connect nearby PC" to "自动连接附近电脑",
+    "Clipboard sync" to "剪贴板同步",
+    "Notification sync" to "通知同步",
 )
