@@ -113,6 +113,34 @@ class CapsuleShapeFamilyTest {
     }
 
     @Test
+    fun chipTabFollowsSegmentCapsule() = runSkikoComposeUiTest(
+        size = Size(400f, 240f),
+        density = Density(4f),
+    ) {
+        setContent {
+            COUITheme {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(Color.Black),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ChipTab(
+                        selected = true,
+                        onClick = {},
+                        label = "All",
+                    )
+                }
+            }
+        }
+        waitForIdle()
+        val fit = fitTopLeftCorner(onRoot().captureToImage().toPixelMap()) { it.luminance() > 0.5f }
+        assertTrue(
+            fit.rmsSegment < fit.rmsCircle,
+            "the chip tab must follow the segment capsule: segment=${fit.rmsSegment} circle=${fit.rmsCircle}",
+        )
+        assertTrue(fit.rmsSegment < 1.5, "segment residual ${fit.rmsSegment}px is too large")
+    }
+
+    @Test
     fun explicitSmallerChipRadiusKeepsTheSquircle() = runSkikoComposeUiTest(
         size = Size(400f, 240f),
         density = Density(4f),

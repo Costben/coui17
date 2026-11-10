@@ -2706,20 +2706,29 @@ public final class io/github/suqi8/coui/kmp/basic/MaterialStrokeParams$Companion
 	public final fun contentCapsule4 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun contentCapsule5 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule1 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun frameworkCapsule10 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun frameworkCapsule11 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule13 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule5 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun frameworkCapsule6 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCapsule8 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun frameworkCircle1 (Z)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getContentCapsule4 ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getContentCapsule4Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getContentCapsule5Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getContentCapsule5Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule10Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule10Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule11Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule11Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule13Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule13Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule1Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule1Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule5Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule5Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule6Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
+	public final fun getFrameworkCapsule6Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule7 ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule8Dark ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getFrameworkCapsule8Light ()Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
@@ -4480,6 +4489,7 @@ public final class io/github/suqi8/coui/kmp/basic/TabRowColors {
 public final class io/github/suqi8/coui/kmp/basic/TabRowDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/TabRowDefaults;
+	public final fun containerStroke (ZLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun getTabRowCornerRadius-D9Ej5fM ()F
 	public final fun getTabRowHeight-D9Ej5fM ()F
 	public final fun getTabRowMaxWidth-D9Ej5fM ()F
@@ -4493,6 +4503,7 @@ public final class io/github/suqi8/coui/kmp/basic/TabRowDefaults {
 	public final fun getTabRowWithContourTinyCornerRadius-D9Ej5fM ()F
 	public final fun getTabRowWithContourTinyHeight-D9Ej5fM ()F
 	public final fun getTabRowWithContourTinyPadding-D9Ej5fM ()F
+	public final fun indicatorStroke (ZLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;
 	public final fun opaqueTabRowColors-zjMxDiM (JJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
 	public final fun segmentBlurColors (Z)Ljava/util/List;
 	public final synthetic fun tabRowColors-ro_MJ88 (JJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TabRowColors;
@@ -4503,7 +4514,8 @@ public final class io/github/suqi8/coui/kmp/basic/TabRowKt {
 	public static final synthetic fun TabRow-aPxkGAE (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TabRow-k0cUV6g (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;ZZLandroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun TabRowWithContour-3gl_c-w (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Landroidx/compose/runtime/Composer;III)V
-	public static final fun TabRowWithContour-zR3NGeo (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Lio/github/suqi8/coui/kmp/blur/Backdrop;ZZZLandroidx/compose/runtime/Composer;IIII)V
+	public static final fun TabRowWithContour-yae-lig (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Lio/github/suqi8/coui/kmp/blur/Backdrop;ZZZLio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Landroidx/compose/runtime/Composer;IIII)V
+	public static final synthetic fun TabRowWithContour-zR3NGeo (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TabRowColors;FFFFFFFLandroidx/compose/ui/Alignment;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Lio/github/suqi8/coui/kmp/blur/Backdrop;ZZZLandroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TagViewColors {

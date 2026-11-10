@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,10 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
@@ -82,6 +79,8 @@ import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.shader.asBrush
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
+import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
@@ -149,6 +148,7 @@ fun TabRow(
         interactionSource = interactionSource,
         indication = indication,
         indicatorMaterial = null,
+        containerMaterial = null,
         backdrop = null,
         dragSelectionEnabled = dragSelectionEnabled,
         commitOnRelease = commitOnRelease,
@@ -263,8 +263,66 @@ fun TabRowWithContour(
     dragSelectionEnabled: Boolean = true,
     commitOnRelease: Boolean = false,
     touchMotionEnabled: Boolean = true,
+    containerMaterial: MaterialStrokeParams? = null,
 ) {
     SegmentButtonRow(
+        tabs = tabs,
+        selectedTabIndex = selectedTabIndex,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+        colors = colors,
+        minWidth = minWidth,
+        maxWidth = maxWidth,
+        height = height,
+        cornerRadius = cornerRadius,
+        contourPadding = contourPadding,
+        segmentPadding = segmentPadding,
+        itemSpacing = itemSpacing,
+        contentAlignment = contentAlignment,
+        listState = listState,
+        interactionSource = interactionSource,
+        indication = indication,
+        indicatorMaterial = indicatorMaterial,
+        containerMaterial = containerMaterial,
+        backdrop = backdrop,
+        dragSelectionEnabled = dragSelectionEnabled,
+        commitOnRelease = commitOnRelease,
+        touchMotionEnabled = touchMotionEnabled,
+    )
+}
+
+/** Binary-compatibility bridge for [TabRowWithContour] callers compiled before [containerMaterial] was added. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that also accepts containerMaterial.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@NonRestartableComposable
+fun TabRowWithContour(
+    tabs: List<String>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    colors: TabRowColors = TabRowDefaults.tabRowColors(),
+    minWidth: Dp = TabRowDefaults.TabRowWithContourMinWidth,
+    maxWidth: Dp = TabRowDefaults.TabRowWithContourMaxWidth,
+    height: Dp = TabRowDefaults.TabRowWithContourHeight,
+    cornerRadius: Dp = TabRowDefaults.TabRowWithContourCornerRadius,
+    contourPadding: Dp = TabRowDefaults.TabRowWithContourPadding,
+    segmentPadding: Dp = SegmentPaddingHorizontal,
+    itemSpacing: Dp = 0.dp,
+    contentAlignment: Alignment = Alignment.Center,
+    listState: LazyListState? = null,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+    indicatorMaterial: MaterialStrokeParams? = null,
+    backdrop: Backdrop? = null,
+    dragSelectionEnabled: Boolean = true,
+    commitOnRelease: Boolean = false,
+    touchMotionEnabled: Boolean = true,
+) {
+    TabRowWithContour(
         tabs = tabs,
         selectedTabIndex = selectedTabIndex,
         onTabSelected = onTabSelected,
@@ -286,6 +344,7 @@ fun TabRowWithContour(
         dragSelectionEnabled = dragSelectionEnabled,
         commitOnRelease = commitOnRelease,
         touchMotionEnabled = touchMotionEnabled,
+        containerMaterial = null,
     )
 }
 
@@ -363,6 +422,7 @@ private fun SegmentButtonRow(
     interactionSource: MutableInteractionSource?,
     indication: Indication?,
     indicatorMaterial: MaterialStrokeParams?,
+    containerMaterial: MaterialStrokeParams?,
     backdrop: Backdrop?,
     dragSelectionEnabled: Boolean,
     commitOnRelease: Boolean,
@@ -385,29 +445,50 @@ private fun SegmentButtonRow(
     // COUI measures segments with the selected appearance (couiTextButtonM: 14sp, medium).
     val measureStyle = remember(labelFontSize) { TextStyle(fontSize = labelFontSize, fontWeight = FontWeight.Medium) }
     val resolvedListState = listState ?: rememberLazyListState()
-    val indicatorShader = rememberMaterialShadowEdgeShader(
-        enabled = indicatorMaterial != null && isRuntimeShaderSupported(),
-    )
     val containerRadiusDp = cornerRadius + contourPadding
     // `COUISegmentButtonLayout.onMeasure`: a custom height is `max(customHeight, coui_segment_min_height)`.
     val resolvedHeight = resolvedTabRowHeight(height)
-    val containerShape = remember(containerRadiusDp, resolvedHeight) {
-        if (containerRadiusDp * 2 >= resolvedHeight) SegmentCapsuleShape else RoundedCornerShape(containerRadiusDp)
+    val squircleEnabled = isSquircleEnabled()
+    val containerShape = remember(containerRadiusDp, squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = containerRadiusDp, squircleEnabled = squircleEnabled)
     }
     val hasContainerSurface = contourPadding > 0.dp && containerColor.alpha > 0f
-    val blurScale = rememberToolbarAttenuatedBlurScale()
     val glassActive = hasContainerSurface && backdrop != null && isBlurEnabled()
+    // `COUISegmentButtonLayout.setMaterialEffectEnabled(true)` pairs the outer `TYPE_CONTENT_SEGMENT_BUTTON`
+    // blur with the `TYPE_FRAMEWORK_CAPSULE_11` container edge + inner shadow (the `COUIShadowEdgeDrawable`
+    // stroke type `mBackgroundStrokeType`) and the `TYPE_FRAMEWORK_CAPSULE_10` indicator edge
+    // (`setShadowEnable(false).setEdgeEnable(true)`).
+    val resolvedContainerMaterial = containerMaterial
+        ?: if (hasContainerSurface && backdrop != null) MaterialStrokeParams.frameworkCapsule11(isDarkTheme) else null
+    val resolvedIndicatorMaterial = indicatorMaterial
+        ?: if (hasContainerSurface && backdrop != null) MaterialStrokeParams.frameworkCapsule10(isDarkTheme) else null
+    val indicatorShader = rememberMaterialShadowEdgeShader(
+        enabled = resolvedIndicatorMaterial != null && isRuntimeShaderSupported(),
+    )
     val containerGlassModifier = if (glassActive) {
         Modifier.couiGlassSurface(
             backdrop = backdrop,
             shape = containerShape,
             containerColor = containerColor,
             fallback = Modifier,
-            blurRadius = with(density) { (SEGMENT_NATIVE_BLUR_SIGMA_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value } * blurScale(),
+            blurRadius = with(density) { (SEGMENT_NATIVE_BLUR_SIGMA_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value },
             blendColors = TabRowDefaults.segmentBlurColors(isDarkTheme),
         )
     } else {
         Modifier
+    }
+    val containerSurfaceModifier = if (resolvedContainerMaterial != null && hasContainerSurface) {
+        containerGlassModifier.materialShadowEdgeBySize(
+            stroke = resolvedContainerMaterial,
+            cornerWeightFor = { w, h ->
+                capsuleRimCornerWeight(w, h, with(density) { containerRadiusDp.toPx() })
+            },
+            cornerRadius = containerRadiusDp.takeIf { containerRadiusDp * 2 < resolvedHeight },
+            edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+            shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
+        )
+    } else {
+        containerGlassModifier
     }
 
     BoxWithConstraints(
@@ -416,14 +497,14 @@ private fun SegmentButtonRow(
             .then(modifier)
             .height(resolvedHeight)
             .couiTouchMotion(
-                surface = containerGlassModifier,
+                surface = containerSurfaceModifier,
                 enabled = touchMotionEnabled && hasContainerSurface,
                 // COUISegmentButtonLayout.initTouchMotionAnimator: deformation, rubber band and
                 // press scale are all on.
                 pressScaleEnabled = true,
                 consumeDrag = false,
                 // COUISegmentButtonLayout only lights up under setMaterialEffectEnabled.
-                lightEnabled = hasContainerSurface && (glassActive || indicatorMaterial != null),
+                lightEnabled = hasContainerSurface && (glassActive || resolvedContainerMaterial != null || resolvedIndicatorMaterial != null),
                 shape = containerShape.takeIf { hasContainerSurface },
                 lightParams = SpotLightDefaults.capsuleParams2(isDarkTheme),
             ),
@@ -561,6 +642,7 @@ private fun SegmentButtonRow(
         val onSelectedPressedChange: (Boolean) -> Unit = remember { { pressed -> selectedTabPressed = pressed } }
         val containerPath = remember { Path() }
         val indicatorPath = remember { Path() }
+        val shadowPath = remember { Path() }
 
         val slideSelectModifier = if (dragSelectionEnabled && segmentWidthsPx.size > 1) {
             Modifier.pointerInput(segmentWidthsPx, segmentLeftsPx, contourPaddingPx, switchDistancePx) {
@@ -652,10 +734,17 @@ private fun SegmentButtonRow(
                     // 1. Container capsule (COUISegmentButtonLayout.drawButtonBackground).
                     val containerRadius = min((cornerRadius + contourPadding).toPx(), size.height / 2f)
                     containerPath.reset()
-                    if (containerRadius >= size.height / 2f) {
+                    if (squircleEnabled && containerRadius >= size.height / 2f - 0.5f) {
                         containerPath.addSegmentCapsule(Rect(Offset.Zero, size))
                     } else {
-                        containerPath.addRoundRect(RoundRect(Rect(Offset.Zero, size), CornerRadius(containerRadius)))
+                        containerPath.addSquircleRoundRect(
+                            rect = Rect(Offset.Zero, size),
+                            topLeft = containerRadius,
+                            topRight = containerRadius,
+                            bottomRight = containerRadius,
+                            bottomLeft = containerRadius,
+                            squircleEnabled = squircleEnabled,
+                        )
                     }
                     if (containerColor.alpha > 0f && !glassActive) {
                         drawPath(containerPath, color = containerColor)
@@ -679,10 +768,17 @@ private fun SegmentButtonRow(
                     )
                     val radius = min(cornerRadius.toPx(), indicatorH / 2f)
                     indicatorPath.reset()
-                    if (radius >= indicatorH / 2f) {
+                    if (squircleEnabled && radius >= indicatorH / 2f - 0.5f) {
                         indicatorPath.addSegmentCapsule(rect)
                     } else {
-                        indicatorPath.addRoundRect(RoundRect(rect, CornerRadius(radius)))
+                        indicatorPath.addSquircleRoundRect(
+                            rect = rect,
+                            topLeft = radius,
+                            topRight = radius,
+                            bottomRight = radius,
+                            bottomLeft = radius,
+                            squircleEnabled = squircleEnabled,
+                        )
                     }
                     val drawSegment: DrawScope.() -> Unit = {
                         // 2. Indicator shadow, clipped outside the indicator
@@ -701,17 +797,34 @@ private fun SegmentButtonRow(
                                     radius = rect.width / 2f,
                                 )
                             }
-                            drawRoundRect(
-                                brush = shadowBrush,
-                                topLeft = Offset(rect.left, shadowTop),
-                                size = Size(rect.width, shadowBottom - shadowTop),
-                                cornerRadius = CornerRadius(indicatorH / 2f),
+                            val shadowRect = Rect(
+                                left = rect.left,
+                                top = shadowTop,
+                                right = rect.right,
+                                bottom = shadowBottom,
                             )
+                            val shadowRadius = min(radius, shadowRect.height / 2f)
+                            shadowPath.reset()
+                            if (squircleEnabled && shadowRadius >= shadowRect.height / 2f - 0.5f) {
+                                shadowPath.addSegmentCapsule(shadowRect)
+                            } else {
+                                shadowPath.addSquircleRoundRect(
+                                    rect = shadowRect,
+                                    topLeft = shadowRadius,
+                                    topRight = shadowRadius,
+                                    bottomRight = shadowRadius,
+                                    bottomLeft = shadowRadius,
+                                    squircleEnabled = squircleEnabled,
+                                )
+                            }
+                            drawPath(path = shadowPath, brush = shadowBrush)
                         }
                         // 3. Indicator capsule fill.
                         drawPath(indicatorPath, color = indicatorColor)
-                        // 4. Optional indicator material: rim and inner shadow on the indicator's own bounds.
-                        val material = indicatorMaterial
+                        // 4. Optional indicator material: rim on the indicator's own bounds.
+                        // `COUISegmentButtonLayout.initShadowEdgeDrawable` sets
+                        // `setShadowEnable(false).setEdgeEnable(true)` with `TYPE_FRAMEWORK_CAPSULE_10`.
+                        val material = resolvedIndicatorMaterial
                         val shader = indicatorShader
                         if (material != null && shader != null) {
                             setMaterialShadowEdgeUniforms(
@@ -720,20 +833,22 @@ private fun SegmentButtonRow(
                                 height = rect.height,
                                 radius = radius,
                                 stroke = material,
-                                // `COUISegmentButtonLayout.initShadowEdgeDrawable`:
-                                // `setCornerType(2).setWeight(2.0f)` for the indicator's edge drawable.
-                                cornerWeight = MaterialShadowEdgeDefaults.CapsuleCornerWeight,
+                                cornerWeight = capsuleRimCornerWeight(rect.width, rect.height, radius),
                                 antiAliasing = MaterialShadowEdgeDefaults.AntiAliasing,
                                 edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
                                 shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
                                 density = density.density,
+                                shadowEnabled = false,
                             )
                             // The edge shader measures fragCoord in canvas space, not in the
                             // drawRect's local space, so a rect drawn off-origin would keep its
                             // rim anchored at the canvas origin. Translate the canvas so the
-                            // shader's own (0,0) is the indicator's top-left.
-                            translate(left = rect.left, top = rect.top) {
-                                drawRect(brush = shader.asBrush(), size = rect.size)
+                            // shader's own (0,0) is the indicator's top-left, clipped to indicatorPath
+                            // as COUISegmentButtonLayout.drawShadowEdgeIndicator does.
+                            clipPath(indicatorPath) {
+                                translate(left = rect.left, top = rect.top) {
+                                    drawRect(brush = shader.asBrush(), size = rect.size)
+                                }
                             }
                         }
                     }
@@ -974,6 +1089,20 @@ object TabRowDefaults {
         BlendColorEntry(color = Color(0x7F7F7F7F), mode = BlurBlendMode.Overlay),
         BlendColorEntry(color = Color(0x99262626), mode = BlurBlendMode.Luminosity),
     )
+
+    /**
+     * Outer capsule rim and inner shadow (`TYPE_FRAMEWORK_CAPSULE_11`) applied by
+     * `COUISegmentButtonLayout.drawShadowEdge` (`mBackgroundStrokeType`) when `setMaterialEffectEnabled(true)` is set.
+     */
+    @Composable
+    fun containerStroke(isDark: Boolean = isDarkTheme()): MaterialStrokeParams = MaterialStrokeParams.frameworkCapsule11(isDark)
+
+    /**
+     * Sliding indicator rim (`TYPE_FRAMEWORK_CAPSULE_10`) applied by
+     * `COUISegmentButtonLayout.drawShadowEdgeIndicator` when `setMaterialEffectEnabled(true)` is set.
+     */
+    @Composable
+    fun indicatorStroke(isDark: Boolean = isDarkTheme()): MaterialStrokeParams = MaterialStrokeParams.frameworkCapsule10(isDark)
 
     /**
      * The minimum height of the [TabRow]. `COUISegmentButtonLayout` measures a custom height as

@@ -62,5 +62,21 @@ class NativeBlurMaterialTest {
             ),
             FloatingActionButtonDefaults.fabBlurColors(accent, isDark = true),
         )
+        assertEquals(
+            MaterialStrokeParams.FrameworkCapsule11Light,
+            MaterialStrokeParams.frameworkCapsule11(isDark = false),
+        )
+        assertEquals(
+            MaterialStrokeParams.FrameworkCapsule11Dark,
+            MaterialStrokeParams.frameworkCapsule11(isDark = true),
+        )
+        assertEquals(
+            MaterialStrokeParams.FrameworkCapsule10Light,
+            MaterialStrokeParams.frameworkCapsule10(isDark = false),
+        )
+        assertEquals(
+            MaterialStrokeParams.FrameworkCapsule10Dark,
+            MaterialStrokeParams.frameworkCapsule10(isDark = true),
+        )
     }
 }

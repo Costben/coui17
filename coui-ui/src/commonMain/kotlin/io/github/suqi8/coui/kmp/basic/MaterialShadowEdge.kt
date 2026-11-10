@@ -395,11 +395,93 @@ data class MaterialStrokeParams(
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_5` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule5(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule5Dark else FrameworkCapsule5Light
 
+        /**
+         * `FRAMEWORK_CAPSULE_PARAMS_6_LIGHT` — `TYPE_FRAMEWORK_CAPSULE_6`, light theme.
+         *
+         * Outer capsule rim and inner shadow of `COUISegmentButtonLayout` when
+         * `setMaterialEffectEnabled(true)` is active (`enableContainerMaterialEffect`).
+         */
+        val FrameworkCapsule6Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.6f,
+            edgeWidth = 2.5.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.15f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1.15f,
+        )
+
+        /** `FRAMEWORK_CAPSULE_PARAMS_6_DARK` — `TYPE_FRAMEWORK_CAPSULE_6`, dark theme. */
+        val FrameworkCapsule6Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.8f,
+            edgeWidth = 2.5.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.05f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
+        /** Resolves `TYPE_FRAMEWORK_CAPSULE_6` by night mode, as `getStrokeParamsByType` does. */
+        fun frameworkCapsule6(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule6Dark else FrameworkCapsule6Light
+
         /** `TYPE_FRAMEWORK_CIRCLE_1`: the circular rim of a toolbar action item. */
         fun frameworkCircle1(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCircle1Dark else FrameworkCircle1Light
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_8` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule8(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule8Dark else FrameworkCapsule8Light
+
+        /**
+         * `FRAMEWORK_CAPSULE_PARAMS_10_LIGHT` — `TYPE_FRAMEWORK_CAPSULE_10`, light theme.
+         *
+         * Sliding indicator rim of `COUISegmentButtonLayout` (`drawShadowEdgeIndicator`).
+         */
+        val FrameworkCapsule10Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.8f,
+            edgeWidth = 1.8.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.05f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** `FRAMEWORK_CAPSULE_PARAMS_10_DARK` — `TYPE_FRAMEWORK_CAPSULE_10`, dark theme. */
+        val FrameworkCapsule10Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.15f,
+            edgeWidth = 1.8.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.02f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** Resolves `TYPE_FRAMEWORK_CAPSULE_10` by night mode, as `getStrokeParamsByType` does. */
+        fun frameworkCapsule10(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule10Dark else FrameworkCapsule10Light
+
+        /**
+         * `FRAMEWORK_CAPSULE_PARAMS_11_LIGHT` — `TYPE_FRAMEWORK_CAPSULE_11`, light theme.
+         *
+         * Fallback `COUIShadowEdgeDrawable` outer rim of `COUISegmentButtonLayout` (`drawShadowEdge`).
+         */
+        val FrameworkCapsule11Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.45f,
+            edgeWidth = 2.5.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.15f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** `FRAMEWORK_CAPSULE_PARAMS_11_DARK` — `TYPE_FRAMEWORK_CAPSULE_11`, dark theme. */
+        val FrameworkCapsule11Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.1f,
+            edgeWidth = 2.5.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.03f,
+            shadowFadeOut = 0f,
+            shadowFadeScale = 1f,
+        )
+
+        /** Resolves `TYPE_FRAMEWORK_CAPSULE_11` by night mode, as `getStrokeParamsByType` does. */
+        fun frameworkCapsule11(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule11Dark else FrameworkCapsule11Light
 
         /** Resolves `TYPE_FRAMEWORK_CAPSULE_13` by night mode, as `getStrokeParamsByType` does. */
         fun frameworkCapsule13(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule13Dark else FrameworkCapsule13Light
@@ -666,6 +748,7 @@ internal fun setMaterialShadowEdgeUniforms(
     shadowStyle: InnerShadowStyle,
     density: Float,
     edgeEnabled: Boolean = true,
+    shadowEnabled: Boolean = true,
 ) {
     // u_commonArray = [resolution.x, resolution.y, position.x, position.y, size.w, size.h,
     //                  cornerRadius.(lb, rb, rt, lt), weight, antiAliasing]
@@ -673,7 +756,7 @@ internal fun setMaterialShadowEdgeUniforms(
         "u_commonArray",
         floatArrayOf(width, height, 0f, 0f, width, height, radius, radius, radius, radius, cornerWeight, antiAliasing),
     )
-    shader.setFloatUniform("u_shadow", 1f)
+    shader.setFloatUniform("u_shadow", if (shadowEnabled) 1f else 0f)
     shader.setFloatUniform(
         "u_shadowArray",
         InnerShadowStyleMapper.toShadowArray16(

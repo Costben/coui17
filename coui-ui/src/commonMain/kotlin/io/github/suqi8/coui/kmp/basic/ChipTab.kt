@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,9 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -47,7 +46,11 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
@@ -70,7 +73,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
-import io.github.suqi8.coui.kmp.squircle.squircleClip
+import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.roundToInt
 
@@ -475,6 +479,12 @@ private fun ChipTabSurface(
         else -> PaddingValues(start = ChipTabDefaults.StartPadding, end = ChipTabDefaults.EndPadding)
     }
 
+    val squircleEnabled = isSquircleEnabled()
+    val pillShape = remember(squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = ChipTabDefaults.CornerRadius, squircleEnabled = squircleEnabled)
+    }
+    val strokePath = remember { Path() }
+
     Box(
         modifier = modifier
             .then(sizeModifier)
@@ -486,16 +496,22 @@ private fun ChipTabSurface(
                 },
             )
             // The native clamps chipCornerRadius to min(width, height) / 2; for the 32dp pill that is
-            // exactly the 16dp capsule, and the fill is drawn by hand because its two layers carry
-            // independent animated alphas, which squircleSurface's single fill cannot express.
-            .squircleClip(cornerRadius = ChipTabDefaults.CornerRadius)
-            .drawBehind {
-                drawRect(color = checkedSurface.copy(alpha = checkedLayerAlpha))
-                if (checkedLayerAlpha < 1f) {
-                    drawRect(color = container4.copy(alpha = container4.alpha * (1f - checkedLayerAlpha)))
-                }
-                if (isDark && checkedLayerAlpha > 0f) {
-                    drawRect(color = ChipTabCheckedOverlay.copy(alpha = ChipTabCheckedOverlay.alpha * checkedLayerAlpha))
+            // the 16dp continuous-curvature system capsule (`CapsuleOutlineShape`), and the fill is
+            // drawn by hand along that outline because its layers carry independent animated alphas.
+            .drawWithCache {
+                val outline = pillShape.createOutline(size, layoutDirection, this@drawWithCache)
+                val silhouette = Path().apply { addOutline(outline) }
+                onDrawWithContent {
+                    if (checkedLayerAlpha > 0f) {
+                        drawOutline(outline, color = checkedSurface.copy(alpha = checkedLayerAlpha))
+                    }
+                    if (checkedLayerAlpha < 1f) {
+                        drawOutline(outline, color = container4.copy(alpha = container4.alpha * (1f - checkedLayerAlpha)))
+                    }
+                    if (isDark && checkedLayerAlpha > 0f) {
+                        drawOutline(outline, color = ChipTabCheckedOverlay.copy(alpha = ChipTabCheckedOverlay.alpha * checkedLayerAlpha))
+                    }
+                    clipPath(silhouette) { this@onDrawWithContent.drawContent() }
                 }
             }
             .selectable(
@@ -525,11 +541,25 @@ private fun ChipTabSurface(
                         startY = 0f,
                         endY = size.height,
                     )
-                    drawRoundRect(
+                    val insetRect = Rect(inset, inset, size.width - inset, size.height - inset)
+                    val insetHalfMin = (size.minDimension / 2f - inset).coerceAtLeast(0f)
+                    val targetRadius = (ChipTabDefaults.CornerRadius.toPx() - inset).coerceIn(0f, insetHalfMin)
+                    strokePath.reset()
+                    if (squircleEnabled && targetRadius >= insetHalfMin - 0.5f) {
+                        strokePath.addSegmentCapsule(insetRect)
+                    } else {
+                        strokePath.addSquircleRoundRect(
+                            rect = insetRect,
+                            topLeft = targetRadius,
+                            topRight = targetRadius,
+                            bottomRight = targetRadius,
+                            bottomLeft = targetRadius,
+                            squircleEnabled = squircleEnabled,
+                        )
+                    }
+                    drawPath(
+                        path = strokePath,
                         brush = strokeBrush,
-                        topLeft = Offset(inset, inset),
-                        size = Size(size.width - strokeWidth, size.height - strokeWidth),
-                        cornerRadius = CornerRadius((size.minDimension / 2f - inset).coerceAtLeast(0f)),
                         style = Stroke(width = strokeWidth),
                     )
 
@@ -620,7 +650,10 @@ private fun RowScope.ChipTabLabel(
 @Composable
 private fun Modifier.chipTabElevation(alpha: () -> Float, cornerRadius: Dp): Modifier {
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val shape = RoundedCornerShape(cornerRadius)
+    val squircleEnabled = isSquircleEnabled()
+    val shape = remember(cornerRadius, squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
+    }
     val withDropShadow = this.dropShadow(shape) {
         val shadow = ChipTabDefaults.CheckedShadow
         radius = shadow.radius.toPx()
