@@ -47,7 +47,7 @@ private const val EASE_HANDLE_1_X = 0.5251651f
 private const val EASE_HANDLE_2_X = 0.9615864f
 
 /** [addSegmentCapsule] as a [Shape], for the surfaces that clip or blur along the capsule. */
-internal object SegmentCapsuleShape : Shape {
+object SegmentCapsuleShape : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline = Outline.Generic(Path().apply { addSegmentCapsule(Rect(Offset.Zero, size)) })
 }
 
@@ -66,9 +66,9 @@ internal object SegmentCapsuleShape : Shape {
  * @param squircleEnabled Forward `isSquircleEnabled`; when `false` the outline is a plain rounded
  *   rectangle, the same fallback the shader-backed modifiers take.
  */
-internal class CapsuleOutlineShape(
-    private val cornerRadius: Dp? = null,
-    private val squircleEnabled: Boolean = true,
+class CapsuleOutlineShape(
+    val cornerRadius: Dp? = null,
+    val squircleEnabled: Boolean = true,
 ) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val halfMin = size.minDimension / 2f
@@ -107,6 +107,9 @@ internal class CapsuleOutlineShape(
     override fun toString(): String = "CapsuleOutlineShape(cornerRadius=$cornerRadius, squircleEnabled=$squircleEnabled)"
 }
 
+/** Convenience alias for ColorOS 17 continuous-curvature capsule shape. */
+typealias COUISmoothCapsuleShape = CapsuleOutlineShape
+
 /**
  * Fills this node with [color] along [shape] and clips its content to the same silhouette.
  *
@@ -132,7 +135,7 @@ internal fun Modifier.shapeFill(shape: Shape, color: () -> Color): Modifier = dr
  * Appends the system capsule filling [rect], whose radius is half the rect's height.
  * The easing tail shortens when the rect is too narrow to hold it at full length.
  */
-internal fun Path.addSegmentCapsule(rect: Rect) {
+fun Path.addSegmentCapsule(rect: Rect) {
     if (rect.height <= 0f || rect.width <= 0f) return
     if (rect.height >= rect.width) {
         addRoundRect(RoundRect(rect, CornerRadius(rect.width / 2f)))
