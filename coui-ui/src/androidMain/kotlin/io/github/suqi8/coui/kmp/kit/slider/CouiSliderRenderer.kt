@@ -149,16 +149,18 @@ internal class CouiSliderRenderer(
 
         val thumbRadius = motion.thumbRadius.value * density * scale
         if (keyPointFractions != null && keyPointFractions.isNotEmpty()) {
-            val markRadius = 3f * density * scale
-            for (markFraction in keyPointFractions) {
-                val x = start + length * if (rtl) 1f - markFraction else markFraction
-                if (abs(x - thumbX) + markRadius > thumbRadius) {
-                    val isSelected = if (rtl) markFraction >= fraction else markFraction <= fraction
-                    paint.color = if (isSelected) colors.activeTick.toArgb() else colors.inactiveTick.toArgb()
-                    canvas.drawCircle(x, centerY, markRadius, paint)
+            if (keyPointFractions.size <= 50) {
+                val markRadius = 3f * density * scale
+                for (markFraction in keyPointFractions) {
+                    val x = start + length * if (rtl) 1f - markFraction else markFraction
+                    if (abs(x - thumbX) + markRadius > thumbRadius) {
+                        val isSelected = if (rtl) markFraction >= fraction else markFraction <= fraction
+                        paint.color = if (isSelected) colors.activeTick.toArgb() else colors.inactiveTick.toArgb()
+                        canvas.drawCircle(x, centerY, markRadius, paint)
+                    }
                 }
             }
-        } else if (tickCount > 0) {
+        } else if (tickCount in 1..50) {
             val markRadius = 3f * density * scale
             for (index in 0..tickCount) {
                 val markFraction = index.toFloat() / tickCount

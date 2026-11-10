@@ -54,6 +54,7 @@ internal class CouiSliderMotion(
     private var fling: Choreographer.FrameCallback? = null
     private var pressed = false
     private var dragging = false
+    private var lastStepHapticTime = 0L
 
     val height: CouiSpring = CouiSpring(0f) {
         if (pendingRelease && heightFraction >= 0.5f) {
@@ -356,7 +357,11 @@ internal class CouiSliderMotion(
                 } else if (section || isSnappedKeyPoint) {
                     feedback(308, section)
                 } else if (dragging) {
-                    feedback(305, false)
+                    val now = android.os.SystemClock.uptimeMillis()
+                    if (now - lastStepHapticTime >= 35L) {
+                        lastStepHapticTime = now
+                        feedback(305, false)
+                    }
                 }
             }
         }
@@ -406,7 +411,7 @@ internal class CouiSliderMotion(
     private fun normalize(next: Float): Float = if (span > 0f) ((next - range.start) / span).coerceIn(0f, 1f) else 0f
     private fun normalizePosition(x: Float): Float = if (length > 0f) (x / length).coerceIn(0f, 1f) else fraction
     private fun index(next: Float): Int = (next * intervals).roundToInt().coerceIn(0, intervals)
-    private fun quantize(next: Float): Float = if (steps > 0 || section) index(next).toFloat() / intervals else resolveFraction(next)
+    private fun quantize(next: Float): Float = if (steps > 0 || section) index(next).toFloat() / intervals else next
 
     private companion object {
         val DragInterpolator = PathInterpolator(0f, 0f, 0.25f, 1f)

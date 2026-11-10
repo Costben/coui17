@@ -44,7 +44,7 @@ internal actual fun CouiPlatformSlider(
         thumbShadow = Color(if (dark) 0x40000000 else 0x1a000000),
         secondaryTrack = colors.secondaryProgressColor(enabled),
     )
-    val hasTicks = showKeyPoints || steps > 0 || (keyPoints != null && keyPoints.isNotEmpty())
+    val hasTicks = (showKeyPoints && steps in 1..50) || (keyPoints != null && keyPoints.isNotEmpty())
     CouiKitSlider(
         modifier = modifier,
         value = value,

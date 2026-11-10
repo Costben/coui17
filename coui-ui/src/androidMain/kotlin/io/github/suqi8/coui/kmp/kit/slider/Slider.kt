@@ -103,10 +103,8 @@ internal fun CouiKitSlider(
     val effectiveReverse = if (rtl) !reverseDirection else reverseDirection
     val stepFractions = remember(steps) { stepsToTickFractions(steps) }
     val keyPointFractions = remember(keyPoints, stepFractions, valueRange, showKeyPoints) {
-        computeKeyPointFractions(keyPoints, stepFractions, valueRange, showKeyPoints)
-    }
-    val allKeyPointFractions = remember(keyPoints, stepFractions, valueRange) {
-        computeAllKeyPointFractions(keyPoints, stepFractions, valueRange)
+        val fractions = computeKeyPointFractions(keyPoints, stepFractions, valueRange, showKeyPoints)
+        if (fractions.size <= 50) fractions else floatArrayOf()
     }
     val secondaryFraction = remember(secondaryProgress, valueRange) {
         secondaryProgress?.let { secondaryProgressFraction(it, valueRange) }
@@ -120,7 +118,7 @@ internal fun CouiKitSlider(
     val scope = rememberCoroutineScope()
     val onChange by rememberUpdatedState(onValueChange)
     val onFinished by rememberUpdatedState(onValueChangeFinished)
-    val motion = remember(valueRange, steps, showTickMarks, density, view, allKeyPointFractions, magnetThreshold, hapticCode, moveByFinger) {
+    val motion = remember(valueRange, steps, showTickMarks, density, view, keyPointFractions, magnetThreshold, hapticCode, moveByFinger) {
         CouiSliderMotion(
             range = valueRange,
             steps = steps,
@@ -129,7 +127,7 @@ internal fun CouiKitSlider(
             initialValue = value,
             onValueChange = { onChange(it) },
             onValueChangeFinished = { onFinished() },
-            keyPointFractions = allKeyPointFractions,
+            keyPointFractions = keyPointFractions,
             magnetThreshold = magnetThreshold,
             hapticEffect = hapticCode,
             moveByFinger = moveByFinger,
@@ -288,8 +286,8 @@ internal fun CouiKitSlider(
                 colors = resolvedColors,
                 enabled = interactive,
                 rtl = effectiveReverse,
-                tickCount = if (showTickMarks) steps + 1 else 0,
-                keyPointFractions = if (keyPointFractions.isNotEmpty()) keyPointFractions else null,
+                tickCount = if (showTickMarks && steps in 1..50) steps + 1 else 0,
+                keyPointFractions = if (showTickMarks && keyPointFractions.isNotEmpty()) keyPointFractions else null,
                 secondaryProgressFraction = secondaryFraction,
                 showProgress = showProgress,
                 showThumb = showThumb,
