@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package coui17
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,35 +16,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import component.searchBarShadow
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlay
-import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarDefaults
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
@@ -56,10 +43,9 @@ import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
-import io.github.suqi8.coui.kmp.basic.SearchBar
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
 import io.github.suqi8.coui.kmp.basic.Text
-import io.github.suqi8.coui.kmp.basic.TopAppBar
+import io.github.suqi8.coui.kmp.basic.TopAppBarSearchBar
 import io.github.suqi8.coui.kmp.basic.couiTopAppBarActionItem
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
@@ -93,98 +79,97 @@ private val Coui17Tabs = listOf(
 )
 
 /**
- * The capsule pages' chrome. The library's [TopAppBar] owns the native large-title transition, so
- * every capsule page follows the same 32dp expanded title -> 24dp toolbar title motion. Search and
- * overflow actions stay in the 40dp toolbar slots throughout the transition.
+ * The capsule pages' chrome. The collapsible [TopAppBarSearchBar] owns the native large-title
+ * transition (32dp expanded title -> 24dp toolbar title) and expands the trailing circular search
+ * button directly inside the toolbar row with a split "Cancel" capsule.
  *
  * The large title belongs to the keyless top level alone: a page with a back key is a second-level
  * page and wears [Coui17SecondaryTopAppBar] instead.
- *
- * @param onSearchPillPositioned the collapsed pill's top edge in window coordinates, reported on
- *   every layout. The expanded search bar is pinned there so the bar never moves when the page
- *   opens; the pill's y depends on the app bar's collapse state, so it has to be measured.
- * @param searchPillVisible whether the collapsed pill is still the visible search entry point. It
- *   fades out while the expanded search bar occupies the same spot, or the two would stack.
  */
 @Composable
 fun Coui17TopAppBar(
     title: String,
-    searchLabel: String,
-    showSearchField: Boolean,
-    onSearch: () -> Unit,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    searchExpanded: Boolean,
+    onSearchExpandedChange: (Boolean) -> Unit,
+    searchPlaceholder: String,
     panelOpen: Boolean,
     onOpenPanel: () -> Unit,
     onPanelSelect: (Coui17PanelPage) -> Unit,
     onPanelDismiss: () -> Unit,
     scrollBehavior: ScrollBehavior,
     modifier: Modifier = Modifier,
-    onSearchPillPositioned: (Dp) -> Unit = {},
-    searchPillVisible: Boolean = true,
+    showSearchButton: Boolean = true,
 ) {
-    // Gallery's toolbar keys ignore the display-size setting the way its bottom bar does, so the
-    // keys alone take its density; the row, title and margins keep scaling with the system.
-    val galleryDensity = rememberGalleryDensity()
-    TopAppBar(
+    val clearTint = COUITheme.colorScheme.onSurface.copy(alpha = 0.28f)
+    val clearLabel = str("Clear")
+    TopAppBarSearchBar(
+        query = searchQuery,
+        onQueryChange = onSearchQueryChange,
+        expanded = searchExpanded,
+        onExpandedChange = onSearchExpandedChange,
+        modifier = modifier.fillMaxWidth(),
         title = title,
         largeTitle = title,
-        modifier = modifier.fillMaxWidth(),
-        scrollBehavior = scrollBehavior,
-        gradientGlass = true,
-        gradientGlassExtraHeight = if (showSearchField) {
-            Coui17Dimens.AppBarBlurExtra
-        } else {
-            AppBarBlurOverlayDefaults.ExtraHeight
+        placeholder = searchPlaceholder,
+        cancelText = str("Cancel"),
+        onCancel = {
+            onSearchQueryChange("")
+            onSearchExpandedChange(false)
         },
-        defaultWindowInsetsPadding = true,
-        // ColorOS 17's home bar carries no hairline: the material ramps out on its own, and the
-        // library's line would otherwise fade in under the search pill as soon as the page scrolls.
-        showDivider = false,
-        actions = {
-            CompositionLocalProvider(LocalDensity provides galleryDensity) {
-                HighlightedIconButton(
-                    onClick = onSearch,
-                    modifier = Modifier.couiTopAppBarActionItem(),
+        showSearchButton = showSearchButton,
+        searchButtonContentDescription = str("Search"),
+        scrollBehavior = scrollBehavior,
+        trailingIcon = {
+            if (searchQuery.isNotEmpty()) {
+                Canvas(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .semantics { contentDescription = clearLabel }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Button,
+                            onClick = { onSearchQueryChange("") },
+                        ),
                 ) {
-                    Icon(imageVector = COUIIcons.Basic.Search, contentDescription = str("Search"))
+                    val unit = size.width / 36f
+                    drawCircle(clearTint, radius = 9f * unit)
+                    val path = Path().apply {
+                        moveTo(18f, 16.868f)
+                        lineTo(15.031f, 13.898f)
+                        lineTo(13.899f, 15.03f)
+                        lineTo(16.869f, 18f)
+                        lineTo(13.898f, 20.97f)
+                        lineTo(15.03f, 22.101f)
+                        lineTo(18f, 19.131f)
+                        lineTo(20.97f, 22.101f)
+                        lineTo(22.102f, 20.969f)
+                        lineTo(19.132f, 18f)
+                        lineTo(22.101f, 15.03f)
+                        lineTo(20.969f, 13.899f)
+                        close()
+                    }
+                    withTransform({ scale(unit, unit, Offset.Zero) }) {
+                        drawPath(path, Color.White)
+                    }
                 }
             }
+        },
+        extraActions = {
             Box {
-                CompositionLocalProvider(LocalDensity provides galleryDensity) {
-                    HighlightedIconButton(
-                        onClick = onOpenPanel,
-                        modifier = Modifier.couiTopAppBarActionItem(),
-                    ) {
-                        Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
-                    }
+                HighlightedIconButton(
+                    onClick = onOpenPanel,
+                    modifier = Modifier.couiTopAppBarActionItem(),
+                ) {
+                    Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
                 }
                 Coui17Panel(
                     show = panelOpen,
                     onSelect = onPanelSelect,
                     onDismiss = onPanelDismiss,
                 )
-            }
-        },
-        bottomContent = {
-            if (showSearchField) {
-                // The device's `blur_overlay` runs `homepage_appbar_blur_extra_height` past
-                // `app_bar_layout`'s bottom edge. That band is material, not layout: it is handed to
-                // the bar as `gradientGlassExtraHeight` (from the call above), so the list still
-                // starts at the bar's own bottom edge the way `app_bar_layout` does on the device.
-                // It is also the room the collapsed pill's shadow falls into.
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(Coui17Dimens.HomeSearchBandHeight),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    Coui17SearchPill(
-                        label = searchLabel,
-                        onClick = onSearch,
-                        scrollFraction = scrollBehavior.state.collapsedFraction,
-                        visible = searchPillVisible,
-                        onPositioned = onSearchPillPositioned,
-                    )
-                }
             }
         },
     )
@@ -239,119 +224,6 @@ fun Coui17SecondaryTopAppBar(
             }
         },
     )
-}
-
-/**
- * The settings home's app bar: the title band over the search band, with the material overlay.
- *
- * The device's `app_bar_layout` is 343px from the top of the screen — a 141px title band that the
- * status bar sits on top of, and a 202px search band holding a 40dp pill inset 16dp. The overlay
- * reaches 54px (14dp) further down, to 397px.
- *
- * @param scrollFraction The scroll-driven alpha, `min(1, scrollPx / 30dp)`.
- */
-@Composable
-fun Coui17HomeTopBar(
-    title: String,
-    searchLabel: String,
-    onSearchClick: () -> Unit,
-    scrollFraction: Float,
-    modifier: Modifier = Modifier,
-) {
-    AppBarBlurOverlay(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(Coui17Dimens.HomeAppBarBottom),
-        extraHeight = Coui17Dimens.AppBarBlurExtra,
-        scrollFraction = scrollFraction,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().height(Coui17Dimens.HomeAppBarBottom)) {
-            // The system Settings home leaves this band clear so its status-bar clock never
-            // collides with a large title. Keeping the measured band preserves the search pill's
-            // y=164px position while removing the overlapping "设置" text.
-            Spacer(modifier = Modifier.height(Coui17Dimens.HomeTitleBandHeight))
-            Box(
-                modifier = Modifier.fillMaxWidth().height(Coui17Dimens.HomeSearchBandHeight),
-                contentAlignment = Alignment.Center,
-            ) {
-                Coui17SearchPill(
-                    label = searchLabel,
-                    onClick = onSearchClick,
-                    scrollFraction = scrollFraction,
-                )
-            }
-        }
-    }
-}
-
-/**
- * The collapsed search field on the home bar.
- *
- * The field itself is inert — the whole pill is the tap target, exactly like the device, where the
- * `search_src_text` `EditText` carries the click and expands the page into the search view.
- *
- * The pill also casts the shadow the device keeps for the collapsed state; see [searchBarShadow].
- * The shadow sits on its own sibling layer with the capsule punched out: the pill's fill is
- * translucent, so a shadow drawn behind it would show through and darken the field, which the
- * device's shadow does not.
- *
- * @param visible fades the pill out while the expanded search bar covers the same band. The pill
- *   stays laid out, so its measured position remains available for the bar to pin to.
- * @param onPositioned reports the pill's top edge in window coordinates on every layout.
- */
-@Composable
-private fun Coui17SearchPill(
-    label: String,
-    onClick: () -> Unit,
-    scrollFraction: Float,
-    visible: Boolean = true,
-    onPositioned: ((Dp) -> Unit)? = null,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val density = LocalDensity.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Coui17Dimens.BarHorizontalPadding)
-            .height(Coui17Dimens.SearchPillHeight)
-            .graphicsLayer { alpha = if (visible) 1f else 0f }
-            .onGloballyPositioned { coordinates ->
-                onPositioned?.invoke(with(density) { coordinates.positionInWindow().y.toDp() })
-            }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick,
-            ),
-    ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .drawWithContent {
-                    val radius = size.height / 2f
-                    val capsule = Path().apply {
-                        addRoundRect(RoundRect(0f, 0f, size.width, size.height, radius, radius))
-                    }
-                    clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
-                }
-                .dropShadow(shape = CircleShape, shadow = searchBarShadow(scrollFraction)),
-        )
-        SearchBar(
-            query = "",
-            onQueryChange = {},
-            onSearch = {},
-            onExpandedChange = {},
-            modifier = Modifier.fillMaxSize(),
-            expanded = false,
-            label = label,
-            enabled = false,
-            // The device's collapsed pill casts a drop shadow but no caustic light; the light only
-            // appears once the bar is being edited.
-            glowColor = null,
-            insideMargin = DpSize(0.dp, 0.dp),
-            cancelText = null,
-        )
-    }
 }
 
 /**

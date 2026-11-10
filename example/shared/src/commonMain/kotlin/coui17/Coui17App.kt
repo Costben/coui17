@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -47,7 +48,6 @@ import appstate.AppState
 import appstate.LocalAppState
 import appstate.LocalNavigator
 import appstate.LocalUpdateAppState
-import component.SearchPager
 import i18n.LocalAppStrings
 import i18n.LocalLanguageSwitchEnabled
 import i18n.str
@@ -83,7 +83,6 @@ import pages.TextStylePage
 import ui.AppTheme
 import ui.keyColorFor
 import utils.FPSMonitor
-import utils.SearchStatus
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -220,37 +219,26 @@ private fun Coui17Root() {
     }
     val currentPage = Coui17Page.entries[pagerState.currentPage]
     val topBarScrollBehavior = topBarScrollBehaviors[pagerState.currentPage]
-    // The device's hint is five character slots long, and the collapsed pill draws five glyphs at
-    // x 219..501px.
     val searchLabel = str("Search settings")
-    var searchStatus by remember { mutableStateOf(SearchStatus(label = searchLabel)) }
-    // The pill's hint is part of the search state rather than of the bar, so a language change has to
-    // be carried into it; re-seeding the state instead would throw away a search in progress.
-    LaunchedEffect(searchLabel) { searchStatus = searchStatus.copy(label = searchLabel) }
+    var searchExpanded by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     var panelOpen by remember { mutableStateOf(false) }
     var panelAnchor by remember { mutableStateOf(Coui17PanelAnchor.BottomBar) }
     val bottomSpace = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
         Coui17Dimens.BottomBarSpace
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val expandedTopBarHeight = statusBar + TopAppBarDefaults.ExpandedHeight
-    val expandedHomeTopBarHeight = expandedTopBarHeight + Coui17Dimens.HomeSearchBandHeight
-    // Opening the search slides the bar from the pill up to the collapsed toolbar row: on the device
-    // the capsule travels 615px → 164px over ~300ms. The pill's y depends on the app bar's collapse
-    // state, so it is measured rather than assumed; the seed is the fully expanded app bar, which is
-    // where a tap can actually land.
-    var searchPillTop by remember { mutableStateOf(expandedTopBarHeight) }
-    // The row the search bar docks into: the collapsed app bar's height, with the 40dp capsule
-    // centred in it. Measured on the device at 42.3dp / 164px, which is exactly this formula.
-    val dockedSearchTop = statusBar +
-        (TopAppBarDefaults.CollapsedHeight - Coui17Dimens.SearchPillHeight) / 2
-    val onSearch = {
-        searchStatus = searchStatus.copy(current = SearchStatus.Status.EXPANDING)
-    }
     val onPanelSelect = { page: Coui17PanelPage ->
         panelOpen = false
         navigator.push(page.route)
     }
-    LaunchedEffect(currentPage) { panelOpen = false }
+    LaunchedEffect(currentPage) {
+        panelOpen = false
+        if (currentPage != Coui17Page.Home) {
+            searchExpanded = false
+            searchQuery = ""
+        }
+    }
     val pageUserScroll = LocalAppState.current.enablePageUserScroll
     var pageFade by remember { mutableStateOf<Coui17PageFade?>(null) }
     var pageSwitchJob by remember { mutableStateOf<Job?>(null) }
@@ -277,6 +265,21 @@ private fun Coui17Root() {
             }
         }
     }
+    val onSearch = {
+        panelOpen = false
+        if (pagerState.currentPage == Coui17Page.Home.ordinal) {
+            searchExpanded = true
+        } else {
+            onSelectPage(Coui17Page.Home.ordinal)
+            coroutineScope.launch {
+                snapshotFlow { pagerState.currentPage }
+                    .first { it == Coui17Page.Home.ordinal }
+                withFrameNanos { }
+                searchExpanded = true
+            }
+        }
+        Unit
+    }
 
     Coui17Frame(
         snackbarHostState = snackbarHostState,
@@ -292,7 +295,7 @@ private fun Coui17Root() {
                 // Gallery also locks the pager while a tap's fade runs (`setUserInputEnabled(... &&
                 // !alphaAnimator.isRunning)`).
                 userScrollEnabled = pageUserScroll &&
-                    searchStatus.isCollapsed() &&
+                    !searchExpanded &&
                     pageFade == null,
             ) { page ->
                 val layoutDirection = LocalLayoutDirection.current
@@ -310,17 +313,17 @@ private fun Coui17Root() {
                         }
                     },
                     scrollBehavior = topBarScrollBehaviors[page],
-                    contentTop = if (page == Coui17Page.Home.ordinal) {
-                        expandedHomeTopBarHeight
-                    } else {
-                        expandedTopBarHeight
-                    },
+                    contentTop = expandedTopBarHeight,
                     contentBottom = bottomSpace,
                 ) { pagePadding ->
                     when (Coui17Page.entries[page]) {
                         Coui17Page.Home -> Coui17HomePage(
                             contentPadding = pagePadding,
                             modifier = Modifier.fillMaxSize(),
+                            searchQuery = searchQuery,
+                            onAtTopAfterSearchClear = {
+                                topBarScrollBehaviors[Coui17Page.Home.ordinal].state.contentOffset = 0f
+                            },
                         )
 
                         Coui17Page.Icons -> IconsPage(padding = pagePadding)
@@ -333,9 +336,20 @@ private fun Coui17Root() {
         bars = {
             Coui17TopAppBar(
                 title = str(currentPage.title),
-                searchLabel = searchLabel,
-                showSearchField = currentPage == Coui17Page.Home,
-                onSearch = onSearch,
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                searchExpanded = searchExpanded,
+                onSearchExpandedChange = { expanded ->
+                    if (expanded) panelOpen = false
+                    if (expanded && pagerState.currentPage != Coui17Page.Home.ordinal) {
+                        onSearch()
+                    } else {
+                        searchExpanded = expanded
+                        if (!expanded) searchQuery = ""
+                    }
+                },
+                searchPlaceholder = searchLabel,
+                showSearchButton = currentPage == Coui17Page.Home,
                 panelOpen = panelOpen && panelAnchor == Coui17PanelAnchor.TopBar,
                 onOpenPanel = {
                     panelAnchor = Coui17PanelAnchor.TopBar
@@ -345,8 +359,6 @@ private fun Coui17Root() {
                 onPanelDismiss = { panelOpen = false },
                 scrollBehavior = topBarScrollBehavior,
                 modifier = Modifier.align(Alignment.TopCenter),
-                onSearchPillPositioned = { searchPillTop = it },
-                searchPillVisible = searchStatus.isCollapsed(),
             )
             Coui17AccessoryBar(
                 currentPage = pagerState.currentPage,
@@ -360,16 +372,6 @@ private fun Coui17Root() {
                 onPanelSelect = onPanelSelect,
                 onPanelDismiss = { panelOpen = false },
                 modifier = Modifier.align(Alignment.BottomCenter),
-            )
-        },
-        overlays = {
-            searchStatus.SearchPager(
-                onSearchStatusChange = { searchStatus = it },
-                barTop = searchPillTop,
-                dockedBarTop = dockedSearchTop,
-                surfaceColor = AppBarBlurOverlayDefaults.containerColor(),
-                defaultResult = {},
-                result = {},
             )
         },
     )

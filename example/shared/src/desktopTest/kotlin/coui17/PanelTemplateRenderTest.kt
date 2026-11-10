@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -17,13 +18,15 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import appstate.LocalNavigator
 import i18n.AppStrings
 import i18n.LocalAppStrings
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Scaffold
-import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.darkColorScheme
+import navigation3.Navigator
+import navigation3.Route
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
@@ -81,12 +84,14 @@ class PanelTemplateRenderTest {
         density = Density(3.875f),
     ) {
         setContent {
+            val navigator = remember { Navigator(mutableStateListOf(Route.Main)) }
             COUITheme(colors = darkColorScheme()) {
-                CompositionLocalProvider(LocalAppStrings provides AppStrings.Chinese) {
+                CompositionLocalProvider(
+                    LocalAppStrings provides AppStrings.Chinese,
+                    LocalNavigator provides navigator,
+                ) {
                     Scaffold(containerColor = Color(0xFF141414)) { _ ->
-                        val snackbarHostState = remember { SnackbarHostState() }
                         Coui17HomePage(
-                            snackbarHostState = snackbarHostState,
                             contentPadding = PaddingValues(top = 24.dp),
                         )
                     }

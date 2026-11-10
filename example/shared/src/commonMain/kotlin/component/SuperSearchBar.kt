@@ -13,26 +13,42 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -43,16 +59,34 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import i18n.str
+import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
+import io.github.suqi8.coui.kmp.basic.CardListPosition
+import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.SearchBar
 import io.github.suqi8.coui.kmp.basic.SearchBarDefaults
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.TopAppBarSearchBar
+import io.github.suqi8.coui.kmp.blur.layerBackdrop
+import io.github.suqi8.coui.kmp.icon.COUIIcons
+import io.github.suqi8.coui.kmp.icon.extended.Messages
+import io.github.suqi8.coui.kmp.icon.extended.Music
+import io.github.suqi8.coui.kmp.icon.extended.Photos
+import io.github.suqi8.coui.kmp.icon.extended.Settings
+import io.github.suqi8.coui.kmp.icon.extended.Theme
+import io.github.suqi8.coui.kmp.icon.extended.Timer
+import io.github.suqi8.coui.kmp.icon.extended.TopDownloads
+import io.github.suqi8.coui.kmp.icon.extended.Unlock
+import io.github.suqi8.coui.kmp.icon.extended.VolumeUp
+import io.github.suqi8.coui.kmp.preference.SwitchPreference
 import io.github.suqi8.coui.kmp.shared.generated.resources.Res
 import io.github.suqi8.coui.kmp.shared.generated.resources.search_cancel
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import org.jetbrains.compose.resources.stringResource
 import utils.SearchStatus
+import utils.rememberBlurBackdrop
 
 /** COUIMoveEaseInterpolator: PathInterpolator(0.3f, 0f, 0.1f, 1f). */
 private val MoveEase = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)
@@ -258,36 +292,266 @@ private fun SearchStatusBar(
     )
 }
 
+private enum class SearchSampleMode { Persistent, Toolbar }
+
+private val TransferIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "Transfer",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        addPath(
+            pathData = PathParser().parsePathString(
+                "M8,11V21.3C8,21.686 8.313,22 8.7,22H9.3C9.687,22 10,21.686 10,21.3V2.637C10,2.049 9.242,1.812 8.907,2.295L3.628,9.901C3.305,10.365 3.638,11 4.203,11L8,11Z",
+            ).toNodes(),
+            fill = SolidColor(Color.Black),
+        )
+        addPath(
+            pathData = PathParser().parsePathString(
+                "M16,13V2.7C16,2.313 15.687,2 15.3,2H14.7C14.313,2 14,2.313 14,2.7V21.363C14,21.95 14.758,22.188 15.093,21.705L20.372,14.099C20.694,13.635 20.362,13 19.797,13L16,13Z",
+            ).toNodes(),
+            fill = SolidColor(Color.Black),
+        )
+    }.build()
+}
+
+private data class SearchPreviewEntry(
+    val title: String,
+    val summary: String,
+    val value: String,
+    val colorHex: Long,
+    val icon: ImageVector,
+)
+
+private val SearchPreviewEntries = listOf(
+    SearchPreviewEntry("Wireless network", "Connected to COUI Demo", "Wi-Fi 6", 0xFF1A8CFF, TransferIcon),
+    SearchPreviewEntry("Bluetooth headphones", "Simulated device · Stereo audio", "Connected", 0xFF6366F1, COUIIcons.VolumeUp),
+    SearchPreviewEntry("Notification messages", "", "3 items", 0xFFFF9B35, COUIIcons.Messages),
+    SearchPreviewEntry("Battery status", "Sufficient battery, ready to use", "72%", 0xFF34B978, COUIIcons.Settings),
+    SearchPreviewEntry("Calendar schedule", "3:00 PM · Project discussion", "Today", 0xFFF0667B, COUIIcons.Timer),
+    SearchPreviewEntry("Music playback", "Afternoon radio · Light music", "Paused", 0xFFA884E7, COUIIcons.Music),
+    SearchPreviewEntry("Photo album", "", "128 photos", 0xFF45B6AE, COUIIcons.Photos),
+    SearchPreviewEntry("Download task", "sample.zip · 24 MB", "Completed", 0xFF1A8CFF, COUIIcons.TopDownloads),
+    SearchPreviewEntry("Privacy & security", "Manage app permissions and local access logs", "", 0xFF34B978, COUIIcons.Unlock),
+    SearchPreviewEntry("Screen display", "", "Auto", 0xFFFF9B35, COUIIcons.Theme),
+)
+
 /**
- * The gallery's [SearchBar] entry: the collapsed field on its own, and the same field with the
- * cancel capsule that melts out of it.
+ * The gallery's [SearchBar] entry: demonstrates both the persistent [SearchBar] (expanding with a
+ * split cancel capsule) and the toolbar [TopAppBarSearchBar] (circular search button expanding
+ * into a search bar and cancel capsule with metaball fusion and motion blur).
  */
 @Composable
 fun SearchBarDemo() {
+    var enabled by remember { mutableStateOf(true) }
+    var active by remember { mutableStateOf<SearchSampleMode?>(null) }
     var query by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-    var submitted by remember { mutableStateOf("") }
-    SearchBar(
-        query = query,
-        onQueryChange = { query = it },
-        onSearch = { submitted = it },
-        onExpandedChange = { expanded = it },
-        modifier = Modifier.fillMaxWidth(),
-        expanded = expanded,
-        label = str("Search settings"),
-        cancelText = str("Cancel"),
-        clearContentDescription = str("Clear"),
+    val persistentExpanded = active == SearchSampleMode.Persistent
+    val toolbarExpanded = active == SearchSampleMode.Toolbar
+    val persistentEnabled = enabled && active != SearchSampleMode.Toolbar
+    val toolbarEnabled = enabled && active != SearchSampleMode.Persistent
+    val scrollState = rememberScrollState()
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val backdrop = rememberBlurBackdrop()
+
+    val closeSearch = {
+        active = null
+        query = ""
+        keyboard?.hide()
+        focusManager.clearFocus()
+    }
+
+    LaunchedEffect(query) {
+        scrollState.scrollTo(0)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text(
-                    text = str("query: \"{}\"", query),
-                    style = COUITheme.textStyles.footnote1,
+        Card(
+            cornerRadius = CardDefaults.GroupCornerRadius,
+            weight = CardDefaults.GroupWeight,
+        ) {
+            SwitchPreference(
+                title = str("Enabled state"),
+                checked = enabled,
+                onCheckedChange = { enabled = it },
+                cardListPosition = CardListPosition.Full,
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(480.dp)
+                .clip(RoundedCornerShape(CardDefaults.GroupCornerRadius)),
+        ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier)
+                    .background(COUITheme.colorScheme.background),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(top = 128.dp, bottom = 16.dp)
+                        .padding(horizontal = 16.dp),
+                ) {
+                    SearchPreviewList(query = query)
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth(),
+            ) {
+                SearchBar(
+                    query = query,
+                    onQueryChange = { query = it },
+                    onSearch = {
+                        keyboard?.hide()
+                        focusManager.clearFocus()
+                    },
+                    onExpandedChange = { isExpanded ->
+                        if (!isExpanded) {
+                            closeSearch()
+                        } else if (active == null) {
+                            active = SearchSampleMode.Persistent
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    expanded = persistentExpanded,
+                    label = str("Search samples"),
+                    enabled = persistentEnabled,
+                    backdrop = backdrop,
+                    insideMargin = DpSize(16.dp, 6.dp),
+                    cancelText = str("Cancel"),
+                    onCancel = closeSearch,
+                    clearContentDescription = str("Clear"),
                 )
-                if (submitted.isNotEmpty()) {
-                    Text(
-                        text = str("Searched") + ": " + submitted,
-                        style = COUITheme.textStyles.footnote1,
+
+                TopAppBarSearchBar(
+                    query = query,
+                    onQueryChange = { query = it },
+                    expanded = toolbarExpanded,
+                    onExpandedChange = { isExpanded ->
+                        if (!isExpanded) {
+                            closeSearch()
+                        } else if (active == null) {
+                            active = SearchSampleMode.Toolbar
+                        }
+                    },
+                    title = str("Sample Demo"),
+                    placeholder = str("Search samples"),
+                    cancelText = str("Cancel"),
+                    onSearch = {
+                        keyboard?.hide()
+                        focusManager.clearFocus()
+                    },
+                    onCancel = closeSearch,
+                    enabled = toolbarEnabled,
+                    searchButtonContentDescription = str("Search"),
+                    backdrop = backdrop,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchPreviewList(query: String) {
+    val needle = query.trim()
+    val matches = remember(needle) {
+        SearchPreviewEntries.mapIndexedNotNull { index, entry ->
+            val localizedTitle = entry.title
+            val localizedSummary = entry.summary
+            val localizedValue = entry.value
+            index.takeIf {
+                needle.isEmpty() ||
+                    localizedTitle.contains(needle, ignoreCase = true) ||
+                    localizedSummary.contains(needle, ignoreCase = true) ||
+                    localizedValue.contains(needle, ignoreCase = true)
+            }
+        }
+    }
+    val localizedMatches = SearchPreviewEntries.indices.filter { index ->
+        val entry = SearchPreviewEntries[index]
+        val titleText = str(entry.title)
+        val summaryText = if (entry.summary.isNotEmpty()) str(entry.summary) else ""
+        val valueText = if (entry.value.isNotEmpty()) str(entry.value) else ""
+        needle.isEmpty() ||
+            titleText.contains(needle, ignoreCase = true) ||
+            summaryText.contains(needle, ignoreCase = true) ||
+            valueText.contains(needle, ignoreCase = true) ||
+            index in matches
+    }
+
+    Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        if (localizedMatches.isEmpty()) {
+            BasicComponent(
+                title = str("No matching items"),
+                cardListPosition = CardListPosition.Full,
+            )
+        } else {
+            val last = localizedMatches.lastIndex
+            localizedMatches.forEachIndexed { position, index ->
+                key(index) {
+                    val entry = SearchPreviewEntries[index]
+                    val accent = Color(entry.colorHex)
+                    val summaryText = entry.summary.takeIf { it.isNotEmpty() }?.let { str(it) }
+                    val valueText = entry.value.takeIf { it.isNotEmpty() }?.let { str(it) }
+                    BasicComponent(
+                        modifier = Modifier.heightIn(min = if (summaryText == null) 56.dp else 72.dp),
+                        title = str(entry.title),
+                        summary = summaryText,
+                        startAction = {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 16.dp)
+                                    .size(32.dp)
+                                    .background(
+                                        color = accent.copy(alpha = 0.16f),
+                                        shape = if (index % 2 == 0) CircleShape else RoundedCornerShape(8.dp),
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = entry.icon,
+                                    contentDescription = null,
+                                    tint = accent,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        },
+                        endActions = {
+                            if (valueText != null) {
+                                Text(
+                                    text = valueText,
+                                    style = COUITheme.textStyles.body2,
+                                    color = COUITheme.colorScheme.onSurfaceSecondary,
+                                )
+                            }
+                        },
+                        cardListPosition = when {
+                            last == 0 -> CardListPosition.Full
+                            position == 0 -> CardListPosition.Head
+                            position == last -> CardListPosition.Tail
+                            else -> CardListPosition.Middle
+                        },
                     )
                 }
             }
