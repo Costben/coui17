@@ -1274,15 +1274,24 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBar
 	public final fun getLambda$-1157972007$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-1173478247$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-2046446912$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-27023815$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-357067351$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-486045669$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-654901189$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-801912990$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$111277080$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$1161401538$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1414627886$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1595528512$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1844159034$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1857322898$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1924252450$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda$966619732$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBarSearchBarKt {
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBarSearchBarKt;
+	public fun <init> ()V
+	public final fun getLambda$1688520326$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/DatePickerDefaults {
@@ -4802,6 +4811,10 @@ public final class io/github/suqi8/coui/kmp/basic/TopAppBarKt {
 	public static final fun TopAppBar-r1A-NS4 (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZZFFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
 	public static final fun couiTopAppBarActionItem (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 	public static final fun rememberTopAppBarState (FFFLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TopAppBarState;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/TopAppBarSearchBarKt {
+	public static final fun TopAppBarSearchBar-ODOD5qU (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ZZLjava/lang/String;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;Lio/github/suqi8/coui/kmp/blur/Backdrop;JLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TopAppBarState {

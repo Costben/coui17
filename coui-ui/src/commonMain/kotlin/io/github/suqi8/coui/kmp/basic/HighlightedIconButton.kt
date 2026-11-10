@@ -87,6 +87,15 @@ fun HighlightedIconButton(
     spotLightEnabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    if (shouldUseToolbarSurfaceIconButton(size = size, backdrop = backdrop, spotLightEnabled = spotLightEnabled)) {
+        ToolbarSurfaceIconButton(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            content = content,
+        )
+        return
+    }
     val touchMotion = rememberCOUITouchMotionState()
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -444,3 +453,18 @@ object HighlightedIconButtonDefaults {
      */
     val LightHaloOffsetY = 1.dp
 }
+
+@Composable
+internal expect fun shouldUseToolbarSurfaceIconButton(
+    size: Dp,
+    backdrop: Backdrop?,
+    spotLightEnabled: Boolean,
+): Boolean
+
+@Composable
+internal expect fun ToolbarSurfaceIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable BoxScope.() -> Unit,
+)

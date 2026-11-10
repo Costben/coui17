@@ -375,6 +375,80 @@ fun TopAppBar(
 }
 
 @Composable
+internal fun TopAppBarWithSearch(
+    title: String,
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.surface,
+    titleColor: Color = COUITheme.colorScheme.onSurface,
+    largeTitle: String = title,
+    largeTitleColor: Color = COUITheme.colorScheme.onSurface,
+    subtitle: String = "",
+    subtitleColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
+    dividerColor: Color = COUITheme.colorScheme.dividerLine,
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: ScrollBehavior? = null,
+    defaultWindowInsetsPadding: Boolean = true,
+    showDivider: Boolean = true,
+    hideSubtitleOnCollapse: Boolean = true,
+    gradientGlass: Boolean = false,
+    gradientGlassExtraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    titlePadding: Dp = TopAppBarDefaults.TitlePadding,
+    navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
+    actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
+    titleAlpha: () -> Float = { 1f },
+    forceCollapsed: Boolean = false,
+    searchOverlay: (@Composable () -> Unit)? = null,
+    bottomContent: @Composable () -> Unit = {},
+) {
+    val actionsRow =
+        @Composable {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(
+                    TopAppBarDefaults.ActionMenuItemSpacing,
+                    Alignment.End,
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                content = actions,
+            )
+        }
+
+    AppBarMaterialScaffold(
+        gradientGlass = gradientGlass,
+        color = color,
+        modifier = modifier,
+        extraHeight = gradientGlassExtraHeight,
+        scrollBehavior = scrollBehavior,
+    ) {
+        TopAppBarLayout(
+            title = title,
+            color = color,
+            titleColor = titleColor,
+            largeTitle = largeTitle,
+            largeTitleColor = largeTitleColor,
+            subtitle = subtitle,
+            subtitleColor = subtitleColor,
+            dividerColor = dividerColor,
+            navigationIcon = navigationIcon,
+            actions = actionsRow,
+            titlePadding = titlePadding,
+            navigationIconPadding = navigationIconPadding,
+            actionIconPadding = actionIconPadding,
+            scrollBehavior = scrollBehavior,
+            modifier = Modifier,
+            defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+            showDivider = showDivider,
+            hideSubtitleOnCollapse = hideSubtitleOnCollapse,
+            gradientGlass = gradientGlass,
+            titleAlpha = titleAlpha,
+            forceCollapsed = forceCollapsed,
+            searchOverlay = searchOverlay,
+            bottomContent = bottomContent,
+        )
+    }
+}
+
+@Composable
 fun TopAppBar(
     title: String,
     modifier: Modifier = Modifier,
@@ -1221,6 +1295,9 @@ private fun TopAppBarLayout(
     showDivider: Boolean = true,
     hideSubtitleOnCollapse: Boolean = true,
     gradientGlass: Boolean = false,
+    titleAlpha: () -> Float = { 1f },
+    forceCollapsed: Boolean = false,
+    searchOverlay: (@Composable () -> Unit)? = null,
     bottomContent: @Composable () -> Unit = {},
 ) {
     // Producer lambdas — reads stay in layout/draw phases so scroll never recomposes this subtree.
@@ -1238,15 +1315,16 @@ private fun TopAppBarLayout(
             offset >= -1f
         }
     }
+    val collapsedTarget = !atTop || forceCollapsed
     val snapFraction = remember(scrollBehavior, snapsToTop) {
-        Animatable(if (snapsToTop && !atTop) 1f else 0f)
+        Animatable(if (snapsToTop && collapsedTarget) 1f else 0f)
     }
-    LaunchedEffect(scrollBehavior, snapsToTop, atTop) {
+    LaunchedEffect(scrollBehavior, snapsToTop, collapsedTarget) {
         if (!snapsToTop) {
             snapFraction.snapTo(0f)
         } else {
             snapFraction.animateTo(
-                targetValue = if (atTop) 0f else 1f,
+                targetValue = if (collapsedTarget) 1f else 0f,
                 animationSpec = scrollBehavior.snapAnimationSpec
                     ?: tween(durationMillis = SnapAnimationDuration, easing = SnapAnimationEasing),
             )
@@ -1394,6 +1472,11 @@ private fun TopAppBarLayout(
             Box(Modifier.layoutId("bottomContent")) {
                 bottomContent()
             }
+            if (searchOverlay != null) {
+                Box(Modifier.layoutId("searchOverlay")) {
+                    searchOverlay()
+                }
+            }
         },
         modifier = modifier
             // The material layer behind this layout paints the gradient shape when gradientGlass
@@ -1491,6 +1574,12 @@ private fun TopAppBarLayout(
                 .measure(constraints.copy(minWidth = 0, minHeight = 0))
 
         val collapsedHeight = TopAppBarDefaults.CollapsedHeight.roundToPx()
+        val searchOverlayWidth = (constraints.maxWidth - titlePaddingPx - actionIconPaddingPx).coerceAtLeast(0)
+        val searchOverlayPlaceable =
+            measurables
+                .firstOrNull { it.layoutId == "searchOverlay" }
+                ?.measure(Constraints.fixed(searchOverlayWidth, collapsedHeight))
+
         val largeTitleTop = TopAppBarDefaults.LargeTitleTopPadding.roundToPx()
         val subtitleMarginTopPx = TopAppBarDefaults.SubtitleMarginTop.roundToPx()
         val largeTitleBottomPaddingPx = TopAppBarDefaults.LargeTitleBottomPadding.roundToPx()
@@ -1578,7 +1667,7 @@ private fun TopAppBarLayout(
                 y = expandedBarHeight - subtitleHeight -
                     (largeTitleBottomPaddingPx * (1f - collapseFraction)).roundToInt() + offsetPx,
             ) {
-                alpha = if (hideSubtitleOnCollapse) 1f - collapseFraction else 1f
+                alpha = (if (hideSubtitleOnCollapse) 1f - collapseFraction else 1f) * titleAlpha()
             }
 
             // Large title: translates and scales into the collapsed title; swapped for the
@@ -1590,7 +1679,7 @@ private fun TopAppBarLayout(
                 transformOrigin = TransformOrigin(pivotX, 0f)
                 scaleX = largeTitleScale
                 scaleY = largeTitleScale
-                alpha = if (collapsed) 0f else 1f
+                alpha = (if (collapsed) 0f else 1f) * titleAlpha()
             }
 
             // Collapsed title (start-aligned, visible only at full collapse).
@@ -1598,8 +1687,11 @@ private fun TopAppBarLayout(
                 x = collapsedTitleX,
                 y = collapsedTitleY,
             ) {
-                alpha = if (collapsed) 1f else 0f
+                alpha = (if (collapsed) 1f else 0f) * titleAlpha()
             }
+
+            // Search overlay (pinned in the toolbar row, spans between titlePadding and actionIconPadding)
+            searchOverlayPlaceable?.placeRelative(x = titlePaddingPx, y = 0)
 
             // Bottom content (pinned, below the bar)
             bottomContentPlaceable.placeRelative(x = 0, y = contentTop)
