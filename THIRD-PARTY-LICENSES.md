@@ -20,6 +20,7 @@ these projects under the same or a compatible license.
 | `com.mikepenz:aboutlibraries-core` | Apache-2.0 | Mike Penz |
 | COUI (`suqi8/coui`) — the upstream project this repository is forked from | Apache-2.0 | the COUI contributors |
 | Miuix — the project COUI is forked from, and the origin of this repository's history | Apache-2.0 | YuKongA and the compose-miuix-ui contributors |
+| COUI-Kit (`ItosEO/COUI-Kit`) — component implementations ported into `kit` packages, rewritten for Compose Multiplatform; those files keep the MPL-2.0 header | MPL-2.0 | the COUI-Kit contributors |
 
 ## Build-time only
 

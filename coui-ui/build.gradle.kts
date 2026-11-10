@@ -64,6 +64,7 @@ kotlin {
         androidMain.dependencies {
             // Resolves the one hidden AOSP backdrop setter the native app bar blur needs.
             implementation(libs.lsposed.hiddenapibypass)
+            implementation(libs.androidx.dynamicanimation)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

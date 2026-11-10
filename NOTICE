@@ -19,3 +19,11 @@ that project.
 
 Third-party dependencies and their licenses are listed in
 THIRD-PARTY-LICENSES.md.
+
+This product includes source code ported from COUI-Kit
+(https://github.com/ItosEO/COUI-Kit), licensed under the Mozilla Public
+License, version 2.0. Those files live in `kit` packages, carry the MPL-2.0
+header and remain under MPL-2.0; the source of each is available in this
+repository. COUI-Kit's third-party resources (ColorOS images and icons) are
+not included. "COUI-Kit" is a name of that project and is not used as the
+name of this product.

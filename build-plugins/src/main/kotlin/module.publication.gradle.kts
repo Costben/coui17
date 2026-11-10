@@ -89,6 +89,11 @@ publishing {
                     name.set("The Apache Software License, Version 2.0")
                     url.set("$projectUrl/blob/main/LICENSE")
                 }
+                // Files under `kit/` packages are ported from COUI-Kit and stay under MPL-2.0.
+                license {
+                    name.set("Mozilla Public License 2.0")
+                    url.set("https://mozilla.org/MPL/2.0/")
+                }
             }
             issueManagement {
                 system.set("Github")

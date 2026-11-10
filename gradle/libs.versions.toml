@@ -53,6 +53,7 @@ jetbrains-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lif
 jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrains-lifecycle" }
 materialKolor-utilities = { module = "com.materialkolor:material-color-utilities", version.ref = "materialKolor-utilities" }
 lsposed-hiddenapibypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version.ref = "lsposed-hiddenapibypass" }
+androidx-dynamicanimation = { module = "androidx.dynamicanimation:dynamicanimation", version = "1.0.0" }
 
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }

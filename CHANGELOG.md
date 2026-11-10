@@ -8,6 +8,8 @@ All notable user-visible changes are documented here. The format follows
 
 ### Added
 
+- Migrated COUI-Kit slider implementation on Android via expect/actual: capsule track geometry with native dynamic spring animations, spotlight touch effect, custom key points with magnetic snapping, and secondary buffer progress, while preserving Skiko rendering and full API compatibility across platforms.
+
 - `ChipTabGroup` takes `leadingIcon` / `onLeadingIconClick`, the pinned 32dp icon-only chip of `COUIChipTabLayout` (20dp icon, always in the selected style, tabs starting 8dp after it), and `contentPadding`, which lies inside the scroll like the native scroller's `clipToPadding = false` padding so the tabs scroll on up to the fading edge.
 - The selected `ChipTab` is lifted as on ColorOS 17: top/bottom rim specular highlights, a drop shadow fitted to the Notes app (`ChipTabDefaults.CheckedShadow`) and dark-theme caustic light, all fading in with the selection.
 - `SlideView` (experimental): the ColorOS 17 swipe-to-delete list row. Swiping reveals full-height actions behind the content, with the native drag damping past the menu, release spring and delete animation; `SlideViewState.delete()` slides the row out and collapses it, and `fastDeleteEnabled` deletes on a long slide.
