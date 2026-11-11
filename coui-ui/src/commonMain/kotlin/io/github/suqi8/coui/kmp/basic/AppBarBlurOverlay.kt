@@ -390,8 +390,15 @@ internal fun AppBarMaterial(
     // the ramp to the other branch.
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
     // Where the platform has its own backdrop blur (ColorOS, Android 16), use it exactly the way
-    // `AppBarBlurHelper` does instead of re-recording the content through COUI's engine.
-    val native = if (platformRenderer && blurEnabled) rememberPlatformAppBarBackdropRenderer() else null
+    // `AppBarBlurHelper` does instead of re-recording the content through COUI's engine. A page that
+    // toggles backdrop recording — one with glass popups over its list — refuses it per
+    // [LocalPlatformAppBarMaterialEnabled] and keeps the engine.
+    val platformAllowed = LocalPlatformAppBarMaterialEnabled.current
+    val native = if (platformRenderer && platformAllowed && blurEnabled) {
+        rememberPlatformAppBarBackdropRenderer()
+    } else {
+        null
+    }
     if (native != null) {
         native.Material(
             containerColor = containerColor,

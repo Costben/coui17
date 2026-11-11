@@ -113,6 +113,10 @@ public final class io/github/suqi8/coui/kmp/anim/SinOutEasingKt {
 	public static final fun getSinOutEasing ()Landroidx/compose/animation/core/Easing;
 }
 
+public final class io/github/suqi8/coui/kmp/basic/AppBarBackdropRendererKt {
+	public static final fun getLocalPlatformAppBarMaterialEnabled ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/AppBarBlurOverlayDefaults;
