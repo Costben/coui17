@@ -43,8 +43,10 @@ import io.github.suqi8.coui.kmp.kit.backdrop.LocalCouiBackdrop
 import io.github.suqi8.coui.kmp.kit.text.CouiTextKind
 import io.github.suqi8.coui.kmp.kit.text.rememberCouiTextStyle
 import io.github.suqi8.coui.kmp.kit.theme.CouiText
+import io.github.suqi8.coui.kmp.kit.topappbar.CouiTopAppBarDefaults
 import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarBackdrop
 import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarOverlay
+import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarSampleBlurRadius
 import io.github.suqi8.coui.kmp.kit.topappbar.TopAppBarActionVisibility
 import io.github.suqi8.coui.kmp.kit.topappbar.TopAppBarButtonGroup
 import io.github.suqi8.coui.kmp.kit.topappbar.TopAppBarSearch
@@ -367,10 +369,19 @@ internal actual fun TopAppBarSearchBarImpl(
     }
 
     if (embedded) {
+        // Embedded in a host bar, the toolbar samples the host's raw page content rather than its
+        // own blurred surface, so every button in it (the search key, the capsules, the extra
+        // actions) blurs the sample at the surface's reference radius instead of showing it sharp.
+        val sampleBlurRadius = if (localCouiBackdrop == null) {
+            with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
+        } else {
+            0f
+        }
         SharedTransitionScope { overlayModifier ->
             CompositionLocalProvider(
                 LocalCouiToolbarBackdrop provides resolvedBackdrop,
                 LocalCouiToolbarOverlay provides this@SharedTransitionScope,
+                LocalCouiToolbarSampleBlurRadius provides sampleBlurRadius,
             ) {
                 Box(modifier = modifier.fillMaxWidth().then(overlayModifier)) {
                     barContent()

@@ -21,12 +21,28 @@ import io.github.suqi8.coui.kmp.kit.theme.CouiTheme
 
 internal val LocalCouiToolbarContentColor = staticCompositionLocalOf { Color.Unspecified }
 
+/**
+ * The blur radius (px) toolbar buttons apply to what they sample. Zero under a toolbar surface,
+ * which hands the buttons an already blurred backdrop.
+ */
+internal val LocalCouiToolbarSampleBlurRadius = staticCompositionLocalOf { 0f }
+
 /** 沿用 ToolbarMaterialEffectDelegate 的光效几何及底栏混色方案, 略增强底色权重以改善可读性, 普通投影适当减弱。 */
 internal object CouiTopAppBarButtonDefaults {
     val circleShape = CouiShape(999.dp, cornerWeight = 2f)
 
+    /**
+     * [blurRadius] (px) blurs what the buttons sample. It defaults to
+     * [LocalCouiToolbarSampleBlurRadius], which stays 0 under the toolbar's own surface (already
+     * blurred); a toolbar embedded in a host bar samples the host's raw page content and provides
+     * a radius so every button in it blurs that content itself.
+     */
     @Composable
-    fun style(dark: Boolean = CouiTheme.isDark, search: Boolean = false): CouiToolbarStyle {
+    fun style(
+        dark: Boolean = CouiTheme.isDark,
+        search: Boolean = false,
+        blurRadius: Float = LocalCouiToolbarSampleBlurRadius.current,
+    ): CouiToolbarStyle {
         val density = LocalDensity.current.density
         val contour = LocalCouiContourGlowEnabled.current
         val colors = CouiTheme.colorSchemeFor(dark)
@@ -34,7 +50,7 @@ internal object CouiTopAppBarButtonDefaults {
             dark,
             circleShape,
             CouiCapsuleShape,
-            material = { capsule -> material(dark, capsule, search) },
+            material = { capsule -> material(dark, capsule, search).copy(blurRadius = blurRadius) },
             shadow = { capsule -> shadow(dark, capsule, density, contour, search) },
             contentColor = LocalCouiToolbarContentColor.current.takeOrElse { colors.onSurface },
             textStyle = CouiTheme.typography.body,

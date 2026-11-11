@@ -133,7 +133,7 @@ internal fun TopAppBarSearch(
             TopAppBarActionVisibility(visible = visible, animateSize = false) {
                 Box(
                     Modifier.then(if (state.motion.expanded) Modifier.clearAndSetSemantics {} else Modifier)
-                        .graphicsLayer { alpha = state.motion.toolbarAlpha },
+                        .toolbarShadowOpacity { state.motion.toolbarAlpha },
                 ) { title() }
             }
 
@@ -330,7 +330,10 @@ internal fun TopAppBarSearchAction(
         Layout(
             modifier = modifier.then(if (state.motion.expanded) Modifier.clearAndSetSemantics {} else Modifier),
             content = {
-                Box(propagateMinConstraints = true) { content() }
+                Box(
+                    Modifier.toolbarShadowOpacity { state.motion.toolbarAlpha },
+                    propagateMinConstraints = true,
+                ) { content() }
             },
         ) { measurables, constraints ->
             val child = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
@@ -345,12 +348,11 @@ internal fun TopAppBarSearchAction(
                         restingOrigin?.let { offset = target.localPositionOf(root, it) }
                     }
                 }
-                // 在同一次实际放置中抵消操作区移位, 不等全局回调修正首帧。
+                // Compensate action-area shift inside the same placement pass.
                 if (!state.motion.expanded && state.motion.toolbarAlpha > 0f) {
                     child.placeWithLayer(0, 0) {
                         translationX = offset.x
                         translationY = offset.y
-                        alpha = state.motion.toolbarAlpha
                         scaleX = state.motion.toolbarScale
                         scaleY = state.motion.toolbarScale
                     }

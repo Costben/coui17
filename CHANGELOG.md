@@ -156,6 +156,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Fixed
 
+- `TopAppBarSearchBar` embedded in a host bar (`gradientColor = Color.Transparent`) now blurs what its search button and capsules sample. It used to read the host's raw page content with the toolbar recipe's zero blur radius, so the button was see-through but sharp; it now blurs at the toolbar surface's 10.8dp reference radius. The same applies to `HighlightedIconButton`s passed as `extraActions`, which switch to the toolbar button material inside the toolbar.
 - A row whose title and summary wrap to three or more lines keeps its leading icon on the centre of the first two lines, inside the text block. The anchored position is measured from the top of the text block, but it was applied from the row's top edge, so the icon rose by the block's top inset and could sit above the first line.
 - The guide dialog's Skip button is a filled secondary capsule, like the system's. `COUIGuideDialogButtonLayout` builds it from `couiButtonColorfulWhiteStyle` with `ButtonType.SECONDARY`; the port drew a bare text button beside the filled Next button.
 - `PageIndicator` marks the current page at rest. The colour fade of `COUIPageIndicator.getColorFactor` was applied to the whole active dot, so a resting indicator drew every dot in the inactive colour; the near half of the trace now keeps the full active colour and only the far dot fades, as `drawTrace` does.

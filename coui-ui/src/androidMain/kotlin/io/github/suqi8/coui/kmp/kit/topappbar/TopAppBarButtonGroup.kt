@@ -23,10 +23,44 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.kit.effect.FloatingShadowOutsetPx
+import kotlin.math.ceil
+
+private val ToolbarShadowOutsetDp = 56.dp
+
+/**
+ * Fades a toolbar item together with its exterior floating shadow.
+ *
+ * `graphicsLayer(alpha < 1f)` implicitly allocates a compositing layer cropped to the node's
+ * layout bounds even with `clip = false`, clipping exterior drop shadows into a hard-edged
+ * rectangle during collapse or fade animations. Expand the layer bounds by the shadow outset so
+ * the full shadow fades smoothly as one group.
+ */
+internal fun Modifier.toolbarShadowOpacity(alpha: () -> Float): Modifier = drawWithCache {
+    val paint = Paint()
+    val outset = ceil(maxOf(FloatingShadowOutsetPx, ToolbarShadowOutsetDp.toPx()))
+    val bounds = Rect(-outset, -outset, size.width + outset, size.height + outset)
+    onDrawWithContent {
+        val opacity = alpha().coerceIn(0f, 1f)
+        if (opacity >= 1f) {
+            drawContent()
+        } else if (opacity > 0f) {
+            paint.alpha = opacity
+            drawContext.canvas.saveLayer(bounds, paint)
+            try {
+                drawContent()
+            } finally {
+                drawContext.canvas.restore()
+            }
+        }
+    }
+}
 
 /** 包住完整的返回或操作槽位, 放在槽位进出动画之外, 保留内部淡化及原位输入。 */
 @Composable
@@ -64,7 +98,7 @@ internal fun TopAppBarActionVisibility(
         // AnimatedVisibility 退场时的零尺寸预布局会驱动内部 animateBounds, 原位淡化需保留尺寸。
         if (transition.currentState || transition.targetState || transition.isRunning) {
             Box(
-                modifier = modifier.graphicsLayer { alpha = opacity },
+                modifier = modifier.toolbarShadowOpacity { opacity },
                 propagateMinConstraints = true,
             ) { content() }
         }
@@ -87,9 +121,7 @@ internal fun TopAppBarActionVisibility(
             label = "TopAppBarActionAlpha",
         ) { if (it == EnterExitState.Visible) 1f else 0f }
         Box(
-            modifier = Modifier.graphicsLayer {
-                alpha = opacity
-            },
+            modifier = Modifier.toolbarShadowOpacity { opacity },
             propagateMinConstraints = true,
         ) { content() }
     }

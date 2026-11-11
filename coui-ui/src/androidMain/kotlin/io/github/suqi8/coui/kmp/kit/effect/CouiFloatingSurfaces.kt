@@ -51,7 +51,8 @@ import kotlin.math.floor
 import kotlin.math.min
 import androidx.compose.ui.graphics.BlendMode as ComposeBlendMode
 
-private const val ShadowOutsetPx = 150f
+internal const val FloatingShadowOutsetPx = 150f
+private const val ShadowOutsetPx = FloatingShadowOutsetPx
 
 internal data class CouiFloatingMaterial(
     val firstColor: Color,
