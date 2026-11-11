@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.padding
@@ -28,50 +30,54 @@ import io.github.suqi8.coui.kmp.preference.OverlayDropdownPreference
 import io.github.suqi8.coui.kmp.preference.WindowDropdownPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
-/** Renders the "Dropdown" gallery section content: the overlay and window dropdown preferences in a card. */
+/**
+ * Renders the "Dropdown" gallery section content: one dropdown preference whose host, grouping,
+ * option length and enabled state come from the options.
+ */
 @Composable
 fun DropdownDemo() {
-    var overlayDropdownOptionSelected by remember { mutableIntStateOf(0) }
-    var windowDropdownOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayExpanded by remember { mutableStateOf(false) }
-    var windowExpanded by remember { mutableStateOf(false) }
+    val enabled = remember { mutableStateOf(true) }
+    val windowHost = remember { mutableStateOf(false) }
+    val grouped = remember { mutableStateOf(false) }
+    val longOptions = remember { mutableStateOf(false) }
+    var selected by remember { mutableIntStateOf(0) }
+    var expanded by remember { mutableStateOf(false) }
     val s = LocalAppStrings.current
-    val dropdownOptions = remember(s) { listOf(s["Option 1"], s["Option 2"], s["Option 3"], s["Option 4"]) }
-    val dropdownLongOptions = remember(s) {
-        listOf(
-            s["Option 1"],
-            s["Long Option 2"],
-            s["Long Long Option 3"],
-            s["Long Long Long Option 4"],
-            s["Long Long Long Long Option 5"],
-            s["Long Long Long Long Long Option 6"],
-            s["Long Long Long Long Long Long Option 7"],
-            s["Long Long Long Long Long Long Long Option 8"],
-            s["Long Long Long Long Long Long Long Long Option 9"],
-            s["Long Long Long Long Long Long Long Long Long Option 10"],
-            s["Long Long Long Long Long Long Long Long Long Long Option 11"],
-            s["Long Long Long Long Long Long Long Long Long Long Long Option 12"],
-        )
+    val items = remember(s, longOptions.value) {
+        if (longOptions.value) {
+            listOf(
+                s["Option 1"],
+                s["Long Option 2"],
+                s["Long Long Option 3"],
+                s["Long Long Long Option 4"],
+                s["Long Long Long Long Option 5"],
+                s["Long Long Long Long Long Option 6"],
+                s["Long Long Long Long Long Long Option 7"],
+                s["Long Long Long Long Long Long Long Option 8"],
+                s["Long Long Long Long Long Long Long Long Option 9"],
+                s["Long Long Long Long Long Long Long Long Long Option 10"],
+                s["Long Long Long Long Long Long Long Long Long Long Option 11"],
+                s["Long Long Long Long Long Long Long Long Long Long Long Option 12"],
+            )
+        } else {
+            listOf(s["Option 1"], s["Option 2"], s["Option 3"], s["Option 4"])
+        }
     }
+    // The long list has more rows than the short one.
+    if (selected > items.lastIndex) selected = 0
 
-    var overlayGroupedExpanded by remember { mutableStateOf(false) }
-    var overlayGroup1DropdownOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayGroup2DropdownOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayGroup3DropdownOptionSelected by remember { mutableIntStateOf(0) }
-    val overlayMultiGroupOptions = remember(
-        s,
-        overlayGroup1DropdownOptionSelected,
-        overlayGroup2DropdownOptionSelected,
-        overlayGroup3DropdownOptionSelected,
-    ) {
+    var group1Selected by remember { mutableIntStateOf(0) }
+    var group2Selected by remember { mutableIntStateOf(0) }
+    var group3Selected by remember { mutableIntStateOf(0) }
+    val groupedEntries = remember(s, group1Selected, group2Selected, group3Selected) {
         listOf(
             DropdownEntry(
                 items = listOf(s["Option A-1"], s["Option A-2"])
                     .mapIndexed { index, text ->
                         DropdownItem(
                             text = text,
-                            selected = overlayGroup1DropdownOptionSelected == index,
-                            onClick = { overlayGroup1DropdownOptionSelected = index },
+                            selected = group1Selected == index,
+                            onClick = { group1Selected = index },
                         )
                     },
             ),
@@ -80,8 +86,8 @@ fun DropdownDemo() {
                     .mapIndexed { index, text ->
                         DropdownItem(
                             text = text,
-                            selected = overlayGroup2DropdownOptionSelected == index,
-                            onClick = { overlayGroup2DropdownOptionSelected = index },
+                            selected = group2Selected == index,
+                            onClick = { group2Selected = index },
                         )
                     },
             ),
@@ -91,117 +97,66 @@ fun DropdownDemo() {
                         DropdownItem(
                             text = string,
                             enabled = index % 2 == 0,
-                            selected = overlayGroup3DropdownOptionSelected == index,
-                            onClick = { overlayGroup3DropdownOptionSelected = index },
+                            selected = group3Selected == index,
+                            onClick = { group3Selected = index },
                         )
                     },
             ),
         )
     }
 
-    var windowGroupedExpanded by remember { mutableStateOf(false) }
-    var windowGroup1DropdownOptionSelected by remember { mutableIntStateOf(0) }
-    var windowGroup2DropdownOptionSelected by remember { mutableIntStateOf(0) }
-    var windowGroup3DropdownOptionSelected by remember { mutableIntStateOf(0) }
-    val windowMultiGroupOptions = remember(
-        s,
-        windowGroup1DropdownOptionSelected,
-        windowGroup2DropdownOptionSelected,
-        windowGroup3DropdownOptionSelected,
-    ) {
-        listOf(
-            DropdownEntry(
-                items = listOf(s["Option A-1"], s["Option A-2"])
-                    .mapIndexed { index, text ->
-                        DropdownItem(
-                            text = text,
-                            selected = windowGroup1DropdownOptionSelected == index,
-                            onClick = { windowGroup1DropdownOptionSelected = index },
-                        )
-                    },
-            ),
-            DropdownEntry(
-                items = listOf(s["Option B-1"], s["Option B-2"], s["Option B-3"])
-                    .mapIndexed { index, text ->
-                        DropdownItem(
-                            text = text,
-                            selected = windowGroup2DropdownOptionSelected == index,
-                            onClick = { windowGroup2DropdownOptionSelected = index },
-                        )
-                    },
-            ),
-            DropdownEntry(
-                items = listOf(s["Option C-1"], s["Option C-2"], s["Option C-3"], s["Option C-4"])
-                    .mapIndexed { index, string ->
-                        DropdownItem(
-                            text = string,
-                            enabled = index % 2 == 0,
-                            selected = windowGroup3DropdownOptionSelected == index,
-                            onClick = { windowGroup3DropdownOptionSelected = index },
-                        )
-                    },
-            ),
-        )
-    }
-
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Window host", windowHost),
+        DemoToggle("Grouped options", grouped),
+        DemoToggle("Long options", longOptions),
+    )
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        OverlayDropdownPreference(
-            title = str("DropdownPref (O)"),
-            summary = if (overlayExpanded) str("Expanded") else str("Collapsed"),
-            items = dropdownOptions,
-            selectedIndex = overlayDropdownOptionSelected,
-            onSelectedIndexChange = { newOption ->
-                overlayDropdownOptionSelected = newOption
-            },
-            onExpandedChange = { overlayExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowDropdownPreference(
-            title = str("DropdownPref (W)"),
-            summary = if (windowExpanded) str("Expanded") else str("Collapsed"),
-            items = dropdownLongOptions,
-            selectedIndex = windowDropdownOptionSelected,
-            onSelectedIndexChange = { newOption ->
-                windowDropdownOptionSelected = newOption
-            },
-            onExpandedChange = { windowExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlayDropdownPreference(
-            title = str("Grouped DropdownPref (O)"),
-            summary = if (overlayGroupedExpanded) str("Expanded") else str("Collapsed"),
-            entries = overlayMultiGroupOptions,
-            collapseOnSelection = false,
-            onExpandedChange = { overlayGroupedExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowDropdownPreference(
-            title = str("Grouped DropdownPref (W)"),
-            summary = if (windowGroupedExpanded) str("Expanded") else str("Collapsed"),
-            entries = windowMultiGroupOptions,
-            collapseOnSelection = false,
-            onExpandedChange = { windowGroupedExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlayDropdownPreference(
-            title = str("Disabled DropdownPref (O)"),
-            items = listOf(str("Option 1")),
-            selectedIndex = 0,
-            onSelectedIndexChange = {},
-            enabled = false,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowDropdownPreference(
-            title = str("Disabled DropdownPref (W)"),
-            items = listOf(str("Option 1")),
-            selectedIndex = 0,
-            onSelectedIndexChange = {},
-            enabled = false,
-        )
+        val title = str("DropdownPreference")
+        val summary = if (expanded) str("Expanded") else str("Collapsed")
+        when {
+            windowHost.value && grouped.value -> WindowDropdownPreference(
+                title = title,
+                summary = summary,
+                entries = groupedEntries,
+                collapseOnSelection = false,
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            windowHost.value -> WindowDropdownPreference(
+                title = title,
+                summary = summary,
+                items = items,
+                selectedIndex = selected,
+                onSelectedIndexChange = { selected = it },
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            grouped.value -> OverlayDropdownPreference(
+                title = title,
+                summary = summary,
+                entries = groupedEntries,
+                collapseOnSelection = false,
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            else -> OverlayDropdownPreference(
+                title = title,
+                summary = summary,
+                items = items,
+                selectedIndex = selected,
+                onSelectedIndexChange = { selected = it },
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+        }
     }
 }
 
@@ -211,6 +166,7 @@ fun DropdownDemo() {
  */
 @Composable
 fun DropdownItemVariants() {
+    val windowHost = remember { mutableStateOf(false) }
     var variantsSelected by remember { mutableIntStateOf(0) }
     var headersSelected by remember { mutableIntStateOf(0) }
     val iconTint = COUITheme.colorScheme.onSurfaceContainer
@@ -354,51 +310,36 @@ fun DropdownItemVariants() {
         )
     }
 
+    DemoOptions(DemoToggle("Window host", windowHost))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        OverlayDropdownMenu(
-            entries = variantEntries,
-            title = str("Item variants (O)"),
-            summary = str("Icon, description, hint, alert, clamping"),
-            collapseOnSelection = false,
+        val rows = listOf(
+            Triple(variantEntries, "Item variants", "Icon, description, hint, alert, clamping"),
+            Triple(headerEntries, "Group headers", "Non-clickable 32dp header rows plus group dividers"),
+            Triple(cascadingRowEntries, "Cascading Menu", "Tap row to expand menu with submenu"),
         )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowDropdownMenu(
-            entries = variantEntries,
-            title = str("Item variants (W)"),
-            summary = str("Same rows in a window popup"),
-            collapseOnSelection = false,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlayDropdownMenu(
-            entries = headerEntries,
-            title = str("Group headers (O)"),
-            summary = str("Non-clickable 32dp header rows"),
-            collapseOnSelection = false,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowDropdownMenu(
-            entries = headerEntries,
-            title = str("Group headers (W)"),
-            summary = str("Headers plus group dividers"),
-            collapseOnSelection = false,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlayDropdownMenu(
-            entries = cascadingRowEntries,
-            title = str("Overlay Cascading Menu"),
-            summary = str("Tap row to expand menu with submenu"),
-            collapseOnSelection = true,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowDropdownMenu(
-            entries = cascadingRowEntries,
-            title = str("Window Cascading Menu"),
-            summary = str("Window-layer row menu with submenu"),
-            collapseOnSelection = true,
-        )
+        rows.forEachIndexed { index, (entries, title, summary) ->
+            if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            // Only the cascading menu closes on a pick; the other two keep the popup open to compare rows.
+            val collapseOnSelection = index == rows.lastIndex
+            if (windowHost.value) {
+                WindowDropdownMenu(
+                    entries = entries,
+                    title = str(title),
+                    summary = str(summary),
+                    collapseOnSelection = collapseOnSelection,
+                )
+            } else {
+                OverlayDropdownMenu(
+                    entries = entries,
+                    title = str(title),
+                    summary = str(summary),
+                    collapseOnSelection = collapseOnSelection,
+                )
+            }
+        }
     }
 }

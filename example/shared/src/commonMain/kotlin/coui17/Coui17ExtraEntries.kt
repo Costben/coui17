@@ -32,6 +32,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import component.DemoChoice
+import component.DemoOptions
+import component.DemoToggle
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Banner
 import io.github.suqi8.coui.kmp.basic.BannerIndicator
@@ -90,7 +93,7 @@ import io.github.suqi8.coui.kmp.utils.LunarDateValue
  *
  * The shared module demos 48 sections; the library ships more components than that. Each composable
  * below fills one of those gaps and follows the shared demos' layout contract — it owns its own 16dp
- * card inset and bottom spacing, so [Coui17HomePage]'s `coui17Entry` wrapper adds neither again.
+ * card inset and bottom spacing, so the page that renders it adds neither again.
  *
  * All user-facing copy goes through [str] with the English source string, so the language switch
  * keeps working and the Chinese table in `i18n/ZhComponents.kt` only has to carry the new keys.
@@ -100,28 +103,34 @@ import io.github.suqi8.coui.kmp.utils.LunarDateValue
 // Basic components
 // ---------------------------------------------------------------------------------------------
 
-/** `EmptyState` in its three size buckets, plus the explicit-action variant. */
+/** `EmptyState` with its size bucket, subtitle and action button picked from the options. */
 @Composable
 fun EmptyStateDemo() {
+    val showSubtitle = remember { mutableStateOf(true) }
+    val showAction = remember { mutableStateOf(false) }
+    val sizeIndex = remember { mutableIntStateOf(EmptyStateSize.Medium.ordinal) }
+
+    DemoOptions(
+        DemoToggle("Show subtitle", showSubtitle),
+        DemoToggle("Show action button", showAction),
+        DemoChoice("Size", EmptyStateSize.entries.map { it.name }, sizeIndex),
+    )
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            EmptyState(
-                title = str("No results"),
-                subtitle = str("Try a different keyword"),
-                size = EmptyStateSize.Medium,
-            )
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            EmptyState(
-                title = str("Nothing here yet"),
-                subtitle = str("Items you add will show up here"),
-                actionText = str("Add"),
-                onActionClick = {},
-            )
-        }
+        EmptyState(
+            title = str("No results"),
+            subtitle = if (showSubtitle.value) str("Try a different keyword") else null,
+            actionText = if (showAction.value) str("Add") else null,
+            onActionClick = if (showAction.value) {
+                {}
+            } else {
+                null
+            },
+            size = EmptyStateSize.entries[sizeIndex.intValue],
+        )
     }
 }
 
@@ -154,11 +163,33 @@ fun CompleteStateDemo() {
  * own checked state and the group reports the selection. The metrics are
  * `Widget.COUI.Chip.Suggestion`: 28dp tall, 12dp chip padding, `couiTextBodyXS` label, `couiColorCard`
  * while unchecked and `couiColorPrimary` with the on-color label once checked.
+ *
+ * The "Fold to one row" option turns on `COUIFlowLayout` folding: the tags collapse to one row and
+ * the last line carries the expand button, which grows the block over 400ms after a 100ms delay on
+ * `COUIMoveEase`.
  */
 @Composable
 fun FlowLayoutDemo() {
-    val tags = listOf("Recommended", "Popular", "Nearby", "Archived", "Inbox")
+    val foldable = remember { mutableStateOf(false) }
+    val tags = listOf("Recommended", "Popular", "Nearby", "Archived", "Inbox", "Drafts", "Spam")
     var selected by remember { mutableStateOf(emptySet<String>()) }
+    var expanded by remember { mutableStateOf(false) }
+    val chips: @Composable () -> Unit = {
+        tags.forEach { tag ->
+            val checked = tag in selected
+            Chip(
+                selected = checked,
+                onClick = {
+                    selected = if (checked) selected - tag else selected + tag
+                },
+                label = str(tag),
+                minHeight = 28.dp,
+                insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+            )
+        }
+    }
+
+    DemoOptions(DemoToggle("Fold to one row", foldable))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -170,76 +201,26 @@ fun FlowLayoutDemo() {
                 .padding(16.dp),
             itemSpacing = 8.dp,
             lineSpacing = 8.dp,
-        ) {
-            tags.forEach { tag ->
-                val checked = tag in selected
-                Chip(
-                    selected = checked,
-                    onClick = {
-                        selected = if (checked) selected - tag else selected + tag
-                    },
-                    label = str(tag),
-                    minHeight = 28.dp,
-                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                )
-            }
-        }
+            expanded = !foldable.value || expanded,
+            onExpandedChange = { expanded = it },
+            expandable = foldable.value,
+            maxRowFolded = 1,
+            expandButton = { toggle -> FlowFoldButton("+", toggle) },
+            foldButton = { toggle -> FlowFoldButton("−", toggle) },
+            content = chips,
+        )
     }
 }
 
-/**
- * `COUIFlowLayout` folding: the tags collapse to one row and the last line carries the expand button,
- * which grows the block over 400ms after a 100ms delay on `COUIMoveEase`.
- */
 @Composable
-fun FoldedFlowLayoutDemo() {
-    val tags = listOf("Recommended", "Popular", "Nearby", "Archived", "Inbox", "Drafts", "Spam")
-    var expanded by remember { mutableStateOf(false) }
-    Card(
+private fun FlowFoldButton(label: String, onClick: () -> Unit) {
+    Box(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
+            .size(28.dp)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        FlowLayout(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            itemSpacing = 8.dp,
-            lineSpacing = 8.dp,
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            maxRowFolded = 1,
-            expandButton = { toggle ->
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clickable(onClick = toggle),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("+", style = COUITheme.textStyles.button)
-                }
-            },
-            foldButton = { toggle ->
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clickable(onClick = toggle),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("−", style = COUITheme.textStyles.button)
-                }
-            },
-        ) {
-            tags.forEach { tag ->
-                Chip(
-                    selected = false,
-                    onClick = {},
-                    label = str(tag),
-                    minHeight = 28.dp,
-                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                )
-            }
-        }
+        Text(label, style = COUITheme.textStyles.button)
     }
 }
 
@@ -370,34 +351,6 @@ fun SidePaneLayoutDemo() {
                     }
                 }
             }
-        }
-    }
-}
-
-/** `LunarDatePicker`'s three wheel columns. */
-@Composable
-fun LunarDatePickerDemo() {
-    var value by remember { mutableStateOf(LunarDateValue(2025, 1, 1)) }
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            LunarDatePicker(
-                value = value,
-                onValueChange = { value = it },
-            )
-            Text(
-                text = "${value.year}-${value.month}-${value.day}",
-                modifier = Modifier.padding(top = 8.dp),
-                color = COUITheme.colorScheme.onSurfaceVariantSummary,
-            )
         }
     }
 }
@@ -576,29 +529,28 @@ fun AppInfoPreferenceDemo() {
     }
 }
 
-/** `CardEntrancePreference` in its small and large card types. */
+/** `CardEntrancePreference`, with its card type and summary picked from the options. */
 @Composable
 fun CardEntrancePreferenceDemo() {
+    val large = remember { mutableStateOf(true) }
+    val showSummary = remember { mutableStateOf(true) }
     val settingsIcon = rememberVectorPainter(COUIIcons.Settings)
-    val downloadIcon = rememberVectorPainter(COUIIcons.Download)
-    Column(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
-        CardEntrancePreference(
-            title = str("Display & brightness"),
-            summary = str("Dark mode, refresh rate, font size"),
-            cardType = CardEntranceType.Large,
-            icon = settingsIcon,
-            onClick = {},
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        CardEntrancePreference(
-            title = str("Storage"),
-            cardType = CardEntranceType.Small,
-            icon = downloadIcon,
-            onClick = {},
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+
+    DemoOptions(
+        DemoToggle("Large card", large),
+        DemoToggle("Show summary", showSummary),
+    )
+    CardEntrancePreference(
+        title = str("Display & brightness"),
+        summary = if (showSummary.value) str("Dark mode, refresh rate, font size") else null,
+        cardType = if (large.value) CardEntranceType.Large else CardEntranceType.Small,
+        icon = settingsIcon,
+        onClick = {},
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    )
 }
 
 /** `CardInstructionPreference` — the description pager and the selector row. */
@@ -696,9 +648,12 @@ fun StepperPreferenceDemo() {
     }
 }
 
-/** `StatusSwitchingPreference` — the trailing status text and status icon forms. */
+/** `StatusSwitchingPreference` — the trailing status is either text or an icon, picked by the option. */
 @Composable
 fun StatusSwitchingPreferenceDemo() {
+    val iconStatus = remember { mutableStateOf(false) }
+
+    DemoOptions(DemoToggle("Status icon", iconStatus))
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -706,29 +661,29 @@ fun StatusSwitchingPreferenceDemo() {
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            StatusSwitchingPreference(
-                title = str("Connection"),
-                status = StatusSwitchingContent.Text(str("Connected")),
-                onClick = {},
-                cardListPosition = cardListPositionOf(0, 2),
-            )
-            StatusSwitchingPreference(
-                title = str("Sync"),
-                status = StatusSwitchingContent.Icon(
+        StatusSwitchingPreference(
+            title = str("Connection"),
+            status = if (iconStatus.value) {
+                StatusSwitchingContent.Icon(
                     imageVector = COUIIcons.Refresh,
                     contentDescription = str("Syncing"),
-                ),
-                cardListPosition = cardListPositionOf(1, 2),
-            )
-        }
+                )
+            } else {
+                StatusSwitchingContent.Text(str("Connected"))
+            },
+            onClick = if (iconStatus.value) null else ({}),
+            cardListPosition = CardListPosition.Full,
+        )
     }
 }
 
-/** `CheckBoxPreferenceCategory` and `LoadingPreferenceCategory` — the two category headers. */
+/** `CheckBoxPreferenceCategory` and `LoadingPreferenceCategory` — the two category headers, the latter with its loading state switched by the option. */
 @Composable
 fun CategoryHeaderPreferenceDemo() {
     var checked by remember { mutableStateOf(false) }
+    val loading = remember { mutableStateOf(false) }
+
+    DemoOptions(DemoToggle("Loading", loading))
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -744,20 +699,19 @@ fun CategoryHeaderPreferenceDemo() {
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             LoadingPreferenceCategory(
-                title = str("Scanning…"),
-                loading = true,
-                loadingText = str("32%"),
-            )
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            LoadingPreferenceCategory(
-                title = str("Up to date"),
-                loading = false,
-                widget = {
-                    Icon(
-                        imageVector = COUIIcons.ChevronForward,
-                        contentDescription = null,
-                        modifier = Modifier.padding(end = 16.dp),
-                    )
+                title = if (loading.value) str("Scanning…") else str("Up to date"),
+                loading = loading.value,
+                loadingText = if (loading.value) str("32%") else null,
+                widget = if (loading.value) {
+                    null
+                } else {
+                    {
+                        Icon(
+                            imageVector = COUIIcons.ChevronForward,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 16.dp),
+                        )
+                    }
                 },
             )
             BottomPreference()

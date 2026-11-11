@@ -74,9 +74,13 @@ fun LoadingButtonDemo() {
     }
 }
 
-/** Renders the badge samples and the badge-on-icon row with its stepper. */
+/** Renders the badge samples and the badge-on-icon row with its stepper; the stroke comes from the option. */
 @Composable
 fun BadgeDemo() {
+    val stroke = remember { mutableStateOf(false) }
+    var badgeCount by remember { mutableIntStateOf(8) }
+
+    DemoOptions(DemoToggle("Stroke", stroke))
     Row(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -84,15 +88,12 @@ fun BadgeDemo() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Badge()
-        Badge(count = 5)
-        Badge(count = 66)
-        Badge(count = 666)
-        Badge(count = 1000)
-        Badge(stroke = true)
-        Badge(count = 99, stroke = true)
+        Badge(stroke = stroke.value)
+        Badge(count = 5, stroke = stroke.value)
+        Badge(count = 66, stroke = stroke.value)
+        Badge(count = 666, stroke = stroke.value)
+        Badge(count = 1000, stroke = stroke.value)
     }
-    var badgeCount by remember { mutableIntStateOf(8) }
     Row(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -104,7 +105,7 @@ fun BadgeDemo() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            BadgeBox(badge = { Badge() }) {
+            BadgeBox(badge = { Badge(stroke = stroke.value) }) {
                 Icon(
                     imageVector = COUIIcons.Settings,
                     contentDescription = str("Settings"),
@@ -112,7 +113,7 @@ fun BadgeDemo() {
                 )
             }
             BadgeBox(
-                badge = { Badge(count = badgeCount) },
+                badge = { Badge(count = badgeCount, stroke = stroke.value) },
                 overhang = BadgeDefaults.CountOverhang,
             ) {
                 Icon(

@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -27,9 +29,10 @@ import io.github.suqi8.coui.kmp.basic.ProgressIndicatorDefaults
 import io.github.suqi8.coui.kmp.basic.RotatingProgressIndicator
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 
-/** Renders the "ProgressIndicator" gallery section content: the linear, circular, infinite and rotating indicators. */
+/** Renders the "ProgressIndicator" gallery section content: the linear, circular, infinite and rotating indicators, with the rotating size picked by the option. */
 @Composable
 fun ProgressIndicatorDemo() {
+    val rotatingSizeIndex = remember { mutableIntStateOf(0) }
     val progressValues = listOf(0.0f, 0.25f, 0.5f, 0.75f, 1.0f, null)
     val animatedProgressValue by rememberInfiniteTransition().animateFloat(
         initialValue = 0f,
@@ -39,7 +42,9 @@ fun ProgressIndicatorDemo() {
             repeatMode = RepeatMode.Reverse,
         ),
     )
+    val smallRotating = rotatingSizeIndex.intValue == 1
 
+    DemoOptions(DemoChoice("Rotating size", listOf("Default", "Small"), rotatingSizeIndex))
     LinearProgressIndicator(
         progress = animatedProgressValue,
         modifier = Modifier
@@ -82,13 +87,21 @@ fun ProgressIndicatorDemo() {
         RotatingProgressIndicator(
             modifier = Modifier
                 .align(alignment = Alignment.CenterVertically),
-        )
-        RotatingProgressIndicator(
-            modifier = Modifier
-                .align(alignment = Alignment.CenterVertically),
-            size = ProgressIndicatorDefaults.SmallRotatingProgressIndicatorSize,
-            ringDiameter = ProgressIndicatorDefaults.SmallRotatingProgressIndicatorRingDiameter,
-            strokeWidth = ProgressIndicatorDefaults.SmallRotatingProgressIndicatorStrokeWidth,
+            size = if (smallRotating) {
+                ProgressIndicatorDefaults.SmallRotatingProgressIndicatorSize
+            } else {
+                ProgressIndicatorDefaults.DefaultRotatingProgressIndicatorSize
+            },
+            ringDiameter = if (smallRotating) {
+                ProgressIndicatorDefaults.SmallRotatingProgressIndicatorRingDiameter
+            } else {
+                ProgressIndicatorDefaults.DefaultRotatingProgressIndicatorRingDiameter
+            },
+            strokeWidth = if (smallRotating) {
+                ProgressIndicatorDefaults.SmallRotatingProgressIndicatorStrokeWidth
+            } else {
+                ProgressIndicatorDefaults.DefaultRotatingProgressIndicatorStrokeWidth
+            },
         )
     }
 }

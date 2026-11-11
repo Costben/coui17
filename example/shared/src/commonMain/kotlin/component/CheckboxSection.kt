@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
@@ -22,11 +25,21 @@ import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.preference.CheckboxLocation
 import io.github.suqi8.coui.kmp.preference.CheckboxPreference
-import io.github.suqi8.coui.kmp.theme.COUITheme
 
-/** Renders the "Checkbox" gallery section content (a card of checkbox rows and preference variants). */
+/** Renders the "Checkbox" gallery section content: a bare tri-state checkbox and a checkbox preference driven by the options. */
 @Composable
 fun CheckboxDemo() {
+    val enabled = remember { mutableStateOf(true) }
+    val atEnd = remember { mutableStateOf(false) }
+    val showSummary = remember { mutableStateOf(true) }
+    var triState by remember { mutableStateOf(ToggleableState.Indeterminate) }
+    var checked by remember { mutableStateOf(false) }
+
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Checkbox at the end", atEnd),
+        DemoToggle("Show summary", showSummary),
+    )
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -34,101 +47,34 @@ fun CheckboxDemo() {
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        CheckboxRow()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        CheckboxPreferenceEndDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        CheckboxPreferenceDemo()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = str("Tri-state Checkbox"))
+            Checkbox(
+                state = triState,
+                onClick = {
+                    triState = when (triState) {
+                        ToggleableState.Off -> ToggleableState.Indeterminate
+                        ToggleableState.Indeterminate -> ToggleableState.On
+                        ToggleableState.On -> ToggleableState.Off
+                    }
+                },
+                enabled = enabled.value,
+            )
+        }
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         CheckboxPreference(
-            title = str("Disabled Checkbox"),
-            checked = true,
-            enabled = false,
-            onCheckedChange = {},
+            checkboxLocation = if (atEnd.value) CheckboxLocation.End else CheckboxLocation.Start,
+            title = str("CheckboxPreference"),
+            summary = if (showSummary.value) str("State: {}", checked) else null,
+            checked = checked,
+            enabled = enabled.value,
+            onCheckedChange = { checked = it },
         )
     }
-}
-
-@Composable
-private fun CheckboxRow() {
-    var checkbox by remember { mutableStateOf(false) }
-    var checkboxTrue by remember { mutableStateOf(true) }
-    var checkboxIndeterminate by remember { mutableStateOf(ToggleableState.Indeterminate) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Checkbox(
-            state = ToggleableState(checkbox),
-            onClick = { checkbox = !checkbox },
-        )
-        Checkbox(
-            state = ToggleableState(checkboxTrue),
-            onClick = { checkboxTrue = !checkboxTrue },
-            modifier = Modifier.padding(start = 8.dp),
-        )
-        Checkbox(
-            state = checkboxIndeterminate,
-            onClick = {
-                checkboxIndeterminate = when (checkboxIndeterminate) {
-                    ToggleableState.Off -> ToggleableState.Indeterminate
-                    ToggleableState.Indeterminate -> ToggleableState.On
-                    ToggleableState.On -> ToggleableState.Off
-                }
-            },
-            modifier = Modifier.padding(start = 8.dp),
-        )
-        Checkbox(
-            state = ToggleableState.Off,
-            onClick = null,
-            modifier = Modifier.padding(start = 8.dp),
-            enabled = false,
-        )
-        Checkbox(
-            state = ToggleableState.On,
-            onClick = null,
-            modifier = Modifier.padding(start = 8.dp),
-            enabled = false,
-        )
-        Checkbox(
-            state = ToggleableState.Indeterminate,
-            onClick = null,
-            modifier = Modifier.padding(start = 8.dp),
-            enabled = false,
-        )
-    }
-}
-
-@Composable
-private fun CheckboxPreferenceEndDemo() {
-    var checked by remember { mutableStateOf(false) }
-
-    CheckboxPreference(
-        checkboxLocation = CheckboxLocation.End,
-        title = str("Checkbox"),
-        checked = checked,
-        endActions = {
-            Text(
-                text = "$checked",
-                fontSize = COUITheme.textStyles.body2.fontSize,
-                color = COUITheme.colorScheme.onSurfaceVariantActions,
-            )
-        },
-        onCheckedChange = { checked = it },
-    )
-}
-
-@Composable
-private fun CheckboxPreferenceDemo() {
-    var checked by remember { mutableStateOf(false) }
-
-    CheckboxPreference(
-        title = str("Checkbox"),
-        summary = str("State: {}", checked),
-        checked = checked,
-        onCheckedChange = { checked = it },
-    )
 }

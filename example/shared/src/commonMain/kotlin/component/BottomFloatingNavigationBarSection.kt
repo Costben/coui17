@@ -5,9 +5,7 @@
 package component
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,8 +25,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.Switch
-import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
@@ -43,11 +39,11 @@ import org.jetbrains.compose.resources.painterResource
 import utils.WallpaperState
 import utils.rememberBlurBackdrop
 
-/** Renders the "BottomFloatingNavigationBar" gallery section content: a wallpaper-backed floating bar with an expansion-view switch. */
+/** Renders the "BottomFloatingNavigationBar" gallery section content: a wallpaper-backed floating bar whose expansion view is driven by the option. */
 @Composable
 fun BottomFloatingNavigationBarDemo() {
     var selectedIndex by remember { mutableIntStateOf(0) }
-    var expanded by remember { mutableStateOf(true) }
+    val expanded = remember { mutableStateOf(true) }
     val colorScheme = COUITheme.colorScheme
     // Three items: the bar hands the expansion view's footprint plus the side spacing to the
     // capsule as a width bound, so the capsule has to leave that much of the row free.
@@ -61,6 +57,7 @@ fun BottomFloatingNavigationBarDemo() {
     }
     val backdrop = rememberBlurBackdrop()
 
+    DemoOptions(DemoToggle("Expansion view", expanded))
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -96,7 +93,7 @@ fun BottomFloatingNavigationBarDemo() {
         ) {
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 BottomFloatingNavigationBar(
-                    expanded = expanded,
+                    expanded = expanded.value,
                     // The expansion view melts out of the capsule through one merged silhouette,
                     // so it is a plain round surface here rather than its own glass panel.
                     expansion = {
@@ -125,15 +122,5 @@ fun BottomFloatingNavigationBarDemo() {
                 }
             }
         }
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = str("Expansion view"))
-        Switch(checked = expanded, onCheckedChange = { expanded = it })
     }
 }

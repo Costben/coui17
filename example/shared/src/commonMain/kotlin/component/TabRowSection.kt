@@ -62,11 +62,13 @@ import io.github.suqi8.coui.kmp.squircle.squircleClip
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
 
-/** Renders the "TabRow" gallery section content: a frameless tab row plus contour tab rows over a pager. */
+/** Renders the "TabRow" gallery section content: a frameless tab row, the frosted glass segment bar, and one contour tab row whose style comes from the option. */
 @Composable
 fun TabRowDemo() {
     val framelessTabs = listOf(str("Day"), str("Week"), str("Month"))
     var framelessSelected by remember { mutableIntStateOf(0) }
+    val styleIndex = remember { mutableIntStateOf(0) }
+
     TabRow(
         tabs = framelessTabs,
         selectedTabIndex = framelessSelected,
@@ -76,6 +78,7 @@ fun TabRowDemo() {
             .padding(bottom = 12.dp),
     )
     ComputerLinkGlassTabDemo()
+    DemoOptions(DemoChoice("Style", listOf("Contour", "Opaque", "Tiny"), styleIndex))
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -83,10 +86,12 @@ fun TabRowDemo() {
             .padding(bottom = 16.dp),
         insideMargin = PaddingValues(16.dp),
     ) {
-        // COUI segment button, as used by the special access page in ColorOS Settings.
+        // COUI segment button, as used by the special access page in ColorOS Settings. The option
+        // picks the contour tier, the opaque Privacy & security capsule, or the 32dp tiny form.
         val segmentTabs = listOf(str("All"), str("Allowed"), str("Denied"))
         val scope = rememberCoroutineScope()
         val pagerState = rememberPagerState(pageCount = { segmentTabs.size })
+        val tiny = styleIndex.intValue == 2
         TabRowWithContour(
             tabs = segmentTabs,
             selectedTabIndex = pagerState.currentPage,
@@ -94,6 +99,22 @@ fun TabRowDemo() {
                 scope.launch {
                     pagerState.animateScrollToPage(it)
                 }
+            },
+            colors = if (styleIndex.intValue == 1) {
+                TabRowDefaults.opaqueTabRowColors()
+            } else {
+                TabRowDefaults.tabRowColors()
+            },
+            height = if (tiny) TabRowDefaults.TabRowWithContourTinyHeight else TabRowDefaults.TabRowWithContourHeight,
+            cornerRadius = if (tiny) {
+                TabRowDefaults.TabRowWithContourTinyCornerRadius
+            } else {
+                TabRowDefaults.TabRowWithContourCornerRadius
+            },
+            contourPadding = if (tiny) {
+                TabRowDefaults.TabRowWithContourTinyPadding
+            } else {
+                TabRowDefaults.TabRowWithContourPadding
             },
         )
         HorizontalPager(
@@ -111,27 +132,6 @@ fun TabRowDemo() {
                         .fillMaxWidth(),
                 )
             },
-        )
-        // The Privacy & security dashboard's opaque capsule (Privacy / Security tabs).
-        val privacyTabs = listOf(str("Privacy"), str("Security"))
-        var privacySelected by remember { mutableIntStateOf(0) }
-        TabRowWithContour(
-            tabs = privacyTabs,
-            selectedTabIndex = privacySelected,
-            onTabSelected = { privacySelected = it },
-            colors = TabRowDefaults.opaqueTabRowColors(),
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
-        // SegmentButton.Tiny variant (32dp height, 2dp contour inset).
-        val tinyTabs = listOf(str("Photo"), str("Video"), str("Portrait"), str("Pano"))
-        var tinySelected by remember { mutableIntStateOf(0) }
-        TabRowWithContour(
-            tabs = tinyTabs,
-            selectedTabIndex = tinySelected,
-            onTabSelected = { tinySelected = it },
-            height = TabRowDefaults.TabRowWithContourTinyHeight,
-            cornerRadius = TabRowDefaults.TabRowWithContourTinyCornerRadius,
-            contourPadding = TabRowDefaults.TabRowWithContourTinyPadding,
         )
     }
 }

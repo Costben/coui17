@@ -5,9 +5,7 @@
 package component
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,8 +25,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingAccessoryNavigationBar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingNavigationBarItem
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.Switch
-import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
@@ -42,12 +38,12 @@ import org.jetbrains.compose.resources.painterResource
 import utils.WallpaperState
 import utils.rememberBlurBackdrop
 
-/** Renders the "BottomFloatingAccessoryNavigationBar" gallery section content: the bar over a wallpaper with its accessory switches. */
+/** Renders the "BottomFloatingAccessoryNavigationBar" gallery section content: the bar over a wallpaper with its accessory slots driven by the options. */
 @Composable
 fun BottomFloatingAccessoryNavigationBarDemo() {
     var selectedIndex by remember { mutableIntStateOf(0) }
-    var startVisible by remember { mutableStateOf(true) }
-    var endVisible by remember { mutableStateOf(true) }
+    val startVisible = remember { mutableStateOf(true) }
+    val endVisible = remember { mutableStateOf(true) }
     val itemLabels = listOf(str("Item {}", 1), str("Item {}", 2))
     val items = remember(itemLabels) {
         listOf(
@@ -57,6 +53,10 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
     }
     val backdrop = rememberBlurBackdrop()
 
+    DemoOptions(
+        DemoToggle("Start accessory", startVisible),
+        DemoToggle("End accessory", endVisible),
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,8 +90,8 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
         ) {
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
                 BottomFloatingAccessoryNavigationBar(
-                    startAccessoryVisible = startVisible,
-                    endAccessoryVisible = endVisible,
+                    startAccessoryVisible = startVisible.value,
+                    endAccessoryVisible = endVisible.value,
                     // The merged blob already carries each accessory's circle, so the slots draw
                     // the icon alone.
                     startAccessory = {
@@ -118,26 +118,5 @@ fun BottomFloatingAccessoryNavigationBarDemo() {
                 }
             }
         }
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = str("Start accessory"))
-        Switch(checked = startVisible, onCheckedChange = { startVisible = it })
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = str("End accessory"))
-        Switch(checked = endVisible, onCheckedChange = { endVisible = it })
     }
 }

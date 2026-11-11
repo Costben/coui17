@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Arrangement
@@ -23,14 +25,34 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.Slider
 import io.github.suqi8.coui.kmp.basic.SliderDefaults
+import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.VerticalSlider
 import io.github.suqi8.coui.kmp.preference.RangeSliderPreference
 import io.github.suqi8.coui.kmp.preference.SliderPreference
 
-/** Renders the "Slider" gallery section content: a card of slider preferences. */
+/**
+ * Renders the "Slider" gallery section content: horizontal, range and vertical sliders that share one
+ * option card for the enabled state and the key-point marks.
+ */
 @Composable
 fun SliderDemo() {
+    val enabled = remember { mutableStateOf(true) }
+    val keyPoints = remember { mutableStateOf(true) }
+
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Show key points", keyPoints),
+    )
+    HorizontalSliders(enabled.value, keyPoints.value)
+    SmallTitle(str("RangeSlider"))
+    RangeSliders(enabled.value, keyPoints.value)
+    SmallTitle(str("VerticalSlider"))
+    VerticalSliders(enabled.value, keyPoints.value)
+}
+
+@Composable
+private fun HorizontalSliders(enabled: Boolean, showKeyPoints: Boolean) {
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -42,27 +64,19 @@ fun SliderDemo() {
             onValueChange = { sliderValue = it },
             title = str("Normal"),
             valueText = "${(sliderValue * 100).toInt()}%",
+            enabled = enabled,
         )
-        var stepsValue by remember { mutableFloatStateOf(100f) }
+        var stepsValue by remember { mutableFloatStateOf(5f) }
         SliderPreference(
             value = stepsValue,
             onValueChange = { stepsValue = it },
             title = str("Steps"),
-            valueText = "${stepsValue.toInt()}/200",
-            valueRange = 0f..200f,
-            steps = 199,
-            hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-        )
-        var stepsWithKeyPointsValue by remember { mutableFloatStateOf(5f) }
-        SliderPreference(
-            value = stepsWithKeyPointsValue,
-            onValueChange = { stepsWithKeyPointsValue = it },
-            title = str("Steps with Key Points"),
-            valueText = "${stepsWithKeyPointsValue.toInt()}/8",
+            valueText = "${stepsValue.toInt()}/8",
             valueRange = 0f..8f,
             steps = 7,
             hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-            showKeyPoints = true,
+            showKeyPoints = showKeyPoints,
+            enabled = enabled,
         )
         var customKeyPointsValue by remember { mutableFloatStateOf(25f) }
         SliderPreference(
@@ -71,23 +85,17 @@ fun SliderDemo() {
             title = str("Custom Key Points"),
             valueText = "${customKeyPointsValue.toInt()}%",
             valueRange = 0f..100f,
-            showKeyPoints = true,
+            showKeyPoints = showKeyPoints,
             hapticEffect = SliderDefaults.SliderHapticEffect.Step,
             keyPoints = listOf(0f, 25f, 50f, 75f, 100f),
-        )
-        val disabledValue by remember { mutableFloatStateOf(0.7f) }
-        SliderPreference(
-            value = disabledValue,
-            onValueChange = {},
-            title = str("Disabled"),
-            valueText = "${(disabledValue * 100).toInt()}%",
-            enabled = false,
+            enabled = enabled,
         )
         var secondaryValue by remember { mutableFloatStateOf(0.25f) }
         Slider(
             value = secondaryValue,
             onValueChange = { secondaryValue = it },
             secondaryProgress = 0.75f,
+            enabled = enabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
@@ -96,9 +104,8 @@ fun SliderDemo() {
     }
 }
 
-/** Renders the "RangeSlider" gallery section content: a card of range-slider preferences. */
 @Composable
-fun RangeSliderDemo() {
+private fun RangeSliders(enabled: Boolean, showKeyPoints: Boolean) {
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -110,43 +117,37 @@ fun RangeSliderDemo() {
             onValueChange = { rangeValue = it },
             title = str("Range"),
             valueText = "${(rangeValue.start * 100).toInt()}% - ${(rangeValue.endInclusive * 100).toInt()}%",
+            enabled = enabled,
         )
         var rangeStepsValue by remember { mutableStateOf(2f..8f) }
         RangeSliderPreference(
             value = rangeStepsValue,
             onValueChange = { rangeStepsValue = it },
-            title = str("Range with Key Points"),
+            title = str("Steps"),
             valueText = "${rangeStepsValue.start.toInt()} - ${rangeStepsValue.endInclusive.toInt()}",
             valueRange = 0f..8f,
             steps = 7,
             hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-            showKeyPoints = true,
+            showKeyPoints = showKeyPoints,
+            enabled = enabled,
         )
         var customRangeValue by remember { mutableStateOf(20f..80f) }
         RangeSliderPreference(
             value = customRangeValue,
             onValueChange = { customRangeValue = it },
-            title = str("Custom Range Points"),
+            title = str("Custom Key Points"),
             valueText = "${customRangeValue.start.toInt()}% - ${customRangeValue.endInclusive.toInt()}%",
             valueRange = 0f..100f,
-            showKeyPoints = true,
+            showKeyPoints = showKeyPoints,
             hapticEffect = SliderDefaults.SliderHapticEffect.Step,
             keyPoints = listOf(0f, 20f, 40f, 60f, 80f, 100f),
-        )
-        var disabledRangeValue by remember { mutableStateOf(0.3f..0.7f) }
-        RangeSliderPreference(
-            value = disabledRangeValue,
-            onValueChange = {},
-            title = str("Disabled"),
-            valueText = "${(disabledRangeValue.start * 100).toInt()}% - ${(disabledRangeValue.endInclusive * 100).toInt()}%",
-            enabled = false,
+            enabled = enabled,
         )
     }
 }
 
-/** Renders the "VerticalSlider" gallery section content: a row of vertical sliders with their labels. */
 @Composable
-fun VerticalSliderDemo() {
+private fun VerticalSliders(enabled: Boolean, showKeyPoints: Boolean) {
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -159,99 +160,64 @@ fun VerticalSliderDemo() {
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            var verticalValue1 by remember { mutableFloatStateOf(0.3f) }
+            var normalValue by remember { mutableFloatStateOf(0.3f) }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f),
             ) {
                 VerticalSlider(
-                    value = verticalValue1,
-                    onValueChange = { verticalValue1 = it },
+                    value = normalValue,
+                    onValueChange = { normalValue = it },
                     secondaryProgress = 0.8f,
+                    enabled = enabled,
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = str("Normal\n{}%", (verticalValue1 * 100).toInt()),
+                    text = str("Normal\n{}%", (normalValue * 100).toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            var verticalValue2 by remember { mutableFloatStateOf(5f) }
+            var stepsValue by remember { mutableFloatStateOf(5f) }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f),
             ) {
                 VerticalSlider(
-                    value = verticalValue2,
-                    onValueChange = { verticalValue2 = it },
+                    value = stepsValue,
+                    onValueChange = { stepsValue = it },
                     valueRange = 0f..6f,
                     steps = 5,
                     hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+                    showKeyPoints = showKeyPoints,
+                    enabled = enabled,
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = str("Steps\n{}/6", verticalValue2.toInt()),
+                    text = str("Steps\n{}/6", stepsValue.toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            var verticalValue3 by remember { mutableFloatStateOf(5f) }
+            var customValue by remember { mutableFloatStateOf(50f) }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f),
             ) {
                 VerticalSlider(
-                    value = verticalValue3,
-                    onValueChange = { verticalValue3 = it },
-                    valueRange = 0f..6f,
-                    steps = 5,
-                    hapticEffect = SliderDefaults.SliderHapticEffect.Step,
-                    showKeyPoints = true,
-                    modifier = Modifier.size(25.dp, 160.dp),
-                )
-                Text(
-                    text = str("Points\n{}/6", verticalValue3.toInt()),
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            var verticalValue4 by remember { mutableFloatStateOf(50f) }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f),
-            ) {
-                VerticalSlider(
-                    value = verticalValue4,
-                    onValueChange = { verticalValue4 = it },
+                    value = customValue,
+                    onValueChange = { customValue = it },
                     valueRange = 0f..100f,
-                    showKeyPoints = true,
+                    showKeyPoints = showKeyPoints,
                     hapticEffect = SliderDefaults.SliderHapticEffect.Step,
                     keyPoints = listOf(0f, 25f, 50f, 75f, 100f),
+                    enabled = enabled,
                     modifier = Modifier.size(25.dp, 160.dp),
                 )
                 Text(
-                    text = str("Custom\n{}%", verticalValue4.toInt()),
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            val disabledVerticalValue by remember { mutableFloatStateOf(0.7f) }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f),
-            ) {
-                VerticalSlider(
-                    value = disabledVerticalValue,
-                    onValueChange = {},
-                    enabled = false,
-                    modifier = Modifier.size(25.dp, 160.dp),
-                )
-                Text(
-                    text = str("Disabled\n{}%", (disabledVerticalValue * 100).toInt()),
+                    text = str("Custom\n{}%", customValue.toInt()),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),

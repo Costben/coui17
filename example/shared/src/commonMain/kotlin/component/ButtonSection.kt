@@ -7,9 +7,7 @@ package component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -26,99 +24,51 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 
-/** Renders the "Button" gallery section content: text buttons, disabled and borderless variants, and a stepper row. */
+/**
+ * Renders the "Button" gallery section content: the three text-button colour sets driven by the
+ * enabled and size options, plus a stepper row.
+ */
 @Composable
 fun ButtonDemo() {
-    val initialButtonText = str("Cancel")
-    val initialSubmitButtonText = str("Submit")
-    var buttonText by remember { mutableStateOf(initialButtonText) }
-    var submitButtonText by remember { mutableStateOf(initialSubmitButtonText) }
+    val enabled = remember { mutableStateOf(true) }
+    val sizeIndex = remember { mutableIntStateOf(0) }
     var clickCount by remember { mutableIntStateOf(0) }
-    var submitClickCount by remember { mutableIntStateOf(0) }
+    val size = ButtonSize.entries[sizeIndex.intValue]
 
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoChoice("Size", listOf("Regular", "Small", "Tiny"), sizeIndex),
+    )
     Row(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Only the regular tier stretches; the small tiers keep their own width.
+        val weight = if (size == ButtonSize.Regular) Modifier.weight(1f) else Modifier
         TextButton(
-            text = buttonText,
-            onClick = {
-                clickCount++
-                buttonText = "Click: $clickCount"
-            },
-            modifier = Modifier.weight(1f),
+            text = if (clickCount > 0) "Click: $clickCount" else str("Cancel"),
+            onClick = { clickCount++ },
+            modifier = weight,
+            enabled = enabled.value,
+            size = size,
         )
-        Spacer(Modifier.width(12.dp))
         TextButton(
-            text = submitButtonText,
-            onClick = {
-                submitClickCount++
-                submitButtonText = "Click: $submitClickCount"
-            },
-            modifier = Modifier.weight(1f),
+            text = str("Submit"),
+            onClick = { clickCount++ },
+            modifier = weight,
+            enabled = enabled.value,
+            size = size,
             colors = ButtonDefaults.textButtonColorsPrimary(),
         )
-    }
-    Row(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        TextButton(
-            text = str("Disabled"),
-            onClick = {},
-            modifier = Modifier.weight(1f),
-            enabled = false,
-        )
-        Spacer(Modifier.width(12.dp))
-        TextButton(
-            text = str("Disabled"),
-            onClick = {},
-            enabled = false,
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.textButtonColorsPrimary(),
-        )
-    }
-    Row(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
         TextButton(
             text = str("Borderless"),
-            onClick = {},
-            modifier = Modifier.weight(1f),
+            onClick = { clickCount++ },
+            modifier = weight,
+            enabled = enabled.value,
+            size = size,
             colors = ButtonDefaults.textButtonColorsBorderless(),
-        )
-        Spacer(Modifier.width(12.dp))
-        TextButton(
-            text = str("Disabled"),
-            onClick = {},
-            enabled = false,
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.textButtonColorsBorderless(),
-        )
-    }
-    Row(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        TextButton(
-            text = str("Tiny"),
-            onClick = {},
-            size = ButtonSize.Tiny,
-        )
-        TextButton(
-            text = str("Tiny Primary"),
-            onClick = {},
-            size = ButtonSize.Tiny,
-            colors = ButtonDefaults.textButtonColorsPrimary(),
         )
     }
     var stepperValue by remember { mutableIntStateOf(2) }
@@ -135,6 +85,7 @@ fun ButtonDemo() {
             onValueChange = { stepperValue = it },
             minValue = 0,
             maxValue = 10,
+            enabled = enabled.value,
         )
     }
 }

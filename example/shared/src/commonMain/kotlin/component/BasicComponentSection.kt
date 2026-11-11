@@ -1,23 +1,42 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Card
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
-/** Renders the enabled and disabled BasicComponent samples inside one card. */
+/** Renders one BasicComponent whose summary, slots and enabled state come from the options. */
 @Composable
 fun BasicComponentDemo() {
+    val enabled = remember { mutableStateOf(true) }
+    val showSummary = remember { mutableStateOf(true) }
+    val showStart = remember { mutableStateOf(true) }
+    val showEnd = remember { mutableStateOf(true) }
+    val actionColor = if (enabled.value) {
+        COUITheme.colorScheme.onSurfaceVariantActions
+    } else {
+        COUITheme.colorScheme.disabledOnSecondaryVariant
+    }
+
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Show summary", showSummary),
+        DemoToggle("Start action", showStart),
+        DemoToggle("End actions", showEnd),
+    )
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -25,51 +44,37 @@ fun BasicComponentDemo() {
     ) {
         BasicComponent(
             title = str("Title"),
-            summary = str("Summary"),
-            startAction = {
-                Text(
-                    text = str("Start"),
-                )
+            summary = if (showSummary.value) str("Summary") else null,
+            startAction = if (showStart.value) {
+                {
+                    Text(
+                        text = str("Start"),
+                        color = if (enabled.value) {
+                            COUITheme.colorScheme.onSurface
+                        } else {
+                            COUITheme.colorScheme.disabledOnSecondaryVariant
+                        },
+                    )
+                }
+            } else {
+                null
             },
             endActions = {
-                Text(
-                    text = str("End1"),
-                    fontSize = COUITheme.textStyles.body2.fontSize,
-                    color = COUITheme.colorScheme.onSurfaceVariantActions,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = str("End2"),
-                    fontSize = COUITheme.textStyles.body2.fontSize,
-                    color = COUITheme.colorScheme.onSurfaceVariantActions,
-                )
+                if (showEnd.value) {
+                    Text(
+                        text = str("End1"),
+                        fontSize = COUITheme.textStyles.body2.fontSize,
+                        color = actionColor,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = str("End2"),
+                        fontSize = COUITheme.textStyles.body2.fontSize,
+                        color = actionColor,
+                    )
+                }
             },
-            enabled = true,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        BasicComponent(
-            title = str("Title"),
-            summary = str("Summary"),
-            startAction = {
-                Text(
-                    text = str("Start"),
-                    color = COUITheme.colorScheme.disabledOnSecondaryVariant,
-                )
-            },
-            endActions = {
-                Text(
-                    text = str("End1"),
-                    fontSize = COUITheme.textStyles.body2.fontSize,
-                    color = COUITheme.colorScheme.disabledOnSecondaryVariant,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = str("End2"),
-                    fontSize = COUITheme.textStyles.body2.fontSize,
-                    color = COUITheme.colorScheme.disabledOnSecondaryVariant,
-                )
-            },
-            enabled = false,
+            enabled = enabled.value,
         )
     }
 }

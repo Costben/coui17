@@ -1,5 +1,6 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
 @file:OptIn(ExperimentalCOUIApi::class)
 
 package component
@@ -37,13 +38,24 @@ import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.preference.SliderPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
-/** Renders the Arrow gallery section: a card of arrow and slider preferences plus its volume dialog. */
+/**
+ * Renders the Arrow gallery section: an arrow preference driven by the options, and a slider
+ * preference that opens its volume dialog.
+ */
 @Composable
 fun ArrowDemo() {
+    val enabled = remember { mutableStateOf(true) }
+    val showIcon = remember { mutableStateOf(true) }
+    val showValue = remember { mutableStateOf(true) }
     var volume by remember { mutableFloatStateOf(0.5f) }
     val showVolumeDialog = remember { mutableStateOf(false) }
     val volumeDialogHoldDown = remember { mutableStateOf(false) }
 
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Show icon", showIcon),
+        DemoToggle("Show value text", showValue),
+    )
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -53,24 +65,39 @@ fun ArrowDemo() {
     ) {
         ArrowPreference(
             title = str("Arrow"),
-            startAction = {
-                Box(
-                    modifier = Modifier.padding(end = 8.dp),
-                ) {
-                    Icon(
-                        imageVector = COUIIcons.Contacts,
-                        contentDescription = str("Personal"),
-                        tint = COUITheme.colorScheme.onBackground,
+            startAction = if (showIcon.value) {
+                {
+                    Box(
+                        modifier = Modifier.padding(end = 8.dp),
+                    ) {
+                        Icon(
+                            imageVector = COUIIcons.Contacts,
+                            contentDescription = str("Personal"),
+                            tint = if (enabled.value) {
+                                COUITheme.colorScheme.onBackground
+                            } else {
+                                COUITheme.colorScheme.disabledOnSecondaryVariant
+                            },
+                        )
+                    }
+                }
+            } else {
+                null
+            },
+            endActions = {
+                if (showValue.value) {
+                    Text(
+                        text = str("End"),
+                        fontSize = COUITheme.textStyles.body2.fontSize,
+                        color = if (enabled.value) {
+                            COUITheme.colorScheme.onSurfaceVariantActions
+                        } else {
+                            COUITheme.colorScheme.disabledOnSecondaryVariant
+                        },
                     )
                 }
             },
-            endActions = {
-                Text(
-                    text = str("End"),
-                    fontSize = COUITheme.textStyles.body2.fontSize,
-                    color = COUITheme.colorScheme.onSurfaceVariantActions,
-                )
-            },
+            enabled = enabled.value,
             onClick = {},
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
@@ -79,23 +106,12 @@ fun ArrowDemo() {
             valueText = "${(volume * 100).toInt()}%",
             value = volume,
             onValueChange = { volume = it },
+            enabled = enabled.value,
             onClick = {
                 showVolumeDialog.value = true
                 volumeDialogHoldDown.value = true
             },
             holdDownState = volumeDialogHoldDown.value,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("Disabled Arrow"),
-            endActions = {
-                Text(
-                    text = str("End"),
-                    fontSize = COUITheme.textStyles.body2.fontSize,
-                    color = COUITheme.colorScheme.disabledOnSecondaryVariant,
-                )
-            },
-            enabled = false,
         )
     }
 

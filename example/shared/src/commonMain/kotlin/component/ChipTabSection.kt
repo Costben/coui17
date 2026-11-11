@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Box
@@ -37,108 +39,80 @@ import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 
 /**
- * Renders the "ChipTab" gallery section content: Notes-style category chips directly on the page
- * background, then single-select, icon and red-dot/count chip tab groups inside a card.
+ * Renders the "ChipTab" gallery section content: one chip tab group whose icons, red dots and
+ * counts, leading icon chip and surrounding card come from the options.
+ *
+ * Without the card this is COUIChipTabLayout as Notes lays it out: the scroller spans the window and
+ * pads its tabs by 16dp, so they scroll on up to the screen edge.
  */
 @Composable
 fun ChipTabDemo() {
+    val showIcons = remember { mutableStateOf(false) }
+    val showHints = remember { mutableStateOf(false) }
+    val leadingChip = remember { mutableStateOf(true) }
+    val inCard = remember { mutableStateOf(false) }
+
     Column(Modifier.fillMaxWidth()) {
-        SmallTitle(str("On the page background"))
-        // COUIChipTabLayout as Notes lays it out: the scroller spans the window and pads its tabs by
-        // 16dp, so they scroll on up to the screen edge.
-        LeadingIconChipTabsDemo(modifier = Modifier.padding(bottom = 16.dp))
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-            cornerRadius = CardDefaults.GroupCornerRadius,
-            weight = CardDefaults.GroupWeight,
-        ) {
-            SingleSelectChipTabsDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            IconChipTabsDemo()
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            RedDotAndCountChipTabsDemo()
+        DemoOptions(
+            DemoToggle("Show icons", showIcons),
+            DemoToggle("Red dot and count", showHints),
+            DemoToggle("Leading icon chip", leadingChip),
+            DemoToggle("Inside a card", inCard),
+        )
+        if (inCard.value) {
+            Card(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp),
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+            ) {
+                ChipTabsDemo(showIcons.value, showHints.value, leadingChip.value)
+            }
+        } else {
+            ChipTabsDemo(
+                showIcons = showIcons.value,
+                showHints = showHints.value,
+                leadingChip = leadingChip.value,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
         }
     }
 }
 
 @Composable
-private fun SingleSelectChipTabsDemo() {
-    var selectedIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf(
-        ChipTabData(label = str("All")),
-        ChipTabData(label = str("Photos")),
-        ChipTabData(label = str("Videos")),
-        ChipTabData(label = str("Documents")),
-    )
-
-    ChipTabGroup(
-        tabs = tabs,
-        selectedIndex = selectedIndex,
-        onSelectedChange = { selectedIndex = it },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-    )
-}
-
-@Composable
-private fun IconChipTabsDemo() {
-    var selectedIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf(
-        ChipTabData(label = str("All"), icon = COUIIcons.All),
-        ChipTabData(label = str("Photos"), icon = COUIIcons.Photos),
-        ChipTabData(label = str("Music"), icon = COUIIcons.Music),
-        ChipTabData(label = str("Files"), icon = COUIIcons.File),
-    )
-
-    ChipTabGroup(
-        tabs = tabs,
-        selectedIndex = selectedIndex,
-        onSelectedChange = { selectedIndex = it },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-    )
-}
-
-@Composable
-private fun RedDotAndCountChipTabsDemo() {
-    var selectedIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf(
-        ChipTabData(label = str("Inbox"), showRedDot = true),
-        ChipTabData(label = str("Updates"), count = 12),
-        ChipTabData(label = str("Archived"), count = 128, showRedDot = true),
-        ChipTabData(label = str("Unavailable"), enabled = false),
-        ChipTabData(label = str("Spam")),
-    )
-
-    ChipTabGroup(
-        tabs = tabs,
-        selectedIndex = selectedIndex,
-        onSelectedChange = { selectedIndex = it },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-    )
-}
-
-@Composable
-private fun LeadingIconChipTabsDemo(modifier: Modifier = Modifier) {
+private fun ChipTabsDemo(
+    showIcons: Boolean,
+    showHints: Boolean,
+    leadingChip: Boolean,
+    modifier: Modifier = Modifier,
+) {
     var selectedIndex by remember { mutableIntStateOf(0) }
     var menuExpanded by remember { mutableStateOf(false) }
     val hapticFeedback = LocalHapticFeedback.current
     val tabs = listOf(
-        ChipTabData(label = str("All")),
-        ChipTabData(label = str("Photos")),
-        ChipTabData(label = str("Videos")),
+        ChipTabData(
+            label = str("All"),
+            icon = COUIIcons.All.takeIf { showIcons },
+            showRedDot = showHints,
+        ),
+        ChipTabData(
+            label = str("Photos"),
+            icon = COUIIcons.Photos.takeIf { showIcons },
+            count = 12.takeIf { showHints },
+        ),
+        ChipTabData(
+            label = str("Music"),
+            icon = COUIIcons.Music.takeIf { showIcons },
+            count = 128.takeIf { showHints },
+            showRedDot = showHints,
+        ),
+        ChipTabData(
+            label = str("Files"),
+            icon = COUIIcons.File.takeIf { showIcons },
+        ),
+        ChipTabData(label = str("Unavailable"), enabled = false),
         ChipTabData(label = str("Documents")),
-        ChipTabData(label = str("Music")),
-        ChipTabData(label = str("Files")),
     )
 
     Box(modifier = modifier) {
@@ -149,7 +123,7 @@ private fun LeadingIconChipTabsDemo(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            leadingIcon = COUIIcons.GridView,
+            leadingIcon = COUIIcons.GridView.takeIf { leadingChip },
             onLeadingIconClick = { menuExpanded = true },
             contentPadding = PaddingValues(horizontal = 16.dp),
         )

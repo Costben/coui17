@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Column
@@ -41,25 +43,28 @@ import io.github.suqi8.coui.kmp.utils.overScrollVertical
 import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import io.github.suqi8.coui.kmp.window.WindowBottomSheet
 
-/** Renders the "BottomSheet" gallery section content: the two sheet entry rows and their sheets. */
+/**
+ * Renders the "BottomSheet" gallery section content: the panel template row and one sheet row whose
+ * host (overlay or window) comes from the option.
+ */
 @Composable
 fun BottomSheetDemo() {
-    var showSuperBottomSheet by remember { mutableStateOf(false) }
-    var showWindowBottomSheet by remember { mutableStateOf(false) }
-    var superBottomSheetHoldDown by remember { mutableStateOf(false) }
-    var windowBottomSheetHoldDown by remember { mutableStateOf(false) }
+    val windowHost = remember { mutableStateOf(false) }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var bottomSheetHoldDown by remember { mutableStateOf(false) }
     var bottomSheetDropdownSelectedOption by remember { mutableIntStateOf(0) }
     var bottomSheetSuperSwitchState by remember { mutableStateOf(true) }
     var showPanelTemplate by remember { mutableStateOf(false) }
     var panelTemplateHoldDown by remember { mutableStateOf(false) }
 
+    DemoOptions(DemoToggle("Window host", windowHost))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        // The reference panel first: the two rows under it are the same panel hosted as an overlay
-        // and as a window, filled with interactive controls.
+        // The reference panel first: the row under it is the same panel hosted as an overlay or as
+        // a window, filled with interactive controls.
         ArrowPreference(
             title = str("Panel Template"),
             summary = str("The ColorOS 17 panel every sheet here follows"),
@@ -71,23 +76,17 @@ fun BottomSheetDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("BottomSheet (O)"),
-            summary = str("Click to show an OverlayBottomSheet"),
-            onClick = {
-                showSuperBottomSheet = true
-                superBottomSheetHoldDown = true
+            title = str("BottomSheet"),
+            summary = if (windowHost.value) {
+                str("Click to show a WindowBottomSheet")
+            } else {
+                str("Click to show an OverlayBottomSheet")
             },
-            holdDownState = superBottomSheetHoldDown,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("BottomSheet (W)"),
-            summary = str("Click to show a WindowBottomSheet"),
             onClick = {
-                showWindowBottomSheet = true
-                windowBottomSheetHoldDown = true
+                showBottomSheet = true
+                bottomSheetHoldDown = true
             },
-            holdDownState = windowBottomSheetHoldDown,
+            holdDownState = bottomSheetHoldDown,
         )
     }
 
@@ -100,23 +99,24 @@ fun BottomSheetDemo() {
         settingsText = str("List item"),
         actionText = str("Button"),
     )
+    // Both hosts stay composed so a sheet that is closing finishes on the host it opened on.
     SuperBottomSheetDemo(
-        show = showSuperBottomSheet,
-        onDismissRequest = { showSuperBottomSheet = false },
+        show = showBottomSheet && !windowHost.value,
+        onDismissRequest = { showBottomSheet = false },
         dropdownSelectedIndex = bottomSheetDropdownSelectedOption,
         onDropdownSelectedIndexChange = { bottomSheetDropdownSelectedOption = it },
         switchChecked = bottomSheetSuperSwitchState,
         onSwitchCheckedChange = { bottomSheetSuperSwitchState = it },
-        onDismissFinished = { superBottomSheetHoldDown = false },
+        onDismissFinished = { bottomSheetHoldDown = false },
     )
     WindowBottomSheetDemo(
-        show = showWindowBottomSheet,
-        onDismissRequest = { showWindowBottomSheet = false },
+        show = showBottomSheet && windowHost.value,
+        onDismissRequest = { showBottomSheet = false },
         dropdownSelectedIndex = bottomSheetDropdownSelectedOption,
         onDropdownSelectedIndexChange = { bottomSheetDropdownSelectedOption = it },
         switchChecked = bottomSheetSuperSwitchState,
         onSwitchCheckedChange = { bottomSheetSuperSwitchState = it },
-        onDismissFinished = { windowBottomSheetHoldDown = false },
+        onDismissFinished = { bottomSheetHoldDown = false },
     )
 }
 

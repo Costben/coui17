@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -115,9 +117,10 @@ private fun ShadowEdgeSurface(
     )
 }
 
-/** Renders the "SpotLight" gallery section content (a static spotlight and an animated sweeping one). */
+/** Renders the "SpotLight" gallery section content: one spotlight whose sweep is switched by the option. */
 @Composable
 fun SpotLightDemo() {
+    val animate = remember { mutableStateOf(true) }
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val params = if (isDark) SpotLightDefaults.CapsuleParams1Dark else SpotLightDefaults.CapsuleParams1Light
     val density = LocalDensity.current
@@ -128,6 +131,7 @@ fun SpotLightDemo() {
     val lightHeight = with(density) { params.lightHeight.toDp() }
     val shape = SquircleShape(20.dp)
 
+    DemoOptions(DemoToggle("Animate", animate))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -138,35 +142,6 @@ fun SpotLightDemo() {
                 .fillMaxWidth()
                 .padding(16.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .clip(shape)
-                    .background(surface)
-                    .spotLight(
-                        position = Offset(0.5f, 0.5f),
-                        radius = endRadius,
-                        intensity = params.endIntensity,
-                        lightColor = Color.White,
-                        lightHeight = lightHeight,
-                        ambientStrength = params.ambientStrength,
-                        diffuseStrength = params.diffuseStrength,
-                        noise = params.noise,
-                        dither = params.ditherN,
-                        blendMode = params.blendMode,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = str("Static | CapsuleParams1 | OVERLAY"),
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
             val transition = rememberInfiniteTransition()
             val sweep by transition.animateFloat(
                 initialValue = 0.2f,
@@ -192,9 +167,9 @@ fun SpotLightDemo() {
                     .clip(shape)
                     .background(surface)
                     .spotLight(
-                        position = Offset(sweep, 0.5f),
+                        position = if (animate.value) Offset(sweep, 0.5f) else Offset(0.5f, 0.5f),
                         radius = endRadius,
-                        intensity = glow,
+                        intensity = if (animate.value) glow else params.endIntensity,
                         lightColor = Color.White,
                         lightHeight = lightHeight,
                         ambientStrength = params.ambientStrength,
@@ -206,7 +181,11 @@ fun SpotLightDemo() {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = str("Animated | position.x 0.2..0.8 | intensity 0..1"),
+                    text = if (animate.value) {
+                        str("Animated | position.x 0.2..0.8 | intensity 0..1")
+                    } else {
+                        str("Static | CapsuleParams1 | OVERLAY")
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp),
                     textAlign = TextAlign.Center,
                 )

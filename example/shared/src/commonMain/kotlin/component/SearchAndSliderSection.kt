@@ -1,5 +1,6 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
 @file:OptIn(ExperimentalCOUIApi::class)
 
 package component
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,6 +30,7 @@ import io.github.suqi8.coui.kmp.basic.IntentSeekBar
 import io.github.suqi8.coui.kmp.basic.IntentSeekBarDefaults
 import io.github.suqi8.coui.kmp.basic.IntentSeekBarSize
 import io.github.suqi8.coui.kmp.basic.SearchHistoryView
+import io.github.suqi8.coui.kmp.basic.SearchHistoryViewDefaults
 import io.github.suqi8.coui.kmp.basic.Slider
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
@@ -55,16 +58,28 @@ private val DemoHistory = listOf(
 /** Renders the "IntentSeekBar" gallery section content: a card of intent seek bar variants and a plain slider. */
 @Composable
 fun IntentSeekBarDemoContent() {
+    val enabled = remember { mutableStateOf(true) }
+    val showThumb = remember { mutableStateOf(true) }
+    val fixedColors = remember { mutableStateOf(false) }
+    val sizeIndex = remember { mutableIntStateOf(0) }
+
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Show thumb", showThumb),
+        DemoToggle("Fixed colors on a dark surface", fixedColors),
+        DemoChoice("Size", IntentSeekBarSize.entries.map { it.name }, sizeIndex),
+    )
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        IntentSeekBarDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        IntentSeekBarSizeDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        IntentSeekBarFixedColorsDemo()
+        IntentSeekBarDemo(
+            enabled = enabled.value,
+            showThumb = showThumb.value,
+            fixedColors = fixedColors.value,
+            size = IntentSeekBarSize.entries[sizeIndex.intValue],
+        )
     }
 }
 
@@ -83,19 +98,25 @@ fun TouchSearchViewDemoContent() {
 /** Renders the "SearchHistoryView" gallery section content: a card with the search history list and its folded variant. */
 @Composable
 fun SearchHistoryViewDemoContent() {
+    val folded = remember { mutableStateOf(false) }
+
+    DemoOptions(DemoToggle("Fold to 2 rows", folded))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        SearchHistoryViewDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        FoldableSearchHistoryViewDemo()
+        SearchHistoryViewDemo(folded = folded.value)
     }
 }
 
 @Composable
-private fun IntentSeekBarDemo() {
+private fun IntentSeekBarDemo(
+    enabled: Boolean,
+    showThumb: Boolean,
+    fixedColors: Boolean,
+    size: IntentSeekBarSize,
+) {
     var played by remember { mutableFloatStateOf(0.35f) }
     var buffered by remember { mutableFloatStateOf(0.65f) }
 
@@ -108,69 +129,41 @@ private fun IntentSeekBarDemo() {
             text = str("Played {}%  ·  Buffered {}%", (played * 100).toInt(), (buffered * 100).toInt()),
             style = COUITheme.textStyles.footnote1,
         )
-        IntentSeekBar(
-            value = played,
-            onValueChange = {
-                played = it
-                if (buffered < it) buffered = it
-            },
-            secondaryProgress = buffered,
-            showThumb = true,
+        // The fixed colour set is meant for media surfaces that stay dark in both themes.
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
-        )
+                .padding(top = 8.dp)
+                .then(
+                    if (fixedColors) {
+                        Modifier
+                            .background(color = Color(0xFF1B1B1B), shape = SquircleShape(12.dp))
+                            .padding(16.dp)
+                    } else {
+                        Modifier
+                    },
+                ),
+        ) {
+            IntentSeekBar(
+                value = played,
+                onValueChange = {
+                    played = it
+                    if (buffered < it) buffered = it
+                },
+                secondaryProgress = buffered,
+                enabled = enabled,
+                colors = if (fixedColors) IntentSeekBarDefaults.fixedColors() else IntentSeekBarDefaults.colors(),
+                showThumb = showThumb,
+                size = size,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         Slider(
             value = buffered,
             onValueChange = { buffered = it.coerceAtLeast(played) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
-        )
-    }
-}
-
-@Composable
-private fun IntentSeekBarSizeDemo() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        var value by remember { mutableFloatStateOf(0.5f) }
-        IntentSeekBarSize.entries.forEach { size ->
-            Text(text = size.name, style = COUITheme.textStyles.footnote1)
-            IntentSeekBar(
-                value = value,
-                onValueChange = { value = it },
-                secondaryProgress = 0.75f,
-                size = size,
-                showThumb = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
-}
-
-@Composable
-private fun IntentSeekBarFixedColorsDemo() {
-    var value by remember { mutableFloatStateOf(0.4f) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .background(color = Color(0xFF1B1B1B), shape = SquircleShape(12.dp))
-            .padding(16.dp),
-    ) {
-        IntentSeekBar(
-            value = value,
-            onValueChange = { value = it },
-            secondaryProgress = 0.8f,
-            colors = IntentSeekBarDefaults.fixedColors(),
-            showThumb = true,
-            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -201,7 +194,7 @@ private fun TouchSearchViewDemo() {
 }
 
 @Composable
-private fun SearchHistoryViewDemo() {
+private fun SearchHistoryViewDemo(folded: Boolean) {
     val demoHistory = DemoHistory.map { str(it) }
     var history by remember { mutableStateOf(demoHistory) }
     var lastClicked by remember { mutableStateOf("-") }
@@ -227,6 +220,7 @@ private fun SearchHistoryViewDemo() {
                 onDeleteClick = { history = emptyList() },
                 title = str("Recent searches"),
                 deleteIconDescription = str("Delete search history"),
+                maxRowFolded = if (folded) 2 else SearchHistoryViewDefaults.MaxRowFolded,
             )
             Text(
                 text = str("Last clicked: {}", lastClicked),
@@ -234,34 +228,5 @@ private fun SearchHistoryViewDemo() {
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
             )
         }
-    }
-}
-
-@Composable
-private fun FoldableSearchHistoryViewDemo() {
-    val demoHistory = DemoHistory.map { str(it) }
-    var history by remember { mutableStateOf(demoHistory.take(9)) }
-
-    if (history.isEmpty()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = str("History cleared"),
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(text = str("Restore"), onClick = { history = demoHistory.take(9) })
-        }
-    } else {
-        SearchHistoryView(
-            items = history,
-            onItemClick = {},
-            onDeleteClick = { history = emptyList() },
-            title = str("Recent searches (folded to 2 rows)"),
-            maxRowFolded = 2,
-        )
     }
 }

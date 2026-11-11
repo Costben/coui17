@@ -29,9 +29,18 @@ import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.delay
 
-/** Renders the "InstallLoadProgress" gallery section content (a card listing every load style plus the special states). */
+/** Renders the "InstallLoadProgress" gallery section content: the scripted system-update flow and one interactive button whose style and state come from the options. */
 @Composable
 fun InstallLoadProgressDemo() {
+    val styleIndex = remember { mutableIntStateOf(0) }
+    val stateIndex = remember { mutableIntStateOf(0) }
+    val style = InstallLoadStyle.entries[styleIndex.intValue]
+    val state = LoadProgressState.entries[stateIndex.intValue]
+
+    DemoOptions(
+        DemoChoice("Style", InstallLoadStyle.entries.map { it.name }, styleIndex),
+        DemoChoice("State", LoadProgressState.entries.map { it.name }, stateIndex),
+    )
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -39,9 +48,7 @@ fun InstallLoadProgressDemo() {
     ) {
         SystemUpdateDemo()
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        InstallLoadStyleDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        InstallLoadSpecialStatesDemo()
+        InstallLoadInteractiveDemo(style = style, state = state)
     }
 }
 
@@ -115,64 +122,13 @@ private fun SystemUpdateDemo() {
     }
 }
 
+/**
+ * The interactive sample: the chosen style and state on one button, with a slider standing in for a
+ * transfer's progress. The 220dp big pill leaves too little width for a caption beside it on a 360dp
+ * screen, so the readout sits underneath.
+ */
 @Composable
-private fun InstallLoadStyleDemo() {
-    var state by remember { mutableStateOf(LoadProgressState.Default) }
-    var progress by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(state) {
-        if (state == LoadProgressState.Loading) {
-            progress = 0
-            while (progress < 100) {
-                delay(120)
-                progress += 5
-            }
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // The same state across the three couiStyle tiers: only bigRoundButton is accent filled at
-        // rest, and only the two pill tiers paint a fill while a transfer is running.
-        InstallLoadStyle.entries.forEach { style ->
-            // The 220dp big pill leaves too little width for a caption beside it on a 360dp screen,
-            // so the caption sits underneath the button instead of forcing a one-word-per-line wrap.
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                InstallLoadProgress(
-                    onClick = { state = state.toggled() },
-                    state = state,
-                    progress = progress,
-                    text = when {
-                        state == LoadProgressState.Loading -> "$progress%"
-
-                        // The 52dp small pill fits a short verb only.
-                        style == InstallLoadStyle.Default -> str("Get")
-
-                        else -> str("Download")
-                    },
-                    style = style,
-                )
-                Text(
-                    text = "${style.name} · couiStyle=${style.value}",
-                    color = COUITheme.colorScheme.onBackgroundVariant,
-                    style = COUITheme.textStyles.footnote1,
-                )
-            }
-        }
-        Text(
-            text = str("state: {} ({}) · progress: {} / 100", state.name, state.value, progress),
-            color = COUITheme.colorScheme.onBackgroundVariant,
-            style = COUITheme.textStyles.footnote1,
-        )
-    }
-}
-
-@Composable
-private fun InstallLoadSpecialStatesDemo() {
+private fun InstallLoadInteractiveDemo(style: InstallLoadStyle, state: LoadProgressState) {
     var progress by remember { mutableIntStateOf(60) }
 
     Column(
@@ -181,16 +137,25 @@ private fun InstallLoadSpecialStatesDemo() {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Press and hold: mPressedAnimator insets the path by 5% of the measured size, narrows the
-        // label to 0.92 and scales the brightness to 0.8 in HSL.
         InstallLoadProgress(
             onClick = { },
-            state = LoadProgressState.Loading,
+            state = state,
             progress = progress,
             max = 100,
-            text = "$progress%",
-            style = InstallLoadStyle.BigRound,
-            hapticFeedback = true,
+            text = when {
+                state == LoadProgressState.Loading -> "$progress%"
+
+                state == LoadProgressState.Fail -> str("Retry")
+
+                state == LoadProgressState.InstallHaveGift -> str("Gift")
+
+                // The 52dp small pill fits a short verb only.
+                style == InstallLoadStyle.Default -> str("Get")
+
+                else -> str("Download")
+            },
+            style = style,
+            hapticFeedback = state == LoadProgressState.Loading,
         )
         Slider(
             value = progress.toFloat(),
@@ -198,27 +163,11 @@ private fun InstallLoadSpecialStatesDemo() {
             valueRange = 0f..100f,
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // mState == 3 paints the whole path with the accent colour, whatever mProgress says.
-            InstallLoadProgress(
-                onClick = { },
-                state = LoadProgressState.Fail,
-                progress = progress,
-                text = str("Retry"),
-                style = InstallLoadStyle.Default,
-            )
-            // mState == 4 matches no onDraw branch: the shape is never painted, only the label.
-            InstallLoadProgress(
-                onClick = { },
-                state = LoadProgressState.InstallHaveGift,
-                progress = progress,
-                text = str("Gift"),
-                style = InstallLoadStyle.Default,
-            )
-        }
+        Text(
+            text = str("style: {} ({}) · state: {} ({}) · progress: {} / 100", style.name, style.value, state.name, state.value, progress),
+            color = COUITheme.colorScheme.onBackgroundVariant,
+            style = COUITheme.textStyles.footnote1,
+        )
         Text(
             text = str("Fail fills the whole shape; InstallHaveGift paints none"),
             color = COUITheme.colorScheme.onBackgroundVariant,

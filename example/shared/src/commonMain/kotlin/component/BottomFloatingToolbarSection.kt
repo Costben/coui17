@@ -9,7 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,10 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -30,8 +27,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BottomFloatingToolbar
 import io.github.suqi8.coui.kmp.basic.BottomFloatingToolbarGroup
 import io.github.suqi8.coui.kmp.basic.BottomFloatingToolbarItem
-import io.github.suqi8.coui.kmp.basic.Switch
-import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
@@ -96,13 +91,14 @@ fun IconToolbarDemo(
     }
 }
 
-/** Renders the "BottomFloatingToolbar" gallery section content: the Notes toolbar, then two floating toolbars over a blurred wallpaper plus a visibility switch. */
+/** Renders the "BottomFloatingToolbar" gallery section content: the Notes toolbar, then two floating toolbars over a blurred wallpaper, both driven by the visibility option. */
 @Composable
 fun BottomFloatingToolbarDemo() {
-    var visible by remember { mutableStateOf(true) }
+    val visible = remember { mutableStateOf(true) }
     val backdrop = rememberBlurBackdrop()
 
-    IconToolbarDemo(visible = visible)
+    DemoOptions(DemoToggle("Visible", visible))
+    IconToolbarDemo(visible = visible.value)
     Spacer(Modifier.height(12.dp))
     Box(
         modifier = Modifier
@@ -137,7 +133,7 @@ fun BottomFloatingToolbarDemo() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CompositionLocalProvider(LocalBackdrop provides backdrop) {
-                BottomFloatingToolbar(visible = visible) {
+                BottomFloatingToolbar(visible = visible.value) {
                     BottomFloatingToolbarGroup {
                         BottomFloatingToolbarItem(label = str("Item {}", 1), icon = COUIIcons.Favorites, onClick = {})
                         BottomFloatingToolbarItem(label = str("Item {}", 2), icon = COUIIcons.Layers, onClick = {})
@@ -149,7 +145,7 @@ fun BottomFloatingToolbarDemo() {
                         )
                     }
                 }
-                BottomFloatingToolbar(visible = visible) {
+                BottomFloatingToolbar(visible = visible.value) {
                     BottomFloatingToolbarGroup {
                         BottomFloatingToolbarItem(label = str("Item {}", 1), icon = COUIIcons.Add, onClick = {})
                         BottomFloatingToolbarItem(label = str("Item {}", 2), onClick = {})
@@ -160,15 +156,5 @@ fun BottomFloatingToolbarDemo() {
                 }
             }
         }
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = str("Visible"))
-        Switch(checked = visible, onCheckedChange = { visible = it })
     }
 }

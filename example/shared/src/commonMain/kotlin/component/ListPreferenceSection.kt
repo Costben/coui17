@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.padding
@@ -18,32 +20,25 @@ import io.github.suqi8.coui.kmp.preference.ListPreference
 import io.github.suqi8.coui.kmp.preference.ListPreferenceEntry
 import io.github.suqi8.coui.kmp.preference.MultiSelectListPreference
 
-/** Renders the "ListPreference" gallery section content: single and multi select list preferences in a card. */
+/** Renders the "ListPreference" gallery section content: single and multi select list preferences, enabled from the option. */
 @Composable
 fun ListPreferenceDemoContent() {
+    val enabled = remember { mutableStateOf(true) }
+
+    DemoOptions(DemoToggle("Enabled", enabled))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        ListPreferenceDemo()
+        ListPreferenceDemo(enabled.value)
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        MultiSelectListPreferenceDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        val unavailable = str("Unavailable")
-        ListPreference(
-            entries = remember(unavailable) { listOf(ListPreferenceEntry(unavailable)) },
-            selectedIndex = 0,
-            onSelectedIndexChange = {},
-            title = str("Disabled ListPreference"),
-            cancelButtonText = str("Cancel"),
-            enabled = false,
-        )
+        MultiSelectListPreferenceDemo(enabled.value)
     }
 }
 
 @Composable
-private fun ListPreferenceDemo() {
+private fun ListPreferenceDemo(enabled: Boolean) {
     val lightLabel = str("Light")
     val darkLabel = str("Dark")
     val followSystemLabel = str("Follow system")
@@ -64,11 +59,12 @@ private fun ListPreferenceDemo() {
         title = str("Theme"),
         cancelButtonText = str("Cancel"),
         summary = str("Single choice bottom panel"),
+        enabled = enabled,
     )
 }
 
 @Composable
-private fun MultiSelectListPreferenceDemo() {
+private fun MultiSelectListPreferenceDemo(enabled: Boolean) {
     val photosLabel = str("Photos")
     val documentsLabel = str("Documents")
     val contactsLabel = str("Contacts")
@@ -98,5 +94,6 @@ private fun MultiSelectListPreferenceDemo() {
         confirmButtonText = str("Confirm"),
         cancelButtonText = str("Cancel"),
         summary = str("Multi choice bottom panel"),
+        enabled = enabled,
     )
 }

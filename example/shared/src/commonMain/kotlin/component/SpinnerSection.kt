@@ -1,5 +1,7 @@
 // Copyright 2025, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.padding
@@ -28,33 +30,21 @@ import io.github.suqi8.coui.kmp.preference.OverlaySpinnerPreference
 import io.github.suqi8.coui.kmp.preference.WindowSpinnerPreference
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 
-/** Renders the "Spinner" gallery section content (a card of overlay and window spinner preferences). */
+/**
+ * Renders the "Spinner" gallery section content: one spinner preference whose host, grouping, dialog
+ * presentation and enabled state come from the options.
+ */
 @Composable
 fun SpinnerDemo() {
-    val superSpinnerOptionSelected = remember { mutableIntStateOf(0) }
-    val windowSpinnerOptionSelected = remember { mutableIntStateOf(1) }
-    val superSpinnerOptionSelectedDialog = remember { mutableIntStateOf(2) }
-    val windowSpinnerOptionSelectedDialog = remember { mutableIntStateOf(3) }
-    var overlayExpanded by remember { mutableStateOf(false) }
-    var windowExpanded by remember { mutableStateOf(false) }
-    var overlayDialogExpanded by remember { mutableStateOf(false) }
-    var windowDialogExpanded by remember { mutableStateOf(false) }
-    var overlayGroupedExpanded by remember { mutableStateOf(false) }
-    var windowGroupedExpanded by remember { mutableStateOf(false) }
-    var overlayGroupedDialogExpanded by remember { mutableStateOf(false) }
-    var windowGroupedDialogExpanded by remember { mutableStateOf(false) }
-    var overlayGroup1SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayGroup2SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayGroup3SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var windowGroup1SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var windowGroup2SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var windowGroup3SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayDialogGroup1SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayDialogGroup2SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var overlayDialogGroup3SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var windowDialogGroup1SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var windowDialogGroup2SpinnerOptionSelected by remember { mutableIntStateOf(0) }
-    var windowDialogGroup3SpinnerOptionSelected by remember { mutableIntStateOf(0) }
+    val enabled = remember { mutableStateOf(true) }
+    val windowHost = remember { mutableStateOf(false) }
+    val grouped = remember { mutableStateOf(false) }
+    val asDialog = remember { mutableStateOf(false) }
+    var selected by remember { mutableIntStateOf(0) }
+    var expanded by remember { mutableStateOf(false) }
+    var group1Selected by remember { mutableIntStateOf(0) }
+    var group2Selected by remember { mutableIntStateOf(0) }
+    var group3Selected by remember { mutableIntStateOf(0) }
     val s = LocalAppStrings.current
     val spinnerOptions = remember(s) {
         listOf(
@@ -108,163 +98,111 @@ fun SpinnerDemo() {
             ),
         )
     }
-    val overlayGroupedSpinnerOptions = remember(
-        spinnerOptions,
-        overlayGroup1SpinnerOptionSelected,
-        overlayGroup2SpinnerOptionSelected,
-        overlayGroup3SpinnerOptionSelected,
-    ) {
+    val groupedOptions = remember(spinnerOptions, group1Selected, group2Selected, group3Selected) {
         groupedSpinnerOptions(
             spinnerOptions = spinnerOptions,
-            group1SelectedIndex = overlayGroup1SpinnerOptionSelected,
-            onGroup1SelectedIndexChange = { overlayGroup1SpinnerOptionSelected = it },
-            group2SelectedIndex = overlayGroup2SpinnerOptionSelected,
-            onGroup2SelectedIndexChange = { overlayGroup2SpinnerOptionSelected = it },
-            group3SelectedIndex = overlayGroup3SpinnerOptionSelected,
-            onGroup3SelectedIndexChange = { overlayGroup3SpinnerOptionSelected = it },
-        )
-    }
-    val windowGroupedSpinnerOptions = remember(
-        spinnerOptions,
-        windowGroup1SpinnerOptionSelected,
-        windowGroup2SpinnerOptionSelected,
-        windowGroup3SpinnerOptionSelected,
-    ) {
-        groupedSpinnerOptions(
-            spinnerOptions = spinnerOptions,
-            group1SelectedIndex = windowGroup1SpinnerOptionSelected,
-            onGroup1SelectedIndexChange = { windowGroup1SpinnerOptionSelected = it },
-            group2SelectedIndex = windowGroup2SpinnerOptionSelected,
-            onGroup2SelectedIndexChange = { windowGroup2SpinnerOptionSelected = it },
-            group3SelectedIndex = windowGroup3SpinnerOptionSelected,
-            onGroup3SelectedIndexChange = { windowGroup3SpinnerOptionSelected = it },
-        )
-    }
-    val overlayGroupedDialogSpinnerOptions = remember(
-        spinnerOptions,
-        overlayDialogGroup1SpinnerOptionSelected,
-        overlayDialogGroup2SpinnerOptionSelected,
-        overlayDialogGroup3SpinnerOptionSelected,
-    ) {
-        groupedSpinnerOptions(
-            spinnerOptions = spinnerOptions,
-            group1SelectedIndex = overlayDialogGroup1SpinnerOptionSelected,
-            onGroup1SelectedIndexChange = { overlayDialogGroup1SpinnerOptionSelected = it },
-            group2SelectedIndex = overlayDialogGroup2SpinnerOptionSelected,
-            onGroup2SelectedIndexChange = { overlayDialogGroup2SpinnerOptionSelected = it },
-            group3SelectedIndex = overlayDialogGroup3SpinnerOptionSelected,
-            onGroup3SelectedIndexChange = { overlayDialogGroup3SpinnerOptionSelected = it },
-        )
-    }
-    val windowGroupedDialogSpinnerOptions = remember(
-        spinnerOptions,
-        windowDialogGroup1SpinnerOptionSelected,
-        windowDialogGroup2SpinnerOptionSelected,
-        windowDialogGroup3SpinnerOptionSelected,
-    ) {
-        groupedSpinnerOptions(
-            spinnerOptions = spinnerOptions,
-            group1SelectedIndex = windowDialogGroup1SpinnerOptionSelected,
-            onGroup1SelectedIndexChange = { windowDialogGroup1SpinnerOptionSelected = it },
-            group2SelectedIndex = windowDialogGroup2SpinnerOptionSelected,
-            onGroup2SelectedIndexChange = { windowDialogGroup2SpinnerOptionSelected = it },
-            group3SelectedIndex = windowDialogGroup3SpinnerOptionSelected,
-            onGroup3SelectedIndexChange = { windowDialogGroup3SpinnerOptionSelected = it },
+            group1SelectedIndex = group1Selected,
+            onGroup1SelectedIndexChange = { group1Selected = it },
+            group2SelectedIndex = group2Selected,
+            onGroup2SelectedIndexChange = { group2Selected = it },
+            group3SelectedIndex = group3Selected,
+            onGroup3SelectedIndexChange = { group3Selected = it },
         )
     }
 
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Window host", windowHost),
+        DemoToggle("Grouped options", grouped),
+        DemoToggle("Show as dialog", asDialog),
+    )
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        OverlaySpinnerPreference(
-            title = str("SpinnerPref (O)"),
-            summary = if (overlayExpanded) str("Expanded") else str("Collapsed"),
-            items = spinnerOptions,
-            selectedIndex = superSpinnerOptionSelected.value,
-            onSelectedIndexChange = { newOption -> superSpinnerOptionSelected.value = newOption },
-            onExpandedChange = { overlayExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowSpinnerPreference(
-            title = str("SpinnerPref (W)"),
-            summary = if (windowExpanded) str("Expanded") else str("Collapsed"),
-            items = spinnerOptions,
-            selectedIndex = windowSpinnerOptionSelected.value,
-            onSelectedIndexChange = { newOption -> windowSpinnerOptionSelected.value = newOption },
-            onExpandedChange = { windowExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlaySpinnerPreference(
-            title = str("SpinnerPref (O)"),
-            summary = str("As Dialog (O)") + if (overlayDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
-            dialogButtonString = str("OK"),
-            items = spinnerOptions,
-            selectedIndex = superSpinnerOptionSelectedDialog.value,
-            onSelectedIndexChange = { newOption -> superSpinnerOptionSelectedDialog.value = newOption },
-            onExpandedChange = { overlayDialogExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowSpinnerPreference(
-            title = str("SpinnerPref (W)"),
-            summary = str("As Dialog (W)") + if (windowDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
-            dialogButtonString = str("OK"),
-            items = spinnerOptions,
-            selectedIndex = windowSpinnerOptionSelectedDialog.value,
-            onSelectedIndexChange = { newOption -> windowSpinnerOptionSelectedDialog.value = newOption },
-            onExpandedChange = { windowDialogExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlaySpinnerPreference(
-            title = str("Grouped SpinnerPref (O)"),
-            summary = if (overlayGroupedExpanded) str("Expanded") else str("Collapsed"),
-            entries = overlayGroupedSpinnerOptions,
-            collapseOnSelection = false,
-            onExpandedChange = { overlayGroupedExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowSpinnerPreference(
-            title = str("Grouped SpinnerPref (W)"),
-            summary = if (windowGroupedExpanded) str("Expanded") else str("Collapsed"),
-            entries = windowGroupedSpinnerOptions,
-            collapseOnSelection = false,
-            onExpandedChange = { windowGroupedExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlaySpinnerPreference(
-            title = str("Grouped SpinnerPref (O)"),
-            summary = str("As Dialog (O)") + if (overlayGroupedDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
-            dialogButtonString = str("OK"),
-            entries = overlayGroupedDialogSpinnerOptions,
-            onExpandedChange = { overlayGroupedDialogExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowSpinnerPreference(
-            title = str("Grouped SpinnerPref (W)"),
-            summary = str("As Dialog (W)") + if (windowGroupedDialogExpanded) str(" (Expanded)") else str(" (Collapsed)"),
-            dialogButtonString = str("OK"),
-            entries = windowGroupedDialogSpinnerOptions,
-            onExpandedChange = { windowGroupedDialogExpanded = it },
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        OverlaySpinnerPreference(
-            title = str("Disabled SpinnerPref (O)"),
-            summary = str("Collapsed"),
-            items = listOf(DropdownItem(text = str("Option 5"))),
-            selectedIndex = 0,
-            onSelectedIndexChange = {},
-            enabled = false,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        WindowSpinnerPreference(
-            title = str("Disabled SpinnerPref (W)"),
-            summary = str("Collapsed"),
-            items = listOf(DropdownItem(text = str("Option 6"))),
-            selectedIndex = 0,
-            onSelectedIndexChange = {},
-            enabled = false,
-        )
+        val title = str("SpinnerPreference")
+        val summary = if (expanded) str("Expanded") else str("Collapsed")
+        // The dialog presentation is a separate overload that takes the button label.
+        when {
+            windowHost.value && grouped.value && asDialog.value -> WindowSpinnerPreference(
+                title = title,
+                summary = summary,
+                dialogButtonString = str("OK"),
+                entries = groupedOptions,
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            windowHost.value && grouped.value -> WindowSpinnerPreference(
+                title = title,
+                summary = summary,
+                entries = groupedOptions,
+                collapseOnSelection = false,
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            windowHost.value && asDialog.value -> WindowSpinnerPreference(
+                title = title,
+                summary = summary,
+                dialogButtonString = str("OK"),
+                items = spinnerOptions,
+                selectedIndex = selected,
+                onSelectedIndexChange = { selected = it },
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            windowHost.value -> WindowSpinnerPreference(
+                title = title,
+                summary = summary,
+                items = spinnerOptions,
+                selectedIndex = selected,
+                onSelectedIndexChange = { selected = it },
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            grouped.value && asDialog.value -> OverlaySpinnerPreference(
+                title = title,
+                summary = summary,
+                dialogButtonString = str("OK"),
+                entries = groupedOptions,
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            grouped.value -> OverlaySpinnerPreference(
+                title = title,
+                summary = summary,
+                entries = groupedOptions,
+                collapseOnSelection = false,
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            asDialog.value -> OverlaySpinnerPreference(
+                title = title,
+                summary = summary,
+                dialogButtonString = str("OK"),
+                items = spinnerOptions,
+                selectedIndex = selected,
+                onSelectedIndexChange = { selected = it },
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+
+            else -> OverlaySpinnerPreference(
+                title = title,
+                summary = summary,
+                items = spinnerOptions,
+                selectedIndex = selected,
+                onSelectedIndexChange = { selected = it },
+                enabled = enabled.value,
+                onExpandedChange = { expanded = it },
+            )
+        }
     }
 }
 

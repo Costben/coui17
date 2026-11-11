@@ -35,19 +35,20 @@ import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
 
-/** Renders the "HorizontalPopupMenu" gallery section content (a button opening a popup with labelled and icon-only menus). */
+/** Renders the "HorizontalPopupMenu" gallery section content (a button opening a popup with labelled and icon-only menus, plus a one-row list popup on the chosen host). */
 @Composable
 fun HorizontalPopupMenuDemo() {
     var showPopup by remember { mutableStateOf(false) }
     // The shortest menu the popup draws: one row, so the fixed 28dp corner radius is exactly half
-    // the panel height. Both hosts are covered because the window host is a separate window and
-    // the overlay host composes into the root scaffold.
-    var showSingleRowWindow by remember { mutableStateOf(false) }
-    var showSingleRowOverlay by remember { mutableStateOf(false) }
+    // the panel height. The host is picked from the options; the window host is a separate window
+    // and the overlay host composes into the root scaffold.
+    var showSingleRow by remember { mutableStateOf(false) }
+    val hostIndex = remember { mutableIntStateOf(0) }
     var selectedIndex by remember { mutableIntStateOf(0) }
     val s = LocalAppStrings.current
     val rows = remember(s) { listOf(s["Option 1"], s["Option 2"], s["Option 3"]) }
 
+    DemoOptions(DemoChoice("Host", listOf("Window", "Overlay"), hostIndex))
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -61,18 +62,11 @@ fun HorizontalPopupMenuDemo() {
                 onClick = { showPopup = true },
             )
             TextButton(
-                text = str("Show single-row WindowListPopup"),
-                onClick = { showSingleRowWindow = true },
-            )
-            TextButton(
-                text = str("Show single-row OverlayListPopup"),
-                onClick = { showSingleRowOverlay = true },
+                text = str("Show single-row list popup"),
+                onClick = { showSingleRow = true },
             )
         }
-        WindowListPopup(
-            show = showSingleRowWindow,
-            onDismissRequest = { showSingleRowWindow = false },
-        ) {
+        val singleRowContent: @Composable () -> Unit = {
             val dismiss = LocalDismissState.current
             ListPopupColumn {
                 DropdownImpl(
@@ -84,20 +78,18 @@ fun HorizontalPopupMenuDemo() {
                 )
             }
         }
-        OverlayListPopup(
-            show = showSingleRowOverlay,
-            onDismissRequest = { showSingleRowOverlay = false },
-        ) {
-            val dismiss = LocalDismissState.current
-            ListPopupColumn {
-                DropdownImpl(
-                    text = str("Only row"),
-                    optionSize = 1,
-                    isSelected = false,
-                    index = 0,
-                    onSelectedIndexChange = { dismiss?.invoke() },
-                )
-            }
+        if (hostIndex.intValue == 0) {
+            WindowListPopup(
+                show = showSingleRow,
+                onDismissRequest = { showSingleRow = false },
+                content = singleRowContent,
+            )
+        } else {
+            OverlayListPopup(
+                show = showSingleRow,
+                onDismissRequest = { showSingleRow = false },
+                content = singleRowContent,
+            )
         }
         WindowListPopup(
             show = showPopup,

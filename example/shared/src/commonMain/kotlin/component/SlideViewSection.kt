@@ -34,63 +34,43 @@ import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Delete
 import kotlinx.coroutines.launch
 
-private val InitialReminders = listOf("3 hours before", "4 hours before", "6 hours before", "3 days before")
-private val InitialFiles = listOf("Meeting notes.m4a", "Interview.m4a", "Voice memo 12.m4a")
+private val InitialFiles = listOf("Meeting notes.m4a", "Interview.m4a", "Voice memo 12.m4a", "Recording 4.m4a")
 
 /** The pin action's fill: the theme's blue, so it reads apart from the red delete. */
 private val PinColor = Color(0xFF0072F5)
 
 /**
- * Two groups of sliding rows. The first is ColorOS 17 Calendar's custom reminder list: one delete
- * action, deleted with [io.github.suqi8.coui.kmp.basic.SlideViewState.delete] after a tap. The second
- * adds a second action and fast delete, so sliding far past the menu deletes the row by itself.
+ * A group of sliding rows whose menu and delete behaviour come from the options: the delete action
+ * is always there, the pin action and the fast-delete effect are toggled. Fast delete removes a row
+ * that is slid far past the menu, matching ColorOS 17's recordings list.
  */
 @Composable
 fun SlideViewDemo() {
-    val reminders = remember { mutableStateListOf(*InitialReminders.toTypedArray()) }
     val files = remember { mutableStateListOf(*InitialFiles.toTypedArray()) }
     var message by remember { mutableStateOf("") }
+    val secondAction = remember { mutableStateOf(true) }
+    val fastDelete = remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val rowColor = CardDefaults.defaultColors().color
     val deleteLabel = str("Delete")
+    val pinLabel = str("Pin")
 
+    DemoOptions(
+        DemoToggle("Second action", secondAction),
+        DemoToggle("Fast delete", fastDelete),
+    )
     Column(Modifier.fillMaxWidth()) {
-        SmallTitle(str("Custom reminders (tap Delete)"))
-        Card(Modifier.padding(horizontal = 12.dp), insideMargin = PaddingValues(0.dp)) {
-            reminders.forEachIndexed { index, reminder ->
-                key(reminder) {
-                    val state = rememberSlideViewState()
-                    SlideView(
-                        menuItems = listOf(SlideMenuItem(text = null, icon = COUIIcons.Delete, contentDescription = deleteLabel)),
-                        onMenuItemClick = {
-                            scope.launch {
-                                state.delete()
-                                reminders.remove(reminder)
-                            }
-                        },
-                        state = state,
-                    ) {
-                        BasicComponent(
-                            modifier = Modifier.background(rowColor),
-                            title = str(reminder),
-                            cardListPosition = positionOf(index, reminders.size),
-                            showDivider = index != reminders.lastIndex,
-                        )
-                    }
-                }
-            }
-        }
-        SmallTitle(str("Recordings (slide far to delete)"))
         Card(Modifier.padding(horizontal = 12.dp), insideMargin = PaddingValues(0.dp)) {
             files.forEachIndexed { index, file ->
                 key(file) {
                     val state = rememberSlideViewState()
                     val pinned = str("Pinned {}", file)
+                    val menuItems = buildList {
+                        add(SlideMenuItem(text = null, icon = COUIIcons.Delete, contentDescription = deleteLabel))
+                        if (secondAction.value) add(SlideMenuItem(pinLabel, color = PinColor))
+                    }
                     SlideView(
-                        menuItems = listOf(
-                            SlideMenuItem(text = null, icon = COUIIcons.Delete, contentDescription = deleteLabel),
-                            SlideMenuItem(str("Pin"), color = PinColor),
-                        ),
+                        menuItems = menuItems,
                         onMenuItemClick = { action ->
                             if (action == 0) {
                                 scope.launch {
@@ -103,7 +83,7 @@ fun SlideViewDemo() {
                             }
                         },
                         state = state,
-                        fastDeleteEnabled = true,
+                        fastDeleteEnabled = fastDelete.value,
                         onFastDelete = { files.remove(file) },
                     ) {
                         BasicComponent(
@@ -122,8 +102,6 @@ fun SlideViewDemo() {
         BasicComponent(
             title = str("Reset"),
             onClick = {
-                reminders.clear()
-                reminders.addAll(InitialReminders)
                 files.clear()
                 files.addAll(InitialFiles)
                 message = ""

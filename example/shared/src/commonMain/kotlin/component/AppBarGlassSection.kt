@@ -97,12 +97,14 @@ fun TopAppBarGlassDemo() {
     }
 }
 
-/** Renders the "TopAppBar (ColorOS 17 forms)" gallery section content: the centred, segment and gradient glass bars. */
+/** Renders the "TopAppBar (ColorOS 17 forms)" gallery section content: one bar whose form (centred, segment, gradient glass or long glass header) comes from the option. */
 @Composable
 fun TopAppBarColorOS17FormsDemo() {
     val backdrop = rememberBlurBackdrop()
     var selectedTab by remember { mutableIntStateOf(0) }
+    val formIndex = remember { mutableIntStateOf(0) }
 
+    DemoOptions(DemoChoice("Form", listOf("Center title", "Segment", "Gradient glass", "Glass header"), formIndex))
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -136,66 +138,71 @@ fun TopAppBarColorOS17FormsDemo() {
             LocalEdgeToEdge provides true,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // G1: the title is centred, with the responsive 16 / 24 / 40dp side clearance.
-                SmallTopAppBar(
-                    title = str("Center title"),
-                    centerTitle = true,
-                    defaultWindowInsetsPadding = false,
-                    navigationIcon = {
-                        IconButton(onClick = { /* Handle click event */ }) {
-                            Icon(COUIIcons.Back, contentDescription = str("Back"))
-                        }
-                    },
-                    actions = {
-                        // coui_action_menu_item_min_width: the bar cannot force this, so the
-                        // action item opts in.
-                        IconButton(
-                            onClick = { /* Handle click event */ },
-                            modifier = Modifier.couiTopAppBarActionItem(),
-                        ) {
-                            Icon(COUIIcons.More, contentDescription = str("More"))
-                        }
-                    },
-                )
-                // G2: the inline 32dp segment slot; mutually exclusive with the centred title.
-                SmallTopAppBar(
-                    title = str("Segment"),
-                    defaultWindowInsetsPadding = false,
-                    segmentButton = {
-                        TabRowWithContour(
-                            tabs = listOf(str("Tab"), str("Tab")),
-                            selectedTabIndex = selectedTab,
-                            onTabSelected = { selectedTab = it },
-                            height = 32.dp,
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = { /* Handle click event */ }) {
-                            Icon(COUIIcons.More, contentDescription = str("More"))
-                        }
-                    },
-                )
-                // G13: the uniform blur is replaced by the 30px -> 0 progressive blur.
-                SmallTopAppBar(
-                    title = str("Gradient glass"),
-                    defaultWindowInsetsPadding = false,
-                    gradientGlass = true,
-                )
-                // G14: a long glass header — the colour holds down to the fade band, then
-                // dissolves into the content instead of ending on a hard edge.
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .couiGlassHeader(
-                            backdrop = backdrop,
-                            containerColor = COUITheme.colorScheme.surface,
-                        ),
-                ) {
-                    Text(
-                        text = str("Glass header"),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                when (formIndex.intValue) {
+                    // G1: the title is centred, with the responsive 16 / 24 / 40dp side clearance.
+                    0 -> SmallTopAppBar(
+                        title = str("Center title"),
+                        centerTitle = true,
+                        defaultWindowInsetsPadding = false,
+                        navigationIcon = {
+                            IconButton(onClick = { /* Handle click event */ }) {
+                                Icon(COUIIcons.Back, contentDescription = str("Back"))
+                            }
+                        },
+                        actions = {
+                            // coui_action_menu_item_min_width: the bar cannot force this, so the
+                            // action item opts in.
+                            IconButton(
+                                onClick = { /* Handle click event */ },
+                                modifier = Modifier.couiTopAppBarActionItem(),
+                            ) {
+                                Icon(COUIIcons.More, contentDescription = str("More"))
+                            }
+                        },
                     )
+
+                    // G2: the inline 32dp segment slot; mutually exclusive with the centred title.
+                    1 -> SmallTopAppBar(
+                        title = str("Segment"),
+                        defaultWindowInsetsPadding = false,
+                        segmentButton = {
+                            TabRowWithContour(
+                                tabs = listOf(str("Tab"), str("Tab")),
+                                selectedTabIndex = selectedTab,
+                                onTabSelected = { selectedTab = it },
+                                height = 32.dp,
+                            )
+                        },
+                        actions = {
+                            IconButton(onClick = { /* Handle click event */ }) {
+                                Icon(COUIIcons.More, contentDescription = str("More"))
+                            }
+                        },
+                    )
+
+                    // G13: the uniform blur is replaced by the 30px -> 0 progressive blur.
+                    2 -> SmallTopAppBar(
+                        title = str("Gradient glass"),
+                        defaultWindowInsetsPadding = false,
+                        gradientGlass = true,
+                    )
+
+                    // G14: a long glass header — the colour holds down to the fade band, then
+                    // dissolves into the content instead of ending on a hard edge.
+                    else -> Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .couiGlassHeader(
+                                backdrop = backdrop,
+                                containerColor = COUITheme.colorScheme.surface,
+                            ),
+                    ) {
+                        Text(
+                            text = str("Glass header"),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                        )
+                    }
                 }
             }
         }

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -80,18 +82,21 @@ fun TagViewDemo() {
     }
 }
 
-/** Renders the "NotificationSnackBar" gallery section content: sample notifications plus trigger buttons and a snackbar host. */
+/**
+ * Renders the "NotificationSnackBar" gallery section content: one sample notification whose image
+ * type comes from the options, plus a trigger and a snackbar host.
+ */
 @Composable
 fun NotificationSnackBarDemo() {
     val hostState = remember { NotificationSnackBarHostState() }
     val scope = rememberCoroutineScope()
+    val imageTypeIndex = remember { mutableIntStateOf(0) }
+    val imageType = NotificationSnackBarImageType.entries[imageTypeIndex.intValue]
     val chargingTitle = str("Charging")
     val batteryIsAt80 = str("Battery is at 80%")
     val detailsAction = str("Details")
-    val newPhotoTitle = str("New photo")
-    val tapToViewTheAlbum = str("Tap to view the album")
-    val viewAction = str("View")
 
+    DemoOptions(DemoChoice("Image type", NotificationSnackBarImageType.entries.map { it.name }, imageTypeIndex))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -104,27 +109,11 @@ fun NotificationSnackBarDemo() {
             ) {
                 NotificationSnackBar(
                     title = str("New message"),
-                    subtitle = str("Square image, 44dp"),
+                    subtitle = str("Image type: {}", imageType.name),
                     icon = COUIIcons.Email,
-                    imageType = NotificationSnackBarImageType.Square,
+                    imageType = imageType,
                     actionText = str("Open"),
                     onAction = { },
-                    onClose = { },
-                )
-                NotificationSnackBar(
-                    title = str("Now playing"),
-                    subtitle = str("Vertical image, 36dp x 48dp"),
-                    icon = COUIIcons.Photos,
-                    imageType = NotificationSnackBarImageType.Vertical,
-                    actionText = str("Pause"),
-                    onAction = { },
-                    onClose = { },
-                )
-                NotificationSnackBar(
-                    title = str("Alarm set"),
-                    subtitle = str("Horizontal image, 58dp x 44dp"),
-                    icon = COUIIcons.WorldClock,
-                    imageType = NotificationSnackBarImageType.Horizontal,
                     onClose = { },
                 )
             }
@@ -143,22 +132,8 @@ fun NotificationSnackBarDemo() {
                                 title = chargingTitle,
                                 subtitle = batteryIsAt80,
                                 icon = COUIIcons.WorldClock,
+                                imageType = imageType,
                                 actionText = detailsAction,
-                            )
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(
-                    text = str("Show vertical"),
-                    onClick = {
-                        scope.launch {
-                            hostState.showNotification(
-                                title = newPhotoTitle,
-                                subtitle = tapToViewTheAlbum,
-                                icon = COUIIcons.Photos,
-                                imageType = NotificationSnackBarImageType.Vertical,
-                                actionText = viewAction,
                             )
                         }
                     },
@@ -179,9 +154,12 @@ fun NotificationSnackBarDemo() {
     }
 }
 
-/** Renders the "MarqueeText" gallery section content: long and short marquee text samples. */
+/** Renders the "MarqueeText" gallery section content: one marquee whose text length comes from the option. */
 @Composable
 fun MarqueeTextDemo() {
+    val longText = remember { mutableStateOf(true) }
+
+    DemoOptions(DemoToggle("Long text", longText))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -194,11 +172,11 @@ fun MarqueeTextDemo() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             MarqueeText(
-                text = str("This sentence is far too long for the box it is given"),
-                modifier = Modifier.width(160.dp),
-            )
-            MarqueeText(
-                text = str("Short text"),
+                text = if (longText.value) {
+                    str("This sentence is far too long for the box it is given")
+                } else {
+                    str("Short text")
+                },
                 modifier = Modifier.width(160.dp),
             )
         }

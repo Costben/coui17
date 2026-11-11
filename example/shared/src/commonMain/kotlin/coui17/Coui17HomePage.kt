@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import appstate.LocalNavigator
 import i18n.str
@@ -27,17 +29,29 @@ import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
+import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
+import io.github.suqi8.coui.kmp.basic.cardListPositionOf
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
+import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.overScrollVertical
+import io.github.suqi8.coui.kmp.utils.scrollEndHaptic
 import navigation3.Route
 
 /**
- * The home page: the component list, one titled card per category in [Coui17Catalog].
+ * The home page: the catalog's categories on group cards, or a search field's results.
  *
- * Each row only names a component and opens its page, the way COUI-Kit's demo and the system
- * Settings list do: the demos themselves live on [Coui17ComponentPage], so the home page stays one
- * screen of short lists instead of every demo stacked into a single scroll.
+ * The nine categories are drawn as four cards — three, two, two and two rows — the way the system
+ * Settings app breaks its own list into blocks, so the list reads as a few short groups instead of
+ * one long run. Each row carries its category's 24dp dual-tone glyph in one of the five ColorOS 17
+ * settings tints and opens that category's page: [Coui17CategoryPage] lists the category's
+ * components and [Coui17ComponentPage] holds their demos, so the home page stays one screen of
+ * short rows instead of every demo stacked into a single scroll.
+ *
+ * A search query replaces those cards with the matching components, grouped under their category
+ * headings: a search names the thing the user is looking for, not the group it sits in, so it
+ * reaches a component's page in one step.
  *
  * Every heading and row resolves through [str], so the page follows the language switch: the
  * catalog's titles are English source keys, never a second copy of the same name.
@@ -53,6 +67,7 @@ fun Coui17HomePage(
     val listState = rememberLazyListState()
     val currentOnAtTopAfterSearchClear by rememberUpdatedState(onAtTopAfterSearchClear)
     val needle = searchQuery.trim()
+    val dark = COUITheme.colorScheme.background.luminance() < 0.5f
     var hadNeedle by remember { mutableStateOf(false) }
     LaunchedEffect(needle) {
         if (needle.isNotEmpty()) {
@@ -85,15 +100,59 @@ fun Coui17HomePage(
                         }
                 }
             }
-            if (components.isEmpty()) null else Coui17Category(category.title, components)
+            if (components.isEmpty()) {
+                null
+            } else {
+                Coui17Category(
+                    title = category.title,
+                    components = components,
+                    tint = category.tint,
+                    icon = category.icon,
+                )
+            }
         }
     }
     LazyColumn(
         state = listState,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().scrollEndHaptic().overScrollVertical(),
         contentPadding = contentPadding,
     ) {
-        if (filteredCatalog.isEmpty()) {
+        if (needle.isEmpty()) {
+            Coui17CatalogGroups.forEachIndexed { groupIndex, group ->
+                item(key = "group:$groupIndex") {
+                    Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
+                        modifier = Modifier
+                            .padding(horizontal = Coui17Dimens.ListCardInset)
+                            .padding(
+                                top = if (groupIndex == 0) Coui17Dimens.ListGroupTitlePadding else 0.dp,
+                                bottom = if (groupIndex == Coui17CatalogGroups.lastIndex) {
+                                    16.dp
+                                } else {
+                                    Coui17GroupCardGap
+                                },
+                            ),
+                    ) {
+                        group.forEachIndexed { index, category ->
+                            ArrowPreference(
+                                title = str(category.title),
+                                startAction = {
+                                    Icon(
+                                        imageVector = category.icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(Coui17CategoryIconSize),
+                                        tint = category.tint.resolve(dark),
+                                    )
+                                },
+                                onClick = { navigator.push(Route.Category(category.title)) },
+                                cardListPosition = cardListPositionOf(index, group.size),
+                            )
+                        }
+                    }
+                }
+            }
+        } else if (filteredCatalog.isEmpty()) {
             item(key = "empty-search") {
                 Card(
                     cornerRadius = CardDefaults.GroupCornerRadius,
@@ -140,6 +199,42 @@ fun Coui17HomePage(
 }
 
 /**
+ * A category's page: one card listing the category's components in catalog order, each opening its
+ * own page. The card is the only thing on the page, so it starts where the group title of a titled
+ * list would and leaves the same room below for the next block.
+ */
+@Composable
+internal fun Coui17CategoryPage(
+    category: Coui17Category,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
+    val navigator = LocalNavigator.current
+    LazyColumn(
+        modifier = modifier.fillMaxWidth().scrollEndHaptic().overScrollVertical(),
+        contentPadding = contentPadding,
+    ) {
+        item(key = "card:${category.title}") {
+            Card(
+                cornerRadius = CardDefaults.GroupCornerRadius,
+                weight = CardDefaults.GroupWeight,
+                modifier = Modifier
+                    .padding(horizontal = Coui17Dimens.ListCardInset)
+                    .padding(top = Coui17Dimens.ListGroupTitlePadding, bottom = 16.dp),
+            ) {
+                category.components.forEachIndexed { index, component ->
+                    ArrowPreference(
+                        title = str(component.title),
+                        onClick = { navigator.push(Route.Component(component.title)) },
+                        cardListPosition = cardListPositionOf(index, category.components.size),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
  * A component's page: its demos in catalog order. A component with several demos titles each one;
  * a single demo goes untitled, because the bar above already names it.
  *
@@ -156,7 +251,7 @@ internal fun Coui17ComponentPage(
 ) {
     val titled = component.demos.size > 1
     LazyColumn(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().scrollEndHaptic().overScrollVertical(),
         contentPadding = contentPadding,
     ) {
         itemsIndexed(component.demos, key = { _, demo -> demo.title }) { _, demo ->
@@ -171,6 +266,17 @@ internal fun Coui17ComponentPage(
         }
     }
 }
+
+/**
+ * The gap between two category cards on the home page.
+ *
+ * The last card leaves 16dp below it instead — the room a page's final block leaves for what comes
+ * after — so the 12dp here is only the break between one card and the next.
+ */
+private val Coui17GroupCardGap = 12.dp
+
+/** The category glyph's box on a home row: the ColorOS 17 settings icon size. */
+private val Coui17CategoryIconSize = 24.dp
 
 /**
  * A compact Settings group title: `SmallTitle` at 12sp in `onBackgroundVariant`, aligned with the

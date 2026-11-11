@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Column
@@ -23,13 +25,14 @@ import io.github.suqi8.coui.kmp.preference.RecommendedPreference
 import io.github.suqi8.coui.kmp.preference.SwitchLoadingPreference
 import kotlinx.coroutines.delay
 
-/** Renders the "SwitchLoadingPreference" gallery section content: an async toggle and an always loading one. */
+/** Renders the "SwitchLoadingPreference" gallery section content: one async toggle that can also be pinned to the loading state. */
 @Composable
 fun SwitchLoadingPreferenceDemo() {
     // SwitchLoadingPreference: simulate an asynchronous toggle that resolves after a delay.
     val loadingChecked = remember { mutableStateOf(false) }
     val loadingTarget = remember { mutableStateOf(false) }
     val isLoading = remember { mutableStateOf(false) }
+    val alwaysLoading = remember { mutableStateOf(false) }
     LaunchedEffect(isLoading.value) {
         if (isLoading.value) {
             delay(1500)
@@ -38,6 +41,7 @@ fun SwitchLoadingPreferenceDemo() {
         }
     }
 
+    DemoOptions(DemoToggle("Always loading", alwaysLoading))
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -46,39 +50,48 @@ fun SwitchLoadingPreferenceDemo() {
             .padding(bottom = 16.dp),
     ) {
         SwitchLoadingPreference(
-            checked = loadingChecked.value,
+            checked = if (alwaysLoading.value) true else loadingChecked.value,
             onCheckedChange = {
-                loadingTarget.value = it
-                isLoading.value = true
+                if (!alwaysLoading.value) {
+                    loadingTarget.value = it
+                    isLoading.value = true
+                }
             },
             title = str("Async Switch"),
-            summary = str("Applies the change after a short delay"),
-            isLoading = isLoading.value,
-            cardListPosition = CardListPosition.Head,
-        )
-        SwitchLoadingPreference(
-            checked = true,
-            onCheckedChange = {},
-            title = str("Always Loading"),
-            summary = str("A switch stuck in the loading state"),
-            isLoading = true,
-            cardListPosition = CardListPosition.Tail,
+            summary = if (alwaysLoading.value) {
+                str("A switch stuck in the loading state")
+            } else {
+                str("Applies the change after a short delay")
+            },
+            isLoading = alwaysLoading.value || isLoading.value,
+            cardListPosition = CardListPosition.Full,
         )
     }
 }
 
-/** Renders the "MarkPreference" gallery section content: a single-select group of mark rows. */
+/**
+ * Renders the "MarkPreference" gallery section content: a single-select group of mark rows.
+ *
+ * The "Single row" option leaves one standalone row: it is CardListPosition.Full, so both rounded
+ * edges get the padding and the card is 4dp taller than a middle row of a group.
+ */
 @Composable
 fun MarkPreferenceDemo() {
-    // MarkPreference: a single-select group where the mark follows the checked row.
+    val enabled = remember { mutableStateOf(true) }
+    val singleRow = remember { mutableStateOf(false) }
     val selectedMark = remember { mutableIntStateOf(0) }
     val everyDayLabel = str("Every day")
     val workdaysOnlyLabel = str("Workdays only")
     val neverLabel = str("Never")
-    val markOptions = remember(everyDayLabel, workdaysOnlyLabel, neverLabel) {
-        listOf(everyDayLabel, workdaysOnlyLabel, neverLabel)
+    val markOptions = remember(everyDayLabel, workdaysOnlyLabel, neverLabel, singleRow.value) {
+        listOf(everyDayLabel, workdaysOnlyLabel, neverLabel).take(if (singleRow.value) 1 else 3)
     }
+    if (selectedMark.intValue > markOptions.lastIndex) selectedMark.intValue = 0
 
+    DemoOptions(
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Single row", singleRow),
+    )
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -91,44 +104,22 @@ fun MarkPreferenceDemo() {
                 title = option,
                 checked = selectedMark.intValue == index,
                 onClick = { selectedMark.intValue = index },
-                // Head gets 2dp on top, Tail 2dp on the bottom, Middle none.
+                enabled = enabled.value,
+                // Head gets 2dp on top, Tail 2dp on the bottom, Middle none, Full both.
                 cardListPosition = cardListPositionOf(index, markOptions.size),
             )
         }
     }
 }
 
-/**
- * Renders the "MarkPreference (standalone, Full)" gallery section content: a card with a single mark
- * row.
- *
- * A standalone row is CardListPosition.Full: both rounded edges get the padding, so this card is 4dp
- * taller than a middle row of a group.
- */
-@Composable
-fun MarkPreferenceStandaloneFullDemo() {
-    Card(
-        cornerRadius = CardDefaults.GroupCornerRadius,
-        weight = CardDefaults.GroupWeight,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
-        MarkPreference(
-            title = str("Only option"),
-            checked = true,
-            onClick = {},
-            cardListPosition = CardListPosition.Full,
-        )
-    }
-}
-
-/** Renders the "ButtonPreference" gallery section content: a row with an inline button and a disabled row. */
+/** Renders the "ButtonPreference" gallery section content: a row with an inline button, enabled from the option. */
 @Composable
 fun ButtonPreferenceDemo() {
     // ButtonPreference: an inline small button whose click is independent from the row.
+    val enabled = remember { mutableStateOf(true) }
     val signInCount = remember { mutableIntStateOf(0) }
 
+    DemoOptions(DemoToggle("Enabled", enabled))
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -145,15 +136,8 @@ fun ButtonPreferenceDemo() {
             },
             buttonText = str("Sign in"),
             onButtonClick = { signInCount.intValue++ },
-            cardListPosition = CardListPosition.Head,
-        )
-        ButtonPreference(
-            title = str("Disabled Row"),
-            summary = str("Button and row are disabled"),
-            buttonText = str("Action"),
-            onButtonClick = {},
-            enabled = false,
-            cardListPosition = CardListPosition.Tail,
+            enabled = enabled.value,
+            cardListPosition = CardListPosition.Full,
         )
     }
 }
@@ -162,6 +146,7 @@ fun ButtonPreferenceDemo() {
 @Composable
 fun RecommendedPreferenceDemo() {
     // RecommendedPreference: a standalone rounded card with related settings entries.
+    val enabled = remember { mutableStateOf(true) }
     val displayAndBrightness = str("Display & brightness")
     val wallpapersAndStyle = str("Wallpapers & style")
     val batteryItem = str("Battery")
@@ -173,20 +158,14 @@ fun RecommendedPreferenceDemo() {
         )
     }
 
-    Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        RecommendedPreference(
-            title = str("You might be looking for:"),
-            items = recommendedItems,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
-        // A disabled card greys out the header and every row and swallows all row clicks.
-        RecommendedPreference(
-            title = str("Not available right now:"),
-            items = recommendedItems,
-            enabled = false,
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp),
-        )
-    }
+    DemoOptions(DemoToggle("Enabled", enabled))
+    // A disabled card greys out the header and every row and swallows all row clicks.
+    RecommendedPreference(
+        title = str("You might be looking for:"),
+        items = recommendedItems,
+        enabled = enabled.value,
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    )
 }

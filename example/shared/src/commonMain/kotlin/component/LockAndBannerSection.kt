@@ -49,6 +49,9 @@ import io.github.suqi8.coui.kmp.squircle.squircleSurface
 /** Renders the lock pattern, numeric keyboard, simple lock, password input and banner demos inside one card. */
 @Composable
 fun LockAndBannerDemo() {
+    val passwordSceneIndex = remember { mutableIntStateOf(LockScreenPwdInputScene.Desktop.ordinal) }
+
+    DemoOptions(DemoChoice("Scene", LockScreenPwdInputScene.entries.map { it.name }, passwordSceneIndex))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -60,7 +63,7 @@ fun LockAndBannerDemo() {
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         SimpleLockDemo()
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        LockScreenPwdInputDemo()
+        LockScreenPwdInputDemo(LockScreenPwdInputScene.entries[passwordSceneIndex.intValue])
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         BannerDemo()
     }
@@ -253,13 +256,24 @@ private fun SimpleLockDemo() {
 }
 
 @Composable
-private fun LockScreenPwdInputDemo() {
+private fun LockScreenPwdInputDemo(scene: LockScreenPwdInputScene) {
     var password by remember { mutableStateOf("") }
-    var settingPassword by remember { mutableStateOf("") }
     val typeAPasswordStatus = str("Type a password")
     var status by remember { mutableStateOf(typeAPasswordStatus) }
     val nextPrefix = str("Next: ")
     val charactersSuffix = str(" characters")
+    val field: @Composable (Modifier) -> Unit = { modifier ->
+        LockScreenPwdInput(
+            value = password,
+            onValueChange = { password = it },
+            modifier = modifier,
+            label = str("Password"),
+            minCount = 4,
+            scene = scene,
+            onNextClick = { status = nextPrefix + it.length.toString() + charactersSuffix },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -267,41 +281,24 @@ private fun LockScreenPwdInputDemo() {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // The lock screen's own form: the desktop pill over the wallpaper, with the inner shadow
-        // and the light sweep the next key throws back across the field.
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .squircleSurface(color = Color(0xFF1B1B1B), cornerRadius = 24.dp)
-                .padding(16.dp),
-        ) {
-            LockScreenPwdInput(
-                value = password,
-                onValueChange = { password = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = str("Password"),
-                minCount = 4,
-                scene = LockScreenPwdInputScene.Desktop,
-                onNextClick = { status = nextPrefix + it.length.toString() + charactersSuffix },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            )
+        if (scene == LockScreenPwdInputScene.Desktop) {
+            // The lock screen's own form: the desktop pill over the wallpaper, with the inner shadow
+            // and the light sweep the next key throws back across the field.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .squircleSurface(color = Color(0xFF1B1B1B), cornerRadius = 24.dp)
+                    .padding(16.dp),
+            ) {
+                field(Modifier.fillMaxWidth())
+            }
+        } else {
+            // The settings form: a plain card-coloured field with no border, inner shadow or light.
+            field(Modifier.fillMaxWidth())
         }
         Text(
             text = status,
             modifier = Modifier.padding(top = 12.dp),
-        )
-        // The settings form: a plain card-coloured field with no border, inner shadow or light.
-        LockScreenPwdInput(
-            value = settingPassword,
-            onValueChange = { settingPassword = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            label = str("Password"),
-            minCount = 4,
-            scene = LockScreenPwdInputScene.Setting,
-            onNextClick = { status = nextPrefix + it.length.toString() + charactersSuffix },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         )
     }
 }

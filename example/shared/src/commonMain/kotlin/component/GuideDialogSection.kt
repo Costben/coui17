@@ -1,5 +1,7 @@
 // Copyright 2026, compose-coui-ui contributors
 // SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:compose:multiple-emitters-check")
+
 package component
 
 import androidx.compose.foundation.layout.Arrangement
@@ -26,49 +28,39 @@ import io.github.suqi8.coui.kmp.window.GuidePage
 import io.github.suqi8.coui.kmp.window.WindowGuideDialog
 import org.jetbrains.compose.resources.painterResource
 
-/** Renders the "GuideDialog" gallery section content: the guide entry card and its two dialogs. */
+/** Renders the "GuideDialog" gallery section content: the guide entry row, with its page count picked from the option. */
 @Composable
 fun GuideDialogDemo() {
-    var showMultiPageGuide by remember { mutableStateOf(false) }
-    var multiPageGuideHoldDown by remember { mutableStateOf(false) }
-    var showSinglePageGuide by remember { mutableStateOf(false) }
-    var singlePageGuideHoldDown by remember { mutableStateOf(false) }
+    val singlePage = remember { mutableStateOf(false) }
+    var showGuide by remember { mutableStateOf(false) }
+    var guideHoldDown by remember { mutableStateOf(false) }
 
+    DemoOptions(DemoToggle("Single page", singlePage))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
         ArrowPreference(
-            title = str("GuideDialog (3 pages)"),
-            summary = str("A first-run guide with a skip button and an indicator"),
-            onClick = {
-                showMultiPageGuide = true
-                multiPageGuideHoldDown = true
+            title = str("GuideDialog"),
+            summary = if (singlePage.value) {
+                str("One page: the skip button and the indicator are hidden")
+            } else {
+                str("A first-run guide with a skip button and an indicator")
             },
-            holdDownState = multiPageGuideHoldDown,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("GuideDialog (single page)"),
-            summary = str("One page: the skip button and the indicator are hidden"),
             onClick = {
-                showSinglePageGuide = true
-                singlePageGuideHoldDown = true
+                showGuide = true
+                guideHoldDown = true
             },
-            holdDownState = singlePageGuideHoldDown,
+            holdDownState = guideHoldDown,
         )
     }
 
-    MultiPageGuideDemo(
-        show = showMultiPageGuide,
-        onDismissRequest = { showMultiPageGuide = false },
-        onDismissFinished = { multiPageGuideHoldDown = false },
-    )
-    SinglePageGuideDemo(
-        show = showSinglePageGuide,
-        onDismissRequest = { showSinglePageGuide = false },
-        onDismissFinished = { singlePageGuideHoldDown = false },
+    GuideDemoDialog(
+        show = showGuide,
+        singlePage = singlePage.value,
+        onDismissRequest = { showGuide = false },
+        onDismissFinished = { guideHoldDown = false },
     )
 }
 
@@ -96,57 +88,42 @@ fun PageIndicatorDemo() {
 }
 
 @Composable
-private fun MultiPageGuideDemo(
+private fun GuideDemoDialog(
     show: Boolean,
+    singlePage: Boolean,
     onDismissRequest: () -> Unit,
     onDismissFinished: () -> Unit,
 ) {
     val image = painterResource(Res.drawable.blur_test_bg)
     val s = LocalAppStrings.current
-    val pages = remember(image, s) {
-        listOf(
-            GuidePage(
-                title = s["Welcome to COUI"],
-                description = s["A ColorOS component library for Compose Multiplatform."],
-                image = image,
-            ),
-            GuidePage(
-                title = s["Every component is themed"],
-                description = s["The theme drives colours, text styles and shapes from a single place."],
-                image = image,
-            ),
-            GuidePage(
-                title = s["Ready to build"],
-                description = s["Browse the sections of this page and drop a component into your app."],
-                image = image,
-            ),
-        )
-    }
-
-    WindowGuideDialog(
-        show = show,
-        pages = pages,
-        onDismissRequest = onDismissRequest,
-        onDismissFinished = onDismissFinished,
-    )
-}
-
-@Composable
-private fun SinglePageGuideDemo(
-    show: Boolean,
-    onDismissRequest: () -> Unit,
-    onDismissFinished: () -> Unit,
-) {
-    val image = painterResource(Res.drawable.blur_test_bg)
-    val s = LocalAppStrings.current
-    val pages = remember(image, s) {
-        listOf(
-            GuidePage(
-                title = s["A single-page guide"],
-                description = s["With one page the indicator is hidden and the primary button fills the row."],
-                image = image,
-            ),
-        )
+    val pages = remember(image, s, singlePage) {
+        if (singlePage) {
+            listOf(
+                GuidePage(
+                    title = s["A single-page guide"],
+                    description = s["With one page the indicator is hidden and the primary button fills the row."],
+                    image = image,
+                ),
+            )
+        } else {
+            listOf(
+                GuidePage(
+                    title = s["Welcome to COUI"],
+                    description = s["A ColorOS component library for Compose Multiplatform."],
+                    image = image,
+                ),
+                GuidePage(
+                    title = s["Every component is themed"],
+                    description = s["The theme drives colours, text styles and shapes from a single place."],
+                    image = image,
+                ),
+                GuidePage(
+                    title = s["Ready to build"],
+                    description = s["Browse the sections of this page and drop a component into your app."],
+                    image = image,
+                ),
+            )
+        }
     }
 
     WindowGuideDialog(

@@ -35,12 +35,13 @@ import io.github.suqi8.coui.kmp.window.WindowCascadingListPopup
  * The `Window` icon-menu family: [WindowIconDropdownMenu] for a flat popup,
  * [WindowIconCascadingDropdownMenu] for submenus, and [WindowCascadingListPopup] as the popup the
  * cascading menu hosts. The `Overlay` twins are covered elsewhere; these keep the window host shown.
+ * The option swaps the hosted popup's primary panel between the full list and a single row.
  */
 @Composable
 fun WindowIconMenuVariantsDemo() {
     var selected by remember { mutableIntStateOf(0) }
     var popupShown by remember { mutableStateOf(false) }
-    var singleRowPopupShown by remember { mutableStateOf(false) }
+    val singleRow = remember { mutableStateOf(false) }
     val entries = remember(selected) {
         listOf(
             DropdownEntry(
@@ -92,6 +93,7 @@ fun WindowIconMenuVariantsDemo() {
         )
     }
 
+    DemoOptions(DemoToggle("Single-row primary panel", singleRow))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -115,26 +117,14 @@ fun WindowIconMenuVariantsDemo() {
                     onClick = { popupShown = true },
                 )
             }
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            // A cascading menu whose primary panel carries a single row, so the one-row geometry is
-            // reachable on the cascading path too.
-            ArrowPreference(
-                title = str("WindowCascadingListPopup (single row)"),
-                summary = str("A one-row primary panel"),
-                onClick = { singleRowPopupShown = true },
-            )
+            // The option swaps the primary panel's entry list, so the one-row geometry is reachable
+            // on the same row instead of a second copy.
         }
     }
 
     WindowCascadingListPopup(
         show = popupShown,
-        entries = cascading,
+        entries = if (singleRow.value) singleRowCascading else cascading,
         onDismissRequest = { popupShown = false },
-    )
-
-    WindowCascadingListPopup(
-        show = singleRowPopupShown,
-        entries = singleRowCascading,
-        onDismissRequest = { singleRowPopupShown = false },
     )
 }

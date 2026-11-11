@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import i18n.str
@@ -28,6 +29,7 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.DateValue
 import io.github.suqi8.coui.kmp.basic.ExpandArrow
 import io.github.suqi8.coui.kmp.basic.ExpandableList
+import io.github.suqi8.coui.kmp.basic.ExpandableListDefaults
 import io.github.suqi8.coui.kmp.basic.FloatingButton
 import io.github.suqi8.coui.kmp.basic.FloatingButtonItem
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -58,33 +60,30 @@ fun CalendarViewDemoContent() {
     }
 }
 
-/** Renders the "FloatingButton" gallery section content: a card wrapping the floating button demo. */
+/**
+ * Renders the "FloatingButton" gallery section content: one button, either on a plain card or over a
+ * wallpaper, where its blur, rim, spotlight and drag deformation show.
+ */
 @Composable
 fun FloatingButtonDemoContent() {
-    Column {
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        ) {
-            FloatingButtonDemo()
-        }
-        SmallTitle(str("Over a wallpaper: blur, rim, spotlight and drag"))
-        FloatingButtonOverWallpaperDemo()
-    }
+    val overWallpaper = remember { mutableStateOf(false) }
+
+    DemoOptions(DemoToggle("Over a wallpaper", overWallpaper))
+    FloatingButtonDemo(overWallpaper = overWallpaper.value)
 }
 
-/** Renders the "ExpandableList" gallery section content: a card with the expandable list and its accordion variant. */
+/** Renders the "ExpandableList" gallery section content: the list whose accordion behaviour is switched by the option. */
 @Composable
 fun ExpandableListDemoContent() {
+    val accordion = remember { mutableStateOf(false) }
+
+    DemoOptions(DemoToggle("Accordion (one group at a time)", accordion))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        ExpandableListDemo()
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        AccordionExpandableListDemo()
+        ExpandableListDemo(accordion = accordion.value)
     }
 }
 
@@ -114,7 +113,7 @@ private fun CalendarViewDemo() {
 }
 
 @Composable
-private fun FloatingButtonDemo() {
+private fun FloatingButtonDemo(overWallpaper: Boolean) {
     var expanded by remember { mutableStateOf(false) }
     val nothingPickedYet = str("Nothing picked yet")
     var picked by remember { mutableStateOf(nothingPickedYet) }
@@ -128,86 +127,93 @@ private fun FloatingButtonDemo() {
             FloatingButtonItem(icon = COUIIcons.Tune, label = settingsLabel),
         )
     }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(320.dp)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        contentAlignment = Alignment.BottomEnd,
-    ) {
-        Text(
-            text = picked,
-            color = COUITheme.colorScheme.onBackgroundVariant,
-            style = COUITheme.textStyles.footnote1,
-            modifier = Modifier.align(Alignment.TopStart),
-        )
-        FloatingButton(
-            items = items,
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            onItemClick = {
-                picked = it.label
-                false
-            },
-            mainIcon = COUIIcons.Add,
-        )
+    val onItemClick: (FloatingButtonItem) -> Boolean = { item ->
+        picked = item.label
+        false
     }
-}
-
-/**
- * The same button over a picture, so the `TYPE_FRAMEWORK_FAB` blur, the rim, the press light and
- * the drag deformation are all visible.
- */
-@Composable
-private fun FloatingButtonOverWallpaperDemo() {
-    var expanded by remember { mutableStateOf(false) }
     val backdrop = rememberBlurBackdrop()
-    val items = listOf(
-        FloatingButtonItem(icon = COUIIcons.AddFolder, label = str("New folder")),
-        FloatingButtonItem(icon = COUIIcons.Favorites, label = str("Add to favorites")),
-    )
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp)
-            .fillMaxWidth()
-            .height(360.dp)
-            .clip(RoundedCornerShape(16.dp)),
-    ) {
+
+    if (!overWallpaper) {
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(320.dp)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                contentAlignment = Alignment.BottomEnd,
+            ) {
+                Text(
+                    text = picked,
+                    color = COUITheme.colorScheme.onBackgroundVariant,
+                    style = COUITheme.textStyles.footnote1,
+                    modifier = Modifier.align(Alignment.TopStart),
+                )
+                FloatingButton(
+                    items = items,
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    onItemClick = onItemClick,
+                    mainIcon = COUIIcons.Add,
+                )
+            }
+        }
+    } else {
+        // Over a picture, so the `TYPE_FRAMEWORK_FAB` blur, the rim, the press light and the drag
+        // deformation are all visible.
         Box(
             modifier = Modifier
-                .matchParentSize()
-                .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier),
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+                .fillMaxWidth()
+                .height(360.dp)
+                .clip(RoundedCornerShape(16.dp)),
         ) {
-            WallpaperState.bitmap?.let { wallpaper ->
-                Image(
-                    bitmap = wallpaper,
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier),
+            ) {
+                WallpaperState.bitmap?.let { wallpaper ->
+                    Image(
+                        bitmap = wallpaper,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                } ?: Image(
+                    painter = painterResource(Res.drawable.blur_test_bg),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                 )
-            } ?: Image(
-                painter = painterResource(Res.drawable.blur_test_bg),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
+            }
+            Text(
+                text = picked,
+                color = Color.White,
+                style = COUITheme.textStyles.footnote1,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp),
+            )
+            FloatingButton(
+                items = items,
+                expanded = expanded,
+                onExpandedChange = { expanded = it },
+                onItemClick = onItemClick,
+                mainIcon = COUIIcons.Add,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
+                backdrop = backdrop,
             )
         }
-        FloatingButton(
-            items = items,
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            onItemClick = { false },
-            mainIcon = COUIIcons.Add,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
-            backdrop = backdrop,
-        )
     }
 }
 
 @Composable
-private fun ExpandableListDemo() {
+private fun ExpandableListDemo(accordion: Boolean) {
     var expandedGroups by remember { mutableStateOf(setOf(0)) }
 
     // Full bleed inside the card: a row's press highlight is clipped by the card's own squircle,
@@ -218,6 +224,7 @@ private fun ExpandableListDemo() {
             childCount = { groupIndex -> DemoSettingsGroups[groupIndex].second.size },
             expandedGroups = expandedGroups,
             onExpandedGroupsChange = { expandedGroups = it },
+            maxExpandedGroupCount = if (accordion) 1 else ExpandableListDefaults.MAX_EXPANDED_GROUP_COUNT,
             modifier = Modifier.fillMaxWidth(),
             groupContent = { groupIndex, expanded ->
                 SettingsGroupHeader(
@@ -227,31 +234,6 @@ private fun ExpandableListDemo() {
             },
             childContent = { groupIndex, childIndex ->
                 SettingsChildRow(text = str(DemoSettingsGroups[groupIndex].second[childIndex]))
-            },
-        )
-    }
-}
-
-@Composable
-private fun AccordionExpandableListDemo() {
-    var expandedGroup by remember { mutableStateOf(setOf<Int>()) }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        ExpandableList(
-            groupCount = DemoAccordionGroups.size,
-            childCount = { groupIndex -> DemoAccordionGroups[groupIndex].second.size },
-            expandedGroups = expandedGroup,
-            onExpandedGroupsChange = { expandedGroup = it },
-            maxExpandedGroupCount = 1,
-            modifier = Modifier.fillMaxWidth(),
-            groupContent = { groupIndex, expanded ->
-                SettingsGroupHeader(
-                    title = str(DemoAccordionGroups[groupIndex].first),
-                    expanded = expanded,
-                )
-            },
-            childContent = { groupIndex, childIndex ->
-                SettingsChildRow(text = str(DemoAccordionGroups[groupIndex].second[childIndex]))
             },
         )
     }
@@ -296,10 +278,4 @@ private val DemoSettingsGroups = listOf(
     "Battery" to listOf("Battery saver", "Battery health"),
     "Network" to listOf("Wi-Fi", "Mobile data", "Hotspot"),
     "Storage" to listOf("Internal storage", "SD card"),
-)
-
-private val DemoAccordionGroups = listOf(
-    "Account" to listOf("Profile", "Sign in"),
-    "Privacy" to listOf("Permissions", "Location"),
-    "About" to listOf("Version", "Build number"),
 )

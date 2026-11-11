@@ -20,96 +20,82 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.CodeTextField
+import io.github.suqi8.coui.kmp.basic.CodeTextFieldDefaults
 import io.github.suqi8.coui.kmp.basic.InputView
 
 /**
- * Renders the "InputView (card single input)" gallery section content.
+ * Renders the "InputView" gallery section content: one card input whose line count, counter, clear
+ * button, password toggle and error state come from the options.
  *
  * ColorOS card inputs: COUICardSingleInputView (single line, title inside the card, counter / clear
- * button at the end, error caption below the card) and COUICardMultiInputView (multi line, counter at
- * the bottom-end corner, see [InputViewCardMultiInputDemo]).
+ * button at the end, error caption below the card) and COUICardMultiInputView (multi line, counter
+ * at the bottom-end corner).
  */
 @Composable
-fun InputViewCardSingleInputDemo(focusManager: FocusManager) {
-    var nickname by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun InputViewDemo(focusManager: FocusManager) {
+    val multiLine = remember { mutableStateOf(false) }
+    val password = remember { mutableStateOf(false) }
+    val showCount = remember { mutableStateOf(true) }
+    val clearButton = remember { mutableStateOf(true) }
+    val errorState = remember { mutableStateOf(false) }
+    var value by remember { mutableStateOf("") }
 
-    InputView(
-        value = nickname,
-        onValueChange = { nickname = it },
-        title = str("Nickname"),
-        label = str("Enter your nickname"),
-        showCount = true,
-        maxCount = 10,
-        showClearButton = true,
-        errorMessage = if (nickname.contains(' ')) str("Nickname cannot contain spaces") else "",
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+    DemoOptions(
+        DemoToggle("Multi-line", multiLine),
+        DemoToggle("Password", password),
+        DemoToggle("Show counter", showCount),
+        DemoToggle("Clear button", clearButton),
+        DemoToggle("Error state", errorState),
     )
     InputView(
-        value = password,
-        onValueChange = { password = it },
-        title = str("Password"),
-        label = str("At least 8 characters"),
-        showPasswordToggle = true,
-        errorMessage = if (password.isNotEmpty() && password.length < 8) str("Password is too short") else "",
+        value = value,
+        onValueChange = { value = it },
+        title = if (password.value) str("Password") else str("Nickname"),
+        label = when {
+            multiLine.value -> str("Signature (multi line)")
+            password.value -> str("At least 8 characters")
+            else -> str("Enter your nickname")
+        },
+        showCount = showCount.value,
+        maxCount = if (multiLine.value) 100 else 10,
+        showClearButton = clearButton.value,
+        showPasswordToggle = password.value,
+        singleLine = !multiLine.value,
+        errorMessage = if (errorState.value) {
+            if (password.value) str("Password is too short") else str("Nickname cannot contain spaces")
+        } else {
+            ""
+        },
         modifier = Modifier
             .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
+            .padding(bottom = 16.dp),
         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-    )
-}
-
-/** Renders the "InputView (card multi input)" gallery section content. */
-@Composable
-fun InputViewCardMultiInputDemo(focusManager: FocusManager) {
-    var signature by remember { mutableStateOf("") }
-
-    InputView(
-        value = signature,
-        onValueChange = { signature = it },
-        label = str("Signature (multi line)"),
-        showCount = true,
-        maxCount = 100,
-        singleLine = false,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = if (password.value) KeyboardType.Password else KeyboardType.Text,
+            imeAction = ImeAction.Done,
+        ),
     )
 }
 
-/** Renders the "CodeTextField" gallery section content. */
+/** Renders the "CodeTextField" gallery section content: a code field whose masking and length come from the options. */
 @Composable
 fun CodeTextFieldDemo(focusManager: FocusManager) {
+    val security = remember { mutableStateOf(false) }
+    val fourCells = remember { mutableStateOf(false) }
+    val cellCount = if (fourCells.value) 4 else CodeTextFieldDefaults.CellCount
     var code by remember { mutableStateOf("") }
+    // A shorter field cannot hold what the longer one collected.
+    if (code.length > cellCount) code = code.take(cellCount)
 
+    DemoOptions(
+        DemoToggle("Hide input", security),
+        DemoToggle("4 digits", fourCells),
+    )
     CodeTextField(
         value = code,
         onValueChange = { code = it.filter(Char::isDigit) },
-        onComplete = { focusManager.clearFocus() },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-    )
-}
-
-/** Renders the "CodeTextField (security)" gallery section content. */
-@Composable
-fun CodeTextFieldSecurityDemo(focusManager: FocusManager) {
-    var pin by remember { mutableStateOf("") }
-
-    CodeTextField(
-        value = pin,
-        onValueChange = { pin = it.filter(Char::isDigit) },
-        cellCount = 4,
-        security = true,
+        cellCount = cellCount,
+        security = security.value,
         onComplete = { focusManager.clearFocus() },
         modifier = Modifier
             .fillMaxWidth()

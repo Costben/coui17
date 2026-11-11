@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,10 +42,10 @@ import kotlinx.coroutines.delay
 /** Renders the "Dialog" gallery section content (the dialog trigger card and every dialog demo). */
 @Composable
 fun DialogDemo() {
-    var showSuperDialog by remember { mutableStateOf(false) }
-    var showWindowDialog by remember { mutableStateOf(false) }
-    var superDialogHoldDown by remember { mutableStateOf(false) }
-    var windowDialogHoldDown by remember { mutableStateOf(false) }
+    val windowHost = remember { mutableStateOf(false) }
+    val alertVariant = remember { mutableIntStateOf(0) }
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogHoldDown by remember { mutableStateOf(false) }
     var showLoadingDialog by remember { mutableStateOf(false) }
     var loadingDialogHoldDown by remember { mutableStateOf(false) }
     var showSecurityDialog by remember { mutableStateOf(false) }
@@ -60,42 +61,36 @@ fun DialogDemo() {
     var progressDialogValue by remember { mutableStateOf<Float?>(null) }
     var showSingleInputDialog by remember { mutableStateOf(false) }
     var singleInputDialogHoldDown by remember { mutableStateOf(false) }
-    var showNeutralAlertDialog by remember { mutableStateOf(false) }
-    var neutralAlertDialogHoldDown by remember { mutableStateOf(false) }
-    var showTinyAlertDialog by remember { mutableStateOf(false) }
-    var tinyAlertDialogHoldDown by remember { mutableStateOf(false) }
-    var showRecommendedAlertDialog by remember { mutableStateOf(false) }
-    var recommendedAlertDialogHoldDown by remember { mutableStateOf(false) }
-    var showLongTextAlertDialog by remember { mutableStateOf(false) }
-    var longTextAlertDialogHoldDown by remember { mutableStateOf(false) }
 
+    DemoOptions(
+        DemoToggle("Window host", windowHost),
+        DemoChoice(
+            "Alert dialog variant",
+            listOf("Standard", "3 actions", "Recommended action", "Tiny", "Long text"),
+            alertVariant,
+        ),
+    )
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
         ArrowPreference(
-            title = str("Dialog (O)"),
-            summary = str("Click to show an OverlayDialog"),
-            onClick = {
-                showSuperDialog = true
-                superDialogHoldDown = true
+            title = str("Dialog"),
+            summary = if (windowHost.value) {
+                str("Click to show a WindowDialog")
+            } else {
+                str("Click to show an OverlayDialog")
             },
-            holdDownState = superDialogHoldDown,
+            onClick = {
+                showDialog = true
+                dialogHoldDown = true
+            },
+            holdDownState = dialogHoldDown,
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("Dialog (W)"),
-            summary = str("Click to show a WindowDialog"),
-            onClick = {
-                showWindowDialog = true
-                windowDialogHoldDown = true
-            },
-            holdDownState = windowDialogHoldDown,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("Loading Dialog (O)"),
+            title = str("Loading Dialog"),
             summary = str("Click to show an OverlayLoadingDialog"),
             onClick = {
                 showLoadingDialog = true
@@ -105,7 +100,7 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("Stacked Button Bar (O)"),
+            title = str("Stacked Button Bar"),
             summary = str("Long labels flip the bar to a vertical stack"),
             onClick = {
                 showStackedDialog = true
@@ -115,7 +110,7 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("Recommended Button Bar (O)"),
+            title = str("Recommended Button Bar"),
             summary = str("One action is highlighted as the recommend button"),
             onClick = {
                 showRecommendedDialog = true
@@ -125,8 +120,16 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("Alert Dialog (O)"),
-            summary = str("Centered warning dialog with a confirm / cancel row"),
+            title = str("Alert Dialog"),
+            summary = str(
+                when (alertVariant.intValue) {
+                    1 -> "Cancel / Never / OK stacked because three actions never fit one row"
+                    2 -> "The confirm action is the bar's recommend button"
+                    3 -> "Center.Tiny: a compact panel pinned to the bottom edge"
+                    4 -> "The panel caps its height and the message scrolls"
+                    else -> "Centered warning dialog with a confirm / cancel row"
+                },
+            ),
             onClick = {
                 showAlertDialog = true
                 alertDialogHoldDown = true
@@ -135,7 +138,7 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("Progress Dialog (O)"),
+            title = str("Progress Dialog"),
             summary = str("Horizontal progress dialog, indefinite then determinate"),
             onClick = {
                 showProgressDialog = true
@@ -145,7 +148,7 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("Security Dialog (O)"),
+            title = str("Security Dialog"),
             summary = str("Click to show an OverlaySecurityDialog"),
             onClick = {
                 showSecurityDialog = true
@@ -155,7 +158,7 @@ fun DialogDemo() {
         )
         HorizontalDivider(Modifier.padding(horizontal = 16.dp))
         ArrowPreference(
-            title = str("Single Input Dialog (O)"),
+            title = str("Single Input Dialog"),
             summary = str("A text field with a byte counter above the button bar"),
             onClick = {
                 showSingleInputDialog = true
@@ -165,91 +168,22 @@ fun DialogDemo() {
         )
     }
 
-    // The Center family's remaining tiers: a third action, the recommend marker, and the tiny
-    // bottom-pinned variant. Grouped in their own card so the centered presentation is visible as a
-    // set rather than one row among the bottom dialogs.
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
-        ArrowPreference(
-            title = str("Alert Dialog (O) · 3 actions"),
-            summary = str("Cancel / Never / OK stacked because three actions never fit one row"),
-            onClick = {
-                showNeutralAlertDialog = true
-                neutralAlertDialogHoldDown = true
-            },
-            holdDownState = neutralAlertDialogHoldDown,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("Alert Dialog (O) · recommended"),
-            summary = str("The confirm action is the bar's recommend button"),
-            onClick = {
-                showRecommendedAlertDialog = true
-                recommendedAlertDialogHoldDown = true
-            },
-            holdDownState = recommendedAlertDialogHoldDown,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("Alert Dialog (O) · tiny"),
-            summary = str("Center.Tiny: a compact panel pinned to the bottom edge"),
-            onClick = {
-                showTinyAlertDialog = true
-                tinyAlertDialogHoldDown = true
-            },
-            holdDownState = tinyAlertDialogHoldDown,
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        ArrowPreference(
-            title = str("Alert Dialog (O) · long text"),
-            summary = str("The panel caps its height and the message scrolls"),
-            onClick = {
-                showLongTextAlertDialog = true
-                longTextAlertDialogHoldDown = true
-            },
-            holdDownState = longTextAlertDialogHoldDown,
-        )
-    }
-
-    NeutralAlertDialogDemo(
-        show = showNeutralAlertDialog,
-        onDismissRequest = { showNeutralAlertDialog = false },
-        onDismissFinished = { neutralAlertDialogHoldDown = false },
-    )
-    RecommendedAlertDialogDemo(
-        show = showRecommendedAlertDialog,
-        onDismissRequest = { showRecommendedAlertDialog = false },
-        onDismissFinished = { recommendedAlertDialogHoldDown = false },
-    )
-    TinyAlertDialogDemo(
-        show = showTinyAlertDialog,
-        onDismissRequest = { showTinyAlertDialog = false },
-        onDismissFinished = { tinyAlertDialogHoldDown = false },
-    )
-    LongTextAlertDialogDemo(
-        show = showLongTextAlertDialog,
-        onDismissRequest = { showLongTextAlertDialog = false },
-        onDismissFinished = { longTextAlertDialogHoldDown = false },
-    )
-
     SingleInputDialogDemo(
         show = showSingleInputDialog,
         onDismissRequest = { showSingleInputDialog = false },
         onDismissFinished = { singleInputDialogHoldDown = false },
     )
 
+    // Both hosts stay composed so a dialog that is closing finishes on the host it opened on.
     SuperDialogDemo(
-        show = showSuperDialog,
-        onDismissRequest = { showSuperDialog = false },
-        onDismissFinished = { superDialogHoldDown = false },
+        show = showDialog && !windowHost.value,
+        onDismissRequest = { showDialog = false },
+        onDismissFinished = { dialogHoldDown = false },
     )
     WindowDialogDemo(
-        show = showWindowDialog,
-        onDismissRequest = { showWindowDialog = false },
-        onDismissFinished = { windowDialogHoldDown = false },
+        show = showDialog && windowHost.value,
+        onDismissRequest = { showDialog = false },
+        onDismissFinished = { dialogHoldDown = false },
     )
     StackedButtonBarDialogDemo(
         show = showStackedDialog,
@@ -288,11 +222,16 @@ fun DialogDemo() {
         onDismissFinished = { securityDialogHoldDown = false },
     )
 
-    AlertDialogDemo(
-        show = showAlertDialog,
-        onDismissRequest = { showAlertDialog = false },
-        onDismissFinished = { alertDialogHoldDown = false },
-    )
+    // The Center family's tiers: the standard confirm / cancel row, a third action, the recommend
+    // marker, the tiny bottom-pinned variant and a scrolling message. Each stays composed so the one
+    // that is closing finishes its exit after the option changes.
+    val dismissAlert = { showAlertDialog = false }
+    val alertFinished = { alertDialogHoldDown = false }
+    AlertDialogDemo(showAlertDialog && alertVariant.intValue == 0, dismissAlert, alertFinished)
+    NeutralAlertDialogDemo(showAlertDialog && alertVariant.intValue == 1, dismissAlert, alertFinished)
+    RecommendedAlertDialogDemo(showAlertDialog && alertVariant.intValue == 2, dismissAlert, alertFinished)
+    TinyAlertDialogDemo(showAlertDialog && alertVariant.intValue == 3, dismissAlert, alertFinished)
+    LongTextAlertDialogDemo(showAlertDialog && alertVariant.intValue == 4, dismissAlert, alertFinished)
 
     // Walk the horizontal progress dialog through both of its modes: indefinite first, then
     // determinate, like a download that only learns its size once the request is accepted.

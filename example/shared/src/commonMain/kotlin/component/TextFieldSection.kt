@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,152 +27,87 @@ import io.github.suqi8.coui.kmp.basic.TextField
 import io.github.suqi8.coui.kmp.basic.TextFieldMode
 
 /**
- * Renders the "TextField (Line, Settings dialog form)" gallery section content: line-mode fields with
- * clear, state, password, count and error variants.
+ * Renders the "TextField" gallery section content: one field assembled from the options, plus the
+ * state-based overload.
  *
- * ColorOS Settings dialog form: Line mode with a plain placeholder and a clear button
- * (?couiEditTextLineHintDisableStyle + quickDelete).
+ * The option combinations cover the ColorOS forms: Line with a plain placeholder and a clear button
+ * is the Settings dialog form (?couiEditTextLineHintDisableStyle + quickDelete); "Focus line only"
+ * (COUIInputPreference, couiJustShowFocusLine=true) and the None mode are the card-preference forms
+ * and are drawn on a card; "Floating label" is couiHintEnabled.
  */
 @Composable
-fun TextFieldLineSettingsDialogFormDemo(focusManager: FocusManager) {
-    var dialogText by remember { mutableStateOf("") }
+fun TextFieldDemo(focusManager: FocusManager) {
+    val modeIndex = remember { mutableIntStateOf(TextFieldMode.Line.ordinal) }
+    val enabled = remember { mutableStateOf(true) }
+    val floatingLabel = remember { mutableStateOf(false) }
+    val focusLineOnly = remember { mutableStateOf(false) }
+    val clearButton = remember { mutableStateOf(true) }
+    val passwordToggle = remember { mutableStateOf(false) }
+    val counter = remember { mutableStateOf(false) }
+    val digitsOnly = remember { mutableStateOf(false) }
+    var text by remember { mutableStateOf("") }
     val stateText = rememberTextFieldState(initialText = "")
-    var passwordText by remember { mutableStateOf("") }
-    var countText by remember { mutableStateOf("") }
-    var errorText by remember { mutableStateOf("") }
+    val mode = TextFieldMode.entries[modeIndex.intValue]
+    val onCard = mode == TextFieldMode.None || focusLineOnly.value
 
-    TextField(
-        value = dialogText,
-        onValueChange = { dialogText = it },
-        label = str("Device name"),
-        showClearButton = true,
-        singleLine = true,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+    DemoOptions(
+        DemoChoice("Background", TextFieldMode.entries.map { it.name }, modeIndex),
+        DemoToggle("Enabled", enabled),
+        DemoToggle("Floating label", floatingLabel),
+        DemoToggle("Focus line only", focusLineOnly),
+        DemoToggle("Clear button", clearButton),
+        DemoToggle("Password toggle", passwordToggle),
+        DemoToggle("Max 10 characters", counter),
+        DemoToggle("Digits only (error state)", digitsOnly),
     )
+    val field: @Composable (Modifier) -> Unit = { modifier ->
+        TextField(
+            value = text,
+            onValueChange = { text = it },
+            label = str("Device name"),
+            backgroundMode = mode,
+            useLabelAsPlaceholder = !floatingLabel.value,
+            justShowFocusLine = focusLineOnly.value,
+            enabled = enabled.value,
+            isError = digitsOnly.value && text.isNotEmpty() && !text.all { it.isDigit() },
+            maxCount = if (counter.value) 10 else null,
+            showClearButton = clearButton.value,
+            showPasswordToggle = passwordToggle.value,
+            singleLine = true,
+            modifier = modifier,
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = if (passwordToggle.value) KeyboardType.Password else KeyboardType.Text,
+                imeAction = ImeAction.Done,
+            ),
+        )
+    }
+    if (onCard) {
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+                .fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                field(Modifier.padding(vertical = 6.dp))
+            }
+        }
+    } else {
+        field(
+            Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 12.dp),
+        )
+    }
     TextField(
         state = stateText,
         label = str("State-based"),
+        enabled = enabled.value,
         modifier = Modifier
             .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
+            .padding(bottom = 16.dp),
         onKeyboardAction = { focusManager.clearFocus() },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-    )
-    TextField(
-        value = passwordText,
-        onValueChange = { passwordText = it },
-        label = str("Password"),
-        showPasswordToggle = true,
-        singleLine = true,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-    )
-    TextField(
-        value = countText,
-        onValueChange = { countText = it },
-        label = str("Max 10 characters"),
-        maxCount = 10,
-        singleLine = true,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-    )
-    TextField(
-        value = errorText,
-        onValueChange = { errorText = it },
-        label = str("Digits only (error state)"),
-        isError = errorText.isNotEmpty() && !errorText.all { it.isDigit() },
-        singleLine = true,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-    )
-}
-
-/**
- * Renders the "TextField (in card, Settings preference form)" gallery section content: a focus-line
- * field and an undecorated field on a card.
- *
- * ColorOS Settings card-preference form: bare text on a white card (COUIInputPreference,
- * couiJustShowFocusLine=true — the focused blue line expands under the text; None mode never shows
- * any line).
- */
-@Composable
-fun TextFieldInCardSettingsPreferenceFormDemo(focusManager: FocusManager) {
-    var cardText by remember { mutableStateOf("") }
-    var focusLineText by remember { mutableStateOf("") }
-
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp)
-            .fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            TextField(
-                value = focusLineText,
-                onValueChange = { focusLineText = it },
-                label = str("Focus line only (COUIInputPreference)"),
-                justShowFocusLine = true,
-                singleLine = true,
-                modifier = Modifier.padding(vertical = 6.dp),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            )
-            TextField(
-                value = cardText,
-                onValueChange = { cardText = it },
-                label = str("No decoration (card input)"),
-                backgroundMode = TextFieldMode.None,
-                singleLine = true,
-                modifier = Modifier.padding(vertical = 6.dp),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            )
-        }
-    }
-}
-
-/** Renders the "TextField (Rectangle & floating label)" gallery section content: rectangle stroke fields with and without a floating label. */
-@Composable
-fun TextFieldRectangleFloatingLabelDemo(focusManager: FocusManager) {
-    var rectText by remember { mutableStateOf("") }
-    var floatingText by remember { mutableStateOf("") }
-
-    TextField(
-        value = rectText,
-        onValueChange = { rectText = it },
-        label = str("Rectangle (stroke only)"),
-        backgroundMode = TextFieldMode.Rectangle,
-        singleLine = true,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-    )
-    TextField(
-        value = floatingText,
-        onValueChange = { floatingText = it },
-        label = str("Floating label (couiHintEnabled)"),
-        useLabelAsPlaceholder = false,
-        backgroundMode = TextFieldMode.Rectangle,
-        singleLine = true,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
     )
 }

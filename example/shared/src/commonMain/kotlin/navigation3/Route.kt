@@ -36,7 +36,14 @@ sealed interface Route : NavKey {
     @Serializable
     data class Panel(val page: String) : Route
 
-    /** A component's page in the ColorOS 17 gallery, opened from its home list; [id] names it. */
+    /**
+     * A category's page in the ColorOS 17 gallery, opened from its home card; [id] is the category's
+     * English title, the same string the catalog groups components under.
+     */
+    @Serializable
+    data class Category(val id: String) : Route
+
+    /** A component's page in the ColorOS 17 gallery, opened from its category page; [id] names it. */
     @Serializable
     data class Component(val id: String) : Route
 }
