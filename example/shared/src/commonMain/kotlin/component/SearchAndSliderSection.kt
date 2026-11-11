@@ -99,14 +99,15 @@ fun TouchSearchViewDemoContent() {
 @Composable
 fun SearchHistoryViewDemoContent() {
     val folded = remember { mutableStateOf(false) }
+    val longPressDelete = remember { mutableStateOf(true) }
 
-    DemoOptions(DemoToggle("Fold to 2 rows", folded))
+    DemoOptions(DemoToggle("Fold to 2 rows", folded), DemoToggle("Long-press to delete", longPressDelete))
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        SearchHistoryViewDemo(folded = folded.value)
+        SearchHistoryViewDemo(folded = folded.value, longPressDelete = longPressDelete.value)
     }
 }
 
@@ -194,7 +195,7 @@ private fun TouchSearchViewDemo() {
 }
 
 @Composable
-private fun SearchHistoryViewDemo(folded: Boolean) {
+private fun SearchHistoryViewDemo(folded: Boolean, longPressDelete: Boolean) {
     val demoHistory = DemoHistory.map { str(it) }
     var history by remember { mutableStateOf(demoHistory) }
     var lastClicked by remember { mutableStateOf("-") }
@@ -221,6 +222,11 @@ private fun SearchHistoryViewDemo(folded: Boolean) {
                 title = str("Recent searches"),
                 deleteIconDescription = str("Delete search history"),
                 maxRowFolded = if (folded) 2 else SearchHistoryViewDefaults.MaxRowFolded,
+                onItemDelete = if (longPressDelete) {
+                    { item -> history = history - item }
+                } else {
+                    null
+                },
             )
             Text(
                 text = str("Last clicked: {}", lastClicked),

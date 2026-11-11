@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -85,6 +86,10 @@ import kotlinx.coroutines.launch
  * @param deleteIconDescription `attr/COUISearchHistoryView_deleteIconDescription`, the accessibility
  *   label of the delete button. The native default is null.
  * @param colors The [SearchHistoryViewColors].
+ * @param onItemDelete When non-null, each keyword is a [SearchHistoryChip] instead of a [Chip]: a
+ *   long press springs a "×" out of the chip and tapping it calls this with the keyword.
+ * @param itemDeleteContentDescription The accessibility label of each chip's "×", given the
+ *   keyword. Only used with [onItemDelete].
  */
 @Composable
 fun SearchHistoryView(
@@ -99,6 +104,8 @@ fun SearchHistoryView(
     deleteIcon: ImageVector = SearchHistoryDeleteIcon,
     deleteIconDescription: String? = null,
     colors: SearchHistoryViewColors = SearchHistoryViewDefaults.colors(),
+    onItemDelete: ((String) -> Unit)? = null,
+    itemDeleteContentDescription: ((String) -> String)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val viewAlpha = remember { Animatable(1f) }
@@ -167,14 +174,25 @@ fun SearchHistoryView(
             maxRows = maxRows,
         ) {
             items.forEach { item ->
-                Chip(
-                    selected = false,
-                    onClick = { onItemClick(item) },
-                    label = item,
-                    minWidth = 0.dp,
-                    minHeight = SearchHistoryViewDefaults.ChipHeight,
-                    cornerRadius = SearchHistoryViewDefaults.ChipCornerRadius,
-                )
+                if (onItemDelete != null) {
+                    key(item) {
+                        SearchHistoryChip(
+                            text = item,
+                            onClick = { onItemClick(item) },
+                            onDelete = { onItemDelete(item) },
+                            deleteContentDescription = itemDeleteContentDescription?.invoke(item),
+                        )
+                    }
+                } else {
+                    Chip(
+                        selected = false,
+                        onClick = { onItemClick(item) },
+                        label = item,
+                        minWidth = 0.dp,
+                        minHeight = SearchHistoryViewDefaults.ChipHeight,
+                        cornerRadius = SearchHistoryViewDefaults.ChipCornerRadius,
+                    )
+                }
             }
         }
 

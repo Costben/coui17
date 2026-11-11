@@ -8,6 +8,9 @@
 import io.github.suqi8.coui.kmp.basic.FlowLayout
 import io.github.suqi8.coui.kmp.basic.FlowLayoutDefaults
 import io.github.suqi8.coui.kmp.basic.SearchHistoryDeleteIcon
+import io.github.suqi8.coui.kmp.basic.SearchHistoryChip
+import io.github.suqi8.coui.kmp.basic.SearchHistoryChipColors
+import io.github.suqi8.coui.kmp.basic.SearchHistoryChipDefaults
 import io.github.suqi8.coui.kmp.basic.SearchHistoryExpandIcon
 import io.github.suqi8.coui.kmp.basic.SearchHistoryView
 import io.github.suqi8.coui.kmp.basic.SearchHistoryViewColors
@@ -31,6 +34,21 @@ SearchHistoryView(
 每个条目在 [FlowLayout](#flowlayout) 中渲染为一个未选中的 [Chip](chip),按面板宽度换行,同一行标签之间 8dp,行与行之间 8dp。
 
 `onDeleteClick` 是在面板**淡出之后**才触发的,而不是在点击瞬间:本移植执行原生的 `doDeleteAnimation`,用 `COUIMoveEaseInterpolator`(`cubic-bezier(0.3, 0, 0.1, 1)`)在 `SEARCH_VIEW_DISAPPEAR_DURATION`(300ms)内把整个面板的 alpha 从 1 动到 0,然后才调用回调。面板之后保持透明,与原生视图一致,因此宿主应当移除该面板或重新填充它——可参考下文的[折叠](#折叠)用法。
+
+## 长按删除
+
+传入 `onItemDelete` 后,每个搜索词渲染为 [SearchHistoryChip](#searchhistorychip) 而不是 `Chip`。长按某个词,"×" 从标签末端弹出,标签同时向右加宽让出位置;点 "×" 以该词调用 `onItemDelete`,点标签本体或再次长按则把 "×" 收回。
+
+```kotlin
+SearchHistoryView(
+    items = history,
+    onItemClick = { query -> /* 执行搜索 */ },
+    onDeleteClick = { history = emptyList() },
+    title = "最近搜索",
+    onItemDelete = { keyword -> history = history - keyword },
+    itemDeleteContentDescription = { keyword -> "删除 $keyword" },
+)
+```
 
 ## 折叠
 
@@ -66,6 +84,8 @@ SearchHistoryView(
 | deleteIcon            | ImageVector             | 删除按钮中绘制的图形                       | SearchHistoryDeleteIcon                | 否   |
 | deleteIconDescription | String?                 | 删除按钮的无障碍标签                       | null                                   | 否   |
 | colors                | SearchHistoryViewColors | 颜色                                       | SearchHistoryViewDefaults.colors()     | 否   |
+| onItemDelete          | ((String) -> Unit)?     | 非空时标签改用可长按删除的 SearchHistoryChip;参数为被删的词 | null | 否 |
+| itemDeleteContentDescription | ((String) -> String)? | 每个标签 "×" 的无障碍标签,参数为该词 | null | 否 |
 
 ### SearchHistoryViewDefaults
 
@@ -110,6 +130,63 @@ SearchHistoryView(
 | 项目 | 取值                                          | 来源                              |
 | ---- | --------------------------------------------- | --------------------------------- |
 | 标题 | couiTextAppearanceButton,14sp,sans-serif-medium | COUISearchHistoryView 构造函数     |
+
+## SearchHistoryChip
+
+可长按删除的搜索词标签,也可以单独放进任意 [FlowLayout](#flowlayout) 使用。它是 32dp 高、沿系统连续曲率轮廓(`CapsuleOutlineShape`)的胶囊,底色 `surfaceContainerHigh`,左右各 12dp 内边距,文字 13sp 单行。
+
+- 长按进入删除模式:"×"(24dp 点击区内两条 1.3dp 圆头线组成的 9dp 图形)从 0.3 缩放到 1 并淡入,标签同时加宽 18dp。两者由同一条临界阻尼弹簧(刚度 438.65)驱动,所以标签只横向变宽,高度不变。
+- 删除模式下点 "×" 调用 `onDelete`;点标签本体或再次长按退出删除模式。"×" 弹出过半后才响应点击。
+- 按下时标签以同一弹簧缩放到 0.96,底色在 150ms 内向白色提亮 28%。
+
+```kotlin
+FlowLayout(itemSpacing = 8.dp, lineSpacing = 8.dp) {
+    history.forEach { keyword ->
+        key(keyword) {
+            SearchHistoryChip(
+                text = keyword,
+                onClick = { /* 执行搜索 */ },
+                onDelete = { history = history - keyword },
+                deleteContentDescription = "删除 $keyword",
+            )
+        }
+    }
+}
+```
+
+带 `deleteMode` / `onDeleteModeChange` 的重载把删除模式交给调用方管理,例如同一时间只让一个 "×" 弹出。
+
+### SearchHistoryChip
+
+| 属性                     | 类型                    | 说明                                              | 默认值                             | 必填 |
+| ------------------------ | ----------------------- | ------------------------------------------------- | ---------------------------------- | ---- |
+| text                     | String                  | 搜索词                                            | -                                  | 是   |
+| onClick                  | () -> Unit              | 非删除模式下点击时调用                            | -                                  | 是   |
+| onDelete                 | () -> Unit              | 点 "×" 时调用                                     | -                                  | 是   |
+| deleteMode               | Boolean                 | "×" 是否弹出(仅受控重载)                        | -                                  | 是   |
+| onDeleteModeChange       | (Boolean) -> Unit       | 长按时调用;删除模式下点本体时以 false 调用(仅受控重载) | -                         | 是   |
+| modifier                 | Modifier                | 作用于标签的 Modifier                             | Modifier                           | 否   |
+| deleteContentDescription | String?                 | "×" 的无障碍标签                                  | null                               | 否   |
+| colors                   | SearchHistoryChipColors | 颜色                                              | SearchHistoryChipDefaults.colors() | 否   |
+
+### SearchHistoryChipDefaults
+
+| 常量                       | 类型     | 值        |
+| -------------------------- | -------- | --------- |
+| Height                     | Dp       | 32.dp     |
+| PaddingStart               | Dp       | 12.dp     |
+| PaddingEnd                 | Dp       | 12.dp     |
+| DeleteExtraWidth           | Dp       | 18.dp     |
+| DeleteTouchWidth           | Dp       | 24.dp     |
+| DeleteIconOffset           | Dp       | 2.dp      |
+| DeleteIconSize             | Dp       | 9.dp      |
+| DeleteIconStrokeWidth      | Dp       | 1.3.dp    |
+| FontSize                   | TextUnit | 13.sp     |
+| PressedScale               | Float    | 0.96f     |
+| SpringStiffness            | Float    | 438.65f   |
+| PressedColorDurationMillis | Int      | 150       |
+
+`colors()` 默认底色 `surfaceContainerHigh`,按下底色为其向白色混合 28%,文字 `onSurface`,"×" 为 `onSurfaceSecondary`。
 
 ## FlowLayout
 

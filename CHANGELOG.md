@@ -8,6 +8,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Added
 
+- `SearchHistoryChip`: a search-history keyword chip with long-press-to-delete. A long press springs a "×" out of the chip's end edge while the chip widens by 18dp on one critically damped spring, keeping its 32dp height; tapping the "×" deletes, tapping the chip folds it back. `SearchHistoryView` takes `onItemDelete` / `itemDeleteContentDescription` to use it for every keyword.
 - Migrated COUI-Kit slider implementation on Android via expect/actual: capsule track geometry with native dynamic spring animations, spotlight touch effect, custom key points with magnetic snapping, and secondary buffer progress, while preserving Skiko rendering and full API compatibility across platforms.
 
 - `ChipTabGroup` takes `leadingIcon` / `onLeadingIconClick`, the pinned 32dp icon-only chip of `COUIChipTabLayout` (20dp icon, always in the selected style, tabs starting 8dp after it), and `contentPadding`, which lies inside the scroll like the native scroller's `clipToPadding = false` padding so the tabs scroll on up to the fading edge.

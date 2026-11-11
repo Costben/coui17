@@ -731,6 +731,7 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Show thumb" to "显示手柄",
     "Fixed colors on a dark surface" to "深色底固定配色",
     "Fold to 2 rows" to "折叠为 2 行",
+    "Long-press to delete" to "长按删除",
     "Window host" to "窗口宿主",
     "Grouped options" to "选项分组",
     "Long options" to "长选项",
