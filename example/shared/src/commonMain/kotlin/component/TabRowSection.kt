@@ -4,21 +4,15 @@
 
 package component
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -27,25 +21,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import i18n.str
-import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.LocalEdgeToEdge
-import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.basic.SmallTopAppBar
-import io.github.suqi8.coui.kmp.basic.Switch
 import io.github.suqi8.coui.kmp.basic.TabRow
 import io.github.suqi8.coui.kmp.basic.TabRowDefaults
 import io.github.suqi8.coui.kmp.basic.TabRowWithContour
@@ -57,307 +44,240 @@ import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Back
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Scan
-import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.squircleClip
 import io.github.suqi8.coui.kmp.theme.COUITheme
-import kotlinx.coroutines.launch
 
-/** Renders the "TabRow" gallery section content: a frameless tab row, the frosted glass segment bar, and one contour tab row whose style comes from the option. */
+/**
+ * Renders the "TabRow" gallery section content: one segment bar whose material tier comes from the
+ * option. The switches decide whether the bar sits in the floating top app bar and whether the
+ * sample content behind it is drawn.
+ *
+ * The tiers run from the most transparent to the most solid: the frosted blur highlight, the
+ * transparent contour capsule, the solid capsule, the 32dp tiny form, and finally the frameless
+ * row.
+ */
 @Composable
 fun TabRowDemo() {
-    val framelessTabs = listOf(str("Day"), str("Week"), str("Month"))
-    var framelessSelected by remember { mutableIntStateOf(0) }
     val styleIndex = remember { mutableIntStateOf(0) }
+    val inTopBar = remember { mutableStateOf(true) }
+    val showBackground = remember { mutableStateOf(true) }
 
-    TabRow(
-        tabs = framelessTabs,
-        selectedTabIndex = framelessSelected,
-        onTabSelected = { framelessSelected = it },
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 12.dp),
+    DemoOptions(
+        DemoChoice(
+            "Style",
+            listOf("Transparent blur highlight", "Contour", "Solid", "Tiny", "Frameless"),
+            styleIndex,
+        ),
+        DemoToggle("In top app bar", inTopBar),
+        DemoToggle("Show background", showBackground),
     )
-    ComputerLinkGlassTabDemo()
-    DemoOptions(DemoChoice("Style", listOf("Contour", "Opaque", "Tiny"), styleIndex))
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        insideMargin = PaddingValues(16.dp),
-    ) {
-        // COUI segment button, as used by the special access page in ColorOS Settings. The option
-        // picks the contour tier, the opaque Privacy & security capsule, or the 32dp tiny form.
-        val segmentTabs = listOf(str("All"), str("Allowed"), str("Denied"))
-        val scope = rememberCoroutineScope()
-        val pagerState = rememberPagerState(pageCount = { segmentTabs.size })
-        val tiny = styleIndex.intValue == 2
-        TabRowWithContour(
-            tabs = segmentTabs,
-            selectedTabIndex = pagerState.currentPage,
-            onTabSelected = {
-                scope.launch {
-                    pagerState.animateScrollToPage(it)
-                }
-            },
-            colors = if (styleIndex.intValue == 1) {
-                TabRowDefaults.opaqueTabRowColors()
-            } else {
-                TabRowDefaults.tabRowColors()
-            },
-            height = if (tiny) TabRowDefaults.TabRowWithContourTinyHeight else TabRowDefaults.TabRowWithContourHeight,
-            cornerRadius = if (tiny) {
-                TabRowDefaults.TabRowWithContourTinyCornerRadius
-            } else {
-                TabRowDefaults.TabRowWithContourCornerRadius
-            },
-            contourPadding = if (tiny) {
-                TabRowDefaults.TabRowWithContourTinyPadding
-            } else {
-                TabRowDefaults.TabRowWithContourPadding
-            },
-        )
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-                .padding(bottom = 16.dp),
-            userScrollEnabled = true,
-            key = { it },
-            pageContent = { page ->
-                Text(
-                    text = str("Content of {}", segmentTabs[page]),
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                )
-            },
-        )
-    }
+    TabRowStage(
+        styleIndex = styleIndex.intValue,
+        inTopBar = inTopBar.value,
+        showBackground = showBackground.value,
+    )
 }
 
 /**
- * Replicates the ColorOS 17 OPSynergy `ComputerLinkTabLayoutFragment` ("与电脑互联") frosted glass
- * segment bar: a `COUIAppBarLayout` (`OConnectSmallTabBehavior` progressive blur on scroll) hosting
- * a toolbar with circular glass buttons and a `COUISegmentButtonLayout` with
- * `setMaterialEffectEnabled(true)` (`TYPE_CONTENT_SEGMENT_BUTTON` 25px blur +
- * `TYPE_FRAMEWORK_CAPSULE_6` outer rim + `TYPE_FRAMEWORK_CAPSULE_10` indicator rim).
+ * The single segment-bar stage. The style option picks the tier — frosted blur highlight, contour,
+ * solid, tiny, or the frameless row — while the switches move the bar in or out of the floating
+ * toolbar and show or hide the sample content it blurs.
  */
 @Composable
-private fun ComputerLinkGlassTabDemo() {
-    val tabs = listOf(str("Cross-screen connect"), str("Remote control PC"))
+private fun TabRowStage(
+    styleIndex: Int,
+    inTopBar: Boolean,
+    showBackground: Boolean,
+) {
+    val tabs = listOf(str("Year"), str("Month"), str("Day"))
     var selectedTab by remember { mutableIntStateOf(0) }
-    val scrollState = rememberScrollState(initial = 110)
+    val scrollState = rememberScrollState(initial = if (inTopBar) 110 else 0)
     val surfaceColor = COUITheme.colorScheme.background
+    val isDark = surfaceColor.luminance() < 0.5f
     val backdrop = rememberLayerBackdrop {
         drawRect(surfaceColor)
         drawContent()
     }
-    var autoConnect by remember { mutableStateOf(true) }
-    var clipboardSync by remember { mutableStateOf(true) }
-    var notificationSync by remember { mutableStateOf(false) }
+    val tiny = styleIndex == 3
 
-    SmallTitle(text = str("Connect to PC"))
+    val tabRow: @Composable () -> Unit = {
+        if (styleIndex == 4) {
+            TabRow(
+                tabs = tabs,
+                selectedTabIndex = selectedTab,
+                onTabSelected = { selectedTab = it },
+            )
+        } else {
+            TabRowWithContour(
+                tabs = tabs,
+                selectedTabIndex = selectedTab,
+                onTabSelected = { selectedTab = it },
+                colors = if (styleIndex == 2) {
+                    TabRowDefaults.opaqueTabRowColors(
+                        selectedBackgroundColor = if (isDark) Color(0xFF5D5D5D) else Color(0xFFF6F7F7),
+                    )
+                } else {
+                    TabRowDefaults.tabRowColors()
+                },
+                height = if (tiny) {
+                    TabRowDefaults.TabRowWithContourTinyHeight
+                } else {
+                    TabRowDefaults.TabRowWithContourHeight
+                },
+                cornerRadius = if (tiny) {
+                    TabRowDefaults.TabRowWithContourTinyCornerRadius
+                } else {
+                    TabRowDefaults.TabRowWithContourCornerRadius
+                },
+                contourPadding = if (tiny) {
+                    TabRowDefaults.TabRowWithContourTinyPadding
+                } else {
+                    TabRowDefaults.TabRowWithContourPadding
+                },
+                backdrop = if (styleIndex == 0) backdrop else null,
+                containerMaterial = if (styleIndex == 2) {
+                    TabRowDefaults.containerStroke(isDark)
+                } else {
+                    null
+                },
+                indicatorMaterial = if (styleIndex == 2) {
+                    TabRowDefaults.indicatorStroke(isDark)
+                } else {
+                    null
+                },
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp)
-            .height(296.dp)
-            .squircleClip(24.dp)
-            .background(surfaceColor),
-    ) {
-        // Underlying scrollable ViewPager2 content (`clipToPadding = false`, `paddingTop = appBarHeight`)
-        // that passes underneath the floating AppBar + COUISegmentButtonLayout.
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .layerBackdrop(backdrop)
-                .verticalScroll(scrollState)
-                .padding(top = 120.dp, start = 16.dp, end = 16.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            ComputerLinkHeroBanner(selectedTab = selectedTab)
-            Text(
-                text = if (selectedTab == 0) {
-                    str("Mirror phone screen, drag files and share clipboard with your PC")
+            .then(if (inTopBar || showBackground) Modifier.height(296.dp) else Modifier)
+            .then(
+                if (showBackground) {
+                    Modifier
+                        .squircleClip(24.dp)
+                        .background(surfaceColor)
                 } else {
-                    str("Control your Windows or Mac desktop remotely from your phone")
+                    Modifier
                 },
-                style = COUITheme.textStyles.body2,
-                color = COUITheme.colorScheme.onSurfaceVariantSummary,
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                insideMargin = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ComputerLinkSettingRow(
-                        title = str("Auto-connect nearby PC"),
-                        checked = autoConnect,
-                        onCheckedChange = { autoConnect = it },
-                    )
-                    ComputerLinkSettingRow(
-                        title = str("Clipboard sync"),
-                        checked = clipboardSync,
-                        onCheckedChange = { clipboardSync = it },
-                    )
-                    ComputerLinkSettingRow(
-                        title = str("Notification sync"),
-                        checked = notificationSync,
-                        onCheckedChange = { notificationSync = it },
-                    )
+            ),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (!inTopBar) {
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    tabRow()
+                }
+            }
+            if (showBackground) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .layerBackdrop(backdrop)
+                        .verticalScroll(scrollState)
+                        .padding(
+                            top = if (inTopBar) 120.dp else 12.dp,
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 24.dp,
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    SampleHeroBanner(selectedTab = selectedTab)
+                    repeat(3) {
+                        Text(
+                            text = str("Sample text"),
+                            style = COUITheme.textStyles.body2,
+                            color = COUITheme.colorScheme.onSurfaceVariantSummary,
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        )
+                    }
                 }
             }
         }
 
-        // Floating COUIAppBarLayout + OConnectSmallTabBehavior progressive blur + COUISegmentButtonLayout
-        CompositionLocalProvider(
-            LocalBackdrop provides backdrop,
-            LocalEdgeToEdge provides true,
-        ) {
-            SmallTopAppBar(
-                title = str("Connect to PC"),
-                color = surfaceColor,
-                defaultWindowInsetsPadding = false,
-                showDivider = false,
-                gradientGlass = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                navigationIcon = {
-                    HighlightedIconButton(
-                        onClick = {},
-                        backdrop = backdrop,
-                    ) {
-                        Icon(
-                            imageVector = COUIIcons.Back,
-                            contentDescription = str("Connect to PC"),
-                        )
-                    }
-                },
-                actions = {
-                    HighlightedIconButton(
-                        onClick = {},
-                        backdrop = backdrop,
-                    ) {
-                        Icon(
-                            imageVector = COUIIcons.Scan,
-                            contentDescription = null,
-                        )
-                    }
-                    Spacer(modifier = Modifier.size(8.dp))
-                    HighlightedIconButton(
-                        onClick = {},
-                        backdrop = backdrop,
-                    ) {
-                        Icon(
-                            imageVector = COUIIcons.More,
-                            contentDescription = null,
-                        )
-                    }
-                },
-                bottomContent = {
-                    // `COUISegmentButtonLayout` with `setMaterialEffectEnabled(true)` (`marginTop = 12dp`)
-                    TabRowWithContour(
-                        tabs = tabs,
-                        selectedTabIndex = selectedTab,
-                        onTabSelected = { selectedTab = it },
-                        backdrop = backdrop,
-                        modifier = Modifier
-                            .padding(top = 4.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
-                    )
-                },
-            )
+        if (inTopBar) {
+            CompositionLocalProvider(
+                LocalBackdrop provides backdrop,
+                LocalEdgeToEdge provides true,
+            ) {
+                SmallTopAppBar(
+                    title = str("TabRow"),
+                    color = surfaceColor,
+                    defaultWindowInsetsPadding = false,
+                    showDivider = false,
+                    gradientGlass = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter),
+                    navigationIcon = {
+                        HighlightedIconButton(
+                            onClick = {},
+                            backdrop = backdrop,
+                        ) {
+                            Icon(
+                                imageVector = COUIIcons.Back,
+                                contentDescription = str("Back"),
+                            )
+                        }
+                    },
+                    actions = {
+                        HighlightedIconButton(
+                            onClick = {},
+                            backdrop = backdrop,
+                        ) {
+                            Icon(
+                                imageVector = COUIIcons.Scan,
+                                contentDescription = null,
+                            )
+                        }
+                        Spacer(modifier = Modifier.size(8.dp))
+                        HighlightedIconButton(
+                            onClick = {},
+                            backdrop = backdrop,
+                        ) {
+                            Icon(
+                                imageVector = COUIIcons.More,
+                                contentDescription = null,
+                            )
+                        }
+                    },
+                    bottomContent = {
+                        Box(
+                            modifier = Modifier.padding(
+                                top = 4.dp,
+                                bottom = 8.dp,
+                                start = 16.dp,
+                                end = 16.dp,
+                            ),
+                        ) {
+                            tabRow()
+                        }
+                    },
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ComputerLinkHeroBanner(selectedTab: Int) {
-    val blockPath = remember { Path() }
-    Canvas(
+private fun SampleHeroBanner(selectedTab: Int) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(148.dp)
-            .squircleClip(20.dp),
-    ) {
-        // Blue/cyan PC screen illustration matching the OPSynergy "与电脑互联" illustration
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = if (selectedTab == 0) {
-                    listOf(Color(0xFF4295D6), Color(0xFF2CC5C9))
-                } else {
-                    listOf(Color(0xFF3E7BD6), Color(0xFF5A54D1))
-                },
+            .squircleClip(20.dp)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = when (selectedTab) {
+                        0 -> listOf(Color(0xFF4295D6), Color(0xFF2CC5C9))
+                        1 -> listOf(Color(0xFF3E7BD6), Color(0xFF5A54D1))
+                        else -> listOf(Color(0xFF7B5AD6), Color(0xFFD65A9E))
+                    },
+                ),
             ),
-        )
-        val screenW = size.width * 0.68f
-        val screenH = size.height * 0.74f
-        val screenLeft = (size.width - screenW) / 2f
-        val screenTop = (size.height - screenH) / 2f
-        blockPath.reset()
-        blockPath.addSquircleRoundRect(
-            rect = Rect(Offset(screenLeft, screenTop), Size(screenW, screenH)),
-            topLeft = 14f,
-            topRight = 14f,
-            bottomRight = 14f,
-            bottomLeft = 14f,
-        )
-        drawPath(path = blockPath, color = Color(0xFF283C4C))
-        // Sidebar inside the PC monitor
-        blockPath.reset()
-        blockPath.addSquircleRoundRect(
-            rect = Rect(Offset(screenLeft + 12f, screenTop + 12f), Size(screenW * 0.18f, screenH - 24f)),
-            topLeft = 6f,
-            topRight = 6f,
-            bottomRight = 6f,
-            bottomLeft = 6f,
-        )
-        drawPath(path = blockPath, color = Color(0xFF3E5566))
-        // Warm orange & red app tiles near the top of the monitor (visible through the frosted segment bar)
-        val tileY = screenTop + 16f
-        val tileColors = listOf(
-            Color(0xFFFF9800),
-            Color(0xFFFFB300),
-            Color(0xFF4CAF50),
-            Color(0xFFE53935),
-            Color(0xFFFF5252),
-        )
-        tileColors.forEachIndexed { idx, color ->
-            blockPath.reset()
-            blockPath.addSquircleRoundRect(
-                rect = Rect(Offset(screenLeft + screenW * 0.26f + idx * 34f, tileY), Size(22f, 22f)),
-                topLeft = 6f,
-                topRight = 6f,
-                bottomRight = 6f,
-                bottomLeft = 6f,
-            )
-            drawPath(path = blockPath, color = color)
-        }
-    }
-}
-
-@Composable
-private fun ComputerLinkSettingRow(
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = title,
-            style = COUITheme.textStyles.body1,
-            color = COUITheme.colorScheme.onSurface,
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-        )
-    }
+    )
 }
