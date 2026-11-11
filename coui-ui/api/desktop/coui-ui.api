@@ -755,6 +755,18 @@ public final class io/github/suqi8/coui/kmp/basic/CalendarViewKt {
 	public static final fun CalendarView (Lio/github/suqi8/coui/kmp/basic/DateValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/IntRange;ILio/github/suqi8/coui/kmp/basic/DateValue;Lio/github/suqi8/coui/kmp/basic/CalendarViewColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 }
 
+public final class io/github/suqi8/coui/kmp/basic/CapsuleOutlineShape : androidx/compose/ui/graphics/Shape {
+	public static final field $stable I
+	public synthetic fun <init> (Landroidx/compose/ui/unit/Dp;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/ui/unit/Dp;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createOutline-Pq9zytI (JLandroidx/compose/ui/unit/LayoutDirection;Landroidx/compose/ui/unit/Density;)Landroidx/compose/ui/graphics/Outline;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCornerRadius-lTKBWiU ()Landroidx/compose/ui/unit/Dp;
+	public final fun getSquircleEnabled ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/CardColors {
 	public static final field $stable I
 	public synthetic fun <init> (JJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -1745,6 +1757,8 @@ public final class io/github/suqi8/coui/kmp/basic/FullPagePullToRefreshState {
 	public final fun getDragOffset ()F
 	public final fun getPullProgress ()F
 	public final fun getRefreshState ()Lio/github/suqi8/coui/kmp/basic/FullPageRefreshState;
+	public final fun snapToRefreshing (Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun snapToRefreshing$default (Lio/github/suqi8/coui/kmp/basic/FullPagePullToRefreshState;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public final fun startRefresh (Lkotlin/jvm/functions/Function0;)V
 }
 
@@ -3832,6 +3846,16 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewState : java/lang/En
 	public final fun getExpanded ()Z
 	public static fun valueOf (Ljava/lang/String;)Lio/github/suqi8/coui/kmp/basic/SearchViewState;
 	public static fun values ()[Lio/github/suqi8/coui/kmp/basic/SearchViewState;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/SegmentCapsuleKt {
+	public static final fun addSegmentCapsule (Landroidx/compose/ui/graphics/Path;Landroidx/compose/ui/geometry/Rect;)V
+}
+
+public final class io/github/suqi8/coui/kmp/basic/SegmentCapsuleShape : androidx/compose/ui/graphics/Shape {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/SegmentCapsuleShape;
+	public fun createOutline-Pq9zytI (JLandroidx/compose/ui/unit/LayoutDirection;Landroidx/compose/ui/unit/Density;)Landroidx/compose/ui/graphics/Outline;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SideNavigationBarDefaults {
