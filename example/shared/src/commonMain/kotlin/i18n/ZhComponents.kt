@@ -797,6 +797,9 @@ internal val zhComponents: Map<String, String> = mapOf(
     "Show background" to "显示背景",
     "State" to "状态",
     "SlideView" to "滑动视图",
+    "Tags" to "标签",
+    "Long-press a chip to delete it" to "长按标签可删除",
+    "Delete {}" to "删除 {}",
     "style: {} ({}) · state: {} ({}) · progress: {} / 100" to
         "样式：{}（{}）· 状态：{}（{}）· 进度：{} / 100",
 )

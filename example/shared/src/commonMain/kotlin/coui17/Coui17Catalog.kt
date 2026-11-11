@@ -58,6 +58,7 @@ import component.ProgressIndicatorDemo
 import component.RadioButtonDemo
 import component.RecommendedPreferenceDemo
 import component.SearchBarDemo
+import component.SearchHistoryChipDemoContent
 import component.SearchHistoryViewDemoContent
 import component.SearchViewAnimateDemo
 import component.SlideViewDemo
@@ -185,6 +186,7 @@ internal val Coui17CatalogGroups: List<List<Coui17Category>> = listOf(
                 demo("SearchBar") { SearchBarDemo() }
                 demo("SearchViewAnimate") { SearchViewAnimateDemo() }
                 demo("SearchHistoryView") { SearchHistoryViewDemoContent() }
+                demo("SearchHistoryChip") { SearchHistoryChipDemoContent() }
                 demo("TouchSearchView") { TouchSearchViewDemoContent() }
             }
         },

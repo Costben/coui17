@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Slider
 import io.github.suqi8.coui.kmp.basic.SliderDefaults
 import io.github.suqi8.coui.kmp.basic.SmallTitle
@@ -54,6 +55,8 @@ fun SliderDemo() {
 @Composable
 private fun HorizontalSliders(enabled: Boolean, showKeyPoints: Boolean) {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -107,6 +110,8 @@ private fun HorizontalSliders(enabled: Boolean, showKeyPoints: Boolean) {
 @Composable
 private fun RangeSliders(enabled: Boolean, showKeyPoints: Boolean) {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -149,6 +154,8 @@ private fun RangeSliders(enabled: Boolean, showKeyPoints: Boolean) {
 @Composable
 private fun VerticalSliders(enabled: Boolean, showKeyPoints: Boolean) {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

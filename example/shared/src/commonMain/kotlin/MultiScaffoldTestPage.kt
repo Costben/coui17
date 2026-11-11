@@ -28,6 +28,7 @@ import appstate.LocalNavigator
 import component.BackNavigationIcon
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.SmallTitle
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
@@ -107,6 +108,8 @@ fun MultiScaffoldTestPage(
                     Column {
                         SmallTitle(text = "Top Left")
                         Card(
+                            cornerRadius = CardDefaults.GroupCornerRadius,
+                            weight = CardDefaults.GroupWeight,
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(
@@ -127,6 +130,8 @@ fun MultiScaffoldTestPage(
                     Column {
                         SmallTitle(text = "Top Right")
                         Card(
+                            cornerRadius = CardDefaults.GroupCornerRadius,
+                            weight = CardDefaults.GroupWeight,
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(
@@ -152,6 +157,8 @@ fun MultiScaffoldTestPage(
                     Column {
                         SmallTitle(text = "Bottom Left")
                         Card(
+                            cornerRadius = CardDefaults.GroupCornerRadius,
+                            weight = CardDefaults.GroupWeight,
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(
@@ -172,6 +179,8 @@ fun MultiScaffoldTestPage(
                     Column {
                         SmallTitle(text = "Bottom Right")
                         Card(
+                            cornerRadius = CardDefaults.GroupCornerRadius,
+                            weight = CardDefaults.GroupWeight,
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
                             OverlayDropdownPreference(

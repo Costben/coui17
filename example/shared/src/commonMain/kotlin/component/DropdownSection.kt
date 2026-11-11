@@ -17,6 +17,7 @@ import i18n.LocalAppStrings
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Badge
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
@@ -112,6 +113,8 @@ fun DropdownDemo() {
         DemoToggle("Long options", longOptions),
     )
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -312,6 +315,8 @@ fun DropdownItemVariants() {
 
     DemoOptions(DemoToggle("Window host", windowHost))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
 import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
 import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
@@ -53,6 +54,8 @@ fun MaterialShadowEdgeDemo() {
     val surface = if (isDark) Color(0xFF2B2B2F) else Color(0xFFF0F1F3)
 
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -133,6 +136,8 @@ fun SpotLightDemo() {
 
     DemoOptions(DemoToggle("Animate", animate))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

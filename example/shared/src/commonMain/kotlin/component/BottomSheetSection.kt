@@ -59,6 +59,8 @@ fun BottomSheetDemo() {
 
     DemoOptions(DemoToggle("Window host", windowHost))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

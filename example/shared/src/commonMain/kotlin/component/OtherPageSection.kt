@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import appstate.LocalNavigator
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import navigation3.Route
@@ -19,6 +20,8 @@ import kotlin.random.Random
 fun OtherDemo() {
     val navigator = LocalNavigator.current
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp),
     ) {

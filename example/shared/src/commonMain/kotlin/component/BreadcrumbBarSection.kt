@@ -20,6 +20,7 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BreadcrumbBar
 import io.github.suqi8.coui.kmp.basic.BreadcrumbItem
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.joinToPath
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -52,6 +53,8 @@ fun BreadcrumbBarDemo() {
             .padding(bottom = 12.dp),
     )
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)

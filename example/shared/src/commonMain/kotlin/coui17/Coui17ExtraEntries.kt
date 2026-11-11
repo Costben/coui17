@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.Chip
+import io.github.suqi8.coui.kmp.basic.ChipDefaults
 import io.github.suqi8.coui.kmp.basic.CompleteState
 import io.github.suqi8.coui.kmp.basic.CompleteStateStatus
 import io.github.suqi8.coui.kmp.basic.EmptyState
@@ -53,9 +55,11 @@ import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.ListDetailView
 import io.github.suqi8.coui.kmp.basic.LoadProgressState
 import io.github.suqi8.coui.kmp.basic.LunarDatePicker
+import io.github.suqi8.coui.kmp.basic.SearchHistoryChip
 import io.github.suqi8.coui.kmp.basic.SideNavigationBar
 import io.github.suqi8.coui.kmp.basic.SidePaneLayout
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.cardListPositionOf
 import io.github.suqi8.coui.kmp.basic.rememberSideNavigationBarState
 import io.github.suqi8.coui.kmp.basic.rememberSidePaneLayoutState
@@ -116,6 +120,8 @@ fun EmptyStateDemo() {
         DemoChoice("Size", EmptyStateSize.entries.map { it.name }, sizeIndex),
     )
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -138,6 +144,8 @@ fun EmptyStateDemo() {
 @Composable
 fun CompleteStateDemo() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -160,13 +168,18 @@ fun CompleteStateDemo() {
  *
  * This is the ColorOS 17 suggestion-chip pattern: `item_search_chip_history.xml` in Settings puts
  * `com.coui.appcompat.chip.COUIChip` rows inside a `COUICheckableGroup`, so every chip toggles its
- * own checked state and the group reports the selection. The metrics are
- * `Widget.COUI.Chip.Suggestion`: 28dp tall, 12dp chip padding, `couiTextBodyXS` label, `couiColorCard`
- * while unchecked and `couiColorPrimary` with the on-color label once checked.
+ * own checked state and the group reports the selection. The chips keep the default selection-chip
+ * height and capsule radius so they line up with the [SearchHistoryChip] capsules in the card below;
+ * `couiTextBodyXS` label, `couiColorCard` while unchecked and `couiColorPrimary` with the on-color
+ * label once checked.
  *
  * The "Fold to one row" option turns on `COUIFlowLayout` folding: the tags collapse to one row and
  * the last line carries the expand button, which grows the block over 400ms after a 100ms delay on
  * `COUIMoveEase`.
+ *
+ * The second card is the same flow layout filled with search history: each keyword is a
+ * [SearchHistoryChip], so a long press springs a "×" out of the capsule and tapping it drops the
+ * keyword from the list.
  */
 @Composable
 fun FlowLayoutDemo() {
@@ -174,6 +187,10 @@ fun FlowLayoutDemo() {
     val tags = listOf("Recommended", "Popular", "Nearby", "Archived", "Inbox", "Drafts", "Spam")
     var selected by remember { mutableStateOf(emptySet<String>()) }
     var expanded by remember { mutableStateOf(false) }
+    val recentSearches = remember {
+        listOf("wireless earbuds", "screen protector", "usb-c hub", "laptop stand", "webcam")
+    }
+    var recent by remember { mutableStateOf(recentSearches) }
     val chips: @Composable () -> Unit = {
         tags.forEach { tag ->
             val checked = tag in selected
@@ -183,22 +200,15 @@ fun FlowLayoutDemo() {
                     selected = if (checked) selected - tag else selected + tag
                 },
                 label = str(tag),
-                minHeight = 28.dp,
                 insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
             )
         }
     }
 
     DemoOptions(DemoToggle("Fold to one row", foldable))
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
+    FlowDemoCard(title = str("Tags")) {
         FlowLayout(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             itemSpacing = 8.dp,
             lineSpacing = 8.dp,
             expanded = !foldable.value || expanded,
@@ -210,13 +220,70 @@ fun FlowLayoutDemo() {
             content = chips,
         )
     }
+    FlowDemoCard(
+        title = str("Recent searches"),
+        caption = str("Long-press a chip to delete it"),
+    ) {
+        if (recent.isEmpty()) {
+            TextButton(text = str("Restore"), onClick = { recent = recentSearches })
+        } else {
+            FlowLayout(itemSpacing = 8.dp, lineSpacing = 8.dp) {
+                recent.forEach { keyword ->
+                    key(keyword) {
+                        SearchHistoryChip(
+                            text = str(keyword),
+                            onClick = {},
+                            onDelete = { recent = recent - keyword },
+                            deleteContentDescription = str("Delete {}", keyword),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** One section of the flow layout page: a group card carrying a title, an optional caption, content. */
+@Composable
+private fun FlowDemoCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    caption: String? = null,
+    content: @Composable () -> Unit,
+) {
+    Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            Text(text = title, style = COUITheme.textStyles.body2)
+            if (caption != null) {
+                Text(
+                    text = caption,
+                    style = COUITheme.textStyles.footnote1,
+                    color = COUITheme.colorScheme.onSurfaceSecondary,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            content()
+        }
+    }
 }
 
 @Composable
 private fun FlowFoldButton(label: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(28.dp)
+            .size(ChipDefaults.MinHeight)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -230,6 +297,8 @@ fun ListDetailViewDemo() {
     var selected by remember { mutableIntStateOf(0) }
     val items = listOf("Overview", "Display", "Sound", "Battery")
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -279,6 +348,8 @@ fun ListDetailViewDemo() {
 fun SideNavigationBarDemo() {
     val state = rememberSideNavigationBarState()
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -320,6 +391,8 @@ fun SideNavigationBarDemo() {
 fun SidePaneLayoutDemo() {
     val state = rememberSidePaneLayoutState()
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -361,6 +434,8 @@ fun BannerIndicatorDemo() {
     var page by remember { mutableIntStateOf(0) }
     val pages = listOf("Featured", "New arrivals", "Recommended")
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -563,6 +638,8 @@ fun CardInstructionPreferenceDemo() {
         CardInstructionItem(str("Back up safely"), str("Encrypted copies in the cloud")),
     )
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

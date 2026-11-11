@@ -50,6 +50,7 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.Text
@@ -191,6 +192,8 @@ fun IconsPage(
                 ) { i ->
                     val index = filteredIndices[i]
                     Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                     ) {
                         BasicComponent(

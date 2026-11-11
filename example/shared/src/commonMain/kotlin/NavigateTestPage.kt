@@ -36,6 +36,7 @@ import appstate.LocalNavigator
 import component.BackNavigationIcon
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
@@ -122,6 +123,8 @@ fun NavTestPage(
             ) {
                 item(key = "nav_push") {
                     Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .padding(top = 12.dp, bottom = 16.dp),
@@ -135,6 +138,8 @@ fun NavTestPage(
                 }
                 item(key = "nav_layout") {
                     Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
                         modifier = Modifier
                             .padding(horizontal = 16.dp),
                     ) {

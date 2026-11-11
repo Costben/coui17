@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.DatePicker
 import io.github.suqi8.coui.kmp.basic.DateValue
 import io.github.suqi8.coui.kmp.basic.LunarDatePicker
@@ -35,6 +36,8 @@ fun DatePickerDemo() {
 
     DemoOptions(DemoToggle("Lunar calendar", lunar))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -77,6 +80,8 @@ fun TimePickerDemo() {
         DemoToggle("Show unit labels", showUnits),
     )
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

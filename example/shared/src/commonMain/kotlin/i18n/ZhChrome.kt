@@ -86,6 +86,7 @@ internal val zhChrome: Map<String, String> = mapOf(
     "IntentSeekBar" to "音量条",
     "TouchSearchView" to "触摸搜索视图",
     "SearchHistoryView" to "搜索历史视图",
+    "SearchHistoryChip" to "搜索历史标签",
     "SearchViewAnimate" to "搜索动画视图",
     "PopupMenuRotation" to "旋转弹出菜单",
     "HintAnimationLayout" to "提示动画布局",

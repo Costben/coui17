@@ -34,6 +34,7 @@ import component.highlight.rememberContainerHighlight
 import i18n.LocalAppStrings
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
@@ -104,6 +105,8 @@ fun BlurDemo() {
     ) {
         // Preview area
         Card(
+            cornerRadius = CardDefaults.GroupCornerRadius,
+            weight = CardDefaults.GroupWeight,
             modifier = Modifier.padding(bottom = 16.dp),
         ) {
             Box(
@@ -272,6 +275,8 @@ fun ForegroundBlurDemo() {
         modifier = Modifier.padding(horizontal = 16.dp),
     ) {
         Card(
+            cornerRadius = CardDefaults.GroupCornerRadius,
+            weight = CardDefaults.GroupWeight,
             modifier = Modifier.padding(bottom = 16.dp),
         ) {
             BgEffectBackground(

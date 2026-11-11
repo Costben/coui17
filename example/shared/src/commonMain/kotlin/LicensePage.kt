@@ -31,6 +31,7 @@ import appstate.LocalNavigator
 import component.BackNavigationIcon
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.VerticalScrollBar
 import io.github.suqi8.coui.kmp.basic.rememberScrollBarAdapter
@@ -111,6 +112,8 @@ fun LicensePage(
                 libraries?.let { libs ->
                     items(libs, key = { it.uniqueId }) { library ->
                         Card(
+                            cornerRadius = CardDefaults.GroupCornerRadius,
+                            weight = CardDefaults.GroupWeight,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .padding(bottom = 16.dp),

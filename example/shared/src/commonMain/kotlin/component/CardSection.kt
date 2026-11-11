@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
@@ -40,6 +41,8 @@ fun CardDemo() {
 
     DemoOptions(DemoChoice("Press feedback", PressFeedbackType.entries.map { it.name }, feedbackIndex))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)

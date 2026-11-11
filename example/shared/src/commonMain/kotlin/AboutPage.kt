@@ -342,6 +342,8 @@ private fun AboutContent(
                         .padding(bottom = scrollPadding.calculateBottomPadding()),
                 ) {
                     Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
                         modifier = Modifier.padding(horizontal = 16.dp)
                             .then(
                                 if (backdrop != null) {
@@ -392,6 +394,8 @@ private fun AboutContent(
                         )
                     }
                     Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .padding(top = 16.dp)

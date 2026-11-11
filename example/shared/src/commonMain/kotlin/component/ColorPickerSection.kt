@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.ColorPalette
 import io.github.suqi8.coui.kmp.basic.ColorPicker
 import io.github.suqi8.coui.kmp.basic.ColorSpace
@@ -45,6 +46,8 @@ fun ColorSwatchPickerCard() {
     var selectedIndex by remember { mutableIntStateOf(0) }
 
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
@@ -95,6 +98,8 @@ fun ColorPaletteDemo() {
     }
 
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
@@ -136,6 +141,8 @@ private fun ColorPickerCard(colorSpace: ColorSpace) {
     }
 
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)

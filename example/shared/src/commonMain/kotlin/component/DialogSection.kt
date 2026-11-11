@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import coui17.SingleInputDialogDemo
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
@@ -71,6 +72,8 @@ fun DialogDemo() {
         ),
     )
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

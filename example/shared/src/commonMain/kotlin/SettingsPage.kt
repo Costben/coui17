@@ -28,6 +28,7 @@ import i18n.LocalLanguageSwitchEnabled
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Scaffold
 import io.github.suqi8.coui.kmp.basic.ScrollBehavior
@@ -125,6 +126,8 @@ private fun SettingsContent(
                 if (LocalLanguageSwitchEnabled.current) {
                     SmallTitle(str("Language"))
                     Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                     ) {
                         OverlayDropdownPreference(
@@ -144,6 +147,8 @@ private fun SettingsContent(
             }
             item(key = "settingsUi") {
                 Card(
+                    cornerRadius = CardDefaults.GroupCornerRadius,
+                    weight = CardDefaults.GroupWeight,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 16.dp),
@@ -233,6 +238,8 @@ private fun SettingsContent(
             item(key = "settingsTransition") {
                 SmallTitle(str("Navigation3"))
                 Card(
+                    cornerRadius = CardDefaults.GroupCornerRadius,
+                    weight = CardDefaults.GroupWeight,
                     modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                 ) {
                     SwitchPreference(
@@ -267,6 +274,8 @@ private fun SettingsContent(
             item(key = "settingsAbout") {
                 SmallTitle(str("Other"))
                 Card(
+                    cornerRadius = CardDefaults.GroupCornerRadius,
+                    weight = CardDefaults.GroupWeight,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 ) {
                     ArrowPreference(

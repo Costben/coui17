@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -25,10 +28,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
+import io.github.suqi8.coui.kmp.basic.FlowLayout
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.IntentSeekBar
 import io.github.suqi8.coui.kmp.basic.IntentSeekBarDefaults
 import io.github.suqi8.coui.kmp.basic.IntentSeekBarSize
+import io.github.suqi8.coui.kmp.basic.SearchHistoryChip
 import io.github.suqi8.coui.kmp.basic.SearchHistoryView
 import io.github.suqi8.coui.kmp.basic.SearchHistoryViewDefaults
 import io.github.suqi8.coui.kmp.basic.Slider
@@ -70,6 +76,8 @@ fun IntentSeekBarDemoContent() {
         DemoChoice("Size", IntentSeekBarSize.entries.map { it.name }, sizeIndex),
     )
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -87,6 +95,8 @@ fun IntentSeekBarDemoContent() {
 @Composable
 fun TouchSearchViewDemoContent() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -103,11 +113,59 @@ fun SearchHistoryViewDemoContent() {
 
     DemoOptions(DemoToggle("Fold to 2 rows", folded), DemoToggle("Long-press to delete", longPressDelete))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
         SearchHistoryViewDemo(folded = folded.value, longPressDelete = longPressDelete.value)
+    }
+}
+
+/** Renders the "SearchHistoryChip" gallery section content: deletable keyword capsules on their own. */
+@Composable
+fun SearchHistoryChipDemoContent() {
+    val keywords = remember {
+        listOf("wireless earbuds", "screen protector", "usb-c hub", "laptop stand", "webcam")
+    }
+    var chips by remember { mutableStateOf(keywords) }
+
+    Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            Text(
+                text = str("Long-press a chip to delete it"),
+                style = COUITheme.textStyles.footnote1,
+                color = COUITheme.colorScheme.onSurfaceSecondary,
+            )
+            Spacer(Modifier.height(12.dp))
+            if (chips.isEmpty()) {
+                TextButton(text = str("Restore"), onClick = { chips = keywords })
+            } else {
+                FlowLayout(itemSpacing = 8.dp, lineSpacing = 8.dp) {
+                    chips.forEach { keyword ->
+                        key(keyword) {
+                            SearchHistoryChip(
+                                text = str(keyword),
+                                onClick = {},
+                                onDelete = { chips = chips - keyword },
+                                deleteContentDescription = str("Delete {}", keyword),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

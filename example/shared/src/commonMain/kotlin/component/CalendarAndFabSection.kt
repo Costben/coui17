@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.CalendarView
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.DateValue
 import io.github.suqi8.coui.kmp.basic.ExpandArrow
 import io.github.suqi8.coui.kmp.basic.ExpandableList
@@ -52,6 +53,8 @@ import utils.rememberBlurBackdrop
 @Composable
 fun CalendarViewDemoContent() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -79,6 +82,8 @@ fun ExpandableListDemoContent() {
 
     DemoOptions(DemoToggle("Accordion (one group at a time)", accordion))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -135,6 +140,8 @@ private fun FloatingButtonDemo(overWallpaper: Boolean) {
 
     if (!overWallpaper) {
         Card(
+            cornerRadius = CardDefaults.GroupCornerRadius,
+            weight = CardDefaults.GroupWeight,
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp),

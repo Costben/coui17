@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.MarqueeText
 import io.github.suqi8.coui.kmp.basic.NotificationSnackBar
@@ -43,6 +44,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun TagViewDemo() {
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -98,6 +101,8 @@ fun NotificationSnackBarDemo() {
 
     DemoOptions(DemoChoice("Image type", NotificationSnackBarImageType.entries.map { it.name }, imageTypeIndex))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
@@ -161,6 +166,8 @@ fun MarqueeTextDemo() {
 
     DemoOptions(DemoToggle("Long text", longText))
     Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),

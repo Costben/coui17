@@ -39,6 +39,7 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
 import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.FullPagePullToRefresh
 import io.github.suqi8.coui.kmp.basic.FullPagePullToRefreshTexts
 import io.github.suqi8.coui.kmp.basic.Scaffold
@@ -150,6 +151,8 @@ fun FullPagePullToRefreshPage(
                     ) {
                         items(count = itemCount, key = { "full_page_refresh_$it" }) { index ->
                             Card(
+                                cornerRadius = CardDefaults.GroupCornerRadius,
+                                weight = CardDefaults.GroupWeight,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 6.dp),
