@@ -51,6 +51,8 @@ import kotlin.math.floor
 import kotlin.math.min
 import androidx.compose.ui.graphics.BlendMode as ComposeBlendMode
 
+private const val ShadowOutsetPx = 150f
+
 internal data class CouiFloatingMaterial(
     val firstColor: Color,
     val firstBlendMode: BlendMode,
@@ -301,8 +303,8 @@ private fun Modifier.floatingSurfaces(
                     alpha = node.alpha
                 }
                 shadowLayers[index].apply {
-                    translationX = node.bounds.center.x - node.bounds.width * node.scaleX * 0.5f
-                    translationY = node.bounds.center.y - node.bounds.height * node.scaleY * 0.5f
+                    translationX = node.bounds.center.x - node.bounds.width * node.scaleX * 0.5f - ShadowOutsetPx
+                    translationY = node.bounds.center.y - node.bounds.height * node.scaleY * 0.5f - ShadowOutsetPx
                     scaleX = 1f
                     scaleY = 1f
                     alpha = 1f
@@ -446,18 +448,21 @@ private fun Modifier.floatingSurfaces(
                     val bounds = nodes[index].bounds
                     val node = nodes[index]
                     val recordSize = IntSize(
-                        ceil(bounds.width * node.scaleX).toInt().coerceAtLeast(1),
-                        ceil(bounds.height * node.scaleY).toInt().coerceAtLeast(1),
+                        ceil(bounds.width * node.scaleX + ShadowOutsetPx * 2f).toInt().coerceAtLeast(1),
+                        ceil(bounds.height * node.scaleY + ShadowOutsetPx * 2f).toInt().coerceAtLeast(1),
                     )
                     // 纯投影不录制 drawContent; 显式 Density 避免重定向外层作用域后形成循环引用。
                     layer.record(density = recordingDensity, layoutDirection = layoutDirection, size = recordSize) {
                         drawIntoCanvas { canvas ->
+                            canvas.translate(ShadowOutsetPx, ShadowOutsetPx)
                             val roundedRect = node.cornerRadius != null &&
                                 node.resolvedCornerRadius < min(bounds.width, bounds.height) * 0.5f
                             renderer.shadowRenderer.draw(
                                 canvas.nativeCanvas, index, bounds.width, bounds.height,
-                                node.scaleX, node.scaleY, windowOrigin.x + layer.translationX,
-                                windowOrigin.y + layer.translationY, node.alpha, shadows[index].color.toArgb(),
+                                node.scaleX, node.scaleY,
+                                windowOrigin.x + (node.bounds.center.x - node.bounds.width * node.scaleX * 0.5f),
+                                windowOrigin.y + (node.bounds.center.y - node.bounds.height * node.scaleY * 0.5f),
+                                node.alpha, shadows[index].color.toArgb(),
                                 shadows[index].elevation, shadows[index].lightY,
                                 if (shadows[index].lightZ > 0f) shadows[index].lightZ else defaultLightZ,
                                 shadows[index].lightRadius,
