@@ -316,6 +316,31 @@ class FullPagePullToRefreshState internal constructor(
         }
     }
 
+    /**
+     * Immediately snaps the page to the refreshing threshold without playing a downward pull
+     * animation, and marks the state as [FullPageRefreshState.Refreshing].
+     *
+     * Useful for double-tap / programmatic refresh actions where the page should directly rest at
+     * the pulled-down position while loading, and then rebound back to the top once finished.
+     */
+    fun snapToRefreshing(onRefresh: (() -> Unit)? = null) {
+        if (refreshState == FullPageRefreshState.Refreshing ||
+            refreshState == FullPageRefreshState.RefreshComplete
+        ) {
+            onRefresh?.invoke()
+            return
+        }
+        completionJob?.cancel()
+        completionJob = null
+        animationJob?.cancel()
+        animationJob = null
+        isRefreshingInternal = true
+        refreshState = FullPageRefreshState.Refreshing
+        val target = if (refreshThresholdPx > 0f) refreshThresholdPx else 240f
+        snapTo(target)
+        onRefresh?.invoke()
+    }
+
     internal fun onTouchStart() {
         if (isTouching) return
         isTouching = true
