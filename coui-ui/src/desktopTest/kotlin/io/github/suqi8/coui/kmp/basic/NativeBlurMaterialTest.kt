@@ -71,6 +71,14 @@ class NativeBlurMaterialTest {
             MaterialStrokeParams.frameworkCapsule11(isDark = true),
         )
         assertEquals(
+            MaterialStrokeParams.FrameworkCapsule6Dark.copy(edgeAlpha = 0.8f * 0.22f),
+            segmentContainerStroke(isDark = true),
+        )
+        assertEquals(
+            MaterialStrokeParams.FrameworkCapsule6Light.copy(edgeAlpha = 0.6f * 0.22f),
+            segmentContainerStroke(isDark = false),
+        )
+        assertEquals(
             MaterialStrokeParams.FrameworkCapsule10Light,
             MaterialStrokeParams.frameworkCapsule10(isDark = false),
         )

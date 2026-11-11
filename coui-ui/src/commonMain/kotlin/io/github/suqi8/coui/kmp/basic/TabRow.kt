@@ -455,11 +455,11 @@ private fun SegmentButtonRow(
     val hasContainerSurface = contourPadding > 0.dp && containerColor.alpha > 0f
     val glassActive = hasContainerSurface && backdrop != null && isBlurEnabled()
     // `COUISegmentButtonLayout.setMaterialEffectEnabled(true)` pairs the outer `TYPE_CONTENT_SEGMENT_BUTTON`
-    // blur with the `TYPE_FRAMEWORK_CAPSULE_11` container edge + inner shadow (the `COUIShadowEdgeDrawable`
-    // stroke type `mBackgroundStrokeType`) and the `TYPE_FRAMEWORK_CAPSULE_10` indicator edge
-    // (`setShadowEnable(false).setEdgeEnable(true)`).
+    // blur with the `TYPE_FRAMEWORK_CAPSULE_6` container edge + inner shadow (`enableContainerMaterialEffect`;
+    // `TYPE_FRAMEWORK_CAPSULE_11` is only the `COUIShadowEdgeDrawable` fallback) and the
+    // `TYPE_FRAMEWORK_CAPSULE_10` indicator edge (`setShadowEnable(false).setEdgeEnable(true)`).
     val resolvedContainerMaterial = containerMaterial
-        ?: if (hasContainerSurface && backdrop != null) MaterialStrokeParams.frameworkCapsule11(isDarkTheme) else null
+        ?: if (hasContainerSurface && backdrop != null) segmentContainerStroke(isDarkTheme) else null
     val resolvedIndicatorMaterial = indicatorMaterial
         ?: if (hasContainerSurface && backdrop != null) MaterialStrokeParams.frameworkCapsule10(isDarkTheme) else null
     val indicatorShader = rememberMaterialShadowEdgeShader(
@@ -1091,11 +1091,15 @@ object TabRowDefaults {
     )
 
     /**
-     * Outer capsule rim and inner shadow (`TYPE_FRAMEWORK_CAPSULE_11`) applied by
-     * `COUISegmentButtonLayout.drawShadowEdge` (`mBackgroundStrokeType`) when `setMaterialEffectEnabled(true)` is set.
+     * Outer capsule rim and inner shadow of `COUISegmentButtonLayout` when `setMaterialEffectEnabled(true)` is set.
+     *
+     * The type is `TYPE_FRAMEWORK_CAPSULE_6`; `TYPE_FRAMEWORK_CAPSULE_11` is only the fallback used when the native
+     * material cannot run. Its 0.8 (dark) / 0.6 (light) edge alpha is the shader's ceiling, not what reaches the
+     * screen: on a ColorOS 16 segment bar the top rim sits about 42 levels above the capsule fill, an effective
+     * alpha near 0.18. Drawn as-is the rim reads as a solid white line, so the alpha is scaled down to match.
      */
     @Composable
-    fun containerStroke(isDark: Boolean = isDarkTheme()): MaterialStrokeParams = MaterialStrokeParams.frameworkCapsule11(isDark)
+    fun containerStroke(isDark: Boolean = isDarkTheme()): MaterialStrokeParams = segmentContainerStroke(isDark)
 
     /**
      * Sliding indicator rim (`TYPE_FRAMEWORK_CAPSULE_10`) applied by
@@ -1382,4 +1386,11 @@ private fun Density.pressedScaleEndRatio(size: Size): Float {
         else -> PressedScaleMin + (PressedScaleMax - PressedScaleMin) *
             PressedScaleEasing.transform((area - PressedScaleMinAreaDp2) / (PressedScaleMaxAreaDp2 - PressedScaleMinAreaDp2))
     }
+}
+
+/** Scale from the `TYPE_FRAMEWORK_CAPSULE_6` edge alpha to the rim brightness measured on device (0.8 × 0.22 ≈ 0.18). */
+private const val SEGMENT_CONTAINER_EDGE_ALPHA_SCALE = 0.22f
+
+internal fun segmentContainerStroke(isDark: Boolean): MaterialStrokeParams = MaterialStrokeParams.frameworkCapsule6(isDark).let {
+    it.copy(edgeAlpha = it.edgeAlpha * SEGMENT_CONTAINER_EDGE_ALPHA_SCALE)
 }
