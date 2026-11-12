@@ -82,6 +82,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -158,6 +160,7 @@ fun ChipTabGroup(
     leadingIcon: ImageVector? = null,
     onLeadingIconClick: () -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(),
+    backdrop: Backdrop? = null,
 ) {
     val currentOnSelectedChange = rememberUpdatedState(onSelectedChange)
     val scrollState = rememberScrollState()
@@ -200,6 +203,7 @@ fun ChipTabGroup(
                 showRedDot = false,
                 iconOnly = true,
                 drawElevation = true,
+                backdrop = backdrop,
             ) {
                 Icon(
                     imageVector = leadingIcon,
@@ -262,6 +266,7 @@ fun ChipTabGroup(
                             iconOnly = false,
                             drawElevation = false,
                             pressScaleHolder = tabPressScales[index],
+                            backdrop = backdrop,
                         ) { contentColor ->
                             ChipTabLabel(
                                 label = tab.label,
@@ -451,6 +456,8 @@ data class ChipTabData(
  * @param count The optional count drawn after the label: [ChipTabDefaults.countTextStyle]
  *   (`couiTextBodyS`, 13sp) in `?attr/couiColorLabelSecondary`, with
  *   [ChipTabDefaults.CountStartMargin] of margin before it.
+ * @param backdrop The page backdrop the pill frosts, or `null` for the flat fill. Only pass a
+ *   backdrop the row is not itself recorded into.
  */
 @Composable
 fun ChipTab(
@@ -462,6 +469,7 @@ fun ChipTab(
     enabled: Boolean = true,
     showRedDot: Boolean = false,
     count: Int? = null,
+    backdrop: Backdrop? = null,
 ) {
     ChipTabSurface(
         selected = selected,
@@ -471,6 +479,7 @@ fun ChipTab(
         showRedDot = showRedDot,
         iconOnly = false,
         drawElevation = true,
+        backdrop = backdrop,
     ) { contentColor ->
         ChipTabLabel(
             label = label,
@@ -502,6 +511,7 @@ private fun ChipTabSurface(
     drawElevation: Boolean,
     modifier: Modifier = Modifier,
     pressScaleHolder: MutableFloatState? = null,
+    backdrop: Backdrop? = null,
     content: @Composable RowScope.(contentColor: Color) -> Unit,
 ) {
     // COUIChipTabDrawable.onStateChange: the checked layer animates between 0 and 1 on COUISpringForce
@@ -633,6 +643,14 @@ private fun ChipTabSurface(
         CapsuleOutlineShape(cornerRadius = ChipTabDefaults.CornerRadius, squircleEnabled = squircleEnabled)
     }
 
+    // With a page backdrop the pill frosts the content behind it, the way the notes app's chips do:
+    // a blurred copy of the backdrop plus the two blend colours, and the checked layer only adds a
+    // wash instead of the opaque surface, so a checked pill still reads as glass.
+    val blurRadius = remember(density) { with(density) { GlassChipDefaults.BlurRadiusPx.toDp() } }
+    val blurColors = remember(isDark, checkedLayerAlpha, backdrop) {
+        if (backdrop != null) GlassChipDefaults.blurColors(isDark, checkedLayerAlpha) else null
+    }
+
     Box(
         modifier = modifier
             .then(sizeModifier)
@@ -727,6 +745,18 @@ private fun ChipTabSurface(
                     Modifier
                 },
             )
+            .then(
+                if (blurColors != null) {
+                    Modifier.textureBlur(
+                        backdrop = backdrop!!,
+                        shape = pillShape,
+                        blurRadius = blurRadius.value,
+                        colors = blurColors,
+                    )
+                } else {
+                    Modifier
+                },
+            )
             // The native clamps chipCornerRadius to min(width, height) / 2; for the 32dp pill that is
             // the 16dp continuous-curvature system capsule (`CapsuleOutlineShape`), and the fill is
             // drawn by hand along that outline because its layers carry independent animated alphas.
@@ -735,11 +765,19 @@ private fun ChipTabSurface(
                 val silhouette = Path().apply { addOutline(outline) }
                 val surfaceBrush = Brush.verticalGradient(colorStops = surfaceStops, startY = 0f, endY = size.height)
                 onDrawWithContent {
-                    if (checkedLayerAlpha > 0f) {
-                        drawPath(path = silhouette, brush = surfaceBrush, alpha = checkedLayerAlpha)
-                    }
-                    if (checkedLayerAlpha < 1f) {
-                        drawOutline(outline, color = container4.copy(alpha = container4.alpha * (1f - checkedLayerAlpha)))
+                    if (blurColors == null) {
+                        if (checkedLayerAlpha > 0f) {
+                            drawPath(path = silhouette, brush = surfaceBrush, alpha = checkedLayerAlpha)
+                        }
+                        if (checkedLayerAlpha < 1f) {
+                            drawOutline(outline, color = container4.copy(alpha = container4.alpha * (1f - checkedLayerAlpha)))
+                        }
+                    } else if (checkedLayerAlpha > 0f) {
+                        // The blurred pill already carries the fill; the opaque checked surface would
+                        // cover the blur, so the checked layer only lays its lift on top.
+                        clipPath(silhouette) {
+                            drawRect(color = GlassChipDefaults.highlightWash(isDark, checkedLayerAlpha))
+                        }
                     }
                     // The checked pill's glass rim: the light and shadow the material lays on top of
                     // the fill, inside the silhouette and under the label.

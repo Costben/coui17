@@ -116,6 +116,7 @@ ChipTab(
 | leadingIcon      | ImageVector?            | 页签前仅图标 chip 的图标 | null     | 否   |
 | onLeadingIconClick | () -> Unit            | 点击仅图标 chip 时的回调 | {}       | 否   |
 | contentPadding   | PaddingValues           | 页签四周的内边距,位于滚动区域内 | PaddingValues() | 否 |
+| backdrop         | Backdrop?               | 胶囊采样的页面背景;为 null 时走平涂 | null | 否 |
 
 ### ChipTab
 
@@ -128,6 +129,7 @@ ChipTab(
 | icon       | ImageVector? | 可选 16dp 前置图标      | null     | 否   |
 | enabled    | Boolean      | 是否启用该页签          | true     | 否   |
 | showRedDot | Boolean      | 该页签是否带红点        | false    | 否   |
+| backdrop   | Backdrop?    | 胶囊采样的页面背景      | null     | 否   |
 | count      | Int?         | 标签之后可选绘制的计数  | null     | 否   |
 
 ### ChipTabData
@@ -202,6 +204,7 @@ ChipTab(
 
 ## 行为
 
+- 传入 `backdrop` 时,胶囊改为便签那套磨砂材质:用 `Modifier.textureBlur` 取背景的模糊副本,再叠 `GlassChipDefaults.blurColors` 那对混合色;选中层只额外铺一层 `highlightWash` 受光,不再画不透明的选中面,所以选中胶囊依然是玻璃而不是色块。不传 `backdrop`(或模糊被关闭)时保持原来的平涂双层填充。
 - 胶囊填充即 `COUIChipTabDrawable.drawDualLayerBackground` 与 `drawLightOSCheckedBackground` 的双层结构:选中面随选中层 alpha 淡出——浅色为 `#F5F6F7`,深色为 `#4B4B4B`——`couiColorContainer4` 以未选中层 alpha 覆盖其上。两个取值都是便签应用胶囊主体的实测值。
 - 选中胶囊的玻璃高光绘制在轮廓之内、填充与文字之间:一道 0.8dp 的描边沿胶囊轮廓行走,白色的 alpha 随纵向位置变化——顶边 100%,向内 34px 处衰减到 0,再在离底边 46px 的范围内回到 100%(深色为 0.55dp,顶边 27% 白、底边 21% 白,衰减距离 33px / 69px)。浅色另外在底边补 4px 纯白加 4px 渐升、从左边缘向内 60px 由 242 回到填充色的内阴影、以及右侧对称的 247 微亮。这些数值取自便签应用在 620dpi 上的真机实测,等价于它的 `TYPE_CONTENT_CHIP_TAB_SELECTED` 玻璃高光与 `TYPE_FRAMEWORK_CAPSULE_2` 描边,但不采样背景。
 - 选中与取消选中会让两个图层在临界阻尼弹簧上交叉渐变(response 0.2 / bounce 0,`COUIChipTabDrawable.CheckedLayerAlphaAnimation`),在 1/256 的最小可见变化处截断。文本与图标颜色不随选中状态变化:两种状态都用 `couiColorLabelPrimary`。
@@ -211,7 +214,7 @@ ChipTab(
 
 ## 未移植
 
-- `COUIChipTab.applyMaterialEffect` 的模糊 / 高光路径,它由 `COUIMaterialStateManager` 的设备特性开关与主题布尔量控制。本移植绘制实测等价形态:与玻璃材质在页面底色上的合成结果一致的填充与高光,但不采样背景——胶囊位于滚动器的离屏渐隐层内,在该层内采样页面背景会让渲染线程的节点树自我引用。
+- `COUIChipTab.applyMaterialEffect` 的 spot-light 路径,它由 `COUIMaterialStateManager` 的菜单特性开关与主题布尔量控制。模糊那一半改由调用方传入 `backdrop` 触发:胶囊位于滚动器的离屏渐隐层内,采样页面背景有让渲染线程节点树自我引用的风险,所以默认不采样,只在调用方明确给出背景时启用。
 - `COUIChipTabLayout` 的纯图标前置胶囊(32dp 圆形胶囊,内含 20dp 图标、前后各 6dp 内边距),以及该布局的 16dp 滚动区留白。
 - `COUIChipTabGroupFragmentMediator`,即 fragment 切换与淡入辅助类。
 - `coui_chip_tab_unit` 与 `coui_chip_tab_position_in_group` 两个字符串;报告证明没有任何 chip 类引用它们。

@@ -116,6 +116,7 @@ ChipTab(
 | leadingIcon      | ImageVector?            | Icon of the icon-only chip before the tabs | null       | No       |
 | onLeadingIconClick | () -> Unit            | Callback when the icon-only chip is clicked | {}        | No       |
 | contentPadding   | PaddingValues           | Padding around the tabs, inside the scroll | PaddingValues() | No |
+| backdrop         | Backdrop?               | Page backdrop the pills frost; null keeps the flat fill | null | No |
 
 ### ChipTab
 
@@ -128,6 +129,7 @@ ChipTab(
 | icon       | ImageVector? | Optional 16dp leading icon           | null          | No       |
 | enabled    | Boolean      | Whether the tab is enabled           | true          | No       |
 | showRedDot | Boolean      | Whether the tab carries the red dot  | false         | No       |
+| backdrop   | Backdrop?    | Page backdrop the pill frosts | null     | No   |
 | count      | Int?         | Optional count drawn after the label | null          | No       |
 
 ### ChipTabData
@@ -203,6 +205,7 @@ ChipTab(
 ## Behavior
 
 - The pill fill is the dual layer of `COUIChipTabDrawable.drawDualLayerBackground` and `drawLightOSCheckedBackground`: the checked surface fading with the checked layer alpha — `#F5F6F7` in light themes, `#4B4B4B` in dark ones — and `couiColorContainer4` over it at the unchecked layer alpha. Both values are the measured bodies of the Notes app's pills.
+- With a `backdrop` the pill switches to the Notes app's frosted material: `Modifier.textureBlur` samples a blurred copy of the backdrop under `GlassChipDefaults.blurColors`, and the checked layer only adds `GlassChipDefaults.highlightWash` on top instead of the opaque surface, so a checked pill stays glass rather than a solid block. Without a backdrop (or with blur disabled) the flat dual-layer fill above is drawn instead.
 - The checked pill's glass rim is drawn inside the silhouette between the fill and the label, as a 0.8dp stroke along the silhouette whose white alpha follows the outline: 100% down the top edge, fading out 34px in, back to 100% over the last 46px above the bottom edge (dark: 0.55dp, 27% white on top, 21% on the bottom, fading out 33px / 69px in). Light themes add a 4px solid white cap on the bottom edge with a 4px ramp above it, a vertical shade from 242 down 60px from the left edge and a faint lift to 247 from the right one. These are the on-device measurements of the Notes app at 620dpi, matching its `TYPE_CONTENT_CHIP_TAB_SELECTED` glass bloom and `TYPE_FRAMEWORK_CAPSULE_2` stroke without compositing a backdrop.
 - Checking and unchecking cross-fade the two layers on a critically damped spring (response 0.2 / bounce 0, `COUIChipTabDrawable.CheckedLayerAlphaAnimation`), cut at the 1/256 minimum visible change. The text and icon colour does not change with the selection: both states use `couiColorLabelPrimary`.
 - Selecting a tab scrolls it into view when one of its edges falls inside the visible rect, which is inset by the 12dp fade width on the sides that are scrolled off (`COUIChipTabGroup.checkOcclusion`); the scroll position animates on the response 0.4 / bounce 0.2 spring (`SCROLL_ANIMATION_RESPONSE` / `SCROLL_ANIMATION_BOUNCE`). The tab is not scrolled on the first composition, matching the native chip click listener.
@@ -211,7 +214,7 @@ ChipTab(
 
 ## Not Ported
 
-- The material blur / spot-light path of `COUIChipTab.applyMaterialEffect`, gated behind the `COUIMaterialStateManager` device feature flags and theme booleans. This port draws the measured equivalent: the same fill and rim the glass produces over the page, without sampling a backdrop — a tab sits inside the scroller's offscreen fading-edge layer, and sampling the page backdrop from there re-enters the node tree on the render thread.
+- The spot-light path of `COUIChipTab.applyMaterialEffect`, gated behind the `COUIMaterialStateManager` device feature flags and theme booleans. The blur half is opt-in through the `backdrop` parameter: a tab sits inside the scroller's offscreen fading-edge layer, where sampling the page backdrop can re-enter the node tree on the render thread, so nothing is sampled unless the caller hands a backdrop in.
 - The icon-only leading chip of `COUIChipTabLayout` (a 32dp round chip of a 20dp icon with 6dp start/end padding) and that layout's 16dp scroller padding.
 - `COUIChipTabGroupFragmentMediator`, the fragment switch and fade-in helper.
 - The `coui_chip_tab_unit` and `coui_chip_tab_position_in_group` strings; the report proves that no chip class references them.
