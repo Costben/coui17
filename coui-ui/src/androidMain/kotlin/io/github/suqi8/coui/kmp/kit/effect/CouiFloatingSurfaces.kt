@@ -133,11 +133,46 @@ internal fun Modifier.couiFloatingSurface(
     foregroundComposition: Boolean = false,
     beforeContent: (DrawScope.(Path) -> Unit)? = null,
     surface: () -> CouiFloatingSurface,
+): Modifier = couiFloatingSurface(
+    backdrop = backdrop,
+    renderer = renderer,
+    material = material,
+    shadow = shadow,
+    shape = shape,
+    contentLayer = contentLayer,
+    contourGlowEnabled = contourGlowEnabled,
+    foregroundComposition = foregroundComposition,
+    beforeContent = beforeContent,
+    useMenuLightEdge = false,
+    surface = surface,
+)
+
+@RequiresApi(34)
+@Composable
+internal fun Modifier.couiFloatingSurface(
+    backdrop: CouiBackdrop?,
+    renderer: CouiFloatingRenderer,
+    material: CouiFloatingMaterial,
+    shadow: CouiFloatingShadow,
+    shape: Shape,
+    contentLayer: GraphicsLayer,
+    contourGlowEnabled: Boolean,
+    foregroundComposition: Boolean,
+    beforeContent: (DrawScope.(Path) -> Unit)?,
+    useMenuLightEdge: Boolean,
+    surface: () -> CouiFloatingSurface,
 ): Modifier {
     require(renderer.standalone)
     return floatingSurfaces(
-        backdrop, renderer, listOf(material), listOf(shadow), listOf(shape),
-        listOf(contentLayer), contourGlowEnabled, foregroundComposition,
+        backdrop,
+        renderer,
+        listOf(material),
+        listOf(shadow),
+        listOf(shape),
+        listOf(contentLayer),
+        contourGlowEnabled,
+        foregroundComposition,
+        useMenuLightEdge = useMenuLightEdge,
         beforeContent = beforeContent?.let { draw -> { _, path -> draw(path) } },
     ) { listOf(surface()) }
 }
@@ -199,6 +234,7 @@ private fun Modifier.floatingSurfaces(
     contentLayers: List<GraphicsLayer>,
     contourGlowEnabled: Boolean,
     foregroundComposition: Boolean = false,
+    useMenuLightEdge: Boolean = false,
     beforeContent: (DrawScope.(Int, Path) -> Unit)? = null,
     drawOrder: List<Int>? = null,
     surfaces: () -> List<CouiFloatingSurface>,
@@ -384,8 +420,9 @@ private fun Modifier.floatingSurfaces(
                             ball[3], ball[4], ball[5], ball[6], ball[7], height, 0f,
                         )
                         shader.setFloatUniform("u_size", bounds.width, height)
-                        // 只淡出材质前景; 最后合成的 destination 必须保持原 alpha。
+                        // Fade only the foreground material; the composited destination keeps its original alpha.
                         shader.setFloatUniform("u_alpha", node.alpha)
+                        shader.setFloatUniform("uUseMenuLightEdge", if (useMenuLightEdge) 1f else 0f)
                         shader.setFloatUniform("u_commonArray", common)
                         if (renderer.standalone) {
                             shader.setFloatUniform("u_baseShapeCtxArray", floatingShapeContext(ball[2], ball[3], ball[5], ball[4]))

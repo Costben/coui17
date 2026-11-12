@@ -179,8 +179,7 @@ object GlassChipDefaults {
      * lay this wash on top. It is scaled by the checked fraction, so the lift fades in with the
      * same spring that drives the colour.
      */
-    fun highlightWash(dark: Boolean, fraction: Float = 1f): Color =
-        Color.White.copy(alpha = (if (dark) 0.20f else 0.08f) * fraction.coerceIn(0f, 1f))
+    fun highlightWash(dark: Boolean, fraction: Float = 1f): Color = Color.White.copy(alpha = (if (dark) 0.20f else 0.08f) * fraction.coerceIn(0f, 1f))
 
     /** The label and icon colour of a chip at [fraction]. */
     fun contentColor(dark: Boolean, fraction: Float): Color {
@@ -188,7 +187,6 @@ object GlassChipDefaults {
         val active = if (dark) Color(0xF2FFFFFF) else Color(0xF2000000)
         return lerp(idle, active, fraction.coerceIn(0f, 1f))
     }
-
 }
 
 /**
@@ -431,7 +429,7 @@ private fun GlassChipSurface(
     onClick: () -> Unit,
     onReselect: (() -> Unit)?,
     backdrop: Backdrop?,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
     content: @Composable RowScope.(contentColor: Color) -> Unit,
 ) {
@@ -473,8 +471,11 @@ private fun GlassChipSurface(
                 // The flat fallback already carries the lift in [GlassChipDefaults.flatFill];
                 // only the blurred chip needs the extra wash on top of [blurColors].
                 val wash =
-                    if (backdrop != null) GlassChipDefaults.highlightWash(dark, fraction)
-                    else Color.Transparent
+                    if (backdrop != null) {
+                        GlassChipDefaults.highlightWash(dark, fraction)
+                    } else {
+                        Color.Transparent
+                    }
                 if (wash.alpha > 0f) {
                     drawRoundRect(
                         color = wash,

@@ -102,6 +102,12 @@ The indicator moves like the system's: on a selection change it flattens to 90% 
 | listState         | LazyListState?            | External scroll state for tabs   | null                                                | No       |
 | interactionSource | MutableInteractionSource? | Interaction source for tab items | null                                                | No       |
 | indication        | Indication?               | Indication for tab items         | null                                                | No       |
+| dragSelectionEnabled | Boolean                | Drag indicator to switch tabs    | true                                                | No       |
+| commitOnRelease   | Boolean                   | Defer commit until release       | false                                               | No       |
+| onTabReselected   | ((Int) -> Unit)?          | Callback when selected tab is re-tapped | null                                         | No       |
+| onTabClick        | ((Int) -> Unit)?          | Callback when any tab is tapped without dragging | null                                | No       |
+| tabModifier       | ((Int) -> Modifier)?      | Modifier factory for each segment root   | null                                                | No       |
+| tabContent        | (@Composable (Int, String, Boolean) -> Unit)? | Custom segment content slot | null                           | No       |
 
 ### TabRowWithContour Properties
 
@@ -117,11 +123,21 @@ The indicator moves like the system's: on a selection change it flattens to 90% 
 | height            | Dp                        | Height of the tab row                    | TabRowDefaults.TabRowWithContourHeight       | No       |
 | cornerRadius      | Dp                        | Corner radius of the indicator           | TabRowDefaults.TabRowWithContourCornerRadius | No       |
 | contourPadding    | Dp                        | Inset between container and indicator    | TabRowDefaults.TabRowWithContourPadding      | No       |
+| segmentPadding    | Dp                        | Horizontal padding inside each segment   | 12.dp                                        | No       |
 | itemSpacing       | Dp                        | Spacing between tabs                     | 0.dp                                         | No       |
 | contentAlignment  | Alignment                 | Alignment of tab content                 | Alignment.Center                             | No       |
 | listState         | LazyListState?            | External scroll state for tabs           | null                                         | No       |
 | interactionSource | MutableInteractionSource? | Interaction source for tab items         | null                                         | No       |
 | indication        | Indication?               | Indication for tab items                 | null                                         | No       |
+| indicatorMaterial | MaterialStrokeParams?     | Custom indicator material edge           | null                                         | No       |
+| backdrop          | Backdrop?                 | Blurred backdrop behind the capsule      | null                                         | No       |
+| dragSelectionEnabled | Boolean                | Drag indicator to switch tabs            | true                                         | No       |
+| commitOnRelease   | Boolean                   | Defer commit until release               | false                                        | No       |
+| touchMotionEnabled | Boolean                  | Outer capsule touch deformation & spotlight | true                                      | No       |
+| containerMaterial | MaterialStrokeParams?     | Custom container material edge           | null                                         | No       |
+| onTabReselected   | ((Int) -> Unit)?          | Callback when selected tab is re-tapped  | null                                         | No       |
+| onTabClick        | ((Int) -> Unit)?          | Callback when any tab is tapped without dragging | null                                 | No       |
+| tabContent        | (@Composable (Int, String, Boolean) -> Unit)? | Custom segment content slot | null                            | No       |
 
 ### TabRowDefaults Object
 

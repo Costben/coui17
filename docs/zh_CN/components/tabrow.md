@@ -102,6 +102,12 @@ TabRowWithContour(
 | listState         | LazyListState?            | 标签列表的外部滚动状态 | null                                                             | 否       |
 | interactionSource | MutableInteractionSource? | 标签项的交互源         | null                                                             | 否       |
 | indication        | Indication?               | 标签项的点击反馈效果   | null                                                             | 否       |
+| dragSelectionEnabled | Boolean                | 是否允许拖动指示器切栏 | true                                                             | 否       |
+| commitOnRelease   | Boolean                   | 是否抬手时才提交选中项 | false                                                            | 否       |
+| onTabReselected   | ((Int) -> Unit)?          | 再次点按已选中项的回调 | null                                                             | 否       |
+| onTabClick        | ((Int) -> Unit)?          | 任意标签非拖拽点按回调 | null                                                             | 否       |
+| tabModifier       | ((Int) -> Modifier)?      | 每个分段根节点的修饰符工厂 | null                                                         | 否       |
+| tabContent        | (@Composable (Int, String, Boolean) -> Unit)? | 自定义标签内容槽位 | null                                                | 否       |
 
 ### TabRowWithContour 属性
 
@@ -117,11 +123,22 @@ TabRowWithContour(
 | height            | Dp                        | 标签行的高度               | TabRowDefaults.TabRowWithContourHeight       | 否       |
 | cornerRadius      | Dp                        | 滑动指示器的圆角半径       | TabRowDefaults.TabRowWithContourCornerRadius | 否       |
 | contourPadding    | Dp                        | 容器与滑动指示器间的内缩   | TabRowDefaults.TabRowWithContourPadding      | 否       |
+| segmentPadding    | Dp                        | 单个分段内部的水平内边距   | 12.dp                                        | 否       |
 | itemSpacing       | Dp                        | 标签之间的间距             | 0.dp                                         | 否       |
 | contentAlignment  | Alignment                 | 标签内容的对齐方式         | Alignment.Center                             | 否       |
 | listState         | LazyListState?            | 标签列表的外部滚动状态     | null                                         | 否       |
 | interactionSource | MutableInteractionSource? | 标签项的交互源             | null                                         | 否       |
 | indication        | Indication?               | 标签项的点击反馈效果       | null                                         | 否       |
+| indicatorMaterial | MaterialStrokeParams?     | 自定义指示器材质描边       | null                                         | 否       |
+| backdrop          | Backdrop?                 | 容器背后的模糊采样源       | null                                         | 否       |
+| dragSelectionEnabled | Boolean                | 是否允许拖动指示器切栏     | true                                         | 否       |
+| commitOnRelease   | Boolean                   | 是否抬手时才提交选中项     | false                                        | 否       |
+| touchMotionEnabled | Boolean                  | 外框胶囊按压形变与跟手光   | true                                         | 否       |
+| containerMaterial | MaterialStrokeParams?     | 自定义容器材质描边         | null                                         | 否       |
+| onTabReselected   | ((Int) -> Unit)?          | 再次点按已选中项的回调     | null                                         | 否       |
+| onTabClick        | ((Int) -> Unit)?          | 任意标签非拖拽点按回调     | null                                         | 否       |
+| tabModifier       | ((Int) -> Modifier)?      | 每个分段根节点的修饰符工厂 | null                                         | 否       |
+| tabContent        | (@Composable (Int, String, Boolean) -> Unit)? | 自定义标签内容槽位 | null                                         | 否       |
 
 ### TabRowDefaults 对象
 

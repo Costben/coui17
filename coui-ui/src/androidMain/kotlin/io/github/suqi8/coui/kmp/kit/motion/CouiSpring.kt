@@ -22,6 +22,8 @@ internal class CouiSpring(
     private var onFrame: ((Float) -> Unit)? = null
     private var onEnd: (() -> Unit)? = null
     private var needsReset = false
+    private var minValue = -Float.MAX_VALUE
+    private var maxValue = Float.MAX_VALUE
     private var animation = newAnimation()
 
     val state: State<Float> get() = position
@@ -29,6 +31,13 @@ internal class CouiSpring(
     val isRunning: Boolean get() = animation.isRunning
     var velocity: Float = 0f
         private set
+
+    /** Passes optional bounds to the AndroidX integrator so rebound timing and velocity stay intact. */
+    fun setBounds(minimum: Float, maximum: Float) {
+        require(minimum.isFinite() && maximum.isFinite() && minimum <= maximum)
+        minValue = minimum
+        maxValue = maximum
+    }
 
     fun animateTo(
         target: Float,
@@ -45,7 +54,9 @@ internal class CouiSpring(
         animation.spring.dampingRatio = 1f - bounce
         animation.spring.stiffness = ((2.0 * PI / response) * (2.0 * PI / response)).toFloat()
         animation.setMinimumVisibleChange(minimumChange)
-        if (!animation.isRunning) animation.setStartValue(value)
+        animation.setMinValue(minValue)
+        animation.setMaxValue(maxValue)
+        if (!animation.isRunning) animation.setStartValue(value.coerceIn(minValue, maxValue))
         if (velocity != null) {
             this.velocity = velocity
             animation.setStartVelocity(velocity)

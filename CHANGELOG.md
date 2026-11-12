@@ -8,6 +8,7 @@ All notable user-visible changes are documented here. The format follows
 
 ### Added
 
+- Migrated COUI-Kit segmented control (`SegmentedControl`, `CouiSegmentMotion`, `CouiSegmentedControlDefaults`) and PR #21 floating-surface light-edge calibration (`uUseMenuLightEdge` / `lightEdgeReferenceColor`, coverage-based `blendShadowColor`, `CouiSpring.setBounds`, `CouiVelocityTracker`) into `TabRow` / `TabRowWithContour` on Android via expect/actual, preserving Skiko rendering and binary compatibility. `TabRow` and `TabRowWithContour` also gain `onTabReselected`, `onTabClick`, and custom `tabContent` slots while honoring bounded explicit widths.
 - `SearchHistoryChip`: a search-history keyword chip with long-press-to-delete. A long press springs a "×" out of the chip's end edge while the chip widens by 18dp on one critically damped spring, keeping its 32dp height; tapping the "×" deletes, tapping the chip folds it back. `SearchHistoryView` takes `onItemDelete` / `itemDeleteContentDescription` to use it for every keyword.
 - Migrated COUI-Kit slider implementation on Android via expect/actual: capsule track geometry with native dynamic spring animations, spotlight touch effect, custom key points with magnetic snapping, and secondary buffer progress, while preserving Skiko rendering and full API compatibility across platforms.
 

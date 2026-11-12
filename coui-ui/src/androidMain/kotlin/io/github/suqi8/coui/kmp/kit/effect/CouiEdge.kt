@@ -147,8 +147,44 @@ internal fun rectLineFadeForSize(
     return (solid * mappedTotal / total) to (mappedTotal * fade / total)
 }
 
+internal const val CouiEdgeColorFunctions = """
+        float colorDodge(float s, float d) {
+            return d / (1.0 - s + 0.00000001);
+        }
+
+        float3 colorDodge(float3 s, float3 d) {
+            return float3(colorDodge(s.x, d.x), colorDodge(s.y, d.y), colorDodge(s.z, d.z));
+        }
+
+        // Shade Light panel blending first, regular bordered card blending second; params from PJZ110 SystemUI.
+        half4 lightEdgeReferenceColor(half4 color) {
+            color = couiMaterial(color,
+                float4(0.0, 0.0, 0.0, 146.0 / 255.0),
+                float4(float3(153.0 / 255.0), 102.0 / 255.0));
+            color.rgb = mix(color.rgb, luminosity(float3(64.0 / 255.0), color.rgb), 25.0 / 255.0);
+            color.rgb = mix(color.rgb, colorDodge(float3(115.0 / 255.0), color.rgb), 77.0 / 255.0);
+            return color;
+        }
+
+        half4 couiEdgeColor(half4 rawColor, float3 lineColor, bool limitHighlights) {
+            float gray = clamp(dot(float3(0.2126, 0.7152, 0.0722), rawColor.rgb)*1.2,0.0,1.0);
+            float edgeImprove = (1.0 - gray);
+            edgeImprove *= edgeImprove;
+            edgeImprove *= edgeImprove;
+            edgeImprove *= 0.1;
+            half4 color = clamp(rawColor + half4(float3(edgeImprove), 0.0), 0.0, 1.0);
+            color.rgb = mix(2.0 * color.rgb * lineColor, 1.0 - 2.0 * (1.0 - color.rgb) * (1.0 - lineColor), step(lineColor, float3(0.5)));
+            // Proportionally pull back clipped highlights to preserve channel ratios instead of clamping to white.
+            if (limitHighlights) {
+                float peak = max(max(color.r, color.g), color.b);
+                color.rgb /= max(1.0, peak);
+            }
+            return color;
+        }
+"""
+
 // 通知描边与 COUI 菜单内晕共用距离场; 裁剪 Shape 须使用相同圆角和权重。
-internal const val CouiContourShaderFunctions = """
+internal const val CouiContourShaderFunctions = CouiEdgeColorFunctions + """
         uniform float uUseLightEdgeColor;
         uniform float uNativeWhiteEdge;
         uniform float uContourGlowEnabled;
@@ -158,24 +194,6 @@ internal const val CouiContourShaderFunctions = """
 
        const float EPS = 1e-6;
        const float EFFECT_PARAM_THRESHOLD = 0.001;
-
-        float colorDodge(float s, float d) {
-            return d / (1.0 - s + 0.00000001);
-        }
-
-        float3 colorDodge(float3 s, float3 d) {
-            return float3(colorDodge(s.x, d.x), colorDodge(s.y, d.y), colorDodge(s.z, d.z));
-        }
-
-        // Shade Light 的面板混色在前, 普通有描边卡片混色在后; 参数来自 PJZ110 SystemUI。
-        half4 lightEdgeReferenceColor(half4 color) {
-            color = couiMaterial(color,
-                float4(0.0, 0.0, 0.0, 146.0 / 255.0),
-                float4(float3(153.0 / 255.0), 102.0 / 255.0));
-            color.rgb = mix(color.rgb, luminosity(float3(64.0 / 255.0), color.rgb), 25.0 / 255.0);
-            color.rgb = mix(color.rgb, colorDodge(float3(115.0 / 255.0), color.rgb), 77.0 / 255.0);
-            return color;
-        }
 
        struct CommonDataRect{
             vec2 halfResolution;
@@ -422,19 +440,7 @@ internal const val CouiContourShaderFunctions = """
                 return color * (1.0 - lineAlpha) + edge;
             }
 
-            float gray = clamp(dot(float3(0.2126, 0.7152, 0.0722), rawColor.rgb)*1.2,0.0,1.0);
-            float edgeImprove = (1.0 - gray);
-            edgeImprove *= edgeImprove;
-            edgeImprove *= edgeImprove;
-            edgeImprove *= 0.1;
-            half4 colorRGBA = clamp(rawColor+half4(float3(edgeImprove),0.0),0.0,1.0);
-            colorRGBA.rgb = mix(2.0 * colorRGBA.rgb * uRectLineColor.rgb, 1.0 - 2.0 * (1.0 - colorRGBA.rgb) * (1.0 - uRectLineColor.rgb), step(uRectLineColor.rgb, float3(0.5)));
-            // 浅色按比例收回过亮描边, 保留通道比例, 避免分别截断后变成白边。
-            if (uUseLightEdgeColor > 0.5) {
-                float peak = max(max(colorRGBA.r, colorRGBA.g), colorRGBA.b);
-                colorRGBA.rgb /= max(1.0, peak);
-            }
-            return mix(color, colorRGBA, lineAlpha*mix_c);
+            return mix(color, couiEdgeColor(rawColor, uRectLineColor, uUseLightEdgeColor > 0.5), lineAlpha*mix_c);
         }
 
 """

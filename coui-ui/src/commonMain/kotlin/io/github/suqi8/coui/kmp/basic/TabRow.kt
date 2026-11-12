@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -129,11 +128,17 @@ fun TabRow(
     indication: Indication? = null,
     dragSelectionEnabled: Boolean = true,
     commitOnRelease: Boolean = false,
+    onTabReselected: ((Int) -> Unit)? = null,
+    onTabClick: ((Int) -> Unit)? = null,
+    tabModifier: ((index: Int) -> Modifier)? = null,
+    tabContent: (@Composable (index: Int, label: String, selected: Boolean) -> Unit)? = null,
 ) {
-    SegmentButtonRow(
+    SegmentButtonRowImpl(
         tabs = tabs,
         selectedTabIndex = selectedTabIndex,
         onTabSelected = onTabSelected,
+        onTabReselected = onTabReselected,
+        onTabClick = onTabClick,
         modifier = modifier,
         colors = colors,
         minWidth = minWidth,
@@ -153,6 +158,58 @@ fun TabRow(
         dragSelectionEnabled = dragSelectionEnabled,
         commitOnRelease = commitOnRelease,
         touchMotionEnabled = false,
+        tabModifier = tabModifier,
+        tabContent = tabContent,
+    )
+}
+
+/** Binary-compatibility bridge for [TabRow] callers compiled before tap and custom-content parameters existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload with onTabReselected, onTabClick, tabModifier and tabContent.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@NonRestartableComposable
+fun TabRow(
+    tabs: List<String>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    colors: TabRowColors = TabRowDefaults.tabRowColors(backgroundColor = Color.Transparent),
+    minWidth: Dp = TabRowDefaults.TabRowMinWidth,
+    maxWidth: Dp = TabRowDefaults.TabRowMaxWidth,
+    height: Dp = TabRowDefaults.TabRowHeight,
+    cornerRadius: Dp = TabRowDefaults.TabRowCornerRadius,
+    itemSpacing: Dp = 0.dp,
+    contentAlignment: Alignment = Alignment.Center,
+    listState: LazyListState? = null,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+    dragSelectionEnabled: Boolean = true,
+    commitOnRelease: Boolean = false,
+) {
+    TabRow(
+        tabs = tabs,
+        selectedTabIndex = selectedTabIndex,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+        colors = colors,
+        minWidth = minWidth,
+        maxWidth = maxWidth,
+        height = height,
+        cornerRadius = cornerRadius,
+        itemSpacing = itemSpacing,
+        contentAlignment = contentAlignment,
+        listState = listState,
+        interactionSource = interactionSource,
+        indication = indication,
+        dragSelectionEnabled = dragSelectionEnabled,
+        commitOnRelease = commitOnRelease,
+        onTabReselected = null,
+        onTabClick = null,
+        tabModifier = null,
+        tabContent = null,
     )
 }
 
@@ -238,6 +295,14 @@ fun TabRow(
  *   switches from interrupting the indicator spring.
  * @param touchMotionEnabled Whether the outer capsule applies ColorOS 17 rubber-band deformation and
  *   `CAPSULE_PARAMS_2` spotlight feedback.
+ * @param containerMaterial Optional custom rim and inner shadow for the container capsule.
+ * @param onTabReselected Optional callback invoked when the currently selected tab is tapped or
+ *   activated again without dragging.
+ * @param onTabClick Optional callback invoked when any tab is tapped or activated without dragging.
+ * @param tabModifier Optional modifier factory applied to each segment root node (for example,
+ *   attaching a test tag to the semantic tab node).
+ * @param tabContent Optional custom content slot for each segment; when `null`, renders the default
+ *   text label.
  */
 @Composable
 @NonRestartableComposable
@@ -264,11 +329,17 @@ fun TabRowWithContour(
     commitOnRelease: Boolean = false,
     touchMotionEnabled: Boolean = true,
     containerMaterial: MaterialStrokeParams? = null,
+    onTabReselected: ((Int) -> Unit)? = null,
+    onTabClick: ((Int) -> Unit)? = null,
+    tabModifier: ((index: Int) -> Modifier)? = null,
+    tabContent: (@Composable (index: Int, label: String, selected: Boolean) -> Unit)? = null,
 ) {
-    SegmentButtonRow(
+    SegmentButtonRowImpl(
         tabs = tabs,
         selectedTabIndex = selectedTabIndex,
         onTabSelected = onTabSelected,
+        onTabReselected = onTabReselected,
+        onTabClick = onTabClick,
         modifier = modifier,
         colors = colors,
         minWidth = minWidth,
@@ -288,6 +359,70 @@ fun TabRowWithContour(
         dragSelectionEnabled = dragSelectionEnabled,
         commitOnRelease = commitOnRelease,
         touchMotionEnabled = touchMotionEnabled,
+        tabModifier = tabModifier,
+        tabContent = tabContent,
+    )
+}
+
+/** Binary-compatibility bridge for [TabRowWithContour] callers compiled before tap and custom-content parameters existed. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload with onTabReselected, onTabClick, tabModifier and tabContent.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@NonRestartableComposable
+fun TabRowWithContour(
+    tabs: List<String>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    colors: TabRowColors = TabRowDefaults.tabRowColors(),
+    minWidth: Dp = TabRowDefaults.TabRowWithContourMinWidth,
+    maxWidth: Dp = TabRowDefaults.TabRowWithContourMaxWidth,
+    height: Dp = TabRowDefaults.TabRowWithContourHeight,
+    cornerRadius: Dp = TabRowDefaults.TabRowWithContourCornerRadius,
+    contourPadding: Dp = TabRowDefaults.TabRowWithContourPadding,
+    segmentPadding: Dp = SegmentPaddingHorizontal,
+    itemSpacing: Dp = 0.dp,
+    contentAlignment: Alignment = Alignment.Center,
+    listState: LazyListState? = null,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+    indicatorMaterial: MaterialStrokeParams? = null,
+    backdrop: Backdrop? = null,
+    dragSelectionEnabled: Boolean = true,
+    commitOnRelease: Boolean = false,
+    touchMotionEnabled: Boolean = true,
+    containerMaterial: MaterialStrokeParams? = null,
+) {
+    TabRowWithContour(
+        tabs = tabs,
+        selectedTabIndex = selectedTabIndex,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+        colors = colors,
+        minWidth = minWidth,
+        maxWidth = maxWidth,
+        height = height,
+        cornerRadius = cornerRadius,
+        contourPadding = contourPadding,
+        segmentPadding = segmentPadding,
+        itemSpacing = itemSpacing,
+        contentAlignment = contentAlignment,
+        listState = listState,
+        interactionSource = interactionSource,
+        indication = indication,
+        indicatorMaterial = indicatorMaterial,
+        backdrop = backdrop,
+        dragSelectionEnabled = dragSelectionEnabled,
+        commitOnRelease = commitOnRelease,
+        touchMotionEnabled = touchMotionEnabled,
+        containerMaterial = containerMaterial,
+        onTabReselected = null,
+        onTabClick = null,
+        tabModifier = null,
+        tabContent = null,
     )
 }
 
@@ -400,15 +535,13 @@ fun TabRowWithContour(
     )
 }
 
-/**
- * Shared implementation of the COUI segment button, following COUISegmentButtonLayout.onDraw
- * and COUISegmentButtonLayout.dispatchTouchEvent.
- */
 @Composable
-private fun SegmentButtonRow(
+internal expect fun SegmentButtonRowImpl(
     tabs: List<String>,
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
+    onTabReselected: ((Int) -> Unit)?,
+    onTabClick: ((Int) -> Unit)?,
     colors: TabRowColors,
     minWidth: Dp,
     maxWidth: Dp,
@@ -427,9 +560,48 @@ private fun SegmentButtonRow(
     dragSelectionEnabled: Boolean,
     commitOnRelease: Boolean,
     touchMotionEnabled: Boolean,
+    tabModifier: ((index: Int) -> Modifier)?,
+    tabContent: (@Composable (index: Int, label: String, selected: Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+)
+
+/**
+ * Shared pure-Compose implementation of the COUI segment button, following
+ * `COUISegmentButtonLayout.onDraw` and `COUISegmentButtonLayout.dispatchTouchEvent`.
+ */
+@Composable
+internal fun CommonSegmentButtonRow(
+    tabs: List<String>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    onTabReselected: ((Int) -> Unit)?,
+    onTabClick: ((Int) -> Unit)?,
+    colors: TabRowColors,
+    minWidth: Dp,
+    maxWidth: Dp,
+    height: Dp,
+    cornerRadius: Dp,
+    contourPadding: Dp,
+    segmentPadding: Dp,
+    itemSpacing: Dp,
+    contentAlignment: Alignment,
+    listState: LazyListState?,
+    interactionSource: MutableInteractionSource?,
+    indication: Indication?,
+    indicatorMaterial: MaterialStrokeParams?,
+    containerMaterial: MaterialStrokeParams?,
+    backdrop: Backdrop?,
+    dragSelectionEnabled: Boolean,
+    commitOnRelease: Boolean,
+    touchMotionEnabled: Boolean,
+    tabModifier: ((index: Int) -> Modifier)?,
+    tabContent: (@Composable (index: Int, label: String, selected: Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    if (tabs.isEmpty()) return
     val currentOnTabSelected by rememberUpdatedState(onTabSelected)
+    val currentOnTabReselected by rememberUpdatedState(onTabReselected)
+    val currentOnTabClick by rememberUpdatedState(onTabClick)
     val couiHaptic = rememberCouiHaptic()
     val currentHaptic by rememberUpdatedState(couiHaptic)
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
@@ -492,9 +664,7 @@ private fun SegmentButtonRow(
     }
 
     BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(modifier)
+        modifier = modifier
             .height(resolvedHeight)
             .couiTouchMotion(
                 surface = containerSurfaceModifier,
@@ -511,30 +681,28 @@ private fun SegmentButtonRow(
     ) {
         // Whole pixels, like the view's padding and the LazyRow's own, so labels and indicator line up.
         val contourPaddingPx = with(density) { contourPadding.roundToPx().toFloat() }
-        val viewportPx = with(density) { this@BoxWithConstraints.maxWidth.toPx() } - contourPaddingPx * 2f
         val minWidthPx = with(density) { minWidth.roundToPx() }
         val maxWidthPx = if (maxWidth == Dp.Infinity) Int.MAX_VALUE else with(density) { maxWidth.roundToPx() }
         val spacingPx = with(density) { itemSpacing.roundToPx() }
         val segmentPaddingPx = with(density) { segmentPadding.roundToPx() }
-
-        // COUISegmentButtonLayout.calculateChildrenWidths: natural label widths distributed to fill the row.
-        val segmentWidthsPx = remember(
-            tabs,
-            viewportPx,
-            minWidthPx,
-            maxWidthPx,
-            spacingPx,
-            segmentPaddingPx,
-            textMeasurer,
-            measureStyle,
-        ) {
-            val naturalWidths = tabs.map { label ->
-                max(
-                    textMeasurer.measure(text = label, style = measureStyle, maxLines = 1).size.width +
-                        2 * segmentPaddingPx,
-                    minWidthPx,
+        val naturalWidths = remember(tabs, minWidthPx, maxWidthPx, segmentPaddingPx, textMeasurer, measureStyle) {
+            tabs.map { label ->
+                min(
+                    max(
+                        textMeasurer.measure(text = label, style = measureStyle, maxLines = 1).size.width +
+                            2 * segmentPaddingPx,
+                        minWidthPx,
+                    ),
+                    maxWidthPx,
                 )
             }
+        }
+        val desiredRowWidthPx = naturalWidths.sum() + spacingPx * max(0, tabs.size - 1) + (contourPaddingPx * 2f).roundToInt()
+        val rowWidthPx = if (constraints.hasBoundedWidth) constraints.maxWidth else desiredRowWidthPx
+        val viewportPx = rowWidthPx.toFloat() - contourPaddingPx * 2f
+
+        // COUISegmentButtonLayout.calculateChildrenWidths: natural label widths distributed to fill the row.
+        val segmentWidthsPx = remember(naturalWidths, viewportPx, minWidthPx, maxWidthPx, spacingPx, tabs.size) {
             val availablePx = viewportPx - spacingPx * max(0, tabs.size - 1)
             computeSegmentWidths(naturalWidths, availablePx, minWidthPx, maxWidthPx)
         }
@@ -728,7 +896,8 @@ private fun SegmentButtonRow(
 
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .width(with(density) { rowWidthPx.toDp() })
+                .fillMaxHeight()
                 .then(slideSelectModifier)
                 .drawBehind {
                     // 1. Container capsule (COUISegmentButtonLayout.drawButtonBackground).
@@ -874,9 +1043,17 @@ private fun SegmentButtonRow(
             ) {
                 itemsIndexed(tabs) { index, label ->
                     SegmentTab(
+                        index = index,
                         text = label,
                         isSelected = activeSelectedTabIndex == index,
-                        onClick = { currentOnTabSelected.invoke(index) },
+                        onClick = {
+                            if (index != currentSelectedTabIndex) {
+                                currentOnTabSelected.invoke(index)
+                            } else {
+                                currentOnTabReselected?.invoke(index)
+                            }
+                            currentOnTabClick?.invoke(index)
+                        },
                         dragPressed = dragPressedIndex == index,
                         width = with(density) { segmentWidthsPx[index].toDp() },
                         color = colors.contentColor(activeSelectedTabIndex == index),
@@ -886,6 +1063,8 @@ private fun SegmentButtonRow(
                         interactionSource = interactionSource,
                         indication = indication,
                         onSelectedPressedChange = onSelectedPressedChange,
+                        tabModifier = tabModifier?.invoke(index) ?: Modifier,
+                        tabContent = tabContent,
                     )
                 }
             }
@@ -945,6 +1124,7 @@ private fun segmentUnderFinger(contentX: Float, lefts: List<Int>, widths: List<I
 
 @Composable
 private fun SegmentTab(
+    index: Int,
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -957,6 +1137,8 @@ private fun SegmentTab(
     interactionSource: MutableInteractionSource?,
     indication: Indication?,
     onSelectedPressedChange: (Boolean) -> Unit,
+    tabModifier: Modifier = Modifier,
+    tabContent: (@Composable (index: Int, label: String, selected: Boolean) -> Unit)? = null,
 ) {
     @Suppress("NAME_SHADOWING")
     val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
@@ -981,6 +1163,7 @@ private fun SegmentTab(
         modifier = Modifier
             .fillMaxHeight()
             .width(width)
+            .then(tabModifier)
             .graphicsLayer {
                 val scale = 1f - (1f - pressedScaleEndRatio(size)) * scaleProgress
                 scaleX = scale
@@ -995,17 +1178,21 @@ private fun SegmentTab(
                 role = Role.Tab
                 selected = isSelected
             }
-            .padding(horizontal = segmentPadding),
+            .then(if (tabContent == null) Modifier.padding(horizontal = segmentPadding) else Modifier),
         contentAlignment = contentAlignment,
     ) {
-        Text(
-            text = text,
-            color = textColor,
-            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-            fontSize = fontSize,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        if (tabContent != null) {
+            tabContent(index, text, isSelected)
+        } else {
+            Text(
+                text = text,
+                color = textColor,
+                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                fontSize = fontSize,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
