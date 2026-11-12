@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,8 +29,10 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +40,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
@@ -49,15 +53,20 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -73,9 +82,15 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
-import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
+import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
@@ -98,24 +113,31 @@ import kotlin.math.roundToInt
  * position is animated on the `SCROLL_ANIMATION_RESPONSE` (0.4) / `SCROLL_ANIMATION_BOUNCE` (0.2)
  * spring. As in the native chip click listener, the tab is not scrolled on the first composition.
  *
- * A checked tab is lifted the way `COUIChipTab` lifts it on ColorOS 17: a specular highlight along
- * the top and bottom edges only — the sides stay transparent, so no ring forms around the pill — the
- * [ChipTabDefaults.CheckedShadow] drop shadow and, in dark themes, the level-1 caustic light. All of
- * them fade in with the checked layer. The shadows are drawn by the group, outside the fading edge's
- * layer, so they are not clipped to the row.
+ * A checked tab is lifted the way `COUIChipTab` lifts it on ColorOS 17: a white rim that strokes the
+ * whole silhouette, brightest across the top and bottom edges and gone by the time it reaches the
+ * straight sides, an inner shade down the left edge and a faint lift down the right one in light
+ * themes, the [ChipTabDefaults.CheckedShadow] drop shadow and, in dark themes, the level-1 caustic
+ * light. All of them fade in with the checked layer. The shadows are drawn by the group, outside the
+ * fading edge's layer, so they are not clipped to the row.
  *
  * [leadingIcon] adds the icon-only chip of `COUIChipTabLayout`: a 32dp round chip of a
  * [ChipTabDefaults.IconOnlyIconSize] icon that always wears the checked style, pinned before the
  * scrolled tabs, which then start [ChipTabDefaults.GroupSpacing] after it.
  *
+ * Pressing a tab mirrors `COUIChip` / `COUIChipTab`: `COUIPressFeedbackHelper` shrinks the pill
+ * toward a size- and aspect-dependent ratio with a bouncy spring release (switching to the candy
+ * spring when `aspect > 2`, and synchronizing the selected shadow in [ChipTabElevationLayer]),
+ * while `COUISpotLightEffect` (`TYPE_CHIP_TAB`) casts a touch-tracking spotlight over the fill when
+ * runtime shaders are available, falling back to `COUIMaskEffectDrawable` (`couiColorPress`)
+ * otherwise.
+ *
  * Not ported, because no consumer in this library reaches them:
- * - the blur of `COUIMaterialBlurEffect` (`TYPE_CONTENT_CHIP_TAB*`) and the spot-light: like the
- *   other controls of this library the tab keeps the blur-disabled flat fill;
+ * - the blur of `COUIMaterialBlurEffect` (`TYPE_CONTENT_CHIP_TAB*`): like the other controls of
+ *   this library the tab keeps the blur-disabled flat fill;
  * - `COUIChipTabGroupFragmentMediator`, the fragment switch and fade-in helper;
  * - `coui_chip_tab_unit` and `coui_chip_tab_position_in_group`: the report proves no chip class
  *   references them (the app owns the pager accessibility text);
- * - the press mask of `drawStateEffects` (`COUIMaskEffectDrawable` / `COUIStrokeDrawable`), whose
- *   geometry the report could not resolve; the tabs are selectable without it.
+ * - `COUIStrokeDrawable` inside `drawStateEffects`, whose geometry the report could not resolve.
  *
  * @param tabs The tabs of the group, in declaration order.
  * @param selectedIndex The index of the selected tab.
@@ -153,6 +175,7 @@ fun ChipTabGroup(
     }
     // Placed in the scrolled content's own coordinates, i.e. the space scrollX is measured in.
     val tabBounds = remember(tabs.size) { mutableStateMapOf<Int, Rect>() }
+    val tabPressScales = remember(tabs.size) { Array(tabs.size) { mutableFloatStateOf(1f) } }
 
     // COUIChipTabGroup only scrolls from its chip click listener, never on the first layout.
     var firstSelection by remember { mutableStateOf(true) }
@@ -191,20 +214,39 @@ fun ChipTabGroup(
                 tabCount = tabs.size,
                 selectedIndex = selectedIndex,
                 tabBounds = tabBounds,
+                tabPressScales = tabPressScales,
                 scrollState = scrollState,
                 modifier = Modifier.matchParentSize(),
             )
             Box(
                 // FadeRect of ChipMaskHorizontalScrollView: the saveLayer'd group, erased by a white-to-
-                // transparent gradient at each edge it can still scroll towards.
-                modifier = Modifier.scrollEdgeFade(scrollState, ChipTabDefaults.FadeWidth),
+                // transparent gradient at each edge it can still scroll towards. Both this offscreen
+                // layer and the scroller below clip to their own bounds, which are the chip's height;
+                // they are therefore laid out [ChipTabDefaults.PressOutset] taller on each side and
+                // placed back up, while the reported size keeps the row at the chip's height, so a tab
+                // can overshoot on release without its edges being cut flat. The native lifts the
+                // scroller's clip by 100dp instead (`COUIChipTab.updateClipExpandForShadowOnParents`).
+                modifier = Modifier
+                    .layout { measurable, constraints ->
+                        val outsetPx = ChipTabDefaults.PressOutset.roundToPx()
+                        val placeable = measurable.measure(constraints)
+                        layout(placeable.width, (placeable.height - 2 * outsetPx).coerceAtLeast(0)) {
+                            placeable.place(0, -outsetPx)
+                        }
+                    }
+                    .scrollEdgeFade(scrollState, ChipTabDefaults.FadeWidth),
             ) {
                 Row(
                     // The padding sits inside the scroll, like the scroller's clipToPadding = false: the
                     // tabs scroll on under it up to the fading edge.
                     modifier = Modifier
                         .horizontalScroll(scrollState)
-                        .padding(start = scrollStartPadding, end = scrollEndPadding),
+                        .padding(
+                            start = scrollStartPadding,
+                            end = scrollEndPadding,
+                            top = ChipTabDefaults.PressOutset,
+                            bottom = ChipTabDefaults.PressOutset,
+                        ),
                     horizontalArrangement = Arrangement.spacedBy(ChipTabDefaults.GroupSpacing),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -219,6 +261,7 @@ fun ChipTabGroup(
                             showRedDot = tab.showRedDot,
                             iconOnly = false,
                             drawElevation = false,
+                            pressScaleHolder = tabPressScales[index],
                         ) { contentColor ->
                             ChipTabLabel(
                                 label = tab.label,
@@ -249,6 +292,7 @@ private fun ChipTabElevationLayer(
     tabCount: Int,
     selectedIndex: Int,
     tabBounds: Map<Int, Rect>,
+    tabPressScales: Array<MutableFloatState>,
     scrollState: ScrollState,
     modifier: Modifier = Modifier,
 ) {
@@ -318,6 +362,11 @@ private fun ChipTabElevationLayer(
                                 IntOffset(x.roundToInt() + outsetPx, bounds.top.roundToInt() + outsetPx)
                             }
                             .size(with(density) { DpSize(bounds.width.toDp(), bounds.height.toDp()) })
+                            .graphicsLayer {
+                                val scale = tabPressScales.getOrNull(index)?.floatValue ?: 1f
+                                scaleX = scale
+                                scaleY = scale
+                            }
                             .chipTabElevation(alpha = { elevationAlpha }, cornerRadius = ChipTabDefaults.CornerRadius),
                     )
                 }
@@ -365,19 +414,23 @@ data class ChipTabData(
  *   fills it with the opaque `coui_chip_tab_surface_unchecked_surface` (`#ffffffff` /
  *   `#ff000000`), is deliberately not ported;
  * - `couiColorContainer4` is then painted over it at `mUncheckedLayerAlpha`;
- * - when checked, `coui_color_checked_background_gradient_start` (`#40ffffff`) is painted over the
- *   same silhouette at `mCheckedLayerAlpha` in dark mode, and top/bottom rim specular highlights
- *   are drawn along with a subtle bottom inner glow.
+ * - when checked, the pill gets the glass rim of `TYPE_CONTENT_CHIP_TAB_SELECTED`: a white stroke
+ *   that follows the silhouette, so the highlight stays 3px thick around the rounded ends instead of
+ *   being cut off where a horizontal band would leave the shape, plus a ramp to white above the
+ *   bottom edge and — in light themes only — a soft shade down the left edge and a faint lift down
+ *   the right one. The geometry and strengths are the on-device measurement of the notes app
+ *   (`ChipTabRimStopsLight` and friends). They are drawn as gradients rather than as a backdrop blur
+ *   because a tab sits inside the scroller's offscreen fading-edge layer, and sampling the page
+ *   backdrop from there re-enters the node tree.
  *
  * `setUncheckedBackgroundColorFromTheme` — `couiColorBackgroundWithCard` composited with
  * `couiColorContainer4` — is the base `COUIChipDrawable` fill; the tab's own drawable overrides the
  * background with the dual layer above and never reads it, so it is not part of this port.
  *
- * Colours are the theme slots closest to the native attributes: the checked fill is
- * `?attr/couiColorBackgroundElevated` in dark mode and `ChipTabCheckedSurfaceLight` in light mode, the label
- * and icon of both states are `?attr/couiColorLabelPrimary` (`onSurface`), a disabled tab is
- * `?attr/couiColorLabelTertiary` (`onSurfaceVariantActions`) and the count text is
- * `?attr/couiColorLabelSecondary` (`onSurfaceSecondary`).
+ * Colours are the measured values of the notes app: the checked fill is `#4B4B4B` in dark mode and
+ * `#F5F6F7` in light mode, the label and icon of both states are `?attr/couiColorLabelPrimary`
+ * (`onSurface`), a disabled tab is `?attr/couiColorLabelTertiary` (`onSurfaceVariantActions`) and
+ * the count text is `?attr/couiColorLabelSecondary` (`onSurfaceSecondary`).
  *
  * @param label The label of the tab: [ChipTabDefaults.textStyle] (`couiTextButtonM`, 14sp), single
  *   line, ellipsized beyond [ChipTabDefaults.TextMaxWidth].
@@ -448,6 +501,7 @@ private fun ChipTabSurface(
     iconOnly: Boolean,
     drawElevation: Boolean,
     modifier: Modifier = Modifier,
+    pressScaleHolder: MutableFloatState? = null,
     content: @Composable RowScope.(contentColor: Color) -> Unit,
 ) {
     // COUIChipTabDrawable.onStateChange: the checked layer animates between 0 and 1 on COUISpringForce
@@ -461,10 +515,105 @@ private fun ChipTabSurface(
     )
     val colorScheme = COUITheme.colorScheme
     val isDark = colorScheme.background.luminance() < 0.5f
-    val checkedSurface = if (isDark) colorScheme.surfaceContainerHighest else ChipTabCheckedSurfaceLight
+    val surfaceStops = if (isDark) ChipTabSurfaceStopsDark else ChipTabSurfaceStopsLight
     val container4 = if (isDark) ChipTabContainer4Dark else ChipTabContainer4Light
     val contentColor = if (enabled) colorScheme.onSurface else colorScheme.onSurfaceVariantActions
     val interactionSource = remember { MutableInteractionSource() }
+    val isInteractionPressed by interactionSource.collectIsPressedAsState()
+    var isPointerPressed by remember { mutableStateOf(false) }
+    val isPressed = enabled && (isPointerPressed || isInteractionPressed)
+
+    val density = LocalDensity.current
+    var widthPx by remember { mutableFloatStateOf(0f) }
+    var heightPx by remember { mutableFloatStateOf(0f) }
+    val widthDp = with(density) { widthPx.toDp().value }
+    val heightDp = with(density) { heightPx.toDp().value }
+    val isCandy = widthDp > 0f && heightDp > 0f &&
+        max(widthDp / heightDp, heightDp / widthDp) > ChipTabPressMotionSpec.pressAspectActivationThreshold
+    val pressTargetScale = couiPressScale(widthDp, heightDp, ChipTabPressMotionSpec)
+    val currentPressTargetScale by rememberUpdatedState(pressTargetScale)
+
+    val pressScaleState = pressScaleHolder ?: remember { mutableFloatStateOf(1f) }
+    val pressProgress = remember { Animatable(0f) }
+    val pressMaskProgress = remember { Animatable(0f) }
+
+    val spotLightSupported = isRuntimeShaderSupported()
+    val spotLightParams = SpotLightDefaults.chipTabParams(isDark)
+    val lightX = remember { Animatable(0.5f) }
+    val lightY = remember { Animatable(0.5f) }
+    val lightProgress = remember { Animatable(0f) }
+    var extinguishing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pressScaleState) {
+        pressScaleState.floatValue = 1f - (1f - currentPressTargetScale) * pressProgress.value
+    }
+
+    LaunchedEffect(enabled) {
+        if (!enabled) {
+            isPointerPressed = false
+            extinguishing = true
+            pressProgress.snapTo(0f)
+            pressScaleState.floatValue = 1f
+            pressMaskProgress.snapTo(0f)
+            lightProgress.snapTo(0f)
+        }
+    }
+
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            val pressSpec = if (isCandy) {
+                ChipTabPressMotionSpec.candyPressSpring
+            } else {
+                ChipTabPressMotionSpec.pressSpring
+            }
+            pressProgress.animateTo(1f, pressSpec) {
+                pressScaleState.floatValue = 1f - (1f - currentPressTargetScale) * value
+            }
+        } else if (pressProgress.value != 0f || pressScaleState.floatValue != 1f) {
+            val releaseSpec = if (isCandy) {
+                ChipTabPressMotionSpec.candyReleaseSpring
+            } else {
+                ChipTabPressMotionSpec.releaseSpring
+            }
+            pressProgress.animateTo(0f, releaseSpec) {
+                pressScaleState.floatValue = 1f - (1f - currentPressTargetScale) * value
+            }
+            pressScaleState.floatValue = 1f
+        }
+    }
+
+    LaunchedEffect(isPressed, spotLightSupported) {
+        if (spotLightSupported) {
+            if (pressMaskProgress.value != 0f) pressMaskProgress.snapTo(0f)
+            return@LaunchedEffect
+        }
+        if (isPressed) {
+            pressMaskProgress.animateTo(1f, ChipTabPressMaskSpring)
+        } else if (pressMaskProgress.value > 0f) {
+            if (pressMaskProgress.value < CHIP_TAB_PRESSED_MASK_MIN_VISIBLE_PROGRESS) {
+                try {
+                    pressMaskProgress.animateTo(1f, ChipTabPressMaskSpring) {
+                        if (value >= CHIP_TAB_PRESSED_MASK_MIN_VISIBLE_PROGRESS) throw ChipTabPressMaskThresholdReached()
+                    }
+                } catch (_: ChipTabPressMaskThresholdReached) {
+                    // Minimum visible progress reached; fall through to the fade-out.
+                }
+            }
+            pressMaskProgress.animateTo(0f, ChipTabPressMaskSpring)
+        }
+    }
+
+    val lightRadius = with(density) {
+        couiSpotlightRadius(
+            start = spotLightParams.startRadius,
+            end = spotLightParams.endRadius,
+            extinguishExtra = SpotLightDefaults.ExtinguishExtraRadius,
+            progress = lightProgress.value,
+            extinguishing = extinguishing,
+        ).toDp()
+    }
+    val lightHeight = with(density) { spotLightParams.lightHeight.toDp() }
+
     val sizeModifier = if (iconOnly) {
         // COUIChipTab.onMeasure forces the icon-only chip to a 32dp square.
         Modifier.size(ChipTabDefaults.Height)
@@ -483,11 +632,94 @@ private fun ChipTabSurface(
     val pillShape = remember(squircleEnabled) {
         CapsuleOutlineShape(cornerRadius = ChipTabDefaults.CornerRadius, squircleEnabled = squircleEnabled)
     }
-    val strokePath = remember { Path() }
 
     Box(
         modifier = modifier
             .then(sizeModifier)
+            .onSizeChanged {
+                widthPx = it.width.toFloat()
+                heightPx = it.height.toFloat()
+            }
+            .pointerInput(enabled, spotLightSupported) {
+                if (!enabled) return@pointerInput
+                val touchSlop = viewConfiguration.touchSlop
+                coroutineScope {
+                    var moveJob: Job? = null
+                    var progressJob: Job? = null
+                    fun moveTo(position: Offset, snap: Boolean) {
+                        if (!spotLightSupported) return
+                        val x = position.x / widthPx.coerceAtLeast(1f)
+                        val y = position.y / heightPx.coerceAtLeast(1f)
+                        moveJob?.cancel()
+                        if (snap) {
+                            moveJob = launch(start = CoroutineStart.UNDISPATCHED) {
+                                lightX.snapTo(x)
+                                lightY.snapTo(y)
+                            }
+                        } else {
+                            moveJob = launch {
+                                coroutineScope {
+                                    launch { lightX.animateTo(x, SpotLightDefaults.MoveSpring) }
+                                    launch { lightY.animateTo(y, SpotLightDefaults.MoveSpring) }
+                                }
+                            }
+                        }
+                    }
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                            val pointerId = down.id
+                            isPointerPressed = true
+                            extinguishing = false
+                            moveTo(down.position, snap = true)
+                            if (spotLightSupported) {
+                                progressJob?.cancel()
+                                progressJob = launch { lightProgress.animateTo(1f, SpotLightDefaults.GlowSpring) }
+                            }
+                            var cancelledByScroll = false
+                            try {
+                                while (true) {
+                                    val initialEvent = awaitPointerEvent(PointerEventPass.Initial)
+                                    val initialChange = initialEvent.changes.firstOrNull { it.id == pointerId } ?: break
+                                    moveTo(initialChange.position, snap = false)
+                                    if (initialChange.changedToUpIgnoreConsumed()) break
+                                    val outOfBounds =
+                                        initialChange.position.x < -touchSlop ||
+                                            initialChange.position.y < -touchSlop ||
+                                            initialChange.position.x > size.width + touchSlop ||
+                                            initialChange.position.y > size.height + touchSlop
+                                    if (outOfBounds) break
+                                    val finalEvent = awaitPointerEvent(PointerEventPass.Final)
+                                    val finalChange = finalEvent.changes.firstOrNull { it.id == pointerId } ?: break
+                                    if (finalChange.changedToUpIgnoreConsumed()) break
+                                    if (finalChange.isConsumed && finalChange.position != finalChange.previousPosition) {
+                                        cancelledByScroll = true
+                                        break
+                                    }
+                                }
+                            } finally {
+                                isPointerPressed = false
+                                if (spotLightSupported) {
+                                    extinguishing = true
+                                    progressJob?.cancel()
+                                    progressJob = launch { lightProgress.animateTo(0f, SpotLightDefaults.ExtinguishSpring) }
+                                }
+                            }
+                            if (cancelledByScroll) {
+                                while (true) {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    if (event.changes.none { it.pressed }) break
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .graphicsLayer {
+                val scale = pressScaleState.floatValue
+                scaleX = scale
+                scaleY = scale
+            }
             .then(
                 if (drawElevation) {
                     Modifier.chipTabElevation(alpha = { checkedLayerAlpha }, cornerRadius = ChipTabDefaults.CornerRadius)
@@ -501,19 +733,46 @@ private fun ChipTabSurface(
             .drawWithCache {
                 val outline = pillShape.createOutline(size, layoutDirection, this@drawWithCache)
                 val silhouette = Path().apply { addOutline(outline) }
+                val surfaceBrush = Brush.verticalGradient(colorStops = surfaceStops, startY = 0f, endY = size.height)
                 onDrawWithContent {
                     if (checkedLayerAlpha > 0f) {
-                        drawOutline(outline, color = checkedSurface.copy(alpha = checkedLayerAlpha))
+                        drawPath(path = silhouette, brush = surfaceBrush, alpha = checkedLayerAlpha)
                     }
                     if (checkedLayerAlpha < 1f) {
                         drawOutline(outline, color = container4.copy(alpha = container4.alpha * (1f - checkedLayerAlpha)))
                     }
-                    if (isDark && checkedLayerAlpha > 0f) {
-                        drawOutline(outline, color = ChipTabCheckedOverlay.copy(alpha = ChipTabCheckedOverlay.alpha * checkedLayerAlpha))
+                    // The checked pill's glass rim: the light and shadow the material lays on top of
+                    // the fill, inside the silhouette and under the label.
+                    if (checkedLayerAlpha > 0f) {
+                        clipPath(silhouette) {
+                            drawChipTabCheckedRim(silhouette = silhouette, isDark = isDark, alpha = checkedLayerAlpha)
+                        }
+                    }
+                    if (!spotLightSupported && pressMaskProgress.value > 0f) {
+                        val pressMask = if (isDark) ChipTabPressedMaskDark else ChipTabPressedMaskLight
+                        drawOutline(outline, color = pressMask.copy(alpha = pressMask.alpha * pressMaskProgress.value))
                     }
                     clipPath(silhouette) { this@onDrawWithContent.drawContent() }
                 }
             }
+            .then(
+                if (spotLightSupported) {
+                    Modifier.spotLight(
+                        position = Offset(lightX.value, lightY.value),
+                        radius = lightRadius,
+                        intensity = spotLightParams.endIntensity * lightProgress.value,
+                        lightHeight = lightHeight,
+                        ambientStrength = spotLightParams.ambientStrength,
+                        diffuseStrength = spotLightParams.diffuseStrength,
+                        noise = spotLightParams.noise,
+                        dither = spotLightParams.ditherN,
+                        blendMode = spotLightParams.blendMode,
+                        enabled = enabled && lightProgress.value > 0f,
+                    )
+                } else {
+                    Modifier
+                },
+            )
             .selectable(
                 selected = selected,
                 interactionSource = interactionSource,
@@ -524,59 +783,6 @@ private fun ChipTabSurface(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        // Upper and lower specular highlights on the checked pill rim, plus a subtle inner glow
-        // along the bottom edge, replicating the ColorOS 17 native highlights without side halos.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .graphicsLayer { alpha = checkedLayerAlpha }
-                .drawBehind {
-                    val strokeWidth = 1.dp.toPx()
-                    val inset = strokeWidth / 2f
-                    val strokeBrush = Brush.verticalGradient(
-                        0.0f to (if (isDark) Color.White.copy(alpha = 0.23f) else Color.White),
-                        0.30f to Color.Transparent,
-                        0.70f to Color.Transparent,
-                        1.0f to (if (isDark) Color.White.copy(alpha = 0.14f) else Color.White),
-                        startY = 0f,
-                        endY = size.height,
-                    )
-                    val insetRect = Rect(inset, inset, size.width - inset, size.height - inset)
-                    val insetHalfMin = (size.minDimension / 2f - inset).coerceAtLeast(0f)
-                    val targetRadius = (ChipTabDefaults.CornerRadius.toPx() - inset).coerceIn(0f, insetHalfMin)
-                    strokePath.reset()
-                    if (squircleEnabled && targetRadius >= insetHalfMin - 0.5f) {
-                        strokePath.addSegmentCapsule(insetRect)
-                    } else {
-                        strokePath.addSquircleRoundRect(
-                            rect = insetRect,
-                            topLeft = targetRadius,
-                            topRight = targetRadius,
-                            bottomRight = targetRadius,
-                            bottomLeft = targetRadius,
-                            squircleEnabled = squircleEnabled,
-                        )
-                    }
-                    drawPath(
-                        path = strokePath,
-                        brush = strokeBrush,
-                        style = Stroke(width = strokeWidth),
-                    )
-
-                    val glowAlpha = if (isDark) 0.06f else 0.85f
-                    val glowHeight = 2.dp.toPx()
-                    val glowBrush = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.White.copy(alpha = glowAlpha)),
-                        startY = size.height - glowHeight,
-                        endY = size.height,
-                    )
-                    drawRect(
-                        brush = glowBrush,
-                        topLeft = Offset(0f, size.height - glowHeight),
-                        size = Size(size.width, glowHeight),
-                    )
-                },
-        )
         Row(
             modifier = Modifier
                 .defaultMinSize(minHeight = ChipTabDefaults.Height)
@@ -762,6 +968,16 @@ object ChipTabDefaults {
     val ElevationOutset = 46.dp
 
     /**
+     * How far [ChipTabGroup] lets its scroller and its fading-edge layer reach past a tab on each
+     * side, so the overshoot of [ChipTabPressMotionSpec.releaseSpring] is not clipped flat.
+     *
+     * A tab scales by `1 - (1 - scale) · progress`; on release `progress` springs below zero, so a
+     * tab that was pressed to [ChipTabPressMotionSpec.pressScaleMin] grows to about 1.04 before
+     * settling. On the 32dp pill that is under a pixel per side, and 2dp leaves room for the rim.
+     */
+    val PressOutset = 2.dp
+
+    /**
      * The smallest layer-alpha change that is worth animating, so the settle tail of the spring is
      * cut. COUI `COUIChipTabDrawable.ALPHA_MIN_VISIBLE_CHANGE` (1 / 256).
      */
@@ -834,17 +1050,229 @@ private suspend fun ScrollState.scrollTabIntoView(bounds: Rect, fadeWidthPx: Flo
 /** couiColorContainer4 in light themes (coui_color_container4 #0A000000): the unchecked pill overlay. */
 private val ChipTabContainer4Light = Color(0x0A000000)
 
-/** couiColorContainer4 in dark themes (coui_color_container4 (night) #1AFFFFFF). */
-private val ChipTabContainer4Dark = Color(0x1AFFFFFF)
+/**
+ * The unchecked pill in dark themes at the alpha the notes app actually lands on: 8.2% white over
+ * the `#303030` page is `#414141`, the measured value.
+ */
+private val ChipTabContainer4Dark = Color(0x15FFFFFF)
+
+/** The checked pill in light themes: `#F5F6F7`, the measured body of the notes app's checked chip. */
+private val ChipTabCheckedSurfaceLight = Color(0xFFF5F6F7)
+
+/** The checked pill in dark themes: `#4B4B4B`, the measured body of the notes app's checked chip. */
+private val ChipTabCheckedSurfaceDark = Color(0xFF4B4B4B)
 
 /**
- * Checked pill surface in light themes (#F6F6F7), matching COUI's composite TYPE_CONTENT_CHIP_TAB_SELECTED_NO_BLUR
- * outcome so the white rim remains visually distinct against the pill body.
+ * The checked pill's body, top to bottom: the glass sits a level brighter under the top rim (`#F6F7F8`)
+ * and two levels brighter where the bottom glow meets it (`#F8F9F9`), the measured values on the
+ * notes app.
  */
-private val ChipTabCheckedSurfaceLight = Color(0xFFF6F6F7)
+private val ChipTabSurfaceStopsLight: Array<Pair<Float, Color>> = arrayOf(
+    0.00f to Color(0xFFF7F8F9),
+    0.05f to Color(0xFFF6F7F8),
+    0.20f to ChipTabCheckedSurfaceLight,
+    0.80f to ChipTabCheckedSurfaceLight,
+    0.88f to Color(0xFFF6F7F8),
+    0.96f to Color(0xFFF8F9F9),
+    1.00f to Color(0xFFF8F9F9),
+)
 
-/** coui_color_checked_background_gradient_start (#40FFFFFF in both themes): the checked pill overlay in dark theme. */
-private val ChipTabCheckedOverlay = Color(0x40FFFFFF)
+/** The same lift in dark themes, one level each way around `#4B4B4B`. */
+private val ChipTabSurfaceStopsDark: Array<Pair<Float, Color>> = arrayOf(
+    0.00f to Color(0xFF4C4C4C),
+    0.20f to ChipTabCheckedSurfaceDark,
+    0.85f to ChipTabCheckedSurfaceDark,
+    1.00f to Color(0xFF4D4D4D),
+)
 
 /** coui_caustic_color_3 in dark themes (#33FFFFFF). */
 private val ChipTabCausticDark = Color(0x33FFFFFF)
+
+/**
+ * The checked pill's glass rim, measured on the notes app at 620dpi (3.875 px/dp).
+ *
+ * The native recipe is the `TYPE_CONTENT_CHIP_TAB_SELECTED` glass bloom over the
+ * `TYPE_FRAMEWORK_CAPSULE_2` stroke. Both are drawn here instead of compositing a backdrop: a
+ * `COUIChipTab` lives inside the scroller's offscreen fading-edge layer, and sampling the page
+ * backdrop from inside that layer re-enters the node tree on the render thread.
+ *
+ * The bloom hugs the pill's outline rather than sitting in a horizontal band: the white is 3px thick
+ * along the top edge and 4px along the bottom, and at the rounded ends it follows the arc down,
+ * fading out over ~35px from the top and ~46px from the bottom before it reaches the straight sides
+ * (light; the dark rim is 2px thick and fades over ~33px / ~69px). [ChipTabRimStopsLight] and
+ * [ChipTabRimStopsDark] are those fades, sampled off the outline every 2px.
+ */
+private val ChipTabRimWidthLight = 0.8.dp
+private val ChipTabRimWidthDark = 0.55.dp
+private val ChipTabRimBleedWidth = 0.52.dp
+private val ChipTabRimBleed = 0.15f
+private val ChipTabRimBleedDark = 0.05f
+
+/** White alpha along the outline, from the top edge (0f) to the bottom edge (1f). */
+private val ChipTabRimStopsLight: Array<Pair<Float, Float>> = arrayOf(
+    0.000f to 1.00f,
+    0.048f to 1.00f,
+    0.097f to 0.95f,
+    0.145f to 0.78f,
+    0.194f to 0.55f,
+    0.242f to 0.32f,
+    0.290f to 0.12f,
+    0.355f to 0.02f,
+    0.420f to 0.00f,
+    0.560f to 0.00f,
+    0.620f to 0.05f,
+    0.680f to 0.15f,
+    0.740f to 0.40f,
+    0.800f to 0.66f,
+    0.870f to 0.90f,
+    0.930f to 1.00f,
+    1.000f to 1.00f,
+)
+
+/** White alpha along the outline in dark themes, over the `#4B4B4B` fill. */
+private val ChipTabRimStopsDark: Array<Pair<Float, Float>> = arrayOf(
+    0.000f to 0.270f,
+    0.016f to 0.270f,
+    0.032f to 0.160f,
+    0.048f to 0.125f,
+    0.065f to 0.100f,
+    0.081f to 0.078f,
+    0.097f to 0.055f,
+    0.113f to 0.050f,
+    0.161f to 0.028f,
+    0.226f to 0.011f,
+    0.274f to 0.000f,
+    0.440f to 0.000f,
+    0.540f to 0.006f,
+    0.605f to 0.011f,
+    0.669f to 0.022f,
+    0.734f to 0.033f,
+    0.798f to 0.050f,
+    0.831f to 0.061f,
+    0.895f to 0.083f,
+    0.927f to 0.111f,
+    0.976f to 0.167f,
+    1.000f to 0.206f,
+)
+
+private val ChipTabBottomRampLight = 1.03.dp
+private val ChipTabBottomSolidLight = 1.03.dp
+private val ChipTabBottomRampDark = 0.78.dp
+private val ChipTabBottomAlphaDark = 0.15f
+private val ChipTabBottomAlphaLight = 0.72f
+private val ChipTabSideShadeWidth = 15.5.dp
+private val ChipTabSideShadeAlpha = 0.016f
+private val ChipTabSideLightAlpha = 0.15f
+
+/** Paints the checked pill's rim; the caller clips it to the pill's silhouette. */
+private fun DrawScope.drawChipTabCheckedRim(silhouette: Path, isDark: Boolean, alpha: Float) {
+    if (alpha <= 0f) return
+    val strength = alpha.coerceIn(0f, 1f)
+    val width = size.width
+    val height = size.height
+    if (width <= 0f || height <= 0f) return
+
+    if (!isDark) {
+        val side = ChipTabSideShadeWidth.toPx().coerceAtMost(width / 2f)
+        if (side > 0f) {
+            // The notes app's light comes from the upper right: the straight edges shade to 242 on
+            // the left and brighten to 247 on the right, over a #F5F6F7 fill.
+            drawRect(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(Color.Black.copy(alpha = ChipTabSideShadeAlpha * strength), Color.Transparent),
+                    startX = 0f,
+                    endX = side,
+                ),
+                size = Size(side, height),
+            )
+            drawRect(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(Color.Transparent, Color.White.copy(alpha = ChipTabSideLightAlpha * strength)),
+                    startX = width - side,
+                    endX = width,
+                ),
+                topLeft = Offset(width - side, 0f),
+                size = Size(side, height),
+            )
+        }
+    }
+
+    // The bloom wraps the outline: a stroke keeps the highlight the same thickness around the
+    // rounded ends instead of cutting it off where a horizontal band would leave the silhouette.
+    // Half of the stroke falls outside and is clipped away by the caller.
+    val rim = (if (isDark) ChipTabRimWidthDark else ChipTabRimWidthLight).toPx().coerceAtMost(height / 4f)
+    if (rim > 0f) {
+        val stops = if (isDark) ChipTabRimStopsDark else ChipTabRimStopsLight
+
+        // Two passes over the same pixels must still land on the measured alpha, so the wider
+        // bleed pass takes `b` of the target and the stroke takes whatever the bleed leaves:
+        // b + m * (1 - b) = a, i.e. m = a * (1 - b) / (1 - a * b).
+        fun rimBrush(scale: (Float) -> Float) = Brush.verticalGradient(
+            colorStops = Array(stops.size) { index ->
+                stops[index].first to Color.White.copy(alpha = scale(stops[index].second) * strength)
+            },
+            startY = 0f,
+            endY = height,
+        )
+        // The bloom seeps into the surface rather than stopping dead at the stroke: a wider second
+        // pass at a fifth of the strength carries it ~2px further in, which is what keeps the
+        // rounded ends from reading as a ring drawn on top.
+        val bleed = if (isDark) ChipTabRimBleedDark else ChipTabRimBleed
+        drawPath(
+            path = silhouette,
+            brush = rimBrush { a -> a * bleed },
+            style = Stroke(width = rim * 2f + ChipTabRimBleedWidth.toPx() * 2f),
+        )
+        drawPath(path = silhouette, brush = rimBrush { a -> a * (1f - bleed) / (1f - a * bleed) }, style = Stroke(width = rim * 2f))
+    }
+
+    // The glow under the bottom edge sits *above* the rim, so the two never paint the same pixels
+    // twice: dark relies on the rim's own bottom stop, light adds the extra 4px of solid white.
+    val solid = (if (isDark) 0.dp else ChipTabBottomSolidLight).toPx()
+    val base = max(solid, rim)
+    val ramp = (if (isDark) ChipTabBottomRampDark else ChipTabBottomRampLight).toPx()
+        .coerceAtMost((height - base).coerceAtLeast(0f))
+    val rampAlpha = (if (isDark) ChipTabBottomAlphaDark else ChipTabBottomAlphaLight) * strength
+    if (ramp > 0f) {
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(Color.Transparent, Color.White.copy(alpha = rampAlpha)),
+                startY = height - base - ramp,
+                endY = height - base,
+            ),
+            topLeft = Offset(0f, height - base - ramp),
+            size = Size(width, ramp),
+        )
+    }
+    if (solid > 0f) {
+        drawRect(
+            color = Color.White.copy(alpha = strength),
+            topLeft = Offset(0f, height - solid),
+            size = Size(width, solid),
+        )
+    }
+}
+
+/** COUIPressFeedbackHelper / PressParamsExtKt.pressParamsDefault tuned for COUIChipTab (no drag/rubber). */
+private val ChipTabPressMotionSpec = COUITouchMotionSpec(
+    pressScaleMin = 0.85f,
+    pressScaleMax = 0.97f,
+    pressSpring = folmeSpring(damping = 1f, response = 0.25f, visibilityThreshold = 0.001f),
+    releaseSpring = folmeSpring(damping = 0.4f, response = 0.5f, visibilityThreshold = 0.001f),
+    candyPressSpring = folmeSpring(damping = 1f, response = 0.3f, visibilityThreshold = 0.001f),
+    candyReleaseSpring = folmeSpring(damping = 0.5f, response = 0.5f, visibilityThreshold = 0.001f),
+)
+
+/** COUIMaskEffectDrawable press tint spring (response 0.3f, bounce 0f). */
+private val ChipTabPressMaskSpring = folmeSpring<Float>(damping = 1f, response = 0.3f)
+
+/** couiColorPress in light themes (#1F000000), fallback when runtime shaders are unavailable. */
+private val ChipTabPressedMaskLight = Color(0x1F000000)
+
+/** couiColorPress in dark themes (#33FFFFFF), fallback when runtime shaders are unavailable. */
+private val ChipTabPressedMaskDark = Color(0x33FFFFFF)
+
+/** COUIMaskEffectDrawable DEFAULT_MIN_PROGRESS_FOR_TOUCH_ENTER_ANIMATION. */
+private const val CHIP_TAB_PRESSED_MASK_MIN_VISIBLE_PROGRESS = 0.7f
+
+private class ChipTabPressMaskThresholdReached : CancellationException("Press mask reached the minimum visible progress")

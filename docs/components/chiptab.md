@@ -66,7 +66,7 @@ ChipTabGroup(
 
 ## Selected Style
 
-The selected tab is lifted the way `COUIChipTab` lifts it on ColorOS 17: top/bottom rim specular highlights (with transparent side edges) + light theme checked surface `#F6F6F7`, a soft drop shadow (`ChipTabDefaults.CheckedShadow`, fitted to the Notes app) and dark-theme caustic light under its lower edge (`coui_caustic_color_3`). All fade in with the selection. The group draws the shadows outside its fading edge, so give it room above and below rather than clipping it.
+The selected tab is lifted the way `COUIChipTab` lifts it on ColorOS 17: a white rim stroked along the whole silhouette — brightest across the top edge, still 3px thick where it follows the rounded ends, and gone by the time it reaches the straight sides — a ramp to white above the bottom edge, a soft inner shade down the left edge with a faint lift down the right one in light themes, the measured `#F5F6F7` / `#4B4B4B` checked fill, a soft drop shadow (`ChipTabDefaults.CheckedShadow`, fitted to the Notes app) and dark-theme caustic light under its lower edge (`coui_caustic_color_3`). The rim geometry and strengths are the on-device measurement of the Notes app; see the constants above `drawChipTabCheckedRim`. All fade in with the selection. The group draws the shadows outside its fading edge, so give it room above and below rather than clipping it. The tab itself is not cut by the scroller: the fading edge and the scroll container are laid out `ChipTabDefaults.PressOutset` taller on each side and placed back, so the overshoot of the release spring draws in full while the row keeps the tab's height.
 
 ## Red Dot and Count
 
@@ -164,6 +164,7 @@ ChipTab(
 | IconOnlyPadding        | Dp                      | 6.dp                      | COUIChipTabLayout.PADDING_HORIZONTAL_6          |
 | CheckedShadow          | Shadow                  | radius 21.82.dp, alpha 0.0865, offset (0, 6.2.dp) | ShadowUtils level 6, fitted to ColorOS 17 Notes |
 | ElevationOutset        | Dp                      | 46.dp                     | How far the group lets tab shadows reach        |
+| PressOutset            | Dp                      | 2.dp                      | How far the scroller reaches past a tab for the press overshoot |
 | MinVisibleChange       | Float                   | 0.00390625f               | COUIChipTabDrawable.ALPHA_MIN_VISIBLE_CHANGE    |
 | LayerSpring            | SpringSpec&lt;Float&gt; | response 0.2 / bounce 0   | COUIChipTabDrawable layer animations            |
 | ScrollSpring           | SpringSpec&lt;Float&gt; | response 0.4 / bounce 0.2 | COUIChipTabGroup.SCROLL_ANIMATION_*             |
@@ -179,9 +180,8 @@ ChipTab(
 
 | COUI token                                                              | Value                 | Used for                    | Port                                         |
 | ----------------------------------------------------------------------- | --------------------- | --------------------------- | -------------------------------------------- |
-| attr/couiColorBackgroundElevated → color/coui_color_background_elevated | #ffffffff / #ff1e1e1e | Checked pill fill           | #F6F6F7 (light) / surfaceContainerHighest (dark) |
+| attr/couiColorBackgroundElevated → color/coui_color_background_elevated | #ffffffff / #ff1e1e1e | Checked pill fill           | #F5F6F7 (light) / #4B4B4B (dark), measured |
 | attr/couiColorContainer4 → color/coui_color_container4                  | #0a000000 / #1affffff | Unchecked pill fill         | file constant, no theme slot                 |
-| color/coui_color_checked_background_gradient_start                      | #40ffffff             | Dark-theme checked overlay  | file constant, no theme slot                 |
 | attr/couiColorLabelPrimary → color/coui_color_label_primary             | #e6000000 / #e6ffffff | Label and icon, both states | onSurface                                    |
 | attr/couiColorLabelTertiary → color/coui_color_label_tertiary           | #42000000 / #4dffffff | Disabled label and icon     | onSurfaceVariantActions                      |
 | attr/couiColorLabelSecondary → color/coui_color_label_secondary         | #8a000000 / #8affffff | Count text                  | onSurfaceSecondary                           |
@@ -202,15 +202,16 @@ ChipTab(
 
 ## Behavior
 
-- The pill fill is the dual layer of `COUIChipTabDrawable.drawDualLayerBackground` and `drawLightOSCheckedBackground`: the checked surface fading with the checked layer alpha — `#F6F6F7` in light themes, `surfaceContainerHighest` in dark ones — `couiColorContainer4` over it at the unchecked layer alpha, and, in dark themes only, `coui_color_checked_background_gradient_start` over the same silhouette.
-- The checked pill carries a specular highlight along its top and bottom edges, drawn as a 1dp vertical-gradient stroke that fades to transparent by 30% / 70% of the height so the left and right sides stay dark, plus a 2dp inner glow rising from the bottom edge. The `TYPE_FRAMEWORK_CAPSULE_2` material stroke is not used: on a light page it wraps the whole silhouette in a bright ring and overshoots the native contrast by roughly 30 levels.
+- The pill fill is the dual layer of `COUIChipTabDrawable.drawDualLayerBackground` and `drawLightOSCheckedBackground`: the checked surface fading with the checked layer alpha — `#F5F6F7` in light themes, `#4B4B4B` in dark ones — and `couiColorContainer4` over it at the unchecked layer alpha. Both values are the measured bodies of the Notes app's pills.
+- The checked pill's glass rim is drawn inside the silhouette between the fill and the label, as a 0.8dp stroke along the silhouette whose white alpha follows the outline: 100% down the top edge, fading out 34px in, back to 100% over the last 46px above the bottom edge (dark: 0.55dp, 27% white on top, 21% on the bottom, fading out 33px / 69px in). Light themes add a 4px solid white cap on the bottom edge with a 4px ramp above it, a vertical shade from 242 down 60px from the left edge and a faint lift to 247 from the right one. These are the on-device measurements of the Notes app at 620dpi, matching its `TYPE_CONTENT_CHIP_TAB_SELECTED` glass bloom and `TYPE_FRAMEWORK_CAPSULE_2` stroke without compositing a backdrop.
 - Checking and unchecking cross-fade the two layers on a critically damped spring (response 0.2 / bounce 0, `COUIChipTabDrawable.CheckedLayerAlphaAnimation`), cut at the 1/256 minimum visible change. The text and icon colour does not change with the selection: both states use `couiColorLabelPrimary`.
 - Selecting a tab scrolls it into view when one of its edges falls inside the visible rect, which is inset by the 12dp fade width on the sides that are scrolled off (`COUIChipTabGroup.checkOcclusion`); the scroll position animates on the response 0.4 / bounce 0.2 spring (`SCROLL_ANIMATION_RESPONSE` / `SCROLL_ANIMATION_BOUNCE`). The tab is not scrolled on the first composition, matching the native chip click listener.
 - The fade mask is a `BlendMode.DstOut` horizontal gradient on the edges that are actually clipped, like `ChipMaskHorizontalScrollView.dispatchDraw`.
+- Pressing shrinks the tab on the press spring and releasing springs it back past its resting size; the fading edge's offscreen layer and the scroll container both clip to their own height, so they are laid out `ChipTabDefaults.PressOutset` taller on each side and placed back up, and the row still reports the tab's height. The native instead expands the parents' clip by 100dp (`COUIChipTab.updateClipExpandForShadowOnParents`).
 
 ## Not Ported
 
-- The material blur / spot-light path of `COUIChipTab.applyMaterialEffect`, gated behind the `COUIMaterialStateManager` device feature flags and theme booleans. This port draws the non-material fallback: the flat dual-layer fill with the hand-drawn top / bottom highlights described above.
+- The material blur / spot-light path of `COUIChipTab.applyMaterialEffect`, gated behind the `COUIMaterialStateManager` device feature flags and theme booleans. This port draws the measured equivalent: the same fill and rim the glass produces over the page, without sampling a backdrop — a tab sits inside the scroller's offscreen fading-edge layer, and sampling the page backdrop from there re-enters the node tree on the render thread.
 - The icon-only leading chip of `COUIChipTabLayout` (a 32dp round chip of a 20dp icon with 6dp start/end padding) and that layout's 16dp scroller padding.
 - `COUIChipTabGroupFragmentMediator`, the fragment switch and fade-in helper.
 - The `coui_chip_tab_unit` and `coui_chip_tab_position_in_group` strings; the report proves that no chip class references them.

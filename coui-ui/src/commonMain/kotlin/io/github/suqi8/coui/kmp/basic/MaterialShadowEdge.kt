@@ -318,6 +318,34 @@ data class MaterialStrokeParams(
         )
 
         /**
+         * `FRAMEWORK_CAPSULE_PARAMS_2_LIGHT` — `TYPE_FRAMEWORK_CAPSULE_2`, light theme. The rim of a
+         * checked `COUIChipTab`: `COUIChipTab.applyMaterialEffect` blends it in from
+         * `TYPE_NO_EFFECT_BASE_1` (an all-zero `StrokeEffectParams`) by `mCheckedLayerAlpha`, so the
+         * rim and its inner shadow grow with the selection.
+         */
+        val FrameworkCapsule2Light: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.2f,
+            edgeWidth = 2.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.1f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
+        /** `FRAMEWORK_CAPSULE_PARAMS_2_DARK` — `TYPE_FRAMEWORK_CAPSULE_2`, dark theme. */
+        val FrameworkCapsule2Dark: MaterialStrokeParams = MaterialStrokeParams(
+            edgeAlpha = 0.6f,
+            edgeWidth = 2.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.02f,
+            shadowFadeOut = 1f,
+            shadowFadeScale = 1f,
+        )
+
+        /** Resolves `TYPE_FRAMEWORK_CAPSULE_2` by night mode, as `getStrokeParamsByType` does. */
+        fun frameworkCapsule2(isDark: Boolean): MaterialStrokeParams = if (isDark) FrameworkCapsule2Dark else FrameworkCapsule2Light
+
+        /**
          * `FRAMEWORK_CAPSULE_PARAMS_7` — `TYPE_FRAMEWORK_CAPSULE_7`. ColorOS ships a single value
          * for both themes.
          */

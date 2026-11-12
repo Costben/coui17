@@ -177,4 +177,123 @@ class ChipTabGroupLayoutTest {
             "selecting an offscreen tab must scroll it into view",
         )
     }
+
+    @Test
+    fun pressingATabShrinksItImmediatelyAndReleasesBackToRest() = runSkikoComposeUiTest(
+        size = Size(360f, 200f),
+        density = Density(1f),
+    ) {
+        var selected = 0
+        setContent {
+            COUITheme {
+                ChipTabGroup(
+                    tabs = tabs,
+                    selectedIndex = selected,
+                    onSelectedChange = { selected = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                )
+            }
+        }
+        waitForIdle()
+
+        val photosNode = onAllNodes(isSelectable())[1]
+        val restWidth = photosNode.getBoundsInRoot().width.value
+
+        mainClock.autoAdvance = false
+        photosNode.performTouchInput { down(center) }
+        mainClock.advanceTimeBy(80)
+
+        val pressedWidth = photosNode.getBoundsInRoot().width.value
+        assertTrue(
+            pressedWidth < restWidth - 1f,
+            "pressing a ChipTab must shrink it immediately (rest=$restWidth, pressed=$pressedWidth)",
+        )
+
+        photosNode.performTouchInput { up() }
+        mainClock.autoAdvance = true
+        waitForIdle()
+
+        assertEquals(1, selected)
+        assertEquals(restWidth, photosNode.getBoundsInRoot().width.value, 0.5f)
+    }
+
+    @Test
+    fun pressingADisabledTabDoesNotShrinkIt() = runSkikoComposeUiTest(
+        size = Size(360f, 200f),
+        density = Density(1f),
+    ) {
+        val mixedTabs = listOf(ChipTabData("All"), ChipTabData("Unavailable", enabled = false))
+        setContent {
+            COUITheme {
+                ChipTabGroup(
+                    tabs = mixedTabs,
+                    selectedIndex = 0,
+                    onSelectedChange = {},
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                )
+            }
+        }
+        waitForIdle()
+
+        val disabledNode = onAllNodes(isSelectable())[1]
+        val restWidth = disabledNode.getBoundsInRoot().width.value
+
+        mainClock.autoAdvance = false
+        disabledNode.performTouchInput { down(center) }
+        mainClock.advanceTimeBy(120)
+
+        assertEquals(restWidth, disabledNode.getBoundsInRoot().width.value, 0.5f)
+
+        disabledNode.performTouchInput { up() }
+        mainClock.autoAdvance = true
+        waitForIdle()
+    }
+
+    @Test
+    fun horizontalScrollCancelsPressShrinkBeforeFingerUp() = runSkikoComposeUiTest(
+        size = Size(180f, 200f),
+        density = Density(1f),
+    ) {
+        var selected = 0
+        val sixTabs = listOf(
+            ChipTabData("All"),
+            ChipTabData("Photos"),
+            ChipTabData("Videos"),
+            ChipTabData("Documents"),
+            ChipTabData("Music"),
+            ChipTabData("Files"),
+        )
+        setContent {
+            COUITheme {
+                ChipTabGroup(
+                    tabs = sixTabs,
+                    selectedIndex = selected,
+                    onSelectedChange = { selected = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                )
+            }
+        }
+        waitForIdle()
+
+        val photosNode = onAllNodes(isSelectable())[1]
+        val restWidth = photosNode.getBoundsInRoot().width.value
+
+        mainClock.autoAdvance = false
+        photosNode.performTouchInput { down(center) }
+        mainClock.advanceTimeBy(80)
+        assertTrue(photosNode.getBoundsInRoot().width.value < restWidth - 1f)
+
+        // Dragging horizontally past touch slop hands the gesture to horizontalScroll and cancels press.
+        photosNode.performTouchInput { moveBy(Offset(-60f, 0f)) }
+        mainClock.advanceTimeBy(1500)
+        assertEquals(restWidth, photosNode.getBoundsInRoot().width.value, 0.5f)
+
+        photosNode.performTouchInput { up() }
+        mainClock.autoAdvance = true
+        waitForIdle()
+        assertEquals(0, selected)
+    }
 }

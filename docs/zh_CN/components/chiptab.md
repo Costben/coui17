@@ -66,7 +66,7 @@ ChipTabGroup(
 
 ## 选中样式
 
-选中的页签按 ColorOS 17 上 `COUIChipTab` 的方式抬起:上下边缘高光（侧边无高光）+ 浅色选中填充 `#F6F6F7`、柔和的投影(`ChipTabDefaults.CheckedShadow`,按便签应用实测拟合)以及深色下沿的焦散光(`coui_caustic_color_3`),均随选中渐显。组会在渐隐层之外绘制投影,请在上下方留出空间而不要裁切它。
+选中的页签按 ColorOS 17 上 `COUIChipTab` 的方式抬起:一道沿整个轮廓描边的白色高光——顶边最亮、跟着圆角拐下去时仍有 3px 粗、走到直立边时已经消失——底边上方再有一段渐升到白的辉光,浅色下左边缘有一层内阴影、右边缘有一层极淡的提升,填充为实测的 `#F5F6F7`(浅色)/ `#4B4B4B`(深色),外加柔和的投影(`ChipTabDefaults.CheckedShadow`,按便签应用实测拟合)以及深色下沿的焦散光(`coui_caustic_color_3`)。高光的几何与强度均取自便签应用的真机实测,见 `drawChipTabCheckedRim` 上方的常量。以上均随选中渐显。组会在渐隐层之外绘制投影,请在上下方留出空间而不要裁切它。页签本体不会被滚动器裁掉:渐隐层与滚动容器上下各多留 `ChipTabDefaults.PressOutset` 再整体上移,松手回弹的过冲可以完整绘出,而行本身仍只占页签的高度。
 
 ## 红点与计数
 
@@ -164,6 +164,7 @@ ChipTab(
 | IconOnlyPadding        | Dp                      | 6.dp                      | COUIChipTabLayout.PADDING_HORIZONTAL_6          |
 | CheckedShadow          | Shadow                  | radius 21.82.dp, alpha 0.0865, offset (0, 6.2.dp) | ShadowUtils 6 级,按 ColorOS 17 便签实测拟合 |
 | ElevationOutset        | Dp                      | 46.dp                     | 组允许页签投影伸出的范围                        |
+| PressOutset            | Dp                      | 2.dp                      | 滚动容器为按压回弹在页签上下多留的范围          |
 | MinVisibleChange       | Float                   | 0.00390625f               | COUIChipTabDrawable.ALPHA_MIN_VISIBLE_CHANGE    |
 | LayerSpring            | SpringSpec&lt;Float&gt; | response 0.2 / bounce 0   | COUIChipTabDrawable 的图层动画                  |
 | ScrollSpring           | SpringSpec&lt;Float&gt; | response 0.4 / bounce 0.2 | COUIChipTabGroup.SCROLL_ANIMATION_*             |
@@ -179,9 +180,8 @@ ChipTab(
 
 | COUI token                                                              | 取值                  | 用途                   | 移植目标                                |
 | ----------------------------------------------------------------------- | --------------------- | ---------------------- | --------------------------------------- |
-| attr/couiColorBackgroundElevated → color/coui_color_background_elevated | #ffffffff / #ff1e1e1e | 选中胶囊填充           | #F6F6F7(浅色) / surfaceContainerHighest(深色) |
+| attr/couiColorBackgroundElevated → color/coui_color_background_elevated | #ffffffff / #ff1e1e1e | 选中胶囊填充           | #F5F6F7(浅色) / #4B4B4B(深色),实测 |
 | attr/couiColorContainer4 → color/coui_color_container4                  | #0a000000 / #1affffff | 未选中胶囊填充         | 文件内常量,主题无对应槽位               |
-| color/coui_color_checked_background_gradient_start                      | #40ffffff             | 深色选中叠加层         | 文件内常量,主题无对应槽位               |
 | attr/couiColorLabelPrimary → color/coui_color_label_primary             | #e6000000 / #e6ffffff | 两种状态下的标签与图标 | onSurface                               |
 | attr/couiColorLabelTertiary → color/coui_color_label_tertiary           | #42000000 / #4dffffff | 禁用状态的标签与图标   | onSurfaceVariantActions                 |
 | attr/couiColorLabelSecondary → color/coui_color_label_secondary         | #8a000000 / #8affffff | 计数文本               | onSurfaceSecondary                      |
@@ -202,15 +202,16 @@ ChipTab(
 
 ## 行为
 
-- 胶囊填充即 `COUIChipTabDrawable.drawDualLayerBackground` 与 `drawLightOSCheckedBackground` 的双层结构:选中面随选中层 alpha 淡出——浅色为 `#F6F6F7`,深色为 `surfaceContainerHighest`——`couiColorContainer4` 以未选中层 alpha 覆盖其上;深色下再在同一轮廓上叠加 `coui_color_checked_background_gradient_start`。
-- 选中胶囊只在上下边缘有镜面高光:1dp 纵向渐变描边,在高度 30% / 70% 处淡至透明,左右侧边保持不发亮;底边另有 2dp 的内辉光。不使用 `TYPE_FRAMEWORK_CAPSULE_2` 材质描边——它在浅色页面上会给整圈轮廓套上亮环,对比度比原厂高出约 30 级。
+- 胶囊填充即 `COUIChipTabDrawable.drawDualLayerBackground` 与 `drawLightOSCheckedBackground` 的双层结构:选中面随选中层 alpha 淡出——浅色为 `#F5F6F7`,深色为 `#4B4B4B`——`couiColorContainer4` 以未选中层 alpha 覆盖其上。两个取值都是便签应用胶囊主体的实测值。
+- 选中胶囊的玻璃高光绘制在轮廓之内、填充与文字之间:一道 0.8dp 的描边沿胶囊轮廓行走,白色的 alpha 随纵向位置变化——顶边 100%,向内 34px 处衰减到 0,再在离底边 46px 的范围内回到 100%(深色为 0.55dp,顶边 27% 白、底边 21% 白,衰减距离 33px / 69px)。浅色另外在底边补 4px 纯白加 4px 渐升、从左边缘向内 60px 由 242 回到填充色的内阴影、以及右侧对称的 247 微亮。这些数值取自便签应用在 620dpi 上的真机实测,等价于它的 `TYPE_CONTENT_CHIP_TAB_SELECTED` 玻璃高光与 `TYPE_FRAMEWORK_CAPSULE_2` 描边,但不采样背景。
 - 选中与取消选中会让两个图层在临界阻尼弹簧上交叉渐变(response 0.2 / bounce 0,`COUIChipTabDrawable.CheckedLayerAlphaAnimation`),在 1/256 的最小可见变化处截断。文本与图标颜色不随选中状态变化:两种状态都用 `couiColorLabelPrimary`。
 - 选中某个页签时,若它的某条边落在可见矩形内,就把该页签滚动到可见位置;可见矩形在被滚出的一侧内缩 12dp 的渐隐宽度(`COUIChipTabGroup.checkOcclusion`),滚动位置用 response 0.4 / bounce 0.2 的弹簧动效(`SCROLL_ANIMATION_RESPONSE` / `SCROLL_ANIMATION_BOUNCE`)。首次组合时不滚动,与原生页签点击监听一致。
 - 渐隐遮罩是只在真正被裁剪的边上绘制的 `BlendMode.DstOut` 横向渐变,对应 `ChipMaskHorizontalScrollView.dispatchDraw`。
+- 按下时页签沿按压弹簧缩小,松手时越过静止尺寸回弹;渐隐层的离屏层与滚动容器都会按自身高度裁剪,因此两者上下各多留 `ChipTabDefaults.PressOutset` 再整体上移,行本身仍只报告页签高度。原生则是把父容器的裁剪外扩 100dp(`COUIChipTab.updateClipExpandForShadowOnParents`)。
 
 ## 未移植
 
-- `COUIChipTab.applyMaterialEffect` 的模糊 / 高光路径,它由 `COUIMaterialStateManager` 的设备特性开关与主题布尔量控制。本移植绘制的是非材质回退形态:扁平的双层填充,加上上面手绘的上下边缘高光。
+- `COUIChipTab.applyMaterialEffect` 的模糊 / 高光路径,它由 `COUIMaterialStateManager` 的设备特性开关与主题布尔量控制。本移植绘制实测等价形态:与玻璃材质在页面底色上的合成结果一致的填充与高光,但不采样背景——胶囊位于滚动器的离屏渐隐层内,在该层内采样页面背景会让渲染线程的节点树自我引用。
 - `COUIChipTabLayout` 的纯图标前置胶囊(32dp 圆形胶囊,内含 20dp 图标、前后各 6dp 内边距),以及该布局的 16dp 滚动区留白。
 - `COUIChipTabGroupFragmentMediator`,即 fragment 切换与淡入辅助类。
 - `coui_chip_tab_unit` 与 `coui_chip_tab_position_in_group` 两个字符串;报告证明没有任何 chip 类引用它们。
