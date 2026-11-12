@@ -19,6 +19,7 @@
 | 系统界面元素 | 系统节点标识 / 类型 | COUI 标准组件组合 | 适用密度 |
 | :--- | :--- | :--- | :--- |
 | 主 Tab 页标题栏与操作按钮 | `toolbar`、`action_main_tab_search` | `PinnedTopAppBar` 或 `TopAppBar(gradientGlass = true)` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | 相册密度 |
+| 带分类胶囊的两行顶栏（搜索页、便签页） | `toolbar` 下的搜索胶囊 + `chip_tab` 行 | `TwoRowTopAppBar`，第二行放 `ChipTabGroup`；两行共用同一条 `AppBarBlurOverlay`，不要给第二行单独配材质 | 相册密度 |
 | 二级设置页返回键与更多键 | `coui_toolbar_back_view`、`coui_toolbar_more_view` | `SmallTopAppBar` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | 应用密度 |
 | 顶栏三点弹出菜单 | `coui_popup_wrapper`、`coui_popup_list_view` | `OverlayListPopup` + `ListPopupColumn` + `DropdownImpl(role = Role.Button)` | 面板物理密度（组件内部自动切换） |
 | 底部悬浮导航胶囊 | `TYPE_FRAMEWORK_BOTTOM_BAR` | `BottomFloatingNavigationBar` | 相册密度 |

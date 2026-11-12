@@ -77,6 +77,7 @@ import component.TopAppBarColorOS17FormsDemo
 import component.TopAppBarGlassDemo
 import component.TopTipsDemo
 import component.TouchSearchViewDemoContent
+import component.TwoRowTopAppBarDemo
 import component.WindowIconMenuVariantsDemo
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
@@ -231,6 +232,7 @@ internal val Coui17CatalogGroups: List<List<Coui17Category>> = listOf(
                 demo("TopAppBar (glass)") { TopAppBarGlassDemo() }
                 demo("TopAppBar (ColorOS 17 forms)") { TopAppBarColorOS17FormsDemo() }
                 demo("PinnedTopAppBar") { PinnedTopAppBarDemo() }
+                demo("TwoRowTopAppBar") { TwoRowTopAppBarDemo() }
             }
             component("TabRow") {
                 demo("TabRow") { TabRowDemo() }

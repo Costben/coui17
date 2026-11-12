@@ -67,6 +67,7 @@ export default defineConfig({
                         { text: "TopAppBar", link: "/components/topappbar" },
                         { text: "PinnedTopAppBar", link: "/components/pinnedtopappbar" },
                         { text: "AppBarBlurOverlay", link: "/components/appbarbluroverlay" },
+                        { text: "TwoRowTopAppBar", link: "/components/tworowtopappbar" },
                         { text: "NavigationBar", link: "/components/navigationbar" },
                         { text: "BottomFloatingAccessoryNavigationBar", link: "/components/bottomfloatingaccessorynavigationbar" },
                         { text: "BottomFloatingToolbar", link: "/components/bottomfloatingtoolbar" },

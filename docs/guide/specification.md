@@ -19,6 +19,7 @@ Follow this workflow when implementing any screen:
 | System Screen Element | System Node ID / Type | Standard COUI Component Combination | Target Density |
 | :--- | :--- | :--- | :--- |
 | Main tab title bar and action keys | `toolbar`, `action_main_tab_search` | `PinnedTopAppBar` or `TopAppBar(gradientGlass = true)` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | Gallery density |
+| Two-row bar with a chip row (search page, Notes) | the toolbar's search capsule followed by the `chip_tab` row | `TwoRowTopAppBar` with a `ChipTabGroup` as its second row; both rows share one `AppBarBlurOverlay`, never a material of their own | Gallery density |
 | Secondary settings back and overflow keys | `coui_toolbar_back_view`, `coui_toolbar_more_view` | `SmallTopAppBar` + `HighlightedIconButton` + `Modifier.couiTopAppBarActionItem()` | App density |
 | Toolbar overflow popup menu | `coui_popup_wrapper`, `coui_popup_list_view` | `OverlayListPopup` + `ListPopupColumn` + `DropdownImpl(role = Role.Button)` | Panel physical density (switched automatically) |
 | Floating bottom navigation capsule | `TYPE_FRAMEWORK_BOTTOM_BAR` | `BottomFloatingNavigationBar` | Gallery density |
