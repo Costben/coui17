@@ -772,13 +772,13 @@ private fun ChipTabSurface(
                         if (checkedLayerAlpha < 1f) {
                             drawOutline(outline, color = container4.copy(alpha = container4.alpha * (1f - checkedLayerAlpha)))
                         }
-                    } else if (checkedLayerAlpha > 0f) {
-                        // The blurred pill already carries the fill; the opaque checked surface would
-                        // cover the blur, so the checked layer only lays its lift on top.
-                        clipPath(silhouette) {
-                            drawRect(color = GlassChipDefaults.highlightWash(isDark, checkedLayerAlpha))
-                        }
                     }
+                    // The blurred pill carries the fill on its own: [blurColors] already lerps
+                    // between the notes app's unchecked and checked pairs, and that lift is what the
+                    // notes app shows (#414141 -> #4B4B4B in a dark theme, 10/255).
+                    // [GlassChipDefaults.highlightWash] piles another 20% white on top and lands the
+                    // pill on ~111 — a white slab beside the notes app's 75 — so the blurred path
+                    // leaves the blurred fill untouched instead of washing it white.
                     // The checked pill's glass rim: the light and shadow the material lays on top of
                     // the fill, inside the silhouette and under the label.
                     if (checkedLayerAlpha > 0f) {
