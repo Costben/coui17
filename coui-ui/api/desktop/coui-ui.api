@@ -1867,6 +1867,41 @@ public final class io/github/suqi8/coui/kmp/basic/FullPageStatementKt {
 	public static final fun FullPageStatement-MCjU-c8 (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/unit/Dp;Lio/github/suqi8/coui/kmp/basic/FullPageStatementColors;Lio/github/suqi8/coui/kmp/basic/ButtonColors;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/ScrollState;Landroidx/compose/runtime/Composer;III)V
 }
 
+public final class io/github/suqi8/coui/kmp/basic/GlassChipDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/GlassChipDefaults;
+	public final fun getBlurRadiusPx ()F
+	public final fun getButtonIconSize-D9Ej5fM ()F
+	public final fun getFadeWidth-D9Ej5fM ()F
+	public final fun getGap-D9Ej5fM ()F
+	public final fun getHeight-D9Ej5fM ()F
+	public final fun getHorizontalPadding-D9Ej5fM ()F
+	public final fun getIconGap-D9Ej5fM ()F
+	public final fun getIconSize-D9Ej5fM ()F
+	public final fun getMaxWidth-D9Ej5fM ()F
+	public final fun getMinWidth-D9Ej5fM ()F
+}
+
+public final class io/github/suqi8/coui/kmp/basic/GlassChipItem {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;)V
+	public synthetic fun <init> (Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Landroidx/compose/ui/graphics/vector/ImageVector;
+	public final fun copy (Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;)Lio/github/suqi8/coui/kmp/basic/GlassChipItem;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/basic/GlassChipItem;Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/GlassChipItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIcon ()Landroidx/compose/ui/graphics/vector/ImageVector;
+	public final fun getLabel ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/GlassChipRowKt {
+	public static final fun GlassChipButton (Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/runtime/Composer;II)V
+	public static final fun GlassChipRow (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+}
+
 public final class io/github/suqi8/coui/kmp/basic/GlassContainer : java/lang/Enum {
 	public static final field Large Lio/github/suqi8/coui/kmp/basic/GlassContainer;
 	public static final field Medium Lio/github/suqi8/coui/kmp/basic/GlassContainer;
