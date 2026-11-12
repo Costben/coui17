@@ -1870,6 +1870,9 @@ public final class io/github/suqi8/coui/kmp/basic/FullPageStatementKt {
 public final class io/github/suqi8/coui/kmp/basic/GlassChipDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/GlassChipDefaults;
+	public final fun blurColors (ZF)Lio/github/suqi8/coui/kmp/blur/BlurColors;
+	public final fun contentColor-WaAFU9c (ZF)J
+	public final fun flatFill-WaAFU9c (ZF)J
 	public final fun getBlurRadiusPx ()F
 	public final fun getButtonIconSize-D9Ej5fM ()F
 	public final fun getFadeWidth-D9Ej5fM ()F
@@ -1880,6 +1883,8 @@ public final class io/github/suqi8/coui/kmp/basic/GlassChipDefaults {
 	public final fun getIconSize-D9Ej5fM ()F
 	public final fun getMaxWidth-D9Ej5fM ()F
 	public final fun getMinWidth-D9Ej5fM ()F
+	public final fun highlightWash-WaAFU9c (ZF)J
+	public static synthetic fun highlightWash-WaAFU9c$default (Lio/github/suqi8/coui/kmp/basic/GlassChipDefaults;ZFILjava/lang/Object;)J
 }
 
 public final class io/github/suqi8/coui/kmp/basic/GlassChipItem {
@@ -1900,6 +1905,7 @@ public final class io/github/suqi8/coui/kmp/basic/GlassChipItem {
 public final class io/github/suqi8/coui/kmp/basic/GlassChipRowKt {
 	public static final fun GlassChipButton (Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/runtime/Composer;II)V
 	public static final fun GlassChipRow (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/blur/Backdrop;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final fun drawGlassChipHighlight (Landroidx/compose/ui/graphics/drawscope/DrawScope;FZ)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/GlassContainer : java/lang/Enum {

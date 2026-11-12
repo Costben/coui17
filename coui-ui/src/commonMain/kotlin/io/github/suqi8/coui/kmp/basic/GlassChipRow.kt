@@ -121,6 +121,112 @@ object GlassChipDefaults {
      * [textureBlur] wants.
      */
     val BlurRadiusPx: Float = CHIP_HWUI_BLUR_RADIUS_PX * HWUI_RADIUS_TO_SIGMA / ENGINE_SIGMA_PER_RADIUS
+
+    /**
+     * The two blend colours of a chip at [fraction], where 0 is unchecked and 1 is checked.
+     *
+     * Light: unchecked `#144E4E4E` ColorDodge + `#14606060` Luminosity, checked `#66A3A1A1` +
+     * `#99F5F5F5`. Dark: unchecked `#33B2B2B2` Luminosity + `#33303030` Overlay, checked
+     * `#A6505050` + `#4CA7A7A7`. These are the pairs the Notes app carries, interpolated by the
+     * checked fraction so a selection spring drives the colour the way the platform drives its
+     * layer alpha.
+     */
+    fun blurColors(dark: Boolean, fraction: Float): BlurColors {
+        val f = fraction.coerceIn(0f, 1f)
+        return if (dark) {
+            BlurColors(
+                blendColors = listOf(
+                    BlendColorEntry(lerp(Color(0x33B2B2B2), Color(0xA6505050), f), BlurBlendMode.Luminosity),
+                    BlendColorEntry(lerp(Color(0x33303030), Color(0x4CA7A7A7), f), BlurBlendMode.Overlay),
+                ),
+            )
+        } else {
+            BlurColors(
+                blendColors = listOf(
+                    BlendColorEntry(lerp(Color(0x144E4E4E), Color(0x66A3A1A1), f), BlurBlendMode.ColorDodge),
+                    BlendColorEntry(lerp(Color(0x14606060), Color(0x99F5F5F5), f), BlurBlendMode.Luminosity),
+                ),
+            )
+        }
+    }
+
+    /**
+     * The flat stand-in for [blurColors] when no [Backdrop] is available.
+     *
+     * Translucent on purpose: the alphas are picked so the result lands on the value the blurred
+     * chip resolves to. The reference case is a chip sitting on an unchecked chip — a dark
+     * unchecked chip is ≈0x42, and these alphas put the flat chip on the same 0x42 / 0x6F the
+     * blurred pair produces, which keeps a chip with no backdrop from reading as an opaque slab
+     * next to its blurred siblings. [highlightWash] is already folded in here, so the flat path
+     * must not paint it a second time.
+     */
+    fun flatFill(dark: Boolean, fraction: Float): Color {
+        val f = fraction.coerceIn(0f, 1f)
+        return if (dark) {
+            lerp(Color(0x16FFFFFF), Color(0x3DFFFFFF), f)
+        } else {
+            lerp(Color(0x0B000000), Color(0xA3FFFFFF), f)
+        }
+    }
+
+    /**
+     * The white wash painted over the blur of a checked chip, on top of [blurColors].
+     *
+     * [blurColors] carries the Notes app's own pairs, and their checked/unchecked gap is uneven:
+     * on a light backdrop the checked pair lifts the chip by ~45/255, on a dark one by only ~10.
+     * Ten levels is not enough to read as a highlight over a dark blur — the chip then looks like
+     * an outlined capsule rather than a lit block — so both the blurred chip and the flat fallback
+     * lay this wash on top. It is scaled by the checked fraction, so the lift fades in with the
+     * same spring that drives the colour.
+     */
+    fun highlightWash(dark: Boolean, fraction: Float = 1f): Color =
+        Color.White.copy(alpha = (if (dark) 0.20f else 0.08f) * fraction.coerceIn(0f, 1f))
+
+    /** The label and icon colour of a chip at [fraction]. */
+    fun contentColor(dark: Boolean, fraction: Float): Color {
+        val idle = if (dark) Color(0xC7FFFFFF) else Color(0xE6000000)
+        val active = if (dark) Color(0xF2FFFFFF) else Color(0xF2000000)
+        return lerp(idle, active, fraction.coerceIn(0f, 1f))
+    }
+
+}
+
+/**
+ * The checked highlight of a glass surface: a hairline along the top and bottom arcs, nothing
+ * on the sides, plus a thin inner glow at the bottom. Shared by the chip row and the segmented bar.
+ */
+fun DrawScope.drawGlassChipHighlight(fraction: Float, dark: Boolean) {
+    val alpha = fraction.coerceIn(0f, 1f)
+    if (alpha <= 0f) return
+    val strokeWidth = 1.dp.toPx()
+    val inset = strokeWidth / 2f
+    val strokeBrush = Brush.verticalGradient(
+        0f to Color.White.copy(alpha = (if (dark) 0.23f else 1f) * alpha),
+        0.30f to Color.Transparent,
+        0.70f to Color.Transparent,
+        1f to Color.White.copy(alpha = (if (dark) 0.14f else 1f) * alpha),
+        startY = 0f,
+        endY = size.height,
+    )
+    val radius = (size.minDimension / 2f - inset).coerceAtLeast(0f)
+    drawRoundRect(
+        brush = strokeBrush,
+        topLeft = Offset(inset, inset),
+        size = Size(size.width - strokeWidth, size.height - strokeWidth),
+        cornerRadius = CornerRadius(radius, radius),
+        style = Stroke(width = strokeWidth),
+    )
+    val glowHeight = 2.dp.toPx()
+    val glowAlpha = (if (dark) 0.06f else 0.85f) * alpha
+    drawRect(
+        brush = Brush.verticalGradient(
+            colors = listOf(Color.Transparent, Color.White.copy(alpha = glowAlpha)),
+            startY = size.height - glowHeight,
+            endY = size.height,
+        ),
+        topLeft = Offset(0f, size.height - glowHeight),
+        size = Size(size.width, glowHeight),
+    )
 }
 
 private const val CHIP_HWUI_BLUR_RADIUS_PX = 40f
@@ -274,7 +380,7 @@ fun GlassChipButton(
             imageVector = icon,
             contentDescription = contentDescription,
             modifier = Modifier.size(GlassChipDefaults.ButtonIconSize),
-            tint = chipContentColor(dark = true, fraction = 1f),
+            tint = GlassChipDefaults.contentColor(dark = true, fraction = 1f),
         )
     }
 }
@@ -344,14 +450,8 @@ private fun GlassChipSurface(
     val blurRadius: Dp = remember(density) {
         with(density) { GlassChipDefaults.BlurRadiusPx.toDp() }
     }
-    val colors = remember(dark, fraction) { chipBlurColors(dark, fraction) }
-    val flatFill = remember(dark, fraction) {
-        if (dark) {
-            lerp(Color(0xFF373737), Color(0xFF4A4A4A), fraction)
-        } else {
-            lerp(Color(0x2E4E4E4E), Color(0x8FE8E8E8), fraction)
-        }
-    }
+    val colors = remember(dark, fraction) { GlassChipDefaults.blurColors(dark, fraction) }
+    val flatFill = remember(dark, fraction) { GlassChipDefaults.flatFill(dark, fraction) }
 
     Box(
         modifier = modifier
@@ -370,7 +470,19 @@ private fun GlassChipSurface(
             )
             .drawWithContent {
                 drawContent()
-                drawCheckedHighlight(fraction, dark)
+                // The flat fallback already carries the lift in [GlassChipDefaults.flatFill];
+                // only the blurred chip needs the extra wash on top of [blurColors].
+                val wash =
+                    if (backdrop != null) GlassChipDefaults.highlightWash(dark, fraction)
+                    else Color.Transparent
+                if (wash.alpha > 0f) {
+                    drawRoundRect(
+                        color = wash,
+                        size = size,
+                        cornerRadius = CornerRadius(size.height / 2f, size.height / 2f),
+                    )
+                }
+                drawGlassChipHighlight(fraction, dark)
             }
             .then(
                 if (onReselect != null) {
@@ -386,7 +498,7 @@ private fun GlassChipSurface(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            content(chipContentColor(dark, fraction))
+            content(GlassChipDefaults.contentColor(dark, fraction))
         }
     }
 }
@@ -448,75 +560,3 @@ private fun Modifier.edgeFade(scrollState: ScrollState): Modifier = this
             )
         }
     }
-
-/**
- * The highlight of the checked chip: a hairline along the top and bottom arcs, nothing on the
- * sides, plus a thin inner glow at the bottom. The values match COUI's own `COUIChipTabDrawable`
- * port in [ChipTab] (0.23 / 0.14 white in dark themes, solid white in light).
- */
-private fun DrawScope.drawCheckedHighlight(fraction: Float, dark: Boolean) {
-    val alpha = fraction.coerceIn(0f, 1f)
-    if (alpha <= 0f) return
-    val strokeWidth = 1.dp.toPx()
-    val inset = strokeWidth / 2f
-    val strokeBrush = Brush.verticalGradient(
-        0f to Color.White.copy(alpha = (if (dark) 0.23f else 1f) * alpha),
-        0.30f to Color.Transparent,
-        0.70f to Color.Transparent,
-        1f to Color.White.copy(alpha = (if (dark) 0.14f else 1f) * alpha),
-        startY = 0f,
-        endY = size.height,
-    )
-    val radius = (size.minDimension / 2f - inset).coerceAtLeast(0f)
-    drawRoundRect(
-        brush = strokeBrush,
-        topLeft = Offset(inset, inset),
-        size = Size(size.width - strokeWidth, size.height - strokeWidth),
-        cornerRadius = CornerRadius(radius, radius),
-        style = Stroke(width = strokeWidth),
-    )
-    val glowHeight = 2.dp.toPx()
-    val glowAlpha = (if (dark) 0.06f else 0.85f) * alpha
-    drawRect(
-        brush = Brush.verticalGradient(
-            colors = listOf(Color.Transparent, Color.White.copy(alpha = glowAlpha)),
-            startY = size.height - glowHeight,
-            endY = size.height,
-        ),
-        topLeft = Offset(0f, size.height - glowHeight),
-        size = Size(size.width, glowHeight),
-    )
-}
-
-private fun chipContentColor(dark: Boolean, fraction: Float): Color {
-    val idle = if (dark) Color(0xC7FFFFFF) else Color(0xE6000000)
-    val active = if (dark) Color(0xF2FFFFFF) else Color(0xF2000000)
-    return lerp(idle, active, fraction)
-}
-
-/**
- * The two blend colours of a chip.
- *
- * Light: unchecked `#144E4E4E` ColorDodge + `#14606060` Luminosity, checked `#66A3A1A1` +
- * `#99F5F5F5`. Dark: unchecked `#33B2B2B2` Luminosity + `#33303030` Overlay, checked `#A6505050` +
- * `#4CA7A7A7`. These are the pairs the Notes app carries, interpolated by the checked fraction so
- * the selection spring drives the colour the same way the platform drives its layer alpha.
- */
-private fun chipBlurColors(dark: Boolean, fraction: Float): BlurColors {
-    val f = fraction.coerceIn(0f, 1f)
-    return if (dark) {
-        BlurColors(
-            blendColors = listOf(
-                BlendColorEntry(lerp(Color(0x33B2B2B2), Color(0xA6505050), f), BlurBlendMode.Luminosity),
-                BlendColorEntry(lerp(Color(0x33303030), Color(0x4CA7A7A7), f), BlurBlendMode.Overlay),
-            ),
-        )
-    } else {
-        BlurColors(
-            blendColors = listOf(
-                BlendColorEntry(lerp(Color(0x144E4E4E), Color(0x66A3A1A1), f), BlurBlendMode.ColorDodge),
-                BlendColorEntry(lerp(Color(0x14606060), Color(0x99F5F5F5), f), BlurBlendMode.Luminosity),
-            ),
-        )
-    }
-}
