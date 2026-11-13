@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +44,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.addOutline
@@ -386,49 +389,60 @@ private fun SearchInput(
             onFocused()
         }
     }
+    // 胶囊内不画光标手柄：25dp 手柄会溢出 40dp 胶囊，而且 CoreTextField 在 onGloballyPositioned 里
+    // 按可见边界重算手柄显隐，按压弹簧每帧移动输入节点时手柄会跟着逐帧闪。选中底色沿用外层配色。
+    val inheritedSelectionColors = LocalTextSelectionColors.current
+    val selectionColors = remember(inheritedSelectionColors) {
+        TextSelectionColors(
+            handleColor = Color.Transparent,
+            backgroundColor = inheritedSelectionColors.backgroundColor,
+        )
+    }
     // 最终宽度排版，当前宽度裁剪；满幅输入节点阻止融合重叠区穿透到下层按钮。
     Layout(content = {
-        BasicTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxSize().focusRequester(requester)
-                .semantics { contentDescription = placeholder }
-                .then(if (!active) Modifier.clearAndSetSemantics {} else Modifier),
-            enabled = enabled && active,
-            singleLine = true,
-            textStyle = LocalCouiTextStyle.current.copy(color = LocalContentColor.current, fontSize = 15.sp),
-            cursorBrush = SolidColor(LocalCouiToolbarStyle.current.cursorColor),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-            decorationBox = { input ->
-                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.padding(start = 2.dp).size(36.dp), contentAlignment = Alignment.Center) {
-                        Icon(
-                            modifier = Modifier.size(CouiSearchBarDefaults.iconSize),
-                            imageVector = CouiSearchIcon.imageVector,
-                            contentDescription = null,
-                        )
-                    }
-                    Box(
-                        Modifier.weight(1f).graphicsLayer { alpha = progress.coerceIn(0f, 1f) },
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        if (query.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                color = LocalContentColor.current.copy(alpha = LocalContentColor.current.alpha * 0.6f),
-                                fontSize = 15.sp,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis,
+        CompositionLocalProvider(LocalTextSelectionColors provides selectionColors) {
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier.fillMaxSize().focusRequester(requester)
+                    .semantics { contentDescription = placeholder }
+                    .then(if (!active) Modifier.clearAndSetSemantics {} else Modifier),
+                enabled = enabled && active,
+                singleLine = true,
+                textStyle = LocalCouiTextStyle.current.copy(color = LocalContentColor.current, fontSize = 15.sp),
+                cursorBrush = SolidColor(LocalCouiToolbarStyle.current.cursorColor),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+                decorationBox = { input ->
+                    Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.padding(start = 2.dp).size(36.dp), contentAlignment = Alignment.Center) {
+                            Icon(
+                                modifier = Modifier.size(CouiSearchBarDefaults.iconSize),
+                                imageVector = CouiSearchIcon.imageVector,
+                                contentDescription = null,
                             )
                         }
-                        input()
+                        Box(
+                            Modifier.weight(1f).graphicsLayer { alpha = progress.coerceIn(0f, 1f) },
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            if (query.isEmpty()) {
+                                Text(
+                                    text = placeholder,
+                                    color = LocalContentColor.current.copy(alpha = LocalContentColor.current.alpha * 0.6f),
+                                    fontSize = 15.sp,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            input()
+                        }
+                        Box(Modifier.graphicsLayer { alpha = progress.coerceIn(0f, 1f) }) { trailingIcon() }
                     }
-                    Box(Modifier.graphicsLayer { alpha = progress.coerceIn(0f, 1f) }) { trailingIcon() }
-                }
-            },
-        )
+                },
+            )
+        }
     }) { measurables, constraints ->
         val child = measurables.single().measure(Constraints.fixed(fullWidth.roundToInt(), constraints.maxHeight))
         layout(constraints.maxWidth, constraints.maxHeight) {
