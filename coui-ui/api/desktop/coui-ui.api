@@ -3760,6 +3760,10 @@ public final class io/github/suqi8/coui/kmp/basic/SearchBarKt {
 	public static final fun SearchBar-g9hh02M (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLjava/lang/String;ZLandroidx/compose/ui/text/TextStyle;Lio/github/suqi8/coui/kmp/basic/SearchBarColors;Lio/github/suqi8/coui/kmp/basic/MaterialStrokeParams;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/graphics/Color;Lio/github/suqi8/coui/kmp/blur/Backdrop;JLjava/lang/String;Lkotlin/jvm/functions/Function0;ZLjava/lang/String;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;IIII)V
 }
 
+public final class io/github/suqi8/coui/kmp/basic/SearchFilterTopAppBarKt {
+	public static final fun SearchFilterTopAppBar-ZSIL4_Q (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;FFFLandroidx/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/layout/PaddingValues;JLio/github/suqi8/coui/kmp/blur/Backdrop;FLkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+}
+
 public final class io/github/suqi8/coui/kmp/basic/SearchHistoryChipColors {
 	public static final field $stable I
 	public synthetic fun <init> (JJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V

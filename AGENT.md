@@ -3,6 +3,8 @@
 本文件汇总后续 AI 在本仓库里应遵守的核心规则。本仓库基于 [Miuix](https://github.com/compose-miuix-ui/miuix) 改造，目标是**就地演进成一套 COUI（ColorOS 设计语言）Compose Multiplatform 组件库**。
 
 > 工程规范（构建命令、代码风格、API 约定、性能约束）见 `CLAUDE.md`，那份仍然有效，写 COUI 组件时**必须同时遵守**。本文件只补充「COUI 改造」这条主线：项目定位、设计来源、设计与代码的映射。
+>
+> **踩过的坑见 [`docs/pitfalls.md`](docs/pitfalls.md)**：构建与快照发布、增量化安装、顶栏玻璃与胶囊采样、密度、光标手柄、验证方法与提交规范。动顶栏 / 玻璃 / 密度 / 安装流程之前先读一遍。
 
 ## 1. 必读目标
 

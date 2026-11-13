@@ -72,6 +72,7 @@ import component.TabRowDemo
 import component.TagViewDemo
 import component.TextFieldDemo
 import component.TimePickerDemo
+import component.SearchFilterTopAppBarDemo
 import component.TooltipDemo
 import component.TopAppBarColorOS17FormsDemo
 import component.TopAppBarGlassDemo
@@ -233,6 +234,7 @@ internal val Coui17CatalogGroups: List<List<Coui17Category>> = listOf(
                 demo("TopAppBar (ColorOS 17 forms)") { TopAppBarColorOS17FormsDemo() }
                 demo("PinnedTopAppBar") { PinnedTopAppBarDemo() }
                 demo("TwoRowTopAppBar") { TwoRowTopAppBarDemo() }
+                demo("SearchFilterTopAppBar") { SearchFilterTopAppBarDemo() }
             }
             component("TabRow") {
                 demo("TabRow") { TabRowDemo() }
