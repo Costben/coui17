@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
@@ -71,10 +72,18 @@ object TwoRowTopAppBarDefaults {
      *
      * The same 6dp the search field leaves inside the first row, so the chip row is inset from the
      * bar's bottom edge the way the field is from the row's. The material then keeps fading out for
-     * [AppBarBlurOverlayDefaults.ExtraHeight] (8dp) past that edge, which is where the bar meets the
-     * list.
+     * [ExtraHeight] (6dp) past that edge — 12dp below the chips — which stops just above the first
+     * list item at rest.
      */
     val SecondRowBottom = 6.dp
+
+    /**
+     * How far a two-row bar's material reaches past the bar's bottom edge: 6dp.
+     *
+     * Mirrors [AppBarBlurOverlayDefaults.TwoRowExtraHeight]; single-row bars keep
+     * [AppBarBlurOverlayDefaults.ExtraHeight] (8dp).
+     */
+    val ExtraHeight = AppBarBlurOverlayDefaults.TwoRowExtraHeight
 
     /**
      * The height the bar occupies below the status bar, as [TwoRowTopAppBar] lays it out.
@@ -126,7 +135,9 @@ object TwoRowTopAppBarDefaults {
  * @param containerColor The base colour of the material, [AppBarBlurOverlayDefaults.containerColor]
  *   by default.
  * @param backdrop The content the material samples, [LocalBackdrop] by default.
- * @param extraHeight How far the material reaches past the bar's bottom edge.
+ * @param extraHeight How far the material reaches past the bar's bottom edge. Defaults to
+ *   [TwoRowTopAppBarDefaults.ExtraHeight] (6dp) when [secondRow] is present, or
+ *   [AppBarBlurOverlayDefaults.ExtraHeight] (8dp) for a single-row bar.
  * @param scrollFraction The material's overall alpha, read in the draw phase. A bar that never
  *   fades out returns `1f`, which is the default.
  * @param platformRenderer Whether the platform's own backdrop blur may be used. See
@@ -147,19 +158,42 @@ fun TwoRowTopAppBar(
     secondRowHeight: Dp = TwoRowTopAppBarDefaults.SecondRowHeight,
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
-    extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    extraHeight: Dp = if (secondRow != null) {
+        TwoRowTopAppBarDefaults.ExtraHeight
+    } else {
+        AppBarBlurOverlayDefaults.ExtraHeight
+    },
     scrollFraction: () -> Float = { 1f },
     platformRenderer: Boolean = true,
     defaultWindowInsetsPadding: Boolean = true,
     firstRow: @Composable () -> Unit,
 ) {
-    AppBarBlurOverlay(
+    val density = LocalDensity.current
+    val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val rowsHeight = TwoRowTopAppBarDefaults.barHeight(
+        firstRowHeight = firstRowHeight,
+        secondRowHeight = if (secondRow != null) secondRowHeight else null,
+    )
+    val totalHeight = statusBarTop + rowsHeight + extraHeight
+    val materialRamp = if (secondRow != null) {
+        twoRowAppBarMaterialRamp(
+            statusBarTop = statusBarTop,
+            firstRowHeight = firstRowHeight,
+            rowGap = TwoRowTopAppBarDefaults.SecondRowGap,
+            totalHeight = totalHeight,
+        )
+    } else {
+        AppBarMaterialRamp()
+    }
+    AppBarMaterialLayout(
+        materialEnabled = LocalEdgeToEdge.current,
         modifier = modifier,
         containerColor = containerColor,
         backdrop = backdrop,
         extraHeight = extraHeight,
         scrollFraction = scrollFraction,
         platformRenderer = platformRenderer,
+        materialRamp = materialRamp,
     ) {
         Column(
             modifier = Modifier

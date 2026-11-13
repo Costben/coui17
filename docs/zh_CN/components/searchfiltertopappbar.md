@@ -59,11 +59,12 @@ val barHeight = TwoRowTopAppBarDefaults.barHeight(
 | :--- | :--- | :--- |
 | `firstRowHeight` | `TwoRowTopAppBarDefaults.FirstRowHeight`（52dp） | 搜索行在状态栏下方的高度 |
 | `filterRowHeight` | `TwoRowTopAppBarDefaults.SecondRowHeight`（32dp） | 筛选行的高度 |
+| `rowGap` | `TwoRowTopAppBarDefaults.SecondRowGap`（11dp） | 搜索行底边与筛选行顶边之间的间距 |
 | `filterContentPadding` | `PaddingValues(horizontal = 16.dp)` | 第一个胶囊之前与最后一个之后的留白 |
 
-两行之间的间距（`SecondRowGap`，11dp）和筛选行下方的留白（`SecondRowBottom`，6dp）来自 [`TwoRowTopAppBarDefaults`](./tworowtopappbar)，不是参数。
+筛选行下方的留白（`SecondRowBottom`，6dp）来自 [`TwoRowTopAppBarDefaults`](./tworowtopappbar)。
 
-组件报出的高度是状态栏加上两行。材质那条 `extraHeight` 的渐隐带画在这个下沿之外，不占布局——和 [`AppBarBlurOverlay`](./appbarbluroverlay) 一样。
+组件报出的高度是状态栏加上两行。材质那条 `extraHeight` 的渐隐带画在这个下沿之外，不占布局——和 [`AppBarBlurOverlay`](./appbarbluroverlay) 一样。两行态下默认使用 `TwoRowTopAppBarDefaults.ExtraHeight`（6dp，连同 `SecondRowBottom` 止于胶囊下方 12dp，即列表首项顶边之上），模糊从胶囊上沿往下 5dp 起按 `curve = 2.2` 衰减，底色从胶囊上沿起沿约 44dp 缓坡淡出；单行态（`filters = null`）回落到 `AppBarBlurOverlayDefaults.ExtraHeight`（8dp）与单行默认剖面。
 
 ## 参数
 
@@ -77,6 +78,6 @@ val barHeight = TwoRowTopAppBarDefaults.barHeight(
 | `onLeadingIconClick` | `{}` | 点击图标胶囊时回调 |
 | `containerColor` | `AppBarBlurOverlayDefaults.containerColor()` | 材质底色 |
 | `backdrop` | `LocalBackdrop.current` | 材质采样的页面 |
-| `extraHeight` | `AppBarBlurOverlayDefaults.ExtraHeight`（8dp） | 材质越过栏底边的距离 |
+| `extraHeight` | 两行 `TwoRowTopAppBarDefaults.ExtraHeight`（6dp）；单行 `AppBarBlurOverlayDefaults.ExtraHeight`（8dp） | 材质越过栏底边的距离 |
 | `scrollFraction` | `{ 1f }` | 材质的整体透明度，在绘制阶段读取 |
 | `platformRenderer` | `false` | 是否允许用平台自己的模糊。这里保持 `false`：栏自己录了材质，平台效果采的是整个窗口 |

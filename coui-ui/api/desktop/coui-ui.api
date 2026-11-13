@@ -124,6 +124,7 @@ public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayDefaults {
 	public final fun getDarkContainerColor-0d7_KjU ()J
 	public final fun getExtraHeight-D9Ej5fM ()F
 	public final fun getScrollAlphaThresholdDp ()F
+	public final fun getTwoRowExtraHeight-D9Ej5fM ()F
 	public final fun scrollAlpha (FLandroidx/compose/ui/unit/Density;)F
 	public final fun scrollAlpha (FLandroidx/compose/ui/unit/Density;F)F
 }
@@ -1275,6 +1276,12 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchBar
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchBarKt;
 	public fun <init> ()V
 	public final fun getLambda$1575655221$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchFilterTopAppBarKt {
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchFilterTopAppBarKt;
+	public fun <init> ()V
+	public final fun getLambda$369877959$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SnackbarKt {
@@ -5116,6 +5123,7 @@ public final class io/github/suqi8/coui/kmp/basic/TwoRowTopAppBarDefaults {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/TwoRowTopAppBarDefaults;
 	public final fun barHeight-Gc-z8mg (FLandroidx/compose/ui/unit/Dp;)F
 	public static synthetic fun barHeight-Gc-z8mg$default (Lio/github/suqi8/coui/kmp/basic/TwoRowTopAppBarDefaults;FLandroidx/compose/ui/unit/Dp;ILjava/lang/Object;)F
+	public final fun getExtraHeight-D9Ej5fM ()F
 	public final fun getFirstRowHeight-D9Ej5fM ()F
 	public final fun getSecondRowBottom-D9Ej5fM ()F
 	public final fun getSecondRowGap-D9Ej5fM ()F

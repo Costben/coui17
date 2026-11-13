@@ -59,11 +59,12 @@ The recorded material is paved with the page colour while `scrollFraction` is be
 | :--- | :--- | :--- |
 | `firstRowHeight` | `TwoRowTopAppBarDefaults.FirstRowHeight` (52dp) | The search row's height below the status bar |
 | `filterRowHeight` | `TwoRowTopAppBarDefaults.SecondRowHeight` (32dp) | The filter row's height |
+| `rowGap` | `TwoRowTopAppBarDefaults.SecondRowGap` (11dp) | The gap between the search row's bottom edge and the filter row |
 | `filterContentPadding` | `PaddingValues(horizontal = 16.dp)` | The padding before the first and after the last chip |
 
-The gap between the rows (`SecondRowGap`, 11dp) and the room below the filter row (`SecondRowBottom`, 6dp) come from [`TwoRowTopAppBarDefaults`](./tworowtopappbar) and are not parameters.
+The room below the filter row (`SecondRowBottom`, 6dp) comes from [`TwoRowTopAppBarDefaults`](./tworowtopappbar).
 
-The component reports the status bar plus the rows. The material's `extraHeight` fade band draws past that bottom edge without taking layout space, the same way [`AppBarBlurOverlay`](./appbarbluroverlay) does.
+The component reports the status bar plus the rows. The material's `extraHeight` fade band draws past that bottom edge without taking layout space, the same way [`AppBarBlurOverlay`](./appbarbluroverlay) does. When `filters` is present, it defaults to `TwoRowTopAppBarDefaults.ExtraHeight` (6dp, ending 12dp below the chips just above the first list item) with the two-row material ramp (blur ramping from 5dp below `rowGap` with `curve = 2.2`, tint easing over ~44dp from the chip row's top); when `filters` is `null`, it falls back to `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) and the single-row ramp.
 
 ## Parameters
 
@@ -77,6 +78,6 @@ The component reports the status bar plus the rows. The material's `extraHeight`
 | `onLeadingIconClick` | `{}` | Called when the leading chip is tapped |
 | `containerColor` | `AppBarBlurOverlayDefaults.containerColor()` | The material's base colour |
 | `backdrop` | `LocalBackdrop.current` | The page the material samples |
-| `extraHeight` | `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) | How far the material reaches past the bar |
+| `extraHeight` | `TwoRowTopAppBarDefaults.ExtraHeight` (6dp) for two rows; `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) for one row | How far the material reaches past the bar |
 | `scrollFraction` | `{ 1f }` | The material's alpha, read in the draw phase |
 | `platformRenderer` | `false` | Whether the platform's own blur may be used. Leave it `false` here: the bar records its own material and the platform effect samples the whole window |

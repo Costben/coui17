@@ -2,16 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -19,8 +25,11 @@ import androidx.compose.ui.unit.height
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LayerBackdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
+import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -154,5 +163,52 @@ class SearchFilterTopAppBarLayoutTest {
 
         assertTrue(inner is LayerBackdrop, "the search row must sample a recorded layer")
         assertTrue(pageBackdrop !== inner, "the search row must not sample the page directly")
+    }
+
+    @Test
+    fun twoRowMaterialLiftsTheChipBandAndStopsAtExtraHeight() = runSkikoComposeUiTest(
+        size = Size(360f, 300f),
+        density = Density(1f),
+    ) {
+        setContent {
+            COUITheme {
+                val page = rememberLayerBackdrop()
+                Box(Modifier.fillMaxSize()) {
+                    Canvas(Modifier.fillMaxSize().layerBackdrop(page)) {
+                        drawRect(Color.Black)
+                    }
+                    CompositionLocalProvider(
+                        LocalEdgeToEdge provides true,
+                        LocalBlurEnabled provides true,
+                        LocalBackdrop provides page,
+                    ) {
+                        SearchFilterTopAppBar(
+                            filters = emptyList(),
+                            containerColor = Color.White,
+                            modifier = Modifier.fillMaxWidth().testTag("bar"),
+                            searchRow = {},
+                        )
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        val bar = onNodeWithTag("bar").getBoundsInRoot()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        val x = pixels.width / 2
+        val chipTopY = (TwoRowTopAppBarDefaults.FirstRowHeight + TwoRowTopAppBarDefaults.SecondRowGap).value.roundToInt()
+        val materialBottomY = (bar.bottom + TwoRowTopAppBarDefaults.ExtraHeight).value.roundToInt()
+
+        val chipTopRed = (pixels[x, chipTopY].red * 255f).roundToInt()
+        assertTrue(
+            chipTopRed >= 175,
+            "the two-row ramp must hold ~74% surface tint at the chip row top (got red=$chipTopRed)",
+        )
+        val afterEdgeRed = (pixels[x, materialBottomY].red * 255f).roundToInt()
+        assertTrue(
+            afterEdgeRed <= 6,
+            "the two-row material must stop at barBottom + TwoRowTopAppBarDefaults.ExtraHeight (got red=$afterEdgeRed)",
+        )
     }
 }

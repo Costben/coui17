@@ -71,6 +71,7 @@ val barHeight = TwoRowTopAppBarDefaults.barHeight(
 | `SecondRowGap` | 11dp | 便签：搜索框到胶囊 16.6dp，减去搜索框在自己行里让出的下方 6dp |
 | `SecondRowHeight` | 32dp | `ChipTabDefaults.Height` |
 | `SecondRowBottom` | 6dp | 与搜索框在第一行里让出的下方内边距一致 |
+| `ExtraHeight` | 6dp | 双行栏底以下的材质渐隐带（`AppBarBlurOverlayDefaults.TwoRowExtraHeight`），连同 `SecondRowBottom` 止于胶囊下方 12dp |
 
 以上数值均在参考机型上按 3.5 px/dp 实测。
 
@@ -84,7 +85,7 @@ val barHeight = TwoRowTopAppBarDefaults.barHeight(
 | `secondRowHeight` | `TwoRowTopAppBarDefaults.SecondRowHeight` | 胶囊行高度 |
 | `containerColor` | `AppBarBlurOverlayDefaults.containerColor()` | 材质的基色 |
 | `backdrop` | `LocalBackdrop.current` | 材质采样的内容 |
-| `extraHeight` | `AppBarBlurOverlayDefaults.ExtraHeight` | 材质越过栏下沿的距离 |
+| `extraHeight` | 双行 `TwoRowTopAppBarDefaults.ExtraHeight`（6dp）；单行 `AppBarBlurOverlayDefaults.ExtraHeight`（8dp） | 材质越过栏下沿的距离 |
 | `scrollFraction` | `{ 1f }` | 整体 alpha，在绘制阶段读取 |
 | `platformRenderer` | `true` | 是否允许走平台自带的背景模糊 |
 | `defaultWindowInsetsPadding` | `true` | 两行是否避让屏幕切口与导航条的水平内边距 |

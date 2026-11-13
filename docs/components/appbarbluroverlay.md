@@ -148,6 +148,7 @@ The producer overload takes the same parameters, with `scrollFraction: () -> Flo
 | Constant / Function   | Type  | Description                                                            | Value / Source |
 | --------------------- | ----- | ---------------------------------------------------------------------- | -------------- |
 | ExtraHeight           | Dp    | How far the overlay reaches past the bar's bottom edge, for both alpha modes | 8.dp (`EXTRA_HEIGHT_DP_FIXED`) |
+| TwoRowExtraHeight     | Dp    | How far a two-row bar (search + chip row) reaches past its bottom edge, ending 12dp below the chips | 6.dp |
 | ScrollAlphaThresholdDp | Float | The scroll distance over which the overlay's alpha ramps from 0 to 1   | 30f |
 | DarkContainerColor    | Color | The dark-theme material base colour: the platform's own dark background, and the colour the dark page renders as | `#303030` (`background_material_dark` → `material_grey_850`) |
 | containerColor()      | Color | The base colour for the current theme: the light theme's `surface`, the dark theme's `DarkContainerColor` | `#f0f1f2` / `#303030` |

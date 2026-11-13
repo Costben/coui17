@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -58,6 +59,15 @@ object AppBarBlurOverlayDefaults {
      * scroll-driven default stacked a second band on top of the caller's own.
      */
     val ExtraHeight = 8.dp
+
+    /**
+     * How far the material reaches past a two-row bar's bottom edge: 6dp.
+     *
+     * Together with `TwoRowTopAppBarDefaults.SecondRowBottom` (6dp), the material ends 12dp below
+     * the chip row — sitting just above the first list item when scrolled to the top so resting
+     * content stays completely sharp while scrolled items enter a smooth 39–44dp ramp.
+     */
+    val TwoRowExtraHeight = 6.dp
 
     /**
      * `AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`: the scroll distance over which the overlay's
@@ -301,6 +311,40 @@ internal fun rememberToolbarAttenuatedBlurScale(): () -> Float {
  * [content] is invoked from exactly one place, and toggling [materialEnabled] only adds or removes
  * the material child, so the content subtree is not recreated.
  */
+@Immutable
+internal data class AppBarMaterialRamp(
+    val blurStartFraction: Float = 0f,
+    val blurCurve: Float = AppBarGlassDefaults.GradientBlurSpeed,
+    val alphaMidFraction: Float = 0f,
+)
+
+/**
+ * The validated material ramp for a two-row bar (search row + chip row) with a short
+ * [TwoRowTopAppBarDefaults.ExtraHeight] (6dp) fade band:
+ * - Blur holds full strength through the upper half of the chip row, then tapers from `5dp` below
+ *   [rowGap] down to the material's bottom edge with `curve = 2.2f`, leaving visible blur along the
+ *   chips' lower edge without spilling onto the first list item at rest.
+ * - Surface tint holds 74% (light) / 38% (dark) down to the chip row's top edge, then eases gently
+ *   across the remaining ~44dp so neither unselected chips over dark covers go black nor the lower
+ *   edge forms a hard step.
+ */
+internal fun twoRowAppBarMaterialRamp(
+    statusBarTop: Dp,
+    firstRowHeight: Dp,
+    rowGap: Dp,
+    totalHeight: Dp,
+): AppBarMaterialRamp {
+    if (totalHeight <= 0.dp) return AppBarMaterialRamp()
+    val secondRowTop = statusBarTop + firstRowHeight + rowGap
+    return AppBarMaterialRamp(
+        blurStartFraction = ((secondRowTop + 5.dp) / totalHeight).coerceIn(0f, 0.85f),
+        blurCurve = TWO_ROW_BLUR_CURVE,
+        alphaMidFraction = (secondRowTop / totalHeight).coerceIn(0.1f, 0.85f),
+    )
+}
+
+private const val TWO_ROW_BLUR_CURVE = 2.2f
+
 @Composable
 internal fun AppBarMaterialLayout(
     materialEnabled: Boolean,
@@ -310,6 +354,7 @@ internal fun AppBarMaterialLayout(
     scrollFraction: () -> Float,
     modifier: Modifier = Modifier,
     platformRenderer: Boolean = true,
+    materialRamp: AppBarMaterialRamp = AppBarMaterialRamp(),
     content: @Composable BoxScope.() -> Unit,
 ) {
     val blurEnabled = isBlurEnabled()
@@ -324,6 +369,7 @@ internal fun AppBarMaterialLayout(
                     backdrop = backdrop,
                     scrollFraction = scrollFraction,
                     platformRenderer = platformRenderer,
+                    materialRamp = materialRamp,
                 )
             }
             CompositionLocalProvider(LocalToolbarBackdropBlurFraction provides activeFraction) {
@@ -376,6 +422,7 @@ internal fun AppBarMaterial(
     backdrop: Backdrop? = LocalBackdrop.current,
     scrollFraction: () -> Float = { 1f },
     platformRenderer: Boolean = true,
+    materialRamp: AppBarMaterialRamp = AppBarMaterialRamp(),
 ) {
     val density = LocalDensity.current
     val blurEnabled = isBlurEnabled()
@@ -415,7 +462,7 @@ internal fun AppBarMaterial(
         if (!blurEnabled) {
             Modifier.background(containerColor)
         } else {
-            val brush = appBarBlurOverlayBrush(containerColor, isDarkTheme)
+            val brush = appBarBlurOverlayBrush(containerColor, isDarkTheme, materialRamp.alphaMidFraction)
             if (backdrop == null) {
                 Modifier.background(brush)
             } else {
@@ -427,7 +474,11 @@ internal fun AppBarMaterial(
                     blurRadius = with(density) {
                         appBarEngineBlurRadiusPx(AppBarGlassDefaults.GradientBlurRadiusPx).toDp().value
                     },
-                    gradient = ProgressiveBlur.Top.copy(curve = AppBarGlassDefaults.GradientBlurSpeed),
+                    gradient = ProgressiveBlur.Top.copy(
+                        startFraction = materialRamp.blurStartFraction.coerceIn(0f, 0.95f),
+                        endFraction = 1f,
+                        curve = materialRamp.blurCurve,
+                    ),
                     colors = BlurDefaults.blurColors(),
                 ).background(brush)
             }
@@ -476,17 +527,45 @@ internal fun appBarEngineBlurRadiusPx(hwuiRadiusPx: Float): Float = hwuiRadiusPx
  * positions and alphas come from [AppBarGlassDefaults].
  */
 @Composable
-private fun appBarBlurOverlayBrush(color: Color, dark: Boolean): Brush = remember(color, dark) {
-    if (dark) {
-        Brush.verticalGradient(
-            0f to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
-            1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
-        )
+private fun appBarBlurOverlayBrush(
+    color: Color,
+    dark: Boolean,
+    alphaMidFraction: Float,
+): Brush = remember(color, dark, alphaMidFraction) {
+    val mid = alphaMidFraction.coerceIn(0f, 0.95f)
+    if (mid <= 0f) {
+        if (dark) {
+            Brush.verticalGradient(
+                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
+                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            )
+        } else {
+            Brush.verticalGradient(
+                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
+                1f - AppBarGlassDefaults.GradientPos1 to color.copy(alpha = AppBarGlassDefaults.GradientAlpha1),
+                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            )
+        }
     } else {
-        Brush.verticalGradient(
-            0f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
-            1f - AppBarGlassDefaults.GradientPos1 to color.copy(alpha = AppBarGlassDefaults.GradientAlpha1),
-            1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
-        )
+        val tail = 1f - mid
+        if (dark) {
+            Brush.verticalGradient(
+                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
+                mid to color.copy(alpha = 0.38f),
+                mid + tail * 0.25f to color.copy(alpha = 0.32f),
+                mid + tail * 0.50f to color.copy(alpha = 0.22f),
+                mid + tail * 0.75f to color.copy(alpha = 0.10f),
+                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            )
+        } else {
+            Brush.verticalGradient(
+                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
+                mid to color.copy(alpha = 0.74f),
+                mid + tail * 0.25f to color.copy(alpha = 0.62f),
+                mid + tail * 0.50f to color.copy(alpha = 0.44f),
+                mid + tail * 0.75f to color.copy(alpha = 0.20f),
+                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
+            )
+        }
     }
 }

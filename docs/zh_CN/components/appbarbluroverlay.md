@@ -150,6 +150,7 @@ producer 重载的参数相同，只是第一个且必填的参数 `scrollFracti
 | 常量 / 函数           | 类型  | 说明                                                 | 值 / 来源 |
 | --------------------- | ----- | ---------------------------------------------------- | --------- |
 | ExtraHeight           | Dp    | 两种 alpha 形态下 overlay 越过导航栏下边缘的距离   | 8.dp（`EXTRA_HEIGHT_DP_FIXED`） |
+| TwoRowExtraHeight     | Dp    | 双行顶栏（搜索框 + 胶囊行）下越过栏底边缘的距离，止于胶囊下方 12dp | 6.dp |
 | ScrollAlphaThresholdDp | Float | overlay 的 alpha 从 0 升到 1 所跨过的滚动距离        | 30f（`AppBarBlurOverlayBehavior.ALPHA_SCROLL_THRESHOLD_DP`） |
 | DarkContainerColor    | Color | 深色主题的材质基色：平台自身的深色背景，也是深色页面实际渲染出的颜色 | `#303030`（`background_material_dark` → `material_grey_850`） |
 | containerColor()      | Color | 当前主题的基色：浅色取 `surface`、深色取 `DarkContainerColor` | `#f0f1f2` / `#303030` |

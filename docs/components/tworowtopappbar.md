@@ -71,6 +71,7 @@ Both rows are centred in their own height. The second row is inset from the firs
 | `SecondRowGap` | 11dp | Notes: 16.6dp from the search field to the chips, minus the 6dp the field sits above the first row's bottom edge |
 | `SecondRowHeight` | 32dp | `ChipTabDefaults.Height` |
 | `SecondRowBottom` | 6dp | The same inset the search field leaves inside the first row |
+| `ExtraHeight` | 6dp | Two-row fade band below the bar (`AppBarBlurOverlayDefaults.TwoRowExtraHeight`), ending 12dp past the chips |
 
 All values were measured on the reference device at 3.5 px/dp.
 
@@ -84,7 +85,7 @@ All values were measured on the reference device at 3.5 px/dp.
 | `secondRowHeight` | `TwoRowTopAppBarDefaults.SecondRowHeight` | Chip row's height |
 | `containerColor` | `AppBarBlurOverlayDefaults.containerColor()` | Base colour of the material |
 | `backdrop` | `LocalBackdrop.current` | Content the material samples |
-| `extraHeight` | `AppBarBlurOverlayDefaults.ExtraHeight` | How far the material reaches past the bar's bottom edge |
+| `extraHeight` | `TwoRowTopAppBarDefaults.ExtraHeight` (6dp) for two rows; `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) for one row | How far the material reaches past the bar's bottom edge |
 | `scrollFraction` | `{ 1f }` | Overall alpha, read in the draw phase |
 | `platformRenderer` | `true` | Whether the platform's own backdrop blur may be used |
 | `defaultWindowInsetsPadding` | `true` | Inset the rows from the display cutout and the navigation bars on the horizontal sides |

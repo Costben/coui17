@@ -91,7 +91,10 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param containerColor The base colour of the material.
  * @param backdrop What the material samples — the page behind the bar. The filters never sample it
  *   directly; see the class-level note.
- * @param extraHeight How far the material reaches past the bar's bottom edge.
+ * @param extraHeight How far the material reaches past the bar's bottom edge. Defaults to
+ *   [TwoRowTopAppBarDefaults.ExtraHeight] (6dp) when [filters] is non-null — stopping 12dp below
+ *   the chips so resting content below is untouched while scrolled items enter a smooth ramp — and
+ *   to [AppBarBlurOverlayDefaults.ExtraHeight] (8dp) for the single-row state.
  * @param scrollFraction The material's overall alpha, read in the draw phase. A bar that is always
  *   visible returns `1f`.
  * @param platformRenderer Whether the platform's own backdrop blur may be used. Defaults to `false`
@@ -112,7 +115,11 @@ fun SearchFilterTopAppBar(
     filterContentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
     containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
     backdrop: Backdrop? = LocalBackdrop.current,
-    extraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    extraHeight: Dp = if (filters != null) {
+        TwoRowTopAppBarDefaults.ExtraHeight
+    } else {
+        AppBarBlurOverlayDefaults.ExtraHeight
+    },
     scrollFraction: () -> Float = { 1f },
     platformRenderer: Boolean = false,
     searchRow: @Composable () -> Unit,
@@ -151,6 +158,16 @@ fun SearchFilterTopAppBar(
         derivedStateOf { currentScrollFraction.value() > 0.001f }
     }
     val searchRowBackdrop = if (materialVisible) materialBackdrop else backdrop
+    val materialRamp = if (filters != null) {
+        twoRowAppBarMaterialRamp(
+            statusBarTop = statusBarTop,
+            firstRowHeight = firstRowHeight,
+            rowGap = rowGap,
+            totalHeight = barHeight + extraHeight,
+        )
+    } else {
+        AppBarMaterialRamp()
+    }
     CompositionLocalProvider(LocalEdgeToEdge provides true) {
         Layout(
             modifier = modifier,
@@ -161,14 +178,16 @@ fun SearchFilterTopAppBar(
                         .height(barHeight + extraHeight)
                         .layerBackdrop(materialBackdrop),
                 ) {
-                    AppBarBlurOverlay(
+                    AppBarMaterialLayout(
+                        materialEnabled = true,
                         modifier = Modifier.fillMaxWidth().height(barHeight),
                         containerColor = containerColor,
                         backdrop = backdrop,
                         extraHeight = extraHeight,
                         scrollFraction = scrollFraction,
                         platformRenderer = platformRenderer,
-                    )
+                        materialRamp = materialRamp,
+                    ) {}
                 }
                 Column(
                     modifier = Modifier
