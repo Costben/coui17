@@ -262,6 +262,15 @@ private fun Modifier.floatingSurfaces(
             RenderEffect.createColorFilterEffect(BlendModeColorFilter(material.secondColor.toArgb(), material.secondBlendMode), color1)
         }
     }
+    val causticInputs = remember(materials) {
+        materials.map { material ->
+            if (material.blurRadius <= 0f) {
+                null
+            } else {
+                RenderEffect.createBlurEffect(material.blurRadius, material.blurRadius, Shader.TileMode.MIRROR)
+            }
+        }
+    }
     var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null, neverEqualPolicy()) }
     return onGloballyPositioned { coordinates = it }.drawWithCache {
         val target = coordinates
@@ -398,7 +407,11 @@ private fun Modifier.floatingSurfaces(
                                         shadow.speed, 0.45f, 0.6f,
                                     ),
                                 )
-                            }.let { RenderEffect.createRuntimeShaderEffect(it, "u_originShader") }
+                            }.let { shader ->
+                                val effect = RenderEffect.createRuntimeShaderEffect(shader, "u_originShader")
+                                val blurInput = if (resolvedForegroundComposition) causticInputs[index] else null
+                                if (blurInput != null) RenderEffect.createChainEffect(effect, blurInput) else effect
+                            }
                         }
                     }
                 }
