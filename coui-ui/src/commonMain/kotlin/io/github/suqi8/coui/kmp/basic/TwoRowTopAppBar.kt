@@ -130,7 +130,11 @@ object TwoRowTopAppBarDefaults {
  * @param scrollFraction The material's overall alpha, read in the draw phase. A bar that never
  *   fades out returns `1f`, which is the default.
  * @param platformRenderer Whether the platform's own backdrop blur may be used. See
- *   [AppBarBlurOverlay] for when a bar has to refuse it.
+ *   [AppBarBlurOverlay] for when a bar has to refuse it. A page that records its own
+ *   [io.github.suqi8.coui.kmp.blur.Backdrop] and hands it to this bar through
+ *   [io.github.suqi8.coui.kmp.blur.LocalBackdrop] has to pass `false`: the platform effect samples
+ *   the window instead, finds nothing to blur behind the recorded layer, and the bar keeps only its
+ *   pale tint — it looks transparent with no blur at all.
  * @param defaultWindowInsetsPadding Whether to inset the rows from the display cutout and the
  *   navigation bars on the horizontal sides, the way [PinnedTopAppBar] and [TopAppBar] do.
  * @param firstRow The first row's content, centred in a [firstRowHeight] tall row.
