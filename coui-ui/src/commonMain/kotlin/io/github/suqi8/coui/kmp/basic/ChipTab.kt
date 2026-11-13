@@ -233,7 +233,14 @@ fun ChipTabGroup(
                 modifier = Modifier
                     .layout { measurable, constraints ->
                         val outsetPx = ChipTabDefaults.PressOutset.roundToPx()
-                        val placeable = measurable.measure(constraints)
+                        // Measure without the height cap: a caller that pins the group to the chip
+                        // height (a two-row bar's filter row does) would otherwise take the outset
+                        // padding out of the tabs, and they would draw 2dp shorter on each side than
+                        // [ChipTabDefaults.Height]. The reported height stays the cap; the scroller
+                        // overflows it by one outset per side and is clipped there.
+                        val placeable = measurable.measure(
+                            constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity),
+                        )
                         layout(placeable.width, (placeable.height - 2 * outsetPx).coerceAtLeast(0)) {
                             placeable.place(0, -outsetPx)
                         }

@@ -296,4 +296,33 @@ class ChipTabGroupLayoutTest {
         waitForIdle()
         assertEquals(0, selected)
     }
+
+    @Test
+    fun tabsKeepChipHeightWhenTheParentPinsTheGroupToIt() = runSkikoComposeUiTest(
+        size = Size(360f, 200f),
+        density = Density(1f),
+    ) {
+        setContent {
+            COUITheme {
+                Box(Modifier.height(ChipTabDefaults.Height)) {
+                    ChipTabGroup(
+                        tabs = tabs,
+                        selectedIndex = 0,
+                        onSelectedChange = {},
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+        waitForIdle()
+
+        // The scroller is laid out PressOutset taller on each side so a pressed tab can overshoot
+        // without its edges being cut. Under an exact-height parent that outset must overflow the
+        // reported height; letting the height cap reach the tabs instead shorts them by 2dp a side.
+        val tabNodes = onAllNodes(isSelectable()).fetchSemanticsNodes()
+        assertEquals(tabs.size, tabNodes.size)
+        tabNodes.forEach { node ->
+            assertEquals(ChipTabDefaults.Height.value, node.boundsInRoot.height, 0.5f)
+        }
+    }
 }
