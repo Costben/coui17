@@ -630,8 +630,21 @@ internal fun CommonSegmentButtonRow(
     // blur with the `TYPE_FRAMEWORK_CAPSULE_6` container edge + inner shadow (`enableContainerMaterialEffect`;
     // `TYPE_FRAMEWORK_CAPSULE_11` is only the `COUIShadowEdgeDrawable` fallback) and the
     // `TYPE_FRAMEWORK_CAPSULE_10` indicator edge (`setShadowEnable(false).setEdgeEnable(true)`).
+    //
+    // This row only exists once the tabs outgrow the bar and start scrolling. A row that fits rides
+    // [SegmentedControl]'s floating glass instead, whose rim is a bright white line; the framework
+    // edge is a third of that, so the two rows of the same bar would not look alike. On glass the
+    // rim therefore keeps the type's own alpha — the row reads as the same capsule, scrolling or not.
     val resolvedContainerMaterial = containerMaterial
-        ?: if (hasContainerSurface && backdrop != null) segmentContainerStroke(isDarkTheme) else null
+        ?: if (hasContainerSurface && backdrop != null) {
+            if (glassActive) {
+                MaterialStrokeParams.frameworkCapsule6(isDarkTheme).copy(edgeAlpha = 1f)
+            } else {
+                segmentContainerStroke(isDarkTheme)
+            }
+        } else {
+            null
+        }
     val resolvedIndicatorMaterial = indicatorMaterial
         ?: if (hasContainerSurface && backdrop != null) MaterialStrokeParams.frameworkCapsule10(isDarkTheme) else null
     val indicatorShader = rememberMaterialShadowEdgeShader(
@@ -656,7 +669,7 @@ internal fun CommonSegmentButtonRow(
                 capsuleRimCornerWeight(w, h, with(density) { containerRadiusDp.toPx() })
             },
             cornerRadius = containerRadiusDp.takeIf { containerRadiusDp * 2 < resolvedHeight },
-            edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+            edgeStyle = if (glassActive) SegmentGlassContainerStyle else GradientStrokeStyle.EDGE_STYLE_0,
             shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
         )
     } else {
@@ -1096,6 +1109,26 @@ private val SegmentCompactPaddingThreshold = 3.dp
 
 /** `CONTENT_SEGMENT_BUTTON_PARAMS` blur sigma, in pixels. */
 private const val SEGMENT_NATIVE_BLUR_SIGMA_PX = 25f
+
+/**
+ * The container rim of a scrolling segment row, used only while the row rides the glass material.
+ *
+ * [`GradientStrokeStyle.EDGE_STYLE_0`] fades its line toward the middle of every edge: the fade is a
+ * share of the perimeter, so a wide, short capsule (a full-width toolbar row) spends its whole
+ * vertical edge inside the ramp and the left / right rim never reaches full white. The floating
+ * glass this row stands in for strokes every edge evenly, so the fade is dropped here.
+ */
+private val SegmentGlassContainerStyle = GradientStrokeStyle(
+    rectLineSize = floatArrayOf(400f, 100f),
+    rectLineColor = floatArrayOf(1f, 1f, 1f),
+    rectLineNear = floatArrayOf(2f, 6f),
+    rectLineFar = floatArrayOf(2f, 6f),
+    rectLineAlpha = floatArrayOf(1f, 1f),
+    rectLineFade = floatArrayOf(0f, 0f, 0f, 0f),
+    angle = 0f,
+    rectLinePara1 = 4f,
+    rectLinePara2 = 0.8f,
+)
 
 private fun resolveSegmentAtX(contentX: Float, lefts: List<Int>, widths: List<Int>): Int {
     if (widths.isEmpty()) return 0
