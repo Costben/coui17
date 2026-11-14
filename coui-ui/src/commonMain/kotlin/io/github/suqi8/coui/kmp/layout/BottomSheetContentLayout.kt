@@ -158,6 +158,8 @@ import kotlin.math.abs
  *   [insideMargin.height]. None by default, as on ColorOS 17, where the platform's 60dp foot sits
  *   below the screen edge. It is dropped while the IME is up, where it would only read as dead
  *   space above the keyboard.
+ * @param dismissOffsetFraction How far the panel has to be dragged down, as a fraction of its own
+ *   height, before releasing it dismisses the sheet. See [BottomSheetDefaults.DismissOffsetFraction].
  * @param content The content of the bottom sheet.
  */
 @Suppress("ktlint:compose:modifier-not-used-at-root")
@@ -184,6 +186,7 @@ internal fun BottomSheetContentLayout(
     enableNestedScroll: Boolean = true,
     topInset: Dp? = null,
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
+    dismissOffsetFraction: Float = BottomSheetDefaults.DismissOffsetFraction,
     content: @Composable () -> Unit,
 ) {
     val animationProgress = remember { Animatable(0f, visibilityThreshold = 0.0001f) }
@@ -368,6 +371,7 @@ internal fun BottomSheetContentLayout(
                 modifier = sheetModifier,
                 topInset = topInset,
                 panelPaddingBottom = panelPaddingBottom,
+                dismissOffsetFraction = dismissOffsetFraction,
                 enableNestedScroll = enableNestedScroll,
                 startAction = startAction?.let { action ->
                     { CompositionLocalProvider(LocalDismissState provides requestDismiss) { action() } }
@@ -407,6 +411,7 @@ internal fun BottomSheetContent(
     topInset: Dp? = null,
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     enableNestedScroll: Boolean = true,
+    dismissOffsetFraction: Float = BottomSheetDefaults.DismissOffsetFraction,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit,
@@ -467,26 +472,24 @@ internal fun BottomSheetContent(
     }
 
     // Settlement logic
-    val performSettle: (Float) -> Unit = remember(allowDismiss, density) {
+    val performSettle: (Float) -> Unit = remember(allowDismiss, density, dismissOffsetFraction) {
         { velocity ->
             settlingJob.value?.cancel()
             isSettling.value = true
             settlingJob.value = coroutineScope.launch {
                 val currentOffset = dragOffsetY.value
                 val windowHeightPx = with(density) { currentWindowHeight.toPx() }
-                val peekPx = with(density) { PanelPeekHeight.toPx() }
                 val sheetPx = sheetHeightPx.intValue.toFloat()
-                // COUIBottomSheetBehavior.shouldHide: the sheet has to sit below the collapsed
-                // (peek) offset, and its 0.1s velocity projection has to travel more than half a
-                // peek height past it.
-                val collapsedOffset = (sheetPx - peekPx).coerceAtLeast(0f)
+                // COUIBottomSheetBehavior.shouldHide only releases the panel once it sits below the
+                // collapsed (peek) offset — that is, once almost the whole panel has been dragged
+                // off-screen — and then also requires a fling or a drag past half the screen. On a
+                // tall panel the first condition is barely reachable, so the panel reads as
+                // impossible to dismiss. Closing after `dismissOffsetFraction` of the panel's own
+                // height, with the 0.1s release projection counted in, is what the gesture implies;
+                // a downward fling of `SIGNIFICANT_VELOCITY_PX` still dismisses at any travel.
                 val projected = currentOffset + velocity * VELOCITY_PROJECTION_SECONDS
-                val shouldHide = sheetPx > 0f && currentOffset >= collapsedOffset &&
-                    (projected - collapsedOffset) / peekPx > HIDE_THRESHOLD
-                // onViewReleased only hides on a mostly vertical fling above 500px/s, or once the
-                // sheet has been dragged past the middle of the screen (`releasedLow`).
-                val shouldDismiss = allowDismiss && shouldHide &&
-                    (velocity > SIGNIFICANT_VELOCITY_PX || currentOffset > sheetPx / 2f)
+                val shouldDismiss = allowDismiss && sheetPx > 0f &&
+                    (projected >= sheetPx * dismissOffsetFraction || velocity > SIGNIFICANT_VELOCITY_PX)
 
                 try {
                     if (shouldDismiss) {
@@ -526,7 +529,7 @@ internal fun BottomSheetContent(
     }
 
     // Nested scroll logic
-    val nestedScrollConnection = remember(enableNestedScroll, allowDismiss, density) {
+    val nestedScrollConnection = remember(enableNestedScroll, allowDismiss, dismissOffsetFraction, density) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 if (!enableNestedScroll) return Offset.Zero
@@ -822,9 +825,6 @@ private val PanelPullUpMaxOffset = 28.dp
 
 /** `COUIBottomSheetDialog`'s pull-up listener moves the parent padding by 0.2 of the drag. */
 private const val PULL_UP_FRICTION = 0.2f
-
-/** `COUIBottomSheetBehavior.HIDE_THRESHOLD`: dismissal is measured in peek heights. */
-private const val HIDE_THRESHOLD = 0.5f
 
 /** `COUIBottomSheetBehavior` projects the release velocity 0.1s ahead before comparing. */
 private const val VELOCITY_PROJECTION_SECONDS = 0.1f
@@ -1300,6 +1300,17 @@ object BottomSheetDefaults {
      * backdrop instead, so it has nothing to hang off-screen.
      */
     val PanelPaddingBottom = 0.dp
+
+    /**
+     * How far the panel has to be dragged down, as a fraction of its own height, before releasing
+     * it dismisses the sheet.
+     *
+     * `COUIBottomSheetBehavior` only releases a panel that already sits below its collapsed (peek)
+     * offset and then travels another half peek, which on a tall panel means dragging almost all of
+     * it off-screen — the gesture reads as unable to close it. Half the panel is the point where
+     * the drag stops looking like a scroll and starts looking like a dismissal.
+     */
+    val DismissOffsetFraction = 0.5f
 
     /**
      * The height of the title row, `coui_list_dialog_toolbar_height` = 50dp.

@@ -75,6 +75,7 @@ Scaffold {
 | allowDismiss               | Boolean                   | Whether to allow dismissing the sheet via drag or back gesture | true                                       | No       |
 | enableNestedScroll         | Boolean                   | Whether to enable nested scrolling for the content             | true                                       | No       |
 | renderInRootScaffold       | Boolean                   | Whether to render the bottom sheet in the root (outermost) Scaffold. When true, it covers the full screen. When false, it renders within the current Scaffold's bounds | true | No |
+| dismissOffsetFraction      | Float                     | How far the panel must be dragged down, as a fraction of its own height, before releasing it dismisses the sheet; a downward fling still dismisses at any travel | BottomSheetDefaults.DismissOffsetFraction (0.5f) | No |
 | content                    | @Composable () -> Unit    | Bottom sheet content                                           | -                                          | Yes      |
 
 ### BottomSheetDefaults Object
@@ -89,6 +90,7 @@ The BottomSheetDefaults object provides default settings for the OverlayBottomSh
 | maxWidth      | Dp     | Default width cap (Dp.Infinity; width follows the COUI responsive grid) |
 | outsideMargin | DpSize | Default bottom sheet external margin (DpSize(0.dp, 0.dp)) |
 | insideMargin  | DpSize | Default bottom sheet internal margin (DpSize(24.dp, 0.dp); width = horizontal padding, height = bottom padding) |
+| DismissOffsetFraction | Float | Default drag-to-dismiss fraction of the panel height (0.5f) |
 
 #### BottomSheetDefaults Functions
 

@@ -45,6 +45,9 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  * @param panelPaddingBottom The extra foot padding the panel adds under its content, on top of
  *   `insideMargin.height`, while the keyboard is away. None by default: ColorOS 17's 60dp panel
  *   foot hangs below the screen edge, so the content ends flush with it.
+ * @param dismissOffsetFraction How far the panel has to be dragged down, as a fraction of its own
+ *   height, before releasing it dismisses the sheet. Defaults to half the panel; lower it for tall
+ *   panels whose content is easy to re-open. A downward fling dismisses at any travel.
  * @param content The [Composable] content of the [OverlayBottomSheet].
  */
 @Composable
@@ -69,6 +72,7 @@ fun OverlayBottomSheet(
     enableNestedScroll: Boolean = true,
     renderInRootScaffold: Boolean = true,
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
+    dismissOffsetFraction: Float = BottomSheetDefaults.DismissOffsetFraction,
     content: @Composable () -> Unit,
 ) {
     BottomSheetContentLayout(
@@ -105,6 +109,7 @@ fun OverlayBottomSheet(
         allowDismiss = allowDismiss,
         enableNestedScroll = enableNestedScroll,
         panelPaddingBottom = panelPaddingBottom,
+        dismissOffsetFraction = dismissOffsetFraction,
         content = content,
     )
 }

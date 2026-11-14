@@ -70,11 +70,13 @@ Scaffold {
 | onDismissFinished          | (() -> Unit)?             | 关闭动画完成后调用；若关闭过程被中途取消（例如 `show` 被设回 true），则不会触发 | null     | 否       |
 | outsideMargin              | DpSize                    | 底部抽屉外部边距                             | BottomSheetDefaults.outsideMargin     | 否       |
 | insideMargin               | DpSize                    | 底部抽屉内部内容的边距                       | BottomSheetDefaults.insideMargin      | 否       |
+| DismissOffsetFraction | Float | 默认的拖拽关闭比例（0.5f） |
 | defaultWindowInsetsPadding | Boolean                   | 是否应用默认窗口插入内边距                   | true                                       | 否       |
 | dragHandleColor            | Color                     | 拖拽指示器的颜色                             | BottomSheetDefaults.dragHandleColor() | 否       |
 | allowDismiss               | Boolean                   | 是否允许通过拖拽或返回手势关闭抽屉           | true                                       | 否       |
 | enableNestedScroll         | Boolean                   | 是否允许内容嵌套滚动                         | true                                       | 否       |
 | renderInRootScaffold       | Boolean                   | 是否在根（最外层）Scaffold 中渲染底部抽屉。为 true 时，覆盖全屏。为 false 时，在当前 Scaffold 的范围内渲染 | true | 否 |
+| dismissOffsetFraction      | Float                     | 面板要向下拖走自身高度的多少比例，松手时才关闭；向下轻甩不受比例限制 | BottomSheetDefaults.DismissOffsetFraction（0.5f） | 否       |
 | content                    | @Composable () -> Unit    | 底部抽屉的内容                               | -                                          | 是       |
 
 ### BottomSheetDefaults

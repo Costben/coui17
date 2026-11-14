@@ -5483,6 +5483,7 @@ public final class io/github/suqi8/coui/kmp/layout/BottomSheetDefaults {
 	public final fun getContentChangeSpring ()Landroidx/compose/animation/core/SpringSpec;
 	public final fun getCornerRadius-D9Ej5fM ()F
 	public final fun getCornerWeight ()F
+	public final fun getDismissOffsetFraction ()F
 	public final fun getHeaderHeight-D9Ej5fM ()F
 	public final fun getHeaderHorizontalPadding-D9Ej5fM ()F
 	public final fun getInsideMargin-MYxV2XQ ()J
@@ -5648,7 +5649,7 @@ public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomAssignmentDialo
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayBottomSheetKt {
-	public static final fun OverlayBottomSheet-tWO_s_M (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZZZFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
+	public static final fun OverlayBottomSheet-NHQ8Las (ZLandroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;JZFFLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;JJZJZZZZFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
 }
 
 public final class io/github/suqi8/coui/kmp/overlay/OverlayCascadingListPopupKt {
