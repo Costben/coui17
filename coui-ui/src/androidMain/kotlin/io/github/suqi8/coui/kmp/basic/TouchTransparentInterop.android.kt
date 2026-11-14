@@ -29,10 +29,10 @@ import io.github.suqi8.coui.kmp.blur.LayerBackdrop
  * it out of hit testing; its drawing is recorded inside the clip and drawn again outside it, so it
  * still shows exactly where it was.
  *
- * The recorded drawing is left out of [LayerBackdrop] recording passes. The view carries a ColorOS
- * window-surface background effect, and drawing it into a backdrop layer too made the effect lose
- * its blur for a few frames whenever that backdrop stopped recording — the bar flashed each time a
- * popup or dialog reading the backdrop closed.
+ * The view is not drawn at all during a [LayerBackdrop] recording pass — neither its picture nor a
+ * fresh recording. It carries a ColorOS window-surface background effect, and drawing it anywhere
+ * inside a recording made the effect lose its blur for the frames after that recording stopped: the
+ * bar flashed each time a popup or dialog reading the backdrop closed.
  *
  * [drawTrigger] is any value whose change must re-record the view, such as its geometry or a tick
  * bumped when the view turns visible; without it the first, still empty recording sticks until
@@ -58,6 +58,11 @@ internal fun TouchTransparentInterop(
                     shape = OutOfReach
                 }
                 .drawWithContent {
+                    // Nothing of the view is drawn into a recording pass, not even into its own
+                    // picture: drawing a window-surface effect view while a backdrop records the
+                    // tree leaves that effect without its blur for the frames that follow, which is
+                    // the bar flashing as the popup that read the backdrop closes.
+                    if (LayerBackdrop.isRecording) return@drawWithContent
                     // Read so a new trigger value rebuilds this lambda and re-records the view.
                     drawTrigger.hashCode()
                     picture.record { this@drawWithContent.drawContent() }
