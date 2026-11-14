@@ -219,4 +219,111 @@ class SearchResultContainerTest {
         assertFalse(state.shownResults)
         assertEquals(1f, state.contentAlpha, 0.01f)
     }
+
+    @Test
+    fun onlyAfterLoadingSkipsRiseWhenSpinnerNeverAppeared() = runSkikoComposeUiTest(
+        size = Size(360f, 640f),
+        density = Density(1f),
+    ) {
+        var loading by mutableStateOf(true)
+        var loaded by mutableStateOf(false)
+        var captured: SearchResultsTransitionState? = null
+
+        mainClock.autoAdvance = false
+        setContent {
+            COUITheme {
+                val transition = rememberSearchResultsTransitionState(
+                    showingResults = true,
+                    loading = loading,
+                    queryKey = loaded,
+                    spec = SearchResultContainerDefaults.transitionSpec(
+                        riseTrigger = SearchResultsRiseTrigger.OnlyAfterLoading,
+                    ),
+                )
+                captured = transition
+                SearchResultContainer(
+                    state = transition,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    if (resultsVisible) {
+                        Box(Modifier.fillMaxSize().testTag("results_view"))
+                    }
+                }
+            }
+        }
+
+        mainClock.advanceTimeByFrame()
+        val state = requireNotNull(captured)
+
+        // Finish in 16ms (before the 50ms loading delay expires) -> spinner never shows, no rise.
+        mainClock.advanceTimeBy(16L)
+        loading = false
+        loaded = true
+        mainClock.advanceTimeBy(16L)
+        mainClock.advanceTimeByFrame()
+
+        assertTrue(state.resultsVisible)
+        assertEquals(0f, state.loadingAlpha, 0.001f)
+        assertEquals(1f, state.contentAlpha, 0.001f)
+        assertEquals(0f, onNodeWithTag("results_view").getBoundsInRoot().top.value, 0.5f)
+    }
+
+    @Test
+    fun onlyAfterLoadingRisesWhenSpinnerAppeared() = runSkikoComposeUiTest(
+        size = Size(360f, 640f),
+        density = Density(1f),
+    ) {
+        var loading by mutableStateOf(true)
+        var loaded by mutableStateOf(false)
+        var captured: SearchResultsTransitionState? = null
+
+        setContent {
+            COUITheme {
+                val transition = rememberSearchResultsTransitionState(
+                    showingResults = true,
+                    loading = loading,
+                    queryKey = loaded,
+                    spec = SearchResultContainerDefaults.transitionSpec(
+                        riseTrigger = SearchResultsRiseTrigger.OnlyAfterLoading,
+                    ),
+                )
+                captured = transition
+                SearchResultContainer(
+                    state = transition,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    if (resultsVisible) {
+                        Box(Modifier.fillMaxSize().testTag("results_view"))
+                    }
+                }
+            }
+        }
+
+        mainClock.autoAdvance = false
+        mainClock.advanceTimeByFrame()
+        val state = requireNotNull(captured)
+
+        // Wait until spinner appears (50ms delay + fade-in).
+        repeat(10) { mainClock.advanceTimeBy(16L) }
+        assertTrue(state.loadingAlpha > 0.3f)
+
+        runOnIdle {
+            loading = false
+            loaded = true
+        }
+        var firstAlpha = -1f
+        var firstTop = -1f
+        for (i in 0 until 8) {
+            mainClock.advanceTimeBy(16L)
+            mainClock.advanceTimeByFrame()
+            if (state.resultsVisible) {
+                firstAlpha = state.contentAlpha
+                firstTop = onNodeWithTag("results_view").getBoundsInRoot().top.value
+                break
+            }
+        }
+        assertTrue(state.resultsVisible)
+        assertTrue(firstAlpha < 0.35f, "expected gradual rise from 0, got $firstAlpha")
+        assertTrue(firstTop > 20f, "expected downward starting offset, got $firstTop")
+    }
 }

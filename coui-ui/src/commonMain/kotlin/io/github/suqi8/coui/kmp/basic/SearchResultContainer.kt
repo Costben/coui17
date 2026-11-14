@@ -47,6 +47,7 @@ object SearchResultContainerDefaults {
     val LoadingEnterScale: Float = 0.88f
     val ModeFadeOutMillis: Int = 120
     val ModeFadeInMillis: Int = 200
+    val RiseTrigger: SearchResultsRiseTrigger = SearchResultsRiseTrigger.OnEnterOrLoad
 
     /**
      * Creates a [SearchResultsTransitionSpec] with overridable durations and travel distances.
@@ -66,6 +67,7 @@ object SearchResultContainerDefaults {
         loadingEnterScale: Float = LoadingEnterScale,
         modeFadeOutMillis: Int = ModeFadeOutMillis,
         modeFadeInMillis: Int = ModeFadeInMillis,
+        riseTrigger: SearchResultsRiseTrigger = RiseTrigger,
     ): SearchResultsTransitionSpec = remember(
         resultsRiseDistance,
         resultsRiseMillis,
@@ -80,6 +82,7 @@ object SearchResultContainerDefaults {
         loadingEnterScale,
         modeFadeOutMillis,
         modeFadeInMillis,
+        riseTrigger,
     ) {
         SearchResultsTransitionSpec(
             resultsRiseDistance = resultsRiseDistance,
@@ -95,6 +98,7 @@ object SearchResultContainerDefaults {
             loadingEnterScale = loadingEnterScale,
             modeFadeOutMillis = modeFadeOutMillis,
             modeFadeInMillis = modeFadeInMillis,
+            riseTrigger = riseTrigger,
         )
     }
 
@@ -108,6 +112,24 @@ object SearchResultContainerDefaults {
             CircularProgressIndicator()
         }
     }
+}
+
+/**
+ * Controls when [SearchResultContainer] plays the bottom-up rise animation on entering or
+ * refreshing content.
+ */
+enum class SearchResultsRiseTrigger {
+    /**
+     * Plays the rise whenever results enter from prompt/suggestions or after loading completes,
+     * even if data arrived before the loading indicator appeared.
+     */
+    OnEnterOrLoad,
+
+    /**
+     * Plays the rise only when the loading indicator actually appeared before content arrived;
+     * already-loaded, cached, or instant responses appear in place without animating.
+     */
+    OnlyAfterLoading,
 }
 
 /**
@@ -129,6 +151,7 @@ data class SearchResultsTransitionSpec(
     val loadingEnterScale: Float = SearchResultContainerDefaults.LoadingEnterScale,
     val modeFadeOutMillis: Int = SearchResultContainerDefaults.ModeFadeOutMillis,
     val modeFadeInMillis: Int = SearchResultContainerDefaults.ModeFadeInMillis,
+    val riseTrigger: SearchResultsRiseTrigger = SearchResultContainerDefaults.RiseTrigger,
 )
 
 /**
@@ -179,6 +202,7 @@ class SearchResultsTransitionState internal constructor(
     internal var animatedQueryKey: Any? =
         if (initialShowingResults && !initialLoading) initialQueryKey else null
     internal var riseOnNextResults: Boolean = initialShowingResults && initialLoading
+    internal var loadingWasShown: Boolean = false
     internal var riseDistanceTarget: Dp by mutableStateOf(spec.resultsRiseDistance)
     internal var loadingExiting: Boolean by mutableStateOf(false)
 
@@ -236,10 +260,12 @@ class SearchResultsTransitionState internal constructor(
                 resultsVisible = false
                 riseProgress.snapTo(1f)
                 riseOnNextResults = false
+                loadingWasShown = false
                 animatedQueryKey = null
                 shownResults = false
             } else {
                 filtersVisible = false
+                loadingWasShown = false
                 loadingProgress.snapTo(0f)
             }
             modeFade.animateTo(1f, tween(spec.modeFadeInMillis, easing = COUIOutEase))
@@ -253,11 +279,13 @@ class SearchResultsTransitionState internal constructor(
     ) {
         if (!activeResults) return
         if (loading) {
+            loadingWasShown = false
             resultsVisible = false
             riseProgress.snapTo(0f)
             if (spec.loadingEnterDelayMillis > 0L) {
                 delay(spec.loadingEnterDelayMillis)
             }
+            loadingWasShown = true
             loadingExiting = false
             loadingProgress.animateTo(
                 targetValue = 1f,
@@ -266,9 +294,22 @@ class SearchResultsTransitionState internal constructor(
         } else {
             val firstRise = riseOnNextResults || animatedQueryKey != queryKey
             if (resultsVisible && !firstRise) return
-            loadingExiting = true
+            val shouldRise = when (spec.riseTrigger) {
+                SearchResultsRiseTrigger.OnEnterOrLoad -> true
+
+                SearchResultsRiseTrigger.OnlyAfterLoading ->
+                    loadingWasShown || loadingProgress.value > 0.001f
+            }
+            loadingWasShown = false
             animatedQueryKey = queryKey
             riseOnNextResults = false
+            if (!shouldRise) {
+                loadingProgress.snapTo(0f)
+                riseProgress.snapTo(1f)
+                resultsVisible = true
+                return
+            }
+            loadingExiting = true
             riseDistanceTarget = if (firstRise) spec.resultsRiseDistance else spec.refreshRiseDistance
             val riseMillis = if (firstRise) spec.resultsRiseMillis else spec.refreshRiseMillis
             coroutineScope {

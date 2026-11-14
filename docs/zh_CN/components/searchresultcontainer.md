@@ -47,3 +47,4 @@ SearchResultContainer(
 2. **结果到达**：在把偏移复位到起点并归零透明度之后才打开 `resultsVisible`（避免首帧全不透明闪现），同时加载球向上淡出收走（`120ms`，`COUIInEase`），结果列表从下方 `48dp` 处上浮落定（`360ms`，`COUIMoveEase`）。
 3. **结果态内切换分类或刷新**：`queryKey` 未变时改用较轻的 `20dp` / `260ms` 上浮。
 4. **退回搜索首页**：结果与加载球先淡出（`120ms`，`COUIInEase`），`filtersVisible` 等淡出结束才收起以同步顶栏高度，随后切换内容并淡入搜索首页（`200ms`，`COUIOutEase`）。
+5. **仅在出现加载时上浮**：通过 `SearchResultContainerDefaults.transitionSpec(riseTrigger = SearchResultsRiseTrigger.OnlyAfterLoading)`，让已缓存或无需转圈的内容直接落位，只有实际出现过加载球时才在结束后上浮。
