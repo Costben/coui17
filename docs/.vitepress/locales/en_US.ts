@@ -69,6 +69,7 @@ export default defineConfig({
                         { text: "AppBarBlurOverlay", link: "/components/appbarbluroverlay" },
                         { text: "TwoRowTopAppBar", link: "/components/tworowtopappbar" },
                         { text: "SearchFilterTopAppBar", link: "/components/searchfiltertopappbar" },
+                        { text: "SearchResultContainer", link: "/components/searchresultcontainer" },
                         { text: "NavigationBar", link: "/components/navigationbar" },
                         { text: "BottomFloatingAccessoryNavigationBar", link: "/components/bottomfloatingaccessorynavigationbar" },
                         { text: "BottomFloatingToolbar", link: "/components/bottomfloatingtoolbar" },

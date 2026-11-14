@@ -58,8 +58,10 @@ import component.ProgressIndicatorDemo
 import component.RadioButtonDemo
 import component.RecommendedPreferenceDemo
 import component.SearchBarDemo
+import component.SearchFilterTopAppBarDemo
 import component.SearchHistoryChipDemoContent
 import component.SearchHistoryViewDemoContent
+import component.SearchResultContainerDemo
 import component.SearchViewAnimateDemo
 import component.SlideViewDemo
 import component.SliderDemo
@@ -72,7 +74,6 @@ import component.TabRowDemo
 import component.TagViewDemo
 import component.TextFieldDemo
 import component.TimePickerDemo
-import component.SearchFilterTopAppBarDemo
 import component.TooltipDemo
 import component.TopAppBarColorOS17FormsDemo
 import component.TopAppBarGlassDemo
@@ -189,6 +190,7 @@ internal val Coui17CatalogGroups: List<List<Coui17Category>> = listOf(
                 demo("SearchViewAnimate") { SearchViewAnimateDemo() }
                 demo("SearchHistoryView") { SearchHistoryViewDemoContent() }
                 demo("SearchHistoryChip") { SearchHistoryChipDemoContent() }
+                demo("SearchResultContainer") { SearchResultContainerDemo() }
                 demo("TouchSearchView") { TouchSearchViewDemoContent() }
             }
         },
