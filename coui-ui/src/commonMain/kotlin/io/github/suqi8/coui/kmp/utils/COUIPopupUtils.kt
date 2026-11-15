@@ -87,6 +87,7 @@ class COUIPopupUtils {
         var dimEnterTransition by mutableStateOf<EnterTransition?>(null)
         var dimExitTransition by mutableStateOf<ExitTransition?>(null)
         var dimAlpha by mutableStateOf<MutableState<Float>?>(null)
+        var passTouches by mutableStateOf<() -> Boolean>({ false })
         var onDismissFinished by mutableStateOf<(() -> Unit)?>(null)
         var content by mutableStateOf<@Composable () -> Unit>({})
     }
@@ -180,6 +181,7 @@ class COUIPopupUtils {
             dimAlpha: MutableState<Float>? = null,
             onDismissFinished: (() -> Unit)? = null,
             renderInRootScaffold: Boolean = true,
+            passTouches: () -> Boolean = { false },
             content: (@Composable () -> Unit)? = null,
         ) {
             if (content == null) {
@@ -204,6 +206,7 @@ class COUIPopupUtils {
             val latestDimEnter by rememberUpdatedState(dimEnterTransition)
             val latestDimExit by rememberUpdatedState(dimExitTransition)
             val latestDimAlpha by rememberUpdatedState(dimAlpha)
+            val latestPassTouches by rememberUpdatedState(passTouches)
             val latestOnDismissFinished by rememberUpdatedState(onDismissFinished)
             val callSiteBlurEnabled = LocalBlurEnabled.current
             val latestContent by rememberUpdatedState<@Composable () -> Unit> {
@@ -220,6 +223,7 @@ class COUIPopupUtils {
                 state.dimEnterTransition = latestDimEnter
                 state.dimExitTransition = latestDimExit
                 state.dimAlpha = latestDimAlpha
+                state.passTouches = latestPassTouches
                 state.onDismissFinished = latestOnDismissFinished
                 state.content = latestContent
             }
@@ -345,11 +349,8 @@ class COUIPopupUtils {
             LaunchedEffect(dialogState.showState.value) {
                 val newTarget = dialogState.showState.value
                 if (newTarget) {
-                    if (!visibleState.isIdle && !lastTarget) {
-                        pendingOpen = true
-                    } else {
-                        visibleState.targetState = true
-                    }
+                    pendingOpen = false
+                    visibleState.targetState = true
                 } else {
                     if (imeInsets.getBottom(density) > 0) {
                         keyboardController?.hide()
@@ -368,6 +369,7 @@ class COUIPopupUtils {
             val dialogStates = LocalDialogStates.current
 
             val effectiveLargeScreen = largeScreen && dialogState.enableAutoLargeScreen
+            val passTouches by remember { derivedStateOf { dialogState.passTouches() } }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 if (dialogState.enableWindowDim) {
@@ -383,19 +385,25 @@ class COUIPopupUtils {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .pointerInput(Unit) {
-                                    awaitPointerEventScope {
-                                        while (true) {
-                                            val event = awaitPointerEvent()
-                                            var i = 0
-                                            val n = event.changes.size
-                                            while (i < n) {
-                                                event.changes[i].consume()
-                                                i++
+                                .then(
+                                    if (passTouches) {
+                                        Modifier
+                                    } else {
+                                        Modifier.pointerInput(Unit) {
+                                            awaitPointerEventScope {
+                                                while (true) {
+                                                    val event = awaitPointerEvent()
+                                                    var i = 0
+                                                    val n = event.changes.size
+                                                    while (i < n) {
+                                                        event.changes[i].consume()
+                                                        i++
+                                                    }
+                                                }
                                             }
                                         }
-                                    }
-                                }
+                                    },
+                                )
                                 .drawBehind {
                                     val alpha = dimAlphaState?.value?.coerceIn(0f, 1f) ?: 1f
                                     drawRect(baseColor.copy(alpha = baseColor.alpha * alpha))
@@ -410,19 +418,25 @@ class COUIPopupUtils {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .pointerInput(Unit) {
-                                    awaitPointerEventScope {
-                                        while (true) {
-                                            val event = awaitPointerEvent()
-                                            var i = 0
-                                            val n = event.changes.size
-                                            while (i < n) {
-                                                event.changes[i].consume()
-                                                i++
+                                .then(
+                                    if (passTouches) {
+                                        Modifier
+                                    } else {
+                                        Modifier.pointerInput(Unit) {
+                                            awaitPointerEventScope {
+                                                while (true) {
+                                                    val event = awaitPointerEvent()
+                                                    var i = 0
+                                                    val n = event.changes.size
+                                                    while (i < n) {
+                                                        event.changes[i].consume()
+                                                        i++
+                                                    }
+                                                }
                                             }
                                         }
-                                    }
-                                },
+                                    },
+                                ),
                         )
                     }
                 }
@@ -459,11 +473,8 @@ class COUIPopupUtils {
             LaunchedEffect(popupState.showState.value) {
                 val newTarget = popupState.showState.value
                 if (newTarget) {
-                    if (!visibleState.isIdle && !lastTarget) {
-                        pendingOpen = true
-                    } else {
-                        visibleState.targetState = true
-                    }
+                    pendingOpen = false
+                    visibleState.targetState = true
                 } else {
                     pendingOpen = false
                     visibleState.targetState = false

@@ -321,23 +321,30 @@ internal fun BottomSheetContentLayout(
                 .fillMaxSize()
                 // Key on `allowDismiss` so the gesture coroutine restarts with the latest closure
                 // when the consumer toggles it; otherwise the in-flight detector keeps the stale value.
-                .pointerInput(allowDismiss) {
-                    detectTapGestures(
-                        onTap = {
-                            if (allowDismiss) {
-                                requestDismiss()
+                .then(
+                    if (!show) {
+                        Modifier
+                    } else {
+                        Modifier
+                            .pointerInput(allowDismiss) {
+                                detectTapGestures(
+                                    onTap = {
+                                        if (allowDismiss) {
+                                            requestDismiss()
+                                        }
+                                    },
+                                )
                             }
-                        },
-                    )
-                }
-                .semantics {
-                    if (allowDismiss) {
-                        onClick(label = "Dismiss") {
-                            requestDismiss()
-                            true
-                        }
-                    }
-                },
+                            .semantics {
+                                if (allowDismiss) {
+                                    onClick(label = "Dismiss") {
+                                        requestDismiss()
+                                        true
+                                    }
+                                }
+                            }
+                    },
+                ),
             contentAlignment = Alignment.BottomCenter,
         ) {
             val sheetModifier = modifier.graphicsLayer {
@@ -373,6 +380,7 @@ internal fun BottomSheetContentLayout(
                 panelPaddingBottom = panelPaddingBottom,
                 dismissOffsetFraction = dismissOffsetFraction,
                 enableNestedScroll = enableNestedScroll,
+                allowTouches = show,
                 startAction = startAction?.let { action ->
                     { CompositionLocalProvider(LocalDismissState provides requestDismiss) { action() } }
                 },
@@ -412,6 +420,7 @@ internal fun BottomSheetContent(
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     enableNestedScroll: Boolean = true,
     dismissOffsetFraction: Float = BottomSheetDefaults.DismissOffsetFraction,
+    allowTouches: Boolean = true,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit,
@@ -630,6 +639,7 @@ internal fun BottomSheetContent(
         onSettle = performSettle,
         onUpdateAlpha = updateDimAlpha,
         modifier = modifier,
+        allowTouches = allowTouches,
         onDismissRequest = onDismissRequest,
         content = content,
     )
@@ -662,6 +672,7 @@ private fun BottomSheetColumn(
     onSettle: (velocity: Float) -> Unit,
     onUpdateAlpha: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    allowTouches: Boolean = true,
     onDismissRequest: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -714,7 +725,13 @@ private fun BottomSheetColumn(
 
         Column(
             modifier = modifier
-                .pointerInput(Unit) { detectTapGestures { /* Consume click */ } }
+                .then(
+                    if (allowTouches) {
+                        Modifier.pointerInput(Unit) { detectTapGestures { /* Consume click */ } }
+                    } else {
+                        Modifier
+                    },
+                )
                 .then(if (enableNestedScroll) Modifier.nestedScroll(nestedScrollConnection) else Modifier)
                 .widthIn(max = effectiveMaxWidth)
                 .fillMaxWidth()

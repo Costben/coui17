@@ -87,6 +87,7 @@ fun OverlayBottomSheet(
         popupHost = { visible, hostContent ->
             val visibleState = remember { mutableStateOf(false) }
             visibleState.value = visible
+            val currentShow = androidx.compose.runtime.rememberUpdatedState(show)
             DialogLayout(
                 visible = visibleState,
                 enableWindowDim = false,
@@ -94,6 +95,7 @@ fun OverlayBottomSheet(
                 exitTransition = ExitTransition.None,
                 enableAutoLargeScreen = false,
                 renderInRootScaffold = renderInRootScaffold,
+                passTouches = { !currentShow.value },
             ) {
                 hostContent()
             }

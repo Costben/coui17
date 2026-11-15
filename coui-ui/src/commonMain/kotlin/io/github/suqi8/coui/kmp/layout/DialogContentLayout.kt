@@ -337,6 +337,7 @@ internal fun DialogContentLayout(
             messageBottomPadding = messageBottomPadding,
             hasCustomContent = hasCustomContent,
             topInset = topInset,
+            allowTouches = show,
             content = {
                 CompositionLocalProvider(LocalDismissState provides requestDismiss) {
                     content()
@@ -376,6 +377,7 @@ internal fun DialogContent(
     messageBottomPadding: Dp? = null,
     hasCustomContent: Boolean = false,
     topInset: Dp? = null,
+    allowTouches: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val resolvedCornerRadius = cornerRadius ?: DialogDefaults.CornerRadius
@@ -473,9 +475,15 @@ internal fun DialogContent(
                 translationY = backProgress.value * maxOffset
             }
         }
-        .pointerInput(Unit) {
-            detectTapGestures { /* Consume click */ }
-        }
+        .then(
+            if (allowTouches) {
+                Modifier.pointerInput(Unit) {
+                    detectTapGestures { /* Consume click */ }
+                }
+            } else {
+                Modifier
+            },
+        )
         // COUI panels carry no blanket inside padding; each slot brings its own margins.
         // ColorOS 17 frosts the dialog: `COUIAlertDialogBuilder` feeds `COUIBackgroundBlurBuilder`
         // `coui_dialog_list_blend_blur_*` + `coui_dialog_list_mix_blur_*` at
@@ -508,17 +516,24 @@ internal fun DialogContent(
                 },
             )
             .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { currentOnDismiss?.invoke() },
-                )
-            }
-            .semantics {
-                onClick(label = "Dismiss") {
-                    currentOnDismiss?.invoke()
-                    true
-                }
-            }
+            .then(
+                if (!allowTouches) {
+                    Modifier
+                } else {
+                    Modifier
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = { currentOnDismiss?.invoke() },
+                            )
+                        }
+                        .semantics {
+                            onClick(label = "Dismiss") {
+                                currentOnDismiss?.invoke()
+                                true
+                            }
+                        }
+                },
+            )
             .padding(horizontal = outsideMargin.width)
             .padding(top = calculatedTopInset, bottom = bottomOutsideMargin),
     ) {
