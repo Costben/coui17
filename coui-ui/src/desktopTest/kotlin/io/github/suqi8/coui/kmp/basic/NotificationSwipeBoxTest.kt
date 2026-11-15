@@ -36,6 +36,8 @@ import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Close
@@ -447,5 +449,86 @@ class NotificationSwipeBoxTest {
         assertEquals(80.dp, split[1].width)
         assertEquals(1f, split[2].scaleX)
         assertEquals(360.dp - 4.dp - 30.dp - 70.dp - 20.dp, split[2].centerX)
+    }
+
+    @Test
+    fun settleSpringMatchesSystemUiSnapBackConfig() {
+        assertEquals(200f, NotificationSwipeDefaults.SettleSpring.stiffness)
+        assertEquals(0.75f, NotificationSwipeDefaults.SettleSpring.dampingRatio)
+    }
+
+    @Test
+    fun conicContinuousCurvatureMatchesSystemUiBezierCorner() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        assertEquals(16.dp, NotificationSwipeDefaults.CardCornerRadius)
+        assertEquals(16.dp, NotificationSwipeDefaults.CornerRadius)
+        setContent {
+            Box(Modifier.fillMaxSize().background(Color.Green)) {
+                MetaBallSurfaceWithRim(
+                    particles = notificationSwipeParticles(360.dp, 84.dp, distance = 0.dp),
+                    blurColors = null,
+                    rimColor = null,
+                    rimLineWidth = NotificationSwipeDefaults.RimLineWidth,
+                    rimLineAngle = 0f,
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color.Blue,
+                    backdrop = null,
+                    rimBottomScale = 1f,
+                    edgeStyle = GradientStrokeStyle.NOTIFICATION_DARK,
+                    conicCornerWeight = NotificationSwipeDefaults.CONIC_CORNER_WEIGHT,
+                )
+            }
+        }
+        waitForIdle()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        // At (4.5, 4.5), circular 16dp would be inside, while CONIC (24dp span, weight 1.1) stays outside (5.714px).
+        val outsideConic = pixels[4, 4]
+        val insideConic = pixels[7, 7]
+        assertTrue(outsideConic.green > 0.95f && outsideConic.blue < 0.05f, "Expected (4,4) outside CONIC corner, got $outsideConic")
+        assertTrue(insideConic.blue > 0.85f && insideConic.green < 0.15f, "Expected (7,7) inside CONIC corner, got $insideConic")
+    }
+
+    @Test
+    fun materialMixAndRimPresetsMatchSystemUi() {
+        assertEquals(
+            listOf(
+                BlendColorEntry(Color(0x19404040), BlurBlendMode.Luminosity),
+                BlendColorEntry(Color(0x4D737373), BlurBlendMode.ColorDodge),
+            ),
+            NotificationSwipeDefaults.blurColors(isDark = false),
+        )
+        assertEquals(
+            listOf(
+                BlendColorEntry(Color(0x59404040), BlurBlendMode.Luminosity),
+                BlendColorEntry(Color(0x66737373), BlurBlendMode.ColorDodge),
+            ),
+            NotificationSwipeDefaults.blurColors(isDark = true),
+        )
+        val darkEdge = GradientStrokeStyleMapper.toEdgeArray16(
+            style = NotificationSwipeDefaults.edgeStyle(isDark = true),
+            width = 328f * 3f,
+            height = 60f * 3f,
+            lineWidth = 8f,
+            lineAlpha = 1f,
+            lineAngle = 0f,
+            density = 3f,
+        )
+        assertEquals(0.35f, darkEdge[7], 1e-4f)
+        assertEquals(0.50f, darkEdge[8], 1e-4f)
+        assertEquals(4.46f, darkEdge[14], 1e-4f)
+        assertEquals(1.1f, darkEdge[15], 1e-4f)
+
+        val lightEdge = GradientStrokeStyleMapper.toEdgeArray16(
+            style = NotificationSwipeDefaults.edgeStyle(isDark = false),
+            width = 328f * 3f,
+            height = 60f * 3f,
+            lineWidth = 8f,
+            lineAlpha = 1f,
+            lineAngle = 0f,
+            density = 3f,
+        )
+        assertEquals(0.40f, lightEdge[7], 1e-4f)
+        assertEquals(0.56f, lightEdge[8], 1e-4f)
+        assertEquals(3.0f, lightEdge[14], 1e-4f)
+        assertEquals(1.0f, lightEdge[15], 1e-4f)
     }
 }

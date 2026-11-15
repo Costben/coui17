@@ -295,6 +295,8 @@ internal fun MetaBallSurfaceWithRim(
     bottomGlowColor: Color? = null,
     continuousCurve: Boolean = false,
     plainRim: Boolean = false,
+    edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+    conicCornerWeight: Float = 0f,
 ) {
     MetaBallSurfaceImpl(
         particles = particles,
@@ -315,6 +317,8 @@ internal fun MetaBallSurfaceWithRim(
         bottomGlowColor = bottomGlowColor,
         continuousCurve = continuousCurve,
         plainRim = plainRim,
+        edgeStyle = edgeStyle,
+        conicCornerWeight = conicCornerWeight,
     )
 }
 
@@ -349,6 +353,8 @@ private fun MetaBallSurfaceImpl(
     bottomGlowColor: Color? = null,
     continuousCurve: Boolean = false,
     plainRim: Boolean = false,
+    edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
+    conicCornerWeight: Float = 0f,
     content: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     val runsShader = isRuntimeShaderSupported()
@@ -381,12 +387,14 @@ private fun MetaBallSurfaceImpl(
                             rim = rimColor ?: Color.Transparent,
                             bottomScale = rimBottomScale,
                             tint = if (blurColors == null) color.copy(alpha = containerAlpha) else Color.Transparent,
+                            edgeStyle = edgeStyle,
                             lineWidth = rimLineWidth,
                             lineAngle = rimLineAngle,
                             extension = extension,
                             factorX = extensionFactorX,
                             factorY = extensionFactorY,
                             continuousCurve = continuousCurve,
+                            conicCornerWeight = conicCornerWeight,
                             plainRim = plainRim,
                         )
                         .textureBlur(
@@ -410,6 +418,7 @@ private fun MetaBallSurfaceImpl(
                         factorY = extensionFactorY,
                         rimBlur = rimBlur,
                         continuousCurve = continuousCurve,
+                        conicCornerWeight = conicCornerWeight,
                     )
                 }
             } else if (shader != null) {
@@ -419,12 +428,14 @@ private fun MetaBallSurfaceImpl(
                         particles = paintedParticles,
                         rim = rimColor ?: Color.Transparent,
                         bottomScale = rimBottomScale,
+                        edgeStyle = edgeStyle,
                         lineWidth = rimLineWidth,
                         lineAngle = rimLineAngle,
                         extension = extension,
                         factorX = extensionFactorX,
                         factorY = extensionFactorY,
                         continuousCurve = continuousCurve,
+                        conicCornerWeight = conicCornerWeight,
                         plainRim = plainRim,
                     ),
                     shader = shader,
@@ -436,6 +447,7 @@ private fun MetaBallSurfaceImpl(
                     rimBlur = rimBlur,
                     rimBottomScale = rimBottomScale,
                     continuousCurve = continuousCurve,
+                    conicCornerWeight = conicCornerWeight,
                 )
             } else {
                 Canvas(modifier = Modifier.matchParentSize()) {
@@ -443,6 +455,7 @@ private fun MetaBallSurfaceImpl(
                         particles = paintedParticles,
                         color = color,
                         continuousCurve = continuousCurve,
+                        conicCornerWeight = conicCornerWeight,
                         pathCaches = pathCaches,
                     )
                 }
@@ -483,6 +496,7 @@ private fun MetaBallSilhouette(
     modifier: Modifier = Modifier,
     rimBottomScale: Float = 0f,
     continuousCurve: Boolean = false,
+    conicCornerWeight: Float = 0f,
 ) {
     // Always the runtime shader, never the platform's `OplusMaterialUtil` chain: the vendor effect
     // re-runs its own material animation whenever the window's overlay state changes, so opening a
@@ -494,6 +508,7 @@ private fun MetaBallSilhouette(
             shader, particles, body, rim, extension, factorX, factorY, rimBlur,
             rimBottomScale = rimBottomScale,
             continuousCurve = continuousCurve,
+            conicCornerWeight = conicCornerWeight,
         )
     }
 }
@@ -520,6 +535,7 @@ private fun DrawScope.drawMetaBall(
     rimBlur: Dp,
     rimBottomScale: Float = 0f,
     continuousCurve: Boolean = false,
+    conicCornerWeight: Float = 0f,
 ) {
     setMetaBallUniforms(
         shader = shader,
@@ -532,6 +548,7 @@ private fun DrawScope.drawMetaBall(
         rimBlur = rimBlur,
         rimBottomScale = rimBottomScale,
         continuousCurve = continuousCurve,
+        conicCornerWeight = conicCornerWeight,
     )
     drawRect(brush = shader.asBrush())
 }
@@ -550,6 +567,7 @@ internal fun Density.setMetaBallUniforms(
     lineWidth: Dp = META_BALL_RIM_LINE_WIDTH,
     lineAngle: Float = 0f,
     continuousCurve: Boolean = false,
+    conicCornerWeight: Float = 0f,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
     if (count == 0) return
@@ -599,6 +617,38 @@ internal fun Density.setMetaBallUniforms(
     shader.setFloatUniform("in_rimBlur", rimBlur.toPx())
     shader.setFloatUniform("in_rimBottom", rimBottomScale)
     shader.setFloatUniform("in_continuousCurve", if (continuousCurve) 1f else 0f)
+    shader.setFloatUniform("in_conicWeight", conicCornerWeight.coerceAtLeast(0f))
+}
+
+/**
+ * Adds a rectangle matching ColorOS `CornerType.CONIC` (`BlurDrawableShaderCornerStringKt.sdBezierDistance`):
+ * each corner spans `min(cornerRadius * 1.5, min(width, height) / 2)` along each edge with cubic
+ * control handle `span * ((8 * weight) / (3 * weight + 3)) * 0.5`.
+ */
+internal fun Path.addConicRoundedRect(
+    width: Float,
+    height: Float,
+    cornerRadius: Float,
+    weight: Float = 1.1f,
+) {
+    if (width <= 0f || height <= 0f) return
+    val span = (cornerRadius * 1.5f).coerceIn(0f, minOf(width, height) / 2f)
+    if (span <= 0.01f) {
+        addRect(Rect(0f, 0f, width, height))
+        return
+    }
+    val conicWeight = (8f * weight) / (3f * weight + 3f)
+    val point = (span * conicWeight * 0.5f).coerceAtLeast(0.001f)
+    moveTo(span, 0f)
+    lineTo(width - span, 0f)
+    cubicTo(width - span + point, 0f, width, span - point, width, span)
+    lineTo(width, height - span)
+    cubicTo(width, height - span + point, width - span + point, height, width - span, height)
+    lineTo(span, height)
+    cubicTo(span - point, height, 0f, height - span + point, 0f, height - span)
+    lineTo(0f, span)
+    cubicTo(0f, span - point, span - point, 0f, span, 0f)
+    close()
 }
 
 private class SegmentCapsulePathCache {
@@ -622,6 +672,7 @@ private fun DrawScope.drawUnmergedParticles(
     particles: List<MetaBallParticle>,
     color: Color,
     continuousCurve: Boolean = false,
+    conicCornerWeight: Float = 0f,
     pathCaches: List<SegmentCapsulePathCache>? = null,
 ) {
     particles.forEachIndexed { index, particle ->
@@ -633,7 +684,14 @@ private fun DrawScope.drawUnmergedParticles(
         val particleColor = color.copy(alpha = color.alpha * particle.alpha)
         withTransform({ scale(particle.scaleX, particle.scaleY, pivot = centre) }) {
             val topLeft = Offset((particle.centerX - particle.width / 2).toPx(), (particle.centerY - particle.height / 2).toPx())
-            if (isWideCapsule) {
+            if (conicCornerWeight > 0.001f) {
+                val path = Path().apply {
+                    addConicRoundedRect(widthPx, heightPx, cornerRadiusPx, conicCornerWeight)
+                }
+                withTransform({ translate(topLeft.x, topLeft.y) }) {
+                    drawPath(path = path, color = particleColor)
+                }
+            } else if (isWideCapsule) {
                 val cache = pathCaches?.getOrNull(index)
                 val path = cache?.get(widthPx, heightPx) ?: Path().apply {
                     addSegmentCapsule(Rect(0f, 0f, widthPx, heightPx))
@@ -699,10 +757,53 @@ uniform float in_rimWidth;
 uniform float in_rimBlur;
 uniform float in_rimBottom;
 uniform float in_continuousCurve;
+uniform float in_conicWeight;
 
 float couiSdRoundBox(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
     return min(max(q.x, q.y), 0.0) + length(max(q, float2(0.0, 0.0))) - r;
+}
+
+float couiCubicBezierDistance(float2 p, float2 p0, float2 p1, float2 p2, float2 p3) {
+    float2 c0 = p0;
+    float2 c1 = 3.0 * (p1 - p0);
+    float2 c2 = 3.0 * (p2 - 2.0 * p1 + p0);
+    float2 c3 = p3 - 3.0 * p2 + 3.0 * p1 - p0;
+    float t = 0.5;
+    for (int i = 0; i < 10; i++) {
+        float2 Bt   = ((c3 * t + c2) * t + c1) * t + c0;
+        float2 dBt  = (3.0 * c3 * t + 2.0 * c2) * t + c1;
+        float2 ddBt = 6.0 * c3 * t + 2.0 * c2;
+        float2 r    = Bt - p;
+        float f1 = dot(dBt, r);
+        float f2 = dot(ddBt, r) + dot(dBt, dBt);
+        float denom = max(f2, 1e-4);
+        t = clamp(t - f1 / denom, 0.0, 1.0);
+    }
+    float2 Bt = ((c3 * t + c2) * t + c1) * t + c0;
+    float2 re = Bt - p;
+    float2 tangent = (3.0 * c3 * t + 2.0 * c2) * t + c1;
+    float2 normal = float2(-tangent.y, tangent.x);
+    float lenN = length(normal);
+    float2 normalizedNormal = lenN > 1e-6 ? normal / lenN : float2(0.7071, 0.7071);
+    float dis = length(re);
+    return dot(re, normalizedNormal) > 0.0 ? dis : -dis;
+}
+
+float couiSdConicBox(float2 p, float2 b, float corner, float weight) {
+    float cc = min(corner * 1.5, min(b.x, b.y));
+    if (abs(p.x) <= b.x - cc || abs(p.y) <= b.y - cc || cc <= 0.01) {
+        return couiSdRoundBox(p, b, cc);
+    }
+    float conicWeight = (8.0 * weight) / (3.0 * weight + 3.0);
+    float point = max(cc * conicWeight * 0.5, 0.001);
+    return couiCubicBezierDistance(
+        abs(p) - b + cc,
+        float2(cc, 0.0),
+        float2(cc, point),
+        float2(point, cc),
+        float2(0.0, cc)
+    );
 }
 
 float couiSegmentCapsuleDelta(float2 p, float2 b, float r) {
@@ -798,10 +899,15 @@ half4 main(float2 xy) {
         }
         float2 c = in_center[i];
         float2 pLocal = (xy - c) / in_scale[i];
-        float corner = min(in_corner[i], min(in_half[i].x, in_half[i].y));
-        float di = couiSdRoundBox(pLocal, in_half[i], corner);
-        if (in_continuousCurve > 0.5) {
-            di += couiSegmentCapsuleDelta(pLocal, in_half[i], corner);
+        float di;
+        if (in_conicWeight > 0.001) {
+            di = couiSdConicBox(pLocal, in_half[i], in_corner[i], in_conicWeight);
+        } else {
+            float corner = min(in_corner[i], min(in_half[i].x, in_half[i].y));
+            di = couiSdRoundBox(pLocal, in_half[i], corner);
+            if (in_continuousCurve > 0.5) {
+                di += couiSegmentCapsuleDelta(pLocal, in_half[i], corner);
+            }
         }
         inside = max(inside, in_alpha[i] * (1.0 - smoothstep(-aa, aa, di)));
         if (has < 0.5) {

@@ -43,6 +43,7 @@ internal fun Modifier.nativeMaterialEdge(
     factorX: Float = MetaBallDefaults.EXTENSION_FACTOR_X,
     factorY: Float = MetaBallDefaults.EXTENSION_FACTOR_Y,
     continuousCurve: Boolean = false,
+    conicCornerWeight: Float = 0f,
     plainRim: Boolean = false,
 ): Modifier {
     if (!isRuntimeShaderSupported()) return this
@@ -63,6 +64,7 @@ internal fun Modifier.nativeMaterialEdge(
             lineWidth = lineWidth,
             lineAngle = lineAngle,
             continuousCurve = continuousCurve,
+            conicCornerWeight = conicCornerWeight,
         )
         shader.setFloatUniform("in_tint", tint.red, tint.green, tint.blue, tint.alpha)
         shader.setFloatUniform("in_plainRim", if (plainRim) 1f else 0f)

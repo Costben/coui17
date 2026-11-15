@@ -58,25 +58,22 @@ import utils.rememberBlurBackdrop
 /** Shade fill measured on ColorOS 17 (`#111111`). */
 private val ShadeColor = Color(0xFF111111)
 
-/**
- * Card fill measured on ColorOS 17 (`#2D2D2D` over the shade). The surface blends its tint over
- * the backdrop, so the tint is set eight levels lighter to land on that measured fill.
- */
-private val CardColor = Color(0xFF353535)
-
 /** `notification_info_text_size` renders at 13sp in a muted 62% white. */
 private val InfoColor = Color(0xFF9F9F9F)
 
-/** The blurred wallpaper that sits behind the shade's top edge. */
+/** The blurred wallpaper that sits behind the shade's top edge in dark mode. */
 private val ShadeTopGlow = listOf(Color(0xFF3F4644), Color(0x00111111))
 
+/** Soft top wallpaper glow behind the light-mode notification preview. */
+private val LightTopGlow = listOf(Color(0xFFD6E2EA), Color(0x00FAFAFA))
+
 /**
- * The shade's four colours.
+ * The shade's backdrop and text colours.
  *
- * The dark values are measured on a ColorOS 17 device. The light shade is a translucent card over
- * the wallpaper, so it has no fixed fill to measure; its colours come from the light theme instead.
+ * The dark backdrop matches ColorOS 17 (`#111111`) so `NotificationSwipeBox`'s dark blur recipe
+ * lands near the measured `#2D2D2D` card body while picking up the wallpaper glow behind it.
  */
-private class ShadeColors(val shade: Color, val card: Color, val text: Color, val info: Color) {
+private class ShadeColors(val shade: Color, val text: Color, val info: Color) {
     val dark: Boolean get() = shade.luminance() < 0.5f
 }
 
@@ -85,9 +82,9 @@ private fun rememberShadeColors(): ShadeColors {
     val colors = COUITheme.colorScheme
     return remember(colors.background) {
         if (colors.background.luminance() < 0.5f) {
-            ShadeColors(ShadeColor, CardColor, Color.White, InfoColor)
+            ShadeColors(ShadeColor, Color.White, InfoColor)
         } else {
-            ShadeColors(colors.surface, colors.surfaceVariant, colors.onSurface, colors.onSurfaceVariantSummary)
+            ShadeColors(colors.surface, colors.onSurface, colors.onSurfaceVariantSummary)
         }
     }
 }
@@ -104,10 +101,9 @@ private data class DemoNotification(
 )
 
 /**
- * Notifications rebuilt to the ColorOS 17 shade: a `#111111` backdrop, `#2D2D2D` cards 8dp apart,
- * 32dp rounded app icons, one 14sp white line for both the title and the body, and a 12sp muted
- * timestamp on the first line. The light theme takes the shade and card from the theme, because the
- * device's light shade is a translucent card over the wallpaper and has no fixed fill to measure.
+ * Notifications rebuilt to the ColorOS 17 shade: a `#111111` backdrop (or light surface) behind
+ * SystemUI-blurred cards 8dp apart, 32dp rounded app icons, one 14sp title/body style, and a 12sp
+ * muted timestamp on the first line.
  */
 @Composable
 fun NotificationSwipeDemo() {
@@ -152,15 +148,13 @@ fun NotificationSwipeDemo() {
     Box(Modifier.fillMaxWidth()) {
         Box(Modifier.matchParentSize().then(if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier)) {
             Box(Modifier.fillMaxSize().background(shade.shade))
-            // The blurred wallpaper the shade reveals above its first card.
-            if (shade.dark) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(88.dp)
-                        .background(Brush.verticalGradient(ShadeTopGlow)),
-                )
-            }
+            // The blurred wallpaper glow revealed behind the top cards.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(88.dp)
+                    .background(Brush.verticalGradient(if (shade.dark) ShadeTopGlow else LightTopGlow)),
+            )
         }
         CompositionLocalProvider(LocalBackdrop provides backdrop) {
             Column(
@@ -218,8 +212,6 @@ private fun DemoNotificationCard(
         dismissIcon = null,
         state = state,
         minHeight = 0.dp,
-        containerColor = shade.card,
-        rimColor = Color.White,
         settingsDescription = str("Settings"),
         dismissDescription = str("Delete"),
         dismissOnFullSwipe = true,

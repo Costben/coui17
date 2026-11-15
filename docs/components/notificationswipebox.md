@@ -48,7 +48,7 @@ NotificationSwipeBox(
 }
 ```
 
-Use foreground content without an opaque card background. Provide a sibling wallpaper through `LocalBackdrop` for the existing glass rendering; without a backdrop the material is opaque. Below Android 13, separate opaque shapes replace the shader bridge. Menu colors use the shared theme material; wallpaper tint and lighting reuse `MetaBallSurface` rather than the SystemUI-specific material recipe.
+Use foreground content without an opaque card background. Provide a sibling backdrop through `LocalBackdrop` so `NotificationSwipeBox` applies the SystemUI notification blur material (`250px` radius scaled by density with `Luminosity` + `ColorDodge` light/dark layers); without a backdrop it falls back to `#CCFFFFFF` / `#CC333333` (`notification_material_blur_bg`). Passing a custom `containerColor` overrides the material with that tint. Below Android 13, separate shapes replace the shader bridge.
 
 ## State and interaction
 
@@ -67,8 +67,10 @@ ColorOS 17 notification menu resources and animation parameters:
 | Action top inset | 8dp | `notification_menu_icon_with_background_standard_height_diff` |
 | Default minimum notification height | 84dp | `notification_menu_icon_with_background_parent_standard_height` |
 | Gap / end inset | 10dp / 4dp | `notification_menu_icon_margin` / `notification_menu_icon_margin_extra` |
-| Card radius | 20dp | `notification_corner_radius` 16dp continuous corner, fitted as circular |
-| Button radius | 16dp | `RadiusParams.CARD_MENU_CONER` / `notif_menu_icon_background` |
+| Card radius | 16dp (`CONIC`, weight 1.1) | `notification_corner_radius` (`SmoothRoundEx`, 24dp cubic-Bezier span) |
+| Button radius | 16dp (`CONIC`, weight 1.1) | `RadiusParams.CARD_MENU_CONER` / `notif_menu_icon_background` |
+| Blur mix & radius | 250px; light `0x19404040` / `0x4D737373`, dark `0x59404040` / `0x66737373` | `QSBlurConfigProvider` / `NotificationBlurMixColorParams` |
+| Edge lighting | `328×60dp` ref; light `0.40/0.56` (`pow 3.0`), dark `0.35/0.50` (`pow 4.46`) | `NotificationGradientStrokeLineAdapter` |
 | Blend range / factors | 3.5dp / 1.2 / 2.0 | notification melt-ball controllers |
 | Follow distance | 8dp | stage-one settings and delete distances |
 | Merge distance | 40dp | `AnimateParamTwo.TWO_ANIMATE_THRESHOLD` (its comment reads "0-158.4px (40dp)") |
@@ -79,11 +81,12 @@ ColorOS 17 notification menu resources and animation parameters:
 | Trash icon | 84×84 at 60fps, shown at 28dp; lid -18° → 0° → -18° | `notification_menu_delete_icon_lottie_*_final.json` |
 | Delete fade / lid close | response 0.3s, bounce 0.5 / 200ms | `AnimateParamThree` |
 | Icon fade interval | 0.6–1.0 of cell exposure | `AnimateParamOne.FADE_START/END` |
-| Recoil spring | response 0.55s, bounce 0.4 | `AnimateParamOne.oneAnimate` |
+| Card snap-back spring | stiffness 200, dampingRatio 0.75 | `NotificationSwipeHelper.mSnapBackSpringConfig` |
+| Icon recoil spring | response 0.55s, bounce 0.4 | `AnimateParamOne.oneAnimate` |
 
 The container needs a bounded width greater than the menu width (144dp for two cells, 74dp for one) to drag. Tall notifications keep the actions 8dp below the top, matching the system menu.
 
-`rimColor` is the light traced along the merged outline. A shade card's top and bottom edges measure `#4E4E4E` over a `#2D2D2D` body, which needs opaque white; the default half-transparent white suits a card floating on a bright wallpaper instead.
+`rimColor` traces the merged outline with ColorOS 17's `NotificationStrokeLineLightGroup` / `NotificationStrokeLineDarkGroup` gradient stroke by default (`Color.Unspecified`); pass `Color.Transparent` to hide the rim or a custom color to tint it.
 
 Set `minHeight = 0.dp` to size compact notifications from their content; action height then follows the card height minus 16dp, up to 68dp.
 

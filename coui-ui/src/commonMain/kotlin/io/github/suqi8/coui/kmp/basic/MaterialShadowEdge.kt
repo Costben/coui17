@@ -86,6 +86,38 @@ class GradientStrokeStyle(
             rectLinePara1 = 4f,
             rectLinePara2 = 0.8f,
         )
+
+        /**
+         * SystemUI `NotificationStrokeLineLightGroup`: `baseSize = 328dp x 60dp` (converted to the
+         * mapper's `dp / 0.34` coordinates), group alpha `0.8`, near/far thickness `(2, 6)` / `(2, 4)`.
+         */
+        internal val NOTIFICATION_LIGHT: GradientStrokeStyle = GradientStrokeStyle(
+            rectLineSize = floatArrayOf(328f / 0.34f, 60f / 0.34f),
+            rectLineColor = floatArrayOf(1f, 1f, 1f),
+            rectLineNear = floatArrayOf(2f, 6f),
+            rectLineFar = floatArrayOf(2f, 4f),
+            rectLineAlpha = floatArrayOf(0.5f * 0.8f, 0.7f * 0.8f),
+            rectLineFade = floatArrayOf(0.2f, 0.4f, 0.2f, 0.35f),
+            angle = 0f,
+            rectLinePara1 = 3.0f,
+            rectLinePara2 = 1.0f,
+        )
+
+        /**
+         * SystemUI `NotificationStrokeLineDarkGroup`: `baseSize = 328dp x 60dp`, group alpha `0.5`,
+         * near/far thickness `(2, 6)` / `(2, 4)`, power `4.46`, mix `1.1`.
+         */
+        internal val NOTIFICATION_DARK: GradientStrokeStyle = GradientStrokeStyle(
+            rectLineSize = floatArrayOf(328f / 0.34f, 60f / 0.34f),
+            rectLineColor = floatArrayOf(1f, 1f, 1f),
+            rectLineNear = floatArrayOf(2f, 6f),
+            rectLineFar = floatArrayOf(2f, 4f),
+            rectLineAlpha = floatArrayOf(0.7f * 0.5f, 1.0f * 0.5f),
+            rectLineFade = floatArrayOf(0.15f, 0.4f, 0.2f, 0.4f),
+            angle = 0f,
+            rectLinePara1 = 4.46f,
+            rectLinePara2 = 1.1f,
+        )
     }
 }
 

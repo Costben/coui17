@@ -48,7 +48,7 @@ NotificationSwipeBox(
 }
 ```
 
-内容槽只放前景内容，避免使用不透明卡片背景遮住融合材质。通过 `LocalBackdrop` 提供同级壁纸后沿用现有玻璃效果；未提供背景时使用不透明材质。Android 13 以下显示独立形状，不绘制融合连接。颜色、壁纸染色与边缘光照沿用主题和 `MetaBallSurface`，尚未逐项对齐 SystemUI 的通知专用材质配方。
+内容槽只放前景内容，避免使用不透明卡片背景遮住融合材质。通过 `LocalBackdrop` 提供同级背景后，默认使用 SystemUI 的通知高斯模糊配方（`250px` 按密度换算，叠加浅色/深色 `Luminosity` + `ColorDodge` 混色层）；未提供背景时回退到 `notification_material_blur_bg`（`#CCFFFFFF` / `#CC333333`）。传入自定义 `containerColor` 会以该纯色替换上述材质。Android 13 以下显示独立形状，不绘制融合连接。
 
 ## 状态与交互
 
@@ -66,8 +66,10 @@ NotificationSwipeBox(
 | 按钮上边距 | 8dp | `notification_menu_icon_with_background_standard_height_diff` |
 | 通知默认最小高度 | 84dp | `notification_menu_icon_with_background_parent_standard_height` |
 | 按钮间距 / 外侧留白 | 10dp / 4dp | `notification_menu_icon_margin` / `margin_extra` |
-| 卡片圆角 | 20dp | `notification_corner_radius` 16dp 连续曲率，按圆形拟合 |
-| 按钮圆角 | 16dp | `RadiusParams.CARD_MENU_CONER` / `notif_menu_icon_background` |
+| 卡片圆角 | 16dp（`CONIC`，weight 1.1） | `notification_corner_radius`（`SmoothRoundEx`，24dp 三次贝塞尔跨度） |
+| 按钮圆角 | 16dp（`CONIC`，weight 1.1） | `RadiusParams.CARD_MENU_CONER` / `notif_menu_icon_background` |
+| 模糊混色与半径 | 250px；浅色 `0x19404040`/`0x4D737373`，深色 `0x59404040`/`0x66737373` | `QSBlurConfigProvider` / `NotificationBlurMixColorParams` |
+| 边缘光 | 基准 `328×60dp`；浅色 `0.40/0.56`（`pow 3.0`），深色 `0.35/0.50`（`pow 4.46`） | `NotificationGradientStrokeLineAdapter` |
 | 融合范围 / 横纵系数 | 3.5dp / 1.2 / 2.0 | 通知融合控制器 |
 | 跟随位移 | 8dp | 一段动效设置、删除按钮位移 |
 | 合并距离 | 40dp | `AnimateParamTwo.TWO_ANIMATE_THRESHOLD`（源码注释「0-158.4px(40dp)」） |
@@ -78,11 +80,12 @@ NotificationSwipeBox(
 | 垃圾桶图标 | 84×84、60fps、显示 28dp；盖子 -18° → 0° → -18° | `notification_menu_delete_icon_lottie_*_final.json` |
 | 删除格淡出 / 合盖 | response 0.3s / bounce 0.5 / 200ms | `AnimateParamThree` |
 | 图标渐显区间 | 单格露出进度 0.6–1.0 | `AnimateParamOne.FADE_START/END` |
-| 回弹 | response 0.55s / bounce 0.4 | `AnimateParamOne.oneAnimate` |
+| 卡片回弹弹簧 | stiffness 200 / dampingRatio 0.75 | `NotificationSwipeHelper.mSnapBackSpringConfig` |
+| 图标回弹弹簧 | response 0.55s / bounce 0.4 | `AnimateParamOne.oneAnimate` |
 
 拖动要求容器具有大于菜单宽度的有限宽度（两格 144dp / 一格 74dp）。高通知的按钮仍与顶部保持 8dp 间距，与系统一致。
 
-`rimColor` 是沿融合轮廓描出的高光。通知栏卡片的上下边缘在 `#2D2D2D` 卡身上测得 `#4E4E4E`，需要不透明白色；默认的半透明白更适合浮在亮色壁纸上的卡片。
+`rimColor` 默认为 `Color.Unspecified`，按当前明暗主题套用 ColorOS 17 的 `NotificationStrokeLineLightGroup` / `NotificationStrokeLineDarkGroup` 梯度边缘光；传入 `Color.Transparent` 可关闭边缘光，或传入指定颜色覆盖默认高光色调。
 
 紧凑通知可设置 `minHeight = 0.dp` 以内容确定高度；按钮高度随卡片高度减去 16dp，最大为 68dp。
 
