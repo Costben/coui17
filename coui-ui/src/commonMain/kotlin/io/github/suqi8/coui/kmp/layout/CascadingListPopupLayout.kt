@@ -4,7 +4,6 @@ package io.github.suqi8.coui.kmp.layout
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -17,7 +16,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,9 +28,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Placeable
@@ -72,13 +67,11 @@ import io.github.suqi8.coui.kmp.basic.rememberListPopupLayoutInfo
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sign
-import kotlin.time.TimeSource
 
 /** Corner radius of the cascading popup container, shared with [PopupCornerRadius] (28dp squircle). */
 internal val CascadingPopupCornerRadius = PopupCornerRadius
@@ -154,16 +147,7 @@ private const val PANEL_DRAG_VELOCITY_STALE_MS = 100L
  */
 private const val PANEL_DRAG_VELOCITY_SAMPLES = 8
 
-/**
- * Spring the panel follows the finger with (`TouchMotionTierParams.iolDragSpring`, response 0.15 /
- * bounce 0.15). `COUISpringForce.setBounce(b)` sets `dampingRatio = 1 - b` and `setResponse(r)`
- * sets `stiffness = (2π / r)²`, which is exactly [folmeSpring]'s conversion.
- */
-private val PanelDragFollowSpring =
-    folmeSpring<Float>(damping = 0.85f, response = 0.15f, visibilityThreshold = 0.5f)
-
 /** `TouchMotionTierParams.iolHandUpSpring` — response 0.65, bounce 0.42 (dampingRatio 0.58). */
-private const val PANEL_HAND_UP_RESPONSE = 0.65f
 private const val PANEL_HAND_UP_BOUNCE = 0.42f
 
 /** `TouchMotionTierParams.iolHandUpSpringLargeArea` — response 0.65, bounce 0.45. */
@@ -193,13 +177,6 @@ internal fun panelHandUpAreaBounce(areaPx: Float, density: Density): Float {
     }
     return PANEL_HAND_UP_BOUNCE + (PANEL_HAND_UP_BOUNCE_LARGE_AREA - PANEL_HAND_UP_BOUNCE) * ramp
 }
-
-/** The hand-up spring for a given area bounce and release velocity, in [folmeSpring]'s terms. */
-private fun panelHandUpSpring(areaBounce: Float, initialVelocity: Float): SpringSpec<Float> = folmeSpring<Float>(
-    damping = 1f - panelHandUpBounce(initialVelocity, areaBounce),
-    response = PANEL_HAND_UP_RESPONSE,
-    visibilityThreshold = 0.5f,
-)
 
 /**
  * `COUIITouchMotionUnit.computeHandUpBounce` under `useNormalizedHandUpVelocity` (the shipping
@@ -460,59 +437,7 @@ private fun CascadingListPopupLayoutImpl(
         if (expandedItem != null) expandedItem = null
     }
 
-    // COUISpringDragHelper's model: the panel chases the finger on the drag spring and, on release,
-    // travels back to the anchored offset — 0 — on the hand-up spring, carrying the release velocity
-    // the native pipeline normalises and clamps at iolHandUpMaxInitialVelocity. Driving the target
-    // through snapshotFlow rather than snapping keeps the follow lag the native spring produces.
     val panelDensity = LocalDensity.current
-    val panelMaxStretchPx = with(panelDensity) { PanelDragMaxStretch.toPx() }
-    val panelAreaHandUpBounce = remember(primarySize, panelDensity) {
-        panelHandUpAreaBounce(primarySize.width.toFloat() * primarySize.height, panelDensity)
-    }
-    val panelDragOffset = remember { Animatable(0f) }
-    var panelDragTarget by remember { mutableFloatStateOf(0f) }
-    var panelDragging by remember { mutableStateOf(false) }
-    // Finger travel accumulated over the gesture and the speed of the latest sample, so the hand-up
-    // spring can start from the velocity the finger actually let go at.
-    var panelTravel by remember { mutableFloatStateOf(0f) }
-    var panelFingerVelocity by remember { mutableFloatStateOf(0f) }
-    var panelReleaseVelocity by remember { mutableFloatStateOf(0f) }
-    var panelLastMoveAt by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
-    var panelDragStartedAt by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
-    val panelVelocity = remember { PanelVelocityTracker() }
-    val endPanelDrag = remember(panelMaxStretchPx, panelAreaHandUpBounce) {
-        {
-            panelReleaseVelocity =
-                if (panelLastMoveAt.elapsedNow().inWholeMilliseconds > PANEL_DRAG_VELOCITY_STALE_MS) {
-                    0f
-                } else {
-                    panelHandUpInitialVelocity(panelFingerVelocity, panelDragOffset.value, panelMaxStretchPx)
-                }
-            panelTravel = 0f
-            panelFingerVelocity = 0f
-            panelVelocity.reset()
-            panelDragging = false
-            panelDragTarget = 0f
-        }
-    }
-    LaunchedEffect(Unit) {
-        snapshotFlow { panelDragTarget to panelDragging }
-            .collectLatest { (target, dragging) ->
-                panelDragOffset.animateTo(
-                    target,
-                    if (dragging) {
-                        PanelDragFollowSpring
-                    } else {
-                        panelHandUpSpring(panelAreaHandUpBounce, panelReleaseVelocity)
-                    },
-                    initialVelocity = if (dragging) 0f else panelReleaseVelocity,
-                )
-            }
-    }
-    // A dismiss that lands mid-drag must not leave the exit animation running on an offset panel.
-    LaunchedEffect(show) {
-        if (!show) endPanelDrag()
-    }
 
     if (!show && !internalVisible.value) return
 
@@ -548,37 +473,6 @@ private fun CascadingListPopupLayoutImpl(
     val primaryShift = remember { PopupShift() }
 
     val anchorBoundsByItem = remember { mutableStateMapOf<DropdownItem, IntRect>() }
-
-    // Native: the popup list is a COUIRecyclerView whose over-scroll moves the whole menu content —
-    // COUITouchRecyclerView.updateOverScrollMode() gates that on canScrollVertically(), so the list
-    // keeps the drag while it still has a scroll range and the panel rubber-bands on what is left
-    // over. Compose states the same split as nested scroll: the list consumes what it can and hands
-    // the remainder to this connection.
-    val panelNestedScroll = remember(panelMaxStretchPx) {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                if (source != NestedScrollSource.UserInput || available.y == 0f) return Offset.Zero
-                val now = TimeSource.Monotonic.markNow()
-                panelLastMoveAt = now
-                if (!panelDragging) {
-                    panelDragging = true
-                    panelTravel = 0f
-                    panelFingerVelocity = 0f
-                    panelVelocity.reset()
-                    panelDragStartedAt = now
-                }
-                panelTravel += available.y
-                panelVelocity.add(panelDragStartedAt.elapsedNow().inWholeMilliseconds, panelTravel)
-                panelFingerVelocity = panelVelocity.velocityPxPerSecond()
-                panelDragTarget = panelDragRubber(panelTravel, panelMaxStretchPx)
-                return available
-            }
-        }
-    }
 
     // COUI `getMainMenuMinWidth`: a menu whose rows own submenus floors at
     // `coui_popup_list_window_width_with_icon` (196dp) instead of the plain 168dp.
@@ -683,30 +577,6 @@ private fun CascadingListPopupLayoutImpl(
                                 }
                             },
                         )
-                        // The drag itself arrives through panelNestedScroll; this layer only has to
-                        // notice the gesture ending, which the scrollable reports to nobody once it
-                        // has consumed the last move. Observing in the Final pass keeps this out of
-                        // every other handler's way, and it consumes nothing.
-                        .nestedScroll(panelNestedScroll)
-                        .then(
-                            if (passTouches) {
-                                Modifier
-                            } else {
-                                Modifier.pointerInput(Unit) {
-                                    awaitPointerEventScope {
-                                        while (true) {
-                                            awaitFirstDown(requireUnconsumed = false)
-                                            var lifted = false
-                                            while (!lifted) {
-                                                val event = awaitPointerEvent(PointerEventPass.Final)
-                                                lifted = event.changes.none { it.pressed }
-                                            }
-                                            endPanelDrag()
-                                        }
-                                    }
-                                }
-                            },
-                        )
                         // COUIPopupMenuRootView.dispatchTouchEvent runs the main-area dismiss handler
                         // before its children see the event; this layer observes the same pass.
                         .mainAreaDelayedDismiss(
@@ -729,7 +599,6 @@ private fun CascadingListPopupLayoutImpl(
                         LocalPopupInteractionEnabled provides !passTouches,
                     ) {
                         CascadingMorphSubLayout(
-                            modifier = Modifier.graphicsLayer { translationY = panelDragOffset.value },
                             entries = entries,
                             expandedItem = expandedItem,
                             displayedItem = displayedItem,

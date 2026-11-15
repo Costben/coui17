@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -48,13 +49,17 @@ import io.github.suqi8.coui.kmp.basic.ListPopupContent
 import io.github.suqi8.coui.kmp.basic.LocalPopupInteractionEnabled
 import io.github.suqi8.coui.kmp.basic.PopupLayoutPosition
 import io.github.suqi8.coui.kmp.basic.PopupListDivider
+import io.github.suqi8.coui.kmp.basic.SpotLightDefaults
 import io.github.suqi8.coui.kmp.basic.couiGlassSurface
+import io.github.suqi8.coui.kmp.basic.couiTouchMotion
 import io.github.suqi8.coui.kmp.basic.popupGlassBlendColors
 import io.github.suqi8.coui.kmp.basic.rememberGlassHighlight
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
+import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
  * Primary side of a cascading popup. While a secondary is expanded, scales towards its top-right
@@ -303,8 +308,11 @@ internal fun CascadingSecondaryContent(
         .coerceAtLeast(0)
     val translateStartPx = (anchorTopInWindow - secondaryTopInWindow) - innerPaddingPx
     val squircleEnabled = isSquircleEnabled()
-    val backdrop = if (enableGlass) LocalBackdrop.current else null
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val blurEnabled = isBlurEnabled()
+    val backdrop = if (enableGlass && blurEnabled) LocalBackdrop.current else null
     val highlight = rememberGlassHighlight(GlassContainer.Panel, backdrop)
+    val interactionEnabled = LocalPopupInteractionEnabled.current
     // The blurred surface keeps the card's own silhouette for the whole transition. COUI blurs the
     // sub menu as a plain `RoundFrameLayout` and reveals it through a moving outline; re-shaping the
     // blurred surface every frame would instead invalidate its outline cache — and its backdrop
@@ -345,44 +353,55 @@ internal fun CascadingSecondaryContent(
         // ListPopupDefaults.MinWidth (168dp) while the card keeps the caller's 196dp, leaving a
         // 28dp empty band on the trailing edge and shifting every row's trailing icon left.
         propagateMinConstraints = true,
-        modifier = Modifier
-            .then(
-                with(density) {
-                    Modifier
-                        .requiredWidth(size.width.toDp())
-                        .requiredHeight(size.height.toDp())
-                },
-            )
-            // The main menu's enter/exit, shared with the primary card (see the caller). Outside the
-            // band clip so the whole revealed card moves as one, as COUI's root-view scale does.
-            .graphicsLayer {
-                val s = groupScale()
-                scaleX = s
-                scaleY = s
-                val t = groupTranslation()
-                translationX = t.x
-                translationY = t.y
-                alpha = groupAlpha().coerceIn(0f, 1f)
-            }
-            .graphicsLayer {
-                translationY = (1f - progress()) * translateStartPx
-                // Silhouette clip in the layer rather than in a draw modifier: a `clipPath` inside
-                // `onDrawWithContent` re-records the whole list on every frame of the spring, while a
-                // layer clip is a RenderNode outline applied at composite time.
-                clip = true
-                shape = bandShape()
-            }
-            .couiGlassSurface(
-                backdrop = backdrop,
+        modifier = with(density) {
+            Modifier
+                .requiredWidth(size.width.toDp())
+                .requiredHeight(size.height.toDp())
+        }
+            // Match the primary card ([ListPopupContent]): equip the expanded submenu card with
+            // COUITouchMotion rubber-band drag, area-preserving deformation, and spotlight so
+            // dragging in all four directions stays elastic after expanding a submenu.
+            .couiTouchMotion(
+                enabled = interactionEnabled,
+                pressScaleEnabled = false,
+                consumeDrag = false,
+                hitTestWhenDisabled = false,
+                lightEnabled = backdrop != null,
                 shape = cardShape,
-                containerColor = surfaceColor,
-                fallback = Modifier.drawBehind { drawRect(surfaceColor) },
-                blendColors = popupGlassBlendColors(),
-                highlight = highlight,
-                // Same compensation as the primary panel: the group scale above must not zoom the
-                // page sampled behind the card.
-                enclosingLayerBlock = secondaryGlassScaleCompensation,
-            ),
+                lightParams = SpotLightDefaults.translucentLarge1(isDark),
+                surface = Modifier
+                    .graphicsLayer {
+                        translationY = (1f - progress()) * translateStartPx
+                        // Silhouette clip in the layer rather than in a draw modifier: a `clipPath`
+                        // inside `onDrawWithContent` re-records the whole list on every frame of
+                        // the spring, while a layer clip is a RenderNode outline applied at
+                        // composite time.
+                        clip = true
+                        shape = bandShape()
+                    }
+                    .couiGlassSurface(
+                        backdrop = backdrop,
+                        shape = cardShape,
+                        containerColor = surfaceColor,
+                        fallback = Modifier.drawBehind { drawRect(surfaceColor) },
+                        blendColors = popupGlassBlendColors(),
+                        highlight = highlight,
+                        // Same compensation as the primary panel: the group scale above must not
+                        // zoom the page sampled behind the card.
+                        enclosingLayerBlock = secondaryGlassScaleCompensation,
+                    ),
+            ) {
+                // The main menu's enter/exit, shared with the primary card (see the caller).
+                // Applied outside the band clip so the whole revealed card moves as one, as COUI's
+                // root-view scale does.
+                val s = groupScale()
+                scaleX *= s
+                scaleY *= s
+                val t = groupTranslation()
+                translationX += t.x
+                translationY += t.y
+                alpha = groupAlpha().coerceIn(0f, 1f)
+            },
     ) {
         CascadingSecondaryColumn(
             triggerItem = triggerItem,
