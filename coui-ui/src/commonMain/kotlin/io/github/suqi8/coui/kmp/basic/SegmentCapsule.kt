@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import kotlin.math.min
 
@@ -45,6 +46,9 @@ private const val ARC_END_X = 0.2250555f
 private const val ARC_END_Y = 0.3679707f
 private const val EASE_HANDLE_1_X = 0.5251651f
 private const val EASE_HANDLE_2_X = 0.9615864f
+
+// Matches WeightLarge (n = 3) in SquirclePath.kt so morph fraction 0 aligns pixel-for-pixel.
+private const val SQUIRCLE_CONTROL_LARGE_RATIO = 0.7832f
 
 /** [addSegmentCapsule] as a [Shape], for the surfaces that clip or blur along the capsule. */
 object SegmentCapsuleShape : Shape {
@@ -193,5 +197,117 @@ private fun Path.addCapsuleCornerToTip(cornerX: Float, cornerY: Float, signX: Fl
         cornerY + scaleY * ARC_HANDLE_1_Y,
         cornerX,
         cornerY + scaleY,
+    )
+}
+
+/**
+ * Appends a smooth rounded rectangle morphing continuously between a `WeightLarge` squircle
+ * ([capsuleFraction] = `0`) and [addSegmentCapsule] ([capsuleFraction] = `1`), keeping both
+ * corner radius and curve handles continuous across row height transitions.
+ */
+internal fun Path.addSquircleToCapsuleMorphRect(
+    width: Float,
+    height: Float,
+    cornerRadius: Float,
+    capsuleFraction: Float,
+) {
+    if (width <= 0f || height <= 0f) return
+    val t = capsuleFraction.coerceIn(0f, 1f)
+    val halfMin = min(width, height) * 0.5f
+    val tile = cornerRadius.coerceIn(0f, halfMin)
+    val sqHandle = tile * (1f - SQUIRCLE_CONTROL_LARGE_RATIO)
+    val capRadius = halfMin
+    val tail = min(TAIL_LENGTH, width / (2f * capRadius))
+
+    val xEnd = lerp(tile, capRadius * tail, t).coerceAtMost(width * 0.5f)
+    val yEnd = lerp(tile, capRadius, t).coerceAtMost(height * 0.5f)
+
+    moveTo(xEnd, 0f)
+    lineTo(width - xEnd, 0f)
+    addMorphCornerToTip(width, 0f, -1f, 1f, tile, sqHandle, capRadius, tail, t)
+    lineTo(width, height - yEnd)
+    addMorphCornerFromTip(width, height, -1f, -1f, tile, sqHandle, capRadius, tail, t)
+    lineTo(xEnd, height)
+    addMorphCornerToTip(0f, height, 1f, -1f, tile, sqHandle, capRadius, tail, t)
+    lineTo(0f, yEnd)
+    addMorphCornerFromTip(0f, 0f, 1f, 1f, tile, sqHandle, capRadius, tail, t)
+    close()
+}
+
+private fun Path.addMorphCornerToTip(
+    cornerX: Float,
+    cornerY: Float,
+    signX: Float,
+    signY: Float,
+    tile: Float,
+    sqHandle: Float,
+    capRadius: Float,
+    tail: Float,
+    t: Float,
+) {
+    val c1x = lerp(0.5f * (tile + sqHandle), capRadius * min(EASE_HANDLE_2_X, tail), t)
+    val c2x = lerp(0.25f * (tile + 2f * sqHandle), capRadius * EASE_HANDLE_1_X, t)
+    val c2y = lerp(0.25f * sqHandle, 0f, t)
+    val midX = lerp((tile + 3f * sqHandle) * 0.125f, capRadius * ARC_END_X, t)
+    val midY = lerp((tile + 3f * sqHandle) * 0.125f, capRadius * ARC_END_Y, t)
+    val c3x = lerp(0.25f * sqHandle, capRadius * ARC_HANDLE_2_X, t)
+    val c3y = lerp(0.25f * (tile + 2f * sqHandle), capRadius * ARC_HANDLE_2_Y, t)
+    val c4y = lerp(0.5f * (tile + sqHandle), capRadius * ARC_HANDLE_1_Y, t)
+    val yEnd = lerp(tile, capRadius, t)
+
+    cubicTo(
+        cornerX + signX * c1x,
+        cornerY,
+        cornerX + signX * c2x,
+        cornerY + signY * c2y,
+        cornerX + signX * midX,
+        cornerY + signY * midY,
+    )
+    cubicTo(
+        cornerX + signX * c3x,
+        cornerY + signY * c3y,
+        cornerX,
+        cornerY + signY * c4y,
+        cornerX,
+        cornerY + signY * yEnd,
+    )
+}
+
+private fun Path.addMorphCornerFromTip(
+    cornerX: Float,
+    cornerY: Float,
+    signX: Float,
+    signY: Float,
+    tile: Float,
+    sqHandle: Float,
+    capRadius: Float,
+    tail: Float,
+    t: Float,
+) {
+    val c1y = lerp(0.5f * (tile + sqHandle), capRadius * ARC_HANDLE_1_Y, t)
+    val c2x = lerp(0.25f * sqHandle, capRadius * ARC_HANDLE_2_X, t)
+    val c2y = lerp(0.25f * (tile + 2f * sqHandle), capRadius * ARC_HANDLE_2_Y, t)
+    val midX = lerp((tile + 3f * sqHandle) * 0.125f, capRadius * ARC_END_X, t)
+    val midY = lerp((tile + 3f * sqHandle) * 0.125f, capRadius * ARC_END_Y, t)
+    val c3x = lerp(0.25f * (tile + 2f * sqHandle), capRadius * EASE_HANDLE_1_X, t)
+    val c3y = lerp(0.25f * sqHandle, 0f, t)
+    val c4x = lerp(0.5f * (tile + sqHandle), capRadius * min(EASE_HANDLE_2_X, tail), t)
+    val xEnd = lerp(tile, capRadius * tail, t)
+
+    cubicTo(
+        cornerX,
+        cornerY + signY * c1y,
+        cornerX + signX * c2x,
+        cornerY + signY * c2y,
+        cornerX + signX * midX,
+        cornerY + signY * midY,
+    )
+    cubicTo(
+        cornerX + signX * c3x,
+        cornerY + signY * c3y,
+        cornerX + signX * c4x,
+        cornerY,
+        cornerX + signX * xEnd,
+        cornerY,
     )
 }

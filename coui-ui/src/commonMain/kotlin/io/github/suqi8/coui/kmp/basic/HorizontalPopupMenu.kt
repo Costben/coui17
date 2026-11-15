@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -194,6 +195,8 @@ fun HorizontalPopupMenuItem(
                         height = maskHeight,
                         cornerRadius = radius,
                         squircleEnabled = squircleEnabled,
+                        capsuleCircleBlend = false,
+                        weight = SquircleDefaults.WeightLarge,
                     )
                     drawPath(path, color = maskColor, alpha = progress.coerceIn(0f, 1f))
                 }

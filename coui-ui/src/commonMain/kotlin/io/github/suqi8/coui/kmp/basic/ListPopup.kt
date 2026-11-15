@@ -212,6 +212,9 @@ private val PopupItemPressMaskRadius = 20.dp
  */
 private val PopupItemPressMaskRadiusTall = 28.dp
 
+/** Smooth corner weight COUI passes for single-line capsule rows (`COUITouchRecyclerView.SMOOTH_WEIGHT_FULL_ROUND`). */
+private const val POPUP_ITEM_FULL_ROUND_WEIGHT = 1.0f
+
 /**
  * A single popup row registered with a [PopupListGestureHost].
  *
@@ -283,10 +286,18 @@ internal class PopupListGestureHost {
     private var startBottom by mutableFloatStateOf(0f)
     private var endTop by mutableFloatStateOf(0f)
     private var endBottom by mutableFloatStateOf(0f)
+    private var startCornerRadius by mutableFloatStateOf(0f)
+    private var endCornerRadius by mutableFloatStateOf(0f)
+    private var startWeight by mutableFloatStateOf(SquircleDefaults.WeightLarge)
+    private var endWeight by mutableFloatStateOf(SquircleDefaults.WeightLarge)
     private var travelDistance by mutableFloatStateOf(0f)
     private var travelled by mutableFloatStateOf(0f)
     private var travelVelocity = 0f
     private var geometryJob: Job? = null
+
+    /** Density-resolved thresholds published by [ListPopupColumn] for target corner resolution. */
+    var singleLineMaxHeightPx: Float = 0f
+    var tallRadiusPx: Float = 0f
 
     private val highlightAlpha = Animatable(0f)
     private var alphaJob: Job? = null
@@ -335,8 +346,35 @@ internal class PopupListGestureHost {
     /** Current press mask bottom, in the list's content coordinates. */
     fun pressBottom(): Float = lerp(startBottom, endBottom, slideFraction())
 
+    /** Current press mask corner radius in pixels, interpolated alongside the row slide. */
+    fun pressCornerRadius(): Float = lerp(startCornerRadius, endCornerRadius, slideFraction())
+
+    /** Current press mask smooth-corner weight, interpolated between 1.0 (capsule) and 3.0. */
+    fun pressWeight(): Float = lerp(startWeight, endWeight, slideFraction())
+
     /** Current press mask opacity. */
     fun pressAlpha(): Float = highlightAlpha.value
+
+    private data class MaskTargetShape(
+        val cornerRadius: Float,
+        val weight: Float,
+    )
+
+    private fun targetMaskShape(item: PopupListItemHandle): MaskTargetShape {
+        val itemHeight = (item.bottom - item.top).coerceAtLeast(0f)
+        val isSingleLine = singleLineMaxHeightPx > 0f && itemHeight <= singleLineMaxHeightPx
+        return if (isSingleLine) {
+            MaskTargetShape(
+                cornerRadius = itemHeight * 0.5f,
+                weight = POPUP_ITEM_FULL_ROUND_WEIGHT,
+            )
+        } else {
+            MaskTargetShape(
+                cornerRadius = tallRadiusPx,
+                weight = SquircleDefaults.WeightLarge,
+            )
+        }
+    }
 
     private fun fadeIn(scope: CoroutineScope) {
         exiting = false
@@ -347,10 +385,15 @@ internal class PopupListGestureHost {
     /** Snaps the mask onto [item] and fades it in (a fresh press, or a re-entry after exiting). */
     private fun placeHighlight(item: PopupListItemHandle, scope: CoroutineScope) {
         geometryJob?.cancel()
+        val target = targetMaskShape(item)
         startTop = item.top
         startBottom = item.bottom
         endTop = item.top
         endBottom = item.bottom
+        startCornerRadius = target.cornerRadius
+        endCornerRadius = target.cornerRadius
+        startWeight = target.weight
+        endWeight = target.weight
         travelDistance = 0f
         travelled = 0f
         travelVelocity = 0f
@@ -366,12 +409,19 @@ internal class PopupListGestureHost {
         geometryJob?.cancel()
         val fromTop = pressTop()
         val fromBottom = pressBottom()
+        val fromCornerRadius = pressCornerRadius()
+        val fromWeight = pressWeight()
+        val target = targetMaskShape(item)
         val distance = abs((item.top + item.bottom) / 2f - (fromTop + fromBottom) / 2f)
         val velocity = travelVelocity
         startTop = fromTop
         startBottom = fromBottom
         endTop = item.top
         endBottom = item.bottom
+        startCornerRadius = fromCornerRadius
+        startWeight = fromWeight
+        endCornerRadius = target.cornerRadius
+        endWeight = target.weight
         travelDistance = distance
         travelled = 0f
         if (distance > 0f) {
@@ -678,6 +728,12 @@ fun ListPopupColumn(
 ) {
     val scrollState = rememberScrollState()
     val host = remember { PopupListGestureHost() }
+    with(LocalDensity.current) {
+        // Matches COUI's whole-pixel `height == 2 * 20dp` threshold with a 1px rounding tolerance
+        // for fractional densities (e.g. 3.875 px/dp: 155 vs 156).
+        host.singleLineMaxHeightPx = PopupItemPressMaskRadius.toPx() * 2f + 1f
+        host.tallRadiusPx = PopupItemPressMaskRadiusTall.toPx()
+    }
     val coroutineScope = rememberCoroutineScope()
     val performHaptic = rememberCouiHaptic()
     val touchSlop = LocalViewConfiguration.current.touchSlop
@@ -986,26 +1042,46 @@ private fun DrawScope.drawPopupItemHighlight(
     val width = (size.width - inset * 2f).coerceAtLeast(0f)
     if (width <= 0f) return
 
-    // COUI tests `height == 2 * vertical_mask_radius` in whole pixels, and at densities where the
-    // two dimensions round apart (3.875 px/dp: 155 vs 156) a one-line row misses it and draws the
-    // 28dp weight-3.0 squircle instead of the stadium. The tolerance keeps the stadium the gallery
-    // shows; rows that really are taller still take the 16.1 radius.
-    val singleLine = height <= PopupItemPressMaskRadius.toPx() * 2f + 1f
+    // COUI interpolates both cornerRadius and smooth weight (1.0 <-> 3.0) across the row slide
+    // spring (COUITouchRecyclerView.startSharedMaskAnim / updateSharedMaskPath) so sliding between
+    // a multi-line squircle row and a single-line capsule row morphs continuously instead of snapping
+    // at the final frame.
+    val cornerRadius = host.pressCornerRadius().takeIf { it > 0f }
+        ?: if (height <= PopupItemPressMaskRadius.toPx() * 2f + 1f) height * 0.5f else PopupItemPressMaskRadiusTall.toPx()
+    val weight = host.pressWeight()
     val path = Path()
-    if (singleLine && squircleEnabled) {
+    if (!squircleEnabled) {
+        path.addSquircleRect(
+            width = width,
+            height = height,
+            cornerRadius = cornerRadius,
+            squircleEnabled = false,
+            capsuleCircleBlend = false,
+        )
+    } else if (weight >= SquircleDefaults.WeightLarge - 1e-3f) {
+        path.addSquircleRect(
+            width = width,
+            height = height,
+            cornerRadius = cornerRadius,
+            squircleEnabled = true,
+            capsuleCircleBlend = false,
+            weight = SquircleDefaults.WeightLarge,
+        )
+    } else if (weight <= POPUP_ITEM_FULL_ROUND_WEIGHT + 1e-3f) {
         // COUI hands a stadium row to OplusPathAdapter.addSmoothRoundRect with
         // RoundCornerUtil.OS_16_1_FULL_ROUND_SMOOTH_WEIGHT (1.0), which draws the same arc-plus-
         // easing-tail capsule as the buttons, not a semicircle joined to two straight edges.
         path.addSegmentCapsule(Rect(0f, 0f, width, height))
     } else {
-        val radius = if (singleLine) PopupItemPressMaskRadius else PopupItemPressMaskRadiusTall
-        path.addSquircleRect(
+        val capsuleFraction = (
+            (SquircleDefaults.WeightLarge - weight) /
+                (SquircleDefaults.WeightLarge - POPUP_ITEM_FULL_ROUND_WEIGHT)
+            ).coerceIn(0f, 1f)
+        path.addSquircleToCapsuleMorphRect(
             width = width,
             height = height,
-            cornerRadius = radius.toPx(),
-            // Taller rows take weight 3.0 (MixedPopupListAdapter.MASK_SMOOTH_ROUND_CORNER_WEIGHT_DEFAULT).
-            squircleEnabled = squircleEnabled,
-            weight = SquircleDefaults.WeightLarge,
+            cornerRadius = cornerRadius,
+            capsuleFraction = capsuleFraction,
         )
     }
     translate(left = inset, top = top) {
@@ -2181,6 +2257,7 @@ internal fun Modifier.popupClipReveal(
             height = visibleHeight,
             cornerRadius = cornerRadius.toPx(),
             squircleEnabled = squircleEnabled,
+            capsuleCircleBlend = false,
         )
         if (clipStart == 0f) {
             clipPath(path) {
