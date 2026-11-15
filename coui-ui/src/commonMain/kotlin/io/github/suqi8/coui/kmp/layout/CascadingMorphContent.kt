@@ -17,10 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
@@ -288,6 +290,9 @@ internal fun CascadingSecondaryContent(
     dropdownColors: DropdownColors,
     surfaceColor: Color,
     enableGlass: Boolean,
+    groupScale: () -> Float = { 1f },
+    groupTranslation: () -> Offset = { Offset.Zero },
+    groupAlpha: () -> Float = { 1f },
 ) {
     val density = LocalDensity.current
     val innerPaddingPx = with(density) { SubMenuInnerPadding.toPx() }
@@ -327,6 +332,14 @@ internal fun CascadingSecondaryContent(
         )
     }
 
+    val secondaryGlassScaleCompensation: GraphicsLayerScope.() -> Unit = remember(groupScale) {
+        {
+            val s = groupScale()
+            scaleX = s
+            scaleY = s
+        }
+    }
+
     Box(
         // Same reason as the primary panel: without the floor the column clamps to
         // ListPopupDefaults.MinWidth (168dp) while the card keeps the caller's 196dp, leaving a
@@ -340,6 +353,17 @@ internal fun CascadingSecondaryContent(
                         .requiredHeight(size.height.toDp())
                 },
             )
+            // The main menu's enter/exit, shared with the primary card (see the caller). Outside the
+            // band clip so the whole revealed card moves as one, as COUI's root-view scale does.
+            .graphicsLayer {
+                val s = groupScale()
+                scaleX = s
+                scaleY = s
+                val t = groupTranslation()
+                translationX = t.x
+                translationY = t.y
+                alpha = groupAlpha().coerceIn(0f, 1f)
+            }
             .graphicsLayer {
                 translationY = (1f - progress()) * translateStartPx
                 // Silhouette clip in the layer rather than in a draw modifier: a `clipPath` inside
@@ -355,6 +379,9 @@ internal fun CascadingSecondaryContent(
                 fallback = Modifier.drawBehind { drawRect(surfaceColor) },
                 blendColors = popupGlassBlendColors(),
                 highlight = highlight,
+                // Same compensation as the primary panel: the group scale above must not zoom the
+                // page sampled behind the card.
+                enclosingLayerBlock = secondaryGlassScaleCompensation,
             ),
     ) {
         CascadingSecondaryColumn(

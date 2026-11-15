@@ -380,6 +380,8 @@ private fun CascadingListPopupLayoutImpl(
             // previous one was dismissed while its collapse was still settling.
             subMenuSpring.snapTo(0f)
             displayedItem = null
+            // Reopened before the previous close finished: that close kept its submenu open.
+            expandedItem = null
             if (enableWindowDim) {
                 launch { dimProgress.animateTo(1f, ListPopupDefaults.DimEnterAnimationSpec) }
             }
@@ -391,7 +393,10 @@ private fun CascadingListPopupLayoutImpl(
             launch { enterAlpha.animateTo(1f, ListPopupDefaults.AlphaEnterAnimationSpec) }
         } else {
             if (!internalVisible.value) return@LaunchedEffect
-            expandedItem = null
+            // COUIPopupListWindow.dismiss() only runs `hideMainMenu(true)` -> startMainMenuExit,
+            // which scales and fades the menu root view holding *both* cards. The sub menu's own
+            // transition is left where it is, so an open submenu leaves together with the main
+            // menu, frozen in its expanded state, instead of first folding back into its row.
             launch { enterPath.animateTo(0f, ListPopupDefaults.PathExitAnimationSpec) }
             launch { enterFraction.animateTo(0f, ListPopupDefaults.FractionExitAnimationSpec) }
             if (enableWindowDim) {
@@ -404,6 +409,10 @@ private fun CascadingListPopupLayoutImpl(
             backEnterProgress.snapTo(0f)
             backExpandProgress.snapTo(0f)
             internalVisible.value = false
+            // The sub menu is reset only once nothing is on screen (COUI: forceDismiss / detach).
+            subMenuSpring.snapTo(0f)
+            displayedItem = null
+            expandedItem = null
             currentOnDismissFinished?.invoke()
         }
     }
@@ -729,7 +738,8 @@ private fun CascadingListPopupLayoutImpl(
                             onLeafSelected = { item ->
                                 item.onClick?.invoke()
                                 if (collapseOnSelection) {
-                                    expandedItem = null
+                                    // The Gallery's sub menu listener calls `dismiss()` directly;
+                                    // the submenu is not hidden first (see the exit branch above).
                                     currentOnDismiss()
                                 }
                             },
@@ -958,6 +968,31 @@ private fun CascadingMorphSubLayout(
                         0f
                     }
                     val secondaryConstraints = Constraints.fixed(secondaryRect.width, secondaryRect.height)
+                    // COUI's main-menu enter/exit scales and fades `mRootView`, the parent of both
+                    // cards, so a submenu that is open when the popup closes leaves with the main
+                    // menu as one piece. Here the enter transform lives inside the primary card,
+                    // under its submenu shrink S, so the primary draws S(E(x)). The secondary gets
+                    // T = S∘E∘S⁻¹, which makes the two read as one rigid group: E is a scale s
+                    // about the card centre c plus the gravity-path offset p, S a scale m about the
+                    // shrink pivot k plus the upward shift, hence T(y) = s·y + (1 - s)·S(c) + m·p.
+                    val primaryCenterX = (primaryRect.left + primaryRect.right) / 2f
+                    val primaryCenterY = (primaryRect.top + primaryRect.bottom) / 2f
+                    val shrinkPivotX = (if (pivotAtRightEdge) primaryRect.right else primaryRect.left).toFloat()
+                    val shrinkPivotY = primaryRect.top.toFloat()
+                    val secondaryCenterX = (secondaryRect.left + secondaryRect.right) / 2f
+                    val secondaryCenterY = (secondaryRect.top + secondaryRect.bottom) / 2f
+                    val groupTranslation: () -> Offset = {
+                        val s = enterFraction()
+                        val m = primaryScale()
+                        val p = gravityPath.pointAt(enterPath())
+                        val qx = shrinkPivotX + (primaryCenterX - shrinkPivotX) * m
+                        val qy = shrinkPivotY + (primaryCenterY - shrinkPivotY) * m + primaryShift.y * expandFraction()
+                        // Expressed about the secondary's own centre, the layer's default pivot.
+                        Offset(
+                            x = (1f - s) * (qx - secondaryCenterX) + m * p.x,
+                            y = (1f - s) * (qy - secondaryCenterY) + m * p.y,
+                        )
+                    }
                     val placeables = subcompose(SLOT_SECONDARY) {
                         CascadingSecondaryContent(
                             triggerItem = activeExpanded,
@@ -967,6 +1002,9 @@ private fun CascadingMorphSubLayout(
                             primaryBottomInWindow = primaryRect.bottom,
                             secondaryTopInWindow = secondaryRect.top,
                             progress = expandFraction,
+                            groupScale = enterFraction,
+                            groupTranslation = groupTranslation,
+                            groupAlpha = enterAlpha,
                             onCollapseSecondary = onCollapseSecondary,
                             onLeafSelected = onLeafSelected,
                             dropdownColors = dropdownColors,
