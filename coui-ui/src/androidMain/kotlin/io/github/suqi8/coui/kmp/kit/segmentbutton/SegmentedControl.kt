@@ -11,6 +11,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -115,6 +117,7 @@ import io.github.suqi8.coui.kmp.kit.theme.CouiTheme
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -267,17 +270,53 @@ internal fun SegmentedControl(
         }
         val actualHeight = constraints.maxHeight
         val padding = defaultPadding.coerceAtMost(actualWidth / 2)
-        val geometry = remember(actualWidth, actualHeight, padding, naturalWidths, rtl, small, maxWidthPx) {
+        // Labels that do not fit at their natural width scroll inside the capsule instead of being
+        // squeezed, so a long row keeps the same glass container, rim and indicator as a short one.
+        val naturalContent = ceil(naturalWidths.sum()).toInt()
+        val scrolls = naturalContent > actualWidth - padding * 2
+        val contentWidth = if (scrolls) naturalContent + padding * 2 else actualWidth
+        val geometry = remember(contentWidth, actualHeight, padding, naturalWidths, rtl, small, maxWidthPx) {
             SegmentGeometry(
-                actualWidth.toFloat(),
+                contentWidth.toFloat(),
                 actualHeight.toFloat(),
                 padding.toFloat(),
-                segmentWidths(naturalWidths, actualWidth - padding * 2, maxWidthPx),
+                segmentWidths(naturalWidths, contentWidth - padding * 2, maxWidthPx),
                 rtl,
                 small,
             )
         }
+        val scroll = rememberScrollState()
+        // Where the scrolled content's left edge sits in the capsule; horizontalScroll places the
+        // content relative to the layout direction, so RTL anchors it to the right edge.
+        val currentContentWidth by rememberUpdatedState(contentWidth)
+        val currentActualWidth by rememberUpdatedState(actualWidth)
+        val contentOffsetX: () -> Float = remember(scroll, rtl) {
+            {
+                if (rtl) {
+                    (currentActualWidth - currentContentWidth + scroll.value).toFloat()
+                } else {
+                    -scroll.value.toFloat()
+                }
+            }
+        }
         LaunchedEffect(session.preview, geometry) { motion.select(session.preview, geometry, density.density) }
+        // Keep the selected label centred in view when the row scrolls.
+        val firstScroll = remember { booleanArrayOf(true) }
+        LaunchedEffect(safeSelected, geometry, actualWidth, scrolls) {
+            if (!scrolls) {
+                if (scroll.value != 0) scroll.scrollTo(0)
+                return@LaunchedEffect
+            }
+            val center = geometry.center(safeSelected)
+            val logical = if (rtl) contentWidth - center else center
+            val target = (logical - actualWidth / 2f).roundToInt().coerceIn(0, (contentWidth - actualWidth).coerceAtLeast(0))
+            if (firstScroll[0]) {
+                firstScroll[0] = false
+                scroll.scrollTo(target)
+            } else {
+                scroll.animateScrollTo(target)
+            }
+        }
         var bounds by remember { mutableStateOf(IntSize.Zero) }
 
         val surface = if (Build.VERSION.SDK_INT >= 34 && effectiveBackdrop != null && renderer != null && contentLayer != null) {
@@ -300,6 +339,7 @@ internal fun SegmentedControl(
                 touchMotionEnabled = touchMotionEnabled,
                 bounds = bounds,
                 light = light,
+                contentOffsetX = contentOffsetX,
             )
         } else {
             Modifier
@@ -328,7 +368,7 @@ internal fun SegmentedControl(
                         clipPath(background) {
                             drawRect(containerColor)
                             drawSegmentIndicator(
-                                motion.rect(geometry, indicatorPress.scale.value),
+                                motion.rect(geometry, indicatorPress.scale.value).translate(contentOffsetX(), 0f),
                                 geometry.height,
                                 cornerRadius,
                                 indicatorShape,
@@ -357,7 +397,15 @@ internal fun SegmentedControl(
                     .then(content).clip(containerShape),
             ) {
                 Row(
-                    Modifier.fillMaxSize().padding(horizontal = with(density) { padding.toDp() })
+                    Modifier.fillMaxSize()
+                        .then(
+                            if (scrolls) {
+                                Modifier.horizontalScroll(scroll, overscrollEffect = null, enabled = enabled).fillMaxHeight()
+                            } else {
+                                Modifier
+                            },
+                        )
+                        .padding(horizontal = with(density) { padding.toDp() })
                         .onGloballyPositioned { inputCoordinates = it }
                         .pointerInput(geometry, labels, enabled, dragSelectionEnabled, commitOnRelease, touchMotionEnabled) {
                             if (!enabled) return@pointerInput
@@ -558,6 +606,7 @@ private fun floatingGlassSurface(
     touchMotionEnabled: Boolean,
     bounds: IntSize,
     light: (DrawScope.() -> Unit)?,
+    contentOffsetX: () -> Float,
 ): Modifier {
     val contourEnabled = contour != null && LocalCouiContourGlowEnabled.current
     val material = remember(dark) { CouiSegmentedControlDefaults.material(dark) }
@@ -582,7 +631,7 @@ private fun floatingGlassSurface(
             }) {
                 clipPath(clip) {
                     drawSegmentIndicator(
-                        motion.rect(geometry, indicatorPress.scale.value),
+                        motion.rect(geometry, indicatorPress.scale.value).translate(contentOffsetX(), 0f),
                         geometry.height,
                         cornerRadius,
                         indicatorShape,

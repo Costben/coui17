@@ -5,7 +5,6 @@ package io.github.suqi8.coui.kmp.basic
 import android.os.Build
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -105,72 +104,38 @@ internal actual fun SegmentButtonRowImpl(
         return
     }
 
-    BoxWithConstraints(modifier = modifier) {
-        val minRequiredPx = with(density) { minWidth.roundToPx() } * tabs.size +
-            with(density) { contourPadding.roundToPx() } * 2
-        val overflows = constraints.hasBoundedWidth && minRequiredPx > constraints.maxWidth
-        if (overflows) {
-            CommonSegmentButtonRow(
-                tabs = tabs,
-                selectedTabIndex = selectedTabIndex,
-                onTabSelected = onTabSelected,
-                onTabReselected = onTabReselected,
-                onTabClick = onTabClick,
-                colors = colors,
-                minWidth = minWidth,
-                maxWidth = maxWidth,
-                height = height,
-                cornerRadius = cornerRadius,
-                contourPadding = contourPadding,
-                segmentPadding = segmentPadding,
-                itemSpacing = itemSpacing,
-                contentAlignment = contentAlignment,
-                listState = null,
-                interactionSource = interactionSource,
-                indication = null,
-                indicatorMaterial = indicatorMaterial,
-                containerMaterial = containerMaterial,
-                backdrop = backdrop,
-                dragSelectionEnabled = dragSelectionEnabled,
-                commitOnRelease = commitOnRelease,
-                touchMotionEnabled = touchMotionEnabled,
-                tabModifier = tabModifier,
-                tabContent = tabContent,
-                modifier = Modifier,
-            )
-        } else {
-            val compact = contourPadding < 3.dp || resolvedHeight <= 34.dp
-            SegmentedControl(
-                modifier = Modifier,
-                labels = tabs,
-                selectedIndex = selectedTabIndex,
-                onSelected = onTabSelected,
-                onReselected = onTabReselected,
-                onTabClick = onTabClick,
-                backdrop = resolvedBackdrop,
-                dark = isDarkTheme,
-                enabled = true,
-                small = compact,
-                dragSelectionEnabled = dragSelectionEnabled,
-                commitOnRelease = commitOnRelease,
-                touchMotionEnabled = touchMotionEnabled,
-                minWidth = minWidth,
-                maxWidth = maxWidth,
-                height = resolvedHeight,
-                cornerRadius = cornerRadius,
-                contourPadding = contourPadding,
-                segmentPadding = segmentPadding,
-                contentAlignment = contentAlignment,
-                interactionSource = interactionSource,
-                textStyle = CouiSegmentedControlDefaults.textStyle(),
-                containerColor = containerColor,
-                indicatorColor = indicatorColor,
-                contentColor = colors.contentColor(false),
-                selectedContentColor = colors.contentColor(true),
-                shadowColor = colors.indicatorShadowColor(),
-                tabModifier = tabModifier,
-                tabContent = tabContent,
-            )
-        }
-    }
+    // Rows that overflow scroll inside SegmentedControl, so every row keeps the same COUI glass
+    // container, rim and indicator instead of falling back to the shader-edged common row.
+    val compact = contourPadding < 3.dp || resolvedHeight <= 34.dp
+    SegmentedControl(
+        modifier = modifier,
+        labels = tabs,
+        selectedIndex = selectedTabIndex,
+        onSelected = onTabSelected,
+        onReselected = onTabReselected,
+        onTabClick = onTabClick,
+        backdrop = resolvedBackdrop,
+        dark = isDarkTheme,
+        enabled = true,
+        small = compact,
+        dragSelectionEnabled = dragSelectionEnabled,
+        commitOnRelease = commitOnRelease,
+        touchMotionEnabled = touchMotionEnabled,
+        minWidth = minWidth,
+        maxWidth = maxWidth,
+        height = resolvedHeight,
+        cornerRadius = cornerRadius,
+        contourPadding = contourPadding,
+        segmentPadding = segmentPadding,
+        contentAlignment = contentAlignment,
+        interactionSource = interactionSource,
+        textStyle = CouiSegmentedControlDefaults.textStyle(),
+        containerColor = containerColor,
+        indicatorColor = indicatorColor,
+        contentColor = colors.contentColor(false),
+        selectedContentColor = colors.contentColor(true),
+        shadowColor = colors.indicatorShadowColor(),
+        tabModifier = tabModifier,
+        tabContent = tabContent,
+    )
 }
