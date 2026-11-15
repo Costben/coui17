@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -144,6 +145,8 @@ private class OverscrollNode(
 
     private val dispatcher = NestedScrollDispatcher()
     private val springEngine = SpringEngine()
+    private val hapticTracker = ScrollEndHapticTracker()
+    private var flingStartSeq = -1L
     private var animationJob: Job? = null
     private val offsetThreshold = 1f
 
@@ -200,6 +203,7 @@ private class OverscrollNode(
 
     override fun onDetach() {
         layerReady = false
+        flingStartSeq = -1L
         super.onDetach()
         resetState()
     }
@@ -244,8 +248,16 @@ private class OverscrollNode(
     private fun resetState() {
         offset = 0f
         rawTouchAccumulation = 0f
+        hapticTracker.reset()
         if (isAttached) {
             overScrollState.isOverScrollActive = false
+        }
+    }
+
+    private fun triggerBoundaryHaptic(top: Boolean, alreadyHandled: Boolean = false) {
+        hapticTracker.onBoundaryHit(top = top, alreadyHandled = alreadyHandled) {
+            performScrollEndHaptic(HapticFeedbackType.TextHandleMove)
+            overScrollState.recordBoundaryHaptic()
         }
     }
 
@@ -387,12 +399,16 @@ private class OverscrollNode(
             if (animationJob?.isActive != true) {
                 unwindStaleOffset(if (isVertical) consumed.y else consumed.x)
             }
+            if (isVertical && abs(offset) <= offsetThreshold) {
+                hapticTracker.onScrolledContent(consumed.y)
+            }
             return dispatcher.dispatchPostScroll(consumed, available, source)
         }
 
         animationJob?.cancel()
         unwindStaleOffset(if (isVertical) consumed.y else consumed.x)
 
+        val seqBefore = overScrollState.boundaryHapticSeq
         val parentConsumed = if (nestedScrollToParent) {
             dispatcher.dispatchPostScroll(consumed, available, source)
         } else {
@@ -403,11 +419,22 @@ private class OverscrollNode(
         val delta = if (isVertical) realAvailable.y else realAvailable.x
 
         applyDrag(delta)
+        if (isVertical) {
+            val handledByParent = overScrollState.boundaryHapticSeq != seqBefore
+            if (abs(offset) <= offsetThreshold) {
+                hapticTracker.onScrolledContent(consumed.y)
+            } else if (delta > 0f && offset > offsetThreshold) {
+                triggerBoundaryHaptic(top = true, alreadyHandled = handledByParent)
+            } else if (delta < 0f && offset < -offsetThreshold) {
+                triggerBoundaryHaptic(top = false, alreadyHandled = handledByParent)
+            }
+        }
         return if (isVertical) Offset(parentConsumed.x, available.y) else Offset(available.x, parentConsumed.y)
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
         if (!isAttached) return Velocity.Zero
+        flingStartSeq = overScrollState.boundaryHapticSeq
         val isActive = abs(offset) > offsetThreshold
         if (overScrollState.isOverScrollActive != isActive) {
             overScrollState.isOverScrollActive = isActive
@@ -455,6 +482,8 @@ private class OverscrollNode(
 
     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
         if (!isAttached) return Velocity.Zero
+        val seqBefore = if (flingStartSeq >= 0L) flingStartSeq else overScrollState.boundaryHapticSeq
+        flingStartSeq = -1L
         val isActive = abs(offset) > offsetThreshold
         if (overScrollState.isOverScrollActive != isActive) {
             overScrollState.isOverScrollActive = isActive
@@ -480,6 +509,14 @@ private class OverscrollNode(
 
         val realAvailable = available - parentConsumed
         val velocity = (if (isVertical) realAvailable.y else realAvailable.x) / 1.53333f // attenuation speed
+        if (isVertical) {
+            val handledByNested = overScrollState.boundaryHapticSeq != seqBefore
+            if (realAvailable.y > POST_FLING_AVAILABLE_VELOCITY_THRESHOLD) {
+                triggerBoundaryHaptic(top = true, alreadyHandled = handledByNested)
+            } else if (realAvailable.y < -POST_FLING_AVAILABLE_VELOCITY_THRESHOLD) {
+                triggerBoundaryHaptic(top = false, alreadyHandled = handledByNested)
+            }
+        }
         // A fling that runs into the boundary also settles on `SPRING_BACK`. The fling curve
         // (`COUISpringInterpolator(40, 1.15)`) shortens as the leftover velocity drops, so the same
         // gesture came back in 0.2s or 2s depending on how hard it was thrown; the finger-up curve
@@ -498,6 +535,15 @@ private class OverscrollNode(
 class OverScrollState {
     var isOverScrollActive by mutableStateOf(false)
         internal set
+
+    // Monotonic counter bumped whenever any scroll-end haptic fires so nested overscroll and
+    // scrollEndHaptic nodes in the same fling pass do not double-trigger.
+    internal var boundaryHapticSeq = 0L
+        private set
+
+    internal fun recordBoundaryHaptic() {
+        boundaryHapticSeq++
+    }
 }
 
 /**

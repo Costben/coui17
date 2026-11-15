@@ -7,6 +7,7 @@ import androidx.compose.foundation.OverscrollFactory
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasureResult
@@ -99,6 +100,7 @@ class COUIOverscrollEffect : OverscrollEffect {
 
     private val springEngineX = SpringEngine()
     private val springEngineY = SpringEngine()
+    private val hapticTracker = ScrollEndHapticTracker()
     private var animationJobX: Job? = null
     private var animationJobY: Job? = null
 
@@ -106,6 +108,7 @@ class COUIOverscrollEffect : OverscrollEffect {
     internal var launchAnimation: ((suspend CoroutineScope.() -> Unit) -> Job)? = null
     internal var getPullToRefreshState: (() -> PullToRefreshState?)? = null
     internal var getOverScrollState: (() -> OverScrollState?)? = null
+    internal var performBoundaryHaptic: ((HapticFeedbackType) -> Unit)? = null
 
     /** When the finger last moved the content; the settle is dated from here, not from the fling. */
     private var lastUserInputAt: TimeMark? = null
@@ -125,6 +128,7 @@ class COUIOverscrollEffect : OverscrollEffect {
         offsetY = 0f
         rawTouchAccumulationX = 0f
         rawTouchAccumulationY = 0f
+        hapticTracker.reset()
         getOverScrollState?.invoke()?.let { state ->
             if (state.isOverScrollActive) state.isOverScrollActive = false
         }
@@ -138,6 +142,15 @@ class COUIOverscrollEffect : OverscrollEffect {
     private fun resetStateY() {
         offsetY = 0f
         rawTouchAccumulationY = 0f
+        hapticTracker.reset()
+    }
+
+    private fun triggerBoundaryHaptic(top: Boolean, alreadyHandled: Boolean = false) {
+        val perform = performBoundaryHaptic ?: return
+        hapticTracker.onBoundaryHit(top = top, alreadyHandled = alreadyHandled) {
+            perform(HapticFeedbackType.TextHandleMove)
+            getOverScrollState?.invoke()?.recordBoundaryHaptic()
+        }
     }
 
     private fun applyDragX(delta: Float) {
@@ -262,6 +275,7 @@ class COUIOverscrollEffect : OverscrollEffect {
             // A running spring settles to zero on its own; only reclaim when it was interrupted.
             if (animationJobY?.isActive != true) unwindStaleOffsetY(consumed.y)
             if (animationJobX?.isActive != true) unwindStaleOffsetX(consumed.x)
+            if (abs(offsetY) <= offsetThreshold) hapticTracker.onScrolledContent(consumed.y)
             updateOverScrollState()
             return consumed
         }
@@ -322,6 +336,7 @@ class COUIOverscrollEffect : OverscrollEffect {
 
         // Post-scroll: call performScroll, apply any unconsumed remainder to overscroll
         val adjustedDelta = Offset(performScrollDeltaX, performScrollDeltaY)
+        val seqBefore = getOverScrollState?.invoke()?.boundaryHapticSeq ?: 0L
         val scrollConsumed = performScroll(adjustedDelta)
         val scrollRemaining = adjustedDelta - scrollConsumed
 
@@ -330,6 +345,16 @@ class COUIOverscrollEffect : OverscrollEffect {
 
         if (scrollRemaining.y != 0f && !bypassY) applyDragY(scrollRemaining.y)
         if (scrollRemaining.x != 0f) applyDragX(scrollRemaining.x)
+        if (!bypassY) {
+            val handledByNested = getOverScrollState?.invoke()?.let { it.boundaryHapticSeq != seqBefore } == true
+            if (abs(offsetY) <= offsetThreshold) {
+                hapticTracker.onScrolledContent(scrollConsumed.y)
+            } else if (scrollRemaining.y > 0f && offsetY > offsetThreshold) {
+                triggerBoundaryHaptic(top = true, alreadyHandled = handledByNested)
+            } else if (scrollRemaining.y < 0f && offsetY < -offsetThreshold) {
+                triggerBoundaryHaptic(top = false, alreadyHandled = handledByNested)
+            }
+        }
 
         updateOverScrollState()
 
@@ -383,6 +408,7 @@ class COUIOverscrollEffect : OverscrollEffect {
             )
         }
 
+        val seqBefore = getOverScrollState?.invoke()?.boundaryHapticSeq ?: 0L
         val consumed = performFling(performVelocity)
         val remaining = performVelocity - consumed
 
@@ -390,6 +416,12 @@ class COUIOverscrollEffect : OverscrollEffect {
         // release. The fling curve's tail grows with the leftover velocity, which made the same
         // gesture come back in 0.2s or 2s depending on how hard it was thrown.
         if (!bypassY && !springBackY) {
+            val handledByNested = getOverScrollState?.invoke()?.let { it.boundaryHapticSeq != seqBefore } == true
+            if (remaining.y > POST_FLING_AVAILABLE_VELOCITY_THRESHOLD) {
+                triggerBoundaryHaptic(top = true, alreadyHandled = handledByNested)
+            } else if (remaining.y < -POST_FLING_AVAILABLE_VELOCITY_THRESHOLD) {
+                triggerBoundaryHaptic(top = false, alreadyHandled = handledByNested)
+            }
             startSpringAnimationY(remaining.y / 1.53333f, startedAt = gestureEnd)
         }
         if (!springBackX) {
@@ -427,6 +459,7 @@ private class COUIOverscrollEffectNode(
         effect.launchAnimation = { block -> coroutineScope.launch(start = CoroutineStart.UNDISPATCHED, block = block) }
         effect.getPullToRefreshState = { currentValueOf(LocalPullToRefreshState) }
         effect.getOverScrollState = { currentValueOf(LocalOverScrollState) }
+        effect.performBoundaryHaptic = { type -> if (isAttached) performScrollEndHaptic(type) }
         effect.invalidateNodeLayer = { if (isAttached) updateLayerBlock(layerBlock) }
     }
 
@@ -435,6 +468,7 @@ private class COUIOverscrollEffectNode(
         effect.launchAnimation = null
         effect.getPullToRefreshState = null
         effect.getOverScrollState = null
+        effect.performBoundaryHaptic = null
         effect.invalidateNodeLayer = null
         effect.resetAll()
     }

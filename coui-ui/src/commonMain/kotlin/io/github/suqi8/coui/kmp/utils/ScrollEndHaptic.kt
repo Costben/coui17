@@ -15,23 +15,15 @@ import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Velocity
 
-private const val PRE_SCROLL_RESET_THRESHOLD = 1.0f
-private const val POST_FLING_AVAILABLE_VELOCITY_THRESHOLD = 1.0f
+internal const val PRE_SCROLL_RESET_THRESHOLD = 1.0f
+internal const val POST_FLING_AVAILABLE_VELOCITY_THRESHOLD = 1.0f
 
 /**
- * A [NestedScrollConnection] that provides haptic feedback when a scrollable container
- * is flung to its start or end boundaries.
- *
- * @param hapticFeedback The [HapticFeedback] instance to perform feedback.
- * @param hapticFeedbackType The type of haptic feedback to perform.
+ * Tracks top/bottom boundary hits for a scrollable container so edge feedback fires once per
+ * boundary visit until the container scrolls back into content or settles from overscroll.
  */
-private class ScrollEndHapticNode(
-    private var hapticFeedbackType: HapticFeedbackType,
-) : DelegatingNode(),
-    CompositionLocalConsumerModifierNode,
-    NestedScrollConnection {
-
-    private enum class ScrollEndHapticState {
+internal class ScrollEndHapticTracker {
+    private enum class BoundaryState {
         /** Not scrolled to the boundary. */
         Idle,
 
@@ -42,25 +34,66 @@ private class ScrollEndHapticNode(
         BottomBoundaryHit,
     }
 
-    private var scrollEndHapticState = ScrollEndHapticState.Idle
+    private var state = BoundaryState.Idle
 
-    /** Fires once per boundary hit, the way `COUINestedScrollView.onOverScrolled` calls it. */
+    fun reset() {
+        state = BoundaryState.Idle
+    }
+
+    /** Resets state when scrolling from a boundary back into content. */
+    fun onScrolledContent(deltaY: Float) {
+        if (state == BoundaryState.TopBoundaryHit && deltaY < -PRE_SCROLL_RESET_THRESHOLD) {
+            state = BoundaryState.Idle
+        } else if (state == BoundaryState.BottomBoundaryHit && deltaY > PRE_SCROLL_RESET_THRESHOLD) {
+            state = BoundaryState.Idle
+        }
+    }
+
+    /**
+     * Records a hit on the top or bottom boundary and invokes [onHit] once per entry.
+     *
+     * When [alreadyHandled] is true, [state] still advances so subsequent frames in the same
+     * boundary visit stay suppressed without double-triggering on this pass.
+     */
+    fun onBoundaryHit(
+        top: Boolean,
+        alreadyHandled: Boolean = false,
+        onHit: () -> Unit,
+    ) {
+        val nextState = if (top) BoundaryState.TopBoundaryHit else BoundaryState.BottomBoundaryHit
+        if (state != nextState) {
+            state = nextState
+            if (!alreadyHandled) {
+                onHit()
+            }
+        }
+    }
+}
+
+/**
+ * A [NestedScrollConnection] that provides haptic feedback when a scrollable container
+ * is flung or dragged to its start or end boundaries.
+ *
+ * @param hapticFeedbackType The type of haptic feedback to perform.
+ */
+private class ScrollEndHapticNode(
+    private var hapticFeedbackType: HapticFeedbackType,
+) : DelegatingNode(),
+    CompositionLocalConsumerModifierNode,
+    NestedScrollConnection {
+
+    private val tracker = ScrollEndHapticTracker()
+
     private fun boundaryHit(top: Boolean) {
-        val state = if (top) ScrollEndHapticState.TopBoundaryHit else ScrollEndHapticState.BottomBoundaryHit
-        if (scrollEndHapticState != state) {
+        tracker.onBoundaryHit(top = top) {
             performScrollEndHaptic(hapticFeedbackType)
-            scrollEndHapticState = state
+            currentValueOf(LocalOverScrollState).recordBoundaryHaptic()
         }
     }
 
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         if (!isAttached) return Offset.Zero
-        // Reset state when scrolling from a boundary into content.
-        if (scrollEndHapticState == ScrollEndHapticState.TopBoundaryHit && available.y < -PRE_SCROLL_RESET_THRESHOLD) {
-            scrollEndHapticState = ScrollEndHapticState.Idle
-        } else if (scrollEndHapticState == ScrollEndHapticState.BottomBoundaryHit && available.y > PRE_SCROLL_RESET_THRESHOLD) {
-            scrollEndHapticState = ScrollEndHapticState.Idle
-        }
+        tracker.onScrolledContent(available.y)
         return Offset.Zero
     }
 
@@ -94,7 +127,7 @@ private class ScrollEndHapticNode(
 
     override fun onDetach() {
         super.onDetach()
-        scrollEndHapticState = ScrollEndHapticState.Idle
+        tracker.reset()
     }
 
     fun update(hapticFeedbackType: HapticFeedbackType) {
