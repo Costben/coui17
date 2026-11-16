@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.topappbar
 
-import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
@@ -18,6 +17,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingRenderer
+import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
 import io.github.suqi8.coui.kmp.kit.motion.CouiSearchMotion
 
 @Stable
@@ -33,7 +33,7 @@ internal class CouiTopAppBarSearchState internal constructor(
 @Composable
 internal fun rememberCouiTopAppBarSearchState(
     expanded: Boolean,
-    renderer: CouiFloatingRenderer? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+    renderer: CouiFloatingRenderer? = if (isKitSurfaceSupported()) {
         remember { CouiFloatingRenderer.standalone() }
     } else {
         null

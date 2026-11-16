@@ -41,7 +41,7 @@ import io.github.suqi8.coui.kmp.kit.theme.LocalCouiDarkTheme
 import io.github.suqi8.coui.kmp.kit.theme.ProvideCouiContent
 import kotlin.math.roundToInt
 
-/** 完整紧凑顶栏；内部处理安全区和槽位布局，点击行为由宿主提供。 */
+/** Compact top app bar; handles safe insets and slot layout while click behavior stays with the host. */
 @Composable
 internal fun TopAppBar(
     modifier: Modifier = Modifier,
@@ -105,11 +105,12 @@ internal fun TopAppBar(
 }
 
 /**
- * 大标题缩为固定小标题；省略 scrollBehavior 时保持展开。
- * 连接挂到正文祖先，正文通过 scrollBehavior.state.contentPadding 补偿逻辑滚动与可见弹簧的差值。
- * 高度不含 windowInsets；expandedHeight 必须大于正数 collapsedHeight。
- * 字号为 Unspecified 时沿用预设：展开跟随 HomeTitle，收起使用固定 dp。
- * 显式字号必须是有限正数 sp；title 槽位须继承组件提供的字号。
+ * Large title that collapses to a fixed compact title; remains expanded when [scrollBehavior] is omitted.
+ * Attach the scroll connection to an ancestor of the body, which applies `scrollBehavior.state.contentPadding`
+ * to compensate for the difference between logical scroll and the visible spring.
+ * Heights exclude [windowInsets]; [expandedHeight] must exceed positive [collapsedHeight].
+ * When title sizes are [TextUnit.Unspecified], expanded uses `HomeTitle` and collapsed uses the default dp size.
+ * Explicit title sizes must be finite positive sp; the [title] slot must inherit the provided text style.
  */
 @Composable
 internal fun LargeTopAppBar(
@@ -141,19 +142,19 @@ internal fun LargeTopAppBar(
         expandedHeight.value.isFinite() && collapsedHeight.value.isFinite() &&
             collapsedHeight > 0.dp && expandedHeight > collapsedHeight,
     ) {
-        "展开高度必须大于收起高度，且高度必须是有限正数"
+        "expandedHeight must be greater than collapsedHeight, and both heights must be finite positive values"
     }
     require(
         expandedTitleSize == TextUnit.Unspecified ||
             (expandedTitleSize.isSp && expandedTitleSize.value.isFinite() && expandedTitleSize.value > 0f),
     ) {
-        "展开字号必须为 Unspecified 或有限正数 sp"
+        "expandedTitleSize must be Unspecified or a finite positive sp value"
     }
     require(
         collapsedTitleSize == TextUnit.Unspecified ||
             (collapsedTitleSize.isSp && collapsedTitleSize.value.isFinite() && collapsedTitleSize.value > 0f),
     ) {
-        "收起字号必须为 Unspecified 或有限正数 sp"
+        "collapsedTitleSize must be Unspecified or a finite positive sp value"
     }
     val density = LocalDensity.current
     val state = scrollBehavior?.state
@@ -242,7 +243,7 @@ internal fun AppBarLayout(
     val direction = LocalLayoutDirection.current
     val defaultTitleStyle = rememberCouiTextStyle(if (large) CouiTextKind.HomeTitle else CouiTextKind.Toolbar)
     val titleStyle = if (large && expandedTitleSize != TextUnit.Unspecified) {
-        // 同步行高与字号的像素比例，保留原字体度量及系统非线性字体缩放。
+        // Scale line height proportionally with font size while keeping original font metrics and nonlinear system scaling.
         val lineHeight = with(density) {
             (
                 defaultTitleStyle.lineHeight.toPx() * expandedTitleSize.toPx() /
@@ -359,7 +360,7 @@ internal fun AppBarLayout(
             }
         },
     ) { nodes, constraints ->
-        require(constraints.hasBoundedWidth) { "顶栏需要有界宽度" }
+        require(constraints.hasBoundedWidth) { "TopAppBar requires bounded width" }
         val width = constraints.maxWidth
         val expanded = expandedHeight.roundToPx()
         val collapsed = collapsedHeight.roundToPx()
@@ -386,7 +387,7 @@ internal fun AppBarLayout(
         val compactEnd = actPaddingPx + action.width + if (action.width > 0) gap else 0
         val expandedStart = titlePadding?.toPx() ?: CouiTopAppBarDefaults.expandedTitleStart.toPx()
         val curvedTitle = large && navigation.width > 0
-        // 弧线偏移在两端的位置与变化率均为零，保留标题原有的起步和收尾节奏。
+        // Both endpoint positions and derivatives of the arc offset are zero, preserving title start and settle curves.
         val arcEnvelope = progress * (1f - progress)
         val arcOffset = if (curvedTitle) 0.8f * arcEnvelope * arcEnvelope else 0f
         val horizontalProgress = progress + arcOffset
@@ -400,7 +401,7 @@ internal fun AppBarLayout(
         } else {
             compactEnd.toFloat()
         }
-        // 用缩放后的可见宽度限制标题，避免收起时覆盖导航或操作按钮。
+        // Constrain title by its scaled visible width so it never overlaps navigation or action buttons when collapsed.
         val titleWidth = ((width - start - end).coerceAtLeast(0f) / scale).roundToInt()
         val titleNode = nodes[2].measure(Constraints(maxWidth = titleWidth, maxHeight = (barHeight / scale).toInt()))
 

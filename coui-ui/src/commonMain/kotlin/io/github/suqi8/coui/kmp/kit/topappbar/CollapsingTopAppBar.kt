@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.topappbar
 
-import android.graphics.Paint
-import android.graphics.Typeface
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -24,21 +22,23 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.backdrop.LocalCouiBackdrop
 import io.github.suqi8.coui.kmp.kit.search.CouiSearchBarState
 import io.github.suqi8.coui.kmp.kit.search.rememberCouiSearchBarState
 import io.github.suqi8.coui.kmp.kit.text.CouiTextKind
+import io.github.suqi8.coui.kmp.kit.text.couiFontMetrics
 import io.github.suqi8.coui.kmp.kit.text.couiTextStyle
 import io.github.suqi8.coui.kmp.kit.text.rememberCouiTextStyle
 import io.github.suqi8.coui.kmp.kit.theme.CouiTheme
 import kotlin.math.roundToInt
 
 /**
- * 大标题与可选常驻搜索槽；省略搜索槽时，标题缩小后固定在顶栏，不淡出。
- * state 的连接须挂在实际内容滚动容器的祖先。
- * dark 只控制本顶栏，搜索槽由宿主传入相同模式或使用共同的局部主题；标题色 alpha 与动画相乘。
+ * Large title with an optional persistent search slot; when the search slot is omitted, the title
+ * shrinks and remains pinned in the top bar without fading out.
+ * [state]'s connection must be attached to an ancestor of the scrolling content container.
+ * [dark] only controls this top bar; the search slot receives the same mode from the host or shares
+ * a local theme, and title alpha multiplies with the animation.
  */
 @Composable
 internal fun CollapsingTopAppBar(
@@ -61,22 +61,22 @@ internal fun CollapsingTopAppBar(
         rememberCouiTextStyle(CouiTextKind.HomeTitle)
     } else {
         remember(density) {
-            val typeface = Typeface.create(Typeface.create("sans-serif-semibold", Typeface.NORMAL), 700, false)
             couiTextStyle(
-                typeface,
-                700,
-                with(density) { CouiCollapsingAppBarDefaults.expandedTitleSize.toPx() },
-                1f,
+                familyName = "sans-serif-semibold",
+                weight = 700,
+                pixels = with(density) { CouiCollapsingAppBarDefaults.expandedTitleSize.toPx() },
+                lineSpacing = 1f,
                 includeFontPadding = false,
                 density = density,
             )
         }
     }
     val descent = remember(titleStyle, density) {
-        Paint().apply {
-            typeface = Typeface.create(Typeface.create("sans-serif-semibold", Typeface.NORMAL), 700, false)
-            textSize = with(density) { titleStyle.fontSize.toPx() }
-        }.fontMetrics.descent
+        couiFontMetrics(
+            familyName = "sans-serif-semibold",
+            weight = 700,
+            pixels = with(density) { titleStyle.fontSize.toPx() },
+        ).descentPx
     }
     val titleHeight = with(density) {
         (if (hasSearchBar) CouiCollapsingAppBarDefaults.titleHeight else CouiCollapsingAppBarDefaults.titleOnlyHeight)
@@ -118,7 +118,7 @@ internal fun CollapsingTopAppBar(
         gradientSpeed = 3f,
         gradientColor = backgroundColor,
         dark = dark,
-        // 正文直接跟随已接受的滚动，标题保留弹簧跟随；模糊不能等标题追上后才补亮。
+        // Content follows accepted scroll directly while the title keeps spring follow; blur must not lag behind the title.
         backgroundAlpha = if (!hasSearchBar || searchActive) {
             1f
         } else {

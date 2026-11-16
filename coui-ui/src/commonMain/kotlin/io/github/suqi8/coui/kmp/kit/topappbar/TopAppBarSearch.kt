@@ -6,9 +6,6 @@
 
 package io.github.suqi8.coui.kmp.kit.topappbar
 
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateBounds
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -46,9 +43,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.addOutline
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
@@ -78,6 +76,8 @@ import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingRenderer
 import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingSurface
 import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingSurface
+import io.github.suqi8.coui.kmp.kit.effect.createBlurRenderEffect
+import io.github.suqi8.coui.kmp.kit.effect.isKitRenderEffectSupported
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.CouiSearchRelocationBoundary
 import io.github.suqi8.coui.kmp.kit.motion.couiPressMotion
@@ -96,11 +96,10 @@ import io.github.suqi8.coui.kmp.kit.theme.CouiText as Text
 import io.github.suqi8.coui.kmp.kit.theme.LocalCouiContentColor as LocalContentColor
 
 /**
- * 标题槽位入口。visible 只控制整组淡化，不改变搜索展收目标或页面查询。
- * action 提供右侧融合胶囊的非交互内容；点击、材质与反馈由组件持有。
- * onActionClick 为 null 时禁用动作；收起时保留融合绘制并立即关闭输入与语义。
+ * Title slot entry point. [visible] fades the group without altering search expand/collapse targets or page query.
+ * [action] provides non-interactive content for the paired trailing capsule; clicks, material, and feedback belong to this component.
+ * Passing `null` for [onActionClick] disables the action; collapsing preserves merged drawing and immediately disables input and semantics.
  */
-@RequiresApi(34)
 @Composable
 internal fun TopAppBarSearch(
     modifier: Modifier = Modifier,
@@ -151,9 +150,8 @@ internal fun TopAppBarSearch(
                 val blurRadius = max(0f, 1f - abs((1f - progress) - 0.5f) * 2f) * 30f
                 var expandedCenter by remember { mutableStateOf<Offset?>(null) }
                 val blur = remember(blurRadius) {
-                    if (blurRadius > 0f) {
-                        RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.DECAL)
-                            .asComposeRenderEffect()
+                    if (blurRadius > 0f && isKitRenderEffectSupported()) {
+                        createBlurRenderEffect(blurRadius, blurRadius, TileMode.Decal)
                     } else {
                         null
                     }
@@ -224,7 +222,7 @@ internal fun TopAppBarSearch(
                                         if (expandedCenter == null || (visible && state.motion.expanded && !state.motion.running)) {
                                             expandedCenter = root.localPositionOf(target, center)
                                         }
-                                        // 收起保留顶栏内的展开端点, 不跟随恢复中的标题槽位重算路径。
+                                        // Retain the expanded endpoint inside the toolbar so collapse does not recompute paths against a recovering title slot.
                                         val end = checkNotNull(expandedCenter)
                                         offset = target.localPositionOf(root, lerp(state.sourceCenter ?: end, end, progress)) - center
                                     }
@@ -242,8 +240,7 @@ internal fun TopAppBarSearch(
     }
 }
 
-/** 与展开搜索框共用材质。收起尾段仍允许重新按下入口。 */
-@RequiresApi(34)
+/** Shares material with the expanded search field; allows pressing the entry button again near the end of collapse. */
 @Composable
 internal fun TopAppBarSearchButton(
     modifier: Modifier = Modifier,
@@ -309,8 +306,7 @@ internal fun TopAppBarSearchButton(
     }
 }
 
-/** 退场动作保留原位淡化; 常驻动作连续移动到新布局位置。 */
-@RequiresApi(34)
+/** Exiting actions fade in place; persistent actions animate smoothly to their new layout positions. */
 @Composable
 internal fun TopAppBarSearchAction(
     modifier: Modifier = Modifier,
@@ -382,15 +378,14 @@ private fun SearchInput(
     trailingIcon: @Composable () -> Unit,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
-    // 与输入节点同批组合，确保自定义动作的分阶段测量不会早于焦点节点请求焦点。
+    // Compose alongside the input node so phased measurement of custom actions never outpaces focus requests.
     LaunchedEffect(focusPending, enabled, active) {
         if (focusPending && enabled && active) {
             if (requester.requestFocus()) keyboard?.show()
             onFocused()
         }
     }
-    // 胶囊内不画光标手柄：25dp 手柄会溢出 40dp 胶囊，而且 CoreTextField 在 onGloballyPositioned 里
-    // 按可见边界重算手柄显隐，按压弹簧每帧移动输入节点时手柄会跟着逐帧闪。选中底色沿用外层配色。
+    // Hide selection handles inside the 40dp capsule: 25dp handles overflow and CoreTextField recalculates visibility on position updates during spring bounce.
     val inheritedSelectionColors = LocalTextSelectionColors.current
     val selectionColors = remember(inheritedSelectionColors) {
         TextSelectionColors(
@@ -398,7 +393,7 @@ private fun SearchInput(
             backgroundColor = inheritedSelectionColors.backgroundColor,
         )
     }
-    // 最终宽度排版，当前宽度裁剪；满幅输入节点阻止融合重叠区穿透到下层按钮。
+    // Lay out at full target width and clip to current width; full-width input prevents overlap regions from leaking touches to underlying buttons.
     Layout(content = {
         CompositionLocalProvider(LocalTextSelectionColors provides selectionColors) {
             BasicTextField(
@@ -451,7 +446,6 @@ private fun SearchInput(
     }
 }
 
-@RequiresApi(34)
 @Composable
 private fun SearchSurface(
     modifier: Modifier = Modifier,
@@ -461,7 +455,7 @@ private fun SearchSurface(
     interactive: Boolean,
     deform: Boolean,
     onClick: ((Offset) -> Unit)? = null,
-    contentRenderEffect: androidx.compose.ui.graphics.RenderEffect? = null,
+    contentRenderEffect: RenderEffect? = null,
     content: @Composable () -> Unit,
 ) {
     val backdrop = checkNotNull(LocalCouiToolbarBackdrop.current)

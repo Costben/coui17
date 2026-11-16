@@ -76,6 +76,10 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
+import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
+import io.github.suqi8.coui.kmp.kit.segmentbutton.CouiSegmentedControlDefaults
+import io.github.suqi8.coui.kmp.kit.segmentbutton.SegmentedControl
 import io.github.suqi8.coui.kmp.shader.asBrush
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
@@ -536,7 +540,7 @@ fun TabRowWithContour(
 }
 
 @Composable
-internal expect fun SegmentButtonRowImpl(
+internal fun SegmentButtonRowImpl(
     tabs: List<String>,
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
@@ -563,7 +567,96 @@ internal expect fun SegmentButtonRowImpl(
     tabModifier: ((index: Int) -> Modifier)?,
     tabContent: (@Composable (index: Int, label: String, selected: Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
-)
+) {
+    if (tabs.isEmpty()) return
+    val density = LocalDensity.current
+    val resolvedHeight = resolvedTabRowHeight(height)
+    val containerColor = colors.backgroundColor(false)
+    val indicatorColor = colors.backgroundColor(true)
+    val hasContainerSurface = contourPadding > 0.dp && containerColor.alpha > 0f
+    val blurActive = backdrop != null && isBlurEnabled()
+    val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
+
+    val resolvedBackdrop = if (hasContainerSurface && blurActive && isKitSurfaceSupported()) {
+        remember(backdrop, density) { CouiBackdrop(backdrop, density) }
+    } else {
+        null
+    }
+    resolvedBackdrop?.RetainWhileComposed()
+
+    val canUseSegmentedControl = hasContainerSurface &&
+        listState == null &&
+        itemSpacing == 0.dp &&
+        indication == null &&
+        (resolvedBackdrop != null || (containerMaterial == null && indicatorMaterial == null))
+
+    if (!canUseSegmentedControl) {
+        CommonSegmentButtonRow(
+            tabs = tabs,
+            selectedTabIndex = selectedTabIndex,
+            onTabSelected = onTabSelected,
+            onTabReselected = onTabReselected,
+            onTabClick = onTabClick,
+            colors = colors,
+            minWidth = minWidth,
+            maxWidth = maxWidth,
+            height = height,
+            cornerRadius = cornerRadius,
+            contourPadding = contourPadding,
+            segmentPadding = segmentPadding,
+            itemSpacing = itemSpacing,
+            contentAlignment = contentAlignment,
+            listState = listState,
+            interactionSource = interactionSource,
+            indication = indication,
+            indicatorMaterial = indicatorMaterial,
+            containerMaterial = containerMaterial,
+            backdrop = backdrop,
+            dragSelectionEnabled = dragSelectionEnabled,
+            commitOnRelease = commitOnRelease,
+            touchMotionEnabled = touchMotionEnabled,
+            tabModifier = tabModifier,
+            tabContent = tabContent,
+            modifier = modifier,
+        )
+        return
+    }
+
+    // Rows that overflow scroll inside SegmentedControl, so every row keeps the same COUI glass
+    // container, rim and indicator instead of falling back to the shader-edged common row.
+    val compact = contourPadding < 3.dp || resolvedHeight <= 34.dp
+    SegmentedControl(
+        modifier = modifier,
+        labels = tabs,
+        selectedIndex = selectedTabIndex,
+        onSelected = onTabSelected,
+        onReselected = onTabReselected,
+        onTabClick = onTabClick,
+        backdrop = resolvedBackdrop,
+        dark = isDarkTheme,
+        enabled = true,
+        small = compact,
+        dragSelectionEnabled = dragSelectionEnabled,
+        commitOnRelease = commitOnRelease,
+        touchMotionEnabled = touchMotionEnabled,
+        minWidth = minWidth,
+        maxWidth = maxWidth,
+        height = resolvedHeight,
+        cornerRadius = cornerRadius,
+        contourPadding = contourPadding,
+        segmentPadding = segmentPadding,
+        contentAlignment = contentAlignment,
+        interactionSource = interactionSource,
+        textStyle = CouiSegmentedControlDefaults.textStyle(),
+        containerColor = containerColor,
+        indicatorColor = indicatorColor,
+        contentColor = colors.contentColor(false),
+        selectedContentColor = colors.contentColor(true),
+        shadowColor = colors.indicatorShadowColor(),
+        tabModifier = tabModifier,
+        tabContent = tabContent,
+    )
+}
 
 /**
  * Shared pure-Compose implementation of the COUI segment button, following

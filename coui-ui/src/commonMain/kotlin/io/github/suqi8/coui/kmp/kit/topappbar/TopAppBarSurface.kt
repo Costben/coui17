@@ -6,13 +6,6 @@
 
 package io.github.suqi8.coui.kmp.kit.topappbar
 
-import android.graphics.BlendMode
-import android.graphics.ColorSpace
-import android.graphics.LinearGradient
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,17 +15,23 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.RenderEffect
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdropEffectScope
@@ -41,7 +40,11 @@ import io.github.suqi8.coui.kmp.kit.backdrop.couiBackdrop
 import io.github.suqi8.coui.kmp.kit.backdrop.drawCouiBackdrop
 import io.github.suqi8.coui.kmp.kit.backdrop.rememberCouiBackdrop
 import io.github.suqi8.coui.kmp.kit.effect.CouiCoverageBlurEffect
+import io.github.suqi8.coui.kmp.kit.effect.createBlendModeRenderEffect
+import io.github.suqi8.coui.kmp.kit.effect.createOffsetRenderEffect
 import io.github.suqi8.coui.kmp.kit.effect.drawCouiGradientBackdrop
+import io.github.suqi8.coui.kmp.kit.effect.isKitRenderEffectSupported
+import io.github.suqi8.coui.kmp.kit.effect.isKitRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.kit.theme.CouiTheme
 
 internal val LocalCouiToolbarBackdrop = staticCompositionLocalOf<CouiBackdrop?> { null }
@@ -53,55 +56,52 @@ private val BlurLayers = listOf(
     Triple(6.3.dp, 0.44f, 0.82f),
     Triple(CouiTopAppBarDefaults.referenceBlurRadius, 0.28f, 0.68f),
 ).map { (radius, start, end) ->
-    radius to FloatArray(FadeStopCount) { index ->
+    radius to List(FadeStopCount) { index ->
         start + (end - start) * index / (FadeStopCount - 1f)
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 private object TopAppBarSurfaceGradientTokens {
-    val GradientColorSpace: ColorSpace = ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB)
-
-    // 三层遮罩共用透明度曲线; 颜色和各层节点位置不随栏高变化, 只在初始化时生成。
-    val FadeColors = LongArray(FadeStopCount) { index ->
+    // Three mask layers share this opacity curve; colors and stop positions do not vary with bar height and are built once.
+    val FadeColors = List(FadeStopCount) { index ->
         val progress = index / (FadeStopCount - 1f)
         val smoothProgress = progress * progress * (3f - 2f * progress)
-        // 直接打包高精度透明度, 避免先舍入到 8 位。
-        android.graphics.Color.pack(0f, 0f, 0f, 1f - smoothProgress, GradientColorSpace)
+        Color(0f, 0f, 0f, 1f - smoothProgress, ColorSpaces.ExtendedSrgb)
     }
 }
 
 /**
- * 背景从标题栏顶部开始并向下延伸，不改变布局或触摸高度。
- * gradientSpeed 为 null 时保留项目固定渐隐；正值选择全高原厂幂曲线。
- * gradientColor 未指定时使用浅色白色、深色黑色渐变；Transparent 关闭遮罩，显式 alpha 与预设透明度相乘。
- * topExtension 在测量时读取，背景向上延伸并平移，不改变内容占位或触摸范围。
+ * Background starts at the top of the app bar and extends downward without changing layout or touch height.
+ * When [gradientSpeed] is `null`, the fixed progressive fade is used; positive values select the full-height power curve.
+ * When [gradientColor] is unspecified, light mode uses white and dark mode uses black; [Color.Transparent] disables the scrim,
+ * and an explicit alpha multiplies the preset opacity.
+ * [topExtension] is read during measurement so the background extends upward and translates without altering content bounds or touch area.
  */
 @Composable
 internal fun TopAppBarSurface(
     modifier: Modifier = Modifier,
     backdrop: CouiBackdrop? = LocalCouiBackdrop.current,
-    fadeHeight: androidx.compose.ui.unit.Dp = CouiTopAppBarDefaults.fadeHeight,
-    referenceBlurRadius: androidx.compose.ui.unit.Dp = CouiTopAppBarDefaults.referenceBlurRadius,
-    bottomExtension: androidx.compose.ui.unit.Dp = CouiTopAppBarDefaults.bottomExtension,
+    fadeHeight: Dp = CouiTopAppBarDefaults.fadeHeight,
+    referenceBlurRadius: Dp = CouiTopAppBarDefaults.referenceBlurRadius,
+    bottomExtension: Dp = CouiTopAppBarDefaults.bottomExtension,
     backgroundAlpha: Float = 1f,
     gradientSpeed: Float? = null,
     gradientColor: Color = Color.Unspecified,
     dark: Boolean = CouiTheme.isDark,
-    topExtension: () -> androidx.compose.ui.unit.Dp = { 0.dp },
+    topExtension: () -> Dp = { 0.dp },
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current.density
     val destination = rememberCouiBackdrop(parent = backdrop)
     val backgroundModifier = if (backdrop != null) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (isKitRuntimeShaderSupported()) {
             Modifier.drawCouiGradientBackdrop(
                 backdrop = backdrop,
                 fadeHeightPx = fadeHeight.value * density,
                 referenceBlurRadiusPx = referenceBlurRadius.value * density,
                 gradientSpeed = gradientSpeed,
             )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        } else if (isKitRenderEffectSupported()) {
             val blurEffects = remember(density) {
                 BlurLayers.map { (radius, _) -> CouiCoverageBlurEffect(radius.value * density) }
             }
@@ -118,7 +118,7 @@ internal fun TopAppBarSurface(
     }
     val resolvedGradientColor = gradientColor.takeOrElse { if (dark) Color.Black else Color.White }
     val gradient = remember(resolvedGradientColor, dark) {
-        // 扩展色彩编码保留渐变透明度精度，避免每个节点先量化为 8 位。
+        // Extended color encoding preserves alpha precision instead of quantizing each stop to 8 bits.
         val color = resolvedGradientColor.convert(ColorSpaces.ExtendedSrgb)
         Brush.verticalGradient(
             List(FadeStopCount) { index ->
@@ -153,7 +153,7 @@ internal fun TopAppBarSurface(
                     height = topBar.height + topExtensionPx + bottomExtension.roundToPx(),
                 ),
             )
-            // 折叠时固定高度的背景随顶栏上移，渐进曲线不随当前栏高重新拉伸。
+            // When collapsed, the fixed-height background shifts upward with the bar so the progressive curve does not stretch to the current bar height.
             layout(topBar.width, topBar.height) {
                 background.placeRelative(0, -topExtensionPx)
                 topBar.placeRelative(0, 0)
@@ -164,7 +164,7 @@ internal fun TopAppBarSurface(
 
 private fun topBarGradientAlpha(position: Float, dark: Boolean): Float {
     if (dark) return .4f * (1f - position * position * (3f - 2f * position))
-    // 保留浅色 .6/.7 节点；两段 Hermite 共用连接斜率，底端以零斜率淡出。
+    // Keep light-mode .6/.7 stops; two Hermite segments share the join slope and settle at zero slope at the bottom.
     val first = position <= .6f
     val span = if (first) .6f else .4f
     val t = if (first) position / span else (position - .6f) / span
@@ -179,40 +179,38 @@ private fun topBarGradientAlpha(position: Float, dark: Boolean): Float {
         ).coerceIn(0f, 1f)
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
-private fun CouiBackdropEffectScope.progressiveBlur(blurEffects: List<CouiCoverageBlurEffect>, fadeHeight: androidx.compose.ui.unit.Dp) {
+private fun CouiBackdropEffectScope.progressiveBlur(blurEffects: List<CouiCoverageBlurEffect>, fadeHeight: Dp) {
     if (!size.isSpecified || size.height <= 0f) return
 
-    // CouiBackdrop 会平移采样原点; 遮罩使用相同偏移并保留平台模糊的采样外沿。
+    // CouiBackdrop translates the sampling origin; masks use the same padding to keep platform blur outer margins.
     padding = blurEffects.maxOf { it.padding }
-    var combined = RenderEffect.createOffsetEffect(0f, 0f)
+    var combined = createOffsetRenderEffect(0f, 0f)
     for ((index, layer) in BlurLayers.withIndex()) {
         val positions = layer.second
-        val blurred = blurEffects[index].effect
+        val blurred = blurEffects[index].composeEffect
         val mask = fadeEffect(positions, fadeHeight)
-        val maskedBlur = RenderEffect.createBlendModeEffect(blurred, mask, BlendMode.DST_IN)
-        // 在滤镜内叠到不透明采样底图上, 不再由 Compose 分别输出三张半透明图层。
-        combined = RenderEffect.createBlendModeEffect(combined, maskedBlur, BlendMode.SRC_OVER)
+        val maskedBlur = createBlendModeRenderEffect(blurred, mask, BlendMode.DstIn)
+        // Composite onto the opaque sampled base inside the filter rather than emitting three translucent Compose layers.
+        combined = createBlendModeRenderEffect(combined, maskedBlur, BlendMode.SrcOver)
     }
-    // 保留采样内容本身的颜色, 避免主题底色覆盖不同表面时形成额外的明暗渐变。
-    renderEffect = combined.asComposeRenderEffect()
+    // Preserve sampled content colors without theme background tinting adding extra shading gradients across surfaces.
+    renderEffect = combined
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
-private fun CouiBackdropEffectScope.fadeEffect(positions: FloatArray, fadeHeight: androidx.compose.ui.unit.Dp): RenderEffect {
-    // 渐变沿固定长度展开并锚定背景下沿, 折叠时只平移, 不随栏高压缩。
-    // 起点允许超出顶部; 由渐变自身延续端点颜色, 不裁短坐标区间。
+private fun CouiBackdropEffectScope.fadeEffect(positions: List<Float>, fadeHeight: Dp): RenderEffect {
+    // Gradient expands over a fixed length anchored to the bottom edge so collapse translates without compressing the curve.
+    // Top coordinate may extend past 0; clamped endpoints extend boundary color without trimming the coordinate range.
     val gradientBottom = padding + size.height
     val gradientTop = gradientBottom - fadeHeight.toPx()
-    return RenderEffect.createShaderEffect(
-        LinearGradient(
-            0f,
-            gradientTop,
-            0f,
-            gradientBottom,
-            TopAppBarSurfaceGradientTokens.FadeColors,
-            positions,
-            Shader.TileMode.CLAMP,
+    return createShaderRenderEffect(
+        LinearGradientShader(
+            from = Offset(0f, gradientTop),
+            to = Offset(0f, gradientBottom),
+            colors = TopAppBarSurfaceGradientTokens.FadeColors,
+            colorStops = positions,
+            tileMode = TileMode.Clamp,
         ),
     )
 }
+
+internal expect fun createShaderRenderEffect(shader: Shader): RenderEffect

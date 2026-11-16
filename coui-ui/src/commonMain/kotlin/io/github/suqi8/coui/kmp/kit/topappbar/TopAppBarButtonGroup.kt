@@ -62,13 +62,13 @@ internal fun Modifier.toolbarShadowOpacity(alpha: () -> Float): Modifier = drawW
     }
 }
 
-/** 包住完整的返回或操作槽位, 放在槽位进出动画之外, 保留内部淡化及原位输入。 */
+/** Wraps the full navigation or action slot outside slot enter/exit animations to preserve internal fade and in-place input. */
 @Composable
 internal fun TopAppBarButtonGroup(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val overlay = checkNotNull(LocalCouiToolbarOverlay.current) { "顶栏按钮组必须位于顶栏效果作用域内" }
+    val overlay = checkNotNull(LocalCouiToolbarOverlay.current) { "TopAppBarButtonGroup must be placed inside a toolbar overlay scope" }
     overlay.apply {
         Row(
             modifier = Modifier.renderInSharedTransitionScopeOverlay(renderInOverlay = { true }).then(modifier),
@@ -79,7 +79,7 @@ internal fun TopAppBarButtonGroup(
     }
 }
 
-/** 顶栏操作区淡化; 可关闭横向收放, 淡化层始终包含外围投影。 */
+/** Fades toolbar action items; horizontal size animation can be disabled, while the fade layer always includes exterior shadow. */
 @Composable
 internal fun TopAppBarActionVisibility(
     modifier: Modifier = Modifier,
@@ -95,7 +95,7 @@ internal fun TopAppBarActionVisibility(
             transitionSpec = { tween(durationMillis, easing = easing) },
             label = "TopAppBarActionAlpha",
         ) { if (it) 1f else 0f }
-        // AnimatedVisibility 退场时的零尺寸预布局会驱动内部 animateBounds, 原位淡化需保留尺寸。
+        // AnimatedVisibility zero-size pre-layout on exit drives internal animateBounds, so in-place fade must keep bounds.
         if (transition.currentState || transition.targetState || transition.isRunning) {
             Box(
                 modifier = modifier.toolbarShadowOpacity { opacity },

@@ -4,10 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.topappbar
 
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
@@ -24,7 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.RenderEffect
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -41,6 +38,8 @@ import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingRenderer
 import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingSurface
 import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingPair
+import io.github.suqi8.coui.kmp.kit.effect.createBlurRenderEffect
+import io.github.suqi8.coui.kmp.kit.effect.isKitRenderEffectSupported
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.couiMovingActionClick
 import io.github.suqi8.coui.kmp.kit.motion.couiPressMotion
@@ -53,8 +52,7 @@ import kotlin.math.roundToInt
 
 private enum class SearchPairSlot { Input, Action }
 
-/** 搜索与动作共享双主体材质；slot 只提供内容，点击、几何和反馈由本节点负责。 */
-@RequiresApi(34)
+/** Dual-body metaball material shared between the search field and action; slots supply content while clicks, geometry, and feedback stay here. */
 @Composable
 internal fun TopAppBarSearchPair(
     modifier: Modifier = Modifier,
@@ -65,7 +63,7 @@ internal fun TopAppBarSearchPair(
     deform: Boolean,
     animating: Boolean,
     capsule: Boolean,
-    contentRenderEffect: androidx.compose.ui.graphics.RenderEffect?,
+    contentRenderEffect: RenderEffect?,
     action: @Composable () -> Unit,
     onActionClick: (() -> Unit)?,
     input: @Composable (Float) -> Unit,
@@ -90,9 +88,9 @@ internal fun TopAppBarSearchPair(
     var geometry by remember { mutableStateOf<CouiTopAppBarSearchPairGeometry?>(null) }
     val fraction = progress.coerceIn(0f, 1f)
     val actionBlur = remember(fraction) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (isKitRenderEffectSupported()) {
             val radius = (1f - fraction) * 30f
-            if (radius > 0f) RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.DECAL).asComposeRenderEffect() else null
+            if (radius > 0f) createBlurRenderEffect(radius, radius, TileMode.Decal) else null
         } else {
             null
         }
@@ -151,7 +149,7 @@ internal fun TopAppBarSearchPair(
     )
     SubcomposeLayout(modifier.then(drawing)) { constraints ->
         val height = constraints.maxHeight
-        // 先测量自定义内容，再确定输入最终宽度；不经 onSizeChanged 回写制造一帧错位。
+        // Measure custom action content first to determine final input width without a one-frame onSizeChanged mismatch.
         val actionWidthLimit = min(
             CouiTopAppBarDefaults.searchActionMaxWidth.roundToPx(),
             (fullWidth * .4f).roundToInt(),
@@ -165,7 +163,7 @@ internal fun TopAppBarSearchPair(
                     Modifier.height(40.dp)
                         .widthIn(min = CouiTopAppBarDefaults.searchActionMinWidth, max = CouiTopAppBarDefaults.searchActionMaxWidth)
                         .graphicsLayer {
-                            // 挂载时的语义计算早于首次测量，未测量节点不参与显示或命中。
+                            // Semantics evaluation at attach time runs before first measurement; keep unmeasured nodes invisible and non-hittable.
                             val frame = geometry
                             if (frame == null) {
                                 alpha = 0f
@@ -231,7 +229,7 @@ internal fun TopAppBarSearchPair(
             }
         }.single().measure(Constraints.fixed(frame.inputBounds.width.roundToInt(), height))
         layout(constraints.maxWidth, height) {
-            // 材质顺序由双主体 renderer 管理；已显露的动作优先接收触摸。
+            // Draw order is managed by the dual-body renderer; revealed action receives touches first.
             if (frame.actionAlpha > 0f) button.place(frame.actionBounds.left.roundToInt(), 0, zIndex = 1f)
             body.place(frame.inputBounds.left.roundToInt(), 0)
         }

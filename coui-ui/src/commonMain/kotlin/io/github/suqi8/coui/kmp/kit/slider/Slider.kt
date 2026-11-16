@@ -6,11 +6,6 @@ package io.github.suqi8.coui.kmp.kit.slider
 
 // Ported from COUI-Kit (ItosEO/COUI-Kit@8a09da4) coui/src/main/java/com/itos/coui/slider/Slider.kt. Extended with reverseDirection, height, haptics, keypoints, magnet threshold, secondary progress, middle fill, and touch guards.
 
-import android.os.Build
-import android.view.HapticFeedbackConstants
-import android.view.MotionEvent
-import android.view.VelocityTracker
-import android.view.View
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -22,28 +17,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
@@ -51,7 +46,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.SliderDefaults
-import io.github.suqi8.coui.kmp.basic.computeAllKeyPointFractions
 import io.github.suqi8.coui.kmp.basic.computeKeyPointFractions
 import io.github.suqi8.coui.kmp.basic.secondaryProgressFraction
 import io.github.suqi8.coui.kmp.basic.stepsToTickFractions
@@ -59,13 +53,21 @@ import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.isCouiTouchCancelled
 import io.github.suqi8.coui.kmp.kit.motion.CouiTouchMotion
+import io.github.suqi8.coui.kmp.kit.motion.CouiVelocityTracker
 import io.github.suqi8.coui.kmp.kit.shape.CouiCapsuleShape
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
+import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlin.math.abs
 
+private const val DEFAULT_FRAME_SECONDS = 1f / 60f
+private const val MAX_FLING_VELOCITY = 8000f
+private const val RELEASE_VELOCITY_SCALE = 0.0003f
+
 /**
- * steps 是内部等分点数, showTickMarks 独立决定是否使用 SectionSeekBar 的点位与吸附。
- * 不采样背景, 不依赖 Oplus SDK; 宿主提供配色、深浅色和轨道 Shape。
+ * Cross-platform COUI slider track and thumb component. [steps] defines internal subdivisions,
+ * while [showTickMarks] independently enables SectionSeekBar tick marks and snapping. Does not
+ * sample backdrop or depend on Oplus SDK; host supplies colors, dark mode flag, and track [Shape].
  */
 @Composable
 internal fun CouiKitSlider(
@@ -114,11 +116,11 @@ internal fun CouiKitSlider(
         SliderDefaults.SliderHapticEffect.Edge -> 1
         SliderDefaults.SliderHapticEffect.Step -> 2
     }
-    val view = LocalView.current
+    val haptic by rememberUpdatedState(rememberCouiHaptic())
     val scope = rememberCoroutineScope()
     val onChange by rememberUpdatedState(onValueChange)
     val onFinished by rememberUpdatedState(onValueChangeFinished)
-    val motion = remember(valueRange, steps, showTickMarks, density, view, keyPointFractions, magnetThreshold, hapticCode, moveByFinger) {
+    val motion = remember(valueRange, steps, showTickMarks, density, keyPointFractions, magnetThreshold, hapticCode, moveByFinger) {
         CouiSliderMotion(
             range = valueRange,
             steps = steps,
@@ -131,21 +133,18 @@ internal fun CouiKitSlider(
             magnetThreshold = magnetThreshold,
             hapticEffect = hapticCode,
             moveByFinger = moveByFinger,
-        ) { code, section ->
-            performSliderHaptic(view, code, section)
+        ) { code, _ ->
+            performSliderHaptic(haptic, code)
         }
     }
     val touch = remember(scope, density) { CouiTouchMotion(scope, density, deformationEnabled = false) }
     val renderer = remember(density, shape, layoutDirection) { CouiSliderRenderer(density, shape, layoutDirection) }
-    val (spotlightInput, drawSpotlight) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        rememberCouiSpotlight(
-            interactive = interactive,
-            preset = SpotlightPreset.OpaqueMedium1,
-            dark = dark,
-        )
-    } else {
-        Modifier to null
-    }
+    // rememberCouiSpotlight internally gates on isKitRuntimeShaderSupported() (API 33+ on Android, true on Skiko).
+    val (spotlightInput, drawSpotlight) = rememberCouiSpotlight(
+        interactive = interactive,
+        preset = SpotlightPreset.OpaqueMedium1,
+        dark = dark,
+    )
     SideEffect {
         motion.syncValue(value)
         if (!interactive) {
@@ -166,9 +165,11 @@ internal fun CouiKitSlider(
     val keyIncrement = span / if (steps > 0 || showTickMarks) steps + 1 else 100
     val scale = (height / 20.dp).coerceAtLeast(0.1f)
     val capInset = 14f * density * scale
+    var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     Box(
         modifier
             .defaultMinSize(minWidth = 144.dp, minHeight = 48.dp)
+            .onGloballyPositioned { coordinates = it }
             .progressSemantics(value.coerceIn(valueRange), valueRange, steps)
             .semantics {
                 if (!interactive) disabled()
@@ -202,8 +203,7 @@ internal fun CouiKitSlider(
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     if (motion.length <= 0f) return@awaitEachGesture
-                    val tracker = VelocityTracker.obtain()
-                    val downTime = down.uptimeMillis
+                    val tracker = CouiVelocityTracker(down.uptimeMillis)
                     var active = down.id
                     var pointerOffset = 0f
                     var origin = down.position
@@ -214,7 +214,7 @@ internal fun CouiKitSlider(
                         return if (effectiveReverse) motion.length - local else local
                     }
                     try {
-                        tracker.addChange(downTime, down)
+                        coordinates?.takeIf { it.isAttached }?.let { tracker.add(down, it, start = true) }
                         motion.press(fingerX(down.position.x))
                         touch.begin(down.position, size)
                         while (true) {
@@ -227,8 +227,7 @@ internal fun CouiKitSlider(
                                 origin += next.position - tracked.position
                                 touch.switchPointer(tracked.position, next.position)
                                 active = next.id
-                                tracker.clear()
-                                tracker.addChange(downTime, next)
+                                coordinates?.takeIf { it.isAttached }?.let { tracker.add(next, it, start = true) }
                                 continue
                             }
                             if (tracked.isConsumed) break
@@ -236,26 +235,32 @@ internal fun CouiKitSlider(
                                 val local = fingerX(tracked.position.x)
                                 val inside = tracked.position.x in 0f..size.width.toFloat() &&
                                     tracked.position.y in 0f..size.height.toFloat()
+                                val xVelocityPxPerSec = (tracker.releaseVelocity().x / RELEASE_VELOCITY_SCALE)
+                                    .coerceIn(-MAX_FLING_VELOCITY, MAX_FLING_VELOCITY)
+                                val directedVelocity = xVelocityPxPerSec * if (effectiveReverse) -1f else 1f
                                 if (dragging || inside) {
-                                    val refreshRate = view.display?.refreshRate?.takeIf { it > 0f } ?: 60f
-                                    if (dragging) motion.drag(local, tracker.xVelocity * if (effectiveReverse) -1f else 1f)
-                                    motion.release(local, tracker.xVelocity * if (effectiveReverse) -1f else 1f, 1f / refreshRate)
+                                    if (dragging) motion.drag(local, directedVelocity)
+                                    motion.release(local, directedVelocity, DEFAULT_FRAME_SECONDS)
                                     tracked.consume()
                                 } else {
                                     motion.cancelGesture()
                                 }
-                                touch.release(Offset(tracker.xVelocity * 0.0003f, 0f))
+                                touch.release(Offset(xVelocityPxPerSec * RELEASE_VELOCITY_SCALE, 0f))
                                 completed = true
                                 break
                             }
-                            tracker.addChange(downTime, tracked)
-                            tracker.computeCurrentVelocity(1000, 8000f)
+                            coordinates?.takeIf { it.isAttached }?.let { tracker.add(tracked, it) }
+                            val xVelocityPxPerSec = (tracker.releaseVelocity().x / RELEASE_VELOCITY_SCALE)
+                                .coerceIn(-MAX_FLING_VELOCITY, MAX_FLING_VELOCITY)
                             val delta = tracked.position - origin
                             if (!dragging && abs(delta.y) > viewConfiguration.touchSlop && abs(delta.y) > abs(delta.x)) break
                             if (abs(delta.x) >= 5f) touch.move(Offset(tracked.position.x, down.position.y))
                             if (dragging || abs(delta.x) > viewConfiguration.touchSlop) {
                                 dragging = true
-                                motion.drag(fingerX(tracked.position.x), tracker.xVelocity * if (effectiveReverse) -1f else 1f)
+                                motion.drag(
+                                    fingerX(tracked.position.x),
+                                    xVelocityPxPerSec * if (effectiveReverse) -1f else 1f,
+                                )
                                 tracked.consume()
                             }
                         }
@@ -277,12 +282,17 @@ internal fun CouiKitSlider(
                 }
                 .then(spotlightInput),
         ) {
-            val canvas = drawContext.canvas.nativeCanvas
-            val trackHeightPx = with(densityScope(density)) { height.toPx() }
+            val canvas = drawContext.canvas
             renderer.draw(
                 canvas = canvas,
                 height = size.height,
-                motion = motion,
+                length = motion.length,
+                visualFraction = motion.visualFraction,
+                heightFraction = motion.heightFraction,
+                thumbRadiusDp = motion.thumbRadius.value,
+                texture = motion.texture.value,
+                thumbCover = motion.thumbCover.value,
+                glitter = motion.glitter.value,
                 colors = resolvedColors,
                 enabled = interactive,
                 rtl = effectiveReverse,
@@ -292,45 +302,31 @@ internal fun CouiKitSlider(
                 showProgress = showProgress,
                 showThumb = showThumb,
                 startFromMiddle = startFromMiddle,
-                customTrackHeight = trackHeightPx,
+                customTrackHeight = height.toPx(),
             )
             if (drawSpotlight != null) {
-                val checkpoint = canvas.save()
-                renderer.clipTrack(canvas)
-                drawSpotlight()
-                canvas.restoreToCount(checkpoint)
+                canvas.save()
+                try {
+                    renderer.clipTrack(canvas)
+                    drawSpotlight()
+                } finally {
+                    canvas.restore()
+                }
             }
         }
     }
 }
 
-private fun densityScope(density: Float): androidx.compose.ui.unit.Density = androidx.compose.ui.unit.Density(density)
-
-private fun VelocityTracker.addChange(downTime: Long, change: PointerInputChange) {
-    for (sample in change.historical) {
-        val event = MotionEvent.obtain(downTime, sample.uptimeMillis, MotionEvent.ACTION_MOVE, sample.position.x, sample.position.y, 0)
-        addMovement(event)
-        event.recycle()
+private fun performSliderHaptic(
+    performHaptic: (CouiHapticEffect) -> Unit,
+    code: Int,
+) {
+    val effect = when (code) {
+        306 -> CouiHapticEffect.EdgeShort
+        308 -> CouiHapticEffect.Strength
+        305 -> CouiHapticEffect.Stepping
+        302 -> CouiHapticEffect.Switch
+        else -> CouiHapticEffect.Stepping
     }
-    val action = when {
-        !change.previousPressed -> MotionEvent.ACTION_DOWN
-        else -> MotionEvent.ACTION_MOVE
-    }
-    val event = MotionEvent.obtain(downTime, change.uptimeMillis, action, change.position.x, change.position.y, 0)
-    addMovement(event)
-    event.recycle()
-}
-
-private fun performSliderHaptic(view: View, code: Int, section: Boolean) {
-    if (view.performHapticFeedback(code)) return
-    if (section && code == 308 && view.performHapticFeedback(302)) return
-    val standard = when {
-        code == 306 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> HapticFeedbackConstants.GESTURE_END
-
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
-            if (section) HapticFeedbackConstants.SEGMENT_TICK else HapticFeedbackConstants.SEGMENT_FREQUENT_TICK
-
-        else -> HapticFeedbackConstants.CLOCK_TICK
-    }
-    view.performHapticFeedback(standard)
+    performHaptic(effect)
 }

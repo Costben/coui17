@@ -4,17 +4,13 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.segmentbutton
 
-import android.graphics.Paint
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -47,6 +44,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.addOutline
@@ -57,7 +55,6 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.key.Key
@@ -103,6 +100,8 @@ import io.github.suqi8.coui.kmp.kit.effect.LocalCouiContourGlowEnabled
 import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.couiButtonFeedback
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingSurface
+import io.github.suqi8.coui.kmp.kit.effect.isKitRuntimeShaderSupported
+import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.isCouiTouchCancelled
 import io.github.suqi8.coui.kmp.kit.motion.CouiPressMotion
@@ -118,20 +117,18 @@ import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlin.math.abs
 import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
  * Controlled capsule segmented control migrated from COUI-Kit.
  *
  * Uses plain fill when [backdrop] is `null`, and ColorOS 17 blurred glass material when [backdrop]
- * is non-null on API 34+. The edge follows the system `TYPE_FRAMEWORK_CAPSULE_6` recipe
- * (`useMenuLightEdge = false`): the inner glow stacks additively instead of blending by coverage,
- * and the edge highlight skips the menu reference-color calibration. In light glass mode, the
- * indicator drop shadow uses the faint measured glass falloff (`0.006f` -> transparent) when
- * [shadowColor] is unspecified or the plain light default (`0x0D000000`), and the API 33+
- * indicator contour rim uses the native `.15f` `lineAlpha`.
+ * is non-null on supported platforms (Android API 34+ or Skiko). The edge follows the system
+ * `TYPE_FRAMEWORK_CAPSULE_6` recipe (`useMenuLightEdge = false`): the inner glow stacks additively
+ * instead of blending by coverage, and the edge highlight skips the menu reference-color
+ * calibration. In light glass mode, the indicator drop shadow uses the faint measured glass
+ * falloff (`0.006f` -> transparent) when [shadowColor] is unspecified or the plain light default
+ * (`0x0D000000`), and the runtime-shader indicator contour rim uses the native `.15f` `lineAlpha`.
  * Defaults to committing on drag crossing; [commitOnRelease] defers commit until valid UP.
  */
 @Composable
@@ -184,16 +181,18 @@ internal fun SegmentedControl(
     val indicatorPress = rememberCouiPressMotion()
     val labelPresses = labels.indices.map { key(it) { rememberCouiPressMotion() } }
 
-    val glassSupported = Build.VERSION.SDK_INT >= 34 && backdrop != null
+    val surfaceSupported = isKitSurfaceSupported()
+    val runtimeShaderSupported = isKitRuntimeShaderSupported()
+    val glassSupported = surfaceSupported && backdrop != null
     val renderer = remember(glassSupported) {
         if (glassSupported) runCatching { CouiFloatingRenderer.standalone() }.getOrNull() else null
     }
     val effectiveBackdrop = if (glassSupported && renderer != null) backdrop else null
-    val contourEnabled = Build.VERSION.SDK_INT >= 33 && effectiveBackdrop != null && LocalCouiContourGlowEnabled.current
+    val contourEnabled = runtimeShaderSupported && effectiveBackdrop != null && LocalCouiContourGlowEnabled.current
     val contour = remember(contourEnabled) {
         if (contourEnabled) runCatching { CouiContour(style = CouiContourStyle.Button) }.getOrNull() else null
     }
-    val edgePaint = remember { Paint(Paint.ANTI_ALIAS_FLAG) }
+    val edgePaint = remember { Paint().apply { isAntiAlias = true } }
     val indicatorShape: Shape = remember(cornerRadius) {
         if (cornerRadius.isSpecified) SegmentIndicatorShape(cornerRadius) else CouiCapsuleShape
     }
@@ -319,7 +318,7 @@ internal fun SegmentedControl(
         }
         var bounds by remember { mutableStateOf(IntSize.Zero) }
 
-        val surface = if (Build.VERSION.SDK_INT >= 34 && effectiveBackdrop != null && renderer != null && contentLayer != null) {
+        val surface = if (surfaceSupported && effectiveBackdrop != null && renderer != null && contentLayer != null) {
             floatingGlassSurface(
                 backdrop = effectiveBackdrop,
                 renderer = renderer,
@@ -585,7 +584,6 @@ internal fun SegmentedControl(
     }
 }
 
-@RequiresApi(34)
 @Composable
 private fun floatingGlassSurface(
     backdrop: CouiBackdrop,
@@ -717,7 +715,7 @@ private class SegmentIndicatorDrawing(
     }
 }
 
-/** Draws the indicator radial drop shadow and fill, plus the optional API 33+ contour rim. */
+/** Draws the indicator radial drop shadow and fill, plus the optional runtime-shader contour rim. */
 private fun DrawScope.drawSegmentIndicator(
     rect: Rect,
     containerHeight: Float,
@@ -745,14 +743,13 @@ private fun DrawScope.drawSegmentIndicator(
         }
         clipPath(drawing.path) {
             drawRect(color, size = rect.size)
-            if (Build.VERSION.SDK_INT >= 33 && contour != null) {
+            if (isKitRuntimeShaderSupported() && contour != null) {
                 drawIndicatorContour(rect.size, cornerRadius, contour, paint)
             }
         }
     }
 }
 
-@RequiresApi(33)
 private fun DrawScope.drawIndicatorContour(
     rectSize: Size,
     cornerRadius: Dp,
@@ -774,5 +771,5 @@ private fun DrawScope.drawIndicatorContour(
         1f,
         1.8f * density,
     )
-    drawIntoCanvas { canvas -> canvas.nativeCanvas.drawRect(0f, 0f, rectSize.width, rectSize.height, paint) }
+    drawIntoCanvas { canvas -> canvas.drawRect(0f, 0f, rectSize.width, rectSize.height, paint) }
 }

@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.topappbar
 
-import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +43,7 @@ import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingSurface
 import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingSurface
 import io.github.suqi8.coui.kmp.kit.effect.couiToolbarFeedback
+import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.motion.couiPressMotion
 import io.github.suqi8.coui.kmp.kit.motion.couiTouchMotion
@@ -59,7 +59,7 @@ internal fun TopAppBarButton(
     enabled: Boolean = true,
     text: Boolean = false,
     enforceMinimumTouchTarget: Boolean = true,
-    renderer: CouiFloatingRenderer? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+    renderer: CouiFloatingRenderer? = if (isKitSurfaceSupported()) {
         remember { CouiFloatingRenderer.standalone() }
     } else {
         null
@@ -86,8 +86,7 @@ internal fun TopAppBarButton(
     )
     val contentColor = style.contentColor
 
-    val isNativeSurfaceSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
-        renderer != null && backdrop != null
+    val isNativeSurfaceSupported = isKitSurfaceSupported() && renderer != null && backdrop != null
 
     Box(
         modifier
@@ -98,7 +97,7 @@ internal fun TopAppBarButton(
                 val lightClip = Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawWithCache)) }
                 onDrawWithContent {
                     drawContent()
-                    // 原厂直接混合已绘制的按钮表面, 不能先混入透明内容层再 SrcOver。
+                    // Native draws the spotlight onto the rendered button surface rather than blending into the transparent content layer before SrcOver.
                     if (drawLight != null) {
                         withTransform({
                             translate(motion.translationX.value, motion.translationY.value)

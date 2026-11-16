@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -42,6 +43,10 @@ import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
+import io.github.suqi8.coui.kmp.kit.topappbar.CouiTopAppBarButtonDefaults
+import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarBackdrop
+import io.github.suqi8.coui.kmp.kit.topappbar.TopAppBarButton
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 
@@ -455,16 +460,34 @@ object HighlightedIconButtonDefaults {
 }
 
 @Composable
-internal expect fun shouldUseToolbarSurfaceIconButton(
+private fun shouldUseToolbarSurfaceIconButton(
     size: Dp,
     backdrop: Backdrop?,
     spotLightEnabled: Boolean,
-): Boolean
+): Boolean = isKitSurfaceSupported() &&
+    LocalCouiToolbarBackdrop.current != null &&
+    backdrop == null &&
+    spotLightEnabled &&
+    size == HighlightedIconButtonDefaults.Size
 
 @Composable
-internal expect fun ToolbarSurfaceIconButton(
+private fun ToolbarSurfaceIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
-)
+) {
+    TopAppBarButton(
+        modifier = modifier,
+        onClick = onClick,
+        enabled = enabled,
+        enforceMinimumTouchTarget = false,
+        style = CouiTopAppBarButtonDefaults.style(search = true),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+            content = content,
+        )
+    }
+}

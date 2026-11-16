@@ -67,6 +67,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.kit.shape.CouiCapsuleShape
+import io.github.suqi8.coui.kmp.kit.slider.CouiKitSlider
+import io.github.suqi8.coui.kmp.kit.slider.CouiSliderColors
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -158,7 +161,7 @@ fun Slider(
 }
 
 @Composable
-internal expect fun CouiPlatformSlider(
+internal fun CouiPlatformSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: (() -> Unit)?,
@@ -178,7 +181,43 @@ internal expect fun CouiPlatformSlider(
     startFromMiddle: Boolean,
     moveByFinger: Boolean,
     modifier: Modifier = Modifier,
-)
+) {
+    val dark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val kitColors = CouiSliderColors(
+        activeTrack = colors.foregroundColor(enabled),
+        inactiveTrack = colors.backgroundColor(enabled),
+        thumb = colors.thumbColor(enabled),
+        activeTick = colors.keyPointForegroundColor(),
+        inactiveTick = colors.keyPointColor(),
+        thumbShadow = Color(if (dark) 0x40000000 else 0x1a000000),
+        secondaryTrack = colors.secondaryProgressColor(enabled),
+    )
+    val hasTicks = (showKeyPoints && steps in 1..50) || (keyPoints != null && keyPoints.isNotEmpty())
+    CouiKitSlider(
+        modifier = modifier,
+        value = value,
+        onValueChange = onValueChange,
+        colors = kitColors,
+        dark = dark,
+        shape = CouiCapsuleShape,
+        valueRange = valueRange,
+        steps = steps,
+        showTickMarks = hasTicks,
+        enabled = enabled,
+        reverseDirection = reverseDirection,
+        height = height,
+        hapticEffect = hapticEffect,
+        showKeyPoints = showKeyPoints,
+        keyPoints = keyPoints,
+        magnetThreshold = magnetThreshold,
+        secondaryProgress = secondaryProgress,
+        showProgress = showProgress,
+        showThumb = showThumb,
+        startFromMiddle = startFromMiddle,
+        moveByFinger = moveByFinger,
+        onValueChangeFinished = onValueChangeFinished ?: {},
+    )
+}
 
 /**
  * A vertical [Slider] component with COUI style.
