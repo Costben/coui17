@@ -33,8 +33,9 @@ data class DeviceTilt(
 }
 
 /**
- * Returns a live [DeviceTilt] driven by the platform's rotation sensor; on platforms
- * without sensor support (Desktop / Web / iOS / macOS), returns [DeviceTilt.Zero].
+ * Returns a live [DeviceTilt] driven by the platform's rotation sensor (Android rotation vector
+ * or iOS CoreMotion device motion). When no motion sensor is available (e.g. iOS Simulator,
+ * Desktop, Web, macOS), returns [DeviceTilt.Zero].
  *
  * @param smoothing Low-pass alpha applied to each sensor sample (0 < a ≤ 1).
  *  1.0 = no smoothing (raw samples), 0.1 = heavy smoothing. Default 0.15.

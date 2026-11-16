@@ -4,8 +4,9 @@ package io.github.suqi8.coui.kmp.blur.sensor
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 
 @Composable
-actual fun rememberDeviceTilt(smoothing: Float): State<DeviceTilt> = remember { mutableStateOf(DeviceTilt.Zero) }
+actual fun rememberDeviceTilt(smoothing: Float): State<DeviceTilt> = rememberPlatformDeviceTilt(smoothing)
+
+@Composable
+internal expect fun rememberPlatformDeviceTilt(smoothing: Float): State<DeviceTilt>

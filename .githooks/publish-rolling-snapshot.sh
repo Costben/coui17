@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Publishes the Android-facing coordinates to build/repository/local as the rolling `1.2.0-SNAPSHOT`,
-# overwriting the previous one, so apps on this machine that depend on that coordinate build against
-# the latest commit without anyone bumping a version.
+# Publishes the Android- and iOS-facing coordinates to build/repository/local as the rolling
+# `1.2.0-SNAPSHOT`, overwriting the previous one, so apps on this machine that depend on that
+# coordinate build against the latest commit without anyone bumping a version.
 #
 # The post-commit / post-merge / post-rewrite hooks next to this file call it with --background once
 # the hooks path is enabled:
@@ -25,7 +25,7 @@ PENDING="${ROOT}/build/rolling-snapshot.pending"
 # Kept outside build/repository/local: every local publish wipes that directory first.
 STAMP="${ROOT}/build/rolling-snapshot.commit"
 
-# Same set as publish-local in the consumer apps: the KMP root coordinate plus its Android variant.
+# Same set as publish-local in the consumer apps: the KMP root coordinate plus its Android and iOS variants.
 MODULES=(coui-core coui-ui coui-preference coui-icons coui-blur coui-squircle coui-navigation3-ui coui-nav coui-shader)
 # Mirrors the path filter of .github/workflows/publish.yml.
 LIBRARY_PATHS=("${MODULES[@]}" build-plugins gradle settings.gradle.kts build.gradle.kts gradle.properties)
@@ -57,6 +57,8 @@ publish_once() {
   for module in "${MODULES[@]}"; do
     tasks+=(":${module}:publishKotlinMultiplatformPublicationToLocalRepository")
     tasks+=(":${module}:publishAndroidPublicationToLocalRepository")
+    tasks+=(":${module}:publishIosArm64PublicationToLocalRepository")
+    tasks+=(":${module}:publishIosSimulatorArm64PublicationToLocalRepository")
   done
 
   echo "== $(date '+%F %T') ${head:0:8}: publishing 1.2.0-SNAPSHOT"
