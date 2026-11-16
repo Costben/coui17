@@ -76,7 +76,7 @@ BottomFloatingToolbar(visible = isSelecting) {
 
 ## Capsule Surface
 
-The capsule samples the content behind it through `LocalBackdrop`. When a backdrop is present and blur is active (`isBlurEnabled()`, combining `LocalBlurEnabled`, system material/power-saving blur state, and runtime shader support), the capsule is blurred and tinted with the toolbar colors; otherwise it falls back to an opaque `containerColor` fill. The capsule and its rim share the system capsule curve (`addSegmentCapsule`); the rim and inner shadow are drawn by `Modifier.materialShadowEdge` with the `TYPE_FRAMEWORK_CAPSULE_13` parameters and the capsule corner weight (1.0 for a wide capsule, 2.0 for a square one). The capsule lifts off the page with the system's caustic shadow (or `BottomFloatingToolbarDefaults.Shadow` where the system has none). Pressing and dragging deform and scale the capsule through `couiTouchMotion` with the `SpotLightDefaults.opaqueMedium2` spotlight.
+The capsule samples the content behind it through `LocalBackdrop`. When a backdrop is present and blur is active (`isBlurEnabled()`, combining `LocalBlurEnabled`, system material/power-saving blur state, and runtime shader support), the capsule is blurred and tinted with the translucent Gallery floating toolbar colors (`#4D333333` ColorDodge + `#66F5F5F5` Luminosity in light, `#66808080` Overlay + `#804D4D4D` Luminosity in dark); otherwise it falls back to an opaque `containerColor` fill. The capsule and its rim share the system capsule curve (`addSegmentCapsule`); the rim and inner shadow are drawn by `Modifier.materialShadowEdge` (`2.0dp` edge width, `0.2f` light / `0.6f` dark alpha) with the capsule corner weight (1.0 for a wide capsule, 2.0 for a square one). The capsule lifts off the page with the system's caustic shadow (or `BottomFloatingToolbarDefaults.Shadow` where the system has none). Pressing and dragging deform and scale the capsule through `couiTouchMotion` with the `SpotLightDefaults.circleParams1` spotlight.
 
 ## Multi-Color Icons
 
@@ -158,9 +158,9 @@ BottomFloatingToolbarItem(
 | GroupMarginSmallScreen          | Dp                      | The edge inset of the outermost capsules on a small screen | 16.dp                     |
 | GroupMarginMediumScreen         | Dp                      | The same inset on a medium screen                       | 24.dp                        |
 | GroupMarginLargeScreen          | Dp                      | The same inset on a large screen                        | 40.dp                        |
-| BlurRadius                      | Float                   | The blur radius in dp                                   | 25f                          |
-| BlurColorsLight                 | List&lt;BlendColorEntry&gt; | The tint layers over the blurred backdrop, light theme | `#99F5F5F5` Luminosity, `#B3666666` ColorDodge |
-| BlurColorsDark                  | List&lt;BlendColorEntry&gt; | The same layers in the dark theme                  | `#B3262626` Luminosity, `#80666666` Overlay |
+| BlurRadius                      | Float                   | The native blur radius in pixels                        | 30f                          |
+| BlurColorsLight                 | List&lt;BlendColorEntry&gt; | The tint layers over the blurred backdrop, light theme | `#4D333333` ColorDodge, `#66F5F5F5` Luminosity |
+| BlurColorsDark                  | List&lt;BlendColorEntry&gt; | The same layers in the dark theme                  | `#66808080` Overlay, `#804D4D4D` Luminosity |
 | TranslationYSpring              | SpringSpec&lt;Float&gt; | The show / hide spring                                  | response 0.38 / bounce 0.75  |
 
 `BottomFloatingToolbarDefaults` also exposes two functions:

@@ -76,7 +76,7 @@ BottomFloatingToolbar(visible = isSelecting) {
 
 ## 胶囊表面
 
-胶囊通过 `LocalBackdrop` 采样其后方的画面。存在背景层且模糊处于启用状态（`isBlurEnabled()`，综合 `LocalBlurEnabled`、系统材质模糊/省电开关与运行时着色器支持）时，胶囊会被模糊并叠加工具栏配色；否则回退为不透明的 `containerColor` 填充。胶囊与其描边共用系统胶囊曲线（`addSegmentCapsule`）；描边与内阴影由 `Modifier.materialShadowEdge` 以 `TYPE_FRAMEWORK_CAPSULE_13` 参数和胶囊角权重绘制（宽胶囊 1.0，方形胶囊 2.0）。胶囊下方带有系统焦散光影（不支持系统焦散时回退为 `BottomFloatingToolbarDefaults.Shadow` 投影）。按压与拖动通过 `couiTouchMotion` 产生形变、橡皮筋位移与缩放，并携带 `SpotLightDefaults.opaqueMedium2` 聚光反馈。
+胶囊通过 `LocalBackdrop` 采样其后方的画面。存在背景层且模糊处于启用状态（`isBlurEnabled()`，综合 `LocalBlurEnabled`、系统材质模糊/省电开关与运行时着色器支持）时，胶囊会被模糊并叠加相册看图页同款轻透着色层（浅色 `#4D333333` ColorDodge + `#66F5F5F5` Luminosity，深色 `#66808080` Overlay + `#804D4D4D` Luminosity）；否则回退为不透明的 `containerColor` 填充。胶囊与其描边共用系统胶囊曲线（`addSegmentCapsule`）；描边与内阴影由 `Modifier.materialShadowEdge`（`2.0dp` 边宽、浅色 `0.2f` / 深色 `0.6f` 透明度）和胶囊角权重绘制（宽胶囊 1.0，方形胶囊 2.0）。胶囊下方带有系统焦散光影（不支持系统焦散时回退为 `BottomFloatingToolbarDefaults.Shadow` 投影）。按压与拖动通过 `couiTouchMotion` 产生形变、橡皮筋位移与缩放，并携带 `SpotLightDefaults.circleParams1` 聚光反馈。
 
 ## 多色图标
 
@@ -158,9 +158,9 @@ BottomFloatingToolbarItem(
 | GroupMarginSmallScreen          | Dp                          | 小屏下最外侧胶囊的边距                     | 16.dp                        |
 | GroupMarginMediumScreen         | Dp                          | 中屏下的同一间距                           | 24.dp                        |
 | GroupMarginLargeScreen          | Dp                          | 大屏下的同一间距                           | 40.dp                        |
-| BlurRadius                      | Float                       | 模糊半径（dp）                             | 25f                          |
-| BlurColorsLight                 | List&lt;BlendColorEntry&gt; | 浅色主题下叠加在模糊上的着色层             | `#99F5F5F5` Luminosity、`#B3666666` ColorDodge |
-| BlurColorsDark                  | List&lt;BlendColorEntry&gt; | 深色主题下的同一组着色层                   | `#B3262626` Luminosity、`#80666666` Overlay |
+| BlurRadius                      | Float                       | 原生模糊半径（px）                         | 30f                          |
+| BlurColorsLight                 | List&lt;BlendColorEntry&gt; | 浅色主题下叠加在模糊上的着色层             | `#4D333333` ColorDodge、`#66F5F5F5` Luminosity |
+| BlurColorsDark                  | List&lt;BlendColorEntry&gt; | 深色主题下的同一组着色层                   | `#66808080` Overlay、`#804D4D4D` Luminosity |
 | TranslationYSpring              | SpringSpec&lt;Float&gt;     | 显示 / 隐藏弹簧                            | 响应 0.38 / 回弹 0.75        |
 
 `BottomFloatingToolbarDefaults` 还提供两个函数：

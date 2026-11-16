@@ -212,12 +212,13 @@ private fun Placeable.PlacementScope.placeRelativeGroups(
 /**
  * A capsule of [BottomFloatingToolbarItem]s inside a [BottomFloatingToolbar].
  *
- * The capsule is the visible surface: it is blurred, tinted with the container colour and edged with
- * [Modifier.materialShadowEdge], exactly like `COUIBottomFloatingToolbarMenuView.onDraw`, and it lifts
- * off the content with the system's caustic shadow, or [BottomFloatingToolbarDefaults.Shadow] where
- * the system has none. The whole capsule answers the finger
- * through [couiTouchMotion], the native `COUITouchMotionAnimator` with deformation, rubber band and
- * press scale, and carries its `TYPE_BOTTOM_NAVIGATION` spot light.
+ * The capsule is the visible surface: it is blurred, tinted with the Gallery translucent
+ * photo-viewer material (`#4D333333` ColorDodge + `#66F5F5F5` Luminosity in light,
+ * `#66808080` Overlay + `#804D4D4D` Luminosity in dark) and edged with
+ * [Modifier.materialShadowEdge], and it lifts off the content with the system's caustic shadow, or
+ * [BottomFloatingToolbarDefaults.Shadow] where the system has none. The whole capsule answers the
+ * finger through [couiTouchMotion], the native `COUITouchMotionAnimator` with deformation, rubber
+ * band and press scale, and carries its `TYPE_CIRCLE_1` spot light.
  *
  * The layout is the native `onMeasure`: the items sit on one line, separated by
  * [BottomFloatingToolbarDefaults.ItemViewSpace], with
@@ -245,12 +246,22 @@ fun BottomFloatingToolbarGroup(
     val shape = remember(cornerRadius, squircleEnabled) {
         CapsuleOutlineShape(cornerRadius = cornerRadius, squircleEnabled = squircleEnabled)
     }
-    val stroke = remember(isDark) { MaterialStrokeParams.frameworkCapsule13(isDark) }
+    val stroke = remember(isDark) {
+        MaterialStrokeParams(
+            edgeAlpha = if (isDark) 0.6f else 0.2f,
+            edgeWidth = 2.0.dp,
+            edgeAngle = 0f,
+            shadowFadeIn = 0.1f,
+            shadowFadeOut = 0.2f,
+            shadowFadeScale = 1.0f,
+        )
+    }
     val blurColors = BottomFloatingToolbarDefaults.blurColors(isDark)
     val touchState = rememberCOUITouchMotionState()
     val systemCaustic = rememberPlatformCausticShadowRenderer() != null
     val density = LocalDensity.current
     val cornerRadiusPx = with(density) { cornerRadius.toPx() }
+    val blurRadius = with(density) { (BottomFloatingToolbarDefaults.BlurRadius / TEXTURE_BLUR_SIGMA_SCALE).toDp().value }
     val itemCount = remember { intArrayOf(0) }
     val height = BottomFloatingToolbarDefaults.MenuViewHeight
     var capsuleWidthPx by remember { mutableIntStateOf(0) }
@@ -262,7 +273,7 @@ fun BottomFloatingToolbarGroup(
         Modifier.textureBlur(
             backdrop = backdrop,
             shape = shape,
-            blurRadius = BottomFloatingToolbarDefaults.BlurRadius,
+            blurRadius = blurRadius,
             colors = blurColors,
         )
     } else {
@@ -314,7 +325,7 @@ fun BottomFloatingToolbarGroup(
                 .onSizeChanged { capsuleWidthPx = it.width }
                 .couiTouchMotion(
                     shape = shape,
-                    lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                    lightParams = SpotLightDefaults.circleParams1(isDark),
                     motionState = touchState,
                     surface = blurSurface
                         // materialShadowEdge returns a bare fallback when the platform rejects
@@ -603,35 +614,29 @@ object BottomFloatingToolbarDefaults {
     val GroupMarginLargeScreen = 40.dp
 
     /**
-     * The blur radius in dp.
-     *
-     * COUI's toolbar stacks two `RenderEffect.createBlurEffect` items, both with a radius of 25
-     * pixels; [textureBlur] takes dp, so the same 25 is expressed in dp here, as in
-     * [GlassDefaults.BlurRadius].
+     * The native RenderEffect blur radius in pixels, matching the ColorOS 17 Gallery photo-viewer
+     * floating toolbar material (`30f`). [BottomFloatingToolbarGroup] converts it through
+     * [TEXTURE_BLUR_SIGMA_SCALE] before handing it to [textureBlur].
      */
-    val BlurRadius = 25f
+    val BlurRadius = 30f
 
     /**
-     * The tint layers laid over the blurred backdrop in the light theme.
-     *
-     * `COUIBottomFloatingToolbar` blends `#99F5F5F5` in `Luminosity` first and `#B3666666` in
-     * `ColorDodge` second; the native chain applies its second `RenderEffect` first, and
-     * [textureBlur]'s `blendColors` are applied in list order, so the list is reversed here.
+     * The tint layers laid over the blurred backdrop in the light theme, in [textureBlur] list
+     * order: `#4D333333` in `ColorDodge` first, then `#66F5F5F5` in `Luminosity`, matching the
+     * ColorOS 17 Gallery photo-viewer floating toolbar and top-bar action buttons.
      */
     val BlurColorsLight: List<BlendColorEntry> = listOf(
-        BlendColorEntry(color = Color(0x99F5F5F5), mode = BlurBlendMode.Luminosity),
-        BlendColorEntry(color = Color(0xB3666666), mode = BlurBlendMode.ColorDodge),
+        BlendColorEntry(color = Color(0x4D333333), mode = BlurBlendMode.ColorDodge),
+        BlendColorEntry(color = Color(0x66F5F5F5), mode = BlurBlendMode.Luminosity),
     )
 
     /**
-     * The tint layers laid over the blurred backdrop in the dark theme.
-     *
-     * The dark counterparts of [BlurColorsLight]: `#B3262626` in `Luminosity` and `#80666666` in
-     * `Overlay`, with the same reversal applied.
+     * The tint layers laid over the blurred backdrop in the dark theme, in [textureBlur] list
+     * order: `#66808080` in `Overlay` first, then `#804D4D4D` in `Luminosity`.
      */
     val BlurColorsDark: List<BlendColorEntry> = listOf(
-        BlendColorEntry(color = Color(0xB3262626), mode = BlurBlendMode.Luminosity),
-        BlendColorEntry(color = Color(0x80666666), mode = BlurBlendMode.Overlay),
+        BlendColorEntry(color = Color(0x66808080), mode = BlurBlendMode.Overlay),
+        BlendColorEntry(color = Color(0x804D4D4D), mode = BlurBlendMode.Luminosity),
     )
 
     /**
