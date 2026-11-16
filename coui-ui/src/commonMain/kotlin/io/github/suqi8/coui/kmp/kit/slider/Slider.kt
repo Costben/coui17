@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.progressSemantics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -65,9 +66,10 @@ private const val MAX_FLING_VELOCITY = 8000f
 private const val RELEASE_VELOCITY_SCALE = 0.0003f
 
 /**
- * Cross-platform COUI slider track and thumb component. [steps] defines internal subdivisions,
- * while [showTickMarks] independently enables SectionSeekBar tick marks and snapping. Does not
- * sample backdrop or depend on Oplus SDK; host supplies colors, dark mode flag, and track [Shape].
+ * Cross-platform COUI slider track and thumb component. [steps] defines discrete sections
+ * (`COUISectionSeekBar` behavior when > 0), while [showTickMarks] independently controls drawing
+ * tick dots on the track. Does not sample backdrop or depend on Oplus SDK; host supplies colors,
+ * dark mode flag, and track [Shape].
  */
 @Composable
 internal fun CouiKitSlider(
@@ -83,6 +85,7 @@ internal fun CouiKitSlider(
     enabled: Boolean = true,
     reverseDirection: Boolean = false,
     height: Dp = 20.dp,
+    minHeight: Dp = 48.dp,
     hapticEffect: SliderDefaults.SliderHapticEffect = SliderDefaults.DefaultHapticEffect,
     showKeyPoints: Boolean = false,
     keyPoints: List<Float>? = null,
@@ -120,11 +123,12 @@ internal fun CouiKitSlider(
     val scope = rememberCoroutineScope()
     val onChange by rememberUpdatedState(onValueChange)
     val onFinished by rememberUpdatedState(onValueChangeFinished)
-    val motion = remember(valueRange, steps, showTickMarks, density, keyPointFractions, magnetThreshold, hapticCode, moveByFinger) {
+    val motion = remember(valueRange, steps, density, keyPointFractions, magnetThreshold, hapticCode, moveByFinger, scope) {
         CouiSliderMotion(
+            scope = scope,
             range = valueRange,
             steps = steps,
-            section = showTickMarks,
+            section = steps > 0,
             density = density,
             initialValue = value,
             onValueChange = { onChange(it) },
@@ -168,7 +172,8 @@ internal fun CouiKitSlider(
     var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     Box(
         modifier
-            .defaultMinSize(minWidth = 144.dp, minHeight = 48.dp)
+            .defaultMinSize(minWidth = 144.dp, minHeight = minHeight)
+            .fillMaxWidth()
             .onGloballyPositioned { coordinates = it }
             .progressSemantics(value.coerceIn(valueRange), valueRange, steps)
             .semantics {

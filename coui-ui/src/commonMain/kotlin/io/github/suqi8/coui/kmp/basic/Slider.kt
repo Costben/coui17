@@ -206,6 +206,7 @@ internal fun CouiPlatformSlider(
         enabled = enabled,
         reverseDirection = reverseDirection,
         height = height,
+        minHeight = SliderDefaults.MinTouchHeight,
         hapticEffect = hapticEffect,
         showKeyPoints = showKeyPoints,
         keyPoints = keyPoints,

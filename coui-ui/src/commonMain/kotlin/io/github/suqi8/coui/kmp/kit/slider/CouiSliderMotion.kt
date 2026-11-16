@@ -10,13 +10,17 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
-import io.github.suqi8.coui.kmp.kit.motion.CouiFrameHandle
+import androidx.compose.runtime.withFrameNanos
 import io.github.suqi8.coui.kmp.kit.motion.CouiSpring
-import io.github.suqi8.coui.kmp.kit.motion.postCouiFrameCallback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
@@ -24,6 +28,7 @@ import kotlin.time.TimeSource
 
 /** Port of COUISeekBarAdvanced / SectionAnimationHandler keeping logical value and visual position separate. */
 internal class CouiSliderMotion(
+    private val scope: CoroutineScope,
     private val range: ClosedFloatingPointRange<Float>,
     private val steps: Int,
     private val section: Boolean,
@@ -38,6 +43,7 @@ internal class CouiSliderMotion(
     private val feedback: (Int, Boolean) -> Unit,
 ) {
     private val intervals = steps + 1
+    private val animateSectionDrag = section && steps <= 50
     private val span = range.endInclusive - range.start
     private var lastExternalValue = initialValue
     private var pendingRelease = false
@@ -54,7 +60,7 @@ internal class CouiSliderMotion(
     private var bumpingEnd = false
     private var transition: CouiFloatAnimator? = null
     private var dragSnap: CouiFloatAnimator? = null
-    private var flingHandle: CouiFrameHandle? = null
+    private var flingJob: Job? = null
     private var pressed = false
     private var dragging = false
     private var lastStepHapticMark: TimeMark? = null
@@ -117,10 +123,10 @@ internal class CouiSliderMotion(
         if (!pressed || length <= 0f) return
         dragging = true
         val x = fingerX.coerceIn(0f, length)
-        if (section) {
+        if (animateSectionDrag) {
             dragSection(x)
         } else {
-            val frac = resolveFraction(x / length)
+            val frac = if (section) quantize(x / length) else resolveFraction(x / length)
             setFraction(frac, vibrate = true)
             // Native FlexibleFollowHand uses permille visibility threshold and keeps a uniform response across long jumps.
             position.animateTo(frac * length, 0.15f, minimumChange = length / 1000f)
@@ -154,12 +160,10 @@ internal class CouiSliderMotion(
         }
         dragging = false
         if (section) {
-            if (dragSnap?.isRunning == true) {
+            if (animateSectionDrag && dragSnap?.isRunning == true) {
                 fastRelease = true
             } else {
-                val segment = length / intervals
-                val target = (index(fraction) + ((fingerX.coerceIn(0f, length) - fraction * length) / segment).toInt())
-                    .coerceIn(0, intervals)
+                val target = index(normalizePosition(fingerX))
                 snapSection(target)
                 resetAnchor()
             }
@@ -217,7 +221,6 @@ internal class CouiSliderMotion(
             position.snapTo(anchorX)
             direction = if (x < anchorX) -1 else 1
             lastFingerX = x
-            return
         }
         val nextDirection = when {
             x > lastFingerX + 0.5f -> 1
@@ -249,7 +252,12 @@ internal class CouiSliderMotion(
         dragSnap?.cancel()
         dragAnimStart = anchorX
         dragAnimEnd = target
+        val startSection = index(normalizePosition(dragAnimStart))
+        val targetSection = index(normalizePosition(target))
+        val minSection = min(startSection, targetSection)
+        val maxSection = max(startSection, targetSection)
         dragSnap = CouiFloatAnimator(
+            scope = scope,
             from = dragAnimValue,
             to = target - anchorX,
             durationMs = 100L,
@@ -263,14 +271,14 @@ internal class CouiSliderMotion(
                 } else {
                     ceil(x / (length / intervals)).toInt()
                 }
-                setFraction(selected.coerceIn(0, intervals).toFloat() / intervals, vibrate = true)
+                setFraction(selected.coerceIn(minSection, maxSection).toFloat() / intervals, vibrate = true)
             },
             onEnd = { _ ->
                 if (fastRelease) {
                     fastRelease = false
-                    val targetSection = index(normalizePosition(lastFingerX))
+                    val targetSectionOnEnd = index(normalizePosition(lastFingerX))
                     resetAnchor()
-                    snapSection(targetSection)
+                    snapSection(targetSectionOnEnd)
                 }
             },
         ).also { it.start() }
@@ -290,6 +298,7 @@ internal class CouiSliderMotion(
     private fun animateSection(target: Float, durationMs: Long) {
         transition?.cancel()
         transition = CouiFloatAnimator(
+            scope = scope,
             from = position.value,
             to = target,
             durationMs = durationMs,
@@ -300,29 +309,36 @@ internal class CouiSliderMotion(
     }
 
     private fun startFling(initialVelocity: Float, frameSeconds: Float) {
-        flingHandle?.cancel()
+        flingJob?.cancel()
         var velocity = initialVelocity
         var x = position.value
-
-        fun scheduleNext() {
-            flingHandle = postCouiFrameCallback {
-                flingHandle = null
-                // Unconstrained single-axis branch of Oplus World.solve rather than AndroidX exponential decay.
-                velocity /= 1f + 15f * frameSeconds
-                x += velocity * frameSeconds
-                val clamped = x.coerceIn(0f, length)
-                if (x >= length && !bumpingEnd) startGlitter(velocity)
-                position.snapTo(clamped)
-                setFraction(normalizePosition(clamped), vibrate = false)
-                // Finish inertia at visible bounds; revisit constrained body if overscroll bounce or exact end timing is needed.
-                if (x != clamped || abs(velocity) < 0.1f) {
+        flingJob = scope.launch {
+            var lastFrameNanos = -1L
+            while (true) {
+                val done = withFrameNanos { frameTimeNanos ->
+                    val dt = if (lastFrameNanos < 0L) {
+                        frameSeconds
+                    } else {
+                        ((frameTimeNanos - lastFrameNanos) / 1_000_000_000f).coerceIn(1f / 240f, 1f / 30f)
+                    }
+                    lastFrameNanos = frameTimeNanos
+                    // Unconstrained single-axis branch of Oplus World.solve rather than AndroidX exponential decay.
+                    velocity /= 1f + 15f * dt
+                    x += velocity * dt
+                    val clamped = x.coerceIn(0f, length)
+                    if (x >= length && !bumpingEnd) startGlitter(velocity)
+                    position.snapTo(clamped)
+                    setFraction(normalizePosition(clamped), vibrate = false)
+                    // Finish inertia at visible bounds; revisit constrained body if overscroll bounce or exact end timing is needed.
+                    x != clamped || abs(velocity) < 0.1f
+                }
+                if (done) {
+                    flingJob = null
                     onValueChangeFinished()
-                } else {
-                    scheduleNext()
+                    break
                 }
             }
         }
-        scheduleNext()
     }
 
     private fun startGlitter(velocity: Float) {
@@ -389,8 +405,8 @@ internal class CouiSliderMotion(
         dragSnap?.cancel()
         dragSnap = null
         position.cancelComplete()
-        flingHandle?.cancel()
-        flingHandle = null
+        flingJob?.cancel()
+        flingJob = null
     }
 
     private fun resetAnchor() {
@@ -420,6 +436,7 @@ internal class CouiSliderMotion(
 }
 
 private class CouiFloatAnimator(
+    private val scope: CoroutineScope,
     private val from: Float,
     private val to: Float,
     private val durationMs: Long,
@@ -429,37 +446,39 @@ private class CouiFloatAnimator(
 ) {
     var isRunning: Boolean = false
         private set
-    private var handle: CouiFrameHandle? = null
-    private var startMark: TimeMark = TimeSource.Monotonic.markNow()
+    private var job: Job? = null
 
     fun start() {
+        job?.cancel()
         isRunning = true
-        startMark = TimeSource.Monotonic.markNow()
-        scheduleNext()
+        job = scope.launch {
+            var startNanos = -1L
+            while (isRunning) {
+                val finished = withFrameNanos { frameTimeNanos ->
+                    if (!isRunning) return@withFrameNanos true
+                    if (startNanos < 0L) startNanos = frameTimeNanos
+                    val elapsedMs = (frameTimeNanos - startNanos) / 1_000_000.0
+                    val rawFraction = if (durationMs <= 0L) 1f else (elapsedMs / durationMs).toFloat().coerceIn(0f, 1f)
+                    onUpdate(from + (to - from) * interpolate(rawFraction))
+                    rawFraction >= 1f
+                }
+                if (finished) {
+                    if (isRunning) {
+                        isRunning = false
+                        job = null
+                        onEnd(false)
+                    }
+                    break
+                }
+            }
+        }
     }
 
     fun cancel() {
         if (!isRunning) return
         isRunning = false
-        handle?.cancel()
-        handle = null
+        job?.cancel()
+        job = null
         onEnd(true)
-    }
-
-    private fun scheduleNext() {
-        handle = postCouiFrameCallback {
-            handle = null
-            if (!isRunning) return@postCouiFrameCallback
-            val elapsedMs = startMark.elapsedNow().inWholeNanoseconds / 1_000_000.0
-            val rawFraction = if (durationMs <= 0L) 1f else (elapsedMs / durationMs).toFloat().coerceIn(0f, 1f)
-            onUpdate(from + (to - from) * interpolate(rawFraction))
-            if (!isRunning) return@postCouiFrameCallback
-            if (rawFraction >= 1f) {
-                isRunning = false
-                onEnd(false)
-            } else {
-                scheduleNext()
-            }
-        }
     }
 }
