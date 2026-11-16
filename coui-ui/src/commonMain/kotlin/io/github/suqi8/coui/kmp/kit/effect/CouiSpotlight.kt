@@ -4,11 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.effect
 
-import android.graphics.BlendMode
-import android.graphics.Paint
-import android.graphics.RuntimeShader
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
@@ -21,9 +16,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
@@ -31,20 +27,18 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
-import androidx.dynamicanimation.animation.FloatValueHolder
-import androidx.dynamicanimation.animation.SpringAnimation
-import androidx.dynamicanimation.animation.SpringForce
 import io.github.suqi8.coui.kmp.kit.input.isCouiTouchCancelled
-import kotlin.math.PI
-import kotlin.math.pow
+import io.github.suqi8.coui.kmp.kit.motion.CouiSpring
+import io.github.suqi8.coui.kmp.shader.RuntimeShader
+import io.github.suqi8.coui.kmp.shader.asBrush
 
-/** 原厂跟手光预设; 半径及光源高度使用设备像素, 不随 density 换算。 */
+/** Vendor press-following spotlight presets; radii and light height are in device pixels without density scaling. */
 internal enum class SpotlightPreset(
     internal val lightIntensity: Float,
     internal val darkIntensity: Float,
     internal val endRadius: Float,
-    internal val darkBlendMode: BlendMode = BlendMode.OVERLAY,
-    internal val lightBlendMode: BlendMode = BlendMode.OVERLAY,
+    internal val darkBlendMode: BlendMode = BlendMode.Overlay,
+    internal val lightBlendMode: BlendMode = BlendMode.Overlay,
     internal val ambient: Float = 0.4f,
     internal val diffuse: Float = 0.4f,
     internal val noise: Float = 0.08f,
@@ -52,9 +46,9 @@ internal enum class SpotlightPreset(
     TranslucentLarge1(0.6f, 0.1f, 800f),
     OpaqueSmall1(0.6f, 0.5f, 500f),
     OpaqueMedium1(0.6f, 0.8f, 500f),
-    OpaqueSmall2(1f, 0.15f, 500f, BlendMode.PLUS),
-    OpaqueMedium2(1f, 0.15f, 500f, BlendMode.PLUS),
-    ChipTab(0.2f, 0.3f, 600f, BlendMode.SRC_OVER, BlendMode.PLUS, 0.1f, 0.5f, 0f),
+    OpaqueSmall2(1f, 0.15f, 500f, BlendMode.Plus),
+    OpaqueMedium2(1f, 0.15f, 500f, BlendMode.Plus),
+    ChipTab(0.2f, 0.3f, 600f, BlendMode.SrcOver, BlendMode.Plus, 0.1f, 0.5f, 0f),
 }
 
 private data class SpotlightStyle(
@@ -64,7 +58,7 @@ private data class SpotlightStyle(
     val lightHeight: Float,
     val noise: Float,
     val dither: Float,
-    val blendMode: BlendMode = BlendMode.OVERLAY,
+    val blendMode: BlendMode = BlendMode.Overlay,
     val startRadius: Float = 100f,
     val endRadius: Float = 800f,
     val color: Color = Color.White,
@@ -77,10 +71,12 @@ internal sealed interface SpotlightDiagnostic {
 }
 
 /**
- * 只观察触摸, 不拦截点击、滑选或滚动。绘制回调应置于透明前景层, 熄灭后为 null。
- * 必须选择预设和深浅色; 可选参数为 null 时继承预设, 非 null 时只覆盖该项。
- * inputTarget 接收本地触点及是否已有光效会话; 返回 null 时取消会话。
- * cancelOnConsumedMove 用于滚动子项：父容器接管后取消当前会话，直到所有手指抬起都不重新点亮。
+ * Observes touch input without intercepting clicks, drags, or scrolls. The draw callback should
+ * be placed in a transparent foreground layer and becomes null once extinguished.
+ * A preset and light/dark flag are required; optional parameters inherit from the preset when null.
+ * [inputTarget] receives the local touch point and whether a session is active; returning null cancels the session.
+ * [cancelOnConsumedMove] is for scrollable children: cancels the current session once a parent
+ * consumes a move, and stays off until all pointers lift.
  */
 @Composable
 internal fun rememberCouiSpotlight(
@@ -100,7 +96,7 @@ internal fun rememberCouiSpotlight(
     inputTarget: ((Offset, Boolean) -> LayoutCoordinates?)? = null,
     cancelOnConsumedMove: Boolean = false,
     onDiagnostic: (SpotlightDiagnostic) -> Unit = {},
-): Pair<Modifier, (DrawScope.() -> Unit)?> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+): Pair<Modifier, (DrawScope.() -> Unit)?> = if (isKitRuntimeShaderSupported()) {
     val style = SpotlightStyle(
         intensity = intensity ?: if (dark) preset.darkIntensity else preset.lightIntensity,
         ambient = ambient ?: preset.ambient,
@@ -118,7 +114,6 @@ internal fun rememberCouiSpotlight(
     Modifier to null
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun runtimeSpotlight(
     interactive: Boolean,
@@ -139,7 +134,6 @@ private fun runtimeSpotlight(
         derivedStateOf(structuralEqualityPolicy()) { light.progress > 0f }
     }
     val shader = remember { RuntimeShader(SPOTLIGHT_SHADER) }
-    val paint = remember(style.blendMode) { Paint().apply { blendMode = style.blendMode } }
     var inputCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val touchModifier = Modifier
         .onGloballyPositioned { inputCoordinates = it }
@@ -165,7 +159,7 @@ private fun runtimeSpotlight(
                         val wasIdle = activePointer == null
                         val newPointer = event.changes.firstOrNull { it.pressed && !it.previousPressed }
                         val tracked = event.changes.firstOrNull { it.id == activePointer }
-                        // 与 drawable 一致: 新按下的手指接管光源, 抬起后交回仍按下的首指。
+                        // Matches drawable behavior: a newly pressed finger takes over, releasing falls back to the first held pointer.
                         val change = if (newPointer != null) {
                             newPointer
                         } else if (tracked != null && !tracked.pressed) {
@@ -218,11 +212,11 @@ private fun runtimeSpotlight(
         }
     val drawSpotlight: DrawScope.() -> Unit = {
         val progress = light.progress
-        val canvas = drawContext.canvas.nativeCanvas
+        val hardware = drawContext.canvas.isSpotlightHardwareAccelerated()
         if (progress > 0f && size.width > 0f && size.height > 0f) {
-            light.reportDraw(canvas.isHardwareAccelerated, IntSize(size.width.toInt(), size.height.toInt()), progress)
+            light.reportDraw(hardware, IntSize(size.width.toInt(), size.height.toInt()), progress)
         }
-        if (progress > 0f && size.width > 0f && size.height > 0f && canvas.isHardwareAccelerated) {
+        if (progress > 0f && size.width > 0f && size.height > 0f && hardware) {
             val position = light.position
             shader.setFloatUniform("resolution", size.width, size.height)
             shader.setFloatUniform(
@@ -234,13 +228,14 @@ private fun runtimeSpotlight(
             )
             shader.setFloatUniform("u_lightColorAndAmbient", style.color.red, style.color.green, style.color.blue, style.ambient)
             shader.setFloatUniform("u_lightingParams", style.diffuse, style.lightHeight, style.noise, style.dither)
-            // 与 COUISpotLightEffectDrawable 一致, 每帧把更新后的 shader 交给独立 Paint。
-            paint.shader = shader
-            canvas.drawPaint(paint)
+            drawRect(brush = shader.asBrush(), size = size, blendMode = style.blendMode)
         }
     }
     return touchModifier to if (visible) drawSpotlight else null
 }
+
+/** Returns true when this [Canvas] supports runtime shader drawing (hardware-accelerated on Android, always true on Skiko). */
+internal expect fun Canvas.isSpotlightHardwareAccelerated(): Boolean
 
 private class SpotlightState(
     private val startRadius: Float,
@@ -251,33 +246,19 @@ private class SpotlightState(
     private var disposed = false
     private var extinguishing = false
     private var bounds = IntSize.Zero
-    private val progressValue = FloatValueHolder()
-    private val positionXValue = FloatValueHolder()
-    private val positionYValue = FloatValueHolder()
+    private var lastTargetPosition = Offset.Zero
 
-    // COUI 的这条路径与 AndroidX 旧版弹簧一致: 持续重定向, 而不是每个 MOVE 重启动画。
-    private val positionXAnimation = SpringAnimation(positionXValue).apply {
-        spring = createSpring(0.35f, 0.15f)
-        setMinimumVisibleChange(0.0001f)
-        addUpdateListener { _, value, _ -> position = position.copy(x = value) }
-    }
-    private val positionYAnimation = SpringAnimation(positionYValue).apply {
-        spring = createSpring(0.35f, 0.15f)
-        setMinimumVisibleChange(0.0001f)
-        addUpdateListener { _, value, _ -> position = position.copy(y = value) }
-    }
-    private val progressSpring = createSpring(0.15f, 0f)
-    private val progressAnimation = SpringAnimation(progressValue).apply {
-        spring = progressSpring
-        // 保留厂商 0..10000 的原始进度及其终止阈值, 只在绘制时归一化。
-        setMinimumVisibleChange(1f)
-        addUpdateListener { _, value, _ -> updateProgress(value) }
-    }
+    // Matches COUI's legacy AndroidX spring path: continuously retarget instead of restarting on every MOVE.
+    private val positionXSpring = CouiSpring(0f, minimumChange = 0.0001f)
+    private val positionYSpring = CouiSpring(0f, minimumChange = 0.0001f)
+
+    // Keep vendor 0..10000 raw progress and settle threshold, normalizing only when drawing.
+    private val progressSpring = CouiSpring(0f, minimumChange = 1f)
 
     var progress by mutableFloatStateOf(0f)
         private set
-    var position by mutableStateOf(Offset.Zero)
-        private set
+    val position: Offset
+        get() = Offset(positionXSpring.value, positionYSpring.value)
     var radius by mutableFloatStateOf(0f)
         private set
 
@@ -287,13 +268,13 @@ private class SpotlightState(
 
     fun move(target: Offset) {
         if (disposed) return
-        if (progressValue.value == 0f) {
-            positionXValue.value = target.x
-            positionYValue.value = target.y
-            position = target
+        lastTargetPosition = target
+        if (progressSpring.value == 0f) {
+            positionXSpring.snapTo(target.x)
+            positionYSpring.snapTo(target.y)
         } else {
-            positionXAnimation.animateToFinalPosition(target.x)
-            positionYAnimation.animateToFinalPosition(target.y)
+            positionXSpring.animateTo(target.x, response = 0.35f, bounce = 0.15f)
+            positionYSpring.animateTo(target.y, response = 0.35f, bounce = 0.15f)
         }
     }
 
@@ -302,24 +283,32 @@ private class SpotlightState(
         extinguishing = false
         reportNextDraw = true
         onDiagnostic(SpotlightDiagnostic.Pressed)
-        progressSpring.stiffness = responseToStiffness(0.15f)
-        progressAnimation.animateToFinalPosition(10000f)
+        progressSpring.animateTo(
+            target = 10000f,
+            response = 0.15f,
+            bounce = 0f,
+            onFrame = ::updateProgress,
+        )
     }
 
     fun release() {
         if (disposed || extinguishing) return
         extinguishing = true
         onDiagnostic(SpotlightDiagnostic.Released(progress))
-        progressSpring.stiffness = responseToStiffness(0.4f)
-        progressAnimation.animateToFinalPosition(0f)
+        progressSpring.animateTo(
+            target = 0f,
+            response = 0.4f,
+            bounce = 0f,
+            onFrame = ::updateProgress,
+        )
     }
 
     fun dispose() {
-        // 防止 pointerInput 的 finally 在移除节点后重新启动 Choreographer 回调。
+        // Prevent pointerInput's finally block from restarting frame callbacks after node removal.
         disposed = true
-        progressAnimation.cancel()
-        positionXAnimation.cancel()
-        positionYAnimation.cancel()
+        progressSpring.cancel()
+        positionXSpring.cancel()
+        positionYSpring.cancel()
     }
 
     fun reportDraw(hardware: Boolean, size: IntSize, progress: Float) {
@@ -333,12 +322,25 @@ private class SpotlightState(
         if (value == 0f) {
             radius = 0f
             extinguishing = false
-            positionXAnimation.skipToEnd()
-            positionYAnimation.skipToEnd()
+            positionXSpring.snapTo(lastTargetPosition.x)
+            positionYSpring.snapTo(lastTargetPosition.y)
         } else {
             radius = startRadius + (endRadius - startRadius) * progress +
                 if (extinguishing && value > 0f) 2f * endRadius * (1f - progress) else 0f
-            if (spotLightOutOfBounds()) progressAnimation.skipToEnd()
+            if (spotLightOutOfBounds()) {
+                if (extinguishing) {
+                    progressSpring.snapTo(0f)
+                    progress = 0f
+                    radius = 0f
+                    extinguishing = false
+                    positionXSpring.snapTo(lastTargetPosition.x)
+                    positionYSpring.snapTo(lastTargetPosition.y)
+                } else {
+                    progressSpring.snapTo(10000f)
+                    progress = 1f
+                    radius = endRadius
+                }
+            }
         }
     }
 
@@ -348,32 +350,25 @@ private class SpotlightState(
         return x - radius > bounds.width || x + radius < 0f ||
             y - radius > bounds.height || y + radius < 0f
     }
-
-    private fun createSpring(response: Float, bounce: Float): SpringForce = SpringForce().apply {
-        stiffness = responseToStiffness(response)
-        dampingRatio = 1f - bounce
-    }
-
-    private fun responseToStiffness(response: Float): Float = (2.0 * PI / response).pow(2.0).toFloat()
 }
 
-// COUI SpotLight.AGSL_SOURCE, 保留厂商光照和噪声计算。
+// COUI SpotLight.AGSL_SOURCE adapted for cross-platform AGSL/SkSL compilation, preserving vendor lighting and noise math.
 private const val SPOTLIGHT_SHADER = """
-uniform vec4 u_lightPosAndHeight;
-uniform vec4 u_lightColorAndAmbient;
-uniform vec4 u_lightingParams;
-uniform vec2 resolution;
+uniform float4 u_lightPosAndHeight;
+uniform float4 u_lightColorAndAmbient;
+uniform float4 u_lightingParams;
+uniform float2 resolution;
 
-float luminance(vec3 c) {
-    return dot(c, vec3(0.299, 0.587, 0.114));
+float luminance(float3 c) {
+    return dot(c, float3(0.299, 0.587, 0.114));
 }
 
-float max3(vec3 v) {
+float max3(float3 v) {
     return max(max(v.r, v.g), v.b);
 }
 
-float noise(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+float noise(float2 p) {
+    return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
 }
 
 float softLight(float A, float B) {
@@ -382,9 +377,9 @@ float softLight(float A, float B) {
     return mix(l, h, step(0.5, A));
 }
 
-float dither(vec2 coord, float ditherN) {
-    float n1 = fract(sin(dot(coord, vec2(12.9898, 78.233))) * 43758.5453);
-    float n2 = fract(sin(dot(coord + vec2(1.0), vec2(12.9898, 78.233))) * 43758.5453);
+float dither(float2 coord, float ditherN) {
+    float n1 = fract(sin(dot(coord, float2(12.9898, 78.233))) * 43758.5453);
+    float n2 = fract(sin(dot(coord + float2(1.0), float2(12.9898, 78.233))) * 43758.5453);
     return (n1 + n2 - 1.0) * ditherN / 255.0;
 }
 
@@ -393,7 +388,7 @@ half4 main(float2 fragCoord) {
     float radius = u_lightPosAndHeight.z;
     float intensity = u_lightPosAndHeight.w;
 
-    vec3 lightCol = u_lightColorAndAmbient.rgb;
+    float3 lightCol = u_lightColorAndAmbient.rgb;
     float ambientStr = u_lightColorAndAmbient.w;
     float diffuseStr = u_lightingParams.x;
     float lightH = u_lightingParams.y;
@@ -401,14 +396,14 @@ half4 main(float2 fragCoord) {
     float ditherN = u_lightingParams.w;
     const float lightIntensity = 1.5;
 
-    vec2 delta = fragCoord - lightP;
-    vec3 L = vec3(delta, lightH);
+    float2 delta = fragCoord - lightP;
+    float3 L = float3(delta, lightH);
     float dist = length(L);
     L = normalize(L);
 
-    vec3 N = vec3(0.0, 0.0, 1.0);
+    float3 N = float3(0.0, 0.0, 1.0);
     float diff = max(dot(N, L), 0.0);
-    vec3 lighting = (ambientStr + diffuseStr * diff) * lightCol;
+    float3 lighting = (ambientStr + diffuseStr * diff) * lightCol;
     if (dist >= radius) {
         return half4(0.0, 0.0, 0.0, 0.0);
     }
@@ -418,24 +413,24 @@ half4 main(float2 fragCoord) {
     float alpha = clamp(luminance(lighting), 0.0, 1.0);
 
     float postOn = max(step(0.001, noise_exp), step(0.001, ditherN));
-    vec3 postLighting = lighting;
+    float3 postLighting = lighting;
     float postAlpha = alpha;
 
     float noiseOn = step(0.001, noise_exp);
-    vec2 uv_pos = fragCoord * 9.259e-4;
+    float2 uv_pos = fragCoord * 9.259e-4;
     float n = clamp((noise(uv_pos) - 0.5) * noise_exp + 0.5, 0.0, 1.0);
     float mask = max3(postLighting);
     float fadeAlpha = clamp(softLight(n, mask), 0.0, 1.0);
     float noiseDelta = clamp(abs(fadeAlpha - mask), 0.0, 1.0);
-    postLighting += vec3(noiseDelta) * noiseOn;
+    postLighting += float3(noiseDelta) * noiseOn;
 
     float ditherOn = step(0.001, ditherN);
     float d = dither(fragCoord, ditherN);
-    postLighting += vec3(d) * ditherOn;
+    postLighting += float3(d) * ditherOn;
     postAlpha = mix(postAlpha, clamp(postAlpha + d, 0.0, 1.0), ditherOn);
 
     lighting = mix(lighting, postLighting, postOn);
     alpha = mix(alpha, postAlpha, postOn);
-    return half4(lighting, alpha);
+    return half4(lighting.x, lighting.y, lighting.z, alpha);
 }
 """

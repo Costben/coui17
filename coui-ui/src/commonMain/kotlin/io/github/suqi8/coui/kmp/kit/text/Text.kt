@@ -6,16 +6,12 @@ package io.github.suqi8.coui.kmp.kit.text
 
 // Ported from COUI-Kit (ItosEO/COUI-Kit@8a09da4) coui/src/main/java/com/itos/coui/text/Text.kt.
 
-import android.content.res.Configuration
-import android.graphics.Typeface
-import android.os.Build
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -24,7 +20,7 @@ import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.kit.theme.CouiTheme
 import kotlin.math.roundToInt
 
-/** COUI 语义排版预设；宿主可通过 rememberCouiTextStyle 用于 Compose 文本与编辑框。 */
+/** COUI semantic typography presets; hosts can pass [rememberCouiTextStyle] to Compose text and editors. */
 internal enum class CouiTextKind(val size: Float, val family: String, val weight: Int) {
     PreferenceTitle(16f, "sans-serif-medium", 500),
     PreferenceSummary(13f, "sans-serif", 400),
@@ -43,7 +39,7 @@ internal enum class CouiTextKind(val size: Float, val family: String, val weight
     Description(12f, "sans-serif", 400),
 }
 
-/** 系统资源决定排版；正文与说明默认起始对齐，行数和溢出交给 BasicText 处理。 */
+/** System resources drive typography; body and description default to start alignment while line count and overflow are handled by [BasicText]. */
 @Composable
 internal fun Text(
     modifier: Modifier = Modifier,
@@ -79,26 +75,19 @@ internal fun Text(
 
 @Composable
 internal fun rememberCouiTextStyle(kind: CouiTextKind): TextStyle {
-    val configuration = LocalConfiguration.current
     val density = LocalDensity.current
-    return remember(kind, configuration, density) {
-        val familyTypeface = Typeface.create(kind.family, Typeface.NORMAL)
-        val typeface = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            Typeface.create(familyTypeface, kind.weight, false)
-        } else {
-            val style = if (kind.weight >= 600) Typeface.BOLD else Typeface.NORMAL
-            Typeface.create(familyTypeface, style)
-        }
+    val fontScale = rememberCouiTextFontScale()
+    return remember(kind, density, fontScale) {
         val fixedDp = kind == CouiTextKind.Toolbar || kind == CouiTextKind.PageTitle || kind == CouiTextKind.PreferenceValue
         val pixels = if (fixedDp) {
             kind.size * density.density
         } else {
-            couiTextSize(kind, configuration) {
+            couiTextSize(kind, fontScale) {
                 with(density) { it.sp.toPx() }
             }
         }
         couiTextStyle(
-            typeface = typeface,
+            familyName = kind.family,
             weight = kind.weight,
             pixels = pixels,
             lineSpacing = couiLineSpacing(kind),
@@ -108,29 +97,17 @@ internal fun rememberCouiTextStyle(kind: CouiTextKind): TextStyle {
     }
 }
 
-private fun couiTextSize(kind: CouiTextKind, configuration: Configuration, spToPx: (Float) -> Float): Float {
+private fun couiTextSize(kind: CouiTextKind, fontScale: Float, spToPx: (Float) -> Float): Float {
     val pixels = spToPx(kind.size).roundToInt().toFloat()
     if (kind == CouiTextKind.SearchCancel) {
-        val base = (pixels / configuration.fontScale).roundToInt()
-        return base * if (configuration.fontScale < 1.15f) 1f else 1.15f
+        val safeScale = if (fontScale > 0f) fontScale else 1f
+        val base = (pixels / safeScale).roundToInt()
+        return base * if (safeScale < 1.15f) 1f else 1.15f
     }
     return pixels
 }
 
-private fun couiLineSpacing(kind: CouiTextKind): Float = when (kind) {
-    CouiTextKind.Category -> 1f
-    CouiTextKind.GroupTitle -> if (Build.VERSION.SDK_INT >= 35) 1.143f else 1f
-    CouiTextKind.Description -> if (Build.VERSION.SDK_INT >= 35) 1.143f else 1f
-    CouiTextKind.Stepper -> if (Build.VERSION.SDK_INT >= 35) 1.1429f else 1.15f
-    CouiTextKind.Progress -> if (Build.VERSION.SDK_INT >= 35) 1.2245f else 1.1f
-    CouiTextKind.PreferenceTitle -> if (Build.VERSION.SDK_INT >= 35) 1.158f else 1.05f
-    CouiTextKind.Toolbar -> if (Build.VERSION.SDK_INT >= 35) 1.1429f else 1.15f
-    CouiTextKind.PreferenceSummary -> if (Build.VERSION.SDK_INT >= 35) 1.1739f else 1.1f
-    CouiTextKind.PageTitle -> 1f
-    CouiTextKind.SectionTitle -> if (Build.VERSION.SDK_INT >= 35) 1.1429f else 1.15f
-    CouiTextKind.Body -> 1.1321f
-    CouiTextKind.HomeTitle -> 1f
-    CouiTextKind.Search -> if (Build.VERSION.SDK_INT >= 35) 1.1321f else 1.1f
-    CouiTextKind.SearchCancel -> if (Build.VERSION.SDK_INT >= 35) 1.2245f else 1.1f
-    CouiTextKind.PreferenceValue -> if (Build.VERSION.SDK_INT >= 35) 1.2245f else 1.1f
-}
+@Composable
+internal expect fun rememberCouiTextFontScale(): Float
+
+internal expect fun couiLineSpacing(kind: CouiTextKind): Float

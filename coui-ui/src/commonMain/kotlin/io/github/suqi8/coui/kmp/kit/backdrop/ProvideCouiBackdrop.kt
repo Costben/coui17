@@ -10,7 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 
 internal val LocalCouiBackdrop = staticCompositionLocalOf<CouiBackdrop?> { null }
 
-/** 提供页面正文采样源；宿主仍须将 couiBackdrop 挂到唯一正文节点，并排除其消费者。 */
+/** Provides a content backdrop source; the host must attach couiBackdrop to one content node excluding consumers. */
 @Composable
 internal fun ProvideCouiBackdrop(backdrop: CouiBackdrop, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalCouiBackdrop provides backdrop, content = content)

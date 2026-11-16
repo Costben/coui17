@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.ceil
 
-/** 配置当前背景的离屏效果, size 不包含 padding, 单位为设备像素。 */
+/** Configures offscreen effects for the current backdrop; [size] excludes [padding] and is in device pixels. */
 internal class CouiBackdropEffectScope internal constructor(internal val recordingDensity: Density) : Density by recordingDensity {
     var size: Size = Size.Zero
         internal set
@@ -44,7 +44,7 @@ internal class CouiBackdropEffectScope internal constructor(internal val recordi
     }
 }
 
-/** 仅采样层应用效果；shape 裁剪采样、surface 与子内容。内部图层和坐标逐节点持有。 */
+/** Applies effects only to the sampling layer; [shape] clips sampling, surface, and child content per node. */
 @Composable
 internal fun Modifier.drawCouiBackdrop(
     backdrop: CouiBackdrop,
@@ -81,7 +81,7 @@ private data class DrawBackdropElement(
     }
 }
 
-/** 均匀与渐进背景共用采样、录制和内容层序；各节点独立拥有可变资源。 */
+/** Shared sampling, recording, and layer order for uniform and progressive backdrops; each node owns its mutable state. */
 internal open class DrawCouiBackdropNode(
     var backdrop: CouiBackdrop,
     var effects: CouiBackdropEffectScope.() -> Unit = {},

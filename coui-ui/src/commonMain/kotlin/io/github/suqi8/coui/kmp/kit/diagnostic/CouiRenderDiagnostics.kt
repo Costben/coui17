@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.diagnostic
 
-import android.os.SystemClock
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
@@ -16,13 +15,13 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlin.time.TimeSource
 
-/** 临时绘制取证入口; 由 App 仅在 canary 启用, 所有操作在主线程执行。 */
+/** Temporary render diagnostics entry point; enabled by the app only in canary builds, always called on main thread. */
 internal object CouiRenderDiagnostics {
     private class Source(val id: String, val backdrop: CouiBackdrop, val redraw: () -> Unit)
 
+    private val clockOrigin = TimeSource.Monotonic.markNow()
     private var reporter: ((String) -> Unit)? = null
     private var nextId = 0L
     private val sources = linkedMapOf<CouiBackdrop, Source>()
@@ -31,6 +30,8 @@ internal object CouiRenderDiagnostics {
 
     val enabled: Boolean get() = reporter != null
 
+    internal fun uptimeMs(): Long = clockOrigin.elapsedNow().inWholeMilliseconds
+
     fun enable(reporter: (String) -> Unit) {
         this.reporter = reporter
         event("enable")
@@ -38,29 +39,35 @@ internal object CouiRenderDiagnostics {
 
     fun event(message: String) {
         if (!enabled) return
-        val entry = "${SystemClock.uptimeMillis()} $message"
+        val entry = "${uptimeMs()} $message"
         if (events.size == 64) events.removeFirst()
         events.addLast(entry)
         reporter?.invoke(entry)
     }
 
-    fun snapshot(): JSONObject = JSONObject()
-        .put("uptimeMs", SystemClock.uptimeMillis())
+    fun snapshot(): String = CouiDiagnosticJsonObject()
+        .put("uptimeMs", uptimeMs())
         .put(
             "sources",
-            JSONArray().apply {
+            CouiDiagnosticJsonArray().apply {
                 sources.values.forEach { source ->
-                    put(source.backdrop.diagnosticState().put("id", source.id))
+                    put(source.backdrop.diagnosticStateJson().put("id", source.id))
                 }
             },
         )
         .put(
             "probes",
-            JSONArray().apply {
-                probes.forEach { (node, id) -> put(node.snapshot().put("id", id)) }
+            CouiDiagnosticJsonArray().apply {
+                probes.forEach { (node, id) -> put(node.snapshotJson().put("id", id)) }
             },
         )
-        .put("events", JSONArray(events.toList()))
+        .put(
+            "events",
+            CouiDiagnosticJsonArray().apply {
+                events.forEach { put(it) }
+            },
+        )
+        .toJsonString()
 
     fun sourceIds(target: String): List<String> = selectedSources(target).map { it.id }
 
@@ -69,7 +76,7 @@ internal object CouiRenderDiagnostics {
     fun redraw(target: String) {
         val selectedSources = sources.values.filter { target == it.id || target == it.backdrop.diagnosticName }
         val selectedProbes = probes.keys.filter { matches(it.name, target) }
-        require(selectedSources.isNotEmpty() || selectedProbes.isNotEmpty()) { "没有匹配的绘制目标: $target" }
+        require(selectedSources.isNotEmpty() || selectedProbes.isNotEmpty()) { "No matching render targets: $target" }
         selectedSources.forEach { it.redraw() }
         selectedProbes.forEach { it.invalidateDraw() }
         event("redraw target=$target sources=${selectedSources.size} probes=${selectedProbes.size}")
@@ -83,7 +90,7 @@ internal object CouiRenderDiagnostics {
 
     fun setBottomHidden(hidden: Boolean) {
         val selected = probes.keys.filter { it.name == "bottom-bar" }
-        require(selected.isNotEmpty()) { "当前没有底栏绘制节点" }
+        require(selected.isNotEmpty()) { "No active bottom-bar render probe" }
         selected.forEach {
             it.hidden = hidden
             it.invalidateDraw()
@@ -125,14 +132,14 @@ internal object CouiRenderDiagnostics {
         val selected = sources.values.filter {
             target == "all" || target == it.id || target == it.backdrop.diagnosticName
         }
-        require(selected.isNotEmpty()) { "没有匹配的采样层: $target" }
+        require(selected.isNotEmpty()) { "No matching sampling layers: $target" }
         return selected
     }
 
     private fun matches(name: String, target: String): Boolean = name == target || name.startsWith("$target/")
 }
 
-/** 位于裁剪层内的节点用于定点重绘; bottom-bar 额外支持暂停绘制, 不改布局或点击。 */
+/** Placed inside clipped layers for targeted redraws; bottom-bar also supports draw suppression without altering layout or hits. */
 internal fun Modifier.renderDiagnosticProbe(name: String?): Modifier = if (name == null || !CouiRenderDiagnostics.enabled) this else then(RenderProbeElement(name))
 
 private data class RenderProbeElement(val name: String) : ModifierNodeElement<RenderProbeNode>() {
@@ -170,24 +177,104 @@ internal class RenderProbeNode(var name: String) :
 
     override fun ContentDrawScope.draw() {
         drawCount++
-        lastDrawMs = SystemClock.uptimeMillis()
+        lastDrawMs = CouiRenderDiagnostics.uptimeMs()
         if (!hidden) drawContent()
     }
 
-    fun snapshot(): JSONObject = JSONObject()
+    fun snapshotJson(): CouiDiagnosticJsonObject = CouiDiagnosticJsonObject()
         .put("name", name)
         .put("drawCount", drawCount)
         .put("lastDrawMs", lastDrawMs)
         .put("hidden", hidden)
         .put("coordinates", diagnosticCoordinates(coordinates))
+
+    fun snapshot(): String = snapshotJson().toJsonString()
 }
 
-internal fun diagnosticCoordinates(coordinates: LayoutCoordinates?): Any {
-    if (coordinates?.isAttached != true) return JSONObject.NULL
+internal fun diagnosticCoordinates(coordinates: LayoutCoordinates?): CouiDiagnosticJsonObject? {
+    if (coordinates?.isAttached != true) return null
     val origin = coordinates.localToScreen(Offset.Zero)
-    return JSONObject()
+    return CouiDiagnosticJsonObject()
         .put("width", coordinates.size.width)
         .put("height", coordinates.size.height)
-        .put("screenX", if (origin.x.isFinite()) origin.x.toDouble() else JSONObject.NULL)
-        .put("screenY", if (origin.y.isFinite()) origin.y.toDouble() else JSONObject.NULL)
+        .put("screenX", if (origin.x.isFinite()) origin.x.toDouble() else null)
+        .put("screenY", if (origin.y.isFinite()) origin.y.toDouble() else null)
+}
+
+internal class CouiDiagnosticJsonObject {
+    private val entries = linkedMapOf<String, String>()
+
+    fun put(key: String, value: String?): CouiDiagnosticJsonObject = apply {
+        entries[key] = if (value == null) "null" else quoteJsonString(value)
+    }
+
+    fun put(key: String, value: Boolean): CouiDiagnosticJsonObject = apply {
+        entries[key] = value.toString()
+    }
+
+    fun put(key: String, value: Number?): CouiDiagnosticJsonObject = apply {
+        entries[key] = formatJsonNumber(value)
+    }
+
+    fun put(key: String, value: CouiDiagnosticJsonObject?): CouiDiagnosticJsonObject = apply {
+        entries[key] = value?.toJsonString() ?: "null"
+    }
+
+    fun put(key: String, value: CouiDiagnosticJsonArray): CouiDiagnosticJsonObject = apply {
+        entries[key] = value.toJsonString()
+    }
+
+    fun toJsonString(): String = entries.entries.joinToString(prefix = "{", postfix = "}", separator = ",") { (k, v) ->
+        "${quoteJsonString(k)}:$v"
+    }
+
+    override fun toString(): String = toJsonString()
+}
+
+internal class CouiDiagnosticJsonArray {
+    private val items = mutableListOf<String>()
+
+    fun put(value: String?): CouiDiagnosticJsonArray = apply {
+        items += if (value == null) "null" else quoteJsonString(value)
+    }
+
+    fun put(value: CouiDiagnosticJsonObject): CouiDiagnosticJsonArray = apply {
+        items += value.toJsonString()
+    }
+
+    fun toJsonString(): String = items.joinToString(prefix = "[", postfix = "]", separator = ",")
+
+    override fun toString(): String = toJsonString()
+}
+
+private fun formatJsonNumber(value: Number?): String = when (value) {
+    null -> "null"
+    is Double -> if (value.isFinite()) value.toString() else "null"
+    is Float -> if (value.isFinite()) value.toString() else "null"
+    else -> value.toString()
+}
+
+private fun quoteJsonString(value: String): String = buildString(value.length + 2) {
+    append('"')
+    for (ch in value) {
+        val escaped = when (ch) {
+            '"' -> "\\\""
+            '\\' -> "\\\\"
+            '\b' -> "\\b"
+            '\u000C' -> "\\f"
+            '\n' -> "\\n"
+            '\r' -> "\\r"
+            '\t' -> "\\t"
+            else -> null
+        }
+        if (escaped != null) {
+            append(escaped)
+        } else if (ch < ' ') {
+            append("\\u")
+            append(ch.code.toString(16).padStart(4, '0'))
+        } else {
+            append(ch)
+        }
+    }
+    append('"')
 }

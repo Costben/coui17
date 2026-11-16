@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.effect
 
-import android.animation.ArgbEvaluator
-import android.view.ViewTreeObserver
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.hoverable
@@ -29,20 +27,20 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import io.github.suqi8.coui.kmp.kit.input.isCouiTouchCancelled
 import io.github.suqi8.coui.kmp.kit.theme.CouiTheme
 
-/** 导航项过滤 state_pressed, COUIMaskRippleDrawable 实际只绘 hover -> focus。 */
+/** Navigation items filter out state_pressed; COUIMaskRippleDrawable only draws hover -> focus. */
 @Composable
 internal fun Modifier.couiNavigationFeedback(
     dark: Boolean,
@@ -56,23 +54,23 @@ internal fun Modifier.couiNavigationFeedback(
     return hoverable(interactionSource).drawBehind {
         val radius = size.height * 0.5f
         val maskSize = Size(size.width + inset * 2f, size.height)
-        drawRoundRect(maskColor(hover.value, if (dark) 0x26FFFFFF else 0x14000000), Offset(-inset, 0f), maskSize, CornerRadius(radius))
-        drawRoundRect(maskColor(focus.value, if (dark) 0x331A8CFF else 0x1F0080FF), Offset(-inset, 0f), maskSize, CornerRadius(radius))
+        drawRoundRect(maskColor(hover.value, Color(if (dark) 0x26FFFFFF else 0x14000000)), Offset(-inset, 0f), maskSize, CornerRadius(radius))
+        drawRoundRect(maskColor(focus.value, Color(if (dark) 0x331A8CFF else 0x1F0080FF)), Offset(-inset, 0f), maskSize, CornerRadius(radius))
     }
 }
 
-/** COUIFloatingButton 启用材质模糊时关闭 press mask, 保留 hover; 按压形变独立处理。 */
+/** COUIFloatingButton disables the press mask when material blur is active while keeping hover; press scale is handled separately. */
 @Composable
 internal fun Modifier.couiFabFeedback(dark: Boolean, interactionSource: MutableInteractionSource): Modifier {
     val hovered by interactionSource.collectIsHoveredAsState()
     val hover = rememberMaskProgress(hovered)
     return hoverable(interactionSource).drawBehind {
         val radius = CornerRadius(size.minDimension * 0.5f)
-        drawRoundRect(maskColor(hover.value, if (dark) 0x26FFFFFF else 0x14000000), cornerRadius = radius)
+        drawRoundRect(maskColor(hover.value, Color(if (dark) 0x26FFFFFF else 0x14000000)), cornerRadius = radius)
     }
 }
 
-/** 原厂顶栏材质过滤 pressed 通知, 仅保留 hover/focus 蒙层; 按压形变独立处理。 */
+/** Vendor toolbar material filters pressed notifications and keeps only hover/focus masks; press scale is handled separately. */
 @Composable
 internal fun Modifier.couiToolbarFeedback(
     dark: Boolean,
@@ -85,8 +83,8 @@ internal fun Modifier.couiToolbarFeedback(
     val focus = rememberMaskProgress(enabled && focused)
     return hoverable(interactionSource, enabled).drawBehind {
         val radius = CornerRadius(size.minDimension * 0.5f)
-        drawRoundRect(maskColor(hover.value, if (dark) 0x26FFFFFF else 0x14000000), cornerRadius = radius)
-        drawRoundRect(maskColor(focus.value, if (dark) 0x331A8CFF else 0x1F0080FF), cornerRadius = radius)
+        drawRoundRect(maskColor(hover.value, Color(if (dark) 0x26FFFFFF else 0x14000000)), cornerRadius = radius)
+        drawRoundRect(maskColor(focus.value, Color(if (dark) 0x331A8CFF else 0x1F0080FF)), cornerRadius = radius)
     }
 }
 
@@ -99,10 +97,10 @@ private fun rememberMaskProgress(active: Boolean): State<Float> {
 }
 
 /**
- * 普通按钮或列表的 hover、focus、press 蒙层；不创建点击或业务提交。
- * list 选择原厂列表的最低按压进度及取消规则，hoverLocked 用于 Popup 展开期间的行悬停。
- * pressFeedback 同时控制普通与列表按压；关闭时释放当前按压动画，不影响 hover/focus。
- * 宿主将同一 interactionSource 交给唯一的 clickable / toggleable owner，并自行提供外部裁剪。
+ * Hover, focus, and press mask for regular buttons or list items; does not trigger clicks or business actions.
+ * [list] selects the vendor list minimum press progress and cancellation rules; [hoverLocked] keeps row hover during Popup expansion.
+ * [pressFeedback] controls both regular and list press masks; disabling it releases any active press animation without affecting hover/focus.
+ * The host shares the same [interactionSource] with the sole clickable/toggleable owner and handles outer clipping.
  */
 @Composable
 internal fun Modifier.couiButtonFeedback(
@@ -121,15 +119,10 @@ internal fun Modifier.couiButtonFeedback(
     val listPress = if (list && pressFeedback) remember { CouiListPressMask() } else null
     if (listPress != null) {
         SideEffect { listPress.updateState(enabled, pressed) }
-        val view = LocalView.current
-        DisposableEffect(listPress, view) {
-            val listener = ViewTreeObserver.OnWindowFocusChangeListener { focused -> if (!focused) listPress.release() }
-            view.viewTreeObserver.addOnWindowFocusChangeListener(listener)
-            onDispose {
-                if (view.viewTreeObserver.isAlive) view.viewTreeObserver.removeOnWindowFocusChangeListener(listener)
-                listPress.dispose()
-            }
+        DisposableEffect(listPress) {
+            onDispose { listPress.dispose() }
         }
+        ObserveWindowFocusLost(listPress) { listPress.release() }
     }
     val press = if (listPress == null) rememberMaskProgress(enabled && pressed && pressFeedback) else null
     val observer = if (listPress != null && enabled) {
@@ -154,13 +147,13 @@ internal fun Modifier.couiButtonFeedback(
         Modifier
     }
     return hoverable(interactionSource, enabled).then(observer).drawBehind {
-        drawRect(maskColor(hover.value, if (dark) 0x26FFFFFF else 0x14000000))
-        drawRect(maskColor(focus.value, if (dark) 0x331A8CFF else 0x1F0080FF))
-        drawRect(maskColor(listPress?.progress ?: checkNotNull(press).value, if (dark) 0x33FFFFFF else 0x1F000000))
+        drawRect(maskColor(hover.value, Color(if (dark) 0x26FFFFFF else 0x14000000)))
+        drawRect(maskColor(focus.value, Color(if (dark) 0x331A8CFF else 0x1F0080FF)))
+        drawRect(maskColor(listPress?.progress ?: checkNotNull(press).value, Color(if (dark) 0x33FFFFFF else 0x1F000000)))
     }
 }
 
-/** COUISwitch 的 hover/press 蒙层；触摸会话与点击识别取消分别收尾。 */
+/** Hover and press mask for COUISwitch; touch session and click recognition cancellation settle separately. */
 @Composable
 internal fun Modifier.couiSwitchFeedback(
     dark: Boolean,
@@ -174,13 +167,13 @@ internal fun Modifier.couiSwitchFeedback(
     val press = rememberMaskProgress(enabled && (pressed || touchPressed))
     return hoverable(interactionSource, enabled).drawBehind {
         if (enabled) {
-            drawRect(maskColor(hover.value, if (dark) 0x26FFFFFF else 0x14000000))
-            drawRect(maskColor(press.value, if (dark) 0x33FFFFFF else 0x1F000000))
+            drawRect(maskColor(hover.value, Color(if (dark) 0x26FFFFFF else 0x14000000)))
+            drawRect(maskColor(press.value, Color(if (dark) 0x33FFFFFF else 0x1F000000)))
         }
     }
 }
 
-/** COUIStrokeDrawable 的 TYPE_OUTER：沿项目形状画双倍笔宽，再裁掉轨道内部。 */
+/** TYPE_OUTER of COUIStrokeDrawable: strokes double width along the item shape, then clips out the track interior. */
 @Composable
 internal fun Modifier.couiSwitchFocusOutline(
     interactionSource: MutableInteractionSource,
@@ -191,20 +184,31 @@ internal fun Modifier.couiSwitchFocusOutline(
     val focused by interactionSource.collectIsFocusedAsState()
     val focus = rememberMaskProgress(enabled && focused)
     return drawWithCache {
-        val path = (shape.createOutline(size, layoutDirection, this) as Outline.Generic).path
-        // getDimensionPixelOffset(default_focus_stroke_radius) 先取整；外半笔宽为 3dp。
+        val path = when (val outline = shape.createOutline(size, layoutDirection, this)) {
+            is Outline.Generic -> outline.path
+            is Outline.Rounded -> Path().apply { addRoundRect(outline.roundRect) }
+            is Outline.Rectangle -> Path().apply { addRect(outline.rect) }
+        }
+        // getDimensionPixelOffset(default_focus_stroke_radius) truncates to int first; outer half stroke width is 3dp.
         val stroke = Stroke(3.dp.toPx().toInt() * 2f)
         onDrawBehind {
             if (enabled) {
                 clipPath(path, ClipOp.Difference) {
-                    drawPath(path, maskColor(focus.value, color.toArgb()), style = stroke)
+                    drawPath(path, maskColor(focus.value, color), style = stroke)
                 }
             }
         }
     }
 }
 
-/** ListSelectedItemLayout 的容器蒙层：DOWN 立即启动，短点按/CANCEL 达到 .7 再退场。 */
+/** Observes window focus loss on the current platform and invokes [onFocusLost]. */
+@Composable
+internal expect fun ObserveWindowFocusLost(
+    key: Any?,
+    onFocusLost: () -> Unit,
+)
+
+/** Container mask for ListSelectedItemLayout: starts on DOWN, reaches .7 on short tap/CANCEL before exiting. */
 private class CouiListPressMask {
     private val effect = CouiStateProgress()
     val progress: Float get() = effect.value
@@ -239,7 +243,7 @@ private class CouiListPressMask {
         effect.reset()
     }
 
-    // Activity 转场会失焦，但仍在绘制。沿原厂 touch exit 完成最低进度与退场，不能跳到零。
+    // Activity transitions drop window focus while still drawing. Complete minimum press and touch exit instead of snapping to zero.
     fun release() {
         touched = false
         semanticPressed = false
@@ -253,6 +257,4 @@ private class CouiListPressMask {
     }
 }
 
-private val MaskEvaluator = ArgbEvaluator()
-
-private fun maskColor(progress: Float, target: Int): Color = Color(MaskEvaluator.evaluate(progress.coerceIn(0f, 1f), 0, target) as Int)
+private fun maskColor(progress: Float, target: Color): Color = lerp(Color.Transparent, target, progress.coerceIn(0f, 1f))

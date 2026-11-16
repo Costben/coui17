@@ -54,7 +54,7 @@ internal object CouiTopAppBarDefaults {
         )
     }
 
-    /** 记住可恢复的折叠状态；canScroll 读取正文实际滚动范围。 */
+    /** Remembers a restorable collapsing scroll behavior; [canScroll] reads the content's scrollable range. */
     @Composable
     fun exitUntilCollapsedScrollBehavior(canScroll: () -> Boolean = { true }): CouiTopAppBarScrollBehavior {
         val state = rememberCouiCollapsingAppBarState(canScroll)

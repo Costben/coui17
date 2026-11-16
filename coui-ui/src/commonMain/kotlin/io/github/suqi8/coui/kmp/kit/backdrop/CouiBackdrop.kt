@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.backdrop
 
-import android.os.SystemClock
-import android.view.ViewTreeObserver
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -34,7 +32,6 @@ import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.GlobalPositionAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.invalidateDraw
-import androidx.compose.ui.node.requireView
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Density
 import io.github.suqi8.coui.kmp.blur.Backdrop
@@ -42,11 +39,11 @@ import io.github.suqi8.coui.kmp.blur.InternalCouiBlurApi
 import io.github.suqi8.coui.kmp.blur.acquireBackdropSampling
 import io.github.suqi8.coui.kmp.blur.isReadyForSampling
 import io.github.suqi8.coui.kmp.blur.releaseBackdropSampling
+import io.github.suqi8.coui.kmp.kit.diagnostic.CouiDiagnosticJsonObject
 import io.github.suqi8.coui.kmp.kit.diagnostic.CouiRenderDiagnostics
 import io.github.suqi8.coui.kmp.kit.diagnostic.diagnosticCoordinates
-import org.json.JSONObject
 
-/** 每个源只挂到一个内容节点, 该子树不得采样自身。parent 用于叠加所属窗口。 */
+/** Attach each source to a single content node that does not sample itself; [parent] stacks the owning window. */
 @Composable
 internal fun rememberCouiBackdrop(
     parent: CouiBackdrop? = null,
@@ -63,7 +60,7 @@ internal fun rememberCouiBackdrop(
 
 internal fun Modifier.couiBackdrop(backdrop: CouiBackdrop): Modifier = then(BackdropElement(backdrop))
 
-/** 只持有源图层和坐标, 不持有效果、组件动画或输入状态。 */
+/** Holds only the source layer and coordinates without effect, animation, or input state. */
 @OptIn(InternalCouiBlurApi::class)
 internal class CouiBackdrop internal constructor(
     private val layer: GraphicsLayer?,
@@ -104,7 +101,7 @@ internal class CouiBackdrop internal constructor(
     private val redrawSignal = mutableStateOf(Unit, neverEqualPolicy())
     private val sourceToTarget = Matrix()
 
-    // 首次采样可能先于源绘制, 就绪状态必须唤醒已等待的消费者。
+    // Initial sampling may run before the source draws; readiness state wakes waiting consumers.
     private var recorded by mutableStateOf(false)
     internal var coordinates: LayoutCoordinates? by mutableStateOf(null, neverEqualPolicy())
 
@@ -120,7 +117,7 @@ internal class CouiBackdrop internal constructor(
         updateCompositingStrategy()
     }
 
-    /** 材质组合在退出动画期间仍须存在, 源及父链随该组合成对保留和释放。 */
+    /** Material surfaces outlive exit transitions, so source and parent chain retention stays paired to composition. */
     @Composable
     internal fun RetainWhileComposed() {
         val delegate = backdropDelegate
@@ -154,7 +151,7 @@ internal class CouiBackdrop internal constructor(
             delegate.releaseBackdropSampling()
             return
         }
-        check(activeConsumers > 0) { "背景源消费者必须成对释放" }
+        check(activeConsumers > 0) { "Backdrop consumers must be released in pairs" }
         activeConsumers--
         parent?.release()
         updateCompositingStrategy()
@@ -163,7 +160,7 @@ internal class CouiBackdrop internal constructor(
     private fun updateCompositingStrategy() {
         val l = layer ?: return
         if (l.isReleased) return
-        // 保留源的指令、坐标和裁剪; 有消费者时仍先按原分辨率栅格化一次。
+        // Keep source commands, coordinates, and clip; rasterize at native resolution while consumers are active.
         l.compositingStrategy = if (isolateWhenIdle || activeConsumers > 0) {
             CompositingStrategy.Offscreen
         } else {
@@ -171,7 +168,7 @@ internal class CouiBackdrop internal constructor(
         }
     }
 
-    /** 目标 DrawScope 原点须对应 target; 扩展采样区由调用方平移。 */
+    /** Target [DrawScope] origin must align with [target]; extended sampling regions are translated by the caller. */
     fun draw(scope: DrawScope, target: LayoutCoordinates) {
         val delegate = backdropDelegate
         if (delegate != null) {
@@ -191,7 +188,7 @@ internal class CouiBackdrop internal constructor(
         val source = coordinates ?: return
         val l = layer ?: return
         if (!recorded || !source.isAttached || !target.isAttached) return
-        // 同窗口沿用 RenderNode 依赖更新; 仅跨窗口订阅 PreDraw, 避免持续驱动页面重绘。
+        // Same-window sampling relies on RenderNode dependency tracking; cross-window subscribes to PreDraw.
         if (source.findRootCoordinates() !== target.findRootCoordinates()) redrawSignal.value
         val width = source.size.width.toFloat()
         val height = source.size.height.toFloat()
@@ -202,7 +199,7 @@ internal class CouiBackdrop internal constructor(
         if (!origin.isFinite || !right.isFinite || !bottom.isFinite) return
         val xAxis = (right - origin) / width
         val yAxis = (bottom - origin) / height
-        // shortcut: 仅支持二维仿射; 组件引入三维翻转时需使用完整投影矩阵。
+        // Shortcut: supports 2D affine transforms only; 3D component flips require a full projection matrix.
         sourceToTarget[0, 0] = xAxis.x
         sourceToTarget[0, 1] = xAxis.y
         sourceToTarget[1, 0] = yAxis.x
@@ -216,11 +213,11 @@ internal class CouiBackdrop internal constructor(
         val l = layer ?: return
         if (CouiRenderDiagnostics.enabled) drawPassCount++
         scope.apply {
-            // 使用 DrawScope 的 record 重定向 Canvas, 补底和 drawContent 共用同一份录制。
+            // Redirect Canvas via DrawScope.record so fallback background and drawContent share one recording.
             l.record {
                 if (CouiRenderDiagnostics.enabled) {
                     recordCallbackCount++
-                    lastRecordMs = SystemClock.uptimeMillis()
+                    lastRecordMs = CouiRenderDiagnostics.uptimeMs()
                 }
                 drawSource(this@apply)
             }
@@ -240,11 +237,11 @@ internal class CouiBackdrop internal constructor(
         invalidate()
     }
 
-    internal fun diagnosticState(): JSONObject = JSONObject()
+    internal fun diagnosticStateJson(): CouiDiagnosticJsonObject = CouiDiagnosticJsonObject()
         .put("name", diagnosticName ?: "unnamed")
-        .put("layerId", layer?.layerId ?: -1L)
-        .put("ownerViewId", layer?.ownerViewId ?: -1)
-        .put("parentLayerId", parent?.layer?.layerId ?: JSONObject.NULL)
+        .put("layerId", layer?.backdropLayerId() ?: -1L)
+        .put("ownerViewId", layer?.backdropOwnerViewId() ?: -1L)
+        .put("parentLayerId", parent?.layer?.backdropLayerId())
         .put("recorded", recorded)
         .put("released", layer?.isReleased ?: false)
         .put("width", layer?.size?.width ?: 0)
@@ -266,11 +263,13 @@ internal class CouiBackdrop internal constructor(
         .put("lastRecordMs", lastRecordMs)
         .put("coordinates", diagnosticCoordinates(coordinates))
 
+    internal fun diagnosticState(): String = diagnosticStateJson().toJsonString()
+
     internal suspend fun diagnosticCapture(): ImageBitmap {
-        val l = checkNotNull(layer) { "采样层尚未就绪或不可用: $diagnosticName" }
-        check(recorded && !l.isReleased) { "采样层尚未就绪或已释放: $diagnosticName" }
+        val l = checkNotNull(layer) { "Backdrop layer is unavailable: $diagnosticName" }
+        check(recorded && !l.isReleased) { "Backdrop layer is not recorded or already released: $diagnosticName" }
         return l.toImageBitmap().also {
-            check(recorded && !l.isReleased) { "采样层在导出期间失效: $diagnosticName" }
+            check(recorded && !l.isReleased) { "Backdrop layer invalidated during capture: $diagnosticName" }
         }
     }
 
@@ -300,36 +299,28 @@ private data class BackdropElement(val backdrop: CouiBackdrop) : ModifierNodeEle
 private class BackdropNode(var backdrop: CouiBackdrop) :
     Modifier.Node(),
     DrawModifierNode,
-    GlobalPositionAwareModifierNode,
-    ViewTreeObserver.OnPreDrawListener,
-    ViewTreeObserver.OnWindowFocusChangeListener {
-    private var observer: ViewTreeObserver? = null
+    GlobalPositionAwareModifierNode {
+    private val platformObserver = CouiBackdropPlatformObserver()
 
     override fun onAttach() {
-        // Dialog 内必须从实际节点取得 View, 不使用外层 Composition 的 LocalView。
-        observer = requireView().viewTreeObserver.also { it.addOnPreDrawListener(this) }
-        if (CouiRenderDiagnostics.enabled) {
-            observer?.addOnWindowFocusChangeListener(this)
+        val diagnosticsEnabled = CouiRenderDiagnostics.enabled
+        platformObserver.attach(
+            node = this,
+            onPreDraw = { backdrop.invalidate() },
+            trackWindowFocus = diagnosticsEnabled,
+            onWindowFocusChanged = { hasFocus ->
+                CouiRenderDiagnostics.event("window.focus source=${backdrop.diagnosticName} focused=$hasFocus")
+            },
+        )
+        if (diagnosticsEnabled) {
             CouiRenderDiagnostics.attachSource(backdrop) { invalidateDraw() }
         }
     }
 
     override fun onDetach() {
-        val current = observer?.takeIf { it.isAlive } ?: requireView().viewTreeObserver
-        current.removeOnPreDrawListener(this)
-        current.removeOnWindowFocusChangeListener(this)
+        platformObserver.detach(this)
         CouiRenderDiagnostics.detachSource(backdrop)
-        observer = null
         backdrop.detach()
-    }
-
-    override fun onPreDraw(): Boolean {
-        backdrop.invalidate()
-        return true
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        CouiRenderDiagnostics.event("window.focus source=${backdrop.diagnosticName} focused=$hasFocus")
     }
 
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
@@ -337,4 +328,19 @@ private class BackdropNode(var backdrop: CouiBackdrop) :
     }
 
     override fun ContentDrawScope.draw() = backdrop.recordAndDraw(this)
+}
+
+internal expect fun GraphicsLayer.backdropLayerId(): Long
+
+internal expect fun GraphicsLayer.backdropOwnerViewId(): Long
+
+internal expect class CouiBackdropPlatformObserver() {
+    fun attach(
+        node: Modifier.Node,
+        onPreDraw: () -> Unit,
+        trackWindowFocus: Boolean,
+        onWindowFocusChanged: (Boolean) -> Unit,
+    )
+
+    fun detach(node: Modifier.Node)
 }
