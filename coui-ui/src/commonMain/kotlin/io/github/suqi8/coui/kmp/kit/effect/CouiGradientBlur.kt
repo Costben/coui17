@@ -4,14 +4,9 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.effect
 
-import android.graphics.RenderEffect
-import android.graphics.RuntimeShader
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -27,14 +22,17 @@ import androidx.compose.ui.unit.LayoutDirection
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdropEffectScope
 import io.github.suqi8.coui.kmp.kit.backdrop.DrawCouiBackdropNode
+import io.github.suqi8.coui.kmp.shader.RuntimeShader
 import kotlin.math.ceil
 import androidx.compose.ui.graphics.CompositingStrategy as ComposeCompositingStrategy
 
 private const val BlurOffsetPx = 2f
 private const val SigmaScale = 0.57735f
 
-/** 仅模糊背景；长度为 px，各节点独立持有横纵图层，Shader 在首次绘制创建。 */
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+/**
+ * Draws only the blurred backdrop with a vertical gradient kernel radius.
+ * Lengths are in pixels; each node owns independent horizontal/vertical layers and creates shaders on first draw.
+ */
 @Composable
 internal fun Modifier.drawCouiGradientBackdrop(
     backdrop: CouiBackdrop,
@@ -43,6 +41,7 @@ internal fun Modifier.drawCouiGradientBackdrop(
     gradientSpeed: Float? = null,
 ): Modifier {
     require(gradientSpeed == null || (gradientSpeed.isFinite() && gradientSpeed > 0f))
+    if (!isKitRuntimeShaderSupported()) return this
     backdrop.RetainWhileComposed()
     return graphicsLayer {
         shape = RectangleShape
@@ -51,7 +50,6 @@ internal fun Modifier.drawCouiGradientBackdrop(
     }.then(GradientBackdropElement(backdrop, fadeHeightPx, referenceBlurRadiusPx, gradientSpeed))
 }
 
-@RequiresApi(33)
 private data class GradientBackdropElement(
     val backdrop: CouiBackdrop,
     val fadeHeightPx: Float,
@@ -68,7 +66,6 @@ private data class GradientBackdropElement(
     }
 }
 
-@RequiresApi(33)
 private class GradientBackdropNode(
     backdrop: CouiBackdrop,
     private var fadeHeightPx: Float,
@@ -119,8 +116,10 @@ private class GradientBackdropNode(
     }
 }
 
-/** 原厂渐进 Gaussian 先横后纵, 每遍保留原尺寸中间图, 不使用多级缩小图混合。 */
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+/**
+ * Separable progressive Gaussian blur (horizontal pass followed by vertical pass).
+ * Each pass keeps a full-resolution intermediate layer without downsampled pyramid blending.
+ */
 private class CouiGradientRenderer(
     private val fadeHeightPx: Float,
     referenceBlurRadiusPx: Float,
@@ -128,7 +127,7 @@ private class CouiGradientRenderer(
     private val density: Density,
     private val passes: List<GraphicsLayer>,
 ) {
-    // 将宿主的参考半径换算为 COUI 核: 原权重 sigma=radius/3, 采样间距为 2px。
+    // Convert host reference radius to the COUI kernel: sigma = radius / 3, sample spacing = 2px.
     private val kernelRadius = ceil(
         (referenceBlurRadiusPx * SigmaScale + 0.5f) * 3f / BlurOffsetPx,
     ).toInt()
@@ -148,7 +147,7 @@ private class CouiGradientRenderer(
 
     var height: Float = 0f
 
-    // 覆盖最大采样偏移和线性插值的外沿, 不让边界 Clamp 进入可见区域。
+    // Cover maximum sample offset plus bilinear outer margin so edge clamping stays outside the visible area.
     val padding: Float = kernelRadius * BlurOffsetPx + 1f
 
     init {
@@ -162,12 +161,12 @@ private class CouiGradientRenderer(
         if (scope.size.width <= 0f || scope.size.height <= 0f) return
         val paddedSize = IntSize(scope.size.width.toInt(), scope.size.height.toInt())
         updateEffects(paddedSize)
-        // 新 Canvas 不继承 CouiBackdrop 的 padding 平移; 独立 Density 避免 DrawScope 循环代理。
+        // New Canvas does not inherit CouiBackdrop padding translation; explicit density avoids cyclic DrawScope delegation.
         passes[0].record(density, scope.layoutDirection, paddedSize) {
             translate(padding, padding) { drawBackdrop() }
         }
-        // 独立图层落实两次栅格化, 不让第二遍在 Shader 内嵌套执行第一遍卷积。
-        // 第二遍指令只引用第一遍; 子层更新仍会传播, 不需要因背景滚动而重录。
+        // Separate layers enforce two rasterizations so the second pass does not nest-evaluate the first pass inside its shader.
+        // The second pass only references the first pass; child layer updates still propagate without re-recording on scroll.
         if (recordedSize != paddedSize || recordedLayoutDirection != scope.layoutDirection) {
             val horizontal = passes[0]
             passes[1].record(density, scope.layoutDirection, paddedSize) { drawLayer(horizontal) }
@@ -184,17 +183,16 @@ private class CouiGradientRenderer(
             val gradientHeight = if (gradientSpeed == null) fadeHeightPx else height
             shader.setFloatUniform("gradientTop", padding + height - gradientHeight)
             shader.setFloatUniform("gradientHeight", gradientHeight)
-            // RenderEffect 保存 uniform 快照; 仅几何改变时更新, 普通滚动复用。
-            passes[index].renderEffect = RenderEffect.createRuntimeShaderEffect(shader, "child")
-                .asComposeRenderEffect()
+            // RenderEffect caches a uniform snapshot; update only on geometry changes and reuse during scroll.
+            passes[index].renderEffect = shader.asComposeRenderEffect("child")
         }
         lastSize = size
         lastHeight = height
     }
 }
 
-// libhwui.so: OplusGradientGaussianBlurEffect::make_blur_effect, 保留整数半径、权重和剩余中心权重。
-// shortcut: 噪声种子固定, 不复刻原厂逐次随机的时间变化; 需要动态噪声时再接入渲染时钟。
+// libhwui.so: OplusGradientGaussianBlurEffect::make_blur_effect, preserving integer radius, weights, and remaining center weight.
+// shortcut: fixed noise seed without per-frame temporal jitter; hook up the render clock if dynamic noise is needed later.
 private fun gradientGaussianShader(kernelRadius: Int, gradientSpeed: Float?): String = """
     const int in_blurRadius = $kernelRadius;
     const float PI = 3.1415926;
@@ -223,15 +221,15 @@ private fun gradientGaussianShader(kernelRadius: Int, gradientSpeed: Float?): St
     half4 main(float2 coord) {
         float4 c = sampleChild(coord);
         float position = clamp((coord.y - gradientTop) / gradientHeight, 0.0, 1.0);
-        // 通用入口保留 smoothstep；显式原厂分支使用 1-pow(1-ratio,speed)。
+        // Keep smoothstep for the default path; use 1 - pow(position, speed) when an explicit speed is provided.
         float ratio = ${if (gradientSpeed == null) "smoothstep(0.0, 1.0, 1.0 - position)" else "1.0 - pow(position, $gradientSpeed)"};
         int radius = int(float(in_blurRadius) * ratio);
         if (radius <= 1) return half4(c);
-        // 卷积结果恢复中心 alpha 后恒为零; 保留清晰端直通, 不截断低但非零的覆盖率。
+        // Convolution result becomes zero after restoring center alpha; pass sharp edge through without truncating low non-zero coverage.
         if (c.a == 0.0) return half4(0.0);
         float2 offset = float2(0.0);
         float sumWeight = 0.0;
-        // 颜色累加与覆盖率归一保持 float，避免 half 舍入随整数半径形成横向色带。
+        // Accumulate color and normalize coverage in float to prevent half-precision rounding from causing horizontal banding.
         float4 finalColor = float4(0.0);
         for (int i = 1; i <= in_blurRadius; i++) {
             if (i > radius) break;
@@ -243,7 +241,7 @@ private fun gradientGaussianShader(kernelRadius: Int, gradientSpeed: Float?): St
             sumWeight += 2.0 * weight;
         }
         finalColor += c * (1.0 - sumWeight);
-        // 屏幕外没有页面采样; 恢复有效颜色但不扩张中心覆盖度, 避免顶边变暗或补成不透明。
+        // No off-screen page samples exist; restore valid color without expanding center coverage so top edge stays clean.
         if (finalColor.a <= 0.0) return half4(0.0);
         finalColor = float4(finalColor.rgb * (c.a / finalColor.a), c.a);
         float noise = interleavedGradientNoise(coord + 0.5) - 0.5;

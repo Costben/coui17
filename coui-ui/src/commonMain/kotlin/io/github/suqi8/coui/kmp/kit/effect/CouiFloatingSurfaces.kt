@@ -4,13 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.effect
 
-import android.graphics.BlendMode
-import android.graphics.BlendModeColorFilter
-import android.graphics.RenderEffect
-import android.graphics.RuntimeShader
-import android.graphics.Shader
-import android.util.DisplayMetrics
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,12 +15,14 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.addOutline
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.translate
@@ -41,15 +36,15 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.shape.CouiCapsuleShape
+import io.github.suqi8.coui.kmp.shader.RuntimeShader
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
-import androidx.compose.ui.graphics.BlendMode as ComposeBlendMode
 
 internal const val FloatingShadowOutsetPx = 150f
 private const val ShadowOutsetPx = FloatingShadowOutsetPx
@@ -60,7 +55,7 @@ internal data class CouiFloatingMaterial(
     val secondColor: Color,
     val edgeAlpha: Float,
     val innerGlowAlpha: Float,
-    val secondBlendMode: BlendMode = BlendMode.LUMINOSITY,
+    val secondBlendMode: BlendMode = BlendMode.Luminosity,
     val blurRadius: Float = 25f,
     val strokeType: Int = 1,
     val index: Int = 2,
@@ -71,7 +66,7 @@ internal data class CouiFloatingMaterial(
     val innerGlowScale: Float = 1f,
 )
 
-/** 长度均为像素; lightZ=0 保留原厂 renderer 默认高度, smoothCorner 对应底栏的 fullsmooth Outline。 */
+/** Lengths are in pixels; lightZ = 0 preserves the native renderer default height, and smoothCorner selects the toolbar fullsmooth outline. */
 internal data class CouiFloatingShadow(
     val elevation: Float,
     val color: Color,
@@ -87,8 +82,7 @@ internal data class CouiFloatingShadow(
     val smoothCorner: Boolean = false,
 )
 
-/** 创建时直接验证原生片段能否编译; 宿主负责报告失败, 不在绘制时吞没错误。 */
-@RequiresApi(34)
+/** Validates runtime shader compilation at creation time; callers are responsible for handling failures rather than swallowing them during draw. */
 internal class CouiFloatingRenderer private constructor(internal val surfaceCount: Int) {
     constructor() : this(3)
 
@@ -100,27 +94,27 @@ internal class CouiFloatingRenderer private constructor(internal val surfaceCoun
     }
     internal val causticShaders = List(surfaceCount) { RuntimeShader(CouiCausticShader) }
     internal val shadowRenderer = CouiShadowRenderer(surfaceCount)
-    internal val destinationEffect = RenderEffect.createRuntimeShaderEffect(
-        RuntimeShader("uniform shader image; half4 main(float2 p) { return image.eval(p); }"),
-        "image",
-    )
+    internal val destinationEffect: RenderEffect = RuntimeShader(
+        "uniform shader image; half4 main(float2 p) { return image.eval(p); }",
+    ).asComposeRenderEffect("image")
 
     companion object {
         fun standalone(): CouiFloatingRenderer = CouiFloatingRenderer(1)
 
-        /** 搜索框与取消按钮的真实双主体链；不创建第三个布局或内容节点。 */
+        /** Dual-subject chain for search field and cancel action; does not allocate a third layout or content node. */
         fun pair(): CouiFloatingRenderer = CouiFloatingRenderer(2)
     }
 }
 
 /**
- * 单主体 BaseShader; 不绑定底栏, 不创建融球资源。
- * foregroundComposition 为 true 时材质和光晕仅输出前景; 共用 backdrop, 源须覆盖不透明 SDR 页面。
- * beforeContent 在材质之后、内容之前直接混合到目标；接收内容的缓存裁剪路径，调用方不得修改。
- * 回调坐标仍为节点本地坐标，变换及裁剪由调用方提供。
- * renderer、contentLayer 与返回的 Modifier 绑定一个绘制节点，不跨节点复用。
+ * Single-subject base shader; does not bind to a bottom bar or allocate metaball resources.
+ * When [foregroundComposition] is true, material and glow emit foreground only; sharing a backdrop
+ * requires the source to cover an opaque SDR page.
+ * [beforeContent] composites directly onto the target after material and before content; it receives
+ * the cached content clip path which callers must not mutate.
+ * Callback coordinates remain local to this node, with transforms and clipping provided by the caller.
+ * [renderer], [contentLayer], and the returned [Modifier] are bound to one draw node and must not be reused across nodes.
  */
-@RequiresApi(34)
 @Composable
 internal fun Modifier.couiFloatingSurface(
     backdrop: CouiBackdrop?,
@@ -147,7 +141,6 @@ internal fun Modifier.couiFloatingSurface(
     surface = surface,
 )
 
-@RequiresApi(34)
 @Composable
 internal fun Modifier.couiFloatingSurface(
     backdrop: CouiBackdrop?,
@@ -177,8 +170,7 @@ internal fun Modifier.couiFloatingSurface(
     ) { listOf(surface()) }
 }
 
-/** 三主体在同一节点按 Z 排序，同 Z 保留宿主子项顺序；资源与返回的 Modifier 不跨节点复用。菜单 index 1，两侧附件 index 2。 */
-@RequiresApi(34)
+/** Z-sorts three subjects within one node, preserving host child order for ties; menu uses index 1 and side attachments use index 2. */
 @Composable
 internal fun Modifier.couiFloatingSurfaces(
     backdrop: CouiBackdrop,
@@ -196,8 +188,7 @@ internal fun Modifier.couiFloatingSurfaces(
     return floatingSurfaces(backdrop, renderer, materials, shadows, shapes, contentLayers, contourGlowEnabled, surfaces = surfaces)
 }
 
-/** 双主体的采样、融球和光效；顺序与 material.index 必须分别为 1、2。 */
-@RequiresApi(34)
+/** Dual-subject sampling, metaball merging, and lighting; order must match material.index 1 and 2 respectively. */
 @Composable
 internal fun Modifier.couiFloatingPair(
     backdrop: CouiBackdrop,
@@ -223,7 +214,6 @@ internal fun Modifier.couiFloatingPair(
     )
 }
 
-@RequiresApi(34)
 @Composable
 private fun Modifier.floatingSurfaces(
     backdrop: CouiBackdrop?,
@@ -241,33 +231,42 @@ private fun Modifier.floatingSurfaces(
 ): Modifier {
     val recordingDensity = LocalDensity.current
     val density = recordingDensity.density
-    val view = LocalView.current
+    val windowSize = LocalWindowInfo.current.containerSize
+    val renderEffectSupported = isKitSurfaceSupported() && isKitRenderEffectSupported()
     val shadowLayers = List(renderer.surfaceCount) { rememberGraphicsLayer() }
     val causticLayers = List(renderer.surfaceCount) { rememberGraphicsLayer() }
     val materialLayers = List(renderer.surfaceCount) { rememberGraphicsLayer() }
     val resolvedForegroundComposition = foregroundComposition || backdrop == null || !backdrop.hasContent
-    // Capsule 轮廓只依赖像素尺寸; 每个槽位仅保留当前轮廓, 不积累动画历史。
+    // Capsule outline depends only on pixel size; retain only the active outline per slot without accumulating animation history.
     val capsuleOutlines = remember(renderer) {
         arrayOfNulls<Pair<Size, Outline>>(renderer.surfaceCount)
     }
-    val materialInputs = remember(materials) {
-        materials.map { material ->
-            // 顶栏默认半径为零, 仍须保留采样及两层混色。
-            val blur = if (material.blurRadius == 0f) {
-                RenderEffect.createOffsetEffect(0f, 0f)
-            } else {
-                RenderEffect.createBlurEffect(material.blurRadius, material.blurRadius, Shader.TileMode.MIRROR)
+    val materialInputs = remember(materials, renderEffectSupported) {
+        if (!renderEffectSupported) {
+            emptyList()
+        } else {
+            materials.map { material ->
+                // Toolbar defaults to zero blur radius, yet still retains sampling and two-layer blending.
+                val blur = if (material.blurRadius == 0f) {
+                    createOffsetRenderEffect(0f, 0f)
+                } else {
+                    createBlurRenderEffect(material.blurRadius, material.blurRadius, TileMode.Mirror)
+                }
+                val color1 = createBlendModeColorFilterRenderEffect(material.firstColor, material.firstBlendMode, blur)
+                createBlendModeColorFilterRenderEffect(material.secondColor, material.secondBlendMode, color1)
             }
-            val color1 = RenderEffect.createColorFilterEffect(BlendModeColorFilter(material.firstColor.toArgb(), material.firstBlendMode), blur)
-            RenderEffect.createColorFilterEffect(BlendModeColorFilter(material.secondColor.toArgb(), material.secondBlendMode), color1)
         }
     }
-    val causticInputs = remember(materials) {
-        materials.map { material ->
-            if (material.blurRadius <= 0f) {
-                null
-            } else {
-                RenderEffect.createBlurEffect(material.blurRadius, material.blurRadius, Shader.TileMode.MIRROR)
+    val causticInputs = remember(materials, renderEffectSupported) {
+        if (!renderEffectSupported) {
+            emptyList()
+        } else {
+            materials.map { material ->
+                if (material.blurRadius <= 0f) {
+                    null
+                } else {
+                    createBlurRenderEffect(material.blurRadius, material.blurRadius, TileMode.Mirror)
+                }
             }
         }
     }
@@ -276,7 +275,8 @@ private fun Modifier.floatingSurfaces(
         val target = coordinates
         val nodes = surfaces()
         require(nodes.size == renderer.surfaceCount)
-        if (target?.isAttached == true && size.width > 0f && size.height > 0f &&
+        if (renderEffectSupported &&
+            target?.isAttached == true && size.width > 0f && size.height > 0f &&
             nodes.any { it.visible && it.bounds.width > 0f && it.bounds.height > 0f } &&
             nodes.all { !it.visible || (it.bounds.width > 0f && it.bounds.height > 0f) }
         ) {
@@ -286,7 +286,7 @@ private fun Modifier.floatingSurfaces(
             fun appendPatch(
                 layer: GraphicsLayer,
                 crop: Rect,
-                blendMode: ComposeBlendMode = ComposeBlendMode.Src,
+                blendMode: BlendMode = BlendMode.Src,
                 includePrefix: Boolean = true,
                 effect: (Rect) -> RenderEffect,
             ) {
@@ -295,9 +295,9 @@ private fun Modifier.floatingSurfaces(
                 val bounds = Rect(floor(clipped.left), floor(clipped.top), ceil(clipped.right), ceil(clipped.bottom))
                 layer.topLeft = IntOffset(bounds.left.toInt(), bounds.top.toInt())
                 layer.clip = true
-                // 完整 patch 用 Src; 分离后的透明前景只使用 SrcOver。
+                // Full patch uses Src; separated transparent foreground only uses SrcOver.
                 layer.blendMode = blendMode
-                layer.renderEffect = effect(bounds).asComposeRenderEffect()
+                layer.renderEffect = effect(bounds)
                 patches.add(FloatingPatch(layer, bounds, if (includePrefix) commands.toList() else emptyList()))
                 commands.add(layer)
             }
@@ -330,13 +330,10 @@ private fun Modifier.floatingSurfaces(
             } else {
                 emptyList()
             }
-            val metrics = DisplayMetrics()
-            @Suppress("DEPRECATION")
-            checkNotNull(view.display).getRealMetrics(metrics)
-            // PJZ110 renderer 的默认资源与显示尺寸校准; 不继承其他 OEM 的不同光照主题。
+            // Calibrate default light Z against PJZ110 renderer defaults and display dimensions.
             val defaultLightZ = 500f * density * (
-                2f + min(metrics.widthPixels, metrics.heightPixels) /
-                    (450f * metrics.density)
+                2f + min(windowSize.width, windowSize.height) /
+                    (450f * density)
                 ) / 3f
             val windowOrigin = target.localToWindow(Offset.Zero)
             nodes.forEachIndexed { index, node ->
@@ -355,7 +352,7 @@ private fun Modifier.floatingSurfaces(
                     scaleY = 1f
                     alpha = 1f
                     clip = false
-                    // alpha 不触发按主体尺寸离屏, 避免收放时裁掉外部半影。
+                    // Avoid offscreen compositing cropped to subject bounds when alpha < 1 so outer penumbra stays unclipped.
                     compositingStrategy = CompositingStrategy.ModulateAlpha
                 }
                 contentLayers[index].setOutline(outlines[index])
@@ -366,8 +363,8 @@ private fun Modifier.floatingSurfaces(
                 val group = if (drawOrder == null) visible else visible.sortedBy { drawOrder.indexOf(it) }
                 group.forEach { index ->
                     commands.add(shadowLayers[index])
-                    // 前景模式下, 原 Shader 在此阈值内严格输出透明, 无需录制背景或创建光晕图层。
-                    // 完整 destination 模式仍需回填, 不能套用这一短路。
+                    // In foreground composition, the shader strictly emits transparent below this threshold, so skip recording and caustic layer.
+                    // Full destination mode must still backfill and cannot take this shortcut.
                     if (contourGlowEnabled && (
                             !resolvedForegroundComposition ||
                                 shadows[index].causticColor.alpha * nodes[index].alpha > 0.001f
@@ -381,11 +378,11 @@ private fun Modifier.floatingSurfaces(
                             node.bounds.width + shadow.layout.right,
                             node.bounds.height + shadow.layout.bottom,
                         )
-                        // 顶栏不回填背景; 默认路径仍保留完整 destination, 不改成 PLUS 光贡献。
+                        // Toolbar skips destination backfill; default path retains full destination instead of PLUS contribution.
                         appendPatch(
                             causticLayers[index],
                             node.mapRect(optical),
-                            blendMode = if (resolvedForegroundComposition) ComposeBlendMode.SrcOver else ComposeBlendMode.Src,
+                            blendMode = if (resolvedForegroundComposition) BlendMode.SrcOver else BlendMode.Src,
                         ) { bounds ->
                             renderer.causticShaders[index].apply {
                                 setIntUniform("u_foregroundComposition", if (resolvedForegroundComposition) 1 else 0)
@@ -408,9 +405,9 @@ private fun Modifier.floatingSurfaces(
                                     ),
                                 )
                             }.let { shader ->
-                                val effect = RenderEffect.createRuntimeShaderEffect(shader, "u_originShader")
+                                val effect = shader.asComposeRenderEffect("u_originShader")
                                 val blurInput = if (resolvedForegroundComposition) causticInputs[index] else null
-                                if (blurInput != null) RenderEffect.createChainEffect(effect, blurInput) else effect
+                                if (blurInput != null) createChainRenderEffect(effect, blurInput) else effect
                             }
                         }
                     }
@@ -421,7 +418,7 @@ private fun Modifier.floatingSurfaces(
                     appendPatch(
                         materialLayers[index],
                         node.materialRect(material.extension),
-                        blendMode = if (resolvedForegroundComposition) ComposeBlendMode.SrcOver else ComposeBlendMode.Src,
+                        blendMode = if (resolvedForegroundComposition) BlendMode.SrcOver else BlendMode.Src,
                         includePrefix = !resolvedForegroundComposition,
                     ) { bounds ->
                         val height = bounds.height
@@ -443,7 +440,7 @@ private fun Modifier.floatingSurfaces(
                             val activeBalls = floatingBallSlots(index, materials.map { it.index }).map { slot ->
                                 if (nodes[slot].visible) nodes[slot].ball(height, origin) else FloatArray(8)
                             }
-                            // Native Shader 的 influence 容量为 3；未注册槽位保持零，不产生绘制/内容节点。
+                            // Native shader influence capacity is 3; unregistered slots stay zero without creating draw or content nodes.
                             val balls = List(3) { slot -> activeBalls.getOrNull(slot) ?: FloatArray(8) }
                             balls.forEachIndexed { i, linked ->
                                 shader.setFloatUniform("u_ball${i + 1}Array", linked)
@@ -473,18 +470,18 @@ private fun Modifier.floatingSurfaces(
                         shader.setFloatUniform("u_edgeArray", edge)
                         shader.setFloatUniform("u_shadowArray", glow)
                         shader.setFloatUniform("u_shadowShapeCtxArray", floatingShadowShapeContext(ball, glow))
-                        shader.setColorUniform("u_color", Color.Transparent.toArgb())
-                        shader.setColorUniform("u_themeTint", material.themeTint.toArgb())
-                        val effect = RenderEffect.createChainEffect(
-                            RenderEffect.createRuntimeShaderEffect(shader, "u_originShader"),
+                        shader.setColorUniform("u_color", Color.Transparent)
+                        shader.setColorUniform("u_themeTint", material.themeTint)
+                        val effect = createChainRenderEffect(
+                            shader.asComposeRenderEffect("u_originShader"),
                             materialInputs[index],
                         )
-                        // 分开材质前景与完整背景, 不让材质 patch 外沿覆盖实际 destination。
-                        // shortcut: 采样源不含兄弟前景; 需严格对齐重叠光效时应补全 destination 绘制顺序。
+                        // Separate material foreground from full background so the material patch margin does not overwrite destination.
+                        // shortcut: sampling source excludes sibling foregrounds; strict overlap lighting would require full destination order.
                         if (resolvedForegroundComposition) {
                             effect
                         } else {
-                            RenderEffect.createBlendModeEffect(renderer.destinationEffect, effect, BlendMode.SRC_OVER)
+                            createBlendModeRenderEffect(renderer.destinationEffect, effect, BlendMode.SrcOver)
                         }
                     }
                     commands.add(contentLayers[index])
@@ -492,7 +489,7 @@ private fun Modifier.floatingSurfaces(
             }
             val drawCommands = commands.toList()
             onDrawWithContent {
-                // 子项只录制透明前景; 真实输出遵守 shadow/caustic -> material/content 的 Z 分组顺序。
+                // Children only record transparent foreground; final output follows shadow/caustic -> material/content Z grouping.
                 drawContent()
                 shadowLayers.forEachIndexed { index, layer ->
                     if (!nodes[index].visible) return@forEachIndexed
@@ -502,7 +499,7 @@ private fun Modifier.floatingSurfaces(
                         ceil(bounds.width * node.scaleX + ShadowOutsetPx * 2f).toInt().coerceAtLeast(1),
                         ceil(bounds.height * node.scaleY + ShadowOutsetPx * 2f).toInt().coerceAtLeast(1),
                     )
-                    // 纯投影不录制 drawContent; 显式 Density 避免重定向外层作用域后形成循环引用。
+                    // Pure shadow does not invoke drawContent; explicit density avoids cyclic proxy delegation.
                     layer.record(density = recordingDensity, layoutDirection = layoutDirection, size = recordSize) {
                         drawIntoCanvas { canvas ->
                             canvas.translate(ShadowOutsetPx, ShadowOutsetPx)

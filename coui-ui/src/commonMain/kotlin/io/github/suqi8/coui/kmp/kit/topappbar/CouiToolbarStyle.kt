@@ -24,5 +24,5 @@ internal data class CouiToolbarStyle(
 )
 
 internal val LocalCouiToolbarStyle = staticCompositionLocalOf<CouiToolbarStyle> {
-    error("顶栏样式必须由组件入口提供")
+    error("Toolbar style must be provided by the component entry point")
 }
