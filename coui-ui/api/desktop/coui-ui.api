@@ -1322,6 +1322,7 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBar
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBarSearchBarKt;
 	public fun <init> ()V
 	public final fun getLambda$1688520326$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$2042706264$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/DatePickerDefaults {
@@ -5402,6 +5403,21 @@ public final class io/github/suqi8/coui/kmp/interfaces/HoldDownInteractionKt {
 	public static final fun collectIsHeldDownAsState (Landroidx/compose/foundation/interaction/InteractionSource;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 }
 
+public final class io/github/suqi8/coui/kmp/kit/topappbar/ComposableSingletons$TopAppBarKt {
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/kit/topappbar/ComposableSingletons$TopAppBarKt;
+	public fun <init> ()V
+	public final fun getLambda$-1816747243$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-318753214$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-673399373$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1240208224$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class io/github/suqi8/coui/kmp/kit/topappbar/ComposableSingletons$TopAppBarSearchKt {
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/kit/topappbar/ComposableSingletons$TopAppBarSearchKt;
+	public fun <init> ()V
+	public final fun getLambda$712225792$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+}
+
 public final class io/github/suqi8/coui/kmp/layout/AlertDialogButton : java/lang/Enum {
 	public static final field Negative Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;
 	public static final field Neutral Lio/github/suqi8/coui/kmp/layout/AlertDialogButton;
@@ -6023,7 +6039,7 @@ public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils {
 
 public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$Companion {
 	public final fun COUIPopupHost (Landroidx/compose/runtime/Composer;I)V
-	public final fun DialogLayout (Landroidx/compose/runtime/MutableState;Landroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZZLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;Landroidx/compose/runtime/MutableState;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public final fun DialogLayout (Landroidx/compose/runtime/MutableState;Landroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZZLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;Landroidx/compose/runtime/MutableState;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public final fun PopupLayout (Landroidx/compose/runtime/MutableState;Landroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZZLandroidx/compose/animation/EnterTransition;Landroidx/compose/animation/ExitTransition;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -6039,6 +6055,7 @@ public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$DialogState {
 	public final fun getEnterTransition ()Landroidx/compose/animation/EnterTransition;
 	public final fun getExitTransition ()Landroidx/compose/animation/ExitTransition;
 	public final fun getOnDismissFinished ()Lkotlin/jvm/functions/Function0;
+	public final fun getPassTouches ()Lkotlin/jvm/functions/Function0;
 	public final fun getShowState ()Landroidx/compose/runtime/MutableState;
 	public final fun getZIndex ()F
 	public final fun setContent (Lkotlin/jvm/functions/Function2;)V
@@ -6050,6 +6067,7 @@ public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$DialogState {
 	public final fun setEnterTransition (Landroidx/compose/animation/EnterTransition;)V
 	public final fun setExitTransition (Landroidx/compose/animation/ExitTransition;)V
 	public final fun setOnDismissFinished (Lkotlin/jvm/functions/Function0;)V
+	public final fun setPassTouches (Lkotlin/jvm/functions/Function0;)V
 }
 
 public final class io/github/suqi8/coui/kmp/utils/COUIPopupUtils$PopupState {
@@ -6097,7 +6115,6 @@ public final class io/github/suqi8/coui/kmp/utils/COUIWindowSizeClass : java/lan
 public final class io/github/suqi8/coui/kmp/utils/ComposableSingletons$COUIPopupUtilsKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/utils/ComposableSingletons$COUIPopupUtilsKt;
 	public fun <init> ()V
-	public final fun getLambda$-491202791$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-577549966$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$2021925702$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$29154800$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;

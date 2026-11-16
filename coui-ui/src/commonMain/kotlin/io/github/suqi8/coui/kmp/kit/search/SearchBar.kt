@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.search
 
-import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,7 +40,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -73,6 +72,9 @@ import io.github.suqi8.coui.kmp.kit.effect.LocalCouiContourGlowEnabled
 import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingPair
 import io.github.suqi8.coui.kmp.kit.effect.couiToolbarFeedback
+import io.github.suqi8.coui.kmp.kit.effect.createBlurRenderEffect
+import io.github.suqi8.coui.kmp.kit.effect.isKitRenderEffectSupported
+import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.CouiSearchRelocationBoundary
 import io.github.suqi8.coui.kmp.kit.input.couiMovingActionClick
@@ -89,9 +91,13 @@ import kotlin.math.roundToInt
 import io.github.suqi8.coui.kmp.kit.theme.CouiIcon as Icon
 
 /**
- * 设置式常驻搜索与分裂取消胶囊；在所属页面的浮层使用，backdrop 不包含当前搜索。
- * 宿主持有查询、展开和结果；取消只请求关闭，清空只提交空查询，不持有导航。
- * enabled 为 false 时停止输入、点击和交互反馈，释放自身焦点；查询和展开目标仍由宿主持有。
+ * Persistent settings-style search bar with a split cancel capsule, rendered on the host page's
+ * overlay layer with a backdrop that excludes the search bar itself.
+ *
+ * The host owns query text, expansion state, and search results; cancelling only requests collapse,
+ * and clearing only submits an empty query without owning navigation. When [enabled] is false,
+ * input, clicks, and interaction feedback stop and own focus is released while query and expansion
+ * state remain owned by the host.
  */
 @Composable
 internal fun SearchBar(
@@ -117,7 +123,7 @@ internal fun SearchBar(
     verticalMargin: Dp = (CouiSearchBarDefaults.height - CouiSearchBarDefaults.surfaceHeight) / 2,
 ) {
     val density = LocalDensity.current
-    // 设置的搜索位于 AppBarBlurOverlay 之后；采样完成渐进处理的背景，不包含标题/搜索。
+    // Positioned after AppBarBlurOverlay; samples the gradient-processed backdrop without title/search.
     val surfaceBackdrop = LocalCouiToolbarBackdrop.current ?: backdrop
     val layoutDirection = LocalLayoutDirection.current
     val rtl = layoutDirection == LayoutDirection.Rtl
@@ -145,7 +151,7 @@ internal fun SearchBar(
     val shape = CouiSearchBarDefaults.shape
     val bodyLayer = rememberGraphicsLayer()
     val cancelLayer = rememberGraphicsLayer()
-    val renderer = if (Build.VERSION.SDK_INT >= 34 && surfaceBackdrop != null) remember { CouiFloatingRenderer.pair() } else null
+    val renderer = if (isKitSurfaceSupported() && surfaceBackdrop != null) remember { CouiFloatingRenderer.pair() } else null
     val bodySource = interactionSource ?: remember { MutableInteractionSource() }
     val cancelSource = remember { MutableInteractionSource() }
     val press = rememberCouiPressMotion()
@@ -221,7 +227,8 @@ internal fun SearchBar(
     val themeTint = CouiTheme.materialTintFor(dark)
     var normalShadow by remember { mutableFloatStateOf(shadowProgress) }
     if (!state.active) SideEffect { normalShadow = shadowProgress }
-    // 首页在搜索弹簧期间暂停滚动投影回调；不能用搜索主动折叠产生的 offset 提前点亮投影。
+    // The home page pauses scroll shadow callbacks during the search spring; do not illuminate
+    // the shadow early from scroll offsets caused by collapsing search.
     val retainedShadow = if (state.active) normalShadow else shadowProgress
     val keepScrollShadow = if (state.active) {
         retainedShadow >= 1f || (state.expanded && retainedShadow > .5f)
@@ -235,7 +242,7 @@ internal fun SearchBar(
     }
     val baseShadow = CouiTopAppBarButtonDefaults.shadow(dark, true, density.density, contour, search = true, alphaScale = drop)
     val shadow = baseShadow.copy(causticColor = baseShadow.causticColor.copy(alpha = baseShadow.causticColor.alpha * drop))
-    val surfaceModifier = if (Build.VERSION.SDK_INT >= 34 && renderer != null && surfaceBackdrop != null) {
+    val surfaceModifier = if (isKitSurfaceSupported() && renderer != null && surfaceBackdrop != null) {
         Modifier.couiFloatingPair(
             surfaceBackdrop,
             renderer,
@@ -257,10 +264,10 @@ internal fun SearchBar(
             listOf(shape, shape),
             listOf(bodyLayer, cancelLayer),
             contour,
-            // 原厂 bringChildToFront(functional) 后再提升 searchBarBackgroundView。
-            // 调整整层材质与内容的顺序，不能只把透明文字层放到上面。
+            // Match upstream bringChildToFront(functional) before elevating searchBarBackgroundView:
+            // reorder whole material+content layers rather than only lifting the transparent text layer.
             drawOrder = listOf(1, 0),
-            // 双胶囊只叠前景，不以整块 Src 回填擦掉下方渐进背景或兄弟投影。
+            // Composite only foregrounds so neither capsule erases the gradient backdrop or sibling shadow with Src.
             foregroundComposition = true,
             beforeContent = { index, path ->
                 val node = if (index == 0) bodySurface() else cancelSurface()
@@ -315,7 +322,8 @@ internal fun SearchBar(
                         },
                     ),
             ) {
-                // 装饰也属于输入本体，完整胶囊的触摸与语义不能穿过 padding 命中下层取消。
+                // Decoration belongs to the input body; the full capsule's touch and semantics must
+                // not fall through padding onto the underlying cancel button.
                 BasicTextField(
                     query,
                     { if (enabled && state.expanded) onQueryChange(it) },
@@ -426,12 +434,8 @@ internal fun SearchBar(
                 BasicText(
                     cancelText ?: "",
                     Modifier.graphicsLayer {
-                        renderEffect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blur > 0f) {
-                            android.graphics.RenderEffect.createBlurEffect(
-                                blur,
-                                blur,
-                                android.graphics.Shader.TileMode.DECAL,
-                            ).asComposeRenderEffect()
+                        renderEffect = if (isKitRenderEffectSupported() && blur > 0f) {
+                            createBlurRenderEffect(blur, blur, TileMode.Decal)
                         } else {
                             null
                         }
