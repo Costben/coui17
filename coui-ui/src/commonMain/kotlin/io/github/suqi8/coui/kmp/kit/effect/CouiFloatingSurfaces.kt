@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.layer.CompositingStrategy
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -506,7 +505,7 @@ private fun Modifier.floatingSurfaces(
                             val roundedRect = node.cornerRadius != null &&
                                 node.resolvedCornerRadius < min(bounds.width, bounds.height) * 0.5f
                             renderer.shadowRenderer.draw(
-                                canvas.nativeCanvas, index, bounds.width, bounds.height,
+                                canvas, index, bounds.width, bounds.height,
                                 node.scaleX, node.scaleY,
                                 windowOrigin.x + (node.bounds.center.x - node.bounds.width * node.scaleX * 0.5f),
                                 windowOrigin.y + (node.bounds.center.y - node.bounds.height * node.scaleY * 0.5f),

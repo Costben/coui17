@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.effect
 
-import androidx.compose.ui.graphics.NativeCanvas
+import androidx.compose.ui.graphics.Canvas
 import kotlin.math.min
 
 /** 普通投影的 caster, 与组件材质的裁剪轮廓分开。 */
@@ -14,7 +14,7 @@ internal enum class CouiShadowOutline { Oval, SmoothCapsule, RoundRect }
 internal expect class CouiShadowRenderer(surfaceCount: Int = 1) {
     /** 长度均为像素; 网格包含轴向缩放, Canvas 只承接平移, alpha 不再由外层重复相乘。 */
     fun draw(
-        canvas: NativeCanvas,
+        canvas: Canvas,
         slot: Int,
         width: Float,
         height: Float,

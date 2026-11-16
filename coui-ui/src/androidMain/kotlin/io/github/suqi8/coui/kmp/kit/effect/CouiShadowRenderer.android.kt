@@ -20,7 +20,7 @@ import android.graphics.RuntimeShader
 import android.graphics.Shader
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.graphics.NativeCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
@@ -29,6 +29,7 @@ import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import androidx.compose.ui.graphics.Canvas as ComposeCanvas
 
 /** 原 Skia 网格、A8 表与厂商 inverse clip 的公开 API 承载; 每个主体仅保留当前两路资源。 */
 @RequiresApi(34)
@@ -69,7 +70,7 @@ internal actual class CouiShadowRenderer actual constructor(surfaceCount: Int) {
 
     /** 长度均为像素; 网格包含轴向缩放, Canvas 只承接平移, alpha 不再由外层重复相乘。 */
     actual fun draw(
-        canvas: NativeCanvas,
+        canvas: ComposeCanvas,
         slot: Int,
         width: Float,
         height: Float,
@@ -89,6 +90,7 @@ internal actual class CouiShadowRenderer actual constructor(surfaceCount: Int) {
     ) {
         if (alpha <= 0f || width <= 0f || height <= 0f || sx <= 0f || sy <= 0f || elevation <= 0f) return
         require(!clipping || outline != CouiShadowOutline.RoundRect) { "普通圆角投影尚未提供 inverse clip" }
+        val nativeCanvas = canvas.nativeCanvas
         val fast = isFastShadowGeometry(width, height, sx, sy, outline == CouiShadowOutline.Oval)
         for (index in 0..1) {
             // override spot 不乘 renderer 的全局 spot alpha; ambient 先转原厂 JNI 字节值。
@@ -108,13 +110,13 @@ internal actual class CouiShadowRenderer actual constructor(surfaceCount: Int) {
                 slots[slot][index] = it
             }
             updateColor(draw, argb)
-            draw.node?.let { canvas.drawRenderNode(it) } ?: draw.mesh?.let {
-                canvas.save()
-                canvas.translate(draw.projection.offset.x, draw.projection.offset.y)
+            draw.node?.let { nativeCanvas.drawRenderNode(it) } ?: draw.mesh?.let {
+                nativeCanvas.save()
+                nativeCanvas.translate(draw.projection.offset.x, draw.projection.offset.y)
                 // 裁剪独立使用局部坐标, Mesh 返回的 LUT 坐标只交给 Paint。
-                if (Build.VERSION.SDK_INT >= 35) draw.clipShader?.let { shader -> canvas.clipShader(shader) }
-                canvas.drawMesh(it, BlendMode.MODULATE, draw.paint)
-                canvas.restore()
+                if (Build.VERSION.SDK_INT >= 35) draw.clipShader?.let { shader -> nativeCanvas.clipShader(shader) }
+                nativeCanvas.drawMesh(it, BlendMode.MODULATE, draw.paint)
+                nativeCanvas.restore()
             }
         }
     }

@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
@@ -93,7 +92,7 @@ private class ShadowNode(var parameters: ShadowElement) :
         val (style, outline, radius, clipping) = parameters
         drawIntoCanvas { canvas ->
             activeRenderer.draw(
-                canvas = canvas.nativeCanvas,
+                canvas = canvas,
                 slot = 0,
                 width = size.width,
                 height = size.height,

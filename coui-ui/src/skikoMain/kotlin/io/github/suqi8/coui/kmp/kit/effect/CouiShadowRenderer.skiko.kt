@@ -4,7 +4,8 @@
 // SPDX-License-Identifier: MPL-2.0
 package io.github.suqi8.coui.kmp.kit.effect
 
-import androidx.compose.ui.graphics.NativeCanvas
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.skiaCanvas
 import org.jetbrains.skia.BlendMode
 import org.jetbrains.skia.ClipMode
 import org.jetbrains.skia.FilterTileMode
@@ -26,7 +27,7 @@ internal actual class CouiShadowRenderer actual constructor(surfaceCount: Int) {
     private val slots = Array(surfaceCount) { arrayOfNulls<ProjectionDraw>(2) }
 
     actual fun draw(
-        canvas: NativeCanvas,
+        canvas: Canvas,
         slot: Int,
         width: Float,
         height: Float,
@@ -46,6 +47,7 @@ internal actual class CouiShadowRenderer actual constructor(surfaceCount: Int) {
     ) {
         if (alpha <= 0f || width <= 0f || height <= 0f || sx <= 0f || sy <= 0f || elevation <= 0f) return
         require(!clipping || outline != CouiShadowOutline.RoundRect) { "普通圆角投影尚未提供 inverse clip" }
+        val skiaCanvas = canvas.skiaCanvas
         val fast = isFastShadowGeometry(width, height, sx, sy, outline == CouiShadowOutline.Oval)
         for (index in 0..1) {
             val multiplier = if (index == 0) 9f / 255f else 1f
@@ -64,10 +66,10 @@ internal actual class CouiShadowRenderer actual constructor(surfaceCount: Int) {
             }
             updateColor(draw, argb)
             if (draw.positions != null && draw.colors != null && draw.indices != null) {
-                canvas.save()
-                canvas.translate(draw.projection.offset.x, draw.projection.offset.y)
-                draw.clipPath?.let { canvas.clipPath(it, ClipMode.DIFFERENCE, true) }
-                canvas.drawVertices(
+                skiaCanvas.save()
+                skiaCanvas.translate(draw.projection.offset.x, draw.projection.offset.y)
+                draw.clipPath?.let { skiaCanvas.clipPath(it, ClipMode.DIFFERENCE, true) }
+                skiaCanvas.drawVertices(
                     VertexMode.TRIANGLES,
                     draw.positions,
                     draw.colors,
@@ -76,12 +78,12 @@ internal actual class CouiShadowRenderer actual constructor(surfaceCount: Int) {
                     BlendMode.MODULATE,
                     draw.paint,
                 )
-                canvas.restore()
+                skiaCanvas.restore()
             } else if (draw.path != null) {
-                canvas.save()
-                draw.clipPath?.let { canvas.clipPath(it, ClipMode.DIFFERENCE, true) }
-                canvas.drawPath(draw.path, draw.paint)
-                canvas.restore()
+                skiaCanvas.save()
+                draw.clipPath?.let { skiaCanvas.clipPath(it, ClipMode.DIFFERENCE, true) }
+                skiaCanvas.drawPath(draw.path, draw.paint)
+                skiaCanvas.restore()
             }
         }
     }
