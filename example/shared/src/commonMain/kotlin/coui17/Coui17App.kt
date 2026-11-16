@@ -51,6 +51,11 @@ import appstate.LocalUpdateAppState
 import i18n.LocalAppStrings
 import i18n.LocalLanguageSwitchEnabled
 import i18n.str
+import interop.DefaultHostBackend
+import interop.LocalNativeHostBackend
+import interop.LocalNativeViewControllerSlot
+import interop.LocalNativeViewSlot
+import interop.NativeHostBackend
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
 import io.github.suqi8.coui.kmp.basic.COUIScrollBehavior
@@ -76,6 +81,7 @@ import kotlinx.coroutines.launch
 import navigation3.Route
 import pages.ColorPage
 import pages.IconsPage
+import pages.NativeInteropPage
 import pages.SecondaryPagesNavHost
 import pages.SettingsPage
 import pages.SystemAlignmentPage
@@ -107,6 +113,7 @@ enum class Coui17PanelPage(val title: String) {
     TextStyle("Text style"),
     Settings("Settings items"),
     SystemAlignment("System alignment"),
+    NativeInterop("Swift / UIKit Interop"),
     ;
 
     val route: Route.Panel get() = Route.Panel(name)
@@ -145,6 +152,9 @@ private val PageFadeInSpec = folmeSpring(damping = 1f, response = 0.2f, visibili
 @Composable
 fun Coui17App(
     onColorModeChange: ((Int) -> Unit)? = null,
+    nativeHostBackend: NativeHostBackend = DefaultHostBackend,
+    nativeViewSlot: (@Composable (Modifier) -> Unit)? = null,
+    nativeViewControllerSlot: (@Composable (Modifier) -> Unit)? = null,
 ) {
     var appState by remember {
         mutableStateOf(AppState(showTopAppBar = false))
@@ -182,6 +192,9 @@ fun Coui17App(
             // changing the language in the settings page recomposes all of them at once.
             LocalAppStrings provides appState.language.strings,
             LocalLanguageSwitchEnabled provides true,
+            LocalNativeHostBackend provides nativeHostBackend,
+            LocalNativeViewSlot provides nativeViewSlot,
+            LocalNativeViewControllerSlot provides nativeViewControllerSlot,
         ) {
             // The gallery root is the nav host's `Route.Main` entry, so the pages it pushes land in
             // the same window instead of on a stack nothing draws.
@@ -404,6 +417,7 @@ private fun Coui17PanelScreen(page: Coui17PanelPage) {
                     Coui17PanelPage.TextStyle -> TextStylePage(padding = pagePadding)
                     Coui17PanelPage.Settings -> SettingsPage(padding = pagePadding)
                     Coui17PanelPage.SystemAlignment -> SystemAlignmentPage(padding = pagePadding)
+                    Coui17PanelPage.NativeInterop -> NativeInteropPage(padding = pagePadding)
                 }
             }
         },

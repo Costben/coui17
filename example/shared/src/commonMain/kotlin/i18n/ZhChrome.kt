@@ -12,6 +12,7 @@ internal val zhChrome: Map<String, String> = mapOf(
     "Text style" to "文字样式",
     "Settings items" to "设置项",
     "System alignment" to "系统对齐",
+    "Swift / UIKit Interop" to "Swift / UIKit 互操作",
     "Search settings" to "搜索设置项",
     "Search" to "搜索",
     "More" to "更多",
