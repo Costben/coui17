@@ -531,4 +531,110 @@ class NotificationSwipeBoxTest {
         assertEquals(3.0f, lightEdge[14], 1e-4f)
         assertEquals(1.0f, lightEdge[15], 1e-4f)
     }
+
+    @Test
+    fun clickingDeleteSweepsLeftBeforeCallingOnDismiss() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState(initiallyRevealed = true)
+        var deleted = 0
+        setContent {
+            COUITheme {
+                NotificationSwipeBox(
+                    onSettings = {},
+                    onDismiss = { deleted++ },
+                    settingsIcon = COUIIcons.Basic.Close,
+                    dismissIcon = null,
+                    state = state,
+                    dismissOnFullSwipe = true,
+                ) {
+                    Box(Modifier.fillMaxWidth().height(84.dp).background(Color.White))
+                }
+            }
+        }
+        waitForIdle()
+        val revealOffset = state.offsetPx
+        mainClock.autoAdvance = false
+        onNodeWithContentDescription("Delete").performTouchInput {
+            down(center)
+            up()
+        }
+        mainClock.advanceTimeBy(80L)
+        assertEquals(0, deleted, "Delete must sweep the row out to the left before invoking onDismiss")
+        assertTrue(
+            state.offsetPx < revealOffset - 20f,
+            "Expected row to slide left from $revealOffset during dismiss sweep, was ${state.offsetPx}",
+        )
+
+        mainClock.autoAdvance = true
+        waitForIdle()
+        assertEquals(1, deleted)
+        assertFalse(state.isRevealed)
+        assertEquals(0f, state.offsetPx)
+        onNodeWithContentDescription("Delete").assertDoesNotExist()
+    }
+
+    @Test
+    fun pressingActionButtonCastsRadialSpotLightClippedToConicCurve() = runSkikoComposeUiTest(size = Size(360f, 84f), density = Density(1f)) {
+        val state = NotificationSwipeState(initiallyRevealed = true)
+        setContent {
+            Box(Modifier.fillMaxSize().background(Color.Green)) {
+                COUITheme(colors = COUITheme.colorScheme.copy(background = Color(0xFF111111))) {
+                    NotificationSwipeBox(
+                        onSettings = {},
+                        onDismiss = {},
+                        settingsIcon = COUIIcons.Basic.Close,
+                        dismissIcon = COUIIcons.Basic.Close,
+                        state = state,
+                        containerColor = Color(0xFF202020),
+                        rimColor = Color.Transparent,
+                    ) {
+                        Box(Modifier.fillMaxWidth().height(84.dp).background(Color.Red))
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        // Settings button at default reveal occupies x=[226, 286), y=[8, 76); centered 24dp icon
+        // occupies [244, 268) x [30, 54). Press near top-left clear of the icon at local (12, 12).
+        val settingsBounds = onNodeWithContentDescription("Settings").fetchSemanticsNode().boundsInRoot
+        val cellLeft = settingsBounds.left.toInt()
+        val cellTop = settingsBounds.top.toInt()
+
+        val restingPixels = onRoot().captureToImage().toPixelMap()
+        val restingNearPress = restingPixels[cellLeft + 12, cellTop + 12]
+        val restingFarCorner = restingPixels[cellLeft + 50, cellTop + 58]
+
+        mainClock.autoAdvance = false
+        onNodeWithContentDescription("Settings").performTouchInput {
+            down(Offset(12f, 12f))
+        }
+        mainClock.advanceTimeBy(180L)
+
+        val pressedPixels = onRoot().captureToImage().toPixelMap()
+        val pressedNearPress = pressedPixels[cellLeft + 12, cellTop + 12]
+        val pressedFarCorner = pressedPixels[cellLeft + 50, cellTop + 58]
+        // (5, 5) is inside circular 16dp (~4.69px inset) but outside CONIC 16dp (~5.71px inset).
+        val conicOutside = pressedPixels[cellLeft + 5, cellTop + 5]
+        val conicInside = pressedPixels[cellLeft + 10, cellTop + 10]
+
+        val nearGain = pressedNearPress.red - restingNearPress.red
+        val farGain = pressedFarCorner.red - restingFarCorner.red
+        assertTrue(nearGain > 0.05f, "Pressed region must emit spotlight glow, gain=$nearGain")
+        assertTrue(
+            nearGain > farGain + 0.01f,
+            "Spotlight must diffuse radially (nearGain=$nearGain > farGain=$farGain) instead of uniform COUIIndication",
+        )
+        assertTrue(
+            conicOutside.green > 0.9f && conicOutside.red < 0.1f,
+            "Spotlight and pressed cell must clip outside CONIC corner (5,5), got $conicOutside",
+        )
+        assertTrue(
+            conicInside.green < 0.35f,
+            "Pressed cell must cover inside CONIC corner (10,10), got $conicInside",
+        )
+
+        onNodeWithContentDescription("Settings").performTouchInput { up() }
+        mainClock.autoAdvance = true
+        waitForIdle()
+    }
 }

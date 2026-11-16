@@ -13,9 +13,11 @@ import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.absoluteOffset
@@ -37,12 +39,14 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,6 +55,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -89,6 +94,9 @@ class NotificationSwipeState(initiallyRevealed: Boolean = false) {
     /** How far the card may travel: the menu, or the whole row when a full swipe deletes. */
     internal var maxPx by mutableFloatStateOf(0f)
 
+    /** Full row width in pixels, used when a delete action sweeps the row off to the left. */
+    internal var sweepMaxPx by mutableFloatStateOf(0f)
+
     /** Menu strip width in pixels, published by [NotificationSwipeBox] once it knows its actions. */
     internal var revealPx by mutableFloatStateOf(0f)
 
@@ -101,7 +109,10 @@ class NotificationSwipeState(initiallyRevealed: Boolean = false) {
     /** The destination the row last settled or is settling on. */
     internal var revealedTarget by mutableStateOf(initiallyRevealed)
 
-    internal val draggable = DraggableState { delta -> offsetPx = (offsetPx + delta).coerceIn(-maxPx, 0f) }
+    internal val draggable = DraggableState { delta ->
+        val boundPx = if (dismissing) maxOf(maxPx, sweepMaxPx) else maxPx
+        offsetPx = (offsetPx + delta).coerceIn(-boundPx, 0f)
+    }
 
     /** Current visual reveal fraction; it remains in 0..1 even during spring overshoot. */
     val revealFraction: Float
@@ -321,8 +332,7 @@ object NotificationSwipeDefaults {
 
     internal fun containerColor(isDark: Boolean): Color = if (isDark) ContainerColorDark else ContainerColorLight
 
-    internal fun edgeStyle(isDark: Boolean): GradientStrokeStyle =
-        if (isDark) GradientStrokeStyle.NOTIFICATION_DARK else GradientStrokeStyle.NOTIFICATION_LIGHT
+    internal fun edgeStyle(isDark: Boolean): GradientStrokeStyle = if (isDark) GradientStrokeStyle.NOTIFICATION_DARK else GradientStrokeStyle.NOTIFICATION_LIGHT
 }
 
 /**
@@ -400,7 +410,7 @@ fun NotificationSwipeBox(
             add(NotificationSwipeAction(dismissIcon, dismissDescription, onDismiss))
         }
     }
-    NotificationSwipeBox(
+    NotificationSwipeBoxImpl(
         actions = actions,
         modifier = modifier,
         state = state,
@@ -410,6 +420,7 @@ fun NotificationSwipeBox(
         actionColor = actionColor,
         rimColor = rimColor,
         dismissOnFullSwipe = dismissOnFullSwipe,
+        dismissPrimaryOnClick = true,
         content = content,
     )
 }
@@ -433,6 +444,35 @@ fun NotificationSwipeBox(
     dismissOnFullSwipe: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    NotificationSwipeBoxImpl(
+        actions = actions,
+        modifier = modifier,
+        state = state,
+        enabled = enabled,
+        minHeight = minHeight,
+        containerColor = containerColor,
+        actionColor = actionColor,
+        rimColor = rimColor,
+        dismissOnFullSwipe = dismissOnFullSwipe,
+        dismissPrimaryOnClick = dismissOnFullSwipe,
+        content = content,
+    )
+}
+
+@Composable
+private fun NotificationSwipeBoxImpl(
+    actions: List<NotificationSwipeAction>,
+    modifier: Modifier = Modifier,
+    state: NotificationSwipeState,
+    enabled: Boolean,
+    minHeight: Dp,
+    containerColor: Color,
+    actionColor: Color,
+    rimColor: Color,
+    dismissOnFullSwipe: Boolean,
+    dismissPrimaryOnClick: Boolean,
+    content: @Composable BoxScope.() -> Unit,
+) {
     val density = LocalDensity.current
     var measuredSize by remember { mutableStateOf(IntSize.Zero) }
     val actionCount = actions.size
@@ -441,13 +481,15 @@ fun NotificationSwipeBox(
     val widthPx = measuredSize.width.toFloat()
     val width = with(density) { measuredSize.width.toDp() }
     val height = with(density) { measuredSize.height.toDp() }
-    val maxPx = if (dismissOnFullSwipe) maxOf(widthPx, revealWidthPx) else revealWidthPx
+    val sweepMaxPx = maxOf(widthPx, revealWidthPx)
+    val maxPx = if (dismissOnFullSwipe) sweepMaxPx else revealWidthPx
     val dismissThresholdPx = with(density) { NotificationSwipeDefaults.dismissThreshold(revealWidth).toPx() }
     val flingVelocityPx = with(density) { NotificationSwipeDefaults.FlingVelocity.toPx() }
 
-    LaunchedEffect(state, revealWidthPx, maxPx) {
+    LaunchedEffect(state, revealWidthPx, maxPx, sweepMaxPx) {
         state.revealPx = revealWidthPx
         state.maxPx = maxPx
+        state.sweepMaxPx = sweepMaxPx
         if (!state.dragging && !state.dismissing) state.snapTo(if (state.revealedTarget) -revealWidthPx else 0f)
     }
 
@@ -468,26 +510,12 @@ fun NotificationSwipeBox(
                     state.dragging = false
                     val pulled = -state.offsetPx
                     if (dismissOnFullSwipe && pulled >= dismissThresholdPx && primaryAction != null) {
-                        state.dismissing = true
-                        state.revealedTarget = false
-                        try {
-                            val fling = velocity < -flingVelocityPx
-                            val remaining = state.maxPx + state.offsetPx
-                            val millis = if (fling) {
-                                (remaining * 1000f / -velocity).toInt().coerceAtMost(NotificationSwipeDefaults.SWEEP_MILLIS)
-                            } else {
-                                NotificationSwipeDefaults.SWEEP_MILLIS
-                            }
-                            state.animateOffsetTo(
-                                target = -state.maxPx,
-                                velocity = 0f,
-                                spec = tween(millis, easing = if (fling) LinearEasing else FastOutLinearInEasing),
-                            )
-                            primaryAction.onClick()
-                            state.snapTo(0f)
-                        } finally {
-                            state.dismissing = false
-                        }
+                        dismissSwipeRow(
+                            state = state,
+                            velocity = velocity,
+                            flingVelocityPx = flingVelocityPx,
+                            onDismiss = primaryAction.onClick,
+                        )
                     } else {
                         val reveal = when {
                             velocity < -flingVelocityPx -> true
@@ -521,9 +549,40 @@ fun NotificationSwipeBox(
                 actionColor = actionColor,
                 rimColor = rimColor,
                 enabled = enabled,
+                dismissPrimaryOnClick = dismissPrimaryOnClick,
+                flingVelocityPx = flingVelocityPx,
             )
         }
         NotificationSwipeCard(state = state, minHeight = minHeight, content = content)
+    }
+}
+
+private suspend fun dismissSwipeRow(
+    state: NotificationSwipeState,
+    velocity: Float,
+    flingVelocityPx: Float,
+    onDismiss: () -> Unit,
+) {
+    state.dismissing = true
+    state.revealedTarget = false
+    try {
+        val sweepTargetPx = maxOf(state.maxPx, state.sweepMaxPx)
+        val fling = velocity < -flingVelocityPx
+        val remaining = (sweepTargetPx + state.offsetPx).coerceAtLeast(0f)
+        val millis = if (fling) {
+            (remaining * 1000f / -velocity).toInt().coerceIn(1, NotificationSwipeDefaults.SWEEP_MILLIS)
+        } else {
+            NotificationSwipeDefaults.SWEEP_MILLIS
+        }
+        state.animateOffsetTo(
+            target = -sweepTargetPx,
+            velocity = 0f,
+            spec = tween(millis, easing = if (fling) LinearEasing else FastOutLinearInEasing),
+        )
+        onDismiss()
+        state.snapTo(0f)
+    } finally {
+        state.dismissing = false
     }
 }
 
@@ -541,6 +600,8 @@ private fun BoxScope.NotificationSwipeMenu(
     actionColor: Color,
     rimColor: Color,
     enabled: Boolean,
+    dismissPrimaryOnClick: Boolean,
+    flingVelocityPx: Float,
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -597,7 +658,12 @@ private fun BoxScope.NotificationSwipeMenu(
         animationSpec = NotificationSwipeDefaults.MenuRecoilSpring,
     )
 
-    val particles = notificationSwipeParticles(
+    val touchState0 = rememberCOUITouchMotionState()
+    val touchState1 = rememberCOUITouchMotionState()
+    val touchState2 = rememberCOUITouchMotionState()
+    val touchStates = listOf(touchState0, touchState1, touchState2)
+
+    val baseParticles = notificationSwipeParticles(
         width = width,
         height = height,
         distance = distance,
@@ -607,6 +673,19 @@ private fun BoxScope.NotificationSwipeMenu(
         merge = merge,
         menuAlpha = deleteFade.coerceIn(0f, 1f),
     )
+    val particles = baseParticles.mapIndexed { index, particle ->
+        val touchState = touchStates.getOrNull(index - 1)
+        if (touchState == null) {
+            particle
+        } else {
+            particle.copy(
+                centerX = particle.centerX + with(density) { touchState.translation.x.toDp() },
+                centerY = particle.centerY + with(density) { touchState.translation.y.toDp() },
+                scaleX = particle.scaleX * touchState.scaleX,
+                scaleY = particle.scaleY * touchState.scaleY,
+            )
+        }
+    }
     // The menu sheet covers exactly the strip the card has vacated.
     val menuShape = remember(state) {
         GenericShape { size, _ ->
@@ -640,7 +719,7 @@ private fun BoxScope.NotificationSwipeMenu(
     Box(Modifier.matchParentSize().clip(menuShape), contentAlignment = AbsoluteAlignment.TopLeft) {
         for (i in 0 until actionCount) {
             val action = actions[actionCount - 1 - i]
-            val particle = particles[i + 1]
+            val particle = baseParticles[i + 1]
             val progress = when (i) {
                 0 -> progress0
                 1 -> progress1
@@ -656,13 +735,28 @@ private fun BoxScope.NotificationSwipeMenu(
                 icon = action.icon,
                 description = action.description,
                 color = action.color ?: actionColor,
-                enabled = enabled && (!dismissing || isPrimary) && (isPrimary || merge == 0f),
+                enabled = enabled && !dismissing && (isPrimary || merge == 0f),
+                isDark = isDark,
+                touchState = touchStates.getOrNull(i),
                 fade = fade,
                 scale = scale,
                 trashProgress = if (isPrimaryDelete) lidProgress else 0f,
                 onClick = {
-                    scope.launch { state.close() }
-                    action.onClick()
+                    if (isPrimary && dismissPrimaryOnClick) {
+                        if (!state.dismissing) {
+                            scope.launch {
+                                dismissSwipeRow(
+                                    state = state,
+                                    velocity = 0f,
+                                    flingVelocityPx = flingVelocityPx,
+                                    onDismiss = action.onClick,
+                                )
+                            }
+                        }
+                    } else {
+                        scope.launch { state.close() }
+                        action.onClick()
+                    }
                 },
             )
         }
@@ -687,22 +781,12 @@ private fun BoxScope.NotificationSwipeCard(
         GenericShape { size, _ ->
             val visibleWidth = (size.width + state.offsetPx).coerceAtLeast(0f)
             if (visibleWidth > 0f && size.height > 0f) {
-                val cornerPx = with(density) { NotificationSwipeDefaults.CardCornerRadius.toPx() }
-                if (squircleEnabled) {
-                    addConicRoundedRect(
-                        width = visibleWidth,
-                        height = size.height,
-                        cornerRadius = cornerPx,
-                        weight = NotificationSwipeDefaults.CONIC_CORNER_WEIGHT,
-                    )
-                } else {
-                    addSquircleRect(
-                        width = visibleWidth,
-                        height = size.height,
-                        cornerRadius = cornerPx,
-                        squircleEnabled = false,
-                    )
-                }
+                addNotificationConicRect(
+                    width = visibleWidth,
+                    height = size.height,
+                    cornerPx = with(density) { NotificationSwipeDefaults.CardCornerRadius.toPx() },
+                    squircleEnabled = squircleEnabled,
+                )
             }
         }
     }
@@ -717,6 +801,29 @@ private fun BoxScope.NotificationSwipeCard(
     )
 }
 
+private fun Path.addNotificationConicRect(
+    width: Float,
+    height: Float,
+    cornerPx: Float,
+    squircleEnabled: Boolean,
+) {
+    if (squircleEnabled) {
+        addConicRoundedRect(
+            width = width,
+            height = height,
+            cornerRadius = cornerPx,
+            weight = NotificationSwipeDefaults.CONIC_CORNER_WEIGHT,
+        )
+    } else {
+        addSquircleRect(
+            width = width,
+            height = height,
+            cornerRadius = cornerPx,
+            squircleEnabled = false,
+        )
+    }
+}
+
 @Composable
 private fun NotificationMenuAction(
     particle: MetaBallParticle,
@@ -725,6 +832,8 @@ private fun NotificationMenuAction(
     description: String,
     color: Color,
     enabled: Boolean,
+    isDark: Boolean,
+    touchState: COUITouchMotionState?,
     fade: Float = 1f,
     scale: Float = 1f,
     trashProgress: Float = 0f,
@@ -737,27 +846,16 @@ private fun NotificationMenuAction(
     val squircleEnabled = isSquircleEnabled()
     val actionShape = remember(density, squircleEnabled) {
         GenericShape { size, _ ->
-            val cornerPx = with(density) { NotificationSwipeDefaults.CornerRadius.toPx() }
-            if (squircleEnabled) {
-                addConicRoundedRect(
-                    width = size.width,
-                    height = size.height,
-                    cornerRadius = cornerPx,
-                    weight = NotificationSwipeDefaults.CONIC_CORNER_WEIGHT,
-                )
-            } else {
-                addSquircleRect(
-                    width = size.width,
-                    height = size.height,
-                    cornerRadius = cornerPx,
-                    squircleEnabled = false,
-                )
-            }
+            addNotificationConicRect(
+                width = size.width,
+                height = size.height,
+                cornerPx = with(density) { NotificationSwipeDefaults.CornerRadius.toPx() },
+                squircleEnabled = squircleEnabled,
+            )
         }
     }
-    IconButton(
-        onClick = onClick,
-        enabled = enabled && progress >= 1f && fade > 0f,
+    val actionEnabled = enabled && progress >= 1f && fade > 0f
+    Box(
         modifier = Modifier
             .absoluteOffset {
                 IntOffset(
@@ -766,8 +864,24 @@ private fun NotificationMenuAction(
                 )
             }
             .size(particle.width, particle.height)
-            .clip(actionShape),
-        cornerRadius = NotificationSwipeDefaults.CornerRadius,
+            .couiTouchMotion(
+                enabled = actionEnabled,
+                pressScaleEnabled = true,
+                consumeDrag = false,
+                lightEnabled = true,
+                hitTestWhenDisabled = false,
+                shape = actionShape,
+                lightParams = SpotLightDefaults.opaqueMedium2(isDark),
+                motionState = touchState,
+            )
+            .clickable(
+                enabled = actionEnabled,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
     ) {
         val glyph = Modifier
             .graphicsLayer {
