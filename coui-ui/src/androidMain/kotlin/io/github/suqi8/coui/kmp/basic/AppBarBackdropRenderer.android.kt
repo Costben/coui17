@@ -51,8 +51,13 @@ private interface BackdropBlurApi {
  * The vendor gradient-blur APIs `AppBarBlurHelper.applyGradientBlurRenderEffect` calls, resolved once
  * and invoked reflectively.
  *
- * `COUIMaterialEffect.canApplyBackgroundRenderEffect` gates the call on the OplusView sub-SDK being
- * at least 33.34, which is checked here too: below it the backdrop node is not wired up.
+ * `COUIMaterialEffect.canApplyBackgroundRenderEffect` only gates the call on the OplusView sub-SDK
+ * being at least 33.34, and that is where the classes start to exist, not where the effect works for
+ * a third-party Compose host: ColorOS 16 (SDK 37 / 38) resolves both classes, yet the backdrop it
+ * samples through `AndroidView` comes out black and paints the whole app bar dark. ColorOS 17
+ * (SDK 40, `OplusBuild.VERSION.OS_17_0`) is the first release where the effect composites the way
+ * the bar needs, so the renderer is only built from SDK 40 on; below it there is none and
+ * [AppBarMaterial] keeps COUI's own engine.
  */
 private class OplusGradientBlurApi : BackdropBlurApi {
     private val renderEffect = Class.forName("android.graphics.RenderEffect")
@@ -70,7 +75,9 @@ private class OplusGradientBlurApi : BackdropBlurApi {
         val version = Class.forName("com.oplus.os.OplusBuild\$VERSION")
         val major = version.getField("SDK_VERSION").getInt(null)
         val sub = version.getField("SDK_SUB_VERSION").getInt(null)
-        check(major > 33 || (major == 33 && sub >= 34)) { "OplusView sub-SDK $major.$sub below 33.34" }
+        // SDK 40 is ColorOS 17 (`OplusBuild.VERSION.OS_17_0`); 37 / 38 are ColorOS 16.0 / 16.1,
+        // which expose the same classes but composite the effect over a black backdrop.
+        check(major >= 40) { "OplusView SDK $major.$sub below 40 (ColorOS 17)" }
     }
 
     override val sizeDependent: Boolean get() = false

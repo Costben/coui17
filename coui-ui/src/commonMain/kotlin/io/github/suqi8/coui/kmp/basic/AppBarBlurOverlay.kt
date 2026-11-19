@@ -169,10 +169,11 @@ object AppBarBlurOverlayDefaults {
  * Android 13 — the blur is skipped and the plain ramp is painted, the way the framework's gradient
  * lives in the app bar's own background drawable rather than in the RenderEffect.
  *
- * On ColorOS with OplusView sub-SDK 33.34 or later, [backdrop] is not used: the material is the
- * platform view `AppBarBlurHelper` dresses, with the framework's gradient-blur backdrop effect set
- * once, and scrolling only changes that view's alpha. On other Android 16 builds the same view
- * carries AOSP's backdrop RenderEffect instead, with the gradient blur rebuilt from public effects.
+ * On ColorOS 17 (`OplusBuild` SDK 40 or later) [backdrop] is not used: the material is the platform
+ * view `AppBarBlurHelper` dresses, with the framework's gradient-blur backdrop effect set once, and
+ * scrolling only changes that view's alpha. ColorOS 16 exposes the same classes but composites the
+ * effect over a black backdrop, which turns the whole bar dark, so it stays on COUI's engine along
+ * with every other platform.
  *
  * @param modifier The modifier to be applied to the overlay. The reported size is the size of
  *   [content], coerced up to the incoming minimum constraints; the material is drawn [extraHeight]
