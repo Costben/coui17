@@ -5,6 +5,8 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,21 +28,25 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Search
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.backdrop.LocalCouiBackdrop
+import io.github.suqi8.coui.kmp.kit.effect.isKitSearchBarSupported
 import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
 import io.github.suqi8.coui.kmp.kit.text.CouiTextKind
 import io.github.suqi8.coui.kmp.kit.text.rememberCouiTextStyle
@@ -204,7 +212,7 @@ private fun TopAppBarSearchBarImpl(
         onBackCompleted = closeSearch,
     )
 
-    val useKitSurface = isKitSurfaceSupported() && resolvedBackdrop != null
+    val useKitSurface = isKitSurfaceSupported() && isKitSearchBarSupported() && resolvedBackdrop != null
 
     if (scrollBehavior != null) {
         if (useKitSurface) {
@@ -425,9 +433,32 @@ private fun TopAppBarSearchBarImpl(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             if (showSearchButton) {
-                                HighlightedIconButton(
-                                    onClick = { if (enabled) currentOnExpandedChange(true) },
-                                    enabled = enabled,
+                                // 和展开后的胶囊用同一套材质：采样背景模糊 + 边缘光，
+                                // 没有采样层时退回半透明填充。
+                                val buttonColor = SearchBarDefaults.searchBarColors().backgroundColor
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .couiGlassSurface(
+                                            backdrop = effectiveBackdrop,
+                                            shape = CircleShape,
+                                            containerColor = Color.Transparent,
+                                            fallback = Modifier.background(buttonColor),
+                                            blurRadius = SearchViewAnimateDefaults.GlassBlurRadius,
+                                            blendColors = remember(buttonColor) {
+                                                listOf(BlendColorEntry(color = buttonColor))
+                                            },
+                                            highlight = rememberGlassHighlight(GlassContainer.Small, effectiveBackdrop),
+                                        )
+                                        .clickable(
+                                            interactionSource = null,
+                                            indication = null,
+                                            enabled = enabled,
+                                            role = Role.Button,
+                                            onClick = { currentOnExpandedChange(true) },
+                                        ),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
                                         imageVector = COUIIcons.Basic.Search,

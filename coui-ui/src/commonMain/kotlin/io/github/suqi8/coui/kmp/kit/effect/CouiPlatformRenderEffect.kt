@@ -17,6 +17,15 @@ internal expect fun isKitSurfaceSupported(): Boolean
 /** True when the current platform supports [RenderEffect] composition (Android API 31+ or Skiko). */
 internal expect fun isKitRenderEffectSupported(): Boolean
 
+/**
+ * True when the metaball search toolbar renders its material correctly on this platform.
+ *
+ * The search toolbar stacks several floating surfaces into one fusion patch with a motion-blur
+ * shader; on Skiko that composition produces no visible material and animates slowly, so the
+ * toolbar falls back to the Compose material path ([SearchViewAnimate]) there.
+ */
+internal expect fun isKitSearchBarSupported(): Boolean
+
 /** True when the current platform supports runtime shader compilation (Android API 33+ or Skiko). */
 internal fun isKitRuntimeShaderSupported(): Boolean = isRuntimeShaderSupported()
 

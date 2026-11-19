@@ -49,6 +49,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Close
 import io.github.suqi8.coui.kmp.icon.basic.Search
@@ -107,6 +110,9 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param cancelButton Replaces the default trailing `SearchFunctionalButton` entirely.
  * @param leadingIcon The glyph shown at the start (defaults to the 24dp `coui_search_view_icon`).
  * @param colors The [SearchViewAnimateColors] of the bar.
+ * @param backdrop The layer the capsule samples when it is drawn as glass. Defaults to
+ *   [LocalBackdrop], so a host that already publishes its page content gets the tinted blur and the
+ *   rim light without wiring anything; pass `null` to force the flat fill.
  */
 @Composable
 fun SearchViewAnimate(
@@ -123,6 +129,7 @@ fun SearchViewAnimate(
     cancelButton: (@Composable () -> Unit)? = null,
     leadingIcon: ImageVector = COUIIcons.Basic.Search,
     colors: SearchViewAnimateColors = SearchViewAnimateDefaults.colors(),
+    backdrop: Backdrop? = LocalBackdrop.current,
 ) {
     val currentOnQueryChange by rememberUpdatedState(onQueryChange)
     val currentOnSearch by rememberUpdatedState(onSearch)
@@ -185,7 +192,20 @@ fun SearchViewAnimate(
             .graphicsLayer { this.translationY = translationY.toPx() }
             .height(height)
             .clip(CircleShape)
-            .background(backgroundColor)
+            // COUISearchViewAnimate 的胶囊在系统里是半透明填充（selector_color_normal #14000000），
+            // 落在玻璃层上就该透出背后的模糊与边缘光。没有 backdrop（模糊关闭、宿主没提供采样层）时
+            // 退回原来的纯色填充，与系统里关闭模糊的表现一致。
+            .couiGlassSurface(
+                backdrop = backdrop,
+                shape = CircleShape,
+                containerColor = Color.Transparent,
+                fallback = Modifier.background(backgroundColor),
+                blurRadius = SearchViewAnimateDefaults.GlassBlurRadius,
+                blendColors = remember(backgroundColor) {
+                    listOf(BlendColorEntry(color = backgroundColor))
+                },
+                highlight = rememberGlassHighlight(GlassContainer.Small, backdrop),
+            )
             // dispatchTouchEvent / onInterceptTouchEvent: a tap on the collapsed bar expands it; while
             // collapsed only the icon itself is allowed to pass the touch through.
             .clickable(
@@ -466,6 +486,12 @@ object SearchViewAnimateDefaults {
      * `android:layout_marginStart="8dp"` in `coui_search_view_animate_layout.xml`.
      */
     val IconInputGap = 8.dp
+
+    /**
+     * Blur radius of the capsule when it is drawn as a glass surface, matching the radius the
+     * capsule rows and floating bars use so a search pill and a segment bar sample alike.
+     */
+    const val GlassBlurRadius = 11f
 
     /** The corner radius of the bar. COUI `dimen/coui_search_view_corner` (18dp); the capsule clamps it to `height / 2`. */
     val CornerRadius = 18.dp

@@ -22,6 +22,9 @@ internal actual fun isKitSurfaceSupported(): Boolean = true
 
 internal actual fun isKitRenderEffectSupported(): Boolean = true
 
+// 搜索工具栏的 metaball 融合 + 运动模糊在 Skiko 上不出材质、动画也重，走 Compose 材质路径。
+internal actual fun isKitSearchBarSupported(): Boolean = false
+
 internal actual val isAgslEs3Supported: Boolean = false
 
 internal actual fun RuntimeShader.asComposeRenderEffect(inputUniformName: String): RenderEffect = ImageFilter.makeRuntimeShader(

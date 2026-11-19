@@ -28,6 +28,9 @@ internal actual fun isKitSurfaceSupported(): Boolean = Build.VERSION.SDK_INT >= 
 @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
 internal actual fun isKitRenderEffectSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
+@ChecksSdkIntAtLeast(api = 34)
+internal actual fun isKitSearchBarSupported(): Boolean = Build.VERSION.SDK_INT >= 34
+
 internal actual val isAgslEs3Supported: Boolean = true
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
