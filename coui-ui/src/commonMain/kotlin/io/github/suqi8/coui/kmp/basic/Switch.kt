@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,12 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
@@ -72,6 +71,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
@@ -107,7 +107,10 @@ fun Switch(
 
     val couiHaptic = rememberCouiHaptic()
 
-    val capsuleShape = CircleShape
+    val squircleEnabled = isSquircleEnabled()
+    val capsuleShape = remember(squircleEnabled) {
+        CapsuleOutlineShape(squircleEnabled = squircleEnabled)
+    }
     // COUI toggle interpolator, shared by every child animator (COUISwitch.animateWhenStateChanged()).
     val couiToggleEasing = remember { CubicBezierEasing(0.3f, 0f, 0.1f, 1f) }
 
@@ -268,16 +271,16 @@ fun Switch(
                     .then(
                         if (enabled) {
                             // COUISwitch clears the shadow layer when disabled.
-                            Modifier.dropShadow(shape = CircleShape, shadow = SwitchDefaults.ThumbShadow)
+                            Modifier.dropShadow(shape = capsuleShape, shadow = SwitchDefaults.ThumbShadow)
                         } else {
                             Modifier
                         },
                     )
                     .drawBehind {
-                        // A circle at rest, a capsule while stretched (COUISwitch.drawOuterCircle).
-                        drawRoundRect(
+                        // A circle at rest, a continuous-curvature capsule while stretched (COUISwitch.drawOuterCircle).
+                        drawOutline(
+                            outline = capsuleShape.createOutline(size, layoutDirection, this),
                             color = thumbColorState.value,
-                            cornerRadius = CornerRadius(size.height / 2f),
                         )
                     },
             )
