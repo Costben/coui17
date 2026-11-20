@@ -84,8 +84,19 @@ internal class CouiSliderMotion(
     val fraction: Float get() = normalize(value)
     val visualFraction: Float get() = if (length > 0f) (position.value / length).coerceIn(0f, 1f) else fraction
 
+    /** Pressed, dragging, or still coasting after a release: the gesture owns the value meanwhile. */
+    private val gestureActive: Boolean
+        get() = pressed || dragging || flingJob?.isActive == true
+
     fun syncValue(externalValue: Float) {
         if (externalValue == lastExternalValue) return
+        // A value arriving mid-gesture is the echo of what we just emitted, and callers routinely
+        // round it (a percent slider feeding an Int preference) — so `next != value` and this used to
+        // cancelGesture() + stopPositionAnimations(). That killed the drag after one step and made
+        // release() bail out on `pressed == false`, so onValueChangeFinished never fired and the
+        // caller never persisted anything. During a gesture this class is the only value source;
+        // reconcile once the finger and the coast are done.
+        if (gestureActive) return
         lastExternalValue = externalValue
         val next = externalValue.coerceIn(range)
         // Callers may round quantized levels to integers; avoid interrupting visual motion for the same step.
