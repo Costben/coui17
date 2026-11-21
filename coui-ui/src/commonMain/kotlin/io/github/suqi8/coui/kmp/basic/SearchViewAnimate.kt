@@ -491,6 +491,7 @@ object SearchViewAnimateDefaults {
      * Blur radius of the capsule when it is drawn as a glass surface, matching the radius the
      * capsule rows and floating bars use so a search pill and a segment bar sample alike.
      */
+    @Suppress("ktlint:standard:property-naming")
     const val GlassBlurRadius = 11f
 
     /** The corner radius of the bar. COUI `dimen/coui_search_view_corner` (18dp); the capsule clamps it to `height / 2`. */
