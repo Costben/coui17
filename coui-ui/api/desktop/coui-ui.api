@@ -3708,6 +3708,24 @@ public abstract interface class io/github/suqi8/coui/kmp/basic/ScrollBehavior {
 	public abstract fun isPinned ()Z
 }
 
+public final class io/github/suqi8/coui/kmp/basic/ScrollToTopController {
+	public static final field $stable I
+	public final fun getHasTarget ()Z
+	public final fun triggerScrollToTop ()V
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ScrollToTopKt {
+	public static final fun BindScrollToTop (Landroidx/compose/foundation/ScrollState;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun BindScrollToTop (Landroidx/compose/foundation/lazy/LazyListState;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun BindScrollToTop (Landroidx/compose/foundation/lazy/grid/LazyGridState;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun BindScrollToTop (Landroidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridState;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun RegisterScrollToTop (ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ScrollToTopBlocker (ZLandroidx/compose/runtime/Composer;I)V
+	public static final fun getLocalScrollToTopController ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun rememberScrollToTopController (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/ScrollToTopController;
+	public static final fun scrollToTopOnTap (Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/SearchBarActionButtonDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/SearchBarActionButtonDefaults;
@@ -3985,6 +4003,7 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults {
 	public static final field CLAMP_ANIMATION_PERCENT F
 	public static final field CLEAR_TEXT Ljava/lang/String;
 	public static final field FADE_DURATION_MILLIS I
+	public static final field GlassBlurRadius F
 	public static final field ICON_ROTATION_DURATION_MILLIS I
 	public static final field ICON_ROTATION_Y F
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults;
@@ -4024,7 +4043,7 @@ public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateKt {
-	public static final fun SearchViewAnimate (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/SearchViewAnimateType;FLkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/graphics/vector/ImageVector;Lio/github/suqi8/coui/kmp/basic/SearchViewAnimateColors;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SearchViewAnimate (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/SearchViewAnimateType;FLkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/graphics/vector/ImageVector;Lio/github/suqi8/coui/kmp/basic/SearchViewAnimateColors;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SearchViewAnimateType : java/lang/Enum {

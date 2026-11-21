@@ -119,6 +119,11 @@ fun Scaffold(
     val rootDialogStates = parentRootDialogStates ?: dialogStates
     val parentRootPopupStates = LocalRootPopupStates.current
     val rootPopupStates = parentRootPopupStates ?: popupStates
+    val parentScrollToTopController = LocalScrollToTopController.current
+    val scrollToTopController = parentScrollToTopController ?: rememberScrollToTopController()
+    if (parentScrollToTopController == null) {
+        PlatformStatusBarScrollToTopEffect(scrollToTopController)
+    }
     Surface(
         modifier = modifier.onConsumedWindowInsetsChanged { consumedWindowInsets ->
             // Exclude currently consumed window insets from user provided contentWindowInsets
@@ -132,7 +137,9 @@ fun Scaffold(
             LocalRootDialogStates provides rootDialogStates,
             LocalRootPopupStates provides rootPopupStates,
             LocalEdgeToEdge provides edgeToEdge,
+            LocalScrollToTopController provides scrollToTopController,
         ) {
+            ScrollToTopBlocker(active = dialogStates.isNotEmpty() || popupStates.isNotEmpty())
             ScaffoldLayout(
                 topBar = topBar,
                 bottomBar = bottomBar,

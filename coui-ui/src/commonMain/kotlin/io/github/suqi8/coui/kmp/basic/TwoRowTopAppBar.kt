@@ -187,7 +187,7 @@ fun TwoRowTopAppBar(
     }
     AppBarMaterialLayout(
         materialEnabled = LocalEdgeToEdge.current,
-        modifier = modifier,
+        modifier = modifier.scrollToTopOnTap(),
         containerColor = containerColor,
         backdrop = backdrop,
         extraHeight = extraHeight,

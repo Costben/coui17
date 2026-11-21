@@ -338,10 +338,11 @@ fun TopAppBar(
 
     // The material layer is a sibling of the bar, measured to the bar plus the extra band while
     // the wrapper still reports the bar's height. Without the material the wrapper is a plain Box.
+    BindTopAppBarScrollReset(scrollBehavior)
     AppBarMaterialScaffold(
         gradientGlass = gradientGlass,
         color = color,
-        modifier = modifier,
+        modifier = modifier.scrollToTopOnTap(),
         extraHeight = gradientGlassExtraHeight,
         scrollBehavior = scrollBehavior,
     ) {
@@ -413,10 +414,11 @@ internal fun TopAppBarWithSearch(
             )
         }
 
+    BindTopAppBarScrollReset(scrollBehavior)
     AppBarMaterialScaffold(
         gradientGlass = gradientGlass,
         color = color,
-        modifier = modifier,
+        modifier = modifier.scrollToTopOnTap(),
         extraHeight = gradientGlassExtraHeight,
         scrollBehavior = scrollBehavior,
     ) {
@@ -582,10 +584,11 @@ fun SmallTopAppBar(
 
     // The material layer is a sibling of the bar, measured to the bar plus the extra band while
     // the wrapper still reports the bar's height. Without the material the wrapper is a plain Box.
+    BindTopAppBarScrollReset(scrollBehavior)
     AppBarMaterialScaffold(
         gradientGlass = gradientGlass,
         color = color,
-        modifier = modifier,
+        modifier = modifier.scrollToTopOnTap(),
         extraHeight = gradientGlassExtraHeight,
         scrollBehavior = scrollBehavior,
     ) {

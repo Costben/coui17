@@ -194,9 +194,10 @@ fun PinnedTopAppBar(
             }
         }
     }
+    BindTopAppBarScrollReset(scrollBehavior)
     AppBarBlurOverlay(
         scrollFraction = scrollFraction,
-        modifier = modifier,
+        modifier = modifier.scrollToTopOnTap(),
         containerColor = containerColor,
         backdrop = backdrop,
         extraHeight = extraHeight,
