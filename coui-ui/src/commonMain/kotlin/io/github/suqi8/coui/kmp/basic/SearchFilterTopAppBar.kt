@@ -170,7 +170,7 @@ fun SearchFilterTopAppBar(
     }
     CompositionLocalProvider(LocalEdgeToEdge provides true) {
         Layout(
-            modifier = modifier,
+            modifier = modifier.scrollToTopOnTap(),
             content = {
                 Box(
                     modifier = Modifier

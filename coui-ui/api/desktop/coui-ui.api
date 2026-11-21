@@ -3719,8 +3719,12 @@ public final class io/github/suqi8/coui/kmp/basic/ScrollToTopKt {
 	public static final fun BindScrollToTop (Landroidx/compose/foundation/lazy/LazyListState;ZLandroidx/compose/runtime/Composer;II)V
 	public static final fun BindScrollToTop (Landroidx/compose/foundation/lazy/grid/LazyGridState;ZLandroidx/compose/runtime/Composer;II)V
 	public static final fun BindScrollToTop (Landroidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridState;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun BindTopAppBarScrollReset (Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZLandroidx/compose/runtime/Composer;II)V
 	public static final fun RegisterScrollToTop (ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun RegisterScrollToTopHeaderReset (ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun ScrollToTopBlocker (ZLandroidx/compose/runtime/Composer;I)V
+	public static final fun ScrollToTopHost (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ScrollToTopPage (ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 	public static final fun getLocalScrollToTopController ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun rememberScrollToTopController (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/ScrollToTopController;
 	public static final fun scrollToTopOnTap (Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;

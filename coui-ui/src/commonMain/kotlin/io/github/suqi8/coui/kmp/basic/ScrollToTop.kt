@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -92,7 +93,7 @@ class ScrollToTopController internal constructor(
         val entry = targets.lastOrNull() ?: return
         activeJob?.cancel()
         activeJob = scope.launch {
-            entry.onScrollToTop()
+            launch { entry.onScrollToTop() }
             headerResets.toList().forEach { reset ->
                 launch { reset.onReset() }
             }
@@ -121,6 +122,53 @@ fun ScrollToTopBlocker(active: Boolean) {
         if (!active) return@DisposableEffect onDispose {}
         controller.pushBlocker()
         onDispose { controller.popBlocker() }
+    }
+}
+
+/**
+ * Provides a [ScrollToTopController] to [content] and connects platform status bar tap events.
+ *
+ * Use this at the root of a screen shell that lays its bars out by hand instead of using
+ * [Scaffold]. When a parent already provides a controller, this composes [content] unchanged so a
+ * nested host never installs a second platform listener.
+ */
+@Composable
+fun ScrollToTopHost(content: @Composable () -> Unit) {
+    if (LocalScrollToTopController.current != null) {
+        content()
+        return
+    }
+    val controller = rememberScrollToTopController()
+    PlatformStatusBarScrollToTopEffect(controller)
+    CompositionLocalProvider(LocalScrollToTopController provides controller) {
+        content()
+    }
+}
+
+/**
+ * Scopes a pager page to its own scroll-to-top handling while it is not [active].
+ *
+ * Pagers often keep neighbouring pages composed (`beyondViewportPageCount` > 0). Those pages would
+ * otherwise register their scrollables with the controller the visible page uses, and the
+ * controller triggers the most recently registered target, so a status bar tap could scroll an
+ * off-screen page. An inactive page gets a detached controller: its bindings still compose and
+ * dispose normally, but nothing triggers them, and they never displace the visible page's target.
+ */
+@Composable
+fun ScrollToTopPage(
+    active: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val parent = LocalScrollToTopController.current
+    if (parent == null) {
+        content()
+        return
+    }
+    val detached = rememberScrollToTopController()
+    CompositionLocalProvider(
+        LocalScrollToTopController provides if (active) parent else detached,
+    ) {
+        content()
     }
 }
 
@@ -223,24 +271,46 @@ fun Modifier.scrollToTopOnTap(
     }
 }
 
+/**
+ * Registers a suspend [onReset] callback with [LocalScrollToTopController] to expand or reset a
+ * custom top bar when scroll-to-top triggers, while [enabled] is `true` and this composable
+ * remains in composition.
+ */
 @Composable
-internal fun BindTopAppBarScrollReset(scrollBehavior: ScrollBehavior?) {
+fun RegisterScrollToTopHeaderReset(
+    enabled: Boolean = true,
+    onReset: suspend () -> Unit,
+) {
     val controller = LocalScrollToTopController.current ?: return
-    val state = scrollBehavior?.state ?: return
+    val latestReset by rememberUpdatedState(onReset)
     val key = remember { Any() }
-    DisposableEffect(controller, state, key) {
-        controller.registerHeaderReset(key) {
-            state.contentOffset = 0f
-            if (state.heightOffset < 0f) {
-                Animatable(state.heightOffset).animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
-                ) {
-                    state.heightOffset = value
-                }
+    DisposableEffect(controller, enabled, key) {
+        if (!enabled) return@DisposableEffect onDispose {}
+        controller.registerHeaderReset(key) { latestReset() }
+        onDispose { controller.unregisterHeaderReset(key) }
+    }
+}
+
+/**
+ * Binds [scrollBehavior] to [LocalScrollToTopController] so tapping the top bar or status bar
+ * expands the header and resets its scroll state alongside the list scrolling to top.
+ */
+@Composable
+fun BindTopAppBarScrollReset(
+    scrollBehavior: ScrollBehavior?,
+    enabled: Boolean = true,
+) {
+    val state = scrollBehavior?.state ?: return
+    RegisterScrollToTopHeaderReset(enabled = enabled) {
+        state.contentOffset = 0f
+        if (state.heightOffset < 0f) {
+            Animatable(state.heightOffset).animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+            ) {
+                state.heightOffset = value
             }
         }
-        onDispose { controller.unregisterHeaderReset(key) }
     }
 }
 

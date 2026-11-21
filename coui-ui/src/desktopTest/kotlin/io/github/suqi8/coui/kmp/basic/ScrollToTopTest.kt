@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -168,5 +169,124 @@ class ScrollToTopTest {
         }
         waitForIdle()
         assertEquals(0, listState.firstVisibleItemIndex, "clearing blocker restores scroll-to-top")
+    }
+
+    @Test
+    fun tappingCollapsedTopAppBarExpandsLargeTitleFully() = runSkikoComposeUiTest(
+        size = Size(360f, 640f),
+        density = Density(1f),
+    ) {
+        lateinit var listState: LazyListState
+        lateinit var behavior: ScrollBehavior
+
+        setContent {
+            COUITheme {
+                behavior = COUIScrollBehavior(state = rememberTopAppBarState())
+                listState = rememberLazyListState()
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = "Large Header",
+                            scrollBehavior = behavior,
+                            modifier = Modifier.testTag(BAR_TAG),
+                        )
+                    },
+                ) { padding ->
+                    BindScrollToTop(listState)
+                    LazyColumn(
+                        state = listState,
+                        contentPadding = padding,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(behavior.nestedScrollConnection)
+                            .testTag(LIST_TAG),
+                    ) {
+                        items(60) { index ->
+                            Box(modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                                Text("Row $index")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        onNodeWithTag(LIST_TAG).performTouchInput { swipeUp() }
+        waitForIdle()
+        assertTrue(behavior.state.collapsedFraction > 0.5f, "bar should collapse after swiping up")
+
+        onNodeWithTag(BAR_TAG).performTouchInput {
+            click(position = centerLeft.copy(x = 40f))
+        }
+        waitForIdle()
+        assertEquals(0, listState.firstVisibleItemIndex)
+        assertEquals(0f, behavior.state.contentOffset, 0.5f)
+        assertEquals(0f, behavior.state.heightOffset, 0.5f)
+        assertEquals(0f, behavior.state.collapsedFraction, 0.01f)
+    }
+
+    @Test
+    fun customHeaderResetExpandsCollapsedBarAndCustomState() = runSkikoComposeUiTest(
+        size = Size(360f, 640f),
+        density = Density(1f),
+    ) {
+        lateinit var listState: LazyListState
+        lateinit var barState: TopAppBarState
+        val scrolledPx = mutableFloatStateOf(0f)
+
+        setContent {
+            COUITheme {
+                barState = rememberTopAppBarState(initialHeightOffsetLimit = -120f)
+                val behavior = COUIScrollBehavior(state = barState, expandOnContentScroll = true)
+                listState = rememberLazyListState()
+                Scaffold(
+                    topBar = {
+                        BindTopAppBarScrollReset(behavior)
+                        RegisterScrollToTopHeaderReset {
+                            scrolledPx.floatValue = 0f
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(64.dp)
+                                .scrollToTopOnTap()
+                                .testTag(BAR_TAG),
+                        )
+                    },
+                ) { padding ->
+                    BindScrollToTop(listState)
+                    LazyColumn(
+                        state = listState,
+                        contentPadding = padding,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(behavior.nestedScrollConnection)
+                            .testTag(LIST_TAG),
+                    ) {
+                        items(60) { index ->
+                            Box(modifier = Modifier.fillMaxWidth().height(48.dp)) {
+                                Text("Row $index")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        onNodeWithTag(LIST_TAG).performTouchInput { swipeUp() }
+        waitForIdle()
+        scrolledPx.floatValue = 300f
+        assertTrue(barState.heightOffset < 0f, "custom bar should be collapsed after swiping up")
+
+        onNodeWithTag(BAR_TAG).performTouchInput {
+            click(position = centerLeft.copy(x = 40f))
+        }
+        waitForIdle()
+        assertEquals(0, listState.firstVisibleItemIndex)
+        assertEquals(0f, barState.heightOffset, 0.5f)
+        assertEquals(0f, barState.contentOffset, 0.5f)
+        assertEquals(0f, scrolledPx.floatValue, 0.5f)
     }
 }
