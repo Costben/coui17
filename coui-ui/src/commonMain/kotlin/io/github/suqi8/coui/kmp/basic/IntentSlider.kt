@@ -45,7 +45,6 @@ import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
@@ -642,8 +641,9 @@ private fun IntentSliderTrack(
         }
 
         // ConicLightEffectRenderer.drawEffect (DrawPhase.POST_DRAW): a 450px high rect reaching
-        // 300px past both track ends, centered on the bar, with BlendMode.SCREEN. A View draws
-        // inside its own bounds, so the light is clipped to the bar.
+        // 300px past both track ends, centered on the bar, with BlendMode.SCREEN. Draw without
+        // clipping to the slider's bounds so the glow can spread cleanly above, below, and past
+        // the track ends (mirroring ConicLightPaintHost on an unclipped host overlay).
         if (conicShader != null && state.conic.isVisible) {
             val conic = state.conic
             val lightWidth = length + 2f * ConicLightShader.HORIZONTAL_PADDING
@@ -665,14 +665,12 @@ private fun IntentSliderTrack(
                 isRtl = isRtl,
                 color = colors.conicLightColor,
             )
-            clipRect(0f, 0f, size.width, size.height) {
-                translate(left - ConicLightShader.HORIZONTAL_PADDING, centerY - ConicLightShader.LIGHT_HEIGHT / 2f) {
-                    drawRect(
-                        brush = conicShader.asBrush(),
-                        size = Size(lightWidth, ConicLightShader.LIGHT_HEIGHT),
-                        blendMode = BlendMode.Screen,
-                    )
-                }
+            translate(left - ConicLightShader.HORIZONTAL_PADDING, centerY - ConicLightShader.LIGHT_HEIGHT / 2f) {
+                drawRect(
+                    brush = conicShader.asBrush(),
+                    size = Size(lightWidth, ConicLightShader.LIGHT_HEIGHT),
+                    blendMode = BlendMode.Screen,
+                )
             }
         }
     }
