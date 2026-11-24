@@ -21,9 +21,10 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  *
  * @param show Whether the [OverlayBottomSheet] is shown.
  * @param modifier The modifier to be applied to the [OverlayBottomSheet].
- * @param title Optional title to display at the top of the [OverlayBottomSheet].
- * @param startAction Optional [Composable] to display on the start side of the title (e.g. a close button).
- * @param endAction Optional [Composable] to display on the end side of the title (e.g. a submit button).
+ * @param title Optional title centered in the top toolbar of the [OverlayBottomSheet].
+ * @param subtitle Optional subtitle centered below [title] in the top toolbar.
+ * @param startAction Optional [Composable] to display on the start side of the toolbar (e.g. a close button).
+ * @param endAction Optional [Composable] to display on the end side of the toolbar (e.g. a submit button).
  * @param backgroundColor The background color of the [OverlayBottomSheet].
  * @param enableWindowDim Whether to dim the window behind the [OverlayBottomSheet].
  * @param cornerRadius The corner radius of the top corners of the [OverlayBottomSheet].
@@ -37,8 +38,14 @@ import io.github.suqi8.coui.kmp.utils.COUIPopupUtils.Companion.DialogLayout
  * @param showDragHandle Whether to draw the drag handle bar at the top of the sheet. ColorOS 17
  *   panels hide it by default (`false`), keeping a slim transparent strip so the panel stays
  *   draggable while toolbar actions sit 15–16dp below the top edge.
+ * @param showInMaxHeight Whether the panel takes the maximum height instead of wrapping its content.
  * @param allowDismiss Whether to allow dismissing the sheet via drag or back gesture.
+ * @param dismissOnClickOutside Whether tapping outside the panel dismisses it while [allowDismiss] is true.
+ * @param draggable Whether the panel follows drag gestures.
+ * @param enablePullUp Whether the panel can be pulled above its resting position with resistance.
  * @param enableNestedScroll Whether to enable nested scrolling for the content.
+ * @param topScrollBlur Whether scrollable content renders a progressive blur and transparent fading
+ *   edge along the top of the content viewport once scrolled.
  * @param renderInRootScaffold Whether to render the bottom sheet in the root (outermost) Scaffold.
  *   When true (default), the bottom sheet covers the full screen. When false, it renders within the
  *   current Scaffold's bounds.
@@ -55,6 +62,7 @@ fun OverlayBottomSheet(
     show: Boolean,
     modifier: Modifier = Modifier,
     title: String? = null,
+    subtitle: String? = null,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
     backgroundColor: Color = BottomSheetDefaults.backgroundColor(),
@@ -68,8 +76,13 @@ fun OverlayBottomSheet(
     defaultWindowInsetsPadding: Boolean = true,
     dragHandleColor: Color = BottomSheetDefaults.dragHandleColor(),
     showDragHandle: Boolean = false,
+    showInMaxHeight: Boolean = false,
     allowDismiss: Boolean = true,
+    dismissOnClickOutside: Boolean = true,
+    draggable: Boolean = true,
+    enablePullUp: Boolean = true,
     enableNestedScroll: Boolean = true,
+    topScrollBlur: Boolean = true,
     renderInRootScaffold: Boolean = true,
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     dismissOffsetFraction: Float = BottomSheetDefaults.DismissOffsetFraction,
@@ -102,14 +115,20 @@ fun OverlayBottomSheet(
         },
         modifier = modifier,
         title = title,
+        subtitle = subtitle,
         startAction = startAction,
         endAction = endAction,
         enableWindowDim = enableWindowDim,
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+        showInMaxHeight = showInMaxHeight,
         allowDismiss = allowDismiss,
+        dismissOnClickOutside = dismissOnClickOutside,
+        draggable = draggable,
+        enablePullUp = enablePullUp,
         enableNestedScroll = enableNestedScroll,
+        topScrollBlur = topScrollBlur,
         panelPaddingBottom = panelPaddingBottom,
         dismissOffsetFraction = dismissOffsetFraction,
         content = content,

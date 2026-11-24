@@ -813,6 +813,7 @@ private fun ChipTabSurface(
                         dither = spotLightParams.ditherN,
                         blendMode = spotLightParams.blendMode,
                         enabled = enabled && lightProgress.value > 0f,
+                        clipShape = pillShape,
                     )
                 } else {
                     Modifier

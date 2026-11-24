@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Dialog
+import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
 import io.github.suqi8.coui.kmp.layout.DialogDefaults
 import io.github.suqi8.coui.kmp.layout.LoadingDialogContentLayout
 import io.github.suqi8.coui.kmp.layout.LoadingDialogDefaults
@@ -37,6 +38,11 @@ import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
  *   outside or pressing the back button. When null (default), the dialog cannot be dismissed
  *   by the user.
  * @param onDismissFinished The callback when the [WindowLoadingDialog] is completely dismissed.
+ * @param title The optional title above the spinner (`COUIRotatingDialogBuilder.setDialogTitle`).
+ * @param titleColor The color of [title].
+ * @param cancelAction The optional cancel button (`COUIRotatingDialogBuilder.setCancelButton`).
+ *   With it the dialog takes the cancelable form (`COUIAlertDialog.Rotating.Cancelable`): a wider
+ *   card without the minimum height, the message closer to a one-button bar.
  */
 @Composable
 fun WindowLoadingDialog(
@@ -49,6 +55,9 @@ fun WindowLoadingDialog(
     enableWindowDim: Boolean = true,
     onDismissRequest: (() -> Unit)? = null,
     onDismissFinished: (() -> Unit)? = null,
+    title: String? = null,
+    titleColor: Color = DialogDefaults.titleColor(),
+    cancelAction: DialogButtonBarAction? = null,
 ) {
     val statusBarsPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val captionBarPadding = WindowInsets.captionBar.asPaddingValues().calculateTopPadding()
@@ -63,7 +72,7 @@ fun WindowLoadingDialog(
         show = show,
         popupHost = { visible, hostContent ->
             // Captured here, in the host composition, so the dialog frosts the page it opens over.
-            val hostBackdrop = rememberHostWindowBackdrop(visible)
+            val hostBackdrop = rememberHostWindowBackdrop(show || visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value?.invoke() },
@@ -85,5 +94,39 @@ fun WindowLoadingDialog(
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         topInset = safeTopInset,
+        title = title,
+        titleColor = titleColor,
+        cancelAction = cancelAction,
+    )
+}
+
+/** Binary-compatible bridge for callers compiled before [title] and [cancelAction] existed. */
+@Deprecated(
+    message = "Migrated to the overload that adds title, titleColor and cancelAction parameters.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun WindowLoadingDialog(
+    show: Boolean,
+    modifier: Modifier = Modifier,
+    text: String? = null,
+    textColor: Color = LoadingDialogDefaults.textColor(),
+    spinnerColor: Color = LoadingDialogDefaults.spinnerColor(),
+    backgroundColor: Color = DialogDefaults.backgroundColor(),
+    enableWindowDim: Boolean = true,
+    onDismissRequest: (() -> Unit)? = null,
+    onDismissFinished: (() -> Unit)? = null,
+) {
+    WindowLoadingDialog(
+        show = show,
+        modifier = modifier,
+        text = text,
+        textColor = textColor,
+        spinnerColor = spinnerColor,
+        backgroundColor = backgroundColor,
+        enableWindowDim = enableWindowDim,
+        onDismissRequest = onDismissRequest,
+        onDismissFinished = onDismissFinished,
+        title = null,
     )
 }

@@ -164,7 +164,7 @@ class SheetActionButtonTest {
     }
 
     @Test
-    fun theBottomSheetHeaderAlignsButtonsTitleAndCardsAt16DpAndPlacesTitleBelowToolbar() = runSkikoComposeUiTest(
+    fun theBottomSheetHeaderAlignsButtonsCardsAt16DpAndCentersTitleInToolbar() = runSkikoComposeUiTest(
         size = Size(WIDTH_PX, 400f),
         density = Density(1f),
     ) {
@@ -205,8 +205,16 @@ class SheetActionButtonTest {
         assertEquals(16.dp, card.left)
         assertEquals((WIDTH_PX - 16).dp, card.right)
         assertEquals(card.right, endBtn.right)
-        assertEquals(card.left, titleNode.left)
-        assertTrue(titleNode.top >= endBtn.bottom)
+        val sheetCenterX = WIDTH_PX / 2f
+        val titleCenterX = (titleNode.left.value + titleNode.right.value) / 2f
+        assertTrue(
+            kotlin.math.abs(titleCenterX - sheetCenterX) <= 2f,
+            "title must sit horizontally centred in the toolbar row: titleCenterX=$titleCenterX sheetCenterX=$sheetCenterX",
+        )
+        assertTrue(
+            titleNode.top >= endBtn.top && titleNode.bottom <= endBtn.bottom,
+            "title must sit on the same toolbar row as endAction: title=$titleNode endBtn=$endBtn",
+        )
     }
 
     private companion object {

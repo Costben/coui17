@@ -9,8 +9,8 @@ import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +29,8 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
@@ -53,8 +55,10 @@ import kotlinx.coroutines.delay
  * `setHorizontalItemAlign(1)`, native over-scroll on, `setHorizontalFlingFriction` at 2.5x the
  * platform scroll friction, `setPadding(24dp, 0, 24dp, 0)` with `setClipToPadding(false)`, and a
  * horizontal `DividerItemDecoration` whose `coui_item_decoration_8dp` drawable is an 8dp-wide
- * transparent shape. [contentPadding] and [itemSpacing] carry the 24dp and the 8dp; the over-scroll,
- * the item align and the fling friction have no [HorizontalPager] equivalent and are not applied.
+ * transparent shape. [contentPadding] and [itemSpacing] carry the 24dp and the 8dp; each card also
+ * applies `COUIScalePageTransformer` (shrinking peeking neighbours down to `0.85x` around their
+ * inner edge so the centred card stands taller while [itemSpacing] stays constant), and
+ * [BannerIndicator] sits over the bottom centre of the pager (`layout_marginBottom` 10dp).
  *
  * **There is no auto-scroll in the native at all.** Neither `COUIBannerRecyclerView` nor
  * `COUIPageIndicatorKit` owns a timer, and no class in the Clock dex references either of them — the
@@ -108,14 +112,13 @@ fun Banner(
     indicatorColors: BannerIndicatorColors = BannerDefaults.bannerIndicatorColors(),
     content: @Composable (page: Int) -> Unit,
 ) {
-    Column(modifier = modifier) {
+    Box(modifier = modifier) {
         HorizontalPager(
             state = state,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+            modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = contentPadding),
             pageSpacing = itemSpacing,
+            beyondViewportPageCount = BANNER_OFFSCREEN_PAGE_LIMIT,
             // COUIBannerRecyclerView applies a 2.5x scroll friction to the fling.
             flingBehavior = PagerDefaults.flingBehavior(
                 state = state,
@@ -124,7 +127,16 @@ fun Banner(
         ) { page ->
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        // COUIScalePageTransformer: shrink peeking neighbours around their inner
+                        // edge so the centred card stands taller while itemSpacing stays constant.
+                        val position = page - (state.currentPage + state.currentPageOffsetFraction)
+                        val scale = bannerPageScale(position)
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(bannerPagePivotX(position), 0.5f)
+                    }
                     .squircleSurface(color = itemColor, cornerRadius = itemCornerRadius),
             ) {
                 content(page)
@@ -134,7 +146,7 @@ fun Banner(
             count = pageCount,
             currentIndex = state.currentPage,
             modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+                .align(Alignment.BottomCenter)
                 .padding(bottom = indicatorMarginBottom),
             colors = indicatorColors,
         )
@@ -146,7 +158,10 @@ fun Banner(
             delay(autoScrollIntervalMillis)
             // A drag in progress owns the pager; skip this tick instead of fighting it.
             if (!state.isScrollInProgress) {
-                state.animateScrollToPage((state.currentPage + 1) % pageCount)
+                state.animateScrollToPage(
+                    page = (state.currentPage + 1) % pageCount,
+                    animationSpec = tween(durationMillis = BANNER_SCROLL_DURATION_MILLIS, easing = BannerScrollEasing),
+                )
             }
         }
     }
@@ -362,3 +377,33 @@ object BannerDefaults {
 
 /** COUIBannerRecyclerView: the 2.5x fling friction multiplier. */
 private const val BANNER_FLING_FRICTION_MULTIPLIER = 2.5f
+
+/** `ViewPager2.setOffscreenPageLimit(2)` so peeking neighbours stay composed and transformed. */
+private const val BANNER_OFFSCREEN_PAGE_LIMIT = 2
+
+/** `COUIScalePageTransformer`: scale of the cards beside the current one. */
+internal const val BANNER_MIN_PAGE_SCALE = 0.85f
+
+/** `COUIBanner` `mDuration`: 950ms auto-scroll tween duration. */
+private const val BANNER_SCROLL_DURATION_MILLIS = 950
+
+/** `COUIBanner` `mInterpolator`: `PathInterpolator(0.2, 0, 0.1, 1)`. */
+private val BannerScrollEasing: Easing = CubicBezierEasing(0.2f, 0f, 0.1f, 1f)
+
+/** `COUIScalePageTransformer.transformPage`: the scale of a page at [position]. */
+internal fun bannerPageScale(position: Float): Float {
+    val min = BANNER_MIN_PAGE_SCALE
+    return when {
+        position < -1f || position > 1f -> min
+        position < 0f -> (1f - min) * (position + 1f) + min
+        else -> (1f - min) * (1f - position) + min
+    }
+}
+
+/** `COUIScalePageTransformer.transformPage`: the horizontal pivot of a page at [position], as a fraction of its width. */
+internal fun bannerPagePivotX(position: Float): Float = when {
+    position < -1f -> 1f
+    position > 1f -> 0f
+    position < 0f -> -position * 0.5f + 0.5f
+    else -> (1f - position) * 0.5f
+}

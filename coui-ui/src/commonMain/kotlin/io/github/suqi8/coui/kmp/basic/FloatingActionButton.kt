@@ -14,6 +14,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -36,6 +38,8 @@ import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 
@@ -125,6 +129,8 @@ fun FloatingActionButton(
     }
 
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val density = LocalDensity.current
+    val squircleEnabled = isSquircleEnabled()
     val glass = backdrop != null && isBlurEnabled()
     val fillModifier = if (glass) {
         val layers = remember(containerColor, isDark) { FloatingActionButtonDefaults.fabBlurColors(containerColor, isDark) }
@@ -133,7 +139,7 @@ fun FloatingActionButton(
             shape = shape,
             containerColor = containerColor,
             fallback = Modifier.background(containerColor, shape),
-            blurRadius = with(LocalDensity.current) {
+            blurRadius = with(density) {
                 (FloatingActionButtonDefaults.NATIVE_BLUR_RADIUS_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
             },
             blendColors = layers,
@@ -141,12 +147,45 @@ fun FloatingActionButton(
     } else {
         Modifier.background(containerColor, shape)
     }
-    // COUIFloatingButton sets OplusMaterialCornerParams(min(w, h) / 2, 2.0): the capsule distance
-    // field of the rim shader.
+    // Keep the rim SDF matched to the shape outline: circular CircleShape, continuous-curvature
+    // SegmentCapsule / Squircle for non-circular shapes, and matching radius at runtime.
     val rimModifier = if (edgeStroke != null) {
-        Modifier.materialShadowEdge(
+        Modifier.materialShadowEdgeBySize(
             stroke = edgeStroke,
-            cornerWeight = MaterialShadowEdgeDefaults.CapsuleCornerWeight,
+            cornerWeightFor = { width, height ->
+                val halfMin = minOf(width, height) / 2f
+                when (shape) {
+                    CircleShape -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
+
+                    is CapsuleOutlineShape -> {
+                        val radiusPx = shape.cornerRadius?.let { with(density) { it.toPx() } }?.coerceAtMost(halfMin) ?: halfMin
+                        capsuleRimCornerWeight(width, height, radiusPx, shape.squircleEnabled)
+                    }
+
+                    SegmentCapsuleShape -> capsuleRimCornerWeight(width, height, halfMin, squircleEnabled = true)
+
+                    is SquircleShape -> {
+                        val radiusPx = shape.topStart.toPx(Size(width, height), density).coerceAtMost(halfMin)
+                        if (!squircleEnabled) {
+                            MaterialShadowEdgeDefaults.CapsuleCornerWeight
+                        } else if (radiusPx < halfMin - 0.5f && !shape.capsuleCircleBlend) {
+                            shape.weight.coerceAtLeast(2f)
+                        } else {
+                            capsuleRimCornerWeight(width, height, radiusPx, squircleEnabled = true)
+                        }
+                    }
+
+                    else -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
+                }
+            },
+            cornerRadiusFor = { width, height ->
+                val halfMin = minOf(width, height) / 2f
+                when (shape) {
+                    is CapsuleOutlineShape -> shape.cornerRadius?.let { with(density) { it.toPx() } }?.coerceAtMost(halfMin) ?: halfMin
+                    is CornerBasedShape -> shape.topStart.toPx(Size(width, height), density).coerceAtMost(halfMin)
+                    else -> halfMin
+                }
+            },
         )
     } else {
         Modifier

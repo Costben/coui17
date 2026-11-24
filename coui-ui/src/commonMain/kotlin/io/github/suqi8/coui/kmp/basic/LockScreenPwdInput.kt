@@ -4,7 +4,6 @@ package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.SpringSpec
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
@@ -29,29 +27,57 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.shadow.ShadowContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
+import io.github.suqi8.coui.kmp.shader.isRenderEffectSupported
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.min
 
 /**
  * The ColorOS 17 lock screen password field.
@@ -73,10 +99,10 @@ import kotlinx.coroutines.launch
  * `setShadowLayer`, clipped to the path, so only the blurred stroke shows inside the pill:
  * `(32, 0, -8, coui_input_lock_screen_upper_inner_shadow_color, 20)` and
  * `(8, 0, 2, coui_input_lock_screen_lower_inner_shadow_color, 12)`. Those numbers are raw pixels,
- * not dp, and the native uses them as pixels. The port approximates the blurred stroke with a
- * vertical gradient that fades the shadow colour out over
- * `radius + |dy| + strokeWidth / 2` from the pill edge, because a commonMain canvas has no
- * `BlurMaskFilter`.
+ * not dp, and the native uses them as pixels. The port records each stroked capsule layer into a
+ * blurred [GraphicsLayer] (`BlurEffect`) on platforms that support render effects (falling back to
+ * `ShadowContext.createDropShadowPainter` over the capsule stroke band on older Android), and clips
+ * the result to the continuous-curvature capsule outline.
  *
  * The light sweep is `LightEffectHelper.drawLightEffect`, triggered by the next button's touch:
  * `COUILockScreenPwdInputLayout.executeLightEffectAnimator(true / false)` springs `mOuterLightAlpha`
@@ -96,10 +122,11 @@ import kotlinx.coroutines.launch
  * disappears. The button's own press scale is `COUIPressFeedbackHelper`, whose end ratio for a 48dp
  * surface is [ButtonDefaults.PressedScale].
  *
+ * The pill fill, clip and desktop border trace ColorOS 17's continuous-curvature system capsule
+ * ([CapsuleOutlineShape] / [addSegmentCapsule]), falling back to a plain rounded rectangle when
+ * smooth corners are disabled (`isSquircleEnabled() == false`).
+ *
  * Not ported:
- * - the smooth-corner variants (`RoundCornerUtil.getSmoothStyleType() == 1` with `OplusPathAdapter`
- *   / `OplusOutlineAdapter`); the port always draws the plain round rect, which is the
- *   `smoothType != 1` branch of `addSmoothRoundRect` and of both outline providers;
  * - `UIUtil.confirmLevelAnim(UIUtil.ANIM_LEVEL_SUPPORT_BLUR_MIN)` and `mScenesMode`: the native only
  *   paints the border, the inner shadow and the light in desktop scene mode on a device that
  *   supports the blur animation level. The port always paints them, i.e. it is the desktop
@@ -181,18 +208,13 @@ fun LockScreenPwdInput(
     visualTransformation: VisualTransformation = PasswordVisualTransformation(),
     interactionSource: MutableInteractionSource? = null,
 ) {
-    val resolvedColors = if (scene == LockScreenPwdInputScene.Setting) {
-        LockScreenPwdInputDefaults.settingColors()
-    } else {
-        colors
-    }
+    val resolvedColors = colors
     val decorated = scene == LockScreenPwdInputScene.Desktop
     val density = LocalDensity.current
+    val shadowContext = LocalGraphicsContext.current.shadowContext
     val heightPx = with(density) { LockScreenPwdInputDefaults.Height.toPx() }
     val iconMarginPx = with(density) { LockScreenPwdInputDefaults.IconMargin.toPx() }
     val borderWidthPx = with(density) { LockScreenPwdInputDefaults.BorderWidth.toPx() }
-    val upperShadowReachPx = LockScreenPwdInputDefaults.upperShadowReach()
-    val lowerShadowReachPx = LockScreenPwdInputDefaults.lowerShadowReach()
 
     val currentOnValueChange by rememberUpdatedState(onValueChange)
     val handleValueChange: (String) -> Unit = remember(maxCount) {
@@ -225,48 +247,135 @@ fun LockScreenPwdInput(
         launch { pressProgress.animateTo(target, NextPressSpring) }
     }
 
+    val squircleEnabled = isSquircleEnabled()
+    val pillShape = remember(squircleEnabled) {
+        CapsuleOutlineShape(squircleEnabled = squircleEnabled)
+    }
+    val innerShadowSpecs = remember(resolvedColors.upperInnerShadowColor, resolvedColors.lowerInnerShadowColor) {
+        listOf(
+            PwdInnerShadowLayer(
+                blurRadius = LockScreenPwdInputDefaults.InnerShadowRadius1,
+                dy = LockScreenPwdInputDefaults.InnerShadowDy1,
+                strokeWidth = LockScreenPwdInputDefaults.InnerShadowStrokeWidth1,
+                color = resolvedColors.upperInnerShadowColor,
+            ),
+            PwdInnerShadowLayer(
+                blurRadius = LockScreenPwdInputDefaults.InnerShadowRadius2,
+                dy = LockScreenPwdInputDefaults.InnerShadowDy2,
+                strokeWidth = LockScreenPwdInputDefaults.InnerShadowStrokeWidth2,
+                color = resolvedColors.lowerInnerShadowColor,
+            ),
+        ).filter { it.color.alpha > 0f }
+    }
+    val hintColor = if (decorated) {
+        LockScreenPwdInputDefaults.NextDisabledIconColor
+    } else {
+        COUITheme.colorScheme.onSurfaceVariantSummary
+    }
+
     Row(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (decorated && nextIcon != null) {
+                Modifier.drawWithCache {
+                    val rtl = layoutDirection == LayoutDirection.Rtl
+                    val buttonCenter = Offset(
+                        x = if (rtl) heightPx / 2f else size.width - heightPx / 2f,
+                        y = size.height / 2f,
+                    )
+                    val fieldWidth = (size.width - heightPx - iconMarginPx).coerceAtLeast(0f)
+                    val fieldLeft = if (rtl) size.width - fieldWidth else 0f
+                    val outerRadius = (size.width - fieldWidth / 2f - heightPx / 2f).coerceAtLeast(1f)
+                    val fieldPath = Path().apply {
+                        addCapsuleOutline(
+                            Rect(fieldLeft, 0f, fieldLeft + fieldWidth, size.height),
+                            squircleEnabled,
+                        )
+                    }
+                    val reachPath = Path().apply {
+                        addOval(Rect(buttonCenter, outerRadius))
+                    }
+                    val lightPath = Path().apply {
+                        op(reachPath, fieldPath, PathOperation.Intersect)
+                    }
+                    onDrawWithContent {
+                        drawContent()
+                        val outerAlpha = outerLight.value
+                        val innerAlpha = innerLight.value
+                        if (outerAlpha <= 0f && innerAlpha <= 0f) return@onDrawWithContent
+                        if (outerAlpha > 0f && fieldWidth > 0f) {
+                            val outerStart = LockScreenPwdInputDefaults.LightRadiusStartFraction * outerRadius
+                            val radius = (outerStart + (outerRadius - outerStart) * outerAlpha).coerceAtLeast(1f)
+                            drawPath(
+                                path = lightPath,
+                                brush = Brush.radialGradient(
+                                    colorStops = outerStops,
+                                    center = buttonCenter,
+                                    radius = radius,
+                                ),
+                                alpha = outerAlpha.coerceIn(0f, 1f),
+                                blendMode = BlendMode.Lighten,
+                            )
+                        }
+                        if (innerAlpha > 0f) {
+                            val scale = 1f - (1f - LockScreenPwdInputDefaults.PressedScale) * pressProgress.value
+                            val innerRadius = (heightPx / 2f * scale).coerceAtLeast(1f)
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    colorStops = innerStops,
+                                    center = buttonCenter,
+                                    radius = innerRadius,
+                                ),
+                                radius = innerRadius,
+                                center = buttonCenter,
+                                alpha = innerAlpha.coerceIn(0f, 1f),
+                                blendMode = BlendMode.Lighten,
+                            )
+                        }
+                    }
+                }
+            } else {
+                Modifier
+            },
+        ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(LockScreenPwdInputDefaults.Height)
-                .clip(RoundedCornerShape(percent = 50))
-                .background(resolvedColors.containerColor),
+                .shapeFill(pillShape) { resolvedColors.containerColor },
         ) {
             if (decorated) {
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    val radius = size.height / 2f
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0f to resolvedColors.upperInnerShadowColor,
-                                1f to resolvedColors.upperInnerShadowColor.copy(alpha = 0f),
-                            ),
-                            startY = 0f,
-                            endY = upperShadowReachPx,
-                        ),
-                    )
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0f to resolvedColors.lowerInnerShadowColor.copy(alpha = 0f),
-                                1f to resolvedColors.lowerInnerShadowColor,
-                            ),
-                            startY = size.height - lowerShadowReachPx,
-                            endY = size.height,
-                        ),
-                    )
-                    drawRoundRect(
-                        color = resolvedColors.borderColor,
-                        topLeft = Offset(borderWidthPx / 2f, borderWidthPx / 2f),
-                        size = Size(size.width - borderWidthPx, size.height - borderWidthPx),
-                        cornerRadius = CornerRadius(radius, radius),
-                        style = Stroke(width = borderWidthPx),
-                    )
-                }
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .drawWithCache {
+                            val outlinePath = buildCapsulePath(size, squircleEnabled)
+                            val recordedShadows = recordPwdInnerShadows(
+                                size = size,
+                                shadowContext = shadowContext,
+                                layers = innerShadowSpecs,
+                                squircleEnabled = squircleEnabled,
+                                path = outlinePath,
+                            )
+                            val borderStroke = Stroke(width = borderWidthPx * 2f)
+                            onDrawBehind {
+                                if (resolvedColors.borderColor.alpha > 0f) {
+                                    clipPath(outlinePath) {
+                                        drawPath(
+                                            path = outlinePath,
+                                            color = resolvedColors.borderColor,
+                                            style = borderStroke,
+                                        )
+                                    }
+                                }
+                                drawPwdInnerShadows(
+                                    shadows = recordedShadows,
+                                    clip = outlinePath,
+                                )
+                            }
+                        },
+                )
             }
             TextField(
                 value = value,
@@ -279,7 +388,7 @@ fun LockScreenPwdInput(
                     ),
                 backgroundMode = TextFieldMode.None,
                 insideMargin = DpSize(0.dp, 0.dp),
-                colors = LockScreenPwdInputDefaults.textFieldColors(resolvedColors.textColor),
+                colors = LockScreenPwdInputDefaults.textFieldColors(hintColor),
                 label = label,
                 enabled = enabled,
                 textStyle = textStyle.copy(color = resolvedColors.textColor),
@@ -290,43 +399,6 @@ fun LockScreenPwdInput(
                 interactionSource = interactionSource,
                 cursorBrush = SolidColor(resolvedColors.textColor),
             )
-            if (decorated) {
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    val outerAlpha = outerLight.value
-                    val innerAlpha = innerLight.value
-                    if (outerAlpha <= 0f && innerAlpha <= 0f) return@Canvas
-                    val center = Offset(size.width + iconMarginPx + heightPx / 2f, size.height / 2f)
-                    if (outerAlpha > 0f) {
-                        val outerRadius = (center.x - size.width / 2f).coerceAtLeast(1f)
-                        val outerStart = LockScreenPwdInputDefaults.LightRadiusStartFraction * outerRadius
-                        val scale = (outerStart + (outerRadius - outerStart) * outerAlpha) / outerRadius
-                        drawRect(
-                            brush = Brush.radialGradient(
-                                colorStops = outerStops,
-                                center = center,
-                                radius = outerRadius * scale,
-                            ),
-                            alpha = outerAlpha,
-                            blendMode = BlendMode.Lighten,
-                        )
-                    }
-                    if (innerAlpha > 0f) {
-                        val scale = 1f - (1f - LockScreenPwdInputDefaults.PressedScale) * pressProgress.value
-                        val innerRadius = heightPx / 2f * scale
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colorStops = innerStops,
-                                center = center,
-                                radius = innerRadius,
-                            ),
-                            radius = innerRadius,
-                            center = center,
-                            alpha = innerAlpha,
-                            blendMode = BlendMode.Lighten,
-                        )
-                    }
-                }
-            }
         }
         if (nextIcon != null) {
             Spacer(modifier = Modifier.width(LockScreenPwdInputDefaults.IconMargin))
@@ -340,6 +412,39 @@ fun LockScreenPwdInput(
                     }
                     .clip(CircleShape)
                     .background(resolvedColors.nextBackgroundColor)
+                    .then(
+                        if (decorated) {
+                            Modifier.drawWithCache {
+                                val circlePath = Path().apply { addOval(Rect(Offset.Zero, size)) }
+                                val recordedShadows = recordPwdInnerShadows(
+                                    size = size,
+                                    shadowContext = shadowContext,
+                                    layers = innerShadowSpecs,
+                                    squircleEnabled = false,
+                                    path = circlePath,
+                                )
+                                val borderStroke = Stroke(width = borderWidthPx * 2f)
+                                onDrawWithContent {
+                                    drawContent()
+                                    drawPwdInnerShadows(
+                                        shadows = recordedShadows,
+                                        clip = circlePath,
+                                    )
+                                    if (resolvedColors.borderColor.alpha > 0f) {
+                                        clipPath(circlePath) {
+                                            drawPath(
+                                                path = circlePath,
+                                                color = resolvedColors.borderColor,
+                                                style = borderStroke,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Modifier
+                        },
+                    )
                     .clickable(
                         interactionSource = nextInteractionSource,
                         indication = null,
@@ -621,16 +726,20 @@ object LockScreenPwdInputDefaults {
     )
 
     /**
-     * The colours of the desktop scene mode. The native picks that mode with `mScenesMode`, not with
-     * the theme, so the pill, the border, the shadows and the light are fixed; only
-     * `coui_color_primary_neutral`, which the `_allow` arrow points at, is day/night qualified.
+     * The colours of the desktop scene mode.
+     *
+     * On ColorOS 17 (`COUILockScreenPwdInputLayout` when `UIUtil.confirmLevelAnim(MID_END)` is
+     * true), both the field and the next button use a transparent background (`setBackgroundColor(0)`)
+     * so only the blurred inner-shadow rim, hairline border, and press light sweep render over the
+     * wallpaper; [ContainerColorDesktop] (`#33FFFFFF`) is only the low-tier fallback when blur and
+     * inner shadows are disabled. The active desktop arrow (`coui_input_lock_screen_pwd_next_desktop_src_allow`)
+     * is pure white (`#FFFFFF`).
      */
     @Composable
     fun colors(scene: LockScreenPwdInputScene = LockScreenPwdInputScene.Desktop): LockScreenPwdInputColors {
         if (scene == LockScreenPwdInputScene.Setting) return settingColors()
-        val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
         return LockScreenPwdInputColors(
-            containerColor = ContainerColorDesktop,
+            containerColor = Color.Transparent,
             borderColor = BorderColor,
             upperInnerShadowColor = UpperInnerShadowColor,
             lowerInnerShadowColor = LowerInnerShadowColor,
@@ -640,22 +749,23 @@ object LockScreenPwdInputDefaults {
             innerGradientColor1 = InnerGradientColor1,
             innerGradientColor2 = InnerGradientColor2,
             textColor = TextColorDesktop,
-            nextBackgroundColor = NextBackgroundColor,
-            nextIconColor = if (isDark) NextIconColorDark else NextIconColorLight,
+            nextBackgroundColor = Color.Transparent,
+            nextIconColor = Color.White,
             nextDisabledIconColor = NextDisabledIconColor,
         )
     }
 
     /**
-     * The colours of the `setting` scene: `COUILockScreenPwdInputLayout.initScenesModeUI` fills the
-     * field with `?attr/couiColorCard` and draws neither border nor inner shadow, and the text takes
-     * the ordinary label colour instead of the desktop white.
+     * The colours of the `setting` scene: `COUILockScreenPwdInputLayout` fills the field with
+     * `?attr/couiColorCard` and the next button with `?attr/couiColorCardBackground`, draws
+     * neither border nor inner shadow, and uses theme label colours for text and the arrow.
      */
     @Composable
     fun settingColors(): LockScreenPwdInputColors {
         val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+        val cardFill = if (isDark) CardBackgroundDark else CardBackgroundLight
         return LockScreenPwdInputColors(
-            containerColor = if (isDark) CardBackgroundDark else CardBackgroundLight,
+            containerColor = cardFill,
             borderColor = Color.Transparent,
             upperInnerShadowColor = Color.Transparent,
             lowerInnerShadowColor = Color.Transparent,
@@ -665,9 +775,9 @@ object LockScreenPwdInputDefaults {
             innerGradientColor1 = Color.Transparent,
             innerGradientColor2 = Color.Transparent,
             textColor = COUITheme.colorScheme.onSurface,
-            nextBackgroundColor = COUITheme.colorScheme.surfaceContainerHigh,
+            nextBackgroundColor = cardFill,
             nextIconColor = if (isDark) NextIconColorDark else NextIconColorLight,
-            nextDisabledIconColor = NextDisabledIconColor,
+            nextDisabledIconColor = if (isDark) NextDisabledIconColor else Color(0x4D000000),
         )
     }
 
@@ -748,3 +858,127 @@ private val OuterLightDisappearSpring: SpringSpec<Float> = folmeSpring(damping =
 
 /** `COUIPressFeedbackHelper`'s scale spring: response 0.3 at critical damping. */
 private val NextPressSpring: SpringSpec<Float> = folmeSpring(damping = 1f, response = 0.3f)
+
+/** One `InnerShadowHelper.addInnerShadowLayer` specification, in raw pixels as in COUI. */
+private class PwdInnerShadowLayer(
+    val blurRadius: Float,
+    val dy: Float,
+    val strokeWidth: Float,
+    val color: Color,
+)
+
+/** A recorded blurred stroke layer for [LockScreenPwdInput], drawn clipped to the capsule path. */
+private class RecordedPwdInnerShadow(
+    val layer: GraphicsLayer?,
+    val painter: Painter?,
+    val painterSize: Size,
+    val pad: Float,
+)
+
+private fun buildCapsulePath(size: Size, squircleEnabled: Boolean): Path = Path().apply {
+    val rect = Rect(Offset.Zero, size)
+    if (squircleEnabled && size.width > size.height) {
+        addSegmentCapsule(rect)
+    } else {
+        addRoundRect(RoundRect(rect, CornerRadius(min(size.width, size.height) / 2f)))
+    }
+}
+
+/**
+ * Records COUI's blurred inner-shadow strokes for [path] inside `drawWithCache` so the blur only
+ * re-renders on size or color changes. Uses a padded blurred [GraphicsLayer] when render effects
+ * are supported and falls back to `ShadowContext.createDropShadowPainter` over the capsule stroke
+ * band otherwise.
+ */
+private fun CacheDrawScope.recordPwdInnerShadows(
+    size: Size,
+    shadowContext: ShadowContext,
+    layers: List<PwdInnerShadowLayer>,
+    squircleEnabled: Boolean,
+    path: Path,
+): List<RecordedPwdInnerShadow> {
+    if (layers.isEmpty() || size.width <= 0f || size.height <= 0f) return emptyList()
+    if (!isRenderEffectSupported()) {
+        return layers.map { spec ->
+            val shadow = Shadow(
+                radius = spec.blurRadius.toDp(),
+                color = spec.color,
+                offset = DpOffset(0.dp, spec.dy.toDp()),
+            )
+            RecordedPwdInnerShadow(
+                layer = null,
+                painter = shadowContext.createDropShadowPainter(
+                    PwdCapsuleStrokeBand(spec.strokeWidth, squircleEnabled),
+                    shadow,
+                ),
+                painterSize = Size(size.width + spec.strokeWidth, size.height + spec.strokeWidth),
+                pad = spec.strokeWidth / 2f,
+            )
+        }
+    }
+    return layers.map { spec ->
+        val pad = ceil(spec.blurRadius * 2f + spec.strokeWidth + abs(spec.dy))
+        val layer = obtainGraphicsLayer()
+        layer.renderEffect = BlurEffect(spec.blurRadius, spec.blurRadius, TileMode.Decal)
+        layer.record(
+            size = IntSize(
+                width = ceil(size.width + pad * 2f).toInt().coerceAtLeast(1),
+                height = ceil(size.height + pad * 2f).toInt().coerceAtLeast(1),
+            ),
+        ) {
+            translate(pad, pad + spec.dy) {
+                drawPath(path = path, color = spec.color, style = Stroke(width = spec.strokeWidth))
+            }
+        }
+        RecordedPwdInnerShadow(layer = layer, painter = null, painterSize = Size.Zero, pad = pad)
+    }
+}
+
+private fun DrawScope.drawPwdInnerShadows(
+    shadows: List<RecordedPwdInnerShadow>,
+    clip: Path,
+) {
+    if (shadows.isEmpty()) return
+    clipPath(clip) {
+        shadows.forEach { shadow ->
+            translate(-shadow.pad, -shadow.pad) {
+                if (shadow.layer != null) {
+                    drawLayer(shadow.layer)
+                } else if (shadow.painter != null) {
+                    with(shadow.painter) { draw(shadow.painterSize) }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Even-odd ring representing a [strokeWidth] stroke along a capsule, used by the blur-mask fallback
+ * on platforms without `BlurEffect` support.
+ */
+private data class PwdCapsuleStrokeBand(
+    val strokeWidth: Float,
+    val squircleEnabled: Boolean,
+) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val path = Path().apply {
+            fillType = PathFillType.EvenOdd
+            addCapsuleOutline(Rect(Offset.Zero, size), squircleEnabled)
+            if (size.width > strokeWidth * 2f && size.height > strokeWidth * 2f) {
+                addCapsuleOutline(
+                    Rect(strokeWidth, strokeWidth, size.width - strokeWidth, size.height - strokeWidth),
+                    squircleEnabled,
+                )
+            }
+        }
+        return Outline.Generic(path)
+    }
+}
+
+private fun Path.addCapsuleOutline(rect: Rect, squircleEnabled: Boolean) {
+    if (squircleEnabled && rect.width > rect.height) {
+        addSegmentCapsule(rect)
+    } else {
+        addRoundRect(RoundRect(rect, CornerRadius(min(rect.width, rect.height) / 2f)))
+    }
+}

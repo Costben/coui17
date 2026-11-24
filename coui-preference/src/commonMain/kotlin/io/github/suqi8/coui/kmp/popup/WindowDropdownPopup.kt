@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.popup
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -14,16 +11,15 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.basic.PreciseClickState
-import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.layout.DialogButtonBar
+import io.github.suqi8.coui.kmp.layout.DialogButtonBarAction
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowCascadingListPopup
 import io.github.suqi8.coui.kmp.window.WindowDialog
@@ -190,7 +186,6 @@ fun WindowDropdownDialog(
         title = title,
         onDismissRequest = onDismiss,
         onDismissFinished = onDismissFinished,
-        insideMargin = DpSize(0.dp, 24.dp),
         content = {
             val dismiss = LocalDismissState.current
             val currentDismiss by rememberUpdatedState(dismiss)
@@ -207,20 +202,20 @@ fun WindowDropdownDialog(
             }
             Layout(
                 content = {
-                    LazyColumn {
-                        dropdownEntriesDialogItems(
-                            entries = entries,
-                            dropdownColors = dropdownColors,
-                            onItemClick = onItemClicked,
-                        )
-                    }
-                    TextButton(
-                        modifier = Modifier
-                            .padding(start = 24.dp, top = 12.dp, end = 24.dp)
-                            .fillMaxWidth(),
-                        text = dialogButtonString,
-                        minHeight = 50.dp,
-                        onClick = { dismiss?.invoke() },
+                    DropdownChoiceDialogList(
+                        entries = entries,
+                        show = show,
+                        freezeSelection = collapseOnSelection,
+                        dropdownColors = dropdownColors,
+                        onItemClick = onItemClicked,
+                    )
+                    // COUIListPreferenceDialogFragment: single capsule button in the COUI 17 bar.
+                    DialogButtonBar(
+                        negative = DialogButtonBarAction(
+                            text = dialogButtonString,
+                            onClick = { currentDismiss?.invoke() },
+                        ),
+                        positive = null,
                     )
                 },
             ) { measurables, constraints ->
@@ -228,14 +223,15 @@ fun WindowDropdownDialog(
                     layout(0, 0) { }
                 } else {
                     val button = measurables[1].measure(constraints)
-                    val lazyList = measurables[0].measure(
+                    val list = measurables[0].measure(
                         constraints.copy(
-                            maxHeight = constraints.maxHeight - button.height,
+                            minHeight = 0,
+                            maxHeight = (constraints.maxHeight - button.height).coerceAtLeast(0),
                         ),
                     )
-                    layout(constraints.maxWidth, lazyList.height + button.height) {
-                        lazyList.place(0, 0)
-                        button.place(0, lazyList.height)
+                    layout(constraints.maxWidth, list.height + button.height) {
+                        list.place(0, 0)
+                        button.place(0, list.height)
                     }
                 }
             }

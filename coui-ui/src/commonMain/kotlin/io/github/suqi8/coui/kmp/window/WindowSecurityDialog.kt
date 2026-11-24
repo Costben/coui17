@@ -84,7 +84,7 @@ fun WindowSecurityDialog(
         show = show,
         popupHost = { visible, hostContent ->
             // Captured here, in the host composition, so the dialog frosts the page it opens over.
-            val hostBackdrop = rememberHostWindowBackdrop(visible)
+            val hostBackdrop = rememberHostWindowBackdrop(show || visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnCancel.value.invoke() },

@@ -338,7 +338,7 @@ fun BottomFloatingToolbarGroup(
                                 if (itemCount[0] == 1) {
                                     MaterialShadowEdgeDefaults.SingleItemCornerWeight
                                 } else {
-                                    capsuleRimCornerWeight(width, height, cornerRadiusPx)
+                                    capsuleRimCornerWeight(width, height, cornerRadiusPx, squircleEnabled)
                                 }
                             },
                             cornerRadius = cornerRadius,

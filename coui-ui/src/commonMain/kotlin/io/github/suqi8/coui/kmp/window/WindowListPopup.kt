@@ -20,9 +20,11 @@ import io.github.suqi8.coui.kmp.layout.ListPopupLayout
 import io.github.suqi8.coui.kmp.layout.popupPhysicalDensity
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.utils.DialogTouchPassThrough
+import io.github.suqi8.coui.kmp.utils.ProvideHostWindowBackdrop
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
+import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
 
 /**
  * A popup with a list of items, rendered at window level without `Scaffold`.
@@ -67,6 +69,7 @@ fun WindowListPopup(
     // scaled-up density while the overlay and cascading popups render at the panel's.
     val density = LocalDensity.current
     val popupDensity = remember(density) { popupPhysicalDensity(density) }
+    val useHostBackdrop = staticBackdrop == null
 
     ListPopupLayout(
         show = show,
@@ -74,6 +77,9 @@ fun WindowListPopup(
         // window up as soon as the close starts — otherwise the page stays undraggable for the
         // whole exit animation even though the panel is already gone from sight.
         popupHost = { visible, passTouches, hostContent ->
+            // Captured here, in the host composition, so the popup frosts the page it opens over
+            // whenever the caller did not already provide a pre-blurred static backdrop.
+            val hostBackdrop = rememberHostWindowBackdrop(useHostBackdrop && (show || visible))
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value?.invoke() },
@@ -82,7 +88,13 @@ fun WindowListPopup(
                     RemovePlatformDialogDefaultEffects()
                     DialogTouchPassThrough(passTouches)
                     WindowNavigationEventScope {
-                        hostContent()
+                        if (useHostBackdrop) {
+                            ProvideHostWindowBackdrop(hostBackdrop.value) {
+                                hostContent()
+                            }
+                        } else {
+                            hostContent()
+                        }
                     }
                 }
             }
@@ -96,6 +108,7 @@ fun WindowListPopup(
         maxHeight = maxHeight,
         minWidth = minWidth,
         preciseClickState = preciseClickState,
+        enableGlass = useHostBackdrop,
         staticBackdrop = staticBackdrop,
         staticBackdropWindowSize = staticBackdropWindowSize,
         content = {

@@ -32,9 +32,10 @@ import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
  *
  * @param show Whether the [WindowBottomSheet] is shown.
  * @param modifier The modifier to be applied to the [WindowBottomSheet].
- * @param title Optional title to display at the top of the [WindowBottomSheet].
- * @param startAction Optional [Composable] to display on the start side of the title (e.g. a close button).
- * @param endAction Optional [Composable] to display on the end side of the title (e.g. a submit button).
+ * @param title Optional title centered in the top toolbar of the [WindowBottomSheet].
+ * @param subtitle Optional subtitle centered below [title] in the top toolbar.
+ * @param startAction Optional [Composable] to display on the start side of the toolbar (e.g. a close button).
+ * @param endAction Optional [Composable] to display on the end side of the toolbar (e.g. a submit button).
  * @param backgroundColor The background color of the [WindowBottomSheet].
  * @param enableWindowDim Whether to dim the window behind the [WindowBottomSheet].
  * @param cornerRadius The corner radius of the top corners of the [WindowBottomSheet].
@@ -48,8 +49,14 @@ import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
  * @param showDragHandle Whether to draw the drag handle bar at the top of the sheet. ColorOS 17
  *   panels hide it by default (`false`), keeping a slim transparent strip so the panel stays
  *   draggable while toolbar actions sit 15–16dp below the top edge.
+ * @param showInMaxHeight Whether the panel takes the maximum height instead of wrapping its content.
  * @param allowDismiss Whether to allow dismissing the sheet via drag or back gesture.
+ * @param dismissOnClickOutside Whether tapping outside the panel dismisses it while [allowDismiss] is true.
+ * @param draggable Whether the panel follows drag gestures.
+ * @param enablePullUp Whether the panel can be pulled above its resting position with resistance.
  * @param enableNestedScroll Whether to enable nested scrolling for the content.
+ * @param topScrollBlur Whether scrollable content renders a progressive blur and transparent fading
+ *   edge along the top of the content viewport once scrolled.
  * @param content The [Composable] content of the [WindowBottomSheet].
  */
 @Composable
@@ -57,6 +64,7 @@ fun WindowBottomSheet(
     show: Boolean,
     modifier: Modifier = Modifier,
     title: String? = null,
+    subtitle: String? = null,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
     backgroundColor: Color = BottomSheetDefaults.backgroundColor(),
@@ -70,8 +78,13 @@ fun WindowBottomSheet(
     defaultWindowInsetsPadding: Boolean = true,
     dragHandleColor: Color = BottomSheetDefaults.dragHandleColor(),
     showDragHandle: Boolean = false,
+    showInMaxHeight: Boolean = false,
     allowDismiss: Boolean = true,
+    dismissOnClickOutside: Boolean = true,
+    draggable: Boolean = true,
+    enablePullUp: Boolean = true,
     enableNestedScroll: Boolean = true,
+    topScrollBlur: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val statusBarsPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -94,7 +107,7 @@ fun WindowBottomSheet(
         showDragHandle = showDragHandle,
         popupHost = { visible, hostContent ->
             // Captured here, in the host composition, so the dialog frosts the page it opens over.
-            val hostBackdrop = rememberHostWindowBackdrop(visible)
+            val hostBackdrop = rememberHostWindowBackdrop(show || visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = {
@@ -115,14 +128,20 @@ fun WindowBottomSheet(
         },
         modifier = modifier,
         title = title,
+        subtitle = subtitle,
         startAction = startAction,
         endAction = endAction,
         enableWindowDim = enableWindowDim,
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+        showInMaxHeight = showInMaxHeight,
         allowDismiss = allowDismiss,
+        dismissOnClickOutside = dismissOnClickOutside,
+        draggable = draggable,
+        enablePullUp = enablePullUp,
         enableNestedScroll = enableNestedScroll,
+        topScrollBlur = topScrollBlur,
         topInset = safeTopInset,
         content = {
             CompositionLocalProvider(

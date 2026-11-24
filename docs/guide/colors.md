@@ -71,3 +71,16 @@ This page lists all colors in the COUI color scheme with their default light and
 | `containerTheme` | Accent button fill (`couiColorContainerTheme`) | `#0080FF` | `#1A8CFF` |
 | `focus` | Focus mask (`couiColorFocus`), the container theme at 12% / 20% | `#1F0080FF` | `#331A8CFF` |
 | `focusOutline` | Focus ring (`couiColorFocusOutline`), the container theme at 40% (`#5C9DFF` in the dark scheme) | `#660080FF` | `#665C9DFF` |
+
+## Settings & Entry Icon Semantic Tints (ColorOS 17)
+
+Dual-tone entry icons (primary solid layer `1f` + secondary layer `0.38f–0.40f`) pick from these six day/night semantic tints rather than rotating colors arbitrarily. See [Specification · Semantic Icon Tints](./specification.md#_5-semantic-icon-tints-for-settings-top-level-entries) for full selection rules:
+
+| Tint | Semantic Role | Light | Dark |
+|------|---------------|-------|------|
+| `Blue` | Core backbone, connectivity, identity & personal records (adjacent repeats expected) | `#FF0080FF` | `#FF1A8CFF` |
+| `Orange` | Visual personalization, interaction feel, creation & warm feedback | `#FFFF7700` | `#FFF08222` |
+| `Yellow` | Luminance/display, starred favorites & spotlight discovery | `#FFFFB200` | `#FFE5A100` |
+| `Green` | App behavior, messaging channels, spatial location & resources | `#FF00BD13` | `#FF24B232` |
+| `Red` | High emotion / safety alert (strictly restrained; never filler) | `#FFEB3B2F` | `#FFEB493D` |
+| `Neutral` | System updates, about device & catch-all metadata | `#FF5C6066` | `#FF9EA4AD` |

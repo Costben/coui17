@@ -607,11 +607,23 @@ object MaterialShadowEdgeDefaults {
  * [MaterialShadowEdgeDefaults.CapsuleCornerWeight]. A radius below half the shorter side keeps the
  * squircle weight, as the button's own rim does.
  */
-internal fun capsuleRimCornerWeight(widthPx: Float, heightPx: Float, radiusPx: Float): Float {
+internal fun capsuleRimCornerWeight(
+    widthPx: Float,
+    heightPx: Float,
+    radiusPx: Float,
+    squircleEnabled: Boolean = true,
+): Float {
     val halfMin = minOf(widthPx, heightPx) / 2f
+    if (!squircleEnabled) return MaterialShadowEdgeDefaults.CapsuleCornerWeight
+    if (radiusPx < halfMin - 0.5f) {
+        val threshold = halfMin * 0.7853982f
+        val range = halfMin - threshold
+        val blend = if (range <= 0f) 1f else ((radiusPx - threshold) / range).coerceIn(0f, 1f)
+        return MaterialShadowEdgeDefaults.SquircleCornerWeight -
+            (MaterialShadowEdgeDefaults.SquircleCornerWeight - MaterialShadowEdgeDefaults.CapsuleCornerWeight) * blend
+    }
     return when {
-        radiusPx < halfMin - 0.5f -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
-        widthPx == heightPx -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
+        widthPx <= heightPx -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
         else -> MaterialShadowEdgeDefaults.CornerWeight
     }
 }
@@ -692,6 +704,7 @@ internal fun Modifier.materialShadowEdgeBySize(
     cornerWeightFor: (width: Float, height: Float) -> Float,
     fallback: Modifier = Modifier,
     cornerRadius: Dp? = null,
+    cornerRadiusFor: ((width: Float, height: Float) -> Float)? = null,
     edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
     shadowStyle: InnerShadowStyle = InnerShadowStyle.SHADOW_STYLE_0,
     antiAliasing: Float = MaterialShadowEdgeDefaults.AntiAliasing,
@@ -704,7 +717,7 @@ internal fun Modifier.materialShadowEdgeBySize(
         stroke = stroke,
         cornerWeightFor = cornerWeightFor,
         cornerRadius = cornerRadius,
-        cornerRadiusFor = null,
+        cornerRadiusFor = cornerRadiusFor,
         edgeStyle = edgeStyle,
         shadowStyle = shadowStyle,
         antiAliasing = antiAliasing,

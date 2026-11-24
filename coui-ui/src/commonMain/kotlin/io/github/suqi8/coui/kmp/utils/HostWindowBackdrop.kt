@@ -25,12 +25,16 @@ import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 internal expect fun rememberHostWindowBackdrop(active: Boolean): State<Backdrop?>
 
 /**
- * Publishes [hostBackdrop] as [LocalBackdrop] for [content], keeping the inherited backdrop while
- * the capture is not available.
+ * Publishes [hostBackdrop] as [LocalBackdrop] for [content].
+ *
+ * On platforms where dialogs own a separate OS window (Android), passing `null` explicitly clears
+ * the inherited host `LayerBackdrop` rather than sampling a `GraphicsLayer` across windows while
+ * the capture is still in flight. On platforms where dialogs draw inside the host window (Skiko),
+ * [rememberHostWindowBackdrop] returns the inherited [LocalBackdrop] directly while active.
  */
 @Composable
 internal fun ProvideHostWindowBackdrop(hostBackdrop: Backdrop?, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalBackdrop provides (hostBackdrop ?: LocalBackdrop.current)) {
+    CompositionLocalProvider(LocalBackdrop provides hostBackdrop) {
         content()
     }
 }

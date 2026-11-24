@@ -253,7 +253,7 @@ internal fun ListPopupLayout(
                 )
             }
             Box(
-                modifier = popupModifier
+                modifier = Modifier
                     .fillMaxSize()
                     // The window-level exit fade (`Animation.COUI.PopupListWindow.Dismiss`) belongs
                     // to the popup window's own surface rather than to its content.
@@ -325,6 +325,7 @@ internal fun ListPopupLayout(
                     gravityPath = gravityPath,
                     popupLayoutPosition = layoutInfo.popupLayoutPosition,
                     localTransformOrigin = layoutInfo.localTransformOrigin,
+                    modifier = popupModifier,
                     enableGlass = enableGlass,
                     interactionEnabled = show && backProgress.value == 0f,
                     staticBackdrop = staticBackdrop,

@@ -15,9 +15,11 @@ import io.github.suqi8.coui.kmp.basic.ListPopupDefaults
 import io.github.suqi8.coui.kmp.basic.PopupPositionProvider
 import io.github.suqi8.coui.kmp.layout.CascadingListPopupLayout
 import io.github.suqi8.coui.kmp.utils.DialogTouchPassThrough
+import io.github.suqi8.coui.kmp.utils.ProvideHostWindowBackdrop
 import io.github.suqi8.coui.kmp.utils.RemovePlatformDialogDefaultEffects
 import io.github.suqi8.coui.kmp.utils.WindowNavigationEventScope
 import io.github.suqi8.coui.kmp.utils.platformDialogProperties
+import io.github.suqi8.coui.kmp.utils.rememberHostWindowBackdrop
 
 /**
  * A cascading list popup rendered at window level (as a [Dialog]) instead of inside a
@@ -59,6 +61,8 @@ fun WindowCascadingListPopup(
         // A dialog window is touch-modal while it is mounted, so the popup gives its own window up
         // as soon as the close starts, exactly like WindowListPopup.
         popupHost = { visible, passTouches, hostContent ->
+            // Captured here, in the host composition, so both panels frost the page they open over.
+            val hostBackdrop = rememberHostWindowBackdrop(show || visible)
             if (visible) {
                 Dialog(
                     onDismissRequest = { currentOnDismissRequest.value() },
@@ -67,7 +71,9 @@ fun WindowCascadingListPopup(
                     RemovePlatformDialogDefaultEffects()
                     DialogTouchPassThrough(passTouches)
                     WindowNavigationEventScope {
-                        hostContent()
+                        ProvideHostWindowBackdrop(hostBackdrop.value) {
+                            hostContent()
+                        }
                     }
                 }
             }
@@ -83,5 +89,6 @@ fun WindowCascadingListPopup(
         minWidth = minWidth,
         dropdownColors = dropdownColors,
         collapseOnSelection = collapseOnSelection,
+        enableGlass = true,
     )
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.layout.SheetCloseCapsule
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
@@ -288,6 +289,55 @@ class ButtonCapsuleShapeTest {
                 assertTrue(it.isPageBackground(), "content leaked past the capsule corner: $it")
             }
         }
+    }
+
+    @Test
+    fun rimCornerWeightMatchesBackgroundCurveFamily() {
+        assertEquals(MaterialShadowEdgeDefaults.CornerWeight, capsuleRimCornerWeight(200f, 80f, 40f, squircleEnabled = true))
+        assertEquals(MaterialShadowEdgeDefaults.CapsuleCornerWeight, capsuleRimCornerWeight(80f, 80f, 40f, squircleEnabled = true))
+        assertEquals(MaterialShadowEdgeDefaults.CapsuleCornerWeight, capsuleRimCornerWeight(200f, 80f, 40f, squircleEnabled = false))
+        assertEquals(MaterialShadowEdgeDefaults.SquircleCornerWeight, capsuleRimCornerWeight(200f, 80f, 16f, squircleEnabled = true))
+        assertEquals(MaterialShadowEdgeDefaults.CapsuleCornerWeight, capsuleRimCornerWeight(200f, 80f, 16f, squircleEnabled = false))
+    }
+
+    @Test
+    fun sheetCloseCapsuleTracesSegmentCapsuleOutline() {
+        val density = Density(2f)
+        var pixels: PixelMap? = null
+        runSkikoComposeUiTest(size = Size(320f, 180f), density = density) {
+            setContent {
+                COUITheme {
+                    Box(Modifier.fillMaxSize().background(Color(0xFF808080)), contentAlignment = Alignment.Center) {
+                        SheetCloseCapsule(onClick = {})
+                    }
+                }
+            }
+            waitForIdle()
+            pixels = onRoot().captureToImage().toPixelMap()
+        }
+        val map = pixels!!
+        val bg = map[0, 0]
+        // Measure the visible rendered capsule bounds via luminance delta vs gray page background.
+        var left = map.width
+        var top = map.height
+        var right = -1
+        var bottom = -1
+        for (y in 0 until map.height) {
+            for (x in 0 until map.width) {
+                val c = map[x, y]
+                val diff = abs(c.red - bg.red) + abs(c.green - bg.green) + abs(c.blue - bg.blue)
+                if (diff > 0.04f) {
+                    if (x < left) left = x
+                    if (x > right) right = x
+                    if (y < top) top = y
+                    if (y > bottom) bottom = y
+                }
+            }
+        }
+        assertTrue(right > left && bottom > top, "SheetCloseCapsule must render visible bounds")
+        val width = (right - left + 1).toFloat()
+        val height = (bottom - top + 1).toFloat()
+        assertTrue(width > height, "SheetCloseCapsule must be a horizontal capsule ($width x $height)")
     }
 
     private fun outlinePath(shape: Shape, size: Size): Path {

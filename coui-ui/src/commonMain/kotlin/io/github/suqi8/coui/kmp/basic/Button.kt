@@ -210,14 +210,11 @@ fun Button(
     // COUIButton.updateStrokeCorner passes weight 2.0 for a square capsule and 1.0 otherwise, where
     // the shader switches to its capsule distance field; a radius below the capsule radius keeps the
     // squircle rim's weight. Only the draw phase knows the size, hence materialShadowEdgeBySize.
-    val rimCornerWeightFor: (Float, Float) -> Float = remember(capsuleCornerRadius, density) {
+    val rimCornerWeightFor: (Float, Float) -> Float = remember(capsuleCornerRadius, density, squircleEnabled) {
         val radiusPx = capsuleCornerRadius?.let { with(density) { it.toPx() } } ?: Float.MAX_VALUE
         val weightFor: (Float, Float) -> Float = { width, height ->
-            when {
-                radiusPx < minOf(width, height) / 2f - 0.5f -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
-                width == height -> MaterialShadowEdgeDefaults.CapsuleCornerWeight
-                else -> MaterialShadowEdgeDefaults.CornerWeight
-            }
+            val effectiveRadius = radiusPx.coerceAtMost(minOf(width, height) / 2f)
+            capsuleRimCornerWeight(width, height, effectiveRadius, squircleEnabled)
         }
         weightFor
     }

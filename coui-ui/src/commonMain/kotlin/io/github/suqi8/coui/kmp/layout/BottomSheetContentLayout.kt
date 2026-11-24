@@ -35,8 +35,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -60,8 +58,11 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.clipPath
@@ -74,6 +75,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -98,13 +100,18 @@ import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import io.github.suqi8.coui.kmp.anim.folmeSpring
+import io.github.suqi8.coui.kmp.basic.AppBarBlurOverlayDefaults
+import io.github.suqi8.coui.kmp.basic.CapsuleOutlineShape
 import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
 import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
+import io.github.suqi8.coui.kmp.basic.MaterialShadowEdgeDefaults
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.PopupBarrierBoundary
 import io.github.suqi8.coui.kmp.basic.Text
+import io.github.suqi8.coui.kmp.basic.capsuleRimCornerWeight
 import io.github.suqi8.coui.kmp.basic.couiGlassSurface
 import io.github.suqi8.coui.kmp.basic.materialShadowEdge
+import io.github.suqi8.coui.kmp.basic.materialShadowEdgeBySize
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
@@ -140,9 +147,10 @@ import kotlin.math.abs
  * @param popupHost A composable that provides the container (e.g., DialogLayout or Dialog).
  *   It receives the visibility state and the inner content composable.
  * @param modifier The modifier to be applied to the bottom sheet content.
- * @param title Optional title to display at the top of the bottom sheet.
- * @param startAction Optional [Composable] to display on the start side of the title.
- * @param endAction Optional [Composable] to display on the end side of the title.
+ * @param title Optional title centered in the top toolbar of the bottom sheet.
+ * @param subtitle Optional subtitle centered below [title] in the top toolbar.
+ * @param startAction Optional [Composable] to display on the start side of the toolbar.
+ * @param endAction Optional [Composable] to display on the end side of the toolbar.
  * @param enableWindowDim Whether to dim the window behind the bottom sheet.
  * @param showDragHandle Whether to draw the drag handle bar at the top of the sheet. ColorOS 17
  *   panels hide it by default (`false`), keeping a slim transparent strip so the panel stays
@@ -151,8 +159,14 @@ import kotlin.math.abs
  * @param onDismissFinished Invoked when the hide animation completes; not invoked if the hide
  *   is cancelled mid-flight (e.g., by [show] toggling back to true).
  * @param defaultWindowInsetsPadding Whether to apply default window insets padding.
+ * @param showInMaxHeight Whether the panel takes the maximum height instead of wrapping its content.
  * @param allowDismiss Whether to allow dismissing the sheet via drag or back gesture.
+ * @param dismissOnClickOutside Whether tapping outside the panel dismisses it while [allowDismiss] is true.
+ * @param draggable Whether the panel follows drag gestures.
+ * @param enablePullUp Whether the panel can be pulled above its resting position with resistance.
  * @param enableNestedScroll Whether to enable nested scrolling for the content.
+ * @param topScrollBlur Whether scrolled content fades to transparent along the top of the content
+ *   viewport. Nothing is blurred or tinted: as on ColorOS 17, the body is clipped below the header.
  * @param topInset Optional top inset override. If null, calculated from window insets.
  * @param panelPaddingBottom Extra padding the panel adds under its content on top of
  *   [insideMargin.height]. None by default, as on ColorOS 17, where the platform's 60dp foot sits
@@ -175,6 +189,7 @@ internal fun BottomSheetContentLayout(
     popupHost: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
+    subtitle: String? = null,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
     enableWindowDim: Boolean = true,
@@ -182,8 +197,13 @@ internal fun BottomSheetContentLayout(
     onDismissRequest: (() -> Unit)? = null,
     onDismissFinished: (() -> Unit)? = null,
     defaultWindowInsetsPadding: Boolean = true,
+    showInMaxHeight: Boolean = false,
     allowDismiss: Boolean = true,
+    dismissOnClickOutside: Boolean = true,
+    draggable: Boolean = true,
+    enablePullUp: Boolean = true,
     enableNestedScroll: Boolean = true,
+    topScrollBlur: Boolean = true,
     topInset: Dp? = null,
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     dismissOffsetFraction: Float = BottomSheetDefaults.DismissOffsetFraction,
@@ -191,6 +211,7 @@ internal fun BottomSheetContentLayout(
 ) {
     val animationProgress = remember { Animatable(0f, visibilityThreshold = 0.0001f) }
     val dragOffsetY = remember { Animatable(0f) }
+    val contentScrollOffsetPx = remember { mutableFloatStateOf(0f) }
     val currentOnDismissFinished by rememberUpdatedState(onDismissFinished)
     val internalVisible = remember { mutableStateOf(false) }
     val density = LocalDensity.current
@@ -206,6 +227,7 @@ internal fun BottomSheetContentLayout(
         if (show) {
             internalVisible.value = true
             dragOffsetY.snapTo(0f)
+            contentScrollOffsetPx.floatValue = 0f
             animationProgress.animateTo(
                 targetValue = 1f,
                 animationSpec = couiPanelSlideSpring(
@@ -316,27 +338,28 @@ internal fun BottomSheetContentLayout(
             )
         }
 
+        val outsideDismissible = allowDismiss && dismissOnClickOutside
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                // Key on `allowDismiss` so the gesture coroutine restarts with the latest closure
-                // when the consumer toggles it; otherwise the in-flight detector keeps the stale value.
+                // Key on the flags so the gesture coroutine restarts with the latest closure
+                // when the consumer toggles them; otherwise the in-flight detector keeps the stale value.
                 .then(
                     if (!show) {
                         Modifier
                     } else {
                         Modifier
-                            .pointerInput(allowDismiss) {
+                            .pointerInput(outsideDismissible) {
                                 detectTapGestures(
                                     onTap = {
-                                        if (allowDismiss) {
+                                        if (outsideDismissible) {
                                             requestDismiss()
                                         }
                                     },
                                 )
                             }
                             .semantics {
-                                if (allowDismiss) {
+                                if (outsideDismissible) {
                                     onClick(label = "Dismiss") {
                                         requestDismiss()
                                         true
@@ -357,6 +380,7 @@ internal fun BottomSheetContentLayout(
 
             BottomSheetContent(
                 title = title,
+                subtitle = subtitle,
                 backgroundColor = backgroundColor,
                 cornerRadius = cornerRadius,
                 sheetMaxWidth = sheetMaxWidth,
@@ -365,9 +389,14 @@ internal fun BottomSheetContentLayout(
                 defaultWindowInsetsPadding = defaultWindowInsetsPadding,
                 dragHandleColor = dragHandleColor,
                 showDragHandle = showDragHandle,
+                showInMaxHeight = showInMaxHeight,
                 allowDismiss = allowDismiss,
+                draggable = draggable,
+                enablePullUp = enablePullUp,
+                topScrollBlur = topScrollBlur,
                 sheetHeightPx = sheetHeightPx,
                 dragOffsetY = dragOffsetY,
+                contentScrollOffsetPx = contentScrollOffsetPx,
                 dimAlpha = dimAlpha,
                 dragSnapChannel = dragSnapChannel,
                 onDismissRequest = {
@@ -415,7 +444,13 @@ internal fun BottomSheetContent(
     dragSnapChannel: Channel<Float>,
     onDismissRequest: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     showDragHandle: Boolean = false,
+    showInMaxHeight: Boolean = false,
+    draggable: Boolean = true,
+    enablePullUp: Boolean = true,
+    topScrollBlur: Boolean = true,
+    contentScrollOffsetPx: MutableFloatState = remember { mutableFloatStateOf(0f) },
     topInset: Dp? = null,
     panelPaddingBottom: Dp = BottomSheetDefaults.PanelPaddingBottom,
     enableNestedScroll: Boolean = true,
@@ -447,13 +482,17 @@ internal fun BottomSheetContent(
         maxOf(statusBars, captionBar, displayCutout)
     }
 
-    val calculateNewOffset = remember(allowDismiss, sheetHeightPx.intValue, currentWindowHeight, density) {
+    val calculateNewOffset = remember(allowDismiss, enablePullUp, sheetHeightPx.intValue, currentWindowHeight, density) {
         { current: Float, delta: Float ->
-            val upLimitPx = pullUpLimitPx(
-                windowHeightPx = with(density) { currentWindowHeight.toPx() },
-                sheetHeightPx = sheetHeightPx.intValue.toFloat(),
-                density = density,
-            )
+            val upLimitPx = if (enablePullUp) {
+                pullUpLimitPx(
+                    windowHeightPx = with(density) { currentWindowHeight.toPx() },
+                    sheetHeightPx = sheetHeightPx.intValue.toFloat(),
+                    density = density,
+                )
+            } else {
+                0f
+            }
             val newOffset = current + delta
             if (newOffset < 0) {
                 // COUIBottomSheetDialog's pull-up listener drags the parent padding by 0.2 of the
@@ -545,11 +584,12 @@ internal fun BottomSheetContent(
         }
     }
 
-    // Nested scroll logic
-    val nestedScrollConnection = remember(enableNestedScroll, allowDismiss, dismissOffsetFraction, density) {
+    // Nested scroll logic: always observes child scroll consumption to drive the top scroll blur
+    // and fading edge, and forwards drag-to-dismiss gestures when `enableNestedScroll && draggable`.
+    val nestedScrollConnection = remember(enableNestedScroll, draggable, allowDismiss, dismissOffsetFraction, density) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (!enableNestedScroll) return Offset.Zero
+                if (!enableNestedScroll || !draggable) return Offset.Zero
 
                 // Allow interruption whenever settling
                 if (isSettling.value) {
@@ -572,7 +612,16 @@ internal fun BottomSheetContent(
             }
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-                if (!enableNestedScroll) return Offset.Zero
+                // Track scrolled content displacement so the top progressive blur and fade ramp in
+                // smoothly once the child leaves rest and clear cleanly back to 0 at the top edge.
+                if (consumed.y != 0f) {
+                    contentScrollOffsetPx.floatValue = (contentScrollOffsetPx.floatValue - consumed.y).coerceAtLeast(0f)
+                }
+                if (available.y > 0f && consumed.y >= 0f) {
+                    contentScrollOffsetPx.floatValue = 0f
+                }
+
+                if (!enableNestedScroll || !draggable) return Offset.Zero
 
                 val delta = available.y
                 if (delta > 0) {
@@ -600,7 +649,7 @@ internal fun BottomSheetContent(
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
-                if (!enableNestedScroll || isSettling.value) return Velocity.Zero
+                if (!enableNestedScroll || !draggable || isSettling.value) return Velocity.Zero
 
                 // Take over fling if the sheet is offset
                 if (dragOffsetY.value > 0) {
@@ -611,7 +660,7 @@ internal fun BottomSheetContent(
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (!enableNestedScroll || isSettling.value) return Velocity.Zero
+                if (!enableNestedScroll || !draggable || isSettling.value) return Velocity.Zero
 
                 if (dragOffsetY.value > 0) {
                     performSettle(available.y)
@@ -624,6 +673,7 @@ internal fun BottomSheetContent(
 
     BottomSheetColumn(
         title = title,
+        subtitle = subtitle,
         startAction = startAction,
         endAction = endAction,
         backgroundColor = backgroundColor,
@@ -634,13 +684,17 @@ internal fun BottomSheetContent(
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
         dragHandleColor = dragHandleColor,
         showDragHandle = showDragHandle,
+        showInMaxHeight = showInMaxHeight,
         allowDismiss = allowDismiss,
+        draggable = draggable,
+        enablePullUp = enablePullUp,
+        topScrollBlur = topScrollBlur,
         windowHeight = windowHeight,
         topInset = calculatedTopInset,
         panelPaddingBottom = panelPaddingBottom,
-        enableNestedScroll = enableNestedScroll,
         sheetHeightPx = sheetHeightPx,
         dragOffsetY = dragOffsetY,
+        contentScrollOffsetPx = contentScrollOffsetPx,
         nestedScrollConnection = nestedScrollConnection,
         coroutineScope = coroutineScope,
         dragSnapChannel = dragSnapChannel,
@@ -648,7 +702,6 @@ internal fun BottomSheetContent(
         onUpdateAlpha = updateDimAlpha,
         modifier = modifier,
         allowTouches = allowTouches,
-        onDismissRequest = onDismissRequest,
         content = content,
     )
 }
@@ -657,6 +710,7 @@ internal fun BottomSheetContent(
 @Composable
 private fun BottomSheetColumn(
     title: String?,
+    subtitle: String?,
     startAction: (@Composable () -> Unit)?,
     endAction: (@Composable () -> Unit)?,
     backgroundColor: Color,
@@ -667,13 +721,17 @@ private fun BottomSheetColumn(
     defaultWindowInsetsPadding: Boolean,
     dragHandleColor: Color,
     showDragHandle: Boolean,
+    showInMaxHeight: Boolean,
     allowDismiss: Boolean,
+    draggable: Boolean,
+    enablePullUp: Boolean,
+    topScrollBlur: Boolean,
     windowHeight: Dp,
     topInset: Dp,
     panelPaddingBottom: Dp,
-    enableNestedScroll: Boolean,
     sheetHeightPx: MutableIntState,
     dragOffsetY: Animatable<Float, *>,
+    contentScrollOffsetPx: MutableFloatState,
     nestedScrollConnection: NestedScrollConnection,
     coroutineScope: CoroutineScope,
     dragSnapChannel: Channel<Float>,
@@ -681,7 +739,6 @@ private fun BottomSheetColumn(
     onUpdateAlpha: (Float) -> Unit,
     modifier: Modifier = Modifier,
     allowTouches: Boolean = true,
-    onDismissRequest: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -691,6 +748,7 @@ private fun BottomSheetColumn(
     val effectiveMaxWidth = remember(windowSize, sheetMaxWidth) {
         min(sheetMaxWidth, couiPanelMaxWidth(windowSize))
     }
+    val maxSheetHeight = windowHeight - topInset
     // ColorOS 17 frosts every panel: `COUIBottomSheetDialog.initBlurParams()` feeds
     // `COUIBackgroundBlurBuilder` the two-tone recipe `coui_bottomdialog_list_mix_blur_*` +
     // `coui_bottomdialog_list_blend_blur_*` at `coui_bottomdialog_blur_radius`, and
@@ -719,6 +777,9 @@ private fun BottomSheetColumn(
         blurRadius = BottomSheetDefaults.blurRadius(),
         blendColors = BottomSheetDefaults.blurColors(),
     )
+    val topScrollAlpha: () -> Float = remember(density, contentScrollOffsetPx) {
+        { AppBarBlurOverlayDefaults.scrollAlpha(contentScrollOffsetPx.floatValue, density) }
+    }
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -740,11 +801,18 @@ private fun BottomSheetColumn(
                         Modifier
                     },
                 )
-                .then(if (enableNestedScroll) Modifier.nestedScroll(nestedScrollConnection) else Modifier)
+                .nestedScroll(nestedScrollConnection)
                 .widthIn(max = effectiveMaxWidth)
                 .fillMaxWidth()
-                .wrapContentHeight()
-                .heightIn(max = windowHeight - topInset)
+                .then(
+                    if (showInMaxHeight) {
+                        Modifier.height(maxSheetHeight)
+                    } else {
+                        Modifier
+                            .wrapContentHeight()
+                            .heightIn(max = maxSheetHeight)
+                    },
+                )
                 .onGloballyPositioned { coordinates ->
                     // Capture the full rendered sheet surface height (including any inner IME
                     // padding) so enter/exit translations slide the entire panel off-screen.
@@ -780,11 +848,16 @@ private fun BottomSheetColumn(
                 dragHandleColor = dragHandleColor,
                 showDragHandle = showDragHandle,
                 allowDismiss = allowDismiss,
-                pullUpLimitPx = pullUpLimitPx(
-                    windowHeightPx = with(density) { windowHeight.toPx() },
-                    sheetHeightPx = sheetHeightPx.intValue.toFloat(),
-                    density = density,
-                ),
+                draggable = draggable,
+                pullUpLimitPx = if (enablePullUp) {
+                    pullUpLimitPx(
+                        windowHeightPx = with(density) { windowHeight.toPx() },
+                        sheetHeightPx = sheetHeightPx.intValue.toFloat(),
+                        density = density,
+                    )
+                } else {
+                    0f
+                },
                 dragOffsetY = dragOffsetY,
                 coroutineScope = coroutineScope,
                 dragSnapChannel = dragSnapChannel,
@@ -792,19 +865,101 @@ private fun BottomSheetColumn(
                 onUpdateAlpha = onUpdateAlpha,
             )
 
-            if (title != null || startAction != null || endAction != null) {
+            if (title != null || subtitle != null || startAction != null || endAction != null) {
                 TitleAndActionsRow(
                     title = title,
+                    subtitle = subtitle,
                     startAction = startAction,
                     endAction = endAction,
-                    onDismissRequest = onDismissRequest,
                 )
             }
 
-            content()
+            BottomSheetScrollableBody(
+                topScrollBlur = topScrollBlur,
+                scrollFraction = topScrollAlpha,
+                modifier = if (showInMaxHeight) {
+                    Modifier.weight(1f).fillMaxWidth()
+                } else {
+                    Modifier.weight(1f, fill = false).fillMaxWidth()
+                },
+                content = content,
+            )
         }
     }
 }
+
+/**
+ * Wraps the sheet's body with an optional transparent fading edge that ramps in as scrollable
+ * content moves past the top of the viewport.
+ *
+ * The caller's [content] is stacked in a [Column], exactly as it was laid out directly inside the
+ * sheet column before this wrapper existed, so a multi-child body never piles up at `(0, 0)`.
+ *
+ * ColorOS 17 never blurs or tints scrolled-under panel content: `coui_panel_layout` stacks the
+ * `bottom_sheet_toolbar` (`background="@null"`) above `panel_container` in a plain vertical
+ * `LinearLayout`, `COUIPanelFragment` only toggles the toolbar's button material
+ * (`setIsDrawableMaterialEffect`), and the only blur `COUIBottomSheetDialog` owns is the panel's own
+ * background (`COUIBackgroundBlurBuilder`). The header is therefore not floating, so the top of the
+ * body viewport is always *visible content*: a blurred copy of that content (the former progressive
+ * band) smeared the first child (a title, a card's lit rim) into a bright grey bar instead of
+ * hiding anything. The body simply scrolls out at the header's bottom edge as on the device, and
+ * [topScrollBlur] only adds a transparent fading edge of [BottomSheetDefaults.TopScrollFadeHeight]:
+ * it never paints a colour of its own and lets the panel's material show through, so it reads the
+ * same over a light or a dark panel.
+ *
+ * @param topScrollBlur Whether the scrolled content fades out along the top edge.
+ * @param scrollFraction The scroll-driven fraction, `0` at rest. At `0` the body is drawn as is.
+ */
+@Composable
+internal fun BottomSheetScrollableBody(
+    topScrollBlur: Boolean,
+    scrollFraction: () -> Float,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = modifier.then(
+            if (topScrollBlur) {
+                Modifier.bottomSheetTopFadeEdge(
+                    scrollFraction = scrollFraction,
+                    fadeLength = BottomSheetDefaults.TopScrollFadeHeight,
+                )
+            } else {
+                Modifier
+            },
+        ),
+    ) {
+        content()
+    }
+}
+
+/**
+ * Top vertical fading edge driven by [scrollFraction], matching `DialogScrollFadingEdge`:
+ * fades scrolled content smoothly to transparent at the top edge while keeping zero offscreen
+ * layer cost at rest (`scrollFraction() <= 0f`).
+ */
+private fun Modifier.bottomSheetTopFadeEdge(
+    scrollFraction: () -> Float,
+    fadeLength: Dp,
+): Modifier = this
+    .graphicsLayer {
+        compositingStrategy = if (scrollFraction() > 0f) CompositingStrategy.Offscreen else CompositingStrategy.Auto
+    }
+    .drawWithContent {
+        drawContent()
+        val fraction = scrollFraction().coerceIn(0f, 1f)
+        val fadePx = (fadeLength.toPx() * fraction).coerceAtMost(size.height / 2f)
+        if (fadePx <= 0f) return@drawWithContent
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(Color.Transparent, Color.Black),
+                startY = 0f,
+                endY = fadePx,
+            ),
+            size = Size(size.width, fadePx),
+            blendMode = BlendMode.DstIn,
+        )
+    }
 
 /**
  * Renders the elastic background fill that follows the sheet upward when the user
@@ -931,6 +1086,7 @@ private fun DragHandleArea(
     dragHandleColor: Color,
     showDragHandle: Boolean,
     allowDismiss: Boolean,
+    draggable: Boolean,
     pullUpLimitPx: Float,
     dragOffsetY: Animatable<Float, *>,
     coroutineScope: CoroutineScope,
@@ -939,8 +1095,8 @@ private fun DragHandleArea(
     onUpdateAlpha: (Float) -> Unit,
 ) {
     val pressAlpha = remember { Animatable(0f) }
-    val handleShape = remember { RoundedCornerShape(2.dp) }
     val squircleEnabled = isSquircleEnabled()
+    val handleShape = remember(squircleEnabled) { CapsuleOutlineShape(squircleEnabled = squircleEnabled) }
     val pressShape = remember(squircleEnabled) { SquircleShape(16.dp, squircleEnabled = squircleEnabled) }
     // COUI couiColorPress has no dedicated scheme slot; derive it from onSurface.
     val pressColor = COUITheme.colorScheme.onSurface.copy(alpha = 0.12f)
@@ -953,44 +1109,51 @@ private fun DragHandleArea(
         modifier = Modifier
             .fillMaxWidth()
             .height(stripHeight)
-            .then(if (showDragHandle) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        coroutineScope.animateHandlePressDown(pressAlpha)
-                        val released = tryAwaitRelease()
-                        if (released) {
-                            coroutineScope.animateHandlePressRelease(pressAlpha)
+            .then(if (showDragHandle && draggable) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
+            .then(
+                if (draggable) {
+                    Modifier
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    coroutineScope.animateHandlePressDown(pressAlpha)
+                                    val released = tryAwaitRelease()
+                                    if (released) {
+                                        coroutineScope.animateHandlePressRelease(pressAlpha)
+                                    }
+                                },
+                            )
                         }
-                    },
-                )
-            }
-            .draggable(
-                orientation = Orientation.Vertical,
-                state = rememberDraggableState { dragAmount ->
-                    val newOffset = dragOffsetY.value + dragAmount
-                    val finalOffset = if (newOffset < 0) {
-                        // COUIBottomSheetDialog's pull-up listener drags the parent padding by 0.2
-                        // of the pull, clamped to `coui_panel_pull_up_max_offset` and the panel top.
-                        (dragOffsetY.value + dragAmount * PULL_UP_FRICTION).coerceIn(-pullUpLimitPx, 0f)
-                    } else if (newOffset >= 0 && !allowDismiss) {
-                        // Damping down if not dismissible
-                        val dampedAmount = if (dragAmount > 0) dragAmount * 0.1f else dragAmount
-                        (dragOffsetY.value + dampedAmount).coerceAtLeast(0f)
-                    } else {
-                        newOffset
-                    }
+                        .draggable(
+                            orientation = Orientation.Vertical,
+                            state = rememberDraggableState { dragAmount ->
+                                val newOffset = dragOffsetY.value + dragAmount
+                                val finalOffset = if (newOffset < 0) {
+                                    // COUIBottomSheetDialog's pull-up listener drags the parent padding by 0.2
+                                    // of the pull, clamped to `coui_panel_pull_up_max_offset` and the panel top.
+                                    (dragOffsetY.value + dragAmount * PULL_UP_FRICTION).coerceIn(-pullUpLimitPx, 0f)
+                                } else if (newOffset >= 0 && !allowDismiss) {
+                                    // Damping down if not dismissible
+                                    val dampedAmount = if (dragAmount > 0) dragAmount * 0.1f else dragAmount
+                                    (dragOffsetY.value + dampedAmount).coerceAtLeast(0f)
+                                } else {
+                                    newOffset
+                                }
 
-                    dragSnapChannel.trySend(finalOffset)
-                    onUpdateAlpha(finalOffset)
-                },
-                onDragStarted = {
-                    coroutineScope.animateHandlePressDown(pressAlpha)
-                },
-                onDragStopped = { velocity ->
-                    coroutineScope.animateHandlePressRelease(pressAlpha)
-                    // Delegate the settle logic to the shared function
-                    onSettle(velocity)
+                                dragSnapChannel.trySend(finalOffset)
+                                onUpdateAlpha(finalOffset)
+                            },
+                            onDragStarted = {
+                                coroutineScope.animateHandlePressDown(pressAlpha)
+                            },
+                            onDragStopped = { velocity ->
+                                coroutineScope.animateHandlePressRelease(pressAlpha)
+                                // Delegate the settle logic to the shared function
+                                onSettle(velocity)
+                            },
+                        )
+                } else {
+                    Modifier
                 },
             )
             // COUI coui_panel_drag_view_shadow_margin_top: aligns the band center with the bar center.
@@ -1008,7 +1171,7 @@ private fun DragHandleArea(
                         drawRect(pressColor.copy(alpha = pressColor.alpha * pressAlpha.value))
                     },
             )
-            // COUI drag bar: a fixed capsule, no press deformation.
+            // COUI drag bar: a fixed continuous-curve capsule, no press deformation.
             Box(
                 modifier = Modifier
                     .width(36.dp)
@@ -1022,58 +1185,85 @@ private fun DragHandleArea(
     }
 }
 
+/** Vertical padding applied to the centered title block inside [TitleAndActionsRow]. */
+private val SheetTitlePaddingVertical = 10.dp
+
+/**
+ * Single-row panel toolbar aligned with `upstream/coui17` (`Widget.COUI.Toolbar.Panel`):
+ * optional [startAction] at the start, optional [endAction] at the end, and a horizontally
+ * centered [title] (with optional [subtitle] stacked below it) symmetrically bounded clear of
+ * both actions.
+ */
 @Composable
 private fun TitleAndActionsRow(
     title: String?,
+    subtitle: String?,
     startAction: (@Composable () -> Unit)?,
     endAction: (@Composable () -> Unit)?,
-    onDismissRequest: (() -> Unit)? = null,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                // `coui_list_dialog_toolbar_height` = 50dp, the height of the `COUIToolbar` a COUI
-                // panel puts its title and actions in. A 40dp action button then leaves 5dp above and
-                // below it, and the row no longer grows with whatever the caller drops in.
-                .heightIn(min = BottomSheetDefaults.HeaderHeight),
-        ) {
-            // Start action (e.g. close button or default close capsule)
-            Box(modifier = Modifier.align(Alignment.CenterStart)) {
-                if (startAction != null) {
-                    startAction()
-                } else {
-                    SheetCloseCapsule(onClick = onDismissRequest ?: {})
+    Layout(
+        content = {
+            Box { startAction?.invoke() }
+            Box { endAction?.invoke() }
+            Box {
+                if (title != null || subtitle != null) {
+                    Column(
+                        modifier = Modifier.padding(vertical = SheetTitlePaddingVertical, horizontal = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        if (title != null) {
+                            Text(
+                                text = title,
+                                color = COUITheme.colorScheme.onBackground,
+                                textAlign = TextAlign.Center,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                style = COUITheme.textStyles.title4,
+                            )
+                        }
+                        if (subtitle != null) {
+                            if (title != null) {
+                                Spacer(Modifier.height(2.dp))
+                            }
+                            Text(
+                                text = subtitle,
+                                color = COUITheme.colorScheme.onSurfaceVariantSummary,
+                                textAlign = TextAlign.Center,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                style = COUITheme.textStyles.footnote2,
+                            )
+                        }
+                    }
                 }
             }
-
-            // End action (e.g. submit button)
-            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                endAction?.invoke()
-            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = BottomSheetDefaults.HeaderHeight),
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val startPlaceable = measurables[0].measure(loose)
+        val endPlaceable = measurables[1].measure(loose)
+        val width = if (constraints.hasBoundedWidth) {
+            constraints.maxWidth
+        } else {
+            startPlaceable.width + endPlaceable.width
         }
-
-        if (title != null) {
-            Spacer(Modifier.height(BottomSheetDefaults.TitleTopGap))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = BottomSheetDefaults.TitleHeight),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Text(
-                    text = title,
-                    modifier = Modifier.wrapContentHeight(unbounded = true),
-                    style = TrimmedTitleLineHeightStyle,
-                    fontSize = 28.sp,
-                    lineHeight = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = COUITheme.colorScheme.onBackground,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Spacer(Modifier.height(BottomSheetDefaults.TitleBottomGap))
+        val side = maxOf(startPlaceable.width, endPlaceable.width)
+        val titlePlaceable = measurables[2].measure(
+            loose.copy(maxWidth = (width - 2 * side).coerceAtLeast(0)),
+        )
+        val height = maxOf(
+            constraints.minHeight,
+            startPlaceable.height,
+            endPlaceable.height,
+            titlePlaceable.height,
+        )
+        layout(width, height) {
+            startPlaceable.placeRelative(0, (height - startPlaceable.height) / 2)
+            endPlaceable.placeRelative(width - endPlaceable.width, (height - endPlaceable.height) / 2)
+            titlePlaceable.placeRelative((width - titlePlaceable.width) / 2, (height - titlePlaceable.height) / 2)
         }
     }
 }
@@ -1345,6 +1535,11 @@ object BottomSheetDefaults {
     val HeaderHeight = 50.dp
 
     /**
+     * Height of the top transparent fading edge applied to scrolled sheet content.
+     */
+    val TopScrollFadeHeight = 20.dp
+
+    /**
      * The side inset of the title row, `toolbar_center_menu_padding_horizontal_compat` = 16dp in
      * `values-v37`.
      */
@@ -1495,6 +1690,8 @@ internal fun SheetToolbarButtonSurface(
             alpha = 0.12f,
         )
     }
+    val squircleEnabled = isSquircleEnabled()
+    val capsuleShape = remember(squircleEnabled) { CapsuleOutlineShape(squircleEnabled = squircleEnabled) }
     val haloShader = rememberToolbarHaloShader()
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
@@ -1514,30 +1711,37 @@ internal fun SheetToolbarButtonSurface(
                 .matchParentSize()
                 .then(
                     if (haloShader != null) {
-                        Modifier.ditheredHalo(haloShader, halo)
+                        Modifier.ditheredHalo(haloShader, halo, continuousCurve = squircleEnabled)
                     } else {
                         Modifier
                             .drawWithContent {
                                 val capsule = Path().apply {
-                                    addOutline(CircleShape.createOutline(size, layoutDirection, this@drawWithContent))
+                                    addOutline(capsuleShape.createOutline(size, layoutDirection, this@drawWithContent))
                                 }
                                 clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
                             }
-                            .dropShadow(CircleShape, halo)
+                            .dropShadow(capsuleShape, halo)
                     },
                 ),
         )
         Box(
             modifier = Modifier
-                .clip(CircleShape)
+                .clip(capsuleShape)
                 .background(fill)
                 .drawBehind {
                     if (wash.value > 0f) {
                         drawRect(color = pressColor.copy(alpha = pressColor.alpha * wash.value))
                     }
                 }
-                .materialShadowEdge(
+                .materialShadowEdgeBySize(
                     stroke = BottomSheetDefaults.ToolbarButtonStroke,
+                    cornerWeightFor = { width, height ->
+                        if (squircleEnabled) {
+                            capsuleRimCornerWeight(width, height, height / 2f, squircleEnabled = true)
+                        } else {
+                            MaterialShadowEdgeDefaults.CapsuleCornerWeight
+                        }
+                    },
                     edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
                     shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
                 )
@@ -1575,11 +1779,33 @@ private const val TOOLBAR_HALO_SHADER = """
     uniform float sigma;
     uniform float aa;
     uniform float4 color;
+    uniform float continuousCurve;
+
+    float couiSegmentCapsuleDelta(float2 p, float2 b) {
+        if (b.x <= b.y) {
+            return 0.0;
+        }
+        float R = b.y;
+        float s = b.x - abs(p.x);
+        float tail = min(1.5, b.x / R);
+        float s0 = 0.2250555 * R;
+        float s1 = tail * R;
+        if (s <= s0 || s >= s1) {
+            return 0.0;
+        }
+        float u = (s - s0) / (s1 - s0);
+        float u2_1u2 = u * u * (1.0 - u) * (1.0 - u);
+        return u2_1u2 * (0.003318 + u * (1.529298 - 1.888829 * u)) * R;
+    }
 
     float sdCapsule(float2 p, float2 halfSize) {
         float r = min(halfSize.x, halfSize.y);
         float2 q = abs(p) - halfSize + r;
-        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+        float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+        if (continuousCurve > 0.5) {
+            d += couiSegmentCapsuleDelta(p, halfSize);
+        }
+        return d;
     }
 
     float erfApprox(float x) {
@@ -1605,7 +1831,11 @@ private const val TOOLBAR_HALO_SHADER = """
     }
 """
 
-private fun Modifier.ditheredHalo(shader: RuntimeShader, halo: Shadow): Modifier = drawWithCache {
+private fun Modifier.ditheredHalo(
+    shader: RuntimeShader,
+    halo: Shadow,
+    continuousCurve: Boolean = true,
+): Modifier = drawWithCache {
     val sigma = halo.radius.toPx() * BLUR_RADIUS_TO_SIGMA
     val offsetX = halo.offset.x.toPx()
     val offsetY = halo.offset.y.toPx()
@@ -1616,6 +1846,7 @@ private fun Modifier.ditheredHalo(shader: RuntimeShader, halo: Shadow): Modifier
     shader.setFloatUniform("sigma", sigma)
     shader.setFloatUniform("aa", 1f)
     shader.setFloatUniform("color", halo.color.red, halo.color.green, halo.color.blue, halo.alpha)
+    shader.setFloatUniform("continuousCurve", if (continuousCurve) 1f else 0f)
     val brush = shader.asBrush()
     onDrawBehind {
         drawRect(

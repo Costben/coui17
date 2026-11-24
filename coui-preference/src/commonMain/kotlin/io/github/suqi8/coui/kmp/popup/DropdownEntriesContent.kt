@@ -2,14 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.popup
 
-import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.DropdownColors
+import io.github.suqi8.coui.kmp.basic.DropdownDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownHeaderItem
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
 import io.github.suqi8.coui.kmp.basic.PopupListDivider
+import io.github.suqi8.coui.kmp.basic.RadioButton
+import io.github.suqi8.coui.kmp.basic.RadioButtonDefaults
+import io.github.suqi8.coui.kmp.preference.ListPreferenceColors
+import io.github.suqi8.coui.kmp.preference.ListPreferenceDefaults
+import io.github.suqi8.coui.kmp.preference.SelectPanelItem
+import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
  * Renders a list of [DropdownEntry] groups inside a popup container. Computes popup-global
@@ -17,8 +33,10 @@ import io.github.suqi8.coui.kmp.basic.PopupListDivider
  * receive the larger first/last padding; group boundaries fall back to the middle padding.
  *
  * A group that declares a [DropdownEntry.title] gets a non-clickable [DropdownHeaderItem] above its
- * items. The header then owns the group's leading edge, so the first option row no longer counts as
- * the popup's first row.
+ * items. Groups are separated by a [PopupListDivider] — matching COUI 17
+ * `COUIPopupListWindow.setItemListInternal` (`GROUP_MIN_ITEMS = 3`), only when the menu holds at
+ * least [POPUP_GROUP_MIN_ITEMS] items; rows inside the same group share `groupKey = entryIdx` so no
+ * intra-group divider is inserted.
  */
 @Composable
 internal fun DropdownEntriesPopupContent(
@@ -26,10 +44,13 @@ internal fun DropdownEntriesPopupContent(
     dropdownColors: DropdownColors,
     onItemClick: (entryIdx: Int, itemIdx: Int) -> Unit,
 ) {
-    val lastEntryIdx = entries.lastIndex
+    val firstEntryIdx = entries.indexOfFirst { it.items.isNotEmpty() }
+    val lastEntryIdx = entries.indexOfLast { it.items.isNotEmpty() }
+    val showGroupDividers = entries.sumOf { it.items.size } >= POPUP_GROUP_MIN_ITEMS
     entries.forEachIndexed { entryIdx, entry ->
+        if (entry.items.isEmpty()) return@forEachIndexed
         val lastItemIdx = entry.items.lastIndex
-        val isFirstEntry = entryIdx == 0
+        val isFirstEntry = entryIdx == firstEntryIdx
         val isLastEntry = entryIdx == lastEntryIdx
         val header = entry.title
         if (header != null) {
@@ -60,47 +81,140 @@ internal fun DropdownEntriesPopupContent(
                 )
             }
         }
-        if (entryIdx != lastEntryIdx) {
-            PopupListDivider()
-        }
-    }
-}
-
-/**
- * Adds [DropdownEntry] groups to a [LazyListScope] for use inside a dialog. Dialog mode uses
- * uniform vertical padding regardless of position, so popup-global first/last is intentionally
- * not propagated. A [DropdownEntry.title] still renders a header row so grouped dialogs stay
- * labelled, but COUI has no dialog header metrics to calibrate against — it reuses the popup one.
- */
-internal fun LazyListScope.dropdownEntriesDialogItems(
-    entries: List<DropdownEntry>,
-    dropdownColors: DropdownColors,
-    onItemClick: (entryIdx: Int, itemIdx: Int) -> Unit,
-) {
-    val lastEntryIdx = entries.lastIndex
-    entries.forEachIndexed { entryIdx, entry ->
-        entry.title?.let { header ->
-            item(key = "header-$entryIdx") {
-                DropdownHeaderItem(text = header, color = dropdownColors.headerColor)
-            }
-        }
-        items(entry.items.size, key = { itemIdx -> "$entryIdx-$itemIdx" }) { itemIdx ->
-            val item = entry.items[itemIdx]
-            DropdownImpl(
-                item = item,
-                optionSize = entry.items.size,
-                isSelected = item.selected,
-                index = itemIdx,
-                dropdownColors = dropdownColors,
-                enabled = entry.enabled && item.enabled,
-                dialogMode = true,
-                onSelectedIndexChange = { idx -> onItemClick(entryIdx, idx) },
-            )
-        }
-        if (entryIdx != lastEntryIdx) {
-            item(key = "divider-$entryIdx") {
+        if (entryIdx != lastEntryIdx && showGroupDividers) {
+            key(entryIdx, "divider") {
                 PopupListDivider()
             }
         }
     }
 }
+
+/** The smallest menu that shows group dividers (COUI `COUIPopupListWindow.GROUP_MIN_ITEMS`). */
+internal const val POPUP_GROUP_MIN_ITEMS = 3
+
+/**
+ * The list panel of a dropdown / spinner dialog, matching ColorOS 17 `COUIListPreferenceDialogFragment`
+ * (`ChoiceListAdapter` with `coui_select_dialog_singlechoice` rows: optional leading icon, label
+ * over optional summary, trailing [RadioButton], and a 0.33dp hairline divider inset by the 24dp
+ * row padding under every row except the last).
+ *
+ * Groups follow one another without an artificial section band (matching both ColorOS 17
+ * `ChoiceListAdapter` and `upstream/coui17`); a [DropdownEntry.title] adds a [DropdownHeaderItem]
+ * aligned with the 24dp row edge.
+ *
+ * While [freezeSelection] is true the radios keep the selection the dialog opened with while it
+ * animates out after a click, matching COUI's single-choice commit-and-dismiss behavior.
+ */
+@Composable
+internal fun DropdownChoiceDialogList(
+    entries: List<DropdownEntry>,
+    show: Boolean,
+    freezeSelection: Boolean,
+    dropdownColors: DropdownColors,
+    onItemClick: (entryIdx: Int, itemIdx: Int) -> Unit,
+) {
+    val disabledSelectedColor = COUITheme.colorScheme.disabledPrimary
+    val colors = remember(dropdownColors, disabledSelectedColor) {
+        ListPreferenceColors(
+            itemTextColor = dropdownColors.contentColor,
+            disabledItemTextColor = dropdownColors.disabledContentColor,
+            itemSummaryColor = dropdownColors.summaryColor,
+            disabledItemSummaryColor = dropdownColors.disabledContentColor,
+            selectedIndicatorColor = dropdownColors.selectedIndicatorColor,
+            disabledSelectedIndicatorColor = disabledSelectedColor,
+        )
+    }
+    val radioColors = RadioButtonDefaults.radioButtonColors(
+        selectedColor = colors.selectedIndicatorColor,
+        disabledSelectedColor = colors.disabledSelectedIndicatorColor,
+    )
+    val openedSelection = remember { DropdownDialogOpenedSelection() }
+    openedSelection.update(show, entries)
+    val lastEntryIdx = entries.indexOfLast { it.items.isNotEmpty() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = ListPreferenceDefaults.ButtonBarTopPadding)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        entries.forEachIndexed { entryIdx, entry ->
+            if (entry.items.isEmpty()) return@forEachIndexed
+            entry.title?.let { header ->
+                key(entryIdx, "header") {
+                    DropdownHeaderItem(
+                        text = header,
+                        modifier = DialogHeaderModifier,
+                        color = dropdownColors.headerColor,
+                    )
+                }
+            }
+            entry.items.forEachIndexed { itemIdx, item ->
+                key(entryIdx, itemIdx) {
+                    val enabled = entry.enabled && item.enabled
+                    val selected = if (freezeSelection) {
+                        openedSelection.isSelected(entryIdx, itemIdx)
+                    } else {
+                        item.selected
+                    }
+                    val icon = item.icon
+                    val iconContent: (@Composable () -> Unit)? = if (icon != null) {
+                        { Box(DialogIconModifier, contentAlignment = Alignment.Center) { icon(Modifier) } }
+                    } else {
+                        null
+                    }
+                    SelectPanelItem(
+                        text = item.text,
+                        summary = item.summary,
+                        selected = selected,
+                        checked = null,
+                        // COUIListPreferenceDialogFragment shows R.id.item_divider on every row
+                        // except the final item (count != 1 && pos != count - 1).
+                        showDivider = !(entryIdx == lastEntryIdx && itemIdx == entry.items.lastIndex),
+                        colors = colors,
+                        enabled = enabled,
+                        onClick = { onItemClick(entryIdx, itemIdx) },
+                        icon = iconContent,
+                    ) {
+                        RadioButton(
+                            selected = selected,
+                            onClick = null,
+                            enabled = enabled,
+                            colors = radioColors,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The selection a dropdown dialog opened with. It is recorded when the dialog starts to show and
+ * kept through its exit, so a click that commits and dismisses does not jump the radio.
+ */
+private class DropdownDialogOpenedSelection {
+    private var showing = false
+    private var selected: List<List<Boolean>> = emptyList()
+
+    fun update(show: Boolean, entries: List<DropdownEntry>) {
+        if (show && !showing) {
+            selected = entries.map { entry -> entry.items.map { it.selected } }
+        }
+        showing = show
+    }
+
+    fun isSelected(entryIdx: Int, itemIdx: Int): Boolean = selected.getOrNull(entryIdx)?.getOrNull(itemIdx) == true
+}
+
+/** A group header lines up with the row text, which the dialog rows pad by 24dp. */
+private val DialogHeaderModifier = Modifier.padding(
+    horizontal = ListPreferenceDefaults.PanelItemHorizontalPadding - DropdownDefaults.InsideHorizontalPadding,
+)
+
+/**
+ * Leading icon slot of `coui_select_dialog_singlechoice.xml` (`alertdialog_choice_icon`): 16dp
+ * before the text block (`coui_dialog_layout_margin_horizontal`) and 10dp extra vertical padding
+ * over the row's 10dp vertical padding to match `alert_dialog_single_list_icon_padding_vertical` (20dp).
+ */
+private val DialogIconModifier = Modifier.padding(end = 16.dp, top = 10.dp, bottom = 10.dp)

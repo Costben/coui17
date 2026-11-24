@@ -11,7 +11,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,11 +35,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -50,8 +52,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastFirst
+import androidx.compose.ui.util.fastFirstOrNull
 import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
@@ -60,6 +66,7 @@ import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.roundToInt
 
 /**
  * A [Chip] component with COUI style.
@@ -212,14 +219,23 @@ fun Chip(
     }
 
     CompositionLocalProvider(LocalContentColor provides contentColor) {
-        Box(
+        val layoutDirection = LocalLayoutDirection.current
+        val paddingStart = insideMargin.calculateStartPadding(layoutDirection)
+        val paddingTop = insideMargin.calculateTopPadding()
+        val paddingEnd = insideMargin.calculateEndPadding(layoutDirection)
+        val paddingBottom = insideMargin.calculateBottomPadding()
+        val showDismissSlot = onDismiss != null || dismissFraction > 0f
+
+        Layout(
             modifier = modifier
                 .graphicsLayer {
                     val scale = 1f - (1f - chipPressedScaleEndRatio(size)) * scaleProgress
                     scaleX = scale
                     scaleY = scale
                 }
-                .widthIn(max = maxWidth)
+                .widthIn(min = minWidth, max = maxWidth)
+                .defaultMinSize(minWidth = minWidth, minHeight = minHeight)
+                .clip(shape)
                 .then(fillModifier)
                 .selectable(
                     selected = selected,
@@ -236,123 +252,151 @@ fun Chip(
                         contentDescription = label + ChipDefaults.COUNT_SEPARATOR + count
                     }
                 },
-            propagateMinConstraints = true,
-        ) {
-            val layoutDirection = LocalLayoutDirection.current
-            Row(
-                modifier = Modifier
-                    .defaultMinSize(minWidth = minWidth, minHeight = minHeight)
-                    .padding(
-                        start = insideMargin.calculateStartPadding(layoutDirection),
-                        top = insideMargin.calculateTopPadding(),
-                        // COUIChipDrawable: a close icon takes the place of chipEndPadding, and a red
-                        // dot widens the chip by mRedDotOffsetHorizontal + dot diameter.
-                        end = if (onDismiss != null) {
-                            0.dp
-                        } else {
-                            insideMargin.calculateEndPadding(layoutDirection) +
-                                if (showRedDot) ChipDefaults.RedDotReservedWidth else 0.dp
-                        },
-                        bottom = insideMargin.calculateBottomPadding(),
-                    ),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (icon != null) {
-                    Box(
-                        modifier = Modifier.size(ChipDefaults.IconSize),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        icon()
+            content = {
+                Row(
+                    modifier = Modifier
+                        .layoutId(CHIP_CONTENT_ID)
+                        .padding(
+                            start = paddingStart,
+                            top = paddingTop,
+                            bottom = paddingBottom,
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (icon != null) {
+                        Box(
+                            modifier = Modifier.size(ChipDefaults.IconSize),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            icon()
+                        }
+                        Spacer(Modifier.width(ChipDefaults.IconSpacing))
                     }
-                    Spacer(Modifier.width(ChipDefaults.IconSpacing))
-                }
-                Text(
-                    text = label,
-                    color = contentColor,
-                    style = ChipDefaults.textStyle(),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.widthIn(max = ChipDefaults.TextMaxWidth),
-                )
-                if (count != null) {
-                    // COUIChipDrawable.drawCount: the count text follows the label after
-                    // mCountMarginStart, in COUNT_TEXT_SIZE (12sp) or countTextAppearance.
-                    Spacer(Modifier.width(ChipDefaults.CountMarginStart))
                     Text(
-                        text = count,
+                        text = label,
                         color = contentColor,
-                        style = ChipDefaults.countTextStyle(),
+                        style = ChipDefaults.textStyle(),
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = ChipDefaults.TextMaxWidth),
                     )
+                    if (count != null) {
+                        // COUIChipDrawable.drawCount: the count text follows the label after
+                        // mCountMarginStart, in COUNT_TEXT_SIZE (12sp) or countTextAppearance.
+                        Spacer(Modifier.width(ChipDefaults.CountMarginStart))
+                        Text(
+                            text = count,
+                            color = contentColor,
+                            style = ChipDefaults.countTextStyle(),
+                            maxLines = 1,
+                        )
+                    }
                 }
-                if (dismissFraction > 0f) {
-                    // COUIChipDrawable.calculateCloseIconWidth: closeIconStartPadding + closeIconSize +
-                    // closeIconEndPadding, with the icon closeIconEndPadding from the chip's end edge.
-                    // The whole block is scaled by the close icon animation progress, so the chip
-                    // widens as the icon appears.
+                if (showDismissSlot) {
+                    // Matches SearchHistoryChip's sideways spring-out animation: the close button
+                    // scales from 0.3 to 1 and fades in while riding the expanding right edge of
+                    // the capsule. Touch bounds remain dismissButtonSize (28dp) centred on the 14dp
+                    // icon without growing the chip height.
                     Box(
                         modifier = Modifier
-                            .padding(
-                                start = ChipDefaults.DismissIconStartPadding * dismissFraction,
-                                end = ChipDefaults.DismissIconEndPadding * dismissFraction,
-                            )
-                            .size(ChipDefaults.DismissIconSize)
+                            .layoutId(CHIP_DISMISS_ID)
+                            .requiredSize(dismissButtonSize)
                             .graphicsLayer {
                                 scaleX = dismissVisualScale
                                 scaleY = dismissVisualScale
-                            },
+                                alpha = dismissFraction
+                            }
+                            .clickable(
+                                interactionSource = dismissInteractionSource,
+                                indication = null,
+                                enabled = enabled && onDismiss != null && dismissFraction > 0.5f,
+                                role = Role.Button,
+                                // COUIChipDrawable keeps the close icon drawn while the hide
+                                // animation runs, but it is only clickable while visible.
+                                onClick = { onDismiss?.invoke() },
+                            )
+                            .semantics { contentDescription = dismissContentDescription },
                         contentAlignment = Alignment.Center,
                     ) {
-                        // calculateCloseIconTouchBounds: a closeIconTouchBoundsSize square centred on
-                        // the icon. requiredSize centres it without growing the chip.
-                        Box(
-                            modifier = Modifier
-                                .requiredSize(dismissButtonSize)
-                                .clickable(
-                                    interactionSource = dismissInteractionSource,
-                                    indication = null,
-                                    enabled = enabled && dismissFraction >= 1f,
-                                    role = Role.Button,
-                                    // COUIChipDrawable keeps the close icon drawn while the hide
-                                    // animation runs, but it is only clickable while visible.
-                                    onClick = { onDismiss?.invoke() },
-                                )
-                                .semantics { contentDescription = dismissContentDescription },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (dismissIcon != null) {
-                                dismissIcon()
-                            } else {
-                                Icon(
-                                    imageVector = COUIIcons.Basic.Close,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(ChipDefaults.DismissIconSize),
-                                )
-                            }
+                        if (dismissIcon != null) {
+                            dismissIcon()
+                        } else {
+                            Icon(
+                                imageVector = COUIIcons.Basic.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(ChipDefaults.DismissIconSize),
+                            )
                         }
                     }
                 }
-            }
-            if (showRedDot) {
-                // COUIChipDrawable.drawRedDot: a COUIHintRedDot.Small dot pinned to the top-end corner
-                // of the label, mRedDotOffsetHorizontal from it and mRedDotOffsetVertical from the top.
-                val dotEndInset = if (onDismiss != null) {
-                    ChipDefaults.DismissIconStartPadding + ChipDefaults.DismissIconSize +
-                        ChipDefaults.DismissIconEndPadding
-                } else {
-                    insideMargin.calculateEndPadding(layoutDirection)
+                if (showRedDot) {
+                    // COUIChipDrawable.drawRedDot: a COUIHintRedDot.Small dot pinned to the top-end
+                    // corner of the label, mRedDotOffsetHorizontal from it and mRedDotOffsetVertical
+                    // from the top.
+                    Box(
+                        modifier = Modifier
+                            .layoutId(CHIP_RED_DOT_ID)
+                            .size(ChipDefaults.RedDotSize)
+                            .background(color = ChipDefaults.redDotColor(), shape = CircleShape),
+                    )
                 }
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(
-                            top = ChipDefaults.RedDotOffsetVertical,
-                            end = (dotEndInset - ChipDefaults.RedDotReservedWidth).coerceAtLeast(0.dp),
-                        )
-                        .size(ChipDefaults.RedDotSize)
-                        .background(color = ChipDefaults.redDotColor(), shape = CircleShape),
+            },
+        ) { measurables, constraints ->
+            val loose = constraints.copy(minWidth = 0, minHeight = 0)
+            val baseEndPaddingPx = paddingEnd.roundToPx() +
+                if (showRedDot) ChipDefaults.RedDotReservedWidth.roundToPx() else 0
+            val dismissIconStartPx = ChipDefaults.DismissIconStartPadding.roundToPx()
+            val dismissIconSizePx = ChipDefaults.DismissIconSize.roundToPx()
+            val dismissIconEndPx = ChipDefaults.DismissIconEndPadding.roundToPx()
+            val dismissTotalWidthPx = dismissIconStartPx + dismissIconSizePx + dismissIconEndPx
+            val currentTrailingPx = (
+                baseEndPaddingPx + (dismissTotalWidthPx - baseEndPaddingPx) * dismissFraction
+                ).roundToInt()
+
+            val contentMaxWidth = if (constraints.hasBoundedWidth) {
+                (constraints.maxWidth - currentTrailingPx).coerceAtLeast(0)
+            } else {
+                constraints.maxWidth
+            }
+            val contentPlaceable = measurables
+                .fastFirst { it.layoutId == CHIP_CONTENT_ID }
+                .measure(loose.copy(maxWidth = contentMaxWidth))
+            val dismissPlaceable = measurables
+                .fastFirstOrNull { it.layoutId == CHIP_DISMISS_ID }
+                ?.measure(loose)
+            val redDotPlaceable = measurables
+                .fastFirstOrNull { it.layoutId == CHIP_RED_DOT_ID }
+                ?.measure(loose)
+
+            val naturalWidth = contentPlaceable.width + currentTrailingPx
+            val totalWidth = constraints.constrainWidth(naturalWidth)
+            val totalHeight = constraints.constrainHeight(contentPlaceable.height)
+            val centerOffsetX = ((totalWidth - naturalWidth) / 2).coerceAtLeast(0)
+
+            layout(totalWidth, totalHeight) {
+                contentPlaceable.placeRelative(
+                    x = centerOffsetX,
+                    y = (totalHeight - contentPlaceable.height) / 2,
                 )
+                if (dismissPlaceable != null) {
+                    val iconCenterX = totalWidth - centerOffsetX - dismissIconEndPx - dismissIconSizePx / 2f
+                    val closeX = (iconCenterX - dismissPlaceable.width / 2f).roundToInt()
+                    dismissPlaceable.placeRelative(
+                        x = closeX,
+                        y = (totalHeight - dismissPlaceable.height) / 2,
+                    )
+                }
+                if (redDotPlaceable != null) {
+                    val plainEndInsetPx = paddingEnd.roundToPx()
+                    val dotEndInsetPx = (
+                        plainEndInsetPx + (dismissTotalWidthPx - plainEndInsetPx) * dismissFraction
+                        ).roundToInt()
+                    val dotEndMarginPx = (dotEndInsetPx - ChipDefaults.RedDotReservedWidth.roundToPx()).coerceAtLeast(0)
+                    redDotPlaceable.placeRelative(
+                        x = totalWidth - dotEndMarginPx - redDotPlaceable.width,
+                        y = ChipDefaults.RedDotOffsetVertical.roundToPx(),
+                    )
+                }
             }
         }
     }
@@ -722,6 +766,10 @@ private val ChipRedDotDark = Color(0xFFEB493D)
 
 /** The smallest scale the close icon shrinks to while appearing (COUIChipDrawable CLOSE_ICON_SCALE_MIN_VALUE). */
 private val CHIP_CLOSE_ICON_SCALE_MIN = 0.3f
+
+private const val CHIP_CONTENT_ID = "chip-content"
+private const val CHIP_DISMISS_ID = "chip-dismiss"
+private const val CHIP_RED_DOT_ID = "chip-red-dot"
 
 /** COUIChipDrawable.CloseIconAnimation spring: COUISpringForce(response 0.3f, bounce 0f). */
 private val ChipCloseIconSpring = spring<Float>(dampingRatio = 1f, stiffness = 438.65f)

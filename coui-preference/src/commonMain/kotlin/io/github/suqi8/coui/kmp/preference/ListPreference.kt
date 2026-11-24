@@ -270,6 +270,7 @@ internal fun SelectPanelItem(
     colors: ListPreferenceColors,
     enabled: Boolean,
     onClick: () -> Unit,
+    icon: (@Composable () -> Unit)? = null,
     endContent: @Composable () -> Unit,
 ) {
     val currentOnClick by rememberUpdatedState(onClick)
@@ -300,6 +301,7 @@ internal fun SelectPanelItem(
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            icon?.invoke()
             Column(
                 modifier = Modifier
                     .weight(1f)

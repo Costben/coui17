@@ -2,19 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BasicTooltipDefaults
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.MutatorMutex
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -37,15 +35,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -77,9 +77,8 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.squircle.SquircleDefaults
-import io.github.suqi8.coui.kmp.squircle.SquircleShape
+import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
-import io.github.suqi8.coui.kmp.squircle.squircleBackground
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 import kotlinx.coroutines.CancellableContinuation
@@ -93,7 +92,9 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -136,8 +137,18 @@ sealed interface TooltipScope {
     fun obtainAnchorBounds(): LayoutCoordinates?
 }
 
+@Stable
+internal class TooltipPlacementState {
+    var resolvedPosition: TooltipAnchorPosition? by mutableStateOf(null)
+    var transformOrigin: TransformOrigin? by mutableStateOf(null)
+    var anchorCenterInPopup: Offset? by mutableStateOf(null)
+}
+
 private class TooltipScopeImpl(
     override val positioning: TooltipAnchorPosition,
+    val placementState: TooltipPlacementState?,
+    val spacingPx: Int?,
+    val edgeMarginPx: Int?,
     private val anchorBounds: () -> LayoutCoordinates?,
 ) : TooltipScope {
     override fun obtainAnchorBounds(): LayoutCoordinates? = anchorBounds()
@@ -226,9 +237,9 @@ private class TooltipStateImpl(
     /** Dismiss the tooltip associated with this [TooltipState] if it's currently being shown. */
     override fun dismiss() {
         transition.targetState = false
-        if (isPersistent) {
-            job?.cancel()
-        }
+        // Always cancel the active show continuation so non-persistent tooltips triggered with
+        // MutatePriority.UserInput (mouse hover or touch long press) release mutatorMutex too.
+        job?.cancel()
     }
 
     /** Cleans up [mutatorMutex] when the tooltip associated with this state leaves Composition. */
@@ -290,20 +301,126 @@ fun TooltipBox(
     content: @Composable () -> Unit,
 ) {
     var anchorBounds by remember { mutableStateOf<LayoutCoordinates?>(null) }
-    val positioning = (positionProvider as? TooltipPopupPositionProvider)?.positioning ?: TooltipAnchorPosition.Below
-    val scope = remember(positioning) { TooltipScopeImpl(positioning) { anchorBounds } }
+    var popupBounds by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val layoutDirection = LocalLayoutDirection.current
+    val tooltipProvider = positionProvider as? TooltipPopupPositionProvider
+    val placementState = tooltipProvider?.placementState
+    val positioning = tooltipProvider?.positioning ?: TooltipAnchorPosition.Below
+    val scope = remember(positioning, placementState, tooltipProvider?.spacing, tooltipProvider?.edgeMargin) {
+        TooltipScopeImpl(
+            positioning = positioning,
+            placementState = placementState,
+            spacingPx = tooltipProvider?.spacing,
+            edgeMarginPx = tooltipProvider?.edgeMargin,
+        ) { anchorBounds }
+    }
+    val resolvedSide = placementState?.resolvedPosition ?: positioning.resolve(layoutDirection)
+    val transformOrigin = placementState?.transformOrigin ?: run {
+        val anchor = anchorBounds
+        val popup = popupBounds
+        if (anchor != null && popup != null && anchor.isAttached && popup.isAttached) {
+            val anchorOnWindow = anchor.positionInWindow()
+            val popupOnWindow = popup.positionInWindow()
+            tooltipTransformOrigin(
+                side = resolvedSide,
+                relativeAnchorX = anchorOnWindow.x - popupOnWindow.x + anchor.size.width / 2f,
+                relativeAnchorY = anchorOnWindow.y - popupOnWindow.y + anchor.size.height / 2f,
+                popupSize = popup.size,
+            )
+        } else {
+            defaultTooltipTransformOrigin(resolvedSide)
+        }
+    }
+
+    val density = LocalDensity.current
+    val shadowPadHorizontalPx = if (tooltipProvider != null) {
+        with(density) { TooltipShadowPaddingHorizontal.roundToPx() }
+    } else {
+        0
+    }
+    val shadowPadTopPx = if (tooltipProvider != null) {
+        with(density) { TooltipShadowPaddingTop.roundToPx() }
+    } else {
+        0
+    }
+    val shadowPadBottomPx = if (tooltipProvider != null) {
+        with(density) { TooltipShadowPaddingBottom.roundToPx() }
+    } else {
+        0
+    }
+    val effectivePositionProvider = remember(
+        positionProvider,
+        shadowPadHorizontalPx,
+        shadowPadTopPx,
+        shadowPadBottomPx,
+    ) {
+        if (tooltipProvider != null) {
+            ShadowPaddedTooltipPositionProvider(
+                delegate = tooltipProvider,
+                padLeftPx = shadowPadHorizontalPx,
+                padTopPx = shadowPadTopPx,
+                padRightPx = shadowPadHorizontalPx,
+                padBottomPx = shadowPadBottomPx,
+            )
+        } else {
+            positionProvider
+        }
+    }
 
     TooltipBoxImpl(
-        positionProvider = positionProvider,
+        positionProvider = effectivePositionProvider,
+        clippingEnabled = tooltipProvider == null,
         tooltip = {
-            AnimatedVisibility(
-                visibleState = state.transition,
-                enter = fadeIn(ListPopupDefaults.AlphaEnterAnimationSpec) +
-                    scaleIn(initialScale = 0.9f, animationSpec = ListPopupDefaults.FractionAnimationSpec),
-                exit = fadeOut(ListPopupDefaults.AlphaExitAnimationSpec) +
-                    scaleOut(targetScale = 0.9f, animationSpec = TooltipExitScaleSpec),
+            val transition = rememberTransition(state.transition, label = "TooltipTransition")
+            val alpha by transition.animateFloat(
+                transitionSpec = {
+                    if (targetState) {
+                        ListPopupDefaults.AlphaEnterAnimationSpec
+                    } else {
+                        ListPopupDefaults.AlphaExitAnimationSpec
+                    }
+                },
+                label = "TooltipAlpha",
+            ) { visible -> if (visible) 1f else 0f }
+            val scale by transition.animateFloat(
+                transitionSpec = {
+                    if (targetState) {
+                        ListPopupDefaults.FractionAnimationSpec
+                    } else {
+                        TooltipExitScaleSpec
+                    }
+                },
+                label = "TooltipScale",
+            ) { visible -> if (visible) 1f else 0.8f }
+
+            // Expand the popup window around the bubble so PopupShadow is never cropped by the
+            // Android PopupWindow surface, while keeping unshrunk constraints for TooltipSurface.
+            // Opacity rides on popupOpacity (expanded saveLayer) instead of graphicsLayer.alpha so
+            // the exterior drop shadow does not clip to a hard rectangle during enter/exit.
+            Box(
+                modifier = Modifier.layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(
+                        width = placeable.width + shadowPadHorizontalPx * 2,
+                        height = placeable.height + shadowPadTopPx + shadowPadBottomPx,
+                    ) {
+                        placeable.place(shadowPadHorizontalPx, shadowPadTopPx)
+                    }
+                },
             ) {
-                scope.tooltip()
+                Box(
+                    modifier = Modifier
+                        .onGloballyPositioned { popupBounds = it }
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            this.transformOrigin = transformOrigin
+                            clip = false
+                        }
+                        .popupOpacity { alpha },
+                ) {
+                    scope.tooltip()
+                }
             }
         },
         state = state,
@@ -318,6 +435,37 @@ private const val TOOLTIP_LONG_PRESS_LABEL = "Show tooltip"
 private const val TOOLTIP_PANE_TITLE = "Tooltip"
 
 /**
+ * Transparent padding around the tooltip bubble inside its [Popup] window so [PopupShadow]
+ * (`radius = 27.85dp`, `offset.y = 6.42dp`) can diffuse naturally on Android without being cut off
+ * by the PopupWindow surface bounds.
+ */
+private val TooltipShadowPaddingHorizontal = 30.dp
+private val TooltipShadowPaddingTop = 26.dp
+private val TooltipShadowPaddingBottom = 38.dp
+
+private class ShadowPaddedTooltipPositionProvider(
+    private val delegate: TooltipPopupPositionProvider,
+    private val padLeftPx: Int,
+    private val padTopPx: Int,
+    private val padRightPx: Int,
+    private val padBottomPx: Int,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val innerSize = IntSize(
+            width = (popupContentSize.width - padLeftPx - padRightPx).coerceAtLeast(0),
+            height = (popupContentSize.height - padTopPx - padBottomPx).coerceAtLeast(0),
+        )
+        val innerOffset = delegate.calculatePosition(anchorBounds, windowSize, layoutDirection, innerSize)
+        return IntOffset(innerOffset.x - padLeftPx, innerOffset.y - padTopPx)
+    }
+}
+
+/**
  * Miuix's tooltip primitive. Forked from the experimental foundation `BasicTooltipBox` so the mouse
  * hover gesture keeps a persistent tooltip open: when the cursor leaves the anchor the tooltip is
  * dismissed only if it is not persistent. This lets the cursor travel onto a persistent [RichTooltip]
@@ -326,6 +474,7 @@ private const val TOOLTIP_PANE_TITLE = "Tooltip"
 @Composable
 private fun TooltipBoxImpl(
     positionProvider: PopupPositionProvider,
+    clippingEnabled: Boolean,
     tooltip: @Composable () -> Unit,
     state: TooltipState,
     modifier: Modifier = Modifier,
@@ -344,6 +493,7 @@ private fun TooltipBoxImpl(
                 positionProvider = positionProvider,
                 state = state,
                 focusable = focusable,
+                clippingEnabled = clippingEnabled,
                 content = tooltip,
             )
         }
@@ -358,12 +508,16 @@ private fun TooltipPopup(
     positionProvider: PopupPositionProvider,
     state: TooltipState,
     focusable: Boolean,
+    clippingEnabled: Boolean,
     content: @Composable () -> Unit,
 ) {
     Popup(
         popupPositionProvider = positionProvider,
         onDismissRequest = { if (state.isVisible) state.dismiss() },
-        properties = PopupProperties(focusable = focusable),
+        properties = PopupProperties(
+            focusable = focusable,
+            clippingEnabled = clippingEnabled,
+        ),
     ) {
         Box(
             modifier = Modifier.semantics {
@@ -394,12 +548,20 @@ private fun Modifier.tooltipGestures(enabled: Boolean, state: TooltipState): Mod
                                 waitForUpOrCancellation(pass = pass)
                             }
                         } catch (_: PointerEventTimeoutCancellationException) {
-                            // Long press detected: show the tooltip and consume the following up
-                            // event so the anchor's own click handling does not also fire.
+                            // Long press detected: show the tooltip while held and consume the
+                            // rest of the gesture until release so the anchor's own click handler
+                            // does not also fire.
                             launch { state.show(MutatePriority.UserInput) }
-                            val changes = awaitPointerEvent(pass = pass).changes
-                            for (i in changes.indices) {
-                                changes[i].consume()
+                            do {
+                                val changes = awaitPointerEvent(pass = pass).changes
+                                for (i in changes.indices) {
+                                    changes[i].consume()
+                                }
+                            } while (changes.any { it.pressed })
+                            // Once the finger lifts, hand a non-persistent tooltip over to the
+                            // default auto-dismiss timeout instead of leaving it pinned forever.
+                            if (!state.isPersistent && state.isVisible) {
+                                launch { state.show(MutatePriority.Default) }
                             }
                         }
                     }
@@ -557,23 +719,88 @@ private fun TooltipScope.TooltipSurface(
     content: @Composable () -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
-    val caretSide = if (caretShape != null) {
-        positioning.resolve(layoutDirection).caretSide
-    } else {
-        null
-    }
+    val placementState = (this as? TooltipScopeImpl)?.placementState
+    val actualPosition = placementState?.resolvedPosition ?: positioning.resolve(layoutDirection)
+    val caretSide = if (caretShape != null) actualPosition.caretSide else null
     val caretPadding = TooltipDefaults.CaretPadding
+    val squircleEnabled = isSquircleEnabled()
     var selfBounds by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
+    // Prefer the unscaled anchor center computed by the position provider so the caret does not
+    // drift during enter/exit scale transitions; fall back to layout coordinates for custom providers.
+    val anchorCenter = placementState?.anchorCenterInPopup ?: run {
+        val anchor = obtainAnchorBounds()
+        val self = selfBounds
+        if (anchor != null && self != null && anchor.isAttached && self.isAttached) {
+            val anchorOnWindow = anchor.positionInWindow()
+            val selfOnWindow = self.positionInWindow()
+            Offset(
+                x = anchorOnWindow.x - selfOnWindow.x + anchor.size.width / 2f,
+                y = anchorOnWindow.y - selfOnWindow.y + anchor.size.height / 2f,
+            )
+        } else {
+            null
+        }
+    }
+
+    val bubbleShape = remember(caretSide, caretPadding, cornerRadius, anchorCenter, squircleEnabled) {
+        TooltipBubbleShape(
+            caretSide = caretSide,
+            caretPadding = caretPadding,
+            cornerRadius = cornerRadius,
+            anchorCenter = anchorCenter,
+            squircleEnabled = squircleEnabled,
+        )
+    }
+
+    val tooltipScopeImpl = this as? TooltipScopeImpl
+    val preferredSide = positioning.resolve(layoutDirection)
     Box(
         modifier = modifier
             .layout { measurable, constraints ->
                 // COUIToolTips never lets the bubble reach mBubbleHorizontalPadding from the
-                // viewport, so a narrow window caps it before maxWidth does.
-                val inset = TooltipDefaults.HorizontalEdgeMargin.roundToPx() * 2
+                // viewport, and when placed on the Start/End (Left/Right) of its anchor it caps
+                // the bubble width to the room available beside the anchor (COUIToolTips.sizePopupWindow).
+                val edgeMarginPx = tooltipScopeImpl?.edgeMarginPx ?: TooltipDefaults.HorizontalEdgeMargin.roundToPx()
+                val spacingPx = tooltipScopeImpl?.spacingPx ?: TooltipDefaults.SpacingBetweenTooltipAndAnchor.roundToPx()
+                val fullBudget = if (constraints.hasBoundedWidth) {
+                    (constraints.maxWidth - edgeMarginPx * 2).coerceAtLeast(constraints.minWidth)
+                } else {
+                    constraints.maxWidth
+                }
+                val sideBudget = if (
+                    constraints.hasBoundedWidth &&
+                    (preferredSide == TooltipAnchorPosition.Left || preferredSide == TooltipAnchorPosition.Right)
+                ) {
+                    val anchor = obtainAnchorBounds()?.takeIf { it.isAttached }
+                    if (anchor != null) {
+                        val anchorLeft = anchor.positionInWindow().x.roundToInt()
+                        val anchorRight = anchorLeft + anchor.size.width
+                        val leftRoom = anchorLeft - spacingPx - edgeMarginPx
+                        val rightRoom = constraints.maxWidth - anchorRight - spacingPx - edgeMarginPx
+                        val preferredRoom = if (preferredSide == TooltipAnchorPosition.Left) leftRoom else rightRoom
+                        val oppositeRoom = if (preferredSide == TooltipAnchorPosition.Left) rightRoom else leftRoom
+                        val minSidePx = min(maxWidth.roundToPx(), TooltipMinSideWidth.roundToPx())
+                        when {
+                            preferredRoom >= minSidePx -> preferredRoom
+                            oppositeRoom >= minSidePx -> oppositeRoom
+                            else -> null
+                        }
+                    } else {
+                        null
+                    }
+                } else {
+                    null
+                }
+                val boundedMaxWidth = if (constraints.hasBoundedWidth) {
+                    val cap = if (sideBudget != null) min(fullBudget, sideBudget) else fullBudget
+                    cap.coerceAtLeast(constraints.minWidth)
+                } else {
+                    constraints.maxWidth
+                }
                 val placeable = measurable.measure(
                     if (constraints.hasBoundedWidth) {
-                        constraints.copy(maxWidth = (constraints.maxWidth - inset).coerceAtLeast(constraints.minWidth))
+                        constraints.copy(maxWidth = boundedMaxWidth)
                     } else {
                         constraints
                     },
@@ -582,55 +809,23 @@ private fun TooltipScope.TooltipSurface(
             }
             .widthIn(max = maxWidth)
             .onGloballyPositioned { selfBounds = it }
-            .then(
-                if (caretSide != null) {
-                    // Painted over the content: under it, the bubble's drop shadow greys the arrow
-                    // out until it no longer reads against the page.
-                    Modifier.drawWithContent {
-                        drawContent()
-                        val anchor = obtainAnchorBounds() ?: return@drawWithContent
-                        val self = selfBounds ?: return@drawWithContent
-                        if (!anchor.isAttached || !self.isAttached) return@drawWithContent
-                        val anchorOnWindow = anchor.positionInWindow()
-                        val selfOnWindow = self.positionInWindow()
-                        drawTooltipCaret(
-                            side = caretSide,
-                            anchorX = anchorOnWindow.x - selfOnWindow.x + anchor.size.width / 2f,
-                            anchorY = anchorOnWindow.y - selfOnWindow.y + anchor.size.height / 2f,
-                            cornerRadiusPx = cornerRadius.toPx(),
-                            color = containerColor,
-                        )
-                    }
-                } else {
-                    Modifier
-                },
-            ),
+            .dropShadow(
+                shape = bubbleShape,
+                shadow = PopupShadow,
+            )
+            .background(
+                color = containerColor,
+                shape = bubbleShape,
+            )
+            .absolutePadding(
+                left = if (caretSide == TooltipCaretSide.Left) caretPadding else 0.dp,
+                top = if (caretSide == TooltipCaretSide.Top) caretPadding else 0.dp,
+                right = if (caretSide == TooltipCaretSide.Right) caretPadding else 0.dp,
+                bottom = if (caretSide == TooltipCaretSide.Bottom) caretPadding else 0.dp,
+            )
+            .padding(insideMargin),
     ) {
-        Box(
-            modifier = Modifier
-                .absolutePadding(
-                    left = if (caretSide == TooltipCaretSide.Left) caretPadding else 0.dp,
-                    top = if (caretSide == TooltipCaretSide.Top) caretPadding else 0.dp,
-                    right = if (caretSide == TooltipCaretSide.Right) caretPadding else 0.dp,
-                    bottom = if (caretSide == TooltipCaretSide.Bottom) caretPadding else 0.dp,
-                )
-                .dropShadow(
-                    shape = SquircleShape(
-                        cornerRadius = cornerRadius,
-                        squircleEnabled = isSquircleEnabled(),
-                        weight = SquircleDefaults.WeightLarge,
-                    ),
-                    shadow = PopupShadow,
-                )
-                .squircleBackground(
-                    color = containerColor,
-                    cornerRadius = cornerRadius,
-                    weight = SquircleDefaults.WeightLarge,
-                )
-                .padding(insideMargin),
-        ) {
-            content()
-        }
+        content()
     }
 }
 
@@ -783,11 +978,12 @@ data class RichTooltipColors(
  * Positions a tooltip on the preferred side of its anchor, centered on the cross axis, flipping to
  * the opposite side when there is no room and clamped to the window bounds.
  */
-@Immutable
-private class TooltipPopupPositionProvider(
+@Stable
+internal class TooltipPopupPositionProvider(
     val positioning: TooltipAnchorPosition,
-    private val spacing: Int,
-    private val edgeMargin: Int,
+    internal val spacing: Int,
+    internal val edgeMargin: Int,
+    internal val placementState: TooltipPlacementState = TooltipPlacementState(),
 ) : PopupPositionProvider {
     override fun calculatePosition(
         anchorBounds: IntRect,
@@ -798,45 +994,166 @@ private class TooltipPopupPositionProvider(
         val resolved = positioning.resolve(layoutDirection)
         val centerX = anchorBounds.left + (anchorBounds.width - popupContentSize.width) / 2
         val centerY = anchorBounds.top + (anchorBounds.height - popupContentSize.height) / 2
+        // COUIToolTips keeps the bubble mBubbleHorizontalPadding away from both side edges.
+        val minX = min(edgeMargin, max(0, windowSize.width - popupContentSize.width) / 2)
+        val maxX = max(minX, windowSize.width - popupContentSize.width - minX)
 
         var x = centerX
         var y = centerY
+        val actualSide: TooltipAnchorPosition
+
+        fun placeVertical(preferAbove: Boolean): TooltipAnchorPosition {
+            val below = anchorBounds.bottom + spacing
+            val above = anchorBounds.top - popupContentSize.height - spacing
+            return if (preferAbove) {
+                if (above >= 0 || below + popupContentSize.height > windowSize.height) {
+                    y = above
+                    TooltipAnchorPosition.Above
+                } else {
+                    y = below
+                    TooltipAnchorPosition.Below
+                }
+            } else {
+                if (below + popupContentSize.height <= windowSize.height || above < 0) {
+                    y = below
+                    TooltipAnchorPosition.Below
+                } else {
+                    y = above
+                    TooltipAnchorPosition.Above
+                }
+            }
+        }
+
         when (resolved) {
             TooltipAnchorPosition.Below -> {
-                val below = anchorBounds.bottom + spacing
-                val above = anchorBounds.top - popupContentSize.height - spacing
-                y = if (below + popupContentSize.height <= windowSize.height || above < 0) below else above
+                actualSide = placeVertical(preferAbove = false)
             }
 
             TooltipAnchorPosition.Above -> {
-                val above = anchorBounds.top - popupContentSize.height - spacing
-                val below = anchorBounds.bottom + spacing
-                y = if (above >= 0 || below + popupContentSize.height > windowSize.height) above else below
+                actualSide = placeVertical(preferAbove = true)
             }
 
             TooltipAnchorPosition.Left -> {
                 val left = anchorBounds.left - popupContentSize.width - spacing
                 val right = anchorBounds.right + spacing
-                x = if (left >= 0 || right + popupContentSize.width > windowSize.width) left else right
+                when {
+                    left >= minX -> {
+                        x = left
+                        actualSide = TooltipAnchorPosition.Left
+                    }
+
+                    right <= maxX -> {
+                        x = right
+                        actualSide = TooltipAnchorPosition.Right
+                    }
+
+                    else -> {
+                        // Neither side fits within the viewport margins without overlapping the
+                        // anchor; fall back vertically so the caret still points directly at it.
+                        actualSide = placeVertical(preferAbove = false)
+                    }
+                }
             }
 
             TooltipAnchorPosition.Right -> {
                 val right = anchorBounds.right + spacing
                 val left = anchorBounds.left - popupContentSize.width - spacing
-                x = if (right + popupContentSize.width <= windowSize.width || left < 0) right else left
+                when {
+                    right <= maxX -> {
+                        x = right
+                        actualSide = TooltipAnchorPosition.Right
+                    }
+
+                    left >= minX -> {
+                        x = left
+                        actualSide = TooltipAnchorPosition.Left
+                    }
+
+                    else -> {
+                        actualSide = placeVertical(preferAbove = false)
+                    }
+                }
             }
 
             else -> {
-                y = anchorBounds.bottom + spacing
+                actualSide = placeVertical(preferAbove = false)
             }
         }
 
-        // COUIToolTips keeps the bubble mBubbleHorizontalPadding away from both side edges.
-        val minX = min(edgeMargin, max(0, windowSize.width - popupContentSize.width) / 2)
-        x = x.coerceIn(minX, max(minX, windowSize.width - popupContentSize.width - minX))
+        x = x.coerceIn(minX, maxX)
         y = y.coerceIn(0, max(0, windowSize.height - popupContentSize.height))
+
+        val anchorCenterX = anchorBounds.left + anchorBounds.width / 2f
+        val anchorCenterY = anchorBounds.top + anchorBounds.height / 2f
+        val relativeAnchorX = anchorCenterX - x
+        val relativeAnchorY = anchorCenterY - y
+        val pivot = tooltipTransformOrigin(
+            side = actualSide,
+            relativeAnchorX = relativeAnchorX,
+            relativeAnchorY = relativeAnchorY,
+            popupSize = popupContentSize,
+        )
+        if (placementState.resolvedPosition != actualSide) {
+            placementState.resolvedPosition = actualSide
+        }
+        if (placementState.transformOrigin != pivot) {
+            placementState.transformOrigin = pivot
+        }
+        val anchorCenter = Offset(relativeAnchorX, relativeAnchorY)
+        if (placementState.anchorCenterInPopup != anchorCenter) {
+            placementState.anchorCenterInPopup = anchorCenter
+        }
         return IntOffset(x, y)
     }
+}
+
+/**
+ * Computes the scale pivot on the tooltip's facing edge pointing directly at the anchor center,
+ * mirroring `COUIToolTips.calculatePivot` so enter and exit animations grow from and shrink back
+ * into the anchor/caret tip instead of the screen or bubble center.
+ */
+internal fun tooltipTransformOrigin(
+    side: TooltipAnchorPosition,
+    relativeAnchorX: Float,
+    relativeAnchorY: Float,
+    popupSize: IntSize,
+): TransformOrigin {
+    val w = popupSize.width.toFloat()
+    val h = popupSize.height.toFloat()
+    return when (side) {
+        TooltipAnchorPosition.Below -> TransformOrigin(
+            pivotFractionX = if (w > 0f) (relativeAnchorX / w).coerceIn(0f, 1f) else 0.5f,
+            pivotFractionY = 0f,
+        )
+
+        TooltipAnchorPosition.Above -> TransformOrigin(
+            pivotFractionX = if (w > 0f) (relativeAnchorX / w).coerceIn(0f, 1f) else 0.5f,
+            pivotFractionY = 1f,
+        )
+
+        TooltipAnchorPosition.Left -> TransformOrigin(
+            pivotFractionX = 1f,
+            pivotFractionY = if (h > 0f) (relativeAnchorY / h).coerceIn(0f, 1f) else 0.5f,
+        )
+
+        TooltipAnchorPosition.Right -> TransformOrigin(
+            pivotFractionX = 0f,
+            pivotFractionY = if (h > 0f) (relativeAnchorY / h).coerceIn(0f, 1f) else 0.5f,
+        )
+
+        else -> TransformOrigin(
+            pivotFractionX = if (w > 0f) (relativeAnchorX / w).coerceIn(0f, 1f) else 0.5f,
+            pivotFractionY = 0f,
+        )
+    }
+}
+
+private fun defaultTooltipTransformOrigin(side: TooltipAnchorPosition): TransformOrigin = when (side) {
+    TooltipAnchorPosition.Below -> TransformOrigin(0.5f, 0f)
+    TooltipAnchorPosition.Above -> TransformOrigin(0.5f, 1f)
+    TooltipAnchorPosition.Left -> TransformOrigin(1f, 0.5f)
+    TooltipAnchorPosition.Right -> TransformOrigin(0f, 0.5f)
+    else -> TransformOrigin(0.5f, 0f)
 }
 
 private fun TooltipAnchorPosition.resolve(layoutDirection: LayoutDirection): TooltipAnchorPosition = when (this) {
@@ -942,8 +1259,12 @@ object TooltipDefaults {
     val plainTooltipContentColor: Color
         @Composable get() = COUITheme.colorScheme.onPrimary
 
-    /** The default maximum width of a rich tooltip. */
-    val RichTooltipMaxWidth = 320.dp
+    /**
+     * The default maximum width of a rich tooltip, matching ColorOS 17's structured tooltip width
+     * (`tool_tips_image_style_max_width` = 260dp) so the bubble stays compact instead of spanning
+     * the full width of a 360dp phone screen.
+     */
+    val RichTooltipMaxWidth = 260.dp
 
     /**
      * The default corner radius of a rich tooltip. `COUIToolTips` has a single bubble radius, so
@@ -1087,65 +1408,200 @@ internal object TooltipCaretGeometry {
 }
 
 /**
- * Draws the `COUIToolTips` bubble indicator.
- *
- * `COUIToolTips.addIndicator` always keeps the indicator on the bubble, projecting the anchor on
- * the facing edge and pushing it clear of the rounded corner; when the centred drawable no longer
- * fits it swaps in the `_sharp_edges_` drawable, whose flat side sits against the bubble edge.
+ * Unified bubble-plus-caret outline: combines the smooth-corner squircle bubble body and the
+ * `COUIToolTips` arrow indicator via [PathOperation.Union] so fill and drop shadow form one
+ * seamless silhouette with zero gap across all 4 directions and bubble sizes.
  */
-private fun DrawScope.drawTooltipCaret(
+@Immutable
+private class TooltipBubbleShape(
+    private val caretSide: TooltipCaretSide?,
+    private val caretPadding: Dp,
+    private val cornerRadius: Dp,
+    private val anchorCenter: Offset?,
+    private val squircleEnabled: Boolean,
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        val caretPaddingPx = if (caretSide != null) with(density) { caretPadding.toPx() } else 0f
+        val bubbleRect = Rect(
+            left = if (caretSide == TooltipCaretSide.Left) caretPaddingPx else 0f,
+            top = if (caretSide == TooltipCaretSide.Top) caretPaddingPx else 0f,
+            right = size.width - if (caretSide == TooltipCaretSide.Right) caretPaddingPx else 0f,
+            bottom = size.height - if (caretSide == TooltipCaretSide.Bottom) caretPaddingPx else 0f,
+        )
+        val cornerRadiusPx = with(density) { cornerRadius.toPx() }
+        val bodyPath = Path()
+        if (bubbleRect.width > 0f && bubbleRect.height > 0f) {
+            bodyPath.addSquircleRoundRect(
+                rect = bubbleRect,
+                topLeft = cornerRadiusPx,
+                topRight = cornerRadiusPx,
+                bottomRight = cornerRadiusPx,
+                bottomLeft = cornerRadiusPx,
+                squircleEnabled = squircleEnabled,
+                weight = SquircleDefaults.WeightLarge,
+            )
+        }
+        if (caretSide == null || bubbleRect.width <= 0f || bubbleRect.height <= 0f) {
+            return Outline.Generic(bodyPath)
+        }
+        val anchor = anchorCenter ?: bubbleRect.center
+        val caretPath = buildTooltipCaretPath(
+            side = caretSide,
+            size = size,
+            bubbleRect = bubbleRect,
+            caretPaddingPx = caretPaddingPx,
+            anchorX = anchor.x,
+            anchorY = anchor.y,
+            cornerRadiusPx = cornerRadiusPx,
+            density = density,
+        )
+        return Outline.Generic(Path.combine(PathOperation.Union, bodyPath, caretPath))
+    }
+
+    override fun equals(other: Any?): Boolean = other is TooltipBubbleShape &&
+        other.caretSide == caretSide &&
+        other.caretPadding == caretPadding &&
+        other.cornerRadius == cornerRadius &&
+        other.anchorCenter == anchorCenter &&
+        other.squircleEnabled == squircleEnabled
+
+    override fun hashCode(): Int {
+        var result = caretSide?.hashCode() ?: 0
+        result = 31 * result + caretPadding.hashCode()
+        result = 31 * result + cornerRadius.hashCode()
+        result = 31 * result + (anchorCenter?.hashCode() ?: 0)
+        result = 31 * result + squircleEnabled.hashCode()
+        return result
+    }
+}
+
+/**
+ * COUI `couiRoundCornerMRadius` (9dp): corner clearance kept before the edge arrow takes over,
+ * ensuring the arrow base never floats over the steep outer portion of the 17dp bubble corner.
+ */
+private val TooltipArrowCornerThreshold = 9.dp
+
+/**
+ * Minimum horizontal space beside an anchor required before [TooltipSurface] constrains a wide
+ * Start/End tooltip into that side slot; narrower slots fall back vertically to Above/Below.
+ */
+private val TooltipMinSideWidth = 120.dp
+
+/**
+ * Builds the `COUIToolTips` bubble indicator path fused into [bubbleRect].
+ *
+ * Narrow bubbles (e.g., short plain tooltips or compact left/right tooltips) keep the centred
+ * arrow rather than forcing an edge arrow onto the rounded corner; wide bubbles switch to the edge
+ * arrow near the ends while keeping `TooltipArrowCornerThreshold + CaretEdgeExtraDistance` clear
+ * of the bubble end. Any residual corner curvature under the arrow's feet is absorbed into the
+ * embed depth plus a short internal base skirt so the union with the squircle body never leaves a
+ * gap.
+ */
+private fun buildTooltipCaretPath(
     side: TooltipCaretSide,
+    size: Size,
+    bubbleRect: Rect,
+    caretPaddingPx: Float,
     anchorX: Float,
     anchorY: Float,
     cornerRadiusPx: Float,
-    color: Color,
-) {
+    density: Density,
+): Path {
     val vertical = side == TooltipCaretSide.Top || side == TooltipCaretSide.Bottom
-    val span = if (vertical) size.width else size.height
-    val anchor = if (vertical) anchorX else anchorY
+    val span = if (vertical) bubbleRect.width else bubbleRect.height
+    val crossSpan = if (vertical) bubbleRect.height else bubbleRect.width
+    val anchor = if (vertical) anchorX - bubbleRect.left else anchorY - bubbleRect.top
 
-    val middleWidth = TooltipDefaults.CaretWidth.toPx()
-    val edgeWidth = TooltipDefaults.CaretEdgeWidth.toPx()
+    val effectiveRadius = cornerRadiusPx.coerceAtMost(min(bubbleRect.width, bubbleRect.height) * 0.5f)
+    val middleWidth = with(density) { TooltipDefaults.CaretWidth.toPx() }
+    val edgeWidth = with(density) { TooltipDefaults.CaretEdgeWidth.toPx() }
+    val middleApex = TooltipCaretGeometry.MIDDLE_APEX * density.density
 
-    val startLimit = cornerRadiusPx + middleWidth / 2f
-    val endLimit = span - cornerRadiusPx - middleWidth / 2f
-    val edge = startLimit > endLimit || anchor < startLimit || anchor > endLimit
+    val startLimit = effectiveRadius + middleWidth / 2f
+    val endLimit = span - effectiveRadius - middleWidth / 2f
+    val canFitFlatMiddle = startLimit <= endLimit
+    val edge = canFitFlatMiddle && (anchor < startLimit || anchor > endLimit)
     val mirror = edge && anchor < span / 2f
     val length = if (edge) edgeWidth else middleWidth
+    val arrowHeight = (if (edge) TooltipCaretGeometry.EDGE_HEIGHT else TooltipCaretGeometry.MIDDLE_HEIGHT) * density.density
 
     val apex = if (edge) {
         if (mirror) {
-            (TooltipCaretGeometry.EDGE_WIDTH - TooltipCaretGeometry.EDGE_APEX) * density
+            (TooltipCaretGeometry.EDGE_WIDTH - TooltipCaretGeometry.EDGE_APEX) * density.density
         } else {
-            TooltipCaretGeometry.EDGE_APEX * density
+            TooltipCaretGeometry.EDGE_APEX * density.density
         }
     } else {
-        TooltipCaretGeometry.MIDDLE_APEX * density
+        middleApex
     }
-    val edgeExtra = TooltipDefaults.CaretEdgeExtraDistance.toPx()
-    val origin = if (edge) {
-        // `coui_tooltips_edge_extra_distance`: the edge drawable keeps 2dp from the bubble end.
-        val min = edgeExtra.coerceAtMost((span - length).coerceAtLeast(0f))
-        (anchor - apex).coerceIn(min, (span - length - edgeExtra).coerceAtLeast(min))
-    } else {
-        (anchor.coerceIn(startLimit, endLimit) - apex).coerceIn(
-            cornerRadiusPx,
-            (span - cornerRadiusPx - length).coerceAtLeast(cornerRadiusPx),
-        )
+
+    val edgeExtra = with(density) { TooltipDefaults.CaretEdgeExtraDistance.toPx() }
+    val edgeCornerInset = with(density) { TooltipArrowCornerThreshold.toPx() } + edgeExtra
+    val origin = when {
+        edge -> {
+            val minInset = edgeCornerInset.coerceAtMost(((span - length) / 2f).coerceAtLeast(0f))
+            (anchor - apex).coerceIn(minInset, (span - length - minInset).coerceAtLeast(minInset))
+        }
+
+        canFitFlatMiddle -> {
+            (anchor.coerceIn(startLimit, endLimit) - apex).coerceIn(
+                effectiveRadius,
+                (span - effectiveRadius - length).coerceAtLeast(effectiveRadius),
+            )
+        }
+
+        else -> {
+            // Short bubble whose flat edge is narrower than CaretWidth: keep the centred arrow
+            // inside the gentle upper curve rather than pushing an edge arrow onto the steep corner.
+            val maxSafeInset = ((span - length) / 2f).coerceAtLeast(0f)
+            val inset = min(effectiveRadius * 0.65f, maxSafeInset)
+            (anchor - apex).coerceIn(inset, (span - inset - length).coerceAtLeast(inset))
+        }
     }
+
+    // Upper bound on how far the rounded bubble corner recedes from the flat edge at a given
+    // coordinate along [0..span]. Embedding the arrow base past this depth eliminates any gap.
+    fun cornerDropAt(pos: Float): Float {
+        val distFromEnd = min(pos, span - pos).coerceAtLeast(0f)
+        if (distFromEnd >= effectiveRadius || effectiveRadius <= 0f) return 0f
+        val dx = effectiveRadius - distFromEnd
+        return effectiveRadius - sqrt((effectiveRadius * effectiveRadius - dx * dx).coerceAtLeast(0f))
+    }
+
+    val maxCornerDrop = max(cornerDropAt(origin), cornerDropAt(origin + length))
+    val baseEmbed = with(density) { TooltipDefaults.CaretEmbedDistance.toPx() }
+    val minOverlap = with(density) { 0.5.dp.toPx() }
+    val effectiveEmbed = max(baseEmbed, maxCornerDrop + minOverlap).coerceAtMost(crossSpan * 0.25f)
+    val yOffset = (caretPaddingPx + effectiveEmbed) - arrowHeight
+    val skirtDepth = with(density) { 2.dp.toPx() }.coerceAtMost(crossSpan * 0.2f)
 
     fun map(localX: Float, localY: Float): Offset = when (side) {
-        TooltipCaretSide.Top -> Offset(origin + localX, localY)
-        TooltipCaretSide.Bottom -> Offset(origin + length - localX, size.height - localY)
-        TooltipCaretSide.Right -> Offset(size.width - localY, origin + localX)
-        TooltipCaretSide.Left -> Offset(localY, origin + length - localX)
+        TooltipCaretSide.Top -> Offset(bubbleRect.left + origin + localX, yOffset + localY)
+        TooltipCaretSide.Bottom -> Offset(bubbleRect.left + origin + length - localX, size.height - (yOffset + localY))
+        TooltipCaretSide.Right -> Offset(size.width - (yOffset + localY), bubbleRect.top + origin + localX)
+        TooltipCaretSide.Left -> Offset(yOffset + localY, bubbleRect.top + origin + length - localX)
     }
 
+    val reversedAxis = side == TooltipCaretSide.Bottom || side == TooltipCaretSide.Left
+    val outlineMirror = if (edge && reversedAxis) !mirror else mirror
+    val outline = TooltipCaretGeometry.outline(edge = edge, mirror = outlineMirror)
     val path = Path()
-    TooltipCaretGeometry.outline(edge = edge, mirror = mirror).forEachIndexed { index, point ->
-        val mapped = map(point.x * density, point.y * density)
+    outline.forEachIndexed { index, point ->
+        val mapped = map(point.x * density.density, point.y * density.density)
         if (index == 0) path.moveTo(mapped.x, mapped.y) else path.lineTo(mapped.x, mapped.y)
     }
+    if (outline.isNotEmpty() && skirtDepth > 0f) {
+        val last = outline.last()
+        val first = outline.first()
+        val lastSkirt = map(last.x * density.density, last.y * density.density + skirtDepth)
+        val firstSkirt = map(first.x * density.density, first.y * density.density + skirtDepth)
+        path.lineTo(lastSkirt.x, lastSkirt.y)
+        path.lineTo(firstSkirt.x, firstSkirt.y)
+    }
     path.close()
-    drawPath(path, color = color)
+    return path
 }

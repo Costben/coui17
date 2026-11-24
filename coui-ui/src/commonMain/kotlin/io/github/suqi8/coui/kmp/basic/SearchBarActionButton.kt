@@ -17,15 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -95,15 +96,19 @@ internal fun SearchBarActionButtonSurface(
     content: @Composable () -> Unit,
 ) {
     val actualInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
-    // The system capsule: the fill, the glow cut-out and the press clip all trace the arc plus the
-    // 1.5-radius easing tail measured on ColorOS 17, not a circular stadium.
-    val cornerWeightFor: (Float, Float) -> Float = remember {
-        { width, height ->
-            if (width == height) MaterialShadowEdgeDefaults.CapsuleCornerWeight else MaterialShadowEdgeDefaults.CornerWeight
-        }
+    val squircleEnabled = isSquircleEnabled()
+    val capsuleShape = remember(squircleEnabled) {
+        CapsuleOutlineShape(squircleEnabled = squircleEnabled)
     }
+    // The system capsule: the fill, the glow cut-out and the press clip all trace the arc plus the
+    // 1.5-radius easing tail measured on ColorOS 17 when squircleEnabled is active, or round rects.
     val edgeModifier = if (stroke != null) {
-        Modifier.materialShadowEdgeBySize(stroke = stroke, cornerWeightFor = cornerWeightFor)
+        Modifier.materialShadowEdgeBySize(
+            stroke = stroke,
+            cornerWeightFor = { width, height ->
+                capsuleRimCornerWeight(width, height, height / 2f, squircleEnabled)
+            },
+        )
     } else {
         Modifier
     }
@@ -114,7 +119,9 @@ internal fun SearchBarActionButtonSurface(
                 modifier = Modifier
                     .matchParentSize()
                     .drawWithContent {
-                        val capsule = Path().apply { addSegmentCapsule(size.toRect()) }
+                        val capsule = Path().apply {
+                            addOutline(capsuleShape.createOutline(size, layoutDirection, this@drawWithContent))
+                        }
                         clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
                     },
             ) {
@@ -125,12 +132,12 @@ internal fun SearchBarActionButtonSurface(
             modifier = Modifier
                 .defaultMinSize(minWidth = SearchBarActionButtonDefaults.Height)
                 .fillMaxHeight()
-                .clip(SegmentCapsuleShape)
+                .clip(capsuleShape)
                 .background(color = containerColor)
                 .then(edgeModifier)
                 .couiTouchMotion(
                     enabled = enabled,
-                    shape = SegmentCapsuleShape,
+                    shape = capsuleShape,
                     motionState = motionState,
                 )
                 .clickable(

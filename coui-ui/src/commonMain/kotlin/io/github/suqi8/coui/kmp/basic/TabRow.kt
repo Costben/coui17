@@ -746,7 +746,7 @@ internal fun CommonSegmentButtonRow(
         containerGlassModifier.materialShadowEdgeBySize(
             stroke = resolvedContainerMaterial,
             cornerWeightFor = { w, h ->
-                capsuleRimCornerWeight(w, h, with(density) { containerRadiusDp.toPx() })
+                capsuleRimCornerWeight(w, h, with(density) { containerRadiusDp.toPx() }, squircleEnabled)
             },
             cornerRadius = containerRadiusDp.takeIf { containerRadiusDp * 2 < resolvedHeight },
             edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
@@ -1095,7 +1095,7 @@ internal fun CommonSegmentButtonRow(
                                 height = rect.height,
                                 radius = radius,
                                 stroke = material,
-                                cornerWeight = capsuleRimCornerWeight(rect.width, rect.height, radius),
+                                cornerWeight = capsuleRimCornerWeight(rect.width, rect.height, radius, squircleEnabled),
                                 antiAliasing = MaterialShadowEdgeDefaults.AntiAliasing,
                                 edgeStyle = GradientStrokeStyle.EDGE_STYLE_0,
                                 shadowStyle = InnerShadowStyle.SHADOW_STYLE_0,

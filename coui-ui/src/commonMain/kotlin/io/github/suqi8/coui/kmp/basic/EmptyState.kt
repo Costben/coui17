@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -20,6 +20,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -126,6 +128,7 @@ fun EmptyState(
                 showIllustration = resolvedSize != EmptyStateSize.Small,
                 illustration = illustration,
                 colors = colors,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
             )
         }
     }
@@ -141,9 +144,14 @@ private fun EmptyStateContent(
     showIllustration: Boolean,
     illustration: (@Composable () -> Unit)?,
     colors: EmptyStateColors,
+    modifier: Modifier = Modifier,
 ) {
+    val squircleEnabled = isSquircleEnabled()
+    val actionShape = remember(squircleEnabled) {
+        CapsuleOutlineShape(squircleEnabled = squircleEnabled)
+    }
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (showIllustration && illustration != null) {
@@ -159,11 +167,13 @@ private fun EmptyStateContent(
         }
         // empty_view_content: a COUIMaxHeightScrollView capped at
         // coui_component_empty_text_scroll_max_height (92dp) with hidden scrollbars.
+        val textScrollState = rememberScrollState()
         Box(
             modifier = Modifier
-                .width(EmptyStateDefaults.ContentWidth)
+                .widthIn(max = EmptyStateDefaults.ContentWidth)
+                .fillMaxWidth()
                 .heightIn(max = EmptyStateDefaults.ContentMaxHeight)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(textScrollState, enabled = textScrollState.maxValue > 0),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
@@ -191,13 +201,18 @@ private fun EmptyStateContent(
             }
         }
         if (!actionText.isNullOrEmpty()) {
-            // empty_view_action: a bare accent TextView whose ripple comes from
+            // empty_view_action: a bare accent TextView whose capsule ripple comes from
             // COUITextViewCompatUtil.setPressRippleDrawable (?couiColorPress, masked to the text).
             Text(
                 text = actionText,
                 modifier = Modifier
                     .padding(top = EmptyStateDefaults.ActionMarginTop)
-                    .clickable(role = Role.Button, onClick = { onActionClick?.invoke() })
+                    .clip(actionShape)
+                    .clickable(
+                        enabled = onActionClick != null,
+                        role = Role.Button,
+                        onClick = { onActionClick?.invoke() },
+                    )
                     .padding(
                         horizontal = EmptyStateDefaults.ActionRipplePaddingHorizontal,
                         vertical = EmptyStateDefaults.ActionRipplePaddingVertical,

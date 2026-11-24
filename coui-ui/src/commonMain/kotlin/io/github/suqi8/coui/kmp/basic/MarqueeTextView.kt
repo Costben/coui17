@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -147,6 +148,7 @@ fun MarqueeText(
 
         Box(
             modifier = Modifier
+                .fillMaxWidth()
                 // The fading edges are a DST_OUT mask, which can only erase what it is composited
                 // against, so the marquee gets an offscreen layer of its own.
                 .graphicsLayer {
@@ -184,7 +186,7 @@ fun MarqueeText(
         ) {
             Row(
                 modifier = Modifier
-                    .wrapContentWidth(unbounded = true)
+                    .wrapContentWidth(align = Alignment.Start, unbounded = true)
                     .offset { IntOffset((startPx - progress.value * distancePx).roundToInt(), 0) },
                 verticalAlignment = Alignment.CenterVertically,
             ) {

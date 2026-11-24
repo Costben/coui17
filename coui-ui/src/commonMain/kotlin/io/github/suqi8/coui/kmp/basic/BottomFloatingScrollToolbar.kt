@@ -147,7 +147,7 @@ fun BottomFloatingScrollToolbar(
                     surface = pillFill.materialShadowEdgeBySize(
                         stroke = stroke,
                         cornerWeightFor = { width, height ->
-                            capsuleRimCornerWeight(width, height, radiusPx)
+                            capsuleRimCornerWeight(width, height, radiusPx, squircleEnabled)
                         },
                         cornerRadius = cornerRadius,
                         fallback = pillFill,

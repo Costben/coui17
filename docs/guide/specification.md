@@ -399,6 +399,36 @@ Do not force `LocalSquircleEnabled = false` to approximate the floating bars: th
 - All five weights of `COUIIcons.*` (`Light`, `Normal`, `Regular`, `Medium`, `Demibold`) are **solid filled vector paths**. Differentiate selected and unselected states through weight and tint rather than mixing outline and filled icon sets.
 - Maintain visual stroke balance when placing icons side by side (for example, `COUIIcons.Tune` uses a thinner stroke relative to solid glyphs).
 
+### 5. Semantic Icon Tints for Settings & Top-Level Entries
+
+Native ColorOS 17 *Settings* and similar top-level hub lists pair **dual-tone filled icons** with a **6-tint functional color system** rather than rotating colors like a rainbow to avoid adjacent duplicates.
+
+#### Dual-Tone Geometry & Alpha
+
+- Use a `24dp` canvas (`viewportWidth = 24f`, `viewportHeight = 24f`).
+- Build each glyph from a primary solid layer (`fillAlpha = 1f`) and a secondary accent layer (`fillAlpha = 0.38f–0.40f`), cutting overlaps out with `PathFillType.EvenOdd` so semi-transparent layers never double-blend.
+- Paint every path with a single neutral fill (`Color.Black`) and apply color at runtime via `Icon(..., tint = ...)`, allowing one vector set to switch cleanly across monochrome, semantic colorful, and accent modes.
+
+#### 6-Tint Functional Color Grammar (Calibrated Against Native ColorOS 17 *Settings*)
+
+| Tint | Light | Dark | Native ColorOS 17 *Settings* Counterparts | Semantic Role & Selection Rules |
+| :--- | :--- | :--- | :--- | :--- |
+| **Blue** | `#FF0080FF` | `#FF1A8CFF` | WLAN, Bluetooth, Multi-screen Connect, Notifications & Control Center, Privacy & Security, Digital Wellbeing, Cloud, Wallet, Accounts & Backup | **Core backbone / connectivity / identity & personal records**. Primary anchor color with the highest share; **adjacent repeats are expected** to keep the list visually grounded. |
+| **Orange** | `#FFFF7700` | `#FFF08222` | Home screen & Lock screen / Personalization, Accessibility, Help & Feedback | **Visual personalization / interaction feel / creation & warm feedback**. Directly governs human-facing appearance, gestures, and expression. |
+| **Yellow** | `#FFFFB200` | `#FFE5A100` | Display & Brightness, Airplane mode, OPPO AI, Google Services | **Luminance / starred collections / spotlight discovery**. High-luminance highlight for favorites, topics, and featured entry points. |
+| **Green** | `#FF00BD13` | `#FF24B232` | Mobile network, Sound & Vibration, Apps, Battery, Location | **App behavior / messaging channels / spatial location / live resources**. Maps to app browsing rules, communication, and nearby/location features. |
+| **Red** | `#FFEB3B2F` | `#FFEB493D` | Only *Emergency SOS* (1 of 24 top-level rows) | **High emotion / critical alert (strictly restrained)**. Never assign red as filler for *Other* or generic entries; reserve it for strong emotional actions (e.g., likes/hearts) or safety alerts. |
+| **Neutral** | `#FF5C6066` | `#FF9EA4AD` | System & Update, About device | **System maintenance / updates / about & catch-all metadata**. Strips away high saturation to anchor the bottom of the page calmly. |
+
+#### Usage & Downstream Customization Guidelines
+
+1. **Assign by semantic family, not rainbow rotation**: Group *Update* and *About / Other* under `Neutral`, *Accounts / History / Core Records* under `Blue`, *Display & Personalization* under `Orange`, and *App Behavior / Location* under `Green` so related rows share a consistent mental model across cards.
+2. **Always pair light and dark values**: Use the lifted dark-mode palette on dark cards (e.g., `#1A8CFF` blue, `#9EA4AD` neutral) rather than reusing light values directly.
+3. **Standard user preference control**: When an app lets users customize hub or top-level settings icon styling, prefer a 3-choice `OverlayDropdownPreference` over a binary switch:
+   - **Colorful (Default)**: Semantic ColorOS 17 6-tint mapping above
+   - **Monochrome**: `COUITheme.colorScheme.onBackground`
+   - **Accent**: `COUITheme.colorScheme.primary` (tracks custom and dynamic accents automatically)
+
 ---
 
 ## 8. Build, Publishing & Reference Device Verification

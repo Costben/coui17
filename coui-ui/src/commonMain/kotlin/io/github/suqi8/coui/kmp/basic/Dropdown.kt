@@ -797,15 +797,20 @@ object DropdownDefaults {
         headerColor = headerColor,
     )
 
+    /**
+     * Default dialog row colors, matching COUI 17 `COUIListPreferenceDialogFragment` /
+     * `coui_select_dialog_singlechoice`: transparent row containers over the frosted dialog panel
+     * (no filled selection band), primary-tinted selection indicator and accent text.
+     */
     @Composable
     fun dialogDropdownColors(
         contentColor: Color = COUITheme.colorScheme.onSurfaceContainer,
         summaryColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
         containerColor: Color = Color.Transparent,
-        selectedContentColor: Color = COUITheme.colorScheme.onTertiaryContainer,
-        selectedSummaryColor: Color = COUITheme.colorScheme.onTertiaryContainer,
-        selectedContainerColor: Color = COUITheme.colorScheme.tertiaryContainer,
-        selectedIndicatorColor: Color = COUITheme.colorScheme.onTertiaryContainer,
+        selectedContentColor: Color = COUITheme.colorScheme.primary,
+        selectedSummaryColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
+        selectedContainerColor: Color = Color.Transparent,
+        selectedIndicatorColor: Color = COUITheme.colorScheme.primary,
         disabledContentColor: Color = COUITheme.colorScheme.disabledOnSecondaryVariant,
         alertContentColor: Color = COUITheme.colorScheme.error,
         headerColor: Color = COUITheme.colorScheme.onSurfaceSecondary,
@@ -922,10 +927,10 @@ object SpinnerDefaults {
         contentColor: Color = COUITheme.colorScheme.onSurfaceContainer,
         summaryColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
         containerColor: Color = Color.Transparent,
-        selectedContentColor: Color = COUITheme.colorScheme.onTertiaryContainer,
-        selectedSummaryColor: Color = COUITheme.colorScheme.onTertiaryContainer,
-        selectedContainerColor: Color = COUITheme.colorScheme.tertiaryContainer,
-        selectedIndicatorColor: Color = COUITheme.colorScheme.onTertiaryContainer,
+        selectedContentColor: Color = COUITheme.colorScheme.primary,
+        selectedSummaryColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
+        selectedContainerColor: Color = Color.Transparent,
+        selectedIndicatorColor: Color = COUITheme.colorScheme.primary,
         disabledContentColor: Color = COUITheme.colorScheme.disabledOnSecondaryVariant,
         alertContentColor: Color = COUITheme.colorScheme.error,
         headerColor: Color = COUITheme.colorScheme.onSurfaceSecondary,

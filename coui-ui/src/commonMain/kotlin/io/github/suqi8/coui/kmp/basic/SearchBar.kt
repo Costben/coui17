@@ -921,7 +921,12 @@ internal fun InputFieldImpl(
         interactionSource = internalInteractionSource,
         decorationBox = { innerTextField ->
             val edgeModifier = if (stroke != null) {
-                Modifier.materialShadowEdge(stroke = stroke)
+                Modifier.materialShadowEdgeBySize(
+                    stroke = stroke,
+                    cornerWeightFor = { width, height ->
+                        capsuleRimCornerWeight(width, height, height / 2f, squircleEnabled)
+                    },
+                )
             } else {
                 Modifier
             }
