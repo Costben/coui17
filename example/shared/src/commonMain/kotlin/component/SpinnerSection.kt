@@ -25,7 +25,6 @@ import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
 import io.github.suqi8.coui.kmp.basic.DropdownEntry
 import io.github.suqi8.coui.kmp.basic.DropdownItem
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.preference.OverlaySpinnerPreference
 import io.github.suqi8.coui.kmp.preference.WindowSpinnerPreference
@@ -50,11 +49,11 @@ fun SpinnerDemo() {
     val spinnerOptions = remember(s) {
         listOf(
             DropdownItem(
-                icon = {
+                icon = { modifier ->
                     Icon(
                         RoundedRectanglePainter(),
                         s["Icon"],
-                        Modifier.padding(end = 12.dp),
+                        modifier,
                         Color(0xFFFF5B29),
                     )
                 },
@@ -62,11 +61,11 @@ fun SpinnerDemo() {
                 summary = s["Red"],
             ),
             DropdownItem(
-                icon = {
+                icon = { modifier ->
                     Icon(
                         RoundedRectanglePainter(),
                         s["Icon"],
-                        Modifier.padding(end = 12.dp),
+                        modifier,
                         Color(0xFF36D167),
                     )
                 },
@@ -74,11 +73,11 @@ fun SpinnerDemo() {
                 summary = s["Green"],
             ),
             DropdownItem(
-                icon = {
+                icon = { modifier ->
                     Icon(
                         RoundedRectanglePainter(),
                         s["Icon"],
-                        Modifier.padding(end = 12.dp),
+                        modifier,
                         Color(0xFF3482FF),
                     )
                 },
@@ -86,11 +85,11 @@ fun SpinnerDemo() {
                 summary = s["Blue"],
             ),
             DropdownItem(
-                icon = {
+                icon = { modifier ->
                     Icon(
                         RoundedRectanglePainter(),
                         s["Icon"],
-                        Modifier.padding(end = 12.dp),
+                        modifier,
                         Color(0xFFFFB21D),
                     )
                 },
@@ -99,8 +98,9 @@ fun SpinnerDemo() {
             ),
         )
     }
-    val groupedOptions = remember(spinnerOptions, group1Selected, group2Selected, group3Selected) {
+    val groupedOptions = remember(s, spinnerOptions, group1Selected, group2Selected, group3Selected) {
         groupedSpinnerOptions(
+            groupTitles = listOf(s["Group 1"], s["Group 2"], s["Group 3"]),
             spinnerOptions = spinnerOptions,
             group1SelectedIndex = group1Selected,
             onGroup1SelectedIndexChange = { group1Selected = it },
@@ -210,6 +210,7 @@ fun SpinnerDemo() {
 }
 
 private fun groupedSpinnerOptions(
+    groupTitles: List<String>,
     spinnerOptions: List<DropdownItem>,
     group1SelectedIndex: Int,
     onGroup1SelectedIndexChange: (Int) -> Unit,
@@ -219,6 +220,7 @@ private fun groupedSpinnerOptions(
     onGroup3SelectedIndexChange: (Int) -> Unit,
 ): List<DropdownEntry> = listOf(
     DropdownEntry(
+        title = groupTitles[0],
         items = spinnerOptions.take(2).mapIndexed { index, item ->
             item.copy(
                 selected = group1SelectedIndex == index,
@@ -230,6 +232,7 @@ private fun groupedSpinnerOptions(
         },
     ),
     DropdownEntry(
+        title = groupTitles[1],
         items = spinnerOptions.drop(2).mapIndexed { index, item ->
             item.copy(
                 selected = group2SelectedIndex == index,
@@ -241,6 +244,7 @@ private fun groupedSpinnerOptions(
         },
     ),
     DropdownEntry(
+        title = groupTitles[2],
         items = spinnerOptions.mapIndexed { index, item ->
             item.copy(
                 enabled = index % 2 == 0,

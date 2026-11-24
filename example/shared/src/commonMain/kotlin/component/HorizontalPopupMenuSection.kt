@@ -4,10 +4,7 @@
 
 package component
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,16 +12,19 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import i18n.LocalAppStrings
 import i18n.str
+import io.github.suqi8.coui.kmp.basic.Card
+import io.github.suqi8.coui.kmp.basic.CardDefaults
+import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
+import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.HorizontalPopupMenu
 import io.github.suqi8.coui.kmp.basic.HorizontalPopupMenuItem
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
-import io.github.suqi8.coui.kmp.basic.TextButton
+import io.github.suqi8.coui.kmp.basic.PopupListDivider
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Copy
@@ -32,124 +32,149 @@ import io.github.suqi8.coui.kmp.icon.extended.Delete
 import io.github.suqi8.coui.kmp.icon.extended.More
 import io.github.suqi8.coui.kmp.icon.extended.Share
 import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
+import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
 
-/** Renders the "HorizontalPopupMenu" gallery section content (a button opening a popup with labelled and icon-only menus, plus a one-row list popup on the chosen host). */
+/**
+ * Renders the "HorizontalPopupMenu" gallery section content: host and bar-style options above a
+ * single trigger card that opens a popup pairing either a 3-column labelled action bar or a
+ * 4-column icon-only action bar with standard list items.
+ */
 @Composable
 fun HorizontalPopupMenuDemo() {
     var showPopup by remember { mutableStateOf(false) }
-    // The shortest menu the popup draws: one row, so the fixed 28dp corner radius is exactly half
-    // the panel height. The host is picked from the options; the window host is a separate window
-    // and the overlay host composes into the root scaffold.
-    var showSingleRow by remember { mutableStateOf(false) }
     val hostIndex = remember { mutableIntStateOf(0) }
+    val iconOnly = remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableIntStateOf(0) }
+    var lastAction by remember { mutableStateOf<String?>(null) }
     val s = LocalAppStrings.current
     val rows = remember(s) { listOf(s["Option 1"], s["Option 2"], s["Option 3"]) }
 
-    DemoOptions(DemoChoice("Host", listOf("Window", "Overlay"), hostIndex))
-    Box(
+    DemoOptions(
+        DemoChoice("Host", listOf("Window", "Overlay"), hostIndex),
+        DemoToggle("Icon-only action bar", iconOnly),
+    )
+    Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
-            .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(bottom = 24.dp),
-        contentAlignment = Alignment.Center,
+            .padding(bottom = 16.dp),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(
-                text = str("Show HorizontalPopupMenu"),
+        Box {
+            ArrowPreference(
+                title = str("Show HorizontalPopupMenu"),
+                summary = lastAction?.let { str("Last clicked: {}", it) }
+                    ?: if (iconOnly.value) {
+                        str("Icon-only action bar with list items")
+                    } else {
+                        str("Labelled action bar with list items")
+                    },
                 onClick = { showPopup = true },
+                cardListPosition = CardListPosition.Full,
             )
-            TextButton(
-                text = str("Show single-row list popup"),
-                onClick = { showSingleRow = true },
-            )
-        }
-        val singleRowContent: @Composable () -> Unit = {
-            val dismiss = LocalDismissState.current
-            ListPopupColumn {
-                DropdownImpl(
-                    text = str("Only row"),
-                    optionSize = 1,
-                    isSelected = false,
-                    index = 0,
-                    onSelectedIndexChange = { dismiss?.invoke() },
-                )
+            val popupContent: @Composable () -> Unit = {
+                val dismiss = LocalDismissState.current
+                val copyText = str("Copy")
+                val shareText = str("Share")
+                val deleteText = str("Delete")
+                val moreText = str("More")
+                ListPopupColumn {
+                    if (iconOnly.value) {
+                        // An icon-only block: the item count picks the 4-column compact grid.
+                        HorizontalPopupMenu {
+                            HorizontalPopupMenuItem(
+                                icon = COUIIcons.Copy,
+                                contentDescription = copyText,
+                                onClick = {
+                                    lastAction = copyText
+                                    dismiss?.invoke()
+                                },
+                            )
+                            HorizontalPopupMenuItem(
+                                icon = COUIIcons.Share,
+                                contentDescription = shareText,
+                                onClick = {
+                                    lastAction = shareText
+                                    dismiss?.invoke()
+                                },
+                            )
+                            HorizontalPopupMenuItem(
+                                icon = COUIIcons.Delete,
+                                contentDescription = deleteText,
+                                onClick = {
+                                    lastAction = deleteText
+                                    dismiss?.invoke()
+                                },
+                            )
+                            HorizontalPopupMenuItem(
+                                icon = COUIIcons.More,
+                                contentDescription = moreText,
+                                onClick = {
+                                    lastAction = moreText
+                                    dismiss?.invoke()
+                                },
+                            )
+                        }
+                    } else {
+                        // A labelled block: labels select the 3-column grid with icons above text.
+                        HorizontalPopupMenu {
+                            HorizontalPopupMenuItem(
+                                icon = COUIIcons.Copy,
+                                label = copyText,
+                                onClick = {
+                                    lastAction = copyText
+                                    dismiss?.invoke()
+                                },
+                            )
+                            HorizontalPopupMenuItem(
+                                icon = COUIIcons.Share,
+                                label = shareText,
+                                onClick = {
+                                    lastAction = shareText
+                                    dismiss?.invoke()
+                                },
+                            )
+                            HorizontalPopupMenuItem(
+                                icon = COUIIcons.Delete,
+                                label = deleteText,
+                                onClick = {
+                                    lastAction = deleteText
+                                    dismiss?.invoke()
+                                },
+                            )
+                        }
+                    }
+                    PopupListDivider()
+                    rows.forEachIndexed { index, text ->
+                        DropdownImpl(
+                            item = DropdownItem(text = text),
+                            optionSize = rows.size,
+                            isSelected = selectedIndex == index,
+                            index = index,
+                            groupKey = 0,
+                            onSelectedIndexChange = { newIndex ->
+                                selectedIndex = newIndex
+                                lastAction = rows[newIndex]
+                                dismiss?.invoke()
+                            },
+                        )
+                    }
+                }
             }
-        }
-        if (hostIndex.intValue == 0) {
-            WindowListPopup(
-                show = showSingleRow,
-                onDismissRequest = { showSingleRow = false },
-                content = singleRowContent,
-            )
-        } else {
-            OverlayListPopup(
-                show = showSingleRow,
-                onDismissRequest = { showSingleRow = false },
-                content = singleRowContent,
-            )
-        }
-        WindowListPopup(
-            show = showPopup,
-            onDismissRequest = { showPopup = false },
-        ) {
-            val dismiss = LocalDismissState.current
-            ListPopupColumn {
-                // A labelled block: one label in the block selects the three-column grid.
-                HorizontalPopupMenu {
-                    HorizontalPopupMenuItem(
-                        icon = COUIIcons.Copy,
-                        label = str("Copy"),
-                        onClick = { dismiss?.invoke() },
-                    )
-                    HorizontalPopupMenuItem(
-                        icon = COUIIcons.Share,
-                        label = str("Share"),
-                        onClick = { dismiss?.invoke() },
-                    )
-                    HorizontalPopupMenuItem(
-                        icon = COUIIcons.Delete,
-                        label = str("Delete"),
-                        onClick = { dismiss?.invoke() },
-                    )
-                }
-                // An icon-only block: the item count picks the column count.
-                HorizontalPopupMenu {
-                    HorizontalPopupMenuItem(
-                        icon = COUIIcons.Copy,
-                        contentDescription = str("Copy"),
-                        onClick = { dismiss?.invoke() },
-                    )
-                    HorizontalPopupMenuItem(
-                        icon = COUIIcons.Share,
-                        contentDescription = str("Share"),
-                        onClick = { dismiss?.invoke() },
-                    )
-                    HorizontalPopupMenuItem(
-                        icon = COUIIcons.Delete,
-                        contentDescription = str("Delete"),
-                        onClick = { dismiss?.invoke() },
-                    )
-                    HorizontalPopupMenuItem(
-                        icon = COUIIcons.More,
-                        contentDescription = str("More"),
-                        onClick = { dismiss?.invoke() },
-                    )
-                }
-                rows.forEachIndexed { index, text ->
-                    DropdownImpl(
-                        text = text,
-                        optionSize = rows.size,
-                        isSelected = selectedIndex == index,
-                        index = index,
-                        onSelectedIndexChange = { newIndex ->
-                            selectedIndex = newIndex
-                            dismiss?.invoke()
-                        },
-                    )
-                }
+            if (hostIndex.intValue == 0) {
+                WindowListPopup(
+                    show = showPopup,
+                    onDismissRequest = { showPopup = false },
+                    content = popupContent,
+                )
+            } else {
+                OverlayListPopup(
+                    show = showPopup,
+                    onDismissRequest = { showPopup = false },
+                    content = popupContent,
+                )
             }
         }
     }

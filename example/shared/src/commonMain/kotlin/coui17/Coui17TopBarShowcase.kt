@@ -484,6 +484,14 @@ internal fun Coui17TopBarShowcaseScreen() {
                     selectedFilter = selectedFilter,
                     onFilterSelected = { selectedFilter = it },
                     scrollBehavior = scrollBehavior,
+                    twoRowScrollFraction = {
+                        val scrolled = if (listState.firstVisibleItemIndex > 0) {
+                            Float.MAX_VALUE
+                        } else {
+                            listState.firstVisibleItemScrollOffset.toFloat()
+                        }
+                        TwoRowTopAppBarDefaults.scrollAlpha(scrolled, density)
+                    },
                     onBack = { navigator.pop() },
                 )
             }
@@ -514,6 +522,7 @@ private fun ShowcaseTopBarHost(
     selectedFilter: Int,
     onFilterSelected: (Int) -> Unit,
     scrollBehavior: ScrollBehavior,
+    twoRowScrollFraction: () -> Float,
     onBack: () -> Unit,
 ) {
     val barColor = AppBarBlurOverlayDefaults.containerColor()
@@ -697,6 +706,7 @@ private fun ShowcaseTopBarHost(
 
             Coui17TopBarStyle.TwoRowBar -> TwoRowTopAppBar(
                 modifier = Modifier.fillMaxWidth(),
+                scrollFraction = twoRowScrollFraction,
                 platformRenderer = false,
                 secondRow = {
                     ChipTabGroup(
@@ -727,6 +737,7 @@ private fun ShowcaseTopBarHost(
                 onFilterSelected = onFilterSelected,
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = COUIIcons.Sort,
+                scrollFraction = twoRowScrollFraction,
                 searchRow = {
                     TopAppBarSearchBar(
                         query = searchQuery,

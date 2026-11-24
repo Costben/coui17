@@ -50,7 +50,6 @@ import component.NavigationPopupMenuDemo
 import component.NotificationSnackBarDemo
 import component.NotificationSwipeDemo
 import component.NumberPickerDemo
-import component.OtherDemo
 import component.PageIndicatorDemo
 import component.PopupMenuRotationDemo
 import component.ProgressIndicatorDemo
@@ -78,6 +77,9 @@ import component.TouchSearchViewDemoContent
 import component.WindowIconMenuVariantsDemo
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
+import navigation3.Navigator
+import navigation3.Route
+import kotlin.random.Random
 
 /**
  * One demo on a component's page. [title] is an English source key; a page with a single demo shows
@@ -92,11 +94,15 @@ internal class Coui17Demo(
  * One row on a category page and the page it opens. Its variants are the demos on that page, never
  * rows of their own, so a component has exactly one way in.
  *
- * [title] is the English source key and doubles as the route id.
+ * [title] is the English source key and doubles as the route id. Entries that open a dedicated
+ * navigation destination directly supply [onOpen] (and an optional [summary] key) instead of
+ * wrapping a nested demo page.
  */
 internal class Coui17Component(
     val title: String,
     val demos: List<Coui17Demo>,
+    val summary: String? = null,
+    val onOpen: ((Navigator) -> Unit)? = null,
 )
 
 /**
@@ -294,7 +300,22 @@ internal val Coui17CatalogGroups: List<List<Coui17Category>> = listOf(
             }
         },
         category("Misc", Coui17CategoryTint.Blue, Coui17CategoryIcons.Misc) {
-            single("Other") { OtherDemo() }
+            route(
+                title = "PullToRefresh Test",
+                summary = "Navigate to a PullToRefresh Page",
+            ) { navigator -> navigator.push(Route.PullToRefresh) }
+            route(
+                title = "Full Page PullToRefresh Test",
+                summary = "Navigate to a Full Page PullToRefresh Page",
+            ) { navigator -> navigator.push(Route.FullPagePullToRefresh) }
+            route(
+                title = "Navigation test",
+                summary = "Navigate to a Navigation Page",
+            ) { navigator -> navigator.push(Route.Navigation(Random.nextLong().toString())) }
+            route(
+                title = "MultiScaffold Test",
+                summary = "Navigate to a MultiScaffold Page",
+            ) { navigator -> navigator.push(Route.MultiScaffold) }
         },
     ),
 )
@@ -313,6 +334,16 @@ private class CategoryBuilder {
     /** A component whose page runs several titled demos. */
     fun component(title: String, block: ComponentBuilder.() -> Unit) {
         components += Coui17Component(title, ComponentBuilder().apply(block).demos.toList())
+    }
+
+    /** A top-level category entry that pushes a secondary route directly when tapped. */
+    fun route(title: String, summary: String? = null, onOpen: (Navigator) -> Unit) {
+        components += Coui17Component(
+            title = title,
+            demos = emptyList(),
+            summary = summary,
+            onOpen = onOpen,
+        )
     }
 }
 

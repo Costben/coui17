@@ -6,16 +6,23 @@
 package coui17
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -25,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.AnnotatedString
@@ -38,7 +46,9 @@ import component.DemoOptions
 import component.DemoToggle
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Banner
+import io.github.suqi8.coui.kmp.basic.BannerDefaults
 import io.github.suqi8.coui.kmp.basic.BannerIndicator
+import io.github.suqi8.coui.kmp.basic.BasicComponent
 import io.github.suqi8.coui.kmp.basic.Button
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
@@ -52,7 +62,9 @@ import io.github.suqi8.coui.kmp.basic.EmptyStateSize
 import io.github.suqi8.coui.kmp.basic.FlowLayout
 import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
+import io.github.suqi8.coui.kmp.basic.IconButton
 import io.github.suqi8.coui.kmp.basic.ListDetailView
+import io.github.suqi8.coui.kmp.basic.ListDetailViewDefaults
 import io.github.suqi8.coui.kmp.basic.LoadProgressState
 import io.github.suqi8.coui.kmp.basic.LunarDatePicker
 import io.github.suqi8.coui.kmp.basic.SearchHistoryChip
@@ -89,6 +101,8 @@ import io.github.suqi8.coui.kmp.preference.StatusSwitchingContent
 import io.github.suqi8.coui.kmp.preference.StatusSwitchingPreference
 import io.github.suqi8.coui.kmp.preference.StepperPreference
 import io.github.suqi8.coui.kmp.preference.SwitchWithDividerPreference
+import io.github.suqi8.coui.kmp.squircle.squircleBackground
+import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.LunarDateValue
 
@@ -107,35 +121,82 @@ import io.github.suqi8.coui.kmp.utils.LunarDateValue
 // Basic components
 // ---------------------------------------------------------------------------------------------
 
-/** `EmptyState` with its size bucket, subtitle and action button picked from the options. */
+/** `EmptyState` with its size bucket, illustration, subtitle and action button picked from the options. */
 @Composable
 fun EmptyStateDemo() {
     val showSubtitle = remember { mutableStateOf(true) }
-    val showAction = remember { mutableStateOf(false) }
+    val showAction = remember { mutableStateOf(true) }
+    val showIllustration = remember { mutableStateOf(true) }
     val sizeIndex = remember { mutableIntStateOf(EmptyStateSize.Medium.ordinal) }
+    var refreshes by remember { mutableIntStateOf(0) }
+    val selectedSize = EmptyStateSize.entries[sizeIndex.intValue]
 
     DemoOptions(
         DemoToggle("Show subtitle", showSubtitle),
         DemoToggle("Show action button", showAction),
+        DemoToggle("Show illustration", showIllustration),
         DemoChoice("Size", EmptyStateSize.entries.map { it.name }, sizeIndex),
     )
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
         modifier = Modifier
+            .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
         EmptyState(
             title = str("No results"),
-            subtitle = if (showSubtitle.value) str("Try a different keyword") else null,
-            actionText = if (showAction.value) str("Add") else null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(if (selectedSize == EmptyStateSize.Small) 160.dp else 280.dp),
+            subtitle = when {
+                !showSubtitle.value -> null
+                refreshes > 0 -> str("Refreshed {} times", refreshes)
+                else -> str("Try a different keyword")
+            },
+            actionText = if (showAction.value) str("Retry") else null,
             onActionClick = if (showAction.value) {
-                {}
+                { refreshes++ }
             } else {
                 null
             },
-            size = EmptyStateSize.entries[sizeIndex.intValue],
+            illustration = if (showIllustration.value) {
+                { EmptyStatePlaceholderIllustration() }
+            } else {
+                null
+            },
+            size = selectedSize,
+        )
+    }
+}
+
+/** A COUI continuous-curvature squircle tray placeholder for the empty-state illustration slot. */
+@Composable
+private fun EmptyStatePlaceholderIllustration() {
+    val lineColor = COUITheme.colorScheme.onSurfaceSecondary.copy(alpha = 0.25f)
+    Column(
+        modifier = Modifier
+            .size(width = 72.dp, height = 60.dp)
+            .squircleSurface(
+                color = COUITheme.colorScheme.surfaceContainerHigh,
+                cornerRadius = CardDefaults.CornerRadius,
+                weight = CardDefaults.Weight,
+            )
+            .padding(horizontal = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .squircleBackground(color = lineColor, cornerRadius = 3.dp),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.68f)
+                .height(6.dp)
+                .squircleBackground(color = lineColor, cornerRadius = 3.dp),
         )
     }
 }
@@ -291,55 +352,173 @@ private fun FlowFoldButton(label: String, onClick: () -> Unit) {
     }
 }
 
-/** `ListDetailView` with a selectable main pane driving the detail pane. */
+private data class ListDetailSampleItem(
+    val title: String,
+    val summary: String,
+    val description: String,
+)
+
+/**
+ * `ListDetailView` with a selectable list pane driving the detail pane.
+ *
+ * Below [ListDetailViewDefaults.SplitModeMinWidth] (600dp) only one pane is visible at a time: the
+ * list opens first, tapping a row opens its detail pane with a back action, and returning clears
+ * the selection. At 600dp and wider both panes sit side by side with a hairline divider, and an
+ * empty placeholder fills the detail pane until an item is selected.
+ */
 @Composable
 fun ListDetailViewDemo() {
-    var selected by remember { mutableIntStateOf(0) }
-    val items = listOf("Overview", "Display", "Sound", "Battery")
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    val previewSplit = remember { mutableStateOf(false) }
+    val items = remember {
+        listOf(
+            ListDetailSampleItem(
+                title = "Overview",
+                summary = "Device status and quick summary",
+                description = "Shows device health, storage usage, and recent system activity at a glance.",
+            ),
+            ListDetailSampleItem(
+                title = "Display",
+                summary = "Dark mode, refresh rate, font size",
+                description = "Configure brightness, color mode, adaptive refresh rate, and typography scale.",
+            ),
+            ListDetailSampleItem(
+                title = "Sound",
+                summary = "Media volume, ringtone, haptics",
+                description = "Adjust media and alarm volume, ringtones, and system haptic feedback.",
+            ),
+            ListDetailSampleItem(
+                title = "Battery",
+                summary = "Battery is at 80%",
+                description = "Inspect app power usage, toggle battery saver, and manage charging optimization.",
+            ),
+        )
+    }
+
+    DemoOptions(DemoToggle("Preview split mode", previewSplit))
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
         modifier = Modifier
+            .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        ListDetailView(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp),
-            detailVisible = true,
-            mainContent = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    items.forEachIndexed { index, item ->
-                        Text(
-                            text = str(item),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            color = if (index == selected) {
-                                COUITheme.colorScheme.primary
-                            } else {
-                                COUITheme.colorScheme.onSurface
-                            },
-                        )
-                    }
-                }
-            },
-            detailContent = {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val simulateSplit = previewSplit.value && maxWidth < ListDetailViewDefaults.SplitModeMinWidth
+            val effectiveWidth = if (simulateSplit) 640.dp else maxWidth
+            val isSplit = ListDetailViewDefaults.isSplitMode(effectiveWidth)
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = if (isSplit) {
+                        str("Split mode (≥ 600dp): list and detail side by side")
+                    } else {
+                        str("Single-pane mode (< 600dp): tap an item to view details")
+                    },
+                    style = COUITheme.textStyles.footnote1,
+                    color = COUITheme.colorScheme.onSurfaceSecondary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center,
+                        .then(
+                            if (simulateSplit) {
+                                Modifier.horizontalScroll(rememberScrollState())
+                            } else {
+                                Modifier
+                            },
+                        ),
                 ) {
-                    Text(
-                        text = str(items[selected]),
-                        style = COUITheme.textStyles.headline2,
-                        color = COUITheme.colorScheme.onSurface,
+                    ListDetailView(
+                        modifier = Modifier
+                            .width(effectiveWidth)
+                            .height(280.dp),
+                        detailVisible = selectedIndex != null,
+                        mainContent = {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState()),
+                            ) {
+                                items.forEachIndexed { index, item ->
+                                    BasicComponent(
+                                        title = str(item.title),
+                                        summary = str(item.summary),
+                                        onClick = { selectedIndex = index },
+                                        holdDownState = selectedIndex == index,
+                                        endActions = {
+                                            Icon(
+                                                imageVector = COUIIcons.ChevronForward,
+                                                contentDescription = null,
+                                                tint = COUITheme.colorScheme.onSurfaceSecondary,
+                                            )
+                                        },
+                                    )
+                                    if (index < items.lastIndex) {
+                                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                                    }
+                                }
+                            }
+                        },
+                        detailContent = {
+                            val current = items[selectedIndex ?: 0]
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    IconButton(onClick = { selectedIndex = null }) {
+                                        Icon(
+                                            imageVector = COUIIcons.ChevronForward,
+                                            contentDescription = str("Back"),
+                                            modifier = Modifier.graphicsLayer { scaleX = -1f },
+                                        )
+                                    }
+                                    Text(
+                                        text = str(current.title),
+                                        style = COUITheme.textStyles.headline2,
+                                        color = COUITheme.colorScheme.onSurface,
+                                    )
+                                }
+                                Text(
+                                    text = str(current.summary),
+                                    style = COUITheme.textStyles.body2,
+                                    color = COUITheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = 12.dp, start = 8.dp, end = 8.dp),
+                                )
+                                Text(
+                                    text = str(current.description),
+                                    style = COUITheme.textStyles.body2,
+                                    color = COUITheme.colorScheme.onSurfaceSecondary,
+                                    modifier = Modifier.padding(top = 8.dp, start = 8.dp, end = 8.dp),
+                                )
+                            }
+                        },
+                        emptyPageContent = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = str("Select an item to view details"),
+                                    style = COUITheme.textStyles.body2,
+                                    color = COUITheme.colorScheme.onSurfaceSecondary,
+                                )
+                            }
+                        },
                     )
                 }
-            },
-        )
+            }
+        }
     }
 }
 
@@ -433,6 +612,7 @@ fun SidePaneLayoutDemo() {
 fun BannerIndicatorDemo() {
     var page by remember { mutableIntStateOf(0) }
     val pages = listOf("Featured", "New arrivals", "Recommended")
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { pages.size })
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -449,15 +629,19 @@ fun BannerIndicatorDemo() {
             Banner(
                 pageCount = pages.size,
                 autoScrollIntervalMillis = 4000,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                state = pagerState,
+                itemColor = COUITheme.colorScheme.surfaceContainerHigh,
+                indicatorColors = BannerDefaults.indicatorColors(),
                 content = { index ->
                     Box(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = str(pages[index]),
-                            modifier = Modifier.padding(vertical = 32.dp),
                             style = COUITheme.textStyles.headline2,
                             color = COUITheme.colorScheme.onSurface,
                         )

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -180,11 +179,11 @@ fun MarqueeTextDemo() {
         ) {
             MarqueeText(
                 text = if (longText.value) {
-                    str("This sentence is far too long for the box it is given")
+                    str("This marquee text is long enough to overflow the full width of the card and scroll smoothly across the entire row")
                 } else {
                     str("Short text")
                 },
-                modifier = Modifier.width(160.dp),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

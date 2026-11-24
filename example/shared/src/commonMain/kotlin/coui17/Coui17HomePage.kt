@@ -97,6 +97,13 @@ fun Coui17HomePage(
                 category.components.filter { component ->
                     component.title.contains(needle, ignoreCase = true) ||
                         str(component.title).contains(needle, ignoreCase = true) ||
+                        (
+                            component.summary != null &&
+                                (
+                                    component.summary.contains(needle, ignoreCase = true) ||
+                                        str(component.summary).contains(needle, ignoreCase = true)
+                                    )
+                            ) ||
                         component.demos.any { demo ->
                             demo.title.contains(needle, ignoreCase = true) ||
                                 str(demo.title).contains(needle, ignoreCase = true)
@@ -229,7 +236,11 @@ fun Coui17HomePage(
                         category.components.forEachIndexed { index, component ->
                             ArrowPreference(
                                 title = str(component.title),
-                                onClick = { navigator.push(Route.Component(component.title)) },
+                                summary = component.summary?.let { str(it) },
+                                onClick = {
+                                    component.onOpen?.invoke(navigator)
+                                        ?: navigator.push(Route.Component(component.title))
+                                },
                                 cardListPosition = when {
                                     last == 0 -> CardListPosition.Full
                                     index == 0 -> CardListPosition.Head
@@ -272,7 +283,11 @@ internal fun Coui17CategoryPage(
                 category.components.forEachIndexed { index, component ->
                     ArrowPreference(
                         title = str(component.title),
-                        onClick = { navigator.push(Route.Component(component.title)) },
+                        summary = component.summary?.let { str(it) },
+                        onClick = {
+                            component.onOpen?.invoke(navigator)
+                                ?: navigator.push(Route.Component(component.title))
+                        },
                         cardListPosition = cardListPositionOf(index, category.components.size),
                     )
                 }

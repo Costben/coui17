@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -25,7 +26,6 @@ import i18n.str
 import io.github.suqi8.coui.kmp.basic.ButtonDefaults
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
-import io.github.suqi8.coui.kmp.basic.HorizontalDivider
 import io.github.suqi8.coui.kmp.basic.Icon
 import io.github.suqi8.coui.kmp.basic.Text
 import io.github.suqi8.coui.kmp.basic.TextButton
@@ -39,11 +39,12 @@ import io.github.suqi8.coui.kmp.preference.SliderPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
- * Renders the Arrow gallery section: an arrow preference driven by the options, and a slider
- * preference that opens its volume dialog.
+ * Renders the Arrow gallery section: a single preference row whose style (Arrow vs Volume slider)
+ * and slots come from [DemoOptions].
  */
 @Composable
 fun ArrowDemo() {
+    val rowStyle = remember { mutableIntStateOf(0) }
     val enabled = remember { mutableStateOf(true) }
     val showIcon = remember { mutableStateOf(true) }
     val showValue = remember { mutableStateOf(true) }
@@ -51,11 +52,17 @@ fun ArrowDemo() {
     val showVolumeDialog = remember { mutableStateOf(false) }
     val volumeDialogHoldDown = remember { mutableStateOf(false) }
 
-    DemoOptions(
-        DemoToggle("Enabled", enabled),
-        DemoToggle("Show icon", showIcon),
-        DemoToggle("Show value text", showValue),
-    )
+    val options = buildList {
+        add(DemoChoice("Row style", listOf("Arrow", "Volume slider"), rowStyle))
+        add(DemoToggle("Enabled", enabled))
+        if (rowStyle.intValue == 0) {
+            add(DemoToggle("Show icon", showIcon))
+            add(DemoToggle("Show value text", showValue))
+        }
+    }
+
+    DemoOptions(*options.toTypedArray())
+
     Card(
         cornerRadius = CardDefaults.GroupCornerRadius,
         weight = CardDefaults.GroupWeight,
@@ -63,56 +70,56 @@ fun ArrowDemo() {
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
     ) {
-        ArrowPreference(
-            title = str("Arrow"),
-            startAction = if (showIcon.value) {
-                {
-                    Box(
-                        modifier = Modifier.padding(end = 8.dp),
-                    ) {
-                        Icon(
-                            imageVector = COUIIcons.Contacts,
-                            contentDescription = str("Personal"),
-                            tint = if (enabled.value) {
-                                COUITheme.colorScheme.onBackground
+        if (rowStyle.intValue == 0) {
+            ArrowPreference(
+                title = str("Arrow"),
+                startAction = if (showIcon.value) {
+                    {
+                        Box(modifier = Modifier.padding(end = 8.dp)) {
+                            Icon(
+                                imageVector = COUIIcons.Contacts,
+                                contentDescription = str("Personal"),
+                                tint = if (enabled.value) {
+                                    COUITheme.colorScheme.onBackground
+                                } else {
+                                    COUITheme.colorScheme.disabledOnSecondaryVariant
+                                },
+                            )
+                        }
+                    }
+                } else {
+                    null
+                },
+                endActions = {
+                    if (showValue.value) {
+                        Text(
+                            text = str("End"),
+                            fontSize = COUITheme.textStyles.body2.fontSize,
+                            color = if (enabled.value) {
+                                COUITheme.colorScheme.onSurfaceVariantActions
                             } else {
                                 COUITheme.colorScheme.disabledOnSecondaryVariant
                             },
                         )
                     }
-                }
-            } else {
-                null
-            },
-            endActions = {
-                if (showValue.value) {
-                    Text(
-                        text = str("End"),
-                        fontSize = COUITheme.textStyles.body2.fontSize,
-                        color = if (enabled.value) {
-                            COUITheme.colorScheme.onSurfaceVariantActions
-                        } else {
-                            COUITheme.colorScheme.disabledOnSecondaryVariant
-                        },
-                    )
-                }
-            },
-            enabled = enabled.value,
-            onClick = {},
-        )
-        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-        SliderPreference(
-            title = str("Volume"),
-            valueText = "${(volume * 100).toInt()}%",
-            value = volume,
-            onValueChange = { volume = it },
-            enabled = enabled.value,
-            onClick = {
-                showVolumeDialog.value = true
-                volumeDialogHoldDown.value = true
-            },
-            holdDownState = volumeDialogHoldDown.value,
-        )
+                },
+                enabled = enabled.value,
+                onClick = {},
+            )
+        } else {
+            SliderPreference(
+                title = str("Volume"),
+                valueText = "${(volume * 100).toInt()}%",
+                value = volume,
+                onValueChange = { volume = it },
+                enabled = enabled.value,
+                onClick = {
+                    showVolumeDialog.value = true
+                    volumeDialogHoldDown.value = true
+                },
+                holdDownState = volumeDialogHoldDown.value,
+            )
+        }
     }
 
     SliderDialog(

@@ -19,30 +19,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -52,20 +42,16 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import i18n.str
-import io.github.suqi8.coui.kmp.basic.Button
-import io.github.suqi8.coui.kmp.basic.GradientStrokeStyle
-import io.github.suqi8.coui.kmp.basic.InnerShadowStyle
+import io.github.suqi8.coui.kmp.basic.CapsuleOutlineShape
 import io.github.suqi8.coui.kmp.basic.MaterialStrokeParams
 import io.github.suqi8.coui.kmp.basic.Text
-import io.github.suqi8.coui.kmp.basic.materialShadowEdge
+import io.github.suqi8.coui.kmp.layout.SheetActionButton
+import io.github.suqi8.coui.kmp.layout.SheetCloseCapsule
 import io.github.suqi8.coui.kmp.overlay.OverlayBottomSheet
-import io.github.suqi8.coui.kmp.shader.RuntimeShader
-import io.github.suqi8.coui.kmp.shader.asBrush
-import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.addSquircleRect
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
-import kotlin.math.abs
 
 /**
  * The ColorOS 17 bottom panel template: a full-width bottom sheet with a capsule close button and an
@@ -119,16 +105,24 @@ fun PanelTemplate(
         startAction = { CloseCapsule(onClick = onDismissRequest) },
         endAction = { OverflowButton(onClick = {}) },
     ) {
-        PanelHeader(title = title, statusText = statusText)
-        Spacer(Modifier.height(PanelTemplateDefaults.ImageGap))
-        // The media slot is not a ColumnScope, so the render is centred by a full-width box.
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            ProductSlot()
+        // One explicit column owns the whole body: the rows stack in order, and on a window shorter
+        // than the 529dp reference panel the body scrolls under the toolbar (feeding the sheet's
+        // top scroll blur) instead of being clipped.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            PanelHeader(title = title, statusText = statusText)
+            Spacer(Modifier.height(PanelTemplateDefaults.ImageGap))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                ProductSlot()
+            }
+            Spacer(Modifier.height(PanelTemplateDefaults.SettingsGap))
+            SettingsRow(text = settingsText, onClick = onSettingsClick)
+            Spacer(Modifier.height(PanelTemplateDefaults.ActionGap))
+            ActionCapsule(text = actionText, onClick = onActionClick)
         }
-        Spacer(Modifier.height(PanelTemplateDefaults.SettingsGap))
-        SettingsRow(text = settingsText, onClick = onSettingsClick)
-        Spacer(Modifier.height(PanelTemplateDefaults.ActionGap))
-        ActionCapsule(text = actionText, onClick = onActionClick)
     }
 }
 
@@ -165,180 +159,21 @@ internal fun PanelHeader(title: String, statusText: String) {
     }
 }
 
-/**
- * The two panel toolbar buttons' shared dress, as measured on a live ColorOS 17 device panel.
- *
- * Light mode: no fill of its own (the capsule reads the panel's 240), a 1dp highlight along the top
- * and bottom rim, and a soft dark halo around it that is deepest under the bottom edge (-18 levels)
- * and dies out ~14dp from the edge. Dark mode: a 12% white fill (51 over the panel's 22), the same
- * rim, and a faint light halo instead of a dark one. The halo never reaches inside the capsule, so
- * it is drawn with the capsule cut out — a plain gradient started at the bottom edge left a hard
- * line across the button's foot.
- */
-@Composable
-private fun ToolbarButtonSurface(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val fill = if (isDark) PanelTemplateDefaults.ToolbarFillDark else Color.Transparent
-    val halo = if (isDark) PanelTemplateDefaults.ToolbarHaloDark else PanelTemplateDefaults.ToolbarHaloLight
-    val haloShader = rememberToolbarHaloShader()
-    Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .then(
-                    if (haloShader != null) {
-                        Modifier.ditheredHalo(haloShader, halo)
-                    } else {
-                        Modifier
-                            .drawWithContent {
-                                val capsule = Path().apply {
-                                    addOutline(CircleShape.createOutline(size, layoutDirection, this@drawWithContent))
-                                }
-                                clipPath(capsule, ClipOp.Difference) { this@drawWithContent.drawContent() }
-                            }
-                            .dropShadow(CircleShape, halo)
-                    },
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(fill)
-                .materialShadowEdge(
-                    stroke = PanelTemplateDefaults.ToolbarButtonStroke,
-                    edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
-                    shadowStyle = InnerShadowStyle.SHADOW_STYLE_1,
-                )
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            content()
-        }
-    }
-}
-
-/**
- * The toolbar halo drawn by a shader instead of [dropShadow], with the dither ColorOS puts on its
- * own material output.
- *
- * The dark halo is 5% white: across its ~60px falloff it climbs only 13 levels over the panel, so a
- * plain blurred shadow quantises into bands 4–5px wide that read as rings round the button. The
- * native composite shader (`librenderkit.so`) ends every material pass with `addNoise`, an
- * interleaved-gradient-noise dither, which is why the system halo is smooth. This draws the same
- * blurred capsule — a Gaussian of [halo]'s radius, converted to sigma the way Skia does — and adds
- * that noise to its alpha. The capsule itself is cut out, as before, so the halo never darkens the
- * button.
- */
-private fun Modifier.ditheredHalo(shader: RuntimeShader, halo: Shadow): Modifier = drawWithCache {
-    val sigma = halo.radius.toPx() * BLUR_RADIUS_TO_SIGMA
-    val offsetX = halo.offset.x.toPx()
-    val offsetY = halo.offset.y.toPx()
-    // Three sigma past the furthest edge, where the Gaussian is below 0.2% of its peak.
-    val extent = 3f * sigma + maxOf(abs(offsetX), abs(offsetY))
-    shader.setFloatUniform("size", size.width, size.height)
-    shader.setFloatUniform("offset", offsetX, offsetY)
-    shader.setFloatUniform("sigma", sigma)
-    shader.setFloatUniform("aa", 1f)
-    shader.setFloatUniform("color", halo.color.red, halo.color.green, halo.color.blue, halo.alpha)
-    val brush = shader.asBrush()
-    onDrawBehind {
-        drawRect(
-            brush = brush,
-            topLeft = Offset(-extent, -extent),
-            size = Size(size.width + 2f * extent, size.height + 2f * extent),
-        )
-    }
-}
-
-@Composable
-private fun rememberToolbarHaloShader(): RuntimeShader? {
-    if (!isRuntimeShaderSupported()) return null
-    return remember { runCatching { RuntimeShader(TOOLBAR_HALO_SHADER) }.getOrNull() }
-}
-
-/** Skia's blur-radius-to-sigma factor, `1 / sqrt(3)`. */
-private const val BLUR_RADIUS_TO_SIGMA = 0.57735f
-
-/**
- * A Gaussian-blurred capsule outside an unblurred one. The blur of a convex shape is approximated by
- * the error function of its signed distance, which is exact along straight edges and within a few
- * percent round a capsule's ends. `ign` is the native `interleavedGradientNoise`, scaled to one
- * alpha level so the halo dithers instead of stepping.
- */
-private const val TOOLBAR_HALO_SHADER = """
-    uniform float2 size;
-    uniform float2 offset;
-    uniform float sigma;
-    uniform float aa;
-    uniform float4 color;
-
-    float sdCapsule(float2 p, float2 halfSize) {
-        float r = min(halfSize.x, halfSize.y);
-        float2 q = abs(p) - halfSize + r;
-        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
-    }
-
-    float erfApprox(float x) {
-        float x2 = x * x;
-        float t = 0.147 * x2;
-        float v = sqrt(1.0 - exp(-x2 * (1.2732395 + t) / (1.0 + t)));
-        return x < 0.0 ? -v : v;
-    }
-
-    float ign(float2 p) {
-        return fract(52.9829189 * fract(dot(p, float2(0.06711056, 0.00583715))));
-    }
-
-    half4 main(float2 xy) {
-        float2 halfSize = size * 0.5;
-        float shadow = 0.5 - 0.5 * erfApprox(sdCapsule(xy - halfSize - offset, halfSize) / (sigma * 1.41421356));
-        float outside = smoothstep(-aa, aa, sdCapsule(xy - halfSize, halfSize));
-        float a = shadow * outside * color.a;
-        // Dither only where the halo is, so the noise never lifts the panel around it.
-        a += (ign(xy) - 0.5) * (2.0 / 255.0) * step(0.5 / 255.0, a);
-        a = clamp(a, 0.0, 1.0);
-        return half4(half3(color.rgb) * a, a);
-    }
-"""
-
-/** The capsule close button in the panel toolbar: 60x40 dp, full radius. */
+/** The capsule close button in the panel toolbar: 60x40 dp, continuous-curve capsule. */
 @Composable
 internal fun CloseCapsule(onClick: () -> Unit) {
-    ToolbarButtonSurface(onClick = onClick) {
-        Box(
-            modifier = Modifier
-                .height(PanelTemplateDefaults.ToolbarHeight)
-                // 16dp a side keeps the capsule at the native 60dp for a two-character label.
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = str("Close"),
-                style = trimmedLineHeight,
-                fontSize = 14.sp,
-                lineHeight = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = COUITheme.colorScheme.onBackground,
-            )
-        }
-    }
+    SheetCloseCapsule(
+        onClick = onClick,
+        text = str("Close"),
+    )
 }
 
-/** The circular overflow button in the panel toolbar: a 40dp circle with three dots. */
+/** The circular overflow button in the panel toolbar: a 40dp continuous-curve button with three dots. */
 @Composable
 internal fun OverflowButton(onClick: () -> Unit) {
     val ink = COUITheme.colorScheme.onBackground
-    ToolbarButtonSurface(onClick = onClick) {
-        Box(
-            modifier = Modifier.size(PanelTemplateDefaults.ToolbarHeight),
-            contentAlignment = Alignment.Center,
-        ) {
-            OverflowDots(ink)
-        }
+    SheetActionButton(onClick = onClick) {
+        OverflowDots(ink)
     }
 }
 
@@ -482,22 +317,25 @@ private fun Chevron(color: Color) {
 }
 
 /**
- * The capsule call-to-action: 44dp tall, full radius, filled with the ColorOS 17 primary
- * gradient measured on the live panel (`#1A8CFE` at the top, `#3198FF` at the bottom).
+ * The capsule call-to-action: 44dp tall, continuous-curve capsule, filled with the ColorOS 17
+ * primary gradient measured on the live panel (`#1A8CFE` at the top, `#3198FF` at the bottom).
  */
 @Composable
 internal fun ActionCapsule(text: String, onClick: () -> Unit) {
+    val squircleEnabled = isSquircleEnabled()
+    val capsuleShape = remember(squircleEnabled) { CapsuleOutlineShape(squircleEnabled = squircleEnabled) }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(PanelTemplateDefaults.ActionHeight)
-            .clip(CircleShape)
-            .background(Brush.verticalGradient(PanelTemplateDefaults.ActionGradient))
+            .clip(capsuleShape)
+            .background(Brush.verticalGradient(PanelTemplateDefaults.ActionGradient), shape = capsuleShape)
             // The native capsule is lit along its top and bottom edge only: 1dp of white that peaks
             // at (117,167,226) over a (34,144,255) fill at the top and (115,161,210) over
             // (49,152,255) at the bottom, fading to nothing across the middle.
             .border(
-                BorderStroke(1.dp, Brush.verticalGradient(PanelTemplateDefaults.ActionEdgeGradient)),
+                border = BorderStroke(1.dp, Brush.verticalGradient(PanelTemplateDefaults.ActionEdgeGradient)),
+                shape = capsuleShape,
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,

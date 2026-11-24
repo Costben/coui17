@@ -24,9 +24,9 @@ import androidx.compose.ui.unit.dp
 import i18n.str
 import io.github.suqi8.coui.kmp.basic.Card
 import io.github.suqi8.coui.kmp.basic.CardDefaults
-import io.github.suqi8.coui.kmp.basic.ChipTabData
-import io.github.suqi8.coui.kmp.basic.ChipTabGroup
+import io.github.suqi8.coui.kmp.basic.CardListPosition
 import io.github.suqi8.coui.kmp.basic.DropdownImpl
+import io.github.suqi8.coui.kmp.basic.DropdownItem
 import io.github.suqi8.coui.kmp.basic.ListPopupColumn
 import io.github.suqi8.coui.kmp.basic.PopupMenuRotation
 import io.github.suqi8.coui.kmp.basic.SearchViewAnimate
@@ -37,6 +37,8 @@ import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.basic.popupMenuRotation
 import io.github.suqi8.coui.kmp.basic.popupMenuRotationPositionProvider
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
+import io.github.suqi8.coui.kmp.overlay.OverlayListPopup
+import io.github.suqi8.coui.kmp.preference.ArrowPreference
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalDismissState
 import io.github.suqi8.coui.kmp.window.WindowListPopup
@@ -55,18 +57,10 @@ fun SearchViewAnimateDemo() {
     }
 }
 
-/** Renders the "PopupMenuRotation" gallery section content (a rotated popup menu with rotation tabs). */
+/** Renders the "PopupMenuRotation" gallery section content (rotation/host options above a trigger card). */
 @Composable
 fun PopupMenuRotationDemo() {
-    Card(
-        cornerRadius = CardDefaults.GroupCornerRadius,
-        weight = CardDefaults.GroupWeight,
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-    ) {
-        RotatingPopupMenuDemo()
-    }
+    RotatingPopupMenuDemo()
 }
 
 @Composable
@@ -125,56 +119,72 @@ private fun MagneticSearchBarDemo() {
 @Composable
 private fun RotatingPopupMenuDemo() {
     var showPopup by remember { mutableStateOf(false) }
-    var rotationIndex by remember { mutableIntStateOf(0) }
+    val rotationIndex = remember { mutableIntStateOf(0) }
+    val hostIndex = remember { mutableIntStateOf(0) }
+    var lastAction by remember { mutableStateOf<String?>(null) }
+    val rotationLabels = remember { listOf("0°", "90°", "270°") }
     val rotations = remember {
         listOf(PopupMenuRotation.None, PopupMenuRotation.Degrees90, PopupMenuRotation.Degrees270)
     }
-    val rotation = rotations[rotationIndex]
+    val rotation = rotations[rotationIndex.intValue]
     val rows = listOf(str("Copy"), str("Share"), str("Delete"))
 
-    Column(
+    DemoOptions(
+        DemoChoice("Rotation", rotationLabels, rotationIndex),
+        DemoChoice("Host", listOf("Window", "Overlay"), hostIndex),
+    )
+    Card(
+        cornerRadius = CardDefaults.GroupCornerRadius,
+        weight = CardDefaults.GroupWeight,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
     ) {
-        ChipTabGroup(
-            tabs = remember {
-                listOf(
-                    ChipTabData(label = "0°"),
-                    ChipTabData(label = "90°"),
-                    ChipTabData(label = "270°"),
-                )
-            },
-            selectedIndex = rotationIndex,
-            onSelectedChange = { rotationIndex = it },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
-            TextButton(text = str("Show rotated menu"), onClick = { showPopup = true })
-            WindowListPopup(
-                show = showPopup,
-                // MenuRotationHelper.rotatedLocateWidth/Height: the locate pass sees the swapped size.
-                popupPositionProvider = popupMenuRotationPositionProvider(rotation),
-                // RotationLayoutOut: the content is rotated about its own centre.
-                popupModifier = Modifier.popupMenuRotation(rotation),
-                onDismissRequest = { showPopup = false },
-            ) {
+        Box {
+            ArrowPreference(
+                title = str("Show rotated menu"),
+                summary = lastAction?.let { str("Last clicked: {}", it) } ?: rotationLabels[rotationIndex.intValue],
+                onClick = { showPopup = true },
+                cardListPosition = CardListPosition.Full,
+            )
+            val popupContent: @Composable () -> Unit = {
                 val dismiss = LocalDismissState.current
                 ListPopupColumn {
                     rows.forEachIndexed { index, text ->
                         DropdownImpl(
-                            text = text,
+                            item = DropdownItem(text = text),
                             optionSize = rows.size,
                             isSelected = false,
                             index = index,
-                            onSelectedIndexChange = { dismiss?.invoke() },
+                            groupKey = 0,
+                            onSelectedIndexChange = { picked ->
+                                lastAction = rows[picked]
+                                dismiss?.invoke()
+                            },
                         )
                     }
                 }
+            }
+            // MenuRotationHelper.rotatedLocateWidth/Height: the locate pass sees the swapped size.
+            // RotationLayoutOut: the content is rotated about its own centre.
+            val positionProvider = remember(rotation) { popupMenuRotationPositionProvider(rotation) }
+            val rotationModifier = remember(rotation) { Modifier.popupMenuRotation(rotation) }
+            if (hostIndex.intValue == 0) {
+                WindowListPopup(
+                    show = showPopup,
+                    popupPositionProvider = positionProvider,
+                    popupModifier = rotationModifier,
+                    onDismissRequest = { showPopup = false },
+                    content = popupContent,
+                )
+            } else {
+                OverlayListPopup(
+                    show = showPopup,
+                    popupPositionProvider = positionProvider,
+                    popupModifier = rotationModifier,
+                    onDismissRequest = { showPopup = false },
+                    content = popupContent,
+                )
             }
         }
     }

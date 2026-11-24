@@ -11,12 +11,20 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 
 /**
- * The five dual-tone tints ColorOS 17 paints its Settings icons with, in day and night values.
+ * The six dual-tone semantic tints ColorOS 17 paints its Settings icons with, in day and night values.
  *
  * Each tint is one hue at two weights: the glyph's main shape is the full colour, its accent layer
  * is the same colour at [Coui17CategoryIcons.ACCENT_ALPHA], so a row reads as one coloured mark
  * rather than two. [light] is the day value and [dark] the night one — the night set is lifted
  * slightly, because the same hue on a dark card otherwise loses contrast.
+ *
+ * Semantic roles calibrated against native ColorOS 17 Settings:
+ * - [Blue]: core backbone, connectivity, identity & personal records (dominant anchor; adjacent repeats expected)
+ * - [Orange]: personalization, interaction & creation/feedback
+ * - [Yellow]: luminance/display, favorites & spotlight discovery
+ * - [Green]: app behavior, communication, location & live resources
+ * - [Red]: high emotion / critical alerts only (strictly restrained; never filler)
+ * - [Neutral]: system updates, about device & catch-all metadata
  */
 internal enum class Coui17CategoryTint(val light: Color, val dark: Color) {
     Green(Color(0xFF00BD13), Color(0xFF24B232)),
@@ -24,6 +32,7 @@ internal enum class Coui17CategoryTint(val light: Color, val dark: Color) {
     Orange(Color(0xFFFF7700), Color(0xFFF08222)),
     Yellow(Color(0xFFFFB200), Color(0xFFE5A100)),
     Red(Color(0xFFEB3B2F), Color(0xFFEB493D)),
+    Neutral(Color(0xFF5C6066), Color(0xFF9EA4AD)),
     ;
 
     /** The value for a dark background when [dark] is true, the day value otherwise. */

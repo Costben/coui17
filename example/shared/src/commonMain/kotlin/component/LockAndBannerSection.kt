@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -45,7 +48,13 @@ import io.github.suqi8.coui.kmp.basic.TextButton
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.extended.Delete
+import io.github.suqi8.coui.kmp.squircle.SquircleShape
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
+import io.github.suqi8.coui.kmp.theme.COUITheme
+
+private val DesktopLockWallpaper = Brush.linearGradient(
+    listOf(Color(0xFF5B247A), Color(0xFF1BCEDF)),
+)
 
 /** Renders the lock pattern, numeric keyboard, simple lock, password input and banner demos inside one card. */
 @Composable
@@ -285,19 +294,29 @@ private fun LockScreenPwdInputDemo(scene: LockScreenPwdInputScene) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (scene == LockScreenPwdInputScene.Desktop) {
-            // The lock screen's own form: the desktop pill over the wallpaper, with the inner shadow
-            // and the light sweep the next key throws back across the field.
+            // The lock screen's own form: a transparent glass pill over the wallpaper with the
+            // blurred inner-shadow rim and the outward light sweep the next key throws back across
+            // the field on press.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .squircleSurface(color = Color(0xFF1B1B1B), cornerRadius = 24.dp)
-                    .padding(16.dp),
+                    .clip(SquircleShape(24.dp))
+                    .background(DesktopLockWallpaper)
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
             ) {
                 field(Modifier.fillMaxWidth())
             }
         } else {
-            // The settings form: a plain card-coloured field with no border, inner shadow or light.
-            field(Modifier.fillMaxWidth())
+            // The settings form: a plain card-coloured field on the page background, with no
+            // border, inner shadow or light.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .squircleSurface(color = COUITheme.colorScheme.background, cornerRadius = 24.dp)
+                    .padding(16.dp),
+            ) {
+                field(Modifier.fillMaxWidth())
+            }
         }
         Text(
             text = status,
@@ -320,6 +339,8 @@ private fun BannerDemo() {
             Color(0xFFB4553C) to cardFour,
         )
     }
+    // Start on page 1 so both scaled-down peeking neighbours are immediately visible on either side.
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { pages.size })
 
     Column(
         modifier = Modifier
@@ -332,6 +353,7 @@ private fun BannerDemo() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp),
+            state = pagerState,
             itemColor = pages.first().first,
         ) { page ->
             Box(
