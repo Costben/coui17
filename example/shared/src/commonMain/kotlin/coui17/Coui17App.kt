@@ -209,6 +209,7 @@ fun Coui17App(
                     componentPage = { route ->
                         coui17ComponentOf(route.id)?.let { Coui17ComponentScreen(it) }
                     },
+                    topBarPage = { Coui17TopBarShowcaseScreen() },
                 ) {
                     Coui17Root()
                 }
@@ -541,7 +542,7 @@ private fun Coui17ComponentScreen(component: Coui17Component) {
  * @param overlays drawn over both, outside every recorded layer.
  */
 @Composable
-private fun Coui17Frame(
+internal fun Coui17Frame(
     snackbarHostState: SnackbarHostState,
     pages: @Composable () -> Unit,
     bars: @Composable BoxScope.() -> Unit,
@@ -637,7 +638,7 @@ private fun Coui17Frame(
 
 /** One page's content. Its app bar is drawn by the caller, as a sibling of the recorded layer. */
 @Composable
-private fun Coui17PageContent(
+internal fun Coui17PageContent(
     scrollBehavior: ScrollBehavior,
     contentTop: Dp,
     contentBottom: Dp,

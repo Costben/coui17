@@ -52,13 +52,11 @@ import component.NotificationSwipeDemo
 import component.NumberPickerDemo
 import component.OtherDemo
 import component.PageIndicatorDemo
-import component.PinnedTopAppBarDemo
 import component.PopupMenuRotationDemo
 import component.ProgressIndicatorDemo
 import component.RadioButtonDemo
 import component.RecommendedPreferenceDemo
 import component.SearchBarDemo
-import component.SearchFilterTopAppBarDemo
 import component.SearchHistoryChipDemoContent
 import component.SearchHistoryViewDemoContent
 import component.SearchResultContainerDemo
@@ -75,11 +73,8 @@ import component.TagViewDemo
 import component.TextFieldDemo
 import component.TimePickerDemo
 import component.TooltipDemo
-import component.TopAppBarColorOS17FormsDemo
-import component.TopAppBarGlassDemo
 import component.TopTipsDemo
 import component.TouchSearchViewDemoContent
-import component.TwoRowTopAppBarDemo
 import component.WindowIconMenuVariantsDemo
 import io.github.suqi8.coui.kmp.basic.SnackbarHostState
 import io.github.suqi8.coui.kmp.blur.isRuntimeShaderSupported
@@ -231,13 +226,6 @@ internal val Coui17CatalogGroups: List<List<Coui17Category>> = listOf(
     ),
     listOf(
         category("Navigation & layout", Coui17CategoryTint.Green, Coui17CategoryIcons.Navigation) {
-            component("TopAppBar") {
-                demo("TopAppBar (glass)") { TopAppBarGlassDemo() }
-                demo("TopAppBar (ColorOS 17 forms)") { TopAppBarColorOS17FormsDemo() }
-                demo("PinnedTopAppBar") { PinnedTopAppBarDemo() }
-                demo("TwoRowTopAppBar") { TwoRowTopAppBarDemo() }
-                demo("SearchFilterTopAppBar") { SearchFilterTopAppBarDemo() }
-            }
             component("TabRow") {
                 demo("TabRow") { TabRowDemo() }
                 demo("ChipTab") { ChipTabDemo() }

@@ -45,6 +45,16 @@ internal object Coui17CategoryIcons {
     /** The accent layer's weight: the second colour step of a ColorOS settings icon. */
     const val ACCENT_ALPHA = 0.4f
 
+    /** `Top bar`: a top chrome bar over a page body in the accent layer. */
+    val TopBar: ImageVector by lazy {
+        dualTone(
+            name = "Coui17.Category.TopBar",
+            main = "M5.2,3H18.8C20.015,3 21,3.985 21,5.2V8.2C21,8.752 20.552,9.2 20,9.2H4" +
+                "C3.448,9.2 3,8.752 3,8.2V5.2C3,3.985 3.985,3 5.2,3Z",
+            accent = "M3,11H21V18.8C21,20.015 20.015,21 18.8,21H5.2C3.985,21 3,20.015 3,18.8V11Z",
+        )
+    }
+
     /** `Basic`: four rounded tiles, the top-right one in the accent layer. */
     val Basic: ImageVector by lazy {
         dualTone(

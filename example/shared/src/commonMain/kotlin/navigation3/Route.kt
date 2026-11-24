@@ -46,4 +46,8 @@ sealed interface Route : NavKey {
     /** A component's page in the ColorOS 17 gallery, opened from its category page; [id] names it. */
     @Serializable
     data class Component(val id: String) : Route
+
+    /** Dedicated full-screen top app bar showcase opened from the home page's "Top bar" section. */
+    @Serializable
+    data object TopBar : Route
 }

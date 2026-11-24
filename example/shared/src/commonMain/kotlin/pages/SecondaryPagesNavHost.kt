@@ -50,6 +50,7 @@ fun SecondaryPagesNavHost(
     panelPage: @Composable (Route.Panel) -> Unit = {},
     categoryPage: @Composable (Route.Category) -> Unit = {},
     componentPage: @Composable (Route.Component) -> Unit = {},
+    topBarPage: @Composable () -> Unit = {},
     mainContent: @Composable () -> Unit,
 ) {
     val appState = LocalAppState.current
@@ -67,6 +68,7 @@ fun SecondaryPagesNavHost(
                 subclass(Route.Panel::class)
                 subclass(Route.Category::class)
                 subclass(Route.Component::class)
+                subclass(Route.TopBar::class)
             }
         }
     }
@@ -111,6 +113,7 @@ fun SecondaryPagesNavHost(
             entry<Route.Panel> { route -> panelPage(route) }
             entry<Route.Category> { route -> categoryPage(route) }
             entry<Route.Component> { route -> componentPage(route) }
+            entry<Route.TopBar> { topBarPage() }
         }
     }
 

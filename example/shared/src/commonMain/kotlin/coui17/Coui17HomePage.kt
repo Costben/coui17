@@ -82,6 +82,9 @@ fun Coui17HomePage(
             }
         }
     }
+    val topBarMatches = needle.isNotEmpty() && Coui17TopBarSearchKeywords.any { keyword ->
+        keyword.contains(needle, ignoreCase = true) || str(keyword).contains(needle, ignoreCase = true)
+    }
     val filteredCatalog = if (needle.isEmpty()) {
         Coui17Catalog
     } else {
@@ -118,6 +121,32 @@ fun Coui17HomePage(
         contentPadding = contentPadding,
     ) {
         if (needle.isEmpty()) {
+            item(key = "section:top-bar") {
+                Card(
+                    cornerRadius = CardDefaults.GroupCornerRadius,
+                    weight = CardDefaults.GroupWeight,
+                    modifier = Modifier
+                        .padding(horizontal = Coui17Dimens.ListCardInset)
+                        .padding(
+                            top = Coui17Dimens.ListGroupTitlePadding,
+                            bottom = Coui17GroupCardGap,
+                        ),
+                ) {
+                    ArrowPreference(
+                        title = str("Top bar"),
+                        startAction = {
+                            Icon(
+                                imageVector = Coui17CategoryIcons.TopBar,
+                                contentDescription = null,
+                                modifier = Modifier.size(Coui17CategoryIconSize),
+                                tint = Coui17CategoryTint.Blue.resolve(dark),
+                            )
+                        },
+                        onClick = { navigator.push(Route.TopBar) },
+                        cardListPosition = CardListPosition.Full,
+                    )
+                }
+            }
             Coui17CatalogGroups.forEachIndexed { groupIndex, group ->
                 item(key = "group:$groupIndex") {
                     Card(
@@ -126,7 +155,7 @@ fun Coui17HomePage(
                         modifier = Modifier
                             .padding(horizontal = Coui17Dimens.ListCardInset)
                             .padding(
-                                top = if (groupIndex == 0) Coui17Dimens.ListGroupTitlePadding else 0.dp,
+                                top = 0.dp,
                                 bottom = if (groupIndex == Coui17CatalogGroups.lastIndex) {
                                     16.dp
                                 } else {
@@ -152,7 +181,7 @@ fun Coui17HomePage(
                     }
                 }
             }
-        } else if (filteredCatalog.isEmpty()) {
+        } else if (filteredCatalog.isEmpty() && !topBarMatches) {
             item(key = "empty-search") {
                 Card(
                     cornerRadius = CardDefaults.GroupCornerRadius,
@@ -168,6 +197,24 @@ fun Coui17HomePage(
                 }
             }
         } else {
+            if (topBarMatches) {
+                item(key = "title:top-bar") { Coui17GroupTitle("Top bar") }
+                item(key = "card:top-bar") {
+                    Card(
+                        cornerRadius = CardDefaults.GroupCornerRadius,
+                        weight = CardDefaults.GroupWeight,
+                        modifier = Modifier
+                            .padding(horizontal = Coui17Dimens.ListCardInset)
+                            .padding(bottom = 16.dp),
+                    ) {
+                        ArrowPreference(
+                            title = str("Top bar"),
+                            onClick = { navigator.push(Route.TopBar) },
+                            cardListPosition = CardListPosition.Full,
+                        )
+                    }
+                }
+            }
             filteredCatalog.forEach { category ->
                 item(key = "title:${category.title}") { Coui17GroupTitle(category.title) }
                 item(key = "card:${category.title}") {
@@ -266,6 +313,20 @@ internal fun Coui17ComponentPage(
         }
     }
 }
+
+/** Search keys that resolve to the dedicated home-page "Top bar" showcase. */
+private val Coui17TopBarSearchKeywords = listOf(
+    "Top bar",
+    "TopAppBar",
+    "SmallTopAppBar",
+    "PinnedTopAppBar",
+    "TwoRowTopAppBar",
+    "SearchFilterTopAppBar",
+    "TopAppBarSearchBar",
+    "ToolbarTextButton",
+    "Settings home (40sp)",
+    "Glass header",
+)
 
 /**
  * The gap between two category cards on the home page.
