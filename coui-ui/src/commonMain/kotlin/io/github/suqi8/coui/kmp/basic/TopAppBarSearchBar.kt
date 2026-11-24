@@ -217,10 +217,19 @@ private fun TopAppBarSearchBarImpl(
     if (scrollBehavior != null) {
         if (useKitSurface) {
             val state = rememberCouiTopAppBarSearchState(expanded)
+            // When not nested inside a pre-blurred TopAppBarSurface, resolvedBackdrop holds the
+            // raw page layer; pass the reference blur radius so both collapsed buttons and the
+            // expanded search/cancel capsules blur what they cover instead of painting sharp grey.
+            val sampleBlurRadius = if (localCouiBackdrop == null) {
+                with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
+            } else {
+                0f
+            }
             SharedTransitionScope { overlayModifier ->
                 CompositionLocalProvider(
                     LocalCouiToolbarBackdrop provides resolvedBackdrop,
                     LocalCouiToolbarOverlay provides this@SharedTransitionScope,
+                    LocalCouiToolbarSampleBlurRadius provides sampleBlurRadius,
                 ) {
                     Box(modifier = modifier.fillMaxWidth().then(overlayModifier)) {
                         TopAppBarWithSearch(

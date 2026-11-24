@@ -1306,13 +1306,16 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$TopAppBar
 	public final fun getLambda$-2046446912$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-27023815$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-357067351$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-383035871$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-486045669$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda$-654901189$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-771811078$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-801912990$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$111277080$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$1161401538$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1175925567$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1414627886$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1595528512$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1626644760$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1844159034$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1857322898$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1924252450$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
@@ -2104,11 +2107,26 @@ public final class io/github/suqi8/coui/kmp/basic/IconButtonDefaults {
 	public final fun getIconPadding-D9Ej5fM ()F
 	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getMinWidth-D9Ej5fM ()F
+	public final fun getRedDotAnchorSize-D9Ej5fM ()F
+	public final fun getRedDotHorizontalOffset-D9Ej5fM ()F
+	public final fun getRedDotVerticalOffset-D9Ej5fM ()F
+	public final fun getRedDotWithBigNumberHorizontalOffset-D9Ej5fM ()F
+	public final fun getRedDotWithNumberHorizontalOffset-D9Ej5fM ()F
+	public final fun getRedDotWithNumberVerticalOffset-D9Ej5fM ()F
+	public final fun getRedDotWithSmallNumberHorizontalOffset-D9Ej5fM ()F
+	public final fun getTextButtonInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getTextButtonMaxWidth-D9Ej5fM ()F
+	public final fun getTextButtonMinWidth-D9Ej5fM ()F
+	public final fun getTextButtonTextSize-D9Ej5fM ()F
+	public final fun getToolbarButtonHeight-D9Ej5fM ()F
+	public final fun toolbarTextButtonColors-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/IconButtonKt {
 	public static final synthetic fun IconButton-0xlP5wg (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun IconButton-NKP4n5s (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun IconButton-F7C3Z7g (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun IconButton-NKP4n5s (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ToolbarTextButton-L2g7X2E (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/IconKt {
@@ -5011,6 +5029,20 @@ public final class io/github/suqi8/coui/kmp/basic/ToolbarPosition$Companion {
 	public final fun getTopStart--Zkg07M ()I
 }
 
+public final class io/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors {
+	public static final field $stable I
+	public synthetic fun <init> (JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-0d7_KjU ()J
+	public final fun component2-0d7_KjU ()J
+	public final fun copy--OWjLjI (JJ)Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;
+	public static synthetic fun copy--OWjLjI$default (Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;JJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContentColor-0d7_KjU ()J
+	public final fun getDisabledContentColor-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/TooltipAnchorPosition {
 	public static final field Companion Lio/github/suqi8/coui/kmp/basic/TooltipAnchorPosition$Companion;
 	public static final synthetic fun box-impl (I)Lio/github/suqi8/coui/kmp/basic/TooltipAnchorPosition;
@@ -5110,30 +5142,66 @@ public final class io/github/suqi8/coui/kmp/basic/TopAppBarDefaults {
 	public final fun getLargeTitleTopPadding-D9Ej5fM ()F
 	public final fun getNavigationIconGap-D9Ej5fM ()F
 	public final fun getNavigationIconPadding-D9Ej5fM ()F
+	public final fun getSearchSlotHeight-D9Ej5fM ()F
+	public final fun getSearchSlotInsideMargin ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getSectionGap-D9Ej5fM ()F
 	public final fun getSectionGapSmall-D9Ej5fM ()F
 	public final fun getSegmentButtonHeight-D9Ej5fM ()F
 	public final fun getSegmentButtonMaxWidth-D9Ej5fM ()F
 	public final fun getSegmentButtonMinWidth-D9Ej5fM ()F
+	public final fun getSettingsHomeExpandedHeight-D9Ej5fM ()F
+	public final fun getSettingsHomeLargeTitleBottomMargin-D9Ej5fM ()F
+	public final fun getSettingsHomeLargeTitleFontSize-XSAIIZE ()J
+	public final fun getSettingsHomeTitlePadding-D9Ej5fM ()F
 	public final fun getSmallTopAppBarCenterHeight-D9Ej5fM ()F
 	public final fun getSubtitleBottomPadding-D9Ej5fM ()F
 	public final fun getSubtitleMarginTop-D9Ej5fM ()F
 	public final fun getTitlePadding-D9Ej5fM ()F
 	public final fun getToolbarTitleTextSize-D9Ej5fM ()F
+	public final fun largeTitleFontSize-5XXgJZs (Landroidx/compose/runtime/Composer;I)J
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TopAppBarKt {
 	public static final fun COUIScrollBehavior (Lio/github/suqi8/coui/kmp/basic/TopAppBarState;Lkotlin/jvm/functions/Function0;Landroidx/compose/animation/core/AnimationSpec;Landroidx/compose/animation/core/DecayAnimationSpec;ZLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;
 	public static final fun SmallTopAppBar-EJXvh-c (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun SmallTopAppBar-hdFJHEQ (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZFLkotlin/jvm/functions/Function2;ZFFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
+	public static final fun TopAppBar-DqbCT6A (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZZFFFFFJFZLio/github/suqi8/coui/kmp/basic/TopAppBarSearchState;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
 	public static final fun TopAppBar-QVWyRLc (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
-	public static final fun TopAppBar-r1A-NS4 (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZZFFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
+	public static final synthetic fun TopAppBar-r1A-NS4 (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLjava/lang/String;JLjava/lang/String;JJLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;ZZZZFFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;IIII)V
 	public static final fun couiTopAppBarActionItem (Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;
 	public static final fun rememberTopAppBarState (FFFLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/TopAppBarState;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TopAppBarSearchBarKt {
 	public static final fun TopAppBarSearchBar-ODOD5qU (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ZZLjava/lang/String;Lio/github/suqi8/coui/kmp/basic/ScrollBehavior;Lio/github/suqi8/coui/kmp/blur/Backdrop;JLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+}
+
+public final class io/github/suqi8/coui/kmp/basic/TopAppBarSearchDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/TopAppBarSearchDefaults;
+	public final fun getResultsEnterSpec ()Landroidx/compose/animation/core/AnimationSpec;
+	public final fun getResultsExitSpec ()Landroidx/compose/animation/core/AnimationSpec;
+	public final fun getResultsOffset-D9Ej5fM ()F
+	public final fun getTitleEndScale ()F
+	public final fun getTitleTravel-D9Ej5fM ()F
+	public final fun getTransitionSpec ()Landroidx/compose/animation/core/AnimationSpec;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/TopAppBarSearchState {
+	public static final field $stable I
+	public final fun getContentAlpha ()F
+	public final fun getProgress ()F
+	public final fun getResultsProgress ()F
+	public final fun isActive ()Z
+	public final fun isContentVisible ()Z
+	public final fun isResultsVisible ()Z
+}
+
+public final class io/github/suqi8/coui/kmp/basic/TopAppBarSearchStateKt {
+	public static final fun TopAppBarSearchSlot-942rkJo (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/runtime/Composer;II)V
+	public static final fun rememberTopAppBarSearchState (ZLandroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/TopAppBarSearchState;
+	public static final fun topAppBarSearchContent (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TopAppBarSearchState;)Landroidx/compose/ui/Modifier;
+	public static final fun topAppBarSearchResults (Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/TopAppBarSearchState;)Landroidx/compose/ui/Modifier;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/TopAppBarState {

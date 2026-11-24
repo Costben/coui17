@@ -16,6 +16,7 @@ import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -33,7 +34,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
@@ -46,6 +49,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -54,16 +58,21 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastFirst
 import androidx.compose.ui.util.lerp
+import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.basic.TopAppBarState.Companion.Saver
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
@@ -74,6 +83,8 @@ import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
 import io.github.suqi8.coui.kmp.utils.COUIWindowSizeClass
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -297,6 +308,21 @@ internal fun appBarMaterialAlpha(contentOffset: Float, collapsedFraction: Float,
  *   bar. Pass the page's own `homepage_appbar_blur_extra_height` instead when it is taller — the
  *   settings home uses 14dp, Notes 16dp — rather than adding a spacer to [bottomContent], which
  *   would push the list down by the same amount.
+ * @param expandedHeight The height of the expanded bar when no subtitle is present. Defaults to
+ *   [TopAppBarDefaults.ExpandedHeight] (110dp); pass [TopAppBarDefaults.SettingsHomeExpandedHeight]
+ *   (116dp) for the COUI 17 settings home bar.
+ * @param largeTitleFontSize The font size of the expanded large title. Defaults to
+ *   [TopAppBarDefaults.largeTitleFontSize] (32dp); pass
+ *   [TopAppBarDefaults.SettingsHomeLargeTitleFontSize] (40sp) for the COUI 17 settings home bar.
+ * @param largeTitleBottomMargin The distance from the bottom of [expandedHeight] to the large
+ *   title. [Dp.Unspecified] places the large title at [TopAppBarDefaults.LargeTitleTopPadding]
+ *   (54dp) from the top; pass [TopAppBarDefaults.SettingsHomeLargeTitleBottomMargin] (18dp) for
+ *   the settings home bar.
+ * @param fadeLargeTitleOnCollapse When `true`, uses the COUI 17 fade collapse mode where the large
+ *   title scales to 0.7 and fades out linearly instead of morphing into a pinned collapsed title.
+ * @param searchState Links the bar to a search bar in [bottomContent], like the COUI 17 settings
+ *   home: entering search shrinks, fades, and lifts the title while rising [bottomContent] to just
+ *   below the status bar. See [rememberTopAppBarSearchState].
  * @param bottomContent The [Composable] content displayed below the title bar area.
  */
 @Composable
@@ -321,6 +347,11 @@ fun TopAppBar(
     titlePadding: Dp = TopAppBarDefaults.TitlePadding,
     navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
     actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
+    expandedHeight: Dp = TopAppBarDefaults.ExpandedHeight,
+    largeTitleFontSize: TextUnit = TopAppBarDefaults.largeTitleFontSize(),
+    largeTitleBottomMargin: Dp = Dp.Unspecified,
+    fadeLargeTitleOnCollapse: Boolean = false,
+    searchState: TopAppBarSearchState? = null,
     bottomContent: @Composable () -> Unit = {},
 ) {
     // Wrap the given actions in a Row.
@@ -370,9 +401,74 @@ fun TopAppBar(
             showDivider = showDivider,
             hideSubtitleOnCollapse = hideSubtitleOnCollapse,
             gradientGlass = gradientGlass,
+            expandedHeight = expandedHeight,
+            largeTitleFontSize = largeTitleFontSize,
+            largeTitleBottomMargin = largeTitleBottomMargin,
+            fadeLargeTitleOnCollapse = fadeLargeTitleOnCollapse,
+            searchState = searchState,
             bottomContent = bottomContent,
         )
     }
+}
+
+/** Binary-compatibility bridge for the [TopAppBar] overload that predates COUI 17 layout/search overrides. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds expandedHeight, largeTitleFontSize, largeTitleBottomMargin, fadeLargeTitleOnCollapse, and searchState.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun TopAppBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    color: Color = COUITheme.colorScheme.surface,
+    titleColor: Color = COUITheme.colorScheme.onSurface,
+    largeTitle: String = title,
+    largeTitleColor: Color = COUITheme.colorScheme.onSurface,
+    subtitle: String = "",
+    subtitleColor: Color = COUITheme.colorScheme.onSurfaceVariantSummary,
+    dividerColor: Color = COUITheme.colorScheme.dividerLine,
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: ScrollBehavior? = null,
+    defaultWindowInsetsPadding: Boolean = true,
+    showDivider: Boolean = true,
+    hideSubtitleOnCollapse: Boolean = true,
+    gradientGlass: Boolean = false,
+    gradientGlassExtraHeight: Dp = AppBarBlurOverlayDefaults.ExtraHeight,
+    titlePadding: Dp = TopAppBarDefaults.TitlePadding,
+    navigationIconPadding: Dp = TopAppBarDefaults.NavigationIconPadding,
+    actionIconPadding: Dp = TopAppBarDefaults.ActionIconPadding,
+    bottomContent: @Composable () -> Unit = {},
+) {
+    TopAppBar(
+        title = title,
+        modifier = modifier,
+        color = color,
+        titleColor = titleColor,
+        largeTitle = largeTitle,
+        largeTitleColor = largeTitleColor,
+        subtitle = subtitle,
+        subtitleColor = subtitleColor,
+        dividerColor = dividerColor,
+        navigationIcon = navigationIcon,
+        actions = actions,
+        scrollBehavior = scrollBehavior,
+        defaultWindowInsetsPadding = defaultWindowInsetsPadding,
+        showDivider = showDivider,
+        hideSubtitleOnCollapse = hideSubtitleOnCollapse,
+        gradientGlass = gradientGlass,
+        gradientGlassExtraHeight = gradientGlassExtraHeight,
+        titlePadding = titlePadding,
+        navigationIconPadding = navigationIconPadding,
+        actionIconPadding = actionIconPadding,
+        expandedHeight = TopAppBarDefaults.ExpandedHeight,
+        largeTitleFontSize = TopAppBarDefaults.largeTitleFontSize(),
+        largeTitleBottomMargin = Dp.Unspecified,
+        fadeLargeTitleOnCollapse = false,
+        searchState = null,
+        bottomContent = bottomContent,
+    )
 }
 
 @Composable
@@ -488,12 +584,17 @@ fun TopAppBar(
         defaultWindowInsetsPadding = defaultWindowInsetsPadding,
         showDivider = showDivider,
         hideSubtitleOnCollapse = hideSubtitleOnCollapse,
-        // `gradientGlass` exists only on the primary overload; passing it pins this forward to the
-        // primary instead of re-selecting this same overload (which would recurse forever).
+        // `gradientGlass` and COUI 17 layout overrides exist only on the primary overload; passing
+        // them pins this forward to the primary instead of re-selecting a bridge overload.
         gradientGlass = false,
         titlePadding = titlePadding,
         navigationIconPadding = navigationIconPadding,
         actionIconPadding = actionIconPadding,
+        expandedHeight = TopAppBarDefaults.ExpandedHeight,
+        largeTitleFontSize = TopAppBarDefaults.largeTitleFontSize(),
+        largeTitleBottomMargin = Dp.Unspecified,
+        fadeLargeTitleOnCollapse = false,
+        searchState = null,
         bottomContent = bottomContent,
     )
 }
@@ -979,6 +1080,36 @@ object TopAppBarDefaults {
      * COUI `coui_toolbar_segment_button_max_width` (207dp).
      */
     val SegmentButtonMaxWidth = 207.dp
+
+    /**
+     * The expanded large title size as a [TextUnit]: COUI `coui_appbar_title_expanded_text_size`
+     * (32dp, a dp size that ignores font scale).
+     */
+    @Composable
+    fun largeTitleFontSize(): TextUnit = with(LocalDensity.current) { LargeTitleTextSize.toSp() }
+
+    /**
+     * The height of the [TopAppBarSearchSlot] row. COUI `coui_search_view_height` (52dp).
+     */
+    val SearchSlotHeight = 52.dp
+
+    /**
+     * The horizontal page-side padding of the capsule inside [TopAppBarSearchSlot].
+     * COUI `coui_preference_card_margin_horizontal` (16dp).
+     */
+    val SearchSlotInsideMargin = PaddingValues(horizontal = 16.dp)
+
+    /** COUI 17 settings home bar expanded height (`SettingsHomeTopBar`, 116dp). */
+    val SettingsHomeExpandedHeight = 116.dp
+
+    /** COUI 17 settings home bar large title font size (`SettingsHomeTopBar`, 40sp). */
+    val SettingsHomeLargeTitleFontSize = 40.sp
+
+    /** COUI 17 settings home bar horizontal title margin (`SettingsHomeTopBar`, 24dp). */
+    val SettingsHomeTitlePadding = 24.dp
+
+    /** COUI 17 settings home bar bottom margin below the large title (`SettingsHomeTopBar`, 18dp). */
+    val SettingsHomeLargeTitleBottomMargin = 18.dp
 }
 
 /**
@@ -1298,6 +1429,11 @@ private fun TopAppBarLayout(
     showDivider: Boolean = true,
     hideSubtitleOnCollapse: Boolean = true,
     gradientGlass: Boolean = false,
+    expandedHeight: Dp = TopAppBarDefaults.ExpandedHeight,
+    largeTitleFontSize: TextUnit = TopAppBarDefaults.largeTitleFontSize(),
+    largeTitleBottomMargin: Dp = Dp.Unspecified,
+    fadeLargeTitleOnCollapse: Boolean = false,
+    searchState: TopAppBarSearchState? = null,
     titleAlpha: () -> Float = { 1f },
     forceCollapsed: Boolean = false,
     searchOverlay: (@Composable () -> Unit)? = null,
@@ -1364,23 +1500,31 @@ private fun TopAppBarLayout(
     }
 
     val density = LocalDensity.current
-    // CollapsingTextHelper lerps the text size from the expanded 32dp down to the collapsed
-    // 24dp, or 18dp when a subtitle is present; replicated as a scale factor around the title's
-    // top-start corner.
-    val largeTitleFontSize = with(density) { TopAppBarDefaults.LargeTitleTextSize.toSp() }
+    // CollapsingTextHelper lerps the text size from the expanded largeTitleFontSize down to the
+    // collapsed 24dp, or 18dp when a persistent subtitle stays visible at full collapse;
+    // replicated as a scale factor around the title's top-start corner.
+    val defaultLargeTitleFontSize = TopAppBarDefaults.largeTitleFontSize()
     // COUIAppbarTitleStyle.Expanded sets lineSpacingMultiplier 1.4 and the native title is laid
     // out with expandedTitleGravity = start|top, so the extra line space falls below the glyphs.
-    // What the line box has to fill is the room between the 54dp top and 12dp bottom paddings of
-    // the 110dp expanded height; a 1.4 multiplier over the font's natural line height is that
-    // same box. Taking it from the height keeps the bar at exactly 110dp.
-    val largeTitleLineHeight = with(density) {
-        (
-            TopAppBarDefaults.ExpandedHeight - TopAppBarDefaults.LargeTitleTopPadding -
-                TopAppBarDefaults.LargeTitleBottomPadding
-            ).toSp()
+    // Keep the fixed 44dp line box only for the default 110dp / 32dp form; custom sizes such as
+    // the 40sp settings home bar use natural line metrics.
+    val largeTitleLineHeight = if (
+        largeTitleBottomMargin.isSpecified ||
+        expandedHeight != TopAppBarDefaults.ExpandedHeight ||
+        largeTitleFontSize != defaultLargeTitleFontSize
+    ) {
+        TextUnit.Unspecified
+    } else {
+        with(density) {
+            (
+                TopAppBarDefaults.ExpandedHeight - TopAppBarDefaults.LargeTitleTopPadding -
+                    TopAppBarDefaults.LargeTitleBottomPadding
+                ).toSp()
+        }
     }
+    val hasPersistentSubtitle = subtitle.isNotEmpty() && !hideSubtitleOnCollapse
     val collapsedTitleSize =
-        if (subtitle.isNotEmpty()) {
+        if (hasPersistentSubtitle) {
             TopAppBarDefaults.CollapsedTitleWithSubtitleTextSize
         } else {
             TopAppBarDefaults.CollapsedTitleTextSize
@@ -1422,18 +1566,22 @@ private fun TopAppBarLayout(
                 navigationIcon()
             }
             // Collapsed title: only shown once the bar is fully collapsed; until then the
-            // large title morphs into it. COUIAppbarTitleStyle keeps sans-serif-semibold in
-            // both states, so the weight does not change as the bar collapses.
+            // large title morphs into it. In fade mode the large title fades away instead, so
+            // this slot stays empty. A new title cross-fades in (switchTitleContentWithAnimation).
             Box(Modifier.layoutId("title")) {
-                Text(
-                    text = title,
-                    color = animatedTitleColor,
-                    fontSize = collapsedTitleFontSize,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    softWrap = false,
-                )
+                if (!fadeLargeTitleOnCollapse) {
+                    TopAppBarTitleCrossfade(text = title) { text ->
+                        Text(
+                            text = text,
+                            color = animatedTitleColor,
+                            fontSize = collapsedTitleFontSize,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false,
+                        )
+                    }
+                }
             }
             Box(
                 Modifier
@@ -1443,20 +1591,20 @@ private fun TopAppBarLayout(
                 actions()
             }
             // Expanded title: position and scale are driven by the collapse fraction in the
-            // placement pass (CollapsingTextHelper SCALE mode). COUIAppbarTitleStyle.Expanded
-            // carries lineSpacingMultiplier 1.4; with the top gravity of the native title the
-            // extra line space sits below the glyphs, so this sets the box height only.
+            // placement pass (CollapsingTextHelper SCALE mode).
             Box(Modifier.layoutId("largeTitle")) {
-                Text(
-                    text = largeTitle,
-                    color = animatedLargeTitleColor,
-                    fontSize = largeTitleFontSize,
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = largeTitleLineHeight,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    softWrap = false,
-                )
+                TopAppBarTitleCrossfade(text = largeTitle) { text ->
+                    Text(
+                        text = text,
+                        color = animatedLargeTitleColor,
+                        fontSize = largeTitleFontSize,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = largeTitleLineHeight,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        softWrap = false,
+                    )
+                }
             }
             if (subtitle.isNotEmpty()) {
                 // Subtitle: alpha and collapsed position are driven in the placement pass
@@ -1561,15 +1709,25 @@ private fun TopAppBarLayout(
                 .measure(constraints.copy(minWidth = 0, maxWidth = collapsedTitleMaxWidth, minHeight = 0))
 
         val largeTitleMaxWidth = (constraints.maxWidth - 2 * titlePaddingPx).coerceAtLeast(0)
-        val largeTitlePlaceable =
-            measurables
-                .fastFirst { it.layoutId == "largeTitle" }
-                .measure(constraints.copy(minWidth = 0, maxWidth = largeTitleMaxWidth, minHeight = 0))
+        val largeTitleMeasurable = measurables.fastFirst { it.layoutId == "largeTitle" }
+        val largeTitleConstraints = constraints.copy(minWidth = 0, maxWidth = largeTitleMaxWidth, minHeight = 0)
+        // A large title too long for the expanded bar is laid out again on every step of the morph,
+        // ellipsized to the bounds it is passing through scaled back up, so the shrinking title
+        // never runs past the collapsed slot (COUICollapsingToolbarLayout.updateTextLayoutIfNeed).
+        val ellipsizeWhileMorphing = !fadeLargeTitleOnCollapse &&
+            largeTitleMeasurable.maxIntrinsicWidth(Constraints.Infinity) > largeTitleMaxWidth
+        val fittingLargeTitlePlaceable = if (ellipsizeWhileMorphing) null else largeTitleMeasurable.measure(largeTitleConstraints)
+        val largeTitleHeight = fittingLargeTitlePlaceable?.height ?: largeTitleMeasurable.maxIntrinsicHeight(largeTitleMaxWidth)
 
-        val subtitlePlaceable =
-            measurables
-                .firstOrNull { it.layoutId == "subtitle" }
-                ?.measure(constraints.copy(minWidth = 0, maxWidth = largeTitleMaxWidth, minHeight = 0))
+        val subtitleMeasurable = measurables.firstOrNull { it.layoutId == "subtitle" }
+        val subtitleStaticPlaceable = if (subtitleMeasurable != null && hideSubtitleOnCollapse) {
+            subtitleMeasurable.measure(constraints.copy(minWidth = 0, maxWidth = largeTitleMaxWidth, minHeight = 0))
+        } else {
+            null
+        }
+        val subtitleHeight = subtitleStaticPlaceable?.height
+            ?: subtitleMeasurable?.maxIntrinsicHeight(largeTitleMaxWidth)
+            ?: 0
 
         val bottomContentPlaceable =
             measurables
@@ -1583,17 +1741,20 @@ private fun TopAppBarLayout(
                 .firstOrNull { it.layoutId == "searchOverlay" }
                 ?.measure(Constraints.fixed(searchOverlayWidth, collapsedHeight))
 
-        val largeTitleTop = TopAppBarDefaults.LargeTitleTopPadding.roundToPx()
+        val largeTitleTop = if (largeTitleBottomMargin.isSpecified) {
+            (expandedHeight.roundToPx() - largeTitleBottomMargin.roundToPx() - largeTitleHeight).coerceAtLeast(0)
+        } else {
+            TopAppBarDefaults.LargeTitleTopPadding.roundToPx()
+        }
         val subtitleMarginTopPx = TopAppBarDefaults.SubtitleMarginTop.roundToPx()
         val largeTitleBottomPaddingPx = TopAppBarDefaults.LargeTitleBottomPadding.roundToPx()
-        val subtitleHeight = subtitlePlaceable?.height ?: 0
 
-        // Expanded bar height (COUICollapsableAppBarLayout.onMeasure): the fixed 107dp grows by
-        // the subtitle height, with the 12dp expanded bottom padding folded in.
-        val expandedContentHeight = largeTitleTop + largeTitlePlaceable.height +
-            (subtitlePlaceable?.let { subtitleMarginTopPx + it.height } ?: 0)
+        // Expanded bar height (COUICollapsableAppBarLayout.onMeasure): the fixed expanded height
+        // grows by the subtitle height, with the 12dp expanded bottom padding folded in.
+        val expandedContentHeight = largeTitleTop + largeTitleHeight +
+            if (subtitleMeasurable != null) subtitleMarginTopPx + subtitleHeight else 0
         val expandedBarHeight = maxOf(
-            TopAppBarDefaults.ExpandedHeight.roundToPx() + subtitleHeight,
+            expandedHeight.roundToPx() + subtitleHeight,
             expandedContentHeight + largeTitleBottomPaddingPx,
         )
         val expansion = (expandedBarHeight - collapsedHeight).coerceAtLeast(0)
@@ -1629,13 +1790,36 @@ private fun TopAppBarLayout(
         val easedFraction = CollapsingTitleEasing.transform(collapseFraction)
 
         val verticalCenter = collapsedHeight / 2
-        // Collapsed title: vertically centered in the toolbar area; shifted up above a subtitle
-        // that stays visible at full collapse (COUICollapsingToolbarLayout.translateTitleIfNeed).
-        val subtitleVisibleWhenCollapsed = subtitlePlaceable != null && !hideSubtitleOnCollapse
+        // Collapsed title: vertically centered in the toolbar area; when a persistent subtitle
+        // stays visible at full collapse, center the (title + gap + subtitle) stack in the 52dp
+        // row so it matches SmallTopAppBar and clears both navigation and action icons.
+        val subtitleVisibleWhenCollapsed = subtitleMeasurable != null && !hideSubtitleOnCollapse
+        val collapsedStackHeight = titlePlaceable.height + subtitleMarginTopPx + subtitleHeight
         val collapsedTitleY = if (subtitleVisibleWhenCollapsed) {
-            (collapsedHeight - subtitleHeight - subtitleMarginTopPx - titlePlaceable.height).coerceAtLeast(0)
+            ((collapsedHeight - collapsedStackHeight) / 2).coerceAtLeast(0)
         } else {
             verticalCenter - titlePlaceable.height / 2
+        }
+        val collapsedSubtitleY = collapsedTitleY + titlePlaceable.height + subtitleMarginTopPx
+        val expandedSubtitleY = expandedBarHeight - subtitleHeight - largeTitleBottomPaddingPx
+        val subtitlePlaceable = subtitleStaticPlaceable ?: subtitleMeasurable?.let { measurable ->
+            val subtitleMaxWidth = lerp(
+                largeTitleMaxWidth.toFloat(),
+                collapsedTitleMaxWidth.toFloat(),
+                easedFraction,
+            ).roundToInt().coerceAtLeast(0)
+            measurable.measure(constraints.copy(minWidth = 0, maxWidth = subtitleMaxWidth, minHeight = 0))
+        }
+        val subtitleX = if (subtitleVisibleWhenCollapsed) {
+            lerp(titlePaddingPx.toFloat(), collapsedTitleX.toFloat(), easedFraction).roundToInt()
+        } else {
+            titlePaddingPx
+        }
+        val subtitleY = if (subtitleVisibleWhenCollapsed) {
+            lerp(expandedSubtitleY.toFloat(), (collapsedSubtitleY + expansion).toFloat(), easedFraction).roundToInt() + offsetPx
+        } else {
+            expandedBarHeight - subtitleHeight -
+                (largeTitleBottomPaddingPx * (1f - collapseFraction)).roundToInt() + offsetPx
         }
 
         // Large title morph (CollapsingTextHelper.calculateOffsets): eased lerp between the
@@ -1643,60 +1827,89 @@ private fun TopAppBarLayout(
         val largeTitleX = lerp(titlePaddingPx.toFloat(), collapsedTitleX.toFloat(), easedFraction)
         val largeTitleY =
             lerp(largeTitleTop.toFloat(), (collapsedTitleY + expansion).toFloat(), easedFraction) + offsetPx
-        val largeTitleScale = lerp(1f, collapsedTitleScale, easedFraction)
-        val collapsed = collapseFraction >= CollapsedTitleSwapFraction
+        // Fade mode (COUI 17 collapsing toolbar): the large title keeps its own text size and only
+        // alpha (1 -> 0) and scale (1 -> 0.7) move, both linearly on the raw collapse fraction.
+        val largeTitleScale = if (fadeLargeTitleOnCollapse) {
+            lerp(1f, FadedLargeTitleScale, collapseFraction)
+        } else {
+            lerp(1f, collapsedTitleScale, easedFraction)
+        }
+        val collapsed = !fadeLargeTitleOnCollapse && collapseFraction >= CollapsedTitleSwapFraction
         val pivotX = if (layoutDirection == LayoutDirection.Rtl) 1f else 0f
+        val largeTitlePlaceable = fittingLargeTitlePlaceable ?: run {
+            val boundsWidth = lerp(largeTitleMaxWidth.toFloat(), collapsedTitleMaxWidth.toFloat(), easedFraction)
+            val layoutWidth = (boundsWidth / largeTitleScale.coerceAtLeast(0.01f)).roundToInt().coerceIn(0, largeTitleMaxWidth)
+            largeTitleMeasurable.measure(largeTitleConstraints.copy(maxWidth = layoutWidth))
+        }
 
-        val contentTop = barHeight
+        // Search transition (HomepageImpl.animToEdit): the title area scrolls away above the bottom
+        // content, which rises to the top of the bar, while the titles also shrink, fade and move up.
+        val searchProgress = searchState?.progress ?: 0f
+        val searchAlpha = searchState?.contentAlpha ?: 1f
+        val contentTop = (barHeight * (1f - searchProgress)).roundToInt()
+        val areaShift = contentTop - barHeight
+        val titleShift = areaShift - (TopAppBarSearchDefaults.TitleTravel.toPx() * searchProgress).roundToInt()
+        val titleSearchScale = lerp(TopAppBarSearchDefaults.TitleEndScale, 1f, searchAlpha)
         val layoutHeight = contentTop + bottomContentPlaceable.height
 
         layout(constraints.maxWidth, layoutHeight) {
             // Navigation icon
-            navigationIconPlaceable.placeRelative(
+            navigationIconPlaceable.placeRelativeWithLayer(
                 x = 0,
-                y = verticalCenter - navigationIconPlaceable.height / 2,
-            )
+                y = verticalCenter - navigationIconPlaceable.height / 2 + areaShift,
+            ) {
+                alpha = searchAlpha
+            }
 
             // Action icons
-            actionIconsPlaceable.placeRelative(
+            actionIconsPlaceable.placeRelativeWithLayer(
                 x = constraints.maxWidth - actionIconsPlaceable.width,
-                y = verticalCenter - actionIconsPlaceable.height / 2,
-            )
-
-            // Subtitle (COUICollapsableAppBarLayout.adjustSubtitleIfNeed): rides the scroll 1:1,
-            // lifted by the interpolating bottom padding; fades out only when hideSubtitleOnCollapse.
-            subtitlePlaceable?.placeRelativeWithLayer(
-                x = titlePaddingPx,
-                y = expandedBarHeight - subtitleHeight -
-                    (largeTitleBottomPaddingPx * (1f - collapseFraction)).roundToInt() + offsetPx,
+                y = verticalCenter - actionIconsPlaceable.height / 2 + areaShift,
             ) {
-                alpha = (if (hideSubtitleOnCollapse) 1f - collapseFraction else 1f) * titleAlpha()
+                alpha = searchAlpha
+            }
+
+            // Subtitle: when hideSubtitleOnCollapse is false, morphs horizontally and vertically
+            // alongside the title into the collapsed toolbar slot between navigationIcon and actions.
+            subtitlePlaceable?.placeRelativeWithLayer(
+                x = subtitleX,
+                y = subtitleY + titleShift,
+            ) {
+                alpha = (if (hideSubtitleOnCollapse) 1f - collapseFraction else 1f) * titleAlpha() * searchAlpha
             }
 
             // Large title: translates and scales into the collapsed title; swapped for the
             // dedicated collapsed title only at full collapse.
             largeTitlePlaceable.placeRelativeWithLayer(
                 x = largeTitleX.roundToInt(),
-                y = largeTitleY.roundToInt(),
+                y = largeTitleY.roundToInt() + titleShift,
             ) {
                 transformOrigin = TransformOrigin(pivotX, 0f)
-                scaleX = largeTitleScale
-                scaleY = largeTitleScale
-                alpha = (if (collapsed) 0f else 1f) * titleAlpha()
+                scaleX = largeTitleScale * titleSearchScale
+                scaleY = largeTitleScale * titleSearchScale
+                val collapseAlpha = when {
+                    fadeLargeTitleOnCollapse -> 1f - collapseFraction
+                    collapsed -> 0f
+                    else -> 1f
+                }
+                alpha = collapseAlpha * titleAlpha() * searchAlpha
             }
 
             // Collapsed title (start-aligned, visible only at full collapse).
             titlePlaceable.placeRelativeWithLayer(
                 x = collapsedTitleX,
-                y = collapsedTitleY,
+                y = collapsedTitleY + titleShift,
             ) {
-                alpha = (if (collapsed) 1f else 0f) * titleAlpha()
+                transformOrigin = TransformOrigin(pivotX, 0f)
+                scaleX = titleSearchScale
+                scaleY = titleSearchScale
+                alpha = (if (collapsed) 1f else 0f) * titleAlpha() * searchAlpha
             }
 
             // Search overlay (pinned in the toolbar row, spans between titlePadding and actionIconPadding)
             searchOverlayPlaceable?.placeRelative(x = titlePaddingPx, y = 0)
 
-            // Bottom content (pinned, below the bar)
+            // Bottom content (pinned, below the bar; rises to the top when searchState activates)
             bottomContentPlaceable.placeRelative(x = 0, y = contentTop)
         }
     }
@@ -1791,17 +2004,22 @@ private fun SmallTopAppBarLayout(
                 }
             }
             // Title: TextAppearance.COUI.Toolbar.SecondTitle (18dp, sans-serif-medium at
-            // textFontWeight 550, viewStart alignment).
+            // textFontWeight 550, viewStart alignment). A new title cross-fades in.
             Box(Modifier.layoutId("title")) {
-                Text(
+                TopAppBarTitleCrossfade(
                     text = title,
-                    color = animatedTitleColor,
-                    maxLines = 1,
-                    fontSize = with(LocalDensity.current) { TopAppBarDefaults.ToolbarTitleTextSize.toSp() },
-                    fontWeight = FontWeight(550),
-                    overflow = TextOverflow.Ellipsis,
-                    softWrap = false,
-                )
+                    contentAlignment = if (centerTitle) Alignment.TopCenter else Alignment.TopStart,
+                ) { text ->
+                    Text(
+                        text = text,
+                        color = animatedTitleColor,
+                        maxLines = 1,
+                        fontSize = with(LocalDensity.current) { TopAppBarDefaults.ToolbarTitleTextSize.toSp() },
+                        fontWeight = FontWeight(550),
+                        overflow = TextOverflow.Ellipsis,
+                        softWrap = false,
+                    )
+                }
             }
             Box(
                 Modifier
@@ -2061,6 +2279,77 @@ private fun SmallTopAppBarLayout(
         }
     }
 }
+
+/**
+ * Shows [text] through [content] and cross-fades to a new one whenever [text] changes, like the
+ * COUI 17 toolbar title switch (`COUICollapsingToolbarLayout.switchTitleContentWithAnimation` ->
+ * `ToolbarTextTransitionController.startCrossFade`): the old title fades out and the new one fades
+ * in at the same place, both with the response 0.2 / bounce 0 alpha spring.
+ */
+@Composable
+private fun TopAppBarTitleCrossfade(
+    text: String,
+    modifier: Modifier = Modifier,
+    contentAlignment: Alignment = Alignment.TopStart,
+    content: @Composable (String) -> Unit,
+) {
+    var shownText by remember { mutableStateOf(text) }
+    var leavingText by remember { mutableStateOf<String?>(null) }
+    val enterAlpha = remember { Animatable(1f, visibilityThreshold = TitleCrossfadeVisibilityThreshold) }
+    val exitAlpha = remember { Animatable(0f, visibilityThreshold = TitleCrossfadeVisibilityThreshold) }
+    LaunchedEffect(text) {
+        if (text == shownText) return@LaunchedEffect
+        val from = enterAlpha.value
+        leavingText = shownText
+        shownText = text
+        exitAlpha.snapTo(from)
+        enterAlpha.snapTo(0f)
+        coroutineScope {
+            launch { exitAlpha.animateTo(0f, TitleCrossfadeSpec) }
+            launch { enterAlpha.animateTo(1f, TitleCrossfadeSpec) }
+        }
+        leavingText = null
+    }
+    val leaving = leavingText
+    val titles = if (leaving != null) listOf(leaving, shownText) else listOf(shownText)
+    Box(modifier = modifier, contentAlignment = contentAlignment) {
+        titles.forEach { title ->
+            key(title) {
+                val isLeaving = title == leaving
+                Box(
+                    if (isLeaving) {
+                        Modifier
+                            .clearAndSetSemantics {}
+                            .graphicsLayer { alpha = exitAlpha.value }
+                    } else {
+                        Modifier.graphicsLayer { alpha = enterAlpha.value }
+                    },
+                ) {
+                    content(title)
+                }
+            }
+        }
+    }
+}
+
+/** The title cross-fade's minimum visible alpha change, `ToolbarGroupTransitionParams` (1/256). */
+private val TitleCrossfadeVisibilityThreshold = 1f / 256f
+
+/**
+ * The title cross-fade spring, both ways: COUI 17 `ToolbarGroupTransitionParams`
+ * `textEnterAlphaSpring` / `textExitAlphaSpring` (response 0.2, bounce 0).
+ */
+private val TitleCrossfadeSpec = folmeSpring(
+    damping = 1f,
+    response = 0.2f,
+    visibilityThreshold = TitleCrossfadeVisibilityThreshold,
+)
+
+/**
+ * End scale of the fading large title in fade mode
+ * (SettingsCollapsingToolbarLayout.OnOffsetChangedListener: `AnimationUtils.lerp(1.0f, 0.7f, f)`).
+ */
+private val FadedLargeTitleScale = 0.7f
 
 /**
  * COUIEaseInterpolator: cubic-bezier(0.33, 0, 0.67, 1), applied to the collapsing title's

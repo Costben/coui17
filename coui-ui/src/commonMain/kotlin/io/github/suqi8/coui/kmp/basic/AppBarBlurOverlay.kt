@@ -442,7 +442,12 @@ internal fun AppBarMaterial(
     // toggles backdrop recording — one with glass popups over its list — refuses it per
     // [LocalPlatformAppBarMaterialEnabled] and keeps the engine.
     val platformAllowed = LocalPlatformAppBarMaterialEnabled.current
-    val native = if (platformRenderer && platformAllowed && blurEnabled) {
+    // The platform renderer only supports the default single-row gradient curve (speed = 3 from the
+    // top edge). Keep COUI's progressive blur engine whenever a caller supplies a custom two-row
+    // materialRamp and a backdrop is available, so the blur does not drop out between the rows.
+    val usePlatform = platformRenderer && platformAllowed && blurEnabled &&
+        (materialRamp == AppBarMaterialRamp() || backdrop == null)
+    val native = if (usePlatform) {
         rememberPlatformAppBarBackdropRenderer()
     } else {
         null
