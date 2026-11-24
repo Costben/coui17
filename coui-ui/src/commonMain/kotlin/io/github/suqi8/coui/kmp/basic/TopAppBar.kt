@@ -2151,7 +2151,7 @@ private fun SmallTopAppBarLayout(
         }
 
         val titleMeasurable = measurables.fastFirst { it.layoutId == "title" }
-        val segmentGapPx = maxOf(sectionGapPx, TopAppBarDefaults.ActionIconGap.roundToPx() * 2)
+        val segmentGapPx = maxOf(sectionGapPx, TopAppBarDefaults.ActionIconGap.roundToPx())
         val navClearLeftPx = if (hasNavigationIcon) {
             navigationIconPlaceable.width + segmentGapPx
         } else {
@@ -2184,7 +2184,10 @@ private fun SmallTopAppBarLayout(
         val centeredHalfBetweenIconsPx = minOf(widthPx / 2 - navClearLeftPx, actionsClearRightPx - widthPx / 2)
             .coerceAtLeast(0)
         val roomBetweenIconsPx = (actionsClearRightPx - navClearLeftPx).coerceAtLeast(0)
-        val segmentFitsBesideTitle = roomWithTitlePx >= segmentMinWidthPx
+        val allowOffCenterForTitle = hasNavigationIcon || hasActions
+        val segmentFitsBesideTitleCentered = centeredHalfWithTitlePx * 2 >= segmentMinWidthPx
+        val segmentFitsBesideTitleShifted = allowOffCenterForTitle && roomWithTitlePx >= segmentMinWidthPx
+        val keepTitleClear = segmentFitsBesideTitleCentered || segmentFitsBesideTitleShifted
 
         val segmentButtonPlaceable = if (centerTitle) {
             null
@@ -2192,14 +2195,14 @@ private fun SmallTopAppBarLayout(
             measurables.firstOrNull { it.layoutId == "segmentButton" }?.let { measurable ->
                 // Keep the segment clear of BOTH the leading title/navigation icon (including
                 // NavigationIconGap) and the trailing action icons. Prefer symmetric centering
-                // when both sides have enough clearance; otherwise use the remaining slot between
-                // the title and actions so short titles never collapse to ellipsis and actions
-                // never paint on top of the segmented control.
+                // whenever it fits; shift off-center between title and icons when icons tighten
+                // one side so short titles never collapse to ellipsis and actions never overlap
+                // the segmented control.
                 val freeSegmentWidthPx = when {
-                    centeredHalfWithTitlePx * 2 >= segmentMinWidthPx ->
+                    segmentFitsBesideTitleCentered ->
                         minOf(centeredHalfWithTitlePx * 2, segmentMaxCapPx)
 
-                    segmentFitsBesideTitle ->
+                    segmentFitsBesideTitleShifted ->
                         minOf(roomWithTitlePx, segmentMaxCapPx)
 
                     centeredHalfBetweenIconsPx * 2 >= segmentMinWidthPx ->
@@ -2223,7 +2226,7 @@ private fun SmallTopAppBarLayout(
 
         val segmentX = segmentButtonPlaceable?.let { placeable ->
             val maxSegmentX = (actionsClearRightPx - placeable.width).coerceAtLeast(navClearLeftPx)
-            val minSegmentX = if (segmentFitsBesideTitle) {
+            val minSegmentX = if (keepTitleClear) {
                 titleClearLeftPx.coerceAtMost(maxSegmentX)
             } else {
                 navClearLeftPx.coerceAtMost(maxSegmentX)
