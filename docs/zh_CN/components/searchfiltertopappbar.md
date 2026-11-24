@@ -79,5 +79,5 @@ val barHeight = TwoRowTopAppBarDefaults.barHeight(
 | `containerColor` | `AppBarBlurOverlayDefaults.containerColor()` | 材质底色 |
 | `backdrop` | `LocalBackdrop.current` | 材质采样的页面 |
 | `extraHeight` | 两行 `TwoRowTopAppBarDefaults.ExtraHeight`（6dp）；单行 `AppBarBlurOverlayDefaults.ExtraHeight`（8dp） | 材质越过栏底边的距离 |
-| `scrollFraction` | `{ 1f }` | 材质的整体透明度，在绘制阶段读取 |
+| `scrollFraction` | `{ 1f }` | 材质的整体透明度，在绘制阶段读取；可滚动列表推荐使用 `TwoRowTopAppBarDefaults.scrollAlpha(scrollPx, density, contentGap)`，跳过胶囊下方空白后再经 56dp 缓入 |
 | `platformRenderer` | `false` | 是否允许用平台自己的模糊。这里保持 `false`：栏自己录了材质，平台效果采的是整个窗口 |

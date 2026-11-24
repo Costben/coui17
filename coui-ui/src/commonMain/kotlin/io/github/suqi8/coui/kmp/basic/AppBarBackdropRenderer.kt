@@ -13,17 +13,24 @@ import androidx.compose.ui.graphics.Color
  *
  * Defaults to `true`: the platform path matches the system pixel for pixel, and it costs nothing to
  * record. It samples the window content, though, so the effect is tied to the frame the view is
- * composited in: while an enclosing backdrop is being recorded the view is left out of that layer
- * ([TouchTransparentInterop]), and when the last consumer goes away and recording stops, the system
- * drops the blur for a few frames — the bar flashes each time a popup or dialog that read the
- * backdrop closes. A page that opens such popups over a scrolling list sees that flash repeatedly.
+ * composited in and has two limitations inside Compose trees:
+ * - While an enclosing backdrop is being recorded the view is left out of that layer
+ *   ([TouchTransparentInterop]), and when the last consumer goes away and recording stops, the
+ *   system drops the blur for a few frames — the bar flashes each time a popup or dialog that read
+ *   the backdrop closes.
+ * - Subtrees clipped by Compose's offscreen `DstIn` squircle mask (`squircleClip` /
+ *   `absoluteSquircleClip`) cannot clip the platform `AndroidView`'s window-surface backdrop effect,
+ *   so the view overflows outside rounded corners as a sharp dark rectangle during transitions.
  *
- * Set it to `false` on those pages to keep [AppBarMaterial]'s Compose engine, which samples the
- * recorded [io.github.suqi8.coui.kmp.blur.LocalBackdrop] and cannot drop out: the recording is a
- * layer the bar reads, not a window effect the compositor owns.
+ * `coui-nav` and `coui-navigation3-ui` `NavDisplay` automatically signal corner-clipped hosts via
+ * [io.github.suqi8.coui.kmp.squircle.LocalSquircleClippedHost] so top bars hosted inside them stay
+ * on [AppBarMaterial]'s Compose engine without extra configuration. Set this local to `false` on
+ * pages outside `NavDisplay` that host glass popups over a blurred bar or apply custom squircle
+ * transition clips.
  *
- * The Compose engine only has something to sample when the caller provides a backdrop; without one
- * [AppBarMaterial] paints the alpha ramp alone.
+ * The Compose engine only has something to sample when the caller provides a
+ * [io.github.suqi8.coui.kmp.blur.LocalBackdrop]; without one [AppBarMaterial] paints the alpha ramp
+ * alone.
  */
 val LocalPlatformAppBarMaterialEnabled = compositionLocalOf { true }
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -20,12 +21,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SkikoComposeUiTest
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
@@ -347,6 +351,62 @@ class TopAppBarGlassRenderTest {
         )
     }
 
+    @Test
+    fun segmentSlotKeepsTitleVisibleAndClearsBackAndActionButtons() = runSkikoComposeUiTest(
+        size = Size(360f, SURFACE_HEIGHT_DP),
+        density = Density(1f),
+    ) {
+        val backTag = "seg-back"
+        val segmentTag = "seg-control"
+        val actionsTag = "seg-actions"
+        setContent {
+            Box(Modifier.fillMaxSize()) {
+                SmallTopAppBar(
+                    title = "分段",
+                    modifier = Modifier.fillMaxWidth().testTag(APP_BAR_TAG),
+                    color = Color.White,
+                    navigationIcon = {
+                        Box(Modifier.size(40.dp).testTag(backTag).background(Color.Blue))
+                    },
+                    actions = {
+                        Box(Modifier.size(90.dp, 40.dp).testTag(actionsTag).background(Color.Red))
+                    },
+                    segmentButton = {
+                        Box(Modifier.fillMaxSize().testTag(segmentTag).background(SegmentColor))
+                    },
+                    defaultWindowInsetsPadding = false,
+                )
+            }
+        }
+        waitForIdle()
+
+        val back = onNodeWithTag(backTag).getBoundsInRoot()
+        val title = onNodeWithText("分段").getBoundsInRoot()
+        val segment = onNodeWithTag(segmentTag).getBoundsInRoot()
+        val actions = onNodeWithTag(actionsTag).getBoundsInRoot()
+
+        assertTrue(
+            title.width.value >= 24f,
+            "Short title must not collapse to ellipsis beside back button and segment, got title=$title",
+        )
+        assertTrue(
+            title.left >= back.right,
+            "Title must clear navigation icon, got back=$back title=$title",
+        )
+        assertTrue(
+            segment.left >= title.right,
+            "Segment must stay clear of title, got title=$title segment=$segment",
+        )
+        assertTrue(
+            segment.right <= actions.left,
+            "Actions must never overlap the segment control, got segment=$segment actions=$actions",
+        )
+        assertTrue(
+            segment.width.value >= 108f,
+            "Segment must keep at least SegmentButtonMinWidth (108dp), got segment=$segment",
+        )
+    }
+
     /**
      * Turning `LocalBlurEnabled` off must drop both the uniform blur (`gradientGlass = false`) and
      * the gradient-glass material (`gradientGlass = true`) back to an opaque solid container fill
@@ -424,6 +484,60 @@ class TopAppBarGlassRenderTest {
                 )
             }
         }
+    }
+
+    /**
+     * In dark mode over a `#303030` page, `SmallTopAppBar(gradientGlass = true)` with a `#303030`
+     * page container colour still casts the same black `0.4 -> 0.0` top shadow as `AppBarBlurOverlay`
+     * and `TopAppBarSearchBar`.
+     */
+    @Test
+    fun darkModeGradientSmallTopAppBarCastsVisibleTopShadowOverDarkPage() = runSkikoComposeUiTest(
+        size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+        density = Density(1f),
+    ) {
+        val pageBg = AppBarBlurOverlayDefaults.DarkContainerColor
+        setContent {
+            COUITheme(colors = darkColorScheme()) {
+                val backdrop = rememberLayerBackdrop {
+                    drawRect(pageBg)
+                    drawContent()
+                }
+                Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                        Canvas(Modifier.fillMaxSize()) { drawRect(pageBg) }
+                    }
+                    CompositionLocalProvider(
+                        LocalBackdrop provides backdrop,
+                        LocalEdgeToEdge provides true,
+                    ) {
+                        SmallTopAppBar(
+                            title = APP_BAR_TITLE,
+                            modifier = Modifier.fillMaxWidth().testTag(APP_BAR_TAG),
+                            color = pageBg,
+                            gradientGlass = true,
+                            showDivider = false,
+                            defaultWindowInsetsPadding = false,
+                        )
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        val bar = appBarBounds()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        val x = pixels.width / 4
+        val topPixel = pixels[x, bar.top.roundToInt() + 1]
+        val beyondBand = pixels[x, (bar.bottom + ExtraHeightPx + 4f).roundToInt()]
+        assertTrue(
+            redChannel(topPixel) in 25..33,
+            "dark gradient SmallTopAppBar top edge over #303030 must darken to ~29, got ${topPixel.argbHex()}",
+        )
+        assertTrue(
+            maxChannelDelta(beyondBand, pageBg) <= 2,
+            "below bar + ExtraHeight must return to #303030, got ${beyondBand.argbHex()}",
+        )
     }
 }
 

@@ -69,6 +69,7 @@ import io.github.suqi8.coui.kmp.nav.transition.NavSettlePhase
 import io.github.suqi8.coui.kmp.nav.transition.NavSwipeDirection
 import io.github.suqi8.coui.kmp.nav.transition.NavTransition
 import io.github.suqi8.coui.kmp.nav.transition.NavTransitions
+import io.github.suqi8.coui.kmp.squircle.LocalSquircleClippedHost
 import io.github.suqi8.coui.kmp.squircle.absoluteSquircleClip
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -602,75 +603,84 @@ private fun NavDisplayLayout(
             maxOf(acc, indexByContentKey[e.contentKey] ?: -1)
         }
 
-        visibleEntries.fastForEach { entry ->
-            key(entry.contentKey) {
-                // Local non-null guard, NOT a non-local `return@key`: Compose Hot Reload turns the
-                // compiler's non-local-return marker into a method literally named "<anonymous>",
-                // which the JVM rejects at class load (ClassFormatError). The index always exists
-                // here (same map the visibleEntries filter ran over), so the body always runs.
-                indexByContentKey[entry.contentKey]?.let { entryIndex ->
-                    // Boundary ownership (§4.3): the entry's own transition governs while it is at the
-                    // top (d <= 0); the upper neighbour's transition governs the covered treatment
-                    // (0 < d <= 1). NavEntryHost picks per relativeDepth inside the deferred
-                    // graphicsLayer so the choice costs no recomposition.
-                    val ownTransition = entry.transitionOrNull() ?: transition
-                    // Resolve the upper neighbour from the PRESENTED set (which still holds a
-                    // popped-but-animating-out entry), NOT the live back stack. A leaving entry keeps its
-                    // last index in indexByContentKey, so index + 1 still points at it until it unloads.
-                    // Using backStack here would, the instant an upper entry with a per-route transition
-                    // (e.g. a bottom-up Modal) is popped, revert this covered layer to the global transition
-                    // mid-dismiss — for a Modal over the horizontal-slide default that wrongly parallaxes the
-                    // layer below sideways while the modal is still sliding down (§4.3 boundary ownership).
-                    val upperEntry = presentation.presented.firstOrNull { indexByContentKey[it.contentKey] == entryIndex + 1 }
-                    val upperTransition = upperEntry?.transitionOrNull() ?: transition
+        // Signal to descendants (such as ColorOS 17 platform app-bar backdrop views) for the whole
+        // lifetime of the host whenever corner clipping is configured, so they stay on Compose's
+        // clippable blur engine instead of overflowing outside rounded corners or flashing when a
+        // gesture starts. Preserve any enclosing host's `true` for nested NavDisplays.
+        val squircleClippedHost = LocalSquircleClippedHost.current ||
+            (effects.enableCornerClip && effects.cornerClipRadius > 0.dp)
 
-                    if (effects.dimAmount > 0f && entryIndex == topMostVisibleIndex && entryIndex > 0) {
-                        // Fullscreen dim scrim UNDER the top-most visible layer (reference shell
-                        // behavior): it must cover the entering page AND the backdrop revealed
-                        // around it when a card-style transition scales layers down — a scrim
-                        // inside the entry host would shrink with the page and leave the
-                        // surroundings undimmed.
-                        //
-                        // The scrim is part of the covered treatment, so the top entry's governing
-                        // transition owns its curve (§4.3 boundary ownership, NavTransition.scrimFraction),
-                        // evaluated against the covered layer directly below (depth 0 = revealed,
-                        // 1 = covered). The effects layer only caps the darkness (dimAmount). The
-                        // fraction is read inside the deferred graphicsLayer, so the per-frame float
-                        // never recomposes this layout.
-                        val belowEntry = presentation.presented.firstOrNull { indexByContentKey[it.contentKey] == entryIndex - 1 }
-                        val scrimScope = LiveNavTransitionScope(
+        CompositionLocalProvider(LocalSquircleClippedHost provides squircleClippedHost) {
+            visibleEntries.fastForEach { entry ->
+                key(entry.contentKey) {
+                    // Local non-null guard, NOT a non-local `return@key`: Compose Hot Reload turns the
+                    // compiler's non-local-return marker into a method literally named "<anonymous>",
+                    // which the JVM rejects at class load (ClassFormatError). The index always exists
+                    // here (same map the visibleEntries filter ran over), so the body always runs.
+                    indexByContentKey[entry.contentKey]?.let { entryIndex ->
+                        // Boundary ownership (§4.3): the entry's own transition governs while it is at the
+                        // top (d <= 0); the upper neighbour's transition governs the covered treatment
+                        // (0 < d <= 1). NavEntryHost picks per relativeDepth inside the deferred
+                        // graphicsLayer so the choice costs no recomposition.
+                        val ownTransition = entry.transitionOrNull() ?: transition
+                        // Resolve the upper neighbour from the PRESENTED set (which still holds a
+                        // popped-but-animating-out entry), NOT the live back stack. A leaving entry keeps its
+                        // last index in indexByContentKey, so index + 1 still points at it until it unloads.
+                        // Using backStack here would, the instant an upper entry with a per-route transition
+                        // (e.g. a bottom-up Modal) is popped, revert this covered layer to the global transition
+                        // mid-dismiss — for a Modal over the horizontal-slide default that wrongly parallaxes the
+                        // layer below sideways while the modal is still sliding down (§4.3 boundary ownership).
+                        val upperEntry = presentation.presented.firstOrNull { indexByContentKey[it.contentKey] == entryIndex + 1 }
+                        val upperTransition = upperEntry?.transitionOrNull() ?: transition
+
+                        if (effects.dimAmount > 0f && entryIndex == topMostVisibleIndex && entryIndex > 0) {
+                            // Fullscreen dim scrim UNDER the top-most visible layer (reference shell
+                            // behavior): it must cover the entering page AND the backdrop revealed
+                            // around it when a card-style transition scales layers down — a scrim
+                            // inside the entry host would shrink with the page and leave the
+                            // surroundings undimmed.
+                            //
+                            // The scrim is part of the covered treatment, so the top entry's governing
+                            // transition owns its curve (§4.3 boundary ownership, NavTransition.scrimFraction),
+                            // evaluated against the covered layer directly below (depth 0 = revealed,
+                            // 1 = covered). The effects layer only caps the darkness (dimAmount). The
+                            // fraction is read inside the deferred graphicsLayer, so the per-frame float
+                            // never recomposes this layout.
+                            val belowEntry = presentation.presented.firstOrNull { indexByContentKey[it.contentKey] == entryIndex - 1 }
+                            val scrimScope = LiveNavTransitionScope(
+                                presentation = presentation,
+                                entryIndex = entryIndex - 1,
+                                isRemoving = belowEntry?.presentation?.isRemoving == true,
+                                change = presentation.change,
+                                layoutSize = layoutSize,
+                                layoutDirection = layoutDirection,
+                                density = density,
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer {
+                                        alpha = effects.dimAmount * ownTransition.scrimFraction(scrimScope).coerceIn(0f, 1f)
+                                    }
+                                    .background(Color.Black),
+                            )
+                        }
+
+                        NavEntryHost(
+                            entry = entry,
+                            entryIndex = entryIndex,
                             presentation = presentation,
-                            entryIndex = entryIndex - 1,
-                            isRemoving = belowEntry?.presentation?.isRemoving == true,
+                            stateHolder = stateHolder,
+                            viewModelStores = viewModelStores,
+                            ownTransition = ownTransition,
+                            upperTransition = upperTransition,
                             change = presentation.change,
+                            effects = effects,
                             layoutSize = layoutSize,
                             layoutDirection = layoutDirection,
                             density = density,
                         )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer {
-                                    alpha = effects.dimAmount * ownTransition.scrimFraction(scrimScope).coerceIn(0f, 1f)
-                                }
-                                .background(Color.Black),
-                        )
                     }
-
-                    NavEntryHost(
-                        entry = entry,
-                        entryIndex = entryIndex,
-                        presentation = presentation,
-                        stateHolder = stateHolder,
-                        viewModelStores = viewModelStores,
-                        ownTransition = ownTransition,
-                        upperTransition = upperTransition,
-                        change = presentation.change,
-                        effects = effects,
-                        layoutSize = layoutSize,
-                        layoutDirection = layoutDirection,
-                        density = density,
-                    )
                 }
             }
         }
@@ -795,7 +805,7 @@ private fun NavEntryHost(
         )
     }
 
-    val clipModifier = if ((depthBuckets and DEPTH_BUCKET_CLIP_CORNERS) != 0) {
+    val clipModifier = if ((depthBuckets and DEPTH_BUCKET_CLIP_CORNERS) != 0 && effects.cornerClipRadius > 0.dp) {
         // Squircle-clip the transitioning top entry. The radius comes from the effects, so callers
         // can follow the platform screen corner (e.g. rememberNavSystemCornerRadius); the corner
         // set follows the effects' clip mode. absoluteSquircleClip uses physical corners (never

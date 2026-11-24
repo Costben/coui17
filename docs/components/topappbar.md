@@ -220,7 +220,7 @@ reproduced.
 With a `scrollBehavior` the material is invisible at rest and reaches full strength after 30dp of
 content has scrolled under the bar. Without a `scrollBehavior` it is always on.
 
-It needs the same `LocalBackdrop` as the uniform material. When blur is disabled (`LocalBlurEnabled` is `false`, system power-saving switches blur off, or runtime shaders are unsupported), the bar reverts to an opaque `color` surface and restores its scroll divider; when blur remains enabled without a `LocalBackdrop`, it paints the gradient colour fill alone.
+It needs the same `LocalBackdrop` as the uniform material. When blur is disabled (`LocalBlurEnabled` is `false`, system power-saving switches blur off, or runtime shaders are unsupported), the bar reverts to an opaque `color` surface and restores its scroll divider; when blur remains enabled without a `LocalBackdrop`, it paints the gradient colour fill alone. In dark mode with blur active, neutral dark `color` values (such as `#303030` or `#1E1E1E`) paint a `Color.Black` `0.4 -> 0.0` top shadow veil (matching `AppBarBlurOverlay` and `TopAppBarSearchBar`); inside a corner-clipping `NavDisplay`, ColorOS 17 automatically switches back to COUI's Compose progressive blur engine so transitions clip cleanly to the rounded corners.
 
 ```kotlin
 CompositionLocalProvider(LocalBackdrop provides backdrop) {

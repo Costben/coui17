@@ -2151,33 +2151,65 @@ private fun SmallTopAppBarLayout(
         }
 
         val titleMeasurable = measurables.fastFirst { it.layoutId == "title" }
+        val segmentGapPx = maxOf(sectionGapPx, TopAppBarDefaults.ActionIconGap.roundToPx() * 2)
+        val navClearLeftPx = if (hasNavigationIcon) {
+            navigationIconPlaceable.width + segmentGapPx
+        } else {
+            titlePaddingPx
+        }
+        val actionsClearRightPx = if (hasActions) {
+            widthPx - actionIconsPlaceable.width - segmentGapPx
+        } else {
+            widthPx - titlePaddingPx
+        }
+        val naturalTitleWidthPx = if (!centerTitle && measurables.any { it.layoutId == "segmentButton" }) {
+            titleMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+        } else {
+            0
+        }
+        val titleClearLeftPx = if (naturalTitleWidthPx > 0) {
+            titleStartPx + naturalTitleWidthPx + segmentGapPx
+        } else {
+            navClearLeftPx
+        }
+        val segmentMinWidthPx = TopAppBarDefaults.SegmentButtonMinWidth.roundToPx()
+        val segmentMaxCapPx = if (isCompactWidth) {
+            TopAppBarDefaults.SegmentButtonMaxWidth.roundToPx()
+        } else {
+            widthPx
+        }
+        val centeredHalfWithTitlePx = minOf(widthPx / 2 - titleClearLeftPx, actionsClearRightPx - widthPx / 2)
+            .coerceAtLeast(0)
+        val roomWithTitlePx = (actionsClearRightPx - titleClearLeftPx).coerceAtLeast(0)
+        val centeredHalfBetweenIconsPx = minOf(widthPx / 2 - navClearLeftPx, actionsClearRightPx - widthPx / 2)
+            .coerceAtLeast(0)
+        val roomBetweenIconsPx = (actionsClearRightPx - navClearLeftPx).coerceAtLeast(0)
+        val segmentFitsBesideTitle = roomWithTitlePx >= segmentMinWidthPx
+
         val segmentButtonPlaceable = if (centerTitle) {
             null
         } else {
             measurables.firstOrNull { it.layoutId == "segmentButton" }?.let { measurable ->
-                // COUIToolbar measures the title's *natural* text width here (`paint.measureText`).
-                // A Measurable may only be measured once per pass, so read it off the intrinsics.
-                val naturalTitleWidthPx = titleMeasurable.maxIntrinsicWidth(constraints.maxHeight)
-                val segmentMinWidthPx = TopAppBarDefaults.SegmentButtonMinWidth.roundToPx()
-                val halfContentPx = (widthPx / 2 - navigationIconContentPx).coerceAtLeast(0)
-                val fitsBesideTitle = naturalTitleWidthPx <=
-                    ((halfContentPx - segmentMinWidthPx / 2) - sectionGapPx) - navigationIconPaddingPx
-                val freeSegmentWidthPx = if (fitsBesideTitle) {
-                    val freePx =
-                        ((halfContentPx - naturalTitleWidthPx) - sectionGapPx) - navigationIconPaddingPx
-                    if (isCompactWidth) {
-                        minOf(freePx * 2, TopAppBarDefaults.SegmentButtonMaxWidth.roundToPx())
-                    } else {
-                        freePx * 2
-                    }
-                } else {
-                    (((halfContentPx - navigationIconPaddingPx) - sectionGapPx) / 2) * 2
+                // Keep the segment clear of BOTH the leading title/navigation icon (including
+                // NavigationIconGap) and the trailing action icons. Prefer symmetric centering
+                // when both sides have enough clearance; otherwise use the remaining slot between
+                // the title and actions so short titles never collapse to ellipsis and actions
+                // never paint on top of the segmented control.
+                val freeSegmentWidthPx = when {
+                    centeredHalfWithTitlePx * 2 >= segmentMinWidthPx ->
+                        minOf(centeredHalfWithTitlePx * 2, segmentMaxCapPx)
+
+                    segmentFitsBesideTitle ->
+                        minOf(roomWithTitlePx, segmentMaxCapPx)
+
+                    centeredHalfBetweenIconsPx * 2 >= segmentMinWidthPx ->
+                        minOf(centeredHalfBetweenIconsPx * 2, segmentMaxCapPx)
+
+                    else ->
+                        minOf(roomBetweenIconsPx, segmentMaxCapPx)
                 }
-                val segmentMaxWidthPx = freeSegmentWidthPx.coerceIn(0, widthPx)
+                val segmentMaxWidthPx = freeSegmentWidthPx.coerceIn(0, roomBetweenIconsPx.coerceAtLeast(0))
                 val segmentHeightPx = TopAppBarDefaults.SegmentButtonHeight.roundToPx()
-                // `measureChildMaxWidthConstrained` fixes the height at segment_button_height and
-                // only clamps the width. COUI consults SegmentButtonMinWidth in the fit test above;
-                // it is applied as the slot's floor here as well, so the slot honours its token.
                 measurable.measure(
                     Constraints(
                         minWidth = minOf(segmentMinWidthPx, segmentMaxWidthPx),
@@ -2189,12 +2221,20 @@ private fun SmallTopAppBarLayout(
             }
         }
 
+        val segmentX = segmentButtonPlaceable?.let { placeable ->
+            val maxSegmentX = (actionsClearRightPx - placeable.width).coerceAtLeast(navClearLeftPx)
+            val minSegmentX = if (segmentFitsBesideTitle) {
+                titleClearLeftPx.coerceAtMost(maxSegmentX)
+            } else {
+                navClearLeftPx.coerceAtMost(maxSegmentX)
+            }
+            ((widthPx - placeable.width) / 2).coerceIn(minSegmentX, maxSegmentX)
+        } ?: 0
+
         if (segmentButtonPlaceable != null) {
-            // The title keeps clear of the segment and its section gap.
-            val segmentLeftPx = ((widthPx - segmentButtonPlaceable.width) / 2)
-                .coerceAtLeast(navigationIconPlaceable.width)
+            // The title keeps clear of the placed segment and its gap.
             titleMaxWidth =
-                minOf(titleMaxWidth, (segmentLeftPx - sectionGapPx - titleStartPx).coerceAtLeast(0))
+                minOf(titleMaxWidth, (segmentX - segmentGapPx - titleStartPx).coerceAtLeast(0))
         }
 
         val titlePlaceable =
@@ -2222,12 +2262,6 @@ private fun SmallTopAppBarLayout(
         } else {
             titleStartPx
         }
-        val segmentX = segmentButtonPlaceable?.let { placeable ->
-            ((widthPx - placeable.width) / 2).coerceIn(
-                minimumValue = navigationIconPlaceable.width,
-                maximumValue = maxOf(navigationIconPlaceable.width, widthPx - actionIconsPlaceable.width),
-            )
-        } ?: 0
 
         // Title stack: vertically centered in the 52dp toolbar area; the subtitle sits
         // 3.5dp below the title, matching the collapsed COUI app bar stack.

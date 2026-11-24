@@ -33,7 +33,9 @@ import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.ProgressiveBlur
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.progressiveTextureBlur
+import io.github.suqi8.coui.kmp.squircle.LocalSquircleClippedHost
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlin.math.abs
 
 /** Default values for [AppBarBlurOverlay]. */
 object AppBarBlurOverlayDefaults {
@@ -77,19 +79,19 @@ object AppBarBlurOverlayDefaults {
     val ScrollAlphaThresholdDp = 30f
 
     /**
-     * The dark-theme material base colour.
+     * The dark-theme page and blur-disabled fallback colour (`#303030`).
      *
-     * The dark page background renders as a flat `48 / 48 / 48` (`#303030`), measured across whole
-     * pages on two native surfaces. `#303030` is also the platform's own dark background
-     * (`background_material_dark` → `material_grey_850` = `#ff303030`), so it is a colour the
-     * platform declares, not one inferred from a screenshot mean. The material's top edge over a
-     * `#454545` card lands at 60, and the dark ramp's hard-coded top alpha `0.4 * B + 0.6 * 69 = 60`
-     * gives `B ≈ 46.5`, consistent with 48.
+     * Measured on ColorOS 17 gentle dark surfaces (`48 / 48 / 48`, matching Android's
+     * `background_material_dark` → `material_grey_850`). Callers use [containerColor] both as the
+     * dark page background and as the opaque solid fill when blur is disabled (`!isBlurEnabled()`).
      *
-     * The colour token that produces this value cannot be resolved: an enabled runtime overlay sits
-     * on top of the night configuration, and the darkening layer is applied by the vendor framework
-     * itself. The rendered value is used here instead, with the light-sensing glass's own alpha ramp
-     * doing the rest.
+     * When blur is active in dark mode, ColorOS 17's top-bar gradient veil darkens scrolled content
+     * with a black `0.4 -> 0.0` scrim rather than painting `#303030` over `#303030` (verified on
+     * PKT110 ColorOS 17 Settings: a flat `#1A1A1A` card drops to `#101010` at `y = 0` and fades
+     * linearly back to `#1A1A1A` at `barBottom + 8dp`, solving `0.4 * B + 0.6 * 26 = 16 -> B = 0`).
+     * [AppBarMaterial] therefore remaps neutral dark container colours (including `#303030` and
+     * `#1E1E1E`) to [Color.Black] for the gradient veil while preserving [DarkContainerColor] for
+     * the blur-disabled opaque fallback.
      */
     val DarkContainerColor = Color(0xFF303030)
 
@@ -139,6 +141,41 @@ object AppBarBlurOverlayDefaults {
     fun scrollAlpha(scrollPx: Float, density: Density, minAlpha: Float): Float {
         val floor = minAlpha.coerceIn(0f, 1f)
         return (floor + (1f - floor) * scrollAlpha(scrollPx, density)).coerceIn(0f, 1f)
+    }
+
+    /**
+     * [scrollAlpha] with a scroll deadzone ([startOffset]) and custom fade-in [rampDistance].
+     *
+     * Multi-row bars ([TwoRowTopAppBar], [SearchFilterTopAppBar]) leave vertical breathing room
+     * below their chip row before the first list card starts (`TwoRowTopAppBarDefaults.SecondRowBottom`
+     * plus the list's own top gap). Starting the single-row 30dp ramp immediately at `scrollPx = 0`
+     * drives the top veil to full strength before the first card even reaches the chips, which
+     * reads as an abrupt dark flash in dark mode. Skipping that blank gap with [startOffset] and
+     * widening [rampDistance] keeps the bar clean until content reaches the chips, then eases the
+     * blur and gradient veil in smoothly.
+     *
+     * @param scrollPx The distance the content has scrolled from rest, in pixels.
+     * @param density The density used to convert [startOffset] and [rampDistance] to pixels.
+     * @param startOffset Scroll distance that stays at [minAlpha] before the fade-in begins.
+     * @param rampDistance Scroll distance over which alpha eases from [minAlpha] to `1f`.
+     * @param minAlpha Optional resting floor coerced into `0f..1f`.
+     */
+    fun scrollAlpha(
+        scrollPx: Float,
+        density: Density,
+        startOffset: Dp,
+        rampDistance: Dp = ScrollAlphaThresholdDp.dp,
+        minAlpha: Float = 0f,
+    ): Float {
+        val floor = minAlpha.coerceIn(0f, 1f)
+        val startPx = with(density) { startOffset.toPx() }
+        val rampPx = with(density) { rampDistance.toPx() }
+        val progress = if (rampPx <= 0f) {
+            if (scrollPx > startPx) 1f else 0f
+        } else {
+            ((scrollPx - startPx) / rampPx).coerceIn(0f, 1f)
+        }
+        return (floor + (1f - floor) * progress).coerceIn(0f, 1f)
     }
 }
 
@@ -437,16 +474,23 @@ internal fun AppBarMaterial(
     // It is a property of the theme, not of the base colour, so a caller-supplied colour cannot move
     // the ramp to the other branch.
     val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
-    // Where the platform has its own backdrop blur (ColorOS, Android 16), use it exactly the way
-    // `AppBarBlurHelper` does instead of re-recording the content through COUI's engine. A page that
-    // toggles backdrop recording — one with glass popups over its list — refuses it per
-    // [LocalPlatformAppBarMaterialEnabled] and keeps the engine.
-    val platformAllowed = LocalPlatformAppBarMaterialEnabled.current
-    // The platform renderer only supports the default single-row gradient curve (speed = 3 from the
-    // top edge). Keep COUI's progressive blur engine whenever a caller supplies a custom two-row
-    // materialRamp and a backdrop is available, so the blur does not drop out between the rows.
-    val usePlatform = platformRenderer && platformAllowed && blurEnabled &&
-        (materialRamp == AppBarMaterialRamp() || backdrop == null)
+    // Where the platform has its own backdrop blur (ColorOS 17), use it unless the caller opted
+    // out ([LocalPlatformAppBarMaterialEnabled]) or an enclosing host applies offscreen squircle
+    // clipping ([LocalSquircleClippedHost], e.g. NavDisplay), which cannot clip AndroidView
+    // window-surface effects and causes a dark corner overflow during transitions.
+    val usePlatform = shouldUsePlatformAppBarMaterial(
+        platformRenderer = platformRenderer,
+        platformLocalEnabled = LocalPlatformAppBarMaterialEnabled.current,
+        squircleClippedHost = LocalSquircleClippedHost.current,
+        blurEnabled = blurEnabled,
+        hasDefaultRamp = materialRamp == AppBarMaterialRamp(),
+        hasBackdrop = backdrop != null,
+    )
+    // Dark-mode neutral container colours (e.g. #303030, #1E1E1E) map to Color.Black for the
+    // 0.4 -> 0.0 top shadow veil so scrolled content and #303030 pages receive a visible dark
+    // gradient matching ColorOS 17 native bars and TopAppBarSearchBar, while blur-disabled
+    // fallback below keeps the caller's opaque containerColor intact.
+    val gradientColor = resolveAppBarGradientColor(containerColor, isDarkTheme)
     val native = if (usePlatform) {
         rememberPlatformAppBarBackdropRenderer()
     } else {
@@ -454,7 +498,7 @@ internal fun AppBarMaterial(
     }
     if (native != null) {
         native.Material(
-            containerColor = containerColor,
+            containerColor = gradientColor,
             dark = isDarkTheme,
             alpha = scrollFraction,
             modifier = modifier.fillMaxSize(),
@@ -468,7 +512,7 @@ internal fun AppBarMaterial(
         if (!blurEnabled) {
             Modifier.background(containerColor)
         } else {
-            val brush = appBarBlurOverlayBrush(containerColor, isDarkTheme, materialRamp.alphaMidFraction)
+            val brush = appBarBlurOverlayBrush(gradientColor, isDarkTheme, materialRamp.alphaMidFraction)
             if (backdrop == null) {
                 Modifier.background(brush)
             } else {
@@ -503,6 +547,47 @@ internal fun AppBarMaterial(
             }
             .then(effect),
     )
+}
+
+/**
+ * Decides whether [AppBarMaterial] may host the platform's window-surface backdrop renderer
+ * (`OplusViewBackgroundRenderEffect` on ColorOS 17) instead of COUI's Compose blur engine.
+ *
+ * The platform renderer is declined whenever:
+ * - the caller passed `platformRenderer = false`,
+ * - [LocalPlatformAppBarMaterialEnabled] is `false`,
+ * - an enclosing host signaled [LocalSquircleClippedHost] (e.g. a corner-clipping `NavDisplay`),
+ * - blur is disabled, or
+ * - a custom two-row ramp is requested and a [Backdrop] is available for the Compose engine.
+ */
+internal fun shouldUsePlatformAppBarMaterial(
+    platformRenderer: Boolean,
+    platformLocalEnabled: Boolean,
+    squircleClippedHost: Boolean,
+    blurEnabled: Boolean,
+    hasDefaultRamp: Boolean,
+    hasBackdrop: Boolean,
+): Boolean = platformRenderer && platformLocalEnabled && !squircleClippedHost && blurEnabled &&
+    (hasDefaultRamp || !hasBackdrop)
+
+/**
+ * Resolves the tint colour painted by [AppBarMaterial]'s gradient veil.
+ *
+ * In dark mode, neutral dark surface colours (such as `#303030` or `#1E1E1E`) would yield zero
+ * darkening over a `#303030` page and actually lighten darker backgrounds when painted at
+ * `0.4 -> 0.0` alpha. ColorOS 17 native dark bars and `TopAppBarSurface` use a black veil instead;
+ * remapping achromatic dark container colours to [Color.Black] (preserving caller alpha) unifies
+ * the dark shadow while keeping explicit chromatic tints and blur-disabled solid fills intact.
+ */
+internal fun resolveAppBarGradientColor(
+    containerColor: Color,
+    isDarkTheme: Boolean,
+): Color {
+    if (!isDarkTheme || containerColor.alpha <= 0f) return containerColor
+    val isNeutralDark = containerColor.luminance() < 0.5f &&
+        abs(containerColor.red - containerColor.green) < 0.01f &&
+        abs(containerColor.green - containerColor.blue) < 0.01f
+    return if (isNeutralDark) Color.Black.copy(alpha = containerColor.alpha) else containerColor
 }
 
 /**

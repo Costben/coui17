@@ -72,6 +72,7 @@ val barHeight = TwoRowTopAppBarDefaults.barHeight(
 | `SecondRowHeight` | 32dp | `ChipTabDefaults.Height` |
 | `SecondRowBottom` | 6dp | 与搜索框在第一行里让出的下方内边距一致 |
 | `ExtraHeight` | 6dp | 双行栏底以下的材质渐隐带（`AppBarBlurOverlayDefaults.TwoRowExtraHeight`），连同 `SecondRowBottom` 止于胶囊下方 12dp |
+| `ScrollAlphaRampDistance` | 56dp | 双行顶栏触及胶囊行下沿后的平滑淡入行程；配合 `TwoRowTopAppBarDefaults.scrollAlpha(scrollPx, density, contentGap)` 跳过 `SecondRowBottom + contentGap` 空白死区再缓入，避免刚滑动顶部瞬间变暗 |
 
 以上数值均在参考机型上按 3.5 px/dp 实测。
 

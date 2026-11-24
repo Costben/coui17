@@ -92,6 +92,7 @@ import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState.Idle
 import androidx.navigationevent.NavigationEventTransitionState.InProgress
 import androidx.navigationevent.compose.NavigationEventState
+import io.github.suqi8.coui.kmp.squircle.LocalSquircleClippedHost
 import io.github.suqi8.coui.kmp.squircle.absoluteSquircleClip
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
@@ -762,12 +763,19 @@ fun <T : Any> NavDisplay(
                     else Lifecycle.State.STARTED
             )
         animatedContentScope = remember { this }
+        val corner = if (transitionEffects.enableCornerClip && !isInMultiWindowMode()) {
+            getRoundedCorner()
+        } else {
+            0.dp
+        }
+        val squircleClippedHost = LocalSquircleClippedHost.current || corner > 0.dp
         CompositionLocalProvider(
             LocalLifecycleOwner provides sceneLifecycleOwner,
             LocalNavAnimatedContentScope provides animatedContentScope,
             LocalCurrentScene provides targetScene,
             LocalEntriesToExcludeFromCurrentScene provides
                     sceneToExcludedEntryMap.getValue(AnimatedSceneKey(targetScene)),
+            LocalSquircleClippedHost provides squircleClippedHost,
         ) {
             val myZIndex =
                 zIndices.getOrElse(AnimatedSceneKey(targetScene)) { targetZIndex }
@@ -778,8 +786,7 @@ fun <T : Any> NavDisplay(
                         myZIndex > minOf(initialZIndex, targetZIndex) &&
                         initialZIndex != targetZIndex
 
-            val roundedModifier = if (transitionEffects.enableCornerClip && isTopScene) {
-                val corner = if (!isInMultiWindowMode()) getRoundedCorner() else 0.dp
+            val roundedModifier = if (corner > 0.dp && isTopScene) {
                 if (shouldFlipDirection) {
                     Modifier.absoluteSquircleClip(
                         topLeft = 0.dp,

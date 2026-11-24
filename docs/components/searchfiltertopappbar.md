@@ -79,5 +79,5 @@ The component reports the status bar plus the rows. The material's `extraHeight`
 | `containerColor` | `AppBarBlurOverlayDefaults.containerColor()` | The material's base colour |
 | `backdrop` | `LocalBackdrop.current` | The page the material samples |
 | `extraHeight` | `TwoRowTopAppBarDefaults.ExtraHeight` (6dp) for two rows; `AppBarBlurOverlayDefaults.ExtraHeight` (8dp) for one row | How far the material reaches past the bar |
-| `scrollFraction` | `{ 1f }` | The material's alpha, read in the draw phase |
+| `scrollFraction` | `{ 1f }` | The material's alpha, read in the draw phase; for scrollable lists use `TwoRowTopAppBarDefaults.scrollAlpha(scrollPx, density, contentGap)` to skip the gap below the chips and ease in over 56dp |
 | `platformRenderer` | `false` | Whether the platform's own blur may be used. Leave it `false` here: the bar records its own material and the platform effect samples the whole window |

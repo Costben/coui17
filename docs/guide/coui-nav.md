@@ -271,6 +271,12 @@ NavDisplay(
 ) { /* ... */ }
 ```
 
+::: tip ColorOS 17 app bar blur and rounded-corner transitions
+Whenever `enableCornerClip = true` and `cornerClipRadius > 0.dp`, `NavDisplay` automatically provides `LocalSquircleClippedHost = true` for the lifetime of its hosted entries. On ColorOS 17, the platform `AndroidView` backdrop effect (`OplusViewBackgroundRenderEffect`) used by `AppBarBlurOverlay`, `TopAppBar(gradientGlass = true)`, and `SmallTopAppBar(gradientGlass = true)` cannot be masked by Compose's offscreen `absoluteSquircleClip`, which would otherwise overflow as a sharp dark rectangle outside the top-left rounded corner when swiping back from a scrolled list. With this signal set, those bars automatically stay on COUI's Compose `progressiveTextureBlur` engine throughout the page's lifetime — no corner overflow and no first-frame gesture swap.
+
+Make sure pages inside a corner-clipping `NavDisplay` still wire up `LocalBackdrop` (`rememberLayerBackdrop` + `Modifier.layerBackdrop`) so Compose blur has content to sample. If you apply custom `squircleClip` transitions outside `NavDisplay`, you can opt out manually with `LocalPlatformAppBarMaterialEnabled provides false` or `platformRenderer = false`.
+:::
+
 ## Gesture back
 
 Back is built in and shares the same `animatedTop` and `NavTransition` as a normal pop — by default there is no separate predictive animation to maintain (opt into a split with [`navDirectionalTransition`](#programmatic-vs-predictive-transitions)). When a gesture is in progress the finger drives `animatedTop` 1:1 (`snapTo`, no interpolator); on release a velocity-first / position-fallback decision commits or cancels, handing the lift velocity to the governing commit curve so motion stays continuous.

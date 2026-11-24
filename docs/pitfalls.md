@@ -170,6 +170,33 @@ coui 里这条已经封成 `SearchFilterTopAppBar`，新页面直接调用它，
 
 **做法**：页面自录材质时一律 `platformRenderer = false`，走 coui 引擎采样录制层。
 
+### 12a. ColorOS 17 上 `NavDisplay` 圆角转场与原生 `AndroidView` 顶栏模糊冲突（黑块溢出）
+
+- **现象**：ColorOS 17（`OplusBuild` SDK ≥ 40）上，页面位于开启圆角裁剪（`enableCornerClip = true` 且 `cornerClipRadius > 0.dp`）的 `NavDisplay` 内并使用 `AppBarBlurOverlay`、`TopAppBar(gradientGlass = true)` 或 `SmallTopAppBar(gradientGlass = true)`；列表向下滚动（`scrollFraction() > 0`）后触发返回手势，顶栏左上角会有一块未被圆角裁掉的直角深色/黑色矩形溢出到圆角外部。列表停在顶部时不触发（此时 `AppBarBlurOverlayView` 为 `View.INVISIBLE`）。
+- **根因**：`OplusGradientBlurApi` 通过 `AndroidView { AppBarBlurOverlayView }` 给原生 `RenderNode` 挂了窗口级 `OplusViewBackgroundRenderEffect`；`NavDisplay` 的 `absoluteSquircleClip` 走离屏 `saveLayer` + `BlendMode.DstIn` 遮罩，无法裁剪原生 `AndroidView` 的窗口级背景效果。
+- **库侧处理**：`coui-nav` 与 `coui-navigation3-ui` 的 `NavDisplay` 在启用有效圆角裁剪时会为整个宿主生命周期提供 `LocalSquircleClippedHost = true`（不按手势帧切换，避免起手第一帧重建/闪一下）；`AppBarMaterial` 检测到该标记后自动切回 Compose 的 `progressiveTextureBlur`。
+- **调用方注意**：
+  - 放入圆角裁剪 `NavDisplay` 的页面仍需按规范提供 `LocalBackdrop`（`rememberLayerBackdrop` + `Modifier.layerBackdrop`），否则切回 Compose 引擎后只绘渐变剖面、无模糊；
+  - 若在 `NavDisplay` 之外自行对含顶栏子树套了 `squircleClip` / `absoluteSquircleClip`（或页面含读取 `LayerBackdrop` 的玻璃弹窗导致平台模糊闪动），请显式提供 `LocalPlatformAppBarMaterialEnabled provides false` 或传 `platformRenderer = false`。
+
+### 12b. 深色模式顶栏顶部渐变阴影与 `TopAppBarSearchBar` 嵌入写法
+
+- **坑点**：`AppBarBlurOverlayDefaults.containerColor()` 在深色模式下返回 `DarkContainerColor = Color(0xFF303030)`（页面底色与模糊关闭时的纯色回退值）。若直接拿 `#303030` 按 `0.4 -> 0.0` 叠在 `#303030` 页面上，上下色差为 0，顶栏几乎没有暗色阴影；叠在 `#1E1E1E` 或 `#000000` 底色上反而会把顶部涂亮发灰。
+- **ColorOS 17 实测**（PKT110 / ColorOS 17 设置二级页深色模式）：原生顶栏渐变遮罩为 **`Color.Black` 线性 `0.4 -> 0.0`**（跨度 `barHeight + 8dp`）：下方 `#1A1A1A`（26）卡片在 `y = 0` 被压暗至 `#101010`（16，`0.6 * 26 = 15.6`），纯黑页边保持 `0`，在 `barBottom + 8dp` 处归零。
+- **库侧处理**：`AppBarMaterial` 在深色模糊态下将中性暗色 `containerColor`（如 `#303030`、`#1E1E1E`）的渐变遮罩统一映射为 `Color.Black`（保留调用方 alpha 与显式彩色 tint），同时在模糊关闭回退时保留原 `containerColor` 实色填充。`AppBarBlurOverlay`、`SmallTopAppBar(gradientGlass = true)`、`TopAppBar(gradientGlass = true)`、`PinnedTopAppBar` 与独立 `TopAppBarSearchBar`（`TopAppBarSurface`）在深色模式下的顶部阴影已统一。
+- **嵌入 `TopAppBarSearchBar` 推荐写法**：把 `TopAppBarSearchBar(gradientColor = Color.Transparent)` 放进带 `WindowInsets.systemBars.only(WindowInsetsSides.Top)` 的 `AppBarBlurOverlay` 里，由外层 `AppBarBlurOverlay` 统一承担从状态栏顶部开始的渐进模糊与暗色顶部阴影，避免状态栏下沿出现接缝或双层遮罩。
+
+### 12c. 列表位于顶部却常驻顶栏阴影：漏接 `scrollBehavior` / `scrollFraction` 默认回退 `1f`
+
+- **现象**：可滚动页面（尤其是深色模式）在列表位于最顶部、尚未下滑时，顶栏区域仍有一层明显的压暗渐变阴影；而 `coui` 顶栏 Demo 在顶部是干净无阴影、开始下滑后才渐显的。
+- **根因**：这是**调用方漏接滚动状态**，不是库设计的顶部常驻阴影。`coui` 的设计本身是「顶部静止 `scrollFraction = 0f` 不绘制遮罩，向下滚动 `0..30dp` 内经 `AppBarBlurOverlayDefaults.scrollAlpha` 线性淡入」；但为了兼容无滚动状态的静态页，两个入口在缺省时都会静默回退到 `1f`：
+  1. `SmallTopAppBar(gradientGlass = true)` / `TopAppBar(gradientGlass = true)` 未传 `scrollBehavior` 时，`AppBarMaterialScaffold` 返回 `1f`；
+  2. `AppBarBlurOverlay` 的 `Float` 重载 `scrollFraction` 默认值为 `1f`，或多 Tab 壳层只接了部分 Tab 的 `LazyListState`、对其余 Tab 写死了 `1f`。
+- **做法**：
+  - 使用 `TopAppBar` / `SmallTopAppBar(gradientGlass = true)` 的可滚动页面，**必须**配套传入 `scrollBehavior`（如 `MiuixScrollBehavior` / `PinnedScrollBehavior`）并把 `scrollBehavior.nestedScrollConnection` 挂到列表上；
+  - 使用 `AppBarBlurOverlay` 自建顶栏（含多 Tab 壳层切换）时，**每个可滚动分页都必须接入各自的 `LazyListState`**，按 `AppBarBlurOverlayDefaults.scrollAlpha(scrolled, density)` 驱动 `scrollFraction`（顶部严格返回 `0f`，切 Tab 时按权重过渡），仅在明确需要 ColorOS 17 首页展开态底色时才显式传入 `minAlpha`；
+  - 使用双行顶栏（`TwoRowTopAppBar` / `SearchFilterTopAppBar`）时，不要套用单行 `0..30dp` 立刻拉满的曲线——列表首项与第二行胶囊之间通常存在 `SecondRowBottom (6dp) + contentGap` 的留白，从 `0dp` 起算会在卡片刚离开空白区时就把整块双行顶栏瞬间压黑。改用 `TwoRowTopAppBarDefaults.scrollAlpha(scrolled, density, contentGap = ...)`（跳过 `6dp + contentGap` 空白死区后再在 `56dp` 内缓入）。
+
 ### 13. 密度：相册和便签不是一回事
 
 **现象**：BiliCO 的胶囊比便签小一截（252×112 px 对 279×124 px，差 10.7%）。

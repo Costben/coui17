@@ -209,7 +209,7 @@ SmallTopAppBar(
 配合 `scrollBehavior` 使用时，材质在静止时不可见，内容滚过顶栏 30dp 后达到满强度；不配
 `scrollBehavior` 时材质始终开启。
 
-它和均匀材质一样需要 `LocalBackdrop`；模糊被禁用（`LocalBlurEnabled` 为 `false`、系统省电模式关闭模糊，或不支持 runtime shader）时，顶栏会自动回退为不透明的 `color` 纯色表面并恢复滚动分割线；显式不传 `LocalBackdrop` 而模糊仍开启时则保留渐变颜色填充。
+它和均匀材质一样需要 `LocalBackdrop`；模糊被禁用（`LocalBlurEnabled` 为 `false`、系统省电模式关闭模糊，或不支持 runtime shader）时，顶栏会自动回退为不透明的 `color` 纯色表面并恢复滚动分割线；显式不传 `LocalBackdrop` 而模糊仍开启时则保留渐变颜色填充。深色模糊态下，中性暗色 `color`（如 `#303030`、`#1E1E1E`）会自动以 `Color.Black` 绘制 `0.4 -> 0.0` 顶部渐变阴影（与 `AppBarBlurOverlay`、`TopAppBarSearchBar` 一致）；在开启圆角转场裁剪的 `NavDisplay` 内，ColorOS 17 会自动切回 Compose 渐进模糊引擎以避免原生视图溢出圆角。
 
 ```kotlin
 CompositionLocalProvider(LocalBackdrop provides backdrop) {

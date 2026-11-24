@@ -34,6 +34,8 @@ import io.github.suqi8.coui.kmp.theme.darkColorScheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 private const val OVERLAY_TAG = "app-bar-blur-overlay"
@@ -363,6 +365,134 @@ class AppBarBlurOverlayRenderTest {
         assertTrue(
             maxChannelDelta(belowBar, Color.White) <= 2,
             "extraHeight band below the bar must not be painted when blur is off, got ${belowBar.argbHex()}",
+        )
+    }
+
+    /**
+     * In dark mode over a `#303030` page, the default `containerColor()` (`#303030`) must still
+     * cast a visible dark top shadow (`Color.Black` at `0.4 -> 0.0`) rather than painting `#303030`
+     * over `#303030` with zero contrast. Over `48 / 48 / 48`, top alpha 0.4 yields `~29`, fading
+     * smoothly back to `48` at `barBottom + ExtraHeight`.
+     */
+    @Test
+    fun darkModeDefaultOverlayCastsVisibleBlackGradientShadowOverDarkPage() = runSkikoComposeUiTest(
+        size = Size(SURFACE_WIDTH_DP, SURFACE_HEIGHT_DP),
+        density = TestDensity,
+    ) {
+        val pageBg = AppBarBlurOverlayDefaults.DarkContainerColor
+        setContent {
+            COUITheme(colors = darkColorScheme()) {
+                val backdrop = rememberLayerBackdrop {
+                    drawRect(pageBg)
+                    drawContent()
+                }
+                Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                        Canvas(Modifier.fillMaxSize()) { drawRect(pageBg) }
+                    }
+                    CompositionLocalProvider(
+                        LocalBackdrop provides backdrop,
+                        LocalEdgeToEdge provides true,
+                    ) {
+                        AppBarBlurOverlay(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(BarHeight)
+                                .testTag(OVERLAY_TAG),
+                            scrollFraction = 1f,
+                        )
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        val overlay = overlayBounds()
+        val pixels = onRoot().captureToImage().toPixelMap()
+        val x = pixels.width / 4
+        val topPixel = pixels[x, overlay.top.roundToInt() + 1]
+        val midPixel = pixels[x, ((overlay.top + overlay.bottom) / 2f).roundToInt()]
+        val beyondBand = pixels[x, (overlay.bottom + ExtraHeightPx + 4f).roundToInt()]
+
+        val topRed = redChannel(topPixel)
+        val midRed = redChannel(midPixel)
+        val pageRed = redChannel(pageBg)
+        assertTrue(
+            topRed in 25..33,
+            "dark top edge over #303030 must darken to ~29 (0.6 * 48), got $topRed (${topPixel.argbHex()})",
+        )
+        assertTrue(
+            midRed in (topRed + 4) until pageRed,
+            "mid-bar must sit strictly between darkened top ($topRed) and page ($pageRed), got $midRed",
+        )
+        assertTrue(
+            maxChannelDelta(beyondBand, pageBg) <= 2,
+            "pixels below bar + ExtraHeight must return to #303030, got ${beyondBand.argbHex()}",
+        )
+    }
+
+    @Test
+    fun resolveAppBarGradientColorRemapsNeutralDarkOnly() {
+        assertEquals(Color.Black, resolveAppBarGradientColor(AppBarBlurOverlayDefaults.DarkContainerColor, isDarkTheme = true))
+        assertEquals(Color.Black, resolveAppBarGradientColor(Color(0xFF1E1E1E), isDarkTheme = true))
+        assertEquals(Color.Black.copy(alpha = 0.5f), resolveAppBarGradientColor(Color(0xFF303030).copy(alpha = 0.5f), isDarkTheme = true))
+        assertEquals(Color.Transparent, resolveAppBarGradientColor(Color.Transparent, isDarkTheme = true))
+        val chromaticDark = Color(0xFF1A237E)
+        assertEquals(chromaticDark, resolveAppBarGradientColor(chromaticDark, isDarkTheme = true))
+        assertEquals(Color(0xFFF0F1F2), resolveAppBarGradientColor(Color(0xFFF0F1F2), isDarkTheme = false))
+    }
+
+    @Test
+    fun shouldUsePlatformAppBarMaterialDisablesInsideSquircleClippedHost() {
+        assertTrue(
+            shouldUsePlatformAppBarMaterial(
+                platformRenderer = true,
+                platformLocalEnabled = true,
+                squircleClippedHost = false,
+                blurEnabled = true,
+                hasDefaultRamp = true,
+                hasBackdrop = true,
+            ),
+        )
+        assertFalse(
+            shouldUsePlatformAppBarMaterial(
+                platformRenderer = true,
+                platformLocalEnabled = true,
+                squircleClippedHost = true,
+                blurEnabled = true,
+                hasDefaultRamp = true,
+                hasBackdrop = true,
+            ),
+        )
+        assertFalse(
+            shouldUsePlatformAppBarMaterial(
+                platformRenderer = true,
+                platformLocalEnabled = true,
+                squircleClippedHost = true,
+                blurEnabled = true,
+                hasDefaultRamp = true,
+                hasBackdrop = false,
+            ),
+        )
+        assertFalse(
+            shouldUsePlatformAppBarMaterial(
+                platformRenderer = true,
+                platformLocalEnabled = false,
+                squircleClippedHost = false,
+                blurEnabled = true,
+                hasDefaultRamp = true,
+                hasBackdrop = true,
+            ),
+        )
+        assertFalse(
+            shouldUsePlatformAppBarMaterial(
+                platformRenderer = true,
+                platformLocalEnabled = true,
+                squircleClippedHost = false,
+                blurEnabled = true,
+                hasDefaultRamp = false,
+                hasBackdrop = true,
+            ),
         )
     }
 }

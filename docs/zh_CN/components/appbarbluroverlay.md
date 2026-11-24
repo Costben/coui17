@@ -49,13 +49,46 @@ Box(Modifier.fillMaxSize()) {
 
 overlay 通过 `LocalBackdrop` 采样它后方的画面；请放在提供了背景层的位置，或传 `backdrop = null` 只保留剖面。当模糊被禁用（`LocalBlurEnabled` 置为 `false`、系统处于省电模式或关闭材质模糊、或平台低于 Android 13 无法运行 runtime shader）时，overlay 不再在外延 `extraHeight` 带上绘制半透明渐变，而是在导航栏自身高度内回退为不透明的 `containerColor` 纯色填充（仍受 `scrollFraction` 驱动），避免滚动文字透过未模糊的渐变叠在标题下方。
 
-在 ColorOS 17（`OplusBuild` SDK 40 及以上）上，overlay 完全不使用 `backdrop`，而是承载一个与原生 helper 相同的系统视图：背景是同一条渐变剖面，再挂上系统的渐进模糊背景效果（30px 到 0px，速度 3），由系统渲染线程直接模糊视图后方已经画好的内容。效果只设置一次，滚动时只改视图的透明度，透明度为 0 时隐藏视图。ColorOS 16 及其他平台继续使用 COUI 自己的模糊：ColorOS 16 能解析到同一套厂商类，但通过 Compose 宿主采样出来的背景是黑的，会把整条顶栏染暗。
+在 ColorOS 17（`OplusBuild` SDK 40 及以上）上，overlay 默认优先承载一个与原生 helper 相同的系统视图：背景是同一条渐变剖面，再挂上系统的渐进模糊背景效果（30px 到 0px，速度 3），由系统渲染线程直接模糊视图后方已经画好的内容。效果只设置一次，滚动时只改视图的透明度，透明度为 0 时隐藏视图。ColorOS 16 及其他平台继续使用 COUI 自己的模糊：ColorOS 16 能解析到同一套厂商类，但通过 Compose 宿主采样出来的背景是黑的，会把整条顶栏染暗。
+
+以下情况会自动或按需切回 COUI 内置的 Compose `progressiveTextureBlur`（此时必须提供 `LocalBackdrop`，否则只绘制渐变剖面）：
+
+- **位于开启圆角裁剪的 `NavDisplay` 内**：`coui-nav` 与 `coui-navigation3-ui` 的 `NavDisplay` 在转场圆角裁剪生效时会自动提供 `LocalSquircleClippedHost = true`，避免原生 `AndroidView` 的窗口级 `OplusViewBackgroundRenderEffect` 无法被 Compose 的 `absoluteSquircleClip` 离屏遮罩裁剪而在返回手势期间溢出直角黑块。
+- **页面内含玻璃弹窗或自定义 `squircleClip` 转场**：使用 `CompositionLocalProvider(LocalPlatformAppBarMaterialEnabled provides false)` 或向 `AppBarBlurOverlay` 传入 `platformRenderer = false`，避免弹层开关引起窗口背景录制启停闪动，或自定义圆角裁剪溢出。
+- **双行顶栏自定义渐变剖面**：传入自定义双行 `materialRamp` 且具备 `backdrop` 时保持 Compose 引擎。
+
+### 嵌入 `TopAppBarSearchBar` 并保留状态栏连续阴影
+
+当页面需要把 `TopAppBarSearchBar` 放进带 `systemBars.Top` 的 `AppBarBlurOverlay` 时，给 `TopAppBarSearchBar` 传 `gradientColor = Color.Transparent`，让外层 `AppBarBlurOverlay` 统一从状态栏顶部开始绘制渐进模糊与顶部渐变阴影，避免状态栏下沿出现接缝或双层叠加：
+
+```kotlin
+AppBarBlurOverlay(
+    scrollFraction = scrollFraction,
+    modifier = Modifier.fillMaxWidth(),
+) {
+    TopAppBarSearchBar(
+        query = query,
+        onQueryChange = { query = it },
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
+        gradientColor = Color.Transparent,
+        placeholder = "搜索",
+    )
+}
+```
+
+深色模式下，即使页面底色与 `AppBarBlurOverlayDefaults.containerColor()` 均为 `#303030`，外层 `AppBarBlurOverlay` 也会按 ColorOS 17 原生行为用 `Color.Black` 绘制 `0.4 -> 0.0` 顶部渐变阴影（与独立 `TopAppBarSearchBar` 保持一致），并在关闭模糊时仍回退为不透明的 `#303030`。
 
 材质靠采样它**下方**的内容成像，所以 COUI 只在 `LocalEdgeToEdge` 为 `true` 时才画材质：套在 `Scaffold(edgeToEdge = true)` 里，或自己用 `CompositionLocalProvider(LocalEdgeToEdge provides true)` 声明。内容被排在顶栏下方时顶栏底下没有像素可采，采样会钳到最近的一行、糊成一条平色横带；此时 overlay 只作为一层普通容器，不绘制材质。
 
 ### 滚动 producer 重载
 
 `AppBarBlurOverlay` 还有一个重载，第一个参数是 `scrollFraction: () -> Float`，而不是 `Float`。producer 在 draw 阶段读取，因此滚动驱动的 alpha 不会让导航栏在每一帧都重组。静止时它必须返回 `0`，此时材质不绘制任何内容，材质下方的内容保持清晰；没有可观察滚动状态的调用方应返回 `1f`。`Float` 重载会转发到这个重载。
+
+> 注意：凡是包含可滚动列表的页面（包括多 Tab 壳层下的各个分页，以及开启 `gradientGlass = true` 的 `TopAppBar` / `SmallTopAppBar`），都应显式接入对应列表的滚动状态（`AppBarBlurOverlayDefaults.scrollAlpha` 或 `scrollBehavior`）。若省略或写死 `1f`，即使列表位于最顶部也会常驻一层满强度渐变遮罩（深色模式下表现为顶部常驻暗影）。双行顶栏（`TwoRowTopAppBar` / `SearchFilterTopAppBar`）可使用 `AppBarBlurOverlayDefaults.scrollAlpha(scrollPx, density, startOffset, rampDistance)` 或便捷封装 `TwoRowTopAppBarDefaults.scrollAlpha(scrollPx, density, contentGap)`，先跳过第二行胶囊下方的留白再以 `56dp` 缓入，避免刚滑动时顶部过快变暗。
 
 ### 静止下限
 
@@ -179,7 +212,7 @@ producer 重载的参数相同，只是第一个且必填的参数 `scrollFracti
 
 走哪条剖面是**主题属性、不是基色亮度**：本移植在 `COUITheme.colorScheme.background.luminance() < 0.5f`（即框架的 `isCOUIDarkThemeOrNightMode`）时选深色两档，因此浅色主题下调暗 `containerColor` 也不会把剖面切到另一分支。
 
-深色基色无法从同一条链里还原。ColorOS 从 `?couiColorBackgroundWithCard` 解析它，而该属性在 night 配置下是 `#ffffff`——这个颜色无法产生实测的材质外观。深色页面背景实测为均匀的 48 / 48 / 48（`#303030`），测量自两个原生界面的整页；而 `#303030` 也是平台自身的深色背景（`background_material_dark` → `material_grey_850`），因此它是平台声明的颜色，而不是从截图均值推断出来的。材质顶边压在 `#454545` 卡片上得 60，配合深色剖面硬编码的顶边 alpha，`0.4 * B + 0.6 * 69 = 60` 解出 `B ≈ 46.5`，与 48 一致。能产生这一值的颜色 token 无法解析：启用的运行时 overlay 叠在 night 配置之上，压暗层由厂商框架本身施加。因此 `DarkContainerColor` 改取渲染出的值 `#303030`。缺口不存在某个显式颜色来填补：渐变模糊背景色在 ColorOS 17 里从未被赋值，静态字段恒为 `null`，最终解析的是页面兜底。
+深色模式下的 `DarkContainerColor`（`#303030`，即平台 `background_material_dark` → `material_grey_850`）作为深色页面底色与**模糊关闭时的不透明回退填充色**保留。但在**模糊开启**时，ColorOS 17 原生深色二级页（PKT110 / ColorOS 17 设置页实测）的顶栏渐变遮罩实为 `Color.Black` 线性 `0.4 -> 0.0`：下方 `#1A1A1A`（26）卡片在 `y = 0` 被压暗为 `#101010`（16，`0.4 * B + 0.6 * 26 = 16` 解得 `B ≈ 0`），纯黑页边保持 `0`，在 `barBottom + 8dp` 处归零。若直接拿 `#303030` 叠在 `#303030` 页面上会毫无对比度、叠在更暗底色上反而发灰；因此 `AppBarMaterial` 在深色模糊态下会将中性暗色 `containerColor`（如 `#303030`、`#1E1E1E`）自动映射为 `Color.Black`（保留调用方 alpha，显式彩色 tint 原样保留），从而让 `AppBarBlurOverlay`、`SmallTopAppBar(gradientGlass = true)`、`TopAppBar(gradientGlass = true)` 与 `TopAppBarSearchBar` 的深色顶部阴影完全统一。
 
 ## 未移植
 

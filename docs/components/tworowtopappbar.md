@@ -72,6 +72,7 @@ Both rows are centred in their own height. The second row is inset from the firs
 | `SecondRowHeight` | 32dp | `ChipTabDefaults.Height` |
 | `SecondRowBottom` | 6dp | The same inset the search field leaves inside the first row |
 | `ExtraHeight` | 6dp | Two-row fade band below the bar (`AppBarBlurOverlayDefaults.TwoRowExtraHeight`), ending 12dp past the chips |
+| `ScrollAlphaRampDistance` | 56dp | Smooth fade-in ramp once content reaches the chip row's bottom edge; use `TwoRowTopAppBarDefaults.scrollAlpha(scrollPx, density, contentGap)` to skip the `SecondRowBottom + contentGap` deadzone before easing in |
 
 All values were measured on the reference device at 3.5 px/dp.
 

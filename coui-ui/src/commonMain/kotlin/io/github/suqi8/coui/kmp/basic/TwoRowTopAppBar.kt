@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.blur.Backdrop
@@ -84,6 +85,43 @@ object TwoRowTopAppBarDefaults {
      * [AppBarBlurOverlayDefaults.ExtraHeight] (8dp).
      */
     val ExtraHeight = AppBarBlurOverlayDefaults.TwoRowExtraHeight
+
+    /**
+     * Default scroll distance over which a two-row bar's material fades in once scrolled content
+     * reaches the chip row's bottom edge: 56dp.
+     *
+     * Compared with the single-row 30dp ramp ([AppBarBlurOverlayDefaults.ScrollAlphaThresholdDp]),
+     * stretching the fade across 56dp lets content ease gently behind the 32dp chip row and reach
+     * full tint/blur strength as it crosses into the first row, avoiding an abrupt dark flash in
+     * dark mode.
+     */
+    val ScrollAlphaRampDistance = 56.dp
+
+    /**
+     * Scroll-driven material alpha tuned for two-row bars ([TwoRowTopAppBar] and
+     * [SearchFilterTopAppBar]).
+     *
+     * Delays the fade-in until scrolled content crosses the blank space between the chip row's
+     * bottom edge and the first list item (`SecondRowBottom + contentGap`), then ramps smoothly
+     * over [rampDistance] (default [ScrollAlphaRampDistance], 56dp).
+     *
+     * @param scrollPx The distance the list has scrolled from rest, in pixels.
+     * @param density The density used to convert dp thresholds to pixels.
+     * @param contentGap Extra vertical padding the list places between the bar's bottom edge
+     *   ([barHeight]) and the first item's top edge (for example `8.dp` or `16.dp`).
+     * @param rampDistance Scroll distance over which alpha eases from `0f` to `1f`.
+     */
+    fun scrollAlpha(
+        scrollPx: Float,
+        density: Density,
+        contentGap: Dp = AppBarBlurOverlayDefaults.ExtraHeight + 8.dp,
+        rampDistance: Dp = ScrollAlphaRampDistance,
+    ): Float = AppBarBlurOverlayDefaults.scrollAlpha(
+        scrollPx = scrollPx,
+        density = density,
+        startOffset = SecondRowBottom + contentGap,
+        rampDistance = rampDistance,
+    )
 
     /**
      * The height the bar occupies below the status bar, as [TwoRowTopAppBar] lays it out.

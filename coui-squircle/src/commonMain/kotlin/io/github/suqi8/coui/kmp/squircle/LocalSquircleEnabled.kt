@@ -24,3 +24,17 @@ val LocalSquircleEnabled = staticCompositionLocalOf { true }
 @Composable
 @ReadOnlyComposable
 fun isSquircleEnabled(): Boolean = LocalSquircleEnabled.current && isRuntimeShaderSupported()
+
+/**
+ * Whether an enclosing host may clip this subtree with [squircleClip] / [absoluteSquircleClip] —
+ * for example a navigation host that rounds transitioning pages during push, pop, or predictive
+ * back animations.
+ *
+ * Platform views carrying window-surface backdrop effects (such as ColorOS 17's
+ * `OplusViewBackgroundRenderEffect` hosted inside `AndroidView`) cannot be masked by Compose's
+ * offscreen `DstIn` squircle clip and overflow outside the rounded corners as a sharp dark
+ * rectangle during transitions. Hosts provide `true` for the full lifetime of clippable entries
+ * rather than toggling mid-gesture so platform-backed overlays stay on Compose's own renderer
+ * without tearing down and flashing on the first frame of a swipe.
+ */
+val LocalSquircleClippedHost = staticCompositionLocalOf { false }

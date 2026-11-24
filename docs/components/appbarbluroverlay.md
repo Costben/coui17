@@ -49,13 +49,46 @@ Box(Modifier.fillMaxSize()) {
 
 The overlay needs the content it samples through `LocalBackdrop`; place it where a backdrop is provided, or pass `backdrop = null` for the plain ramp alone. When blur is disabled (`LocalBlurEnabled` set to `false`, system power-saving mode or material blur switched off, or below Android 13 without runtime shaders), the overlay stops painting into the `extraHeight` band and falls back to an opaque `containerColor` fill inside the bar's own height (still modulated by `scrollFraction`), preventing sharp scrolling text from bleeding through an unblurred translucent ramp.
 
-On ColorOS 17 (`OplusBuild` SDK 40 or later), the overlay does not use `backdrop` at all. It hosts the same platform view the native helper dresses: the gradient drawable as its background, and the framework's gradient-blur backdrop effect (30px to 0px, speed 3), which the system renderer applies to whatever is already drawn behind the view. The effect is set once; scrolling only changes the view's alpha, and the view is hidden at exactly 0. ColorOS 16 and every other platform keep COUI's own blur: ColorOS 16 resolves the same vendor classes, but the backdrop it samples through the Compose host comes out black and paints the whole bar dark.
+On ColorOS 17 (`OplusBuild` SDK 40 or later), the overlay defaults to hosting the same platform view the native helper dresses: the gradient drawable as its background, and the framework's gradient-blur backdrop effect (30px to 0px, speed 3), which the system renderer applies to whatever is already drawn behind the view. The effect is set once; scrolling only changes the view's alpha, and the view is hidden at exactly 0. ColorOS 16 and every other platform keep COUI's own blur: ColorOS 16 resolves the same vendor classes, but the backdrop it samples through the Compose host comes out black and paints the whole bar dark.
+
+The overlay switches back to COUI's Compose `progressiveTextureBlur` (which requires `LocalBackdrop` to blur; otherwise it paints the gradient ramp alone) in the following cases:
+
+- **Inside a corner-clipping `NavDisplay`**: both `coui-nav` and `coui-navigation3-ui` `NavDisplay` automatically provide `LocalSquircleClippedHost = true` when rounded corner clipping is configured, avoiding the ColorOS 17 defect where the native `AndroidView`'s window-surface `OplusViewBackgroundRenderEffect` cannot be masked by Compose's offscreen `absoluteSquircleClip` and overflows outside the top-left corner as a sharp dark rectangle during back transitions.
+- **Pages with glass popups or custom `squircleClip` transitions**: provide `LocalPlatformAppBarMaterialEnabled provides false` (or pass `platformRenderer = false`) so backdrop recording toggles or custom offscreen corner clips do not cause flicker or corner overflow.
+- **Custom two-row material ramps**: kept on the Compose engine whenever a `backdrop` is available.
+
+### Embedding `TopAppBarSearchBar` with a Continuous Top Shadow
+
+When embedding `TopAppBarSearchBar` inside an `AppBarBlurOverlay` that spans the status bar (`WindowInsets.systemBars.only(WindowInsetsSides.Top)`), pass `gradientColor = Color.Transparent` to `TopAppBarSearchBar` so the enclosing `AppBarBlurOverlay` paints one continuous progressive blur and top gradient shadow from `y = 0` without a seam below the status bar:
+
+```kotlin
+AppBarBlurOverlay(
+    scrollFraction = scrollFraction,
+    modifier = Modifier.fillMaxWidth(),
+) {
+    TopAppBarSearchBar(
+        query = query,
+        onQueryChange = { query = it },
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
+        gradientColor = Color.Transparent,
+        placeholder = "Search",
+    )
+}
+```
+
+In dark mode, even when both the page background and `AppBarBlurOverlayDefaults.containerColor()` are `#303030`, the enclosing `AppBarBlurOverlay` paints a black `0.4 -> 0.0` top shadow veil (matching standalone `TopAppBarSearchBar` and native ColorOS 17 bars) while still falling back to opaque `#303030` when blur is disabled.
 
 The material is an image of the content **under** it, so COUI only paints it while `LocalEdgeToEdge` is `true`: put it inside a `Scaffold(edgeToEdge = true)`, or declare it yourself with `CompositionLocalProvider(LocalEdgeToEdge provides true)`. With the content laid out below the bar there is nothing to sample, the sample clamps to the nearest row and smears it into a flat band; the overlay then behaves as a plain container and paints no material.
 
 ### Scroll Producer Overload
 
 `AppBarBlurOverlay` also has an overload whose first parameter is `scrollFraction: () -> Float` instead of a `Float`. The producer is read in the draw phase, so a scroll-driven alpha does not recompose the bar on every frame. At rest it must return `0`, which leaves the material drawing nothing and the content under the bar sharp; a caller with no scroll state to observe should return `1f`. The `Float` overload forwards to this one.
+
+> Note: Every scrollable page — including each tab inside a multi-tab shell and any `TopAppBar` / `SmallTopAppBar(gradientGlass = true)` — should explicitly wire its list scroll state (`AppBarBlurOverlayDefaults.scrollAlpha` or `scrollBehavior`). Leaving `scrollFraction` / `scrollBehavior` omitted or hardcoded to `1f` keeps the full-strength gradient veil permanently painted even at scroll offset `0` (most noticeable as a constant top shadow in dark mode). For two-row bars (`TwoRowTopAppBar` / `SearchFilterTopAppBar`), use `AppBarBlurOverlayDefaults.scrollAlpha(scrollPx, density, startOffset, rampDistance)` or `TwoRowTopAppBarDefaults.scrollAlpha(scrollPx, density, contentGap)` to skip the blank gap below the chip row and ease in over 56dp instead of hitting full tint immediately.
 
 ### Resting Alpha Floor
 
@@ -177,7 +210,7 @@ The dark theme has only two stops: the `0.4` top-edge alpha is a hard-coded valu
 
 Which of the two ramps is drawn is a property of the theme, not of the base colour: the port selects the dark ramp when `COUITheme.colorScheme.background.luminance() < 0.5f`, so passing a dark `containerColor` on a light theme cannot move the ramp to the other branch.
 
-The dark base colour itself cannot be read off the same chain. ColorOS resolves it from `?couiColorBackgroundWithCard`, which is `#ffffff` in the night configuration — a colour that cannot produce the profile the material shows. The dark page background renders as a flat 48 / 48 / 48 (`#303030`), measured across whole pages on two native surfaces, and `#303030` is also the platform's own dark background (`background_material_dark` → `material_grey_850`), so it is a colour the platform declares rather than one inferred from a screenshot mean. The material's top edge over a `#454545` card lands at 60, and the dark ramp's hard-coded top alpha gives `0.4 * B + 0.6 * 69 = 60`, so `B ≈ 46.5`, consistent with 48. The colour token that would produce this cannot be resolved: an enabled runtime overlay sits on top of the night configuration, and the darkening layer is applied by the vendor framework itself. `DarkContainerColor` therefore takes the rendered value, `#303030`, instead. No explicit colour is hiding the gap: the gradient-blur background colour is never assigned in ColorOS 17, so its static never leaves `null` and the page fallback is what resolves.
+In dark mode, `DarkContainerColor` (`#303030`, matching Android's `background_material_dark` → `material_grey_850`) is preserved as the dark page background and the **opaque fallback colour when blur is disabled**. When blur is active, however, ColorOS 17's native dark top-bar gradient veil (measured on PKT110 ColorOS 17 Settings) is a linear `0.4 -> 0.0` `Color.Black` scrim across `barHeight + 8dp`: a flat `#1A1A1A` (26) card drops to `#101010` (16, solving `0.4 * B + 0.6 * 26 = 16 -> B ≈ 0`) at `y = 0`, pure black margins stay `0`, and the ramp reaches `0` at `barBottom + 8dp`. Painting `#303030` at `0.4 -> 0.0` over a `#303030` page yields zero contrast and lightens darker surfaces; `AppBarMaterial` therefore remaps neutral dark `containerColor` values (such as `#303030` and `#1E1E1E`) to `Color.Black` for the gradient veil (preserving caller alpha and explicit chromatic tints), unifying dark top shadows across `AppBarBlurOverlay`, `SmallTopAppBar(gradientGlass = true)`, `TopAppBar(gradientGlass = true)`, and `TopAppBarSearchBar`.
 
 ## Not Ported
 

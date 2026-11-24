@@ -1,4 +1,5 @@
 public final class io/github/suqi8/coui/kmp/squircle/LocalSquircleEnabledKt {
+	public static final fun getLocalSquircleClippedHost ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalSquircleEnabled ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun isSquircleEnabled (Landroidx/compose/runtime/Composer;I)Z
 }

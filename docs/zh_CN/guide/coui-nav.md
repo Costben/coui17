@@ -271,6 +271,12 @@ NavDisplay(
 ) { /* ... */ }
 ```
 
+::: tip ColorOS 17 顶栏玻璃与圆角转场兼容性
+当 `enableCornerClip = true` 且 `cornerClipRadius > 0.dp` 时，`NavDisplay` 会自动为宿主内所有页面提供 `LocalSquircleClippedHost = true`。ColorOS 17 上 `AppBarBlurOverlay`、`TopAppBar(gradientGlass = true)` 与 `SmallTopAppBar(gradientGlass = true)` 的原生 `AndroidView` 窗口级模糊（`OplusViewBackgroundRenderEffect`）无法被 Compose 的 `absoluteSquircleClip` 离屏遮罩裁剪，否则列表滚动后在返回手势期间会在顶栏左上角溢出直角黑块。开启该标记后，顶栏在页面整个生命周期内自动保持 COUI 内置的 Compose `progressiveTextureBlur`，转场无溢出也无起手闪动。
+
+因此，放在圆角裁剪 `NavDisplay` 内的玻璃顶栏页面请正常提供 `LocalBackdrop`（`rememberLayerBackdrop` + `Modifier.layerBackdrop`），确保内置模糊有可采样的内容层；若你在 `NavDisplay` 之外自行套用了 `squircleClip` / `graphicsLayer` 转场，也可手动提供 `LocalPlatformAppBarMaterialEnabled provides false` 或传 `platformRenderer = false`。
+:::
+
 ## 手势返回
 
 返回已内置，且与普通 pop **共用同一个 `animatedTop` 与同一套 `NavTransition`**——默认无需为预测返回单独维护一套动画（需要分离时用 [`navDirectionalTransition`](#程序化与预测性转场分离) 选择性开启）。手势进行中，手指以 1:1 驱动 `animatedTop`（`snapTo`，不过插值器）；松手时按「速度优先、位置兜底」判定 commit 或 cancel，并把松手瞬时速度作为初速度交接给有效 commit 曲线，保证运动连续。
