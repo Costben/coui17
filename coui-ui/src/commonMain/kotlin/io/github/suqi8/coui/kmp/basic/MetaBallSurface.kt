@@ -36,6 +36,7 @@ import io.github.suqi8.coui.kmp.blur.asBrush
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
+import io.github.suqi8.coui.kmp.squircle.addSquircleRect
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -297,6 +298,8 @@ internal fun MetaBallSurfaceWithRim(
     plainRim: Boolean = false,
     edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
     conicCornerWeight: Float = 0f,
+    squircleCornerWeight: Float = 0f,
+    particleColors: List<Color?>? = null,
 ) {
     MetaBallSurfaceImpl(
         particles = particles,
@@ -319,6 +322,8 @@ internal fun MetaBallSurfaceWithRim(
         plainRim = plainRim,
         edgeStyle = edgeStyle,
         conicCornerWeight = conicCornerWeight,
+        squircleCornerWeight = squircleCornerWeight,
+        particleColors = particleColors,
     )
 }
 
@@ -355,6 +360,8 @@ private fun MetaBallSurfaceImpl(
     plainRim: Boolean = false,
     edgeStyle: GradientStrokeStyle = GradientStrokeStyle.EDGE_STYLE_0,
     conicCornerWeight: Float = 0f,
+    squircleCornerWeight: Float = 0f,
+    particleColors: List<Color?>? = null,
     content: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     val runsShader = isRuntimeShaderSupported()
@@ -378,25 +385,33 @@ private fun MetaBallSurfaceImpl(
                     modifier = Modifier.matchParentSize(),
                 )
             }
+            val drawRim = rimColor != null && rimColor.alpha > 0f
             if (glass) {
+                val glassTint = if (blurColors == null) color.copy(alpha = containerAlpha) else Color.Transparent
+                val glassEdgeModifier = if (drawRim || glassTint.alpha > 0f) {
+                    Modifier.nativeMaterialEdge(
+                        particles = paintedParticles,
+                        rim = rimColor ?: Color.Transparent,
+                        bottomScale = rimBottomScale,
+                        tint = glassTint,
+                        edgeStyle = edgeStyle,
+                        lineWidth = rimLineWidth,
+                        lineAngle = rimLineAngle,
+                        extension = extension,
+                        factorX = extensionFactorX,
+                        factorY = extensionFactorY,
+                        continuousCurve = continuousCurve,
+                        conicCornerWeight = conicCornerWeight,
+                        squircleCornerWeight = squircleCornerWeight,
+                        plainRim = plainRim,
+                    )
+                } else {
+                    Modifier
+                }
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .nativeMaterialEdge(
-                            particles = paintedParticles,
-                            rim = rimColor ?: Color.Transparent,
-                            bottomScale = rimBottomScale,
-                            tint = if (blurColors == null) color.copy(alpha = containerAlpha) else Color.Transparent,
-                            edgeStyle = edgeStyle,
-                            lineWidth = rimLineWidth,
-                            lineAngle = rimLineAngle,
-                            extension = extension,
-                            factorX = extensionFactorX,
-                            factorY = extensionFactorY,
-                            continuousCurve = continuousCurve,
-                            conicCornerWeight = conicCornerWeight,
-                            plainRim = plainRim,
-                        )
+                        .then(glassEdgeModifier)
                         .textureBlur(
                             backdrop = backdrop,
                             shape = RectangleShape,
@@ -419,14 +434,14 @@ private fun MetaBallSurfaceImpl(
                         rimBlur = rimBlur,
                         continuousCurve = continuousCurve,
                         conicCornerWeight = conicCornerWeight,
+                        squircleCornerWeight = squircleCornerWeight,
                     )
                 }
             } else if (shader != null) {
-                MetaBallSilhouette(
-                    particles = paintedParticles,
-                    modifier = Modifier.matchParentSize().nativeMaterialEdge(
+                val opaqueEdgeModifier = if (drawRim) {
+                    Modifier.nativeMaterialEdge(
                         particles = paintedParticles,
-                        rim = rimColor ?: Color.Transparent,
+                        rim = rimColor,
                         bottomScale = rimBottomScale,
                         edgeStyle = edgeStyle,
                         lineWidth = rimLineWidth,
@@ -436,8 +451,15 @@ private fun MetaBallSurfaceImpl(
                         factorY = extensionFactorY,
                         continuousCurve = continuousCurve,
                         conicCornerWeight = conicCornerWeight,
+                        squircleCornerWeight = squircleCornerWeight,
                         plainRim = plainRim,
-                    ),
+                    )
+                } else {
+                    Modifier
+                }
+                MetaBallSilhouette(
+                    particles = paintedParticles,
+                    modifier = Modifier.matchParentSize().then(opaqueEdgeModifier),
                     shader = shader,
                     body = color,
                     rim = Color.Transparent,
@@ -448,6 +470,8 @@ private fun MetaBallSurfaceImpl(
                     rimBottomScale = rimBottomScale,
                     continuousCurve = continuousCurve,
                     conicCornerWeight = conicCornerWeight,
+                    squircleCornerWeight = squircleCornerWeight,
+                    particleColors = particleColors,
                 )
             } else {
                 Canvas(modifier = Modifier.matchParentSize()) {
@@ -456,6 +480,8 @@ private fun MetaBallSurfaceImpl(
                         color = color,
                         continuousCurve = continuousCurve,
                         conicCornerWeight = conicCornerWeight,
+                        squircleCornerWeight = squircleCornerWeight,
+                        particleColors = particleColors,
                         pathCaches = pathCaches,
                     )
                 }
@@ -497,6 +523,8 @@ private fun MetaBallSilhouette(
     rimBottomScale: Float = 0f,
     continuousCurve: Boolean = false,
     conicCornerWeight: Float = 0f,
+    squircleCornerWeight: Float = 0f,
+    particleColors: List<Color?>? = null,
 ) {
     // Always the runtime shader, never the platform's `OplusMaterialUtil` chain: the vendor effect
     // re-runs its own material animation whenever the window's overlay state changes, so opening a
@@ -509,6 +537,8 @@ private fun MetaBallSilhouette(
             rimBottomScale = rimBottomScale,
             continuousCurve = continuousCurve,
             conicCornerWeight = conicCornerWeight,
+            squircleCornerWeight = squircleCornerWeight,
+            particleColors = particleColors,
         )
     }
 }
@@ -536,6 +566,8 @@ private fun DrawScope.drawMetaBall(
     rimBottomScale: Float = 0f,
     continuousCurve: Boolean = false,
     conicCornerWeight: Float = 0f,
+    squircleCornerWeight: Float = 0f,
+    particleColors: List<Color?>? = null,
 ) {
     setMetaBallUniforms(
         shader = shader,
@@ -549,6 +581,8 @@ private fun DrawScope.drawMetaBall(
         rimBottomScale = rimBottomScale,
         continuousCurve = continuousCurve,
         conicCornerWeight = conicCornerWeight,
+        squircleCornerWeight = squircleCornerWeight,
+        particleColors = particleColors,
     )
     drawRect(brush = shader.asBrush())
 }
@@ -568,6 +602,8 @@ internal fun Density.setMetaBallUniforms(
     lineAngle: Float = 0f,
     continuousCurve: Boolean = false,
     conicCornerWeight: Float = 0f,
+    squircleCornerWeight: Float = 0f,
+    particleColors: List<Color?>? = null,
 ) {
     val count = minOf(particles.size, META_BALL_MAX_PARTICLES)
     if (count == 0) return
@@ -577,7 +613,9 @@ internal fun Density.setMetaBallUniforms(
     val corners = FloatArray(META_BALL_MAX_PARTICLES)
     val scales = FloatArray(META_BALL_MAX_PARTICLES * 2) { 1f }
     val alphas = FloatArray(META_BALL_MAX_PARTICLES) { 1f }
+    val colors = FloatArray(META_BALL_MAX_PARTICLES * 4)
     val edgeArrays = FloatArray(META_BALL_MAX_PARTICLES * 16)
+    var hasCustomParticleColors = false
     for (i in 0 until count) {
         val particle = particles[i]
         centers[i * 2] = particle.centerX.toPx()
@@ -588,6 +626,12 @@ internal fun Density.setMetaBallUniforms(
         scales[i * 2] = particle.scaleX.coerceAtLeast(0.001f)
         scales[i * 2 + 1] = particle.scaleY.coerceAtLeast(0.001f)
         alphas[i] = particle.alpha.coerceIn(0f, 1f)
+        val resolvedParticleColor = particleColors?.getOrNull(i)?.takeIf { it != Color.Unspecified } ?: body
+        if (resolvedParticleColor != body) hasCustomParticleColors = true
+        colors[i * 4] = resolvedParticleColor.red
+        colors[i * 4 + 1] = resolvedParticleColor.green
+        colors[i * 4 + 2] = resolvedParticleColor.blue
+        colors[i * 4 + 3] = resolvedParticleColor.alpha
         GradientStrokeStyleMapper.toEdgeArray16(
             style = edgeStyle,
             width = particle.width.toPx(),
@@ -603,6 +647,8 @@ internal fun Density.setMetaBallUniforms(
     shader.setFloatUniform("in_corner", corners)
     shader.setFloatUniform("in_scale", scales)
     shader.setFloatUniform("in_alpha", alphas)
+    shader.setFloatUniform("in_particleColor", colors)
+    shader.setFloatUniform("in_useParticleColors", if (hasCustomParticleColors) 1f else 0f)
     shader.setFloatUniform("in_edge", edgeArrays)
     shader.setFloatUniform("in_count", count.toFloat())
     shader.setFloatUniform("in_extension", extension.toPx())
@@ -618,6 +664,7 @@ internal fun Density.setMetaBallUniforms(
     shader.setFloatUniform("in_rimBottom", rimBottomScale)
     shader.setFloatUniform("in_continuousCurve", if (continuousCurve) 1f else 0f)
     shader.setFloatUniform("in_conicWeight", conicCornerWeight.coerceAtLeast(0f))
+    shader.setFloatUniform("in_squircleWeight", squircleCornerWeight.coerceAtLeast(0f))
 }
 
 /**
@@ -673,15 +720,19 @@ private fun DrawScope.drawUnmergedParticles(
     color: Color,
     continuousCurve: Boolean = false,
     conicCornerWeight: Float = 0f,
+    squircleCornerWeight: Float = 0f,
+    particleColors: List<Color?>? = null,
     pathCaches: List<SegmentCapsulePathCache>? = null,
 ) {
     particles.forEachIndexed { index, particle ->
+        if (particle.alpha <= 0.001f) return@forEachIndexed
         val centre = Offset(particle.centerX.toPx(), particle.centerY.toPx())
         val widthPx = particle.width.toPx()
         val heightPx = particle.height.toPx()
         val cornerRadiusPx = particle.cornerRadius.toPx()
         val isWideCapsule = continuousCurve && widthPx > heightPx && cornerRadiusPx >= (heightPx / 2f - 0.001f)
-        val particleColor = color.copy(alpha = color.alpha * particle.alpha)
+        val baseColor = particleColors?.getOrNull(index)?.takeIf { it != Color.Unspecified } ?: color
+        val particleColor = baseColor.copy(alpha = baseColor.alpha * particle.alpha)
         withTransform({ scale(particle.scaleX, particle.scaleY, pivot = centre) }) {
             val topLeft = Offset((particle.centerX - particle.width / 2).toPx(), (particle.centerY - particle.height / 2).toPx())
             if (conicCornerWeight > 0.001f) {
@@ -695,6 +746,19 @@ private fun DrawScope.drawUnmergedParticles(
                 val cache = pathCaches?.getOrNull(index)
                 val path = cache?.get(widthPx, heightPx) ?: Path().apply {
                     addSegmentCapsule(Rect(0f, 0f, widthPx, heightPx))
+                }
+                withTransform({ translate(topLeft.x, topLeft.y) }) {
+                    drawPath(path = path, color = particleColor)
+                }
+            } else if (squircleCornerWeight > 2.001f) {
+                val path = Path().apply {
+                    addSquircleRect(
+                        width = widthPx,
+                        height = heightPx,
+                        cornerRadius = cornerRadiusPx,
+                        squircleEnabled = true,
+                        weight = squircleCornerWeight,
+                    )
                 }
                 withTransform({ translate(topLeft.x, topLeft.y) }) {
                     drawPath(path = path, color = particleColor)
@@ -747,6 +811,8 @@ uniform float2 in_half[8];
 uniform float in_corner[8];
 uniform float2 in_scale[8];
 uniform float in_alpha[8];
+uniform float4 in_particleColor[8];
+uniform float in_useParticleColors;
 uniform float in_edge[128];
 uniform float in_count;
 uniform float in_extension;
@@ -758,10 +824,19 @@ uniform float in_rimBlur;
 uniform float in_rimBottom;
 uniform float in_continuousCurve;
 uniform float in_conicWeight;
+uniform float in_squircleWeight;
 
 float couiSdRoundBox(float2 p, float2 b, float r) {
     float2 q = abs(p) - b + r;
     return min(max(q.x, q.y), 0.0) + length(max(q, float2(0.0, 0.0))) - r;
+}
+
+float couiSdSquircleBox(float2 p, float2 b, float r, float w) {
+    float2 q = abs(p) - b + r;
+    if (q.x <= 0.0 || q.y <= 0.0) {
+        return max(q.x, q.y) - r;
+    }
+    return pow(pow(q.x, w) + pow(q.y, w), 1.0 / w) - r;
 }
 
 float couiCubicBezierDistance(float2 p, float2 p0, float2 p1, float2 p2, float2 p3) {
@@ -886,6 +961,12 @@ half4 main(float2 xy) {
     int owner = 0;
     float has = 0.0;
     float opacity = 0.0;
+    float d0 = 1e6;
+    float kCard = 1.0;
+    float dActions = 1e6;
+    float hasAction = 0.0;
+    half4 cardColor = half4(in_body);
+    half4 actionColor = half4(in_body);
     // SkSL(ES2) has no fwidth, dFdx or dFdy: any of them fails the whole shader to compile and
     // silently degrades to the unmerged silhouettes. The SDF gradient magnitude is ~1, so a fixed
     // 0.6 device pixels approximates the one-pixel antialiasing band fwidth would have measured.
@@ -897,6 +978,9 @@ half4 main(float2 xy) {
         if (float(i) >= in_count) {
             break;
         }
+        if (in_alpha[i] <= 0.001) {
+            continue;
+        }
         float2 c = in_center[i];
         float2 pLocal = (xy - c) / in_scale[i];
         float di;
@@ -904,12 +988,33 @@ half4 main(float2 xy) {
             di = couiSdConicBox(pLocal, in_half[i], in_corner[i], in_conicWeight);
         } else {
             float corner = min(in_corner[i], min(in_half[i].x, in_half[i].y));
-            di = couiSdRoundBox(pLocal, in_half[i], corner);
+            if (in_squircleWeight > 2.001) {
+                di = couiSdSquircleBox(pLocal, in_half[i], corner, in_squircleWeight);
+            } else {
+                di = couiSdRoundBox(pLocal, in_half[i], corner);
+            }
             if (in_continuousCurve > 0.5) {
                 di += couiSegmentCapsuleDelta(pLocal, in_half[i], corner);
             }
         }
         inside = max(inside, in_alpha[i] * (1.0 - smoothstep(-aa, aa, di)));
+        if (i == 0) {
+            d0 = di;
+            cardColor = half4(in_particleColor[0]);
+        } else if (in_useParticleColors > 0.5) {
+            if (hasAction < 0.5) {
+                dActions = di;
+                actionColor = half4(in_particleColor[i]);
+                hasAction = 1.0;
+            } else {
+                float kAct = max(in_extension * in_factor.x, 0.0001);
+                float hAct = clamp(0.5 + 0.5 * (di - dActions) / kAct, 0.0, 1.0);
+                // Fade out shrinking secondary cells smoothly into the primary cell during merge.
+                float actBlend = (1.0 - hAct) * in_alpha[i];
+                actionColor = mix(actionColor, half4(in_particleColor[i]), half(actBlend));
+                dActions = couiSmin(dActions, di, kAct);
+            }
+        }
         if (has < 0.5) {
             d = di;
             nearest = c;
@@ -923,6 +1028,9 @@ half4 main(float2 xy) {
             float len = length(delta);
             float2 u = len > 0.001 ? delta / len : float2(0.7071, 0.7071);
             float k = in_extension * length(in_factor * u);
+            if (i == 1 || owner == 0) {
+                kCard = max(kCard, k);
+            }
             float prev = d;
             d = couiSmin(d, di, k);
             if (di < prev) {
@@ -944,7 +1052,17 @@ half4 main(float2 xy) {
 
     // TYPE_FRAMEWORK_CAPSULE_3 uses the native EDGE_STYLE_0 near/far perimeter ramps.
     // The top is the narrow far line, the bottom the broader near line; both follow the union SDF.
+    // Particle 0 (the foreground card) always owns pixels inside its silhouette (d0 <= -aa);
+    // trailing action colors only blend in across the liquid bridge outside the card edge.
     half4 body = half4(in_body);
+    if (in_useParticleColors > 0.5) {
+        if (hasAction > 0.5) {
+            float cardMask = smoothstep(-aa, max(kCard, 1.0), d0);
+            body = mix(cardColor, actionColor, half(cardMask));
+        } else {
+            body = cardColor;
+        }
+    }
     half4 rim = half4(in_rim);
     float bottomWeight = localPos.y > 0.0 ? in_rimBottom : 1.0;
     half srcA = half(couiOwnerEdgeAlpha(float2(localPos.x, -localPos.y), nearestHalf, d, owner) * bottomWeight);

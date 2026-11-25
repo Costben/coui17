@@ -4,73 +4,29 @@
 
 package io.github.suqi8.coui.kmp.basic
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.SpringSpec
-import androidx.compose.animation.core.animate
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.DraggableState
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.absoluteOffset
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.AbsoluteAlignment
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
 import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
 import io.github.suqi8.coui.kmp.core.ExperimentalCOUIApi
-import io.github.suqi8.coui.kmp.squircle.addSquircleRect
-import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 
@@ -88,69 +44,82 @@ data class NotificationSwipeAction(
 @Stable
 @ExperimentalCOUIApi
 class NotificationSwipeState(initiallyRevealed: Boolean = false) {
+    internal val delegate = SwipeRevealState(initiallyRevealed)
+
     /** The card's travel in pixels: zero when closed, negative towards the menu and beyond. */
-    internal var offsetPx by mutableFloatStateOf(0f)
-
-    /** How far the card may travel: the menu, or the whole row when a full swipe deletes. */
-    internal var maxPx by mutableFloatStateOf(0f)
-
-    /** Full row width in pixels, used when a delete action sweeps the row off to the left. */
-    internal var sweepMaxPx by mutableFloatStateOf(0f)
-
-    /** Menu strip width in pixels, published by [NotificationSwipeBox] once it knows its actions. */
-    internal var revealPx by mutableFloatStateOf(0f)
-
-    /** Whether a released full swipe is carrying the row away. */
-    internal var dismissing by mutableStateOf(false)
-
-    /** Whether the finger is on the row. */
-    internal var dragging by mutableStateOf(false)
-
-    /** The destination the row last settled or is settling on. */
-    internal var revealedTarget by mutableStateOf(initiallyRevealed)
-
-    internal val draggable = DraggableState { delta ->
-        val boundPx = if (dismissing) maxOf(maxPx, sweepMaxPx) else maxPx
-        offsetPx = (offsetPx + delta).coerceIn(-boundPx, 0f)
-    }
-
-    /** Current visual reveal fraction; it remains in 0..1 even during spring overshoot. */
-    val revealFraction: Float
-        get() {
-            val offset = offsetPx
-            // A settled offset is positive zero, whose negation is negative zero; report plain zero.
-            return if (offset >= 0f || revealPx == 0f) 0f else (-offset / revealPx).coerceIn(0f, 1f)
+    internal var offsetPx: Float
+        get() = delegate.offsetPx
+        set(value) {
+            delegate.offsetPx = value
         }
 
+    /** How far the card may travel: the menu, or the whole row when a full swipe deletes. */
+    internal var maxPx: Float
+        get() = delegate.maxPx
+        set(value) {
+            delegate.maxPx = value
+        }
+
+    /** Full row width in pixels, used when a delete action sweeps the row off to the left. */
+    internal var sweepMaxPx: Float
+        get() = delegate.sweepMaxPx
+        set(value) {
+            delegate.sweepMaxPx = value
+        }
+
+    /** Menu strip width in pixels, published by [NotificationSwipeBox] once it knows its actions. */
+    internal var revealPx: Float
+        get() = delegate.revealPx
+        set(value) {
+            delegate.revealPx = value
+        }
+
+    /** Whether a released full swipe is carrying the row away. */
+    internal var dismissing: Boolean
+        get() = delegate.dismissing
+        set(value) {
+            delegate.dismissing = value
+        }
+
+    /** Whether the finger is on the row. */
+    internal var dragging: Boolean
+        get() = delegate.dragging
+        set(value) {
+            delegate.dragging = value
+        }
+
+    /** The destination the row last settled or is settling on. */
+    internal var revealedTarget: Boolean
+        get() = delegate.revealedTarget
+        set(value) {
+            delegate.revealedTarget = value
+        }
+
+    internal val draggable: DraggableState get() = delegate.draggable
+
+    /** Current visual reveal fraction; it remains in 0..1 even during spring overshoot. */
+    val revealFraction: Float get() = delegate.revealFraction
+
     /** How far past the menu a full swipe has carried the card, in pixels. */
-    internal val overshootPx: Float get() = (-offsetPx - revealPx).coerceAtLeast(0f)
+    internal val overshootPx: Float get() = delegate.overshootPx
 
     /**
      * Whether the menu is open or opening. While the finger is down this follows the side of the
      * half-way point the card is on; afterwards it is the destination the row settles on.
      */
-    val isRevealed: Boolean get() = if (dragging) -offsetPx > revealPx / 2 else revealedTarget
+    val isRevealed: Boolean get() = delegate.isRevealed
 
     /** Reveals the actions with the native stage-one spring. A new drag cancels this animation. */
-    suspend fun reveal() = settle(true)
+    suspend fun reveal() = delegate.reveal()
 
     /** Returns the notification and its menu to the closed position. */
-    suspend fun close() = settle(false)
+    suspend fun close() = delegate.close()
 
-    internal suspend fun settle(revealed: Boolean, velocity: Float = 0f) {
-        revealedTarget = revealed
-        animateOffsetTo(if (revealed) -revealPx else 0f, velocity, NotificationSwipeDefaults.SettleSpring)
-    }
+    internal suspend fun settle(revealed: Boolean, velocity: Float = 0f) = delegate.settle(revealed, velocity)
 
-    internal suspend fun animateOffsetTo(target: Float, velocity: Float, spec: AnimationSpec<Float>) {
-        draggable.drag {
-            animate(offsetPx, target, velocity, spec) { value, _ -> dragBy(value - offsetPx) }
-        }
-    }
+    internal suspend fun animateOffsetTo(target: Float, velocity: Float, spec: AnimationSpec<Float>) = delegate.animateOffsetTo(target, velocity, spec)
 
-    internal suspend fun snapTo(target: Float) {
-        draggable.drag { dragBy(target - offsetPx) }
-    }
+    internal suspend fun snapTo(target: Float) = delegate.snapTo(target)
 
     companion object {
         /** Saves the destination rather than an unfinished drag's pixel offset. */
@@ -338,28 +307,10 @@ object NotificationSwipeDefaults {
 /**
  * A notification that reveals settings and delete buttons on a physical left swipe.
  *
- * The visible card and both menu backgrounds share one [MetaBallSurface]. Their signed-distance
- * fields merge while touching and split as the card retreats. Menu icons follow by 8dp, fade in
- * over the last 40% of each cell's exposure, and spring back when that cell clears the card.
- * Content keeps its original width and slides left with the finger inside the card mask, whose
- * end edge retreats.
- *
- * Supply foreground content without its own opaque background so it does not cover the melt.
- * A [io.github.suqi8.coui.kmp.blur.LocalBackdrop] gives the chain the existing glass treatment.
- * Below Android 13 the existing surface draws separate opaque shapes without the shader bridge.
- *
- * Pass `null` for [onSettings] and [settingsIcon] to draw a delete-only notification: the menu is
- * then one cell wide and the delete button sits against the outer padding.
- *
- * With [dismissOnFullSwipe] the card keeps following the finger past the menu, the way the shade
- * does. The delete cell stretches into the space it leaves while the settings cell moves with it;
- * [NotificationSwipeDefaults.MergeDistance] past the menu the delete cell springs over the
- * settings cell, which shrinks into it, and the device ticks; it ticks again if the
- * finger backs out. That point is [NotificationSwipeDefaults.dismissThreshold]: releasing beyond
- * it sweeps the row away and calls [onDismiss] as soon as it is gone, releasing anywhere short of
- * it springs back to the menu, and nothing is deleted while the finger is still down. The built-in
- * [NotificationTrashIcon] lifts its lid once, at that same point, and lays it back down as the row
- * goes.
+ * Built on [SwipeRevealBox] with [SwipeRevealDefaults.notificationStyle]. For standard card lists
+ * without notification-specific geometry or glass material, prefer [SwipeRevealBox] directly, or
+ * detach the notification traits here via [cornerRadius], [actionCornerRadius], [enableBlur],
+ * [enableRim], and [useConicCorner].
  *
  * @param onSettings Invoked by the revealed settings button or its accessibility action; `null`
  *   omits the settings button entirely.
@@ -381,6 +332,13 @@ object NotificationSwipeDefaults {
  * @param settingsDescription Localized settings accessibility label.
  * @param dismissDescription Localized delete accessibility label.
  * @param dismissOnFullSwipe Whether the card may be dragged past the menu and thrown away.
+ * @param cornerRadius Card corner radius; defaults to [NotificationSwipeDefaults.CardCornerRadius].
+ * @param actionCornerRadius Action cell corner radius; defaults to [cornerRadius].
+ * @param enableBlur Whether to sample [io.github.suqi8.coui.kmp.blur.LocalBackdrop] with the
+ *   SystemUI glass blur recipe. Set `false` to detach blur and render an opaque fill.
+ * @param enableRim Whether to draw the glass edge highlight rim. Set `false` to detach the rim.
+ * @param useConicCorner Whether to draw ColorOS 17 `CornerType.CONIC` continuous curvature (`1.5×`
+ *   Bezier span). Set `false` to use standard COUI [CardDefaults.Weight] Lp squircle corners.
  * @param content The notification's foreground, measured at full width throughout the gesture.
  */
 @Composable
@@ -400,30 +358,95 @@ fun NotificationSwipeBox(
     settingsDescription: String = "Settings",
     dismissDescription: String = "Delete",
     dismissOnFullSwipe: Boolean = false,
+    cornerRadius: Dp = NotificationSwipeDefaults.CardCornerRadius,
+    actionCornerRadius: Dp = cornerRadius,
+    enableBlur: Boolean = true,
+    enableRim: Boolean = true,
+    useConicCorner: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val actions = remember(onSettings, onDismiss, settingsIcon, dismissIcon, settingsDescription, dismissDescription) {
         buildList {
             if (onSettings != null && settingsIcon != null) {
-                add(NotificationSwipeAction(settingsIcon, settingsDescription, onSettings))
+                add(SwipeRevealAction(settingsIcon, settingsDescription, onSettings))
             }
-            add(NotificationSwipeAction(dismissIcon, dismissDescription, onDismiss))
+            add(SwipeRevealAction(dismissIcon, dismissDescription, onDismiss))
         }
     }
-    NotificationSwipeBoxImpl(
+    val resolvedContainerColor = if (containerColor == Color.Unspecified && !enableBlur) {
+        COUITheme.colorScheme.surfaceContainer
+    } else {
+        containerColor
+    }
+    val style = SwipeRevealDefaults.notificationStyle(
+        cornerRadius = cornerRadius,
+        actionCornerRadius = actionCornerRadius,
+        cornerWeight = CardDefaults.Weight,
+        conicCornerWeight = if (useConicCorner) NotificationSwipeDefaults.CONIC_CORNER_WEIGHT else 0f,
+        containerColor = resolvedContainerColor,
+        actionColor = actionColor,
+        enableBlur = enableBlur,
+        enableRim = enableRim,
+        rimColor = rimColor,
+        minHeight = minHeight,
+    )
+    SwipeRevealBoxImpl(
         actions = actions,
         modifier = modifier,
-        state = state,
+        state = state.delegate,
         enabled = enabled,
-        minHeight = minHeight,
-        containerColor = containerColor,
-        actionColor = actionColor,
-        rimColor = rimColor,
+        style = style,
         dismissOnFullSwipe = dismissOnFullSwipe,
         dismissPrimaryOnClick = true,
         content = content,
     )
 }
+
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that exposes detachable cornerRadius, actionCornerRadius, enableBlur, enableRim, and useConicCorner parameters.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+@ExperimentalCOUIApi
+fun NotificationSwipeBox(
+    onSettings: (() -> Unit)?,
+    onDismiss: () -> Unit,
+    settingsIcon: ImageVector?,
+    dismissIcon: ImageVector?,
+    modifier: Modifier = Modifier,
+    state: NotificationSwipeState = rememberNotificationSwipeState(),
+    enabled: Boolean = true,
+    minHeight: Dp = NotificationSwipeDefaults.MinHeight,
+    containerColor: Color = Color.Unspecified,
+    actionColor: Color = COUITheme.colorScheme.onSurface,
+    rimColor: Color = Color.Unspecified,
+    settingsDescription: String = "Settings",
+    dismissDescription: String = "Delete",
+    dismissOnFullSwipe: Boolean = false,
+    content: @Composable BoxScope.() -> Unit,
+): Unit = NotificationSwipeBox(
+    onSettings = onSettings,
+    onDismiss = onDismiss,
+    settingsIcon = settingsIcon,
+    dismissIcon = dismissIcon,
+    modifier = modifier,
+    state = state,
+    enabled = enabled,
+    minHeight = minHeight,
+    containerColor = containerColor,
+    actionColor = actionColor,
+    rimColor = rimColor,
+    settingsDescription = settingsDescription,
+    dismissDescription = dismissDescription,
+    dismissOnFullSwipe = dismissOnFullSwipe,
+    cornerRadius = NotificationSwipeDefaults.CardCornerRadius,
+    actionCornerRadius = NotificationSwipeDefaults.CardCornerRadius,
+    enableBlur = true,
+    enableRim = true,
+    useConicCorner = true,
+    content = content,
+)
 
 /**
  * A notification that reveals up to 3 actions on a physical left swipe.
@@ -442,472 +465,104 @@ fun NotificationSwipeBox(
     actionColor: Color = COUITheme.colorScheme.onSurface,
     rimColor: Color = Color.Unspecified,
     dismissOnFullSwipe: Boolean = false,
+    cornerRadius: Dp = NotificationSwipeDefaults.CardCornerRadius,
+    actionCornerRadius: Dp = cornerRadius,
+    enableBlur: Boolean = true,
+    enableRim: Boolean = true,
+    useConicCorner: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    NotificationSwipeBoxImpl(
-        actions = actions,
-        modifier = modifier,
-        state = state,
-        enabled = enabled,
-        minHeight = minHeight,
-        containerColor = containerColor,
+    val revealActions = remember(actions) {
+        actions.map { SwipeRevealAction(it.icon, it.description, it.onClick, it.color) }
+    }
+    val resolvedContainerColor = if (containerColor == Color.Unspecified && !enableBlur) {
+        COUITheme.colorScheme.surfaceContainer
+    } else {
+        containerColor
+    }
+    val style = SwipeRevealDefaults.notificationStyle(
+        cornerRadius = cornerRadius,
+        actionCornerRadius = actionCornerRadius,
+        cornerWeight = CardDefaults.Weight,
+        conicCornerWeight = if (useConicCorner) NotificationSwipeDefaults.CONIC_CORNER_WEIGHT else 0f,
+        containerColor = resolvedContainerColor,
         actionColor = actionColor,
+        enableBlur = enableBlur,
+        enableRim = enableRim,
         rimColor = rimColor,
+        minHeight = minHeight,
+    )
+    SwipeRevealBoxImpl(
+        actions = revealActions,
+        modifier = modifier,
+        state = state.delegate,
+        enabled = enabled,
+        style = style,
         dismissOnFullSwipe = dismissOnFullSwipe,
         dismissPrimaryOnClick = dismissOnFullSwipe,
         content = content,
     )
 }
 
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that exposes detachable cornerRadius, actionCornerRadius, enableBlur, enableRim, and useConicCorner parameters.",
+    level = DeprecationLevel.HIDDEN,
+)
 @Composable
-private fun NotificationSwipeBoxImpl(
+@ExperimentalCOUIApi
+fun NotificationSwipeBox(
     actions: List<NotificationSwipeAction>,
     modifier: Modifier = Modifier,
-    state: NotificationSwipeState,
-    enabled: Boolean,
-    minHeight: Dp,
-    containerColor: Color,
-    actionColor: Color,
-    rimColor: Color,
-    dismissOnFullSwipe: Boolean,
-    dismissPrimaryOnClick: Boolean,
+    state: NotificationSwipeState = rememberNotificationSwipeState(),
+    enabled: Boolean = true,
+    minHeight: Dp = NotificationSwipeDefaults.MinHeight,
+    containerColor: Color = Color.Unspecified,
+    actionColor: Color = COUITheme.colorScheme.onSurface,
+    rimColor: Color = Color.Unspecified,
+    dismissOnFullSwipe: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
-) {
-    val density = LocalDensity.current
-    var measuredSize by remember { mutableStateOf(IntSize.Zero) }
-    val actionCount = actions.size
-    val revealWidth = NotificationSwipeDefaults.revealWidth(actionCount)
-    val revealWidthPx = with(density) { revealWidth.toPx() }
-    val widthPx = measuredSize.width.toFloat()
-    val width = with(density) { measuredSize.width.toDp() }
-    val height = with(density) { measuredSize.height.toDp() }
-    val sweepMaxPx = maxOf(widthPx, revealWidthPx)
-    val maxPx = if (dismissOnFullSwipe) sweepMaxPx else revealWidthPx
-    val dismissThresholdPx = with(density) { NotificationSwipeDefaults.dismissThreshold(revealWidth).toPx() }
-    val flingVelocityPx = with(density) { NotificationSwipeDefaults.FlingVelocity.toPx() }
+): Unit = NotificationSwipeBox(
+    actions = actions,
+    modifier = modifier,
+    state = state,
+    enabled = enabled,
+    minHeight = minHeight,
+    containerColor = containerColor,
+    actionColor = actionColor,
+    rimColor = rimColor,
+    dismissOnFullSwipe = dismissOnFullSwipe,
+    cornerRadius = NotificationSwipeDefaults.CardCornerRadius,
+    actionCornerRadius = NotificationSwipeDefaults.CardCornerRadius,
+    enableBlur = true,
+    enableRim = true,
+    useConicCorner = true,
+    content = content,
+)
 
-    LaunchedEffect(state, revealWidthPx, maxPx, sweepMaxPx) {
-        state.revealPx = revealWidthPx
-        state.maxPx = maxPx
-        state.sweepMaxPx = sweepMaxPx
-        if (!state.dragging && !state.dismissing) state.snapTo(if (state.revealedTarget) -revealWidthPx else 0f)
-    }
+private val NotificationParticleStyle = SwipeRevealStyle(
+    cornerRadius = NotificationSwipeDefaults.CardCornerRadius,
+    actionCornerRadius = NotificationSwipeDefaults.CornerRadius,
+    cornerWeight = CardDefaults.Weight,
+    conicCornerWeight = NotificationSwipeDefaults.CONIC_CORNER_WEIGHT,
+    minHeight = NotificationSwipeDefaults.MinHeight,
+    actionWidth = NotificationSwipeDefaults.ActionWidth,
+    actionMaxHeight = NotificationSwipeDefaults.ActionHeight,
+    actionVerticalInset = NotificationSwipeDefaults.ActionTop,
+    centerActionsVertically = false,
+    actionGap = NotificationSwipeDefaults.ActionGap,
+    endPadding = NotificationSwipeDefaults.EndPadding,
+    blendRange = NotificationSwipeDefaults.BlendRange,
+    followDistance = NotificationSwipeDefaults.FollowDistance,
+    settleSpring = NotificationSwipeDefaults.SettleSpring,
+    recoilSpring = NotificationSwipeDefaults.MenuRecoilSpring,
+)
 
-    val primaryAction = actions.lastOrNull()
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clipToBounds()
-            .onSizeChanged { measuredSize = it }
-            .draggable(
-                state = state.draggable,
-                orientation = Orientation.Horizontal,
-                reverseDirection = false,
-                enabled = enabled && !state.dismissing && width > revealWidth && actionCount > 0,
-                onDragStarted = { state.dragging = true },
-                onDragStopped = { velocity ->
-                    state.dragging = false
-                    val pulled = -state.offsetPx
-                    if (dismissOnFullSwipe && pulled >= dismissThresholdPx && primaryAction != null) {
-                        dismissSwipeRow(
-                            state = state,
-                            velocity = velocity,
-                            flingVelocityPx = flingVelocityPx,
-                            onDismiss = primaryAction.onClick,
-                        )
-                    } else {
-                        val reveal = when {
-                            velocity < -flingVelocityPx -> true
-                            velocity > flingVelocityPx -> false
-                            else -> pulled > state.revealPx / 2
-                        }
-                        state.settle(reveal, velocity)
-                    }
-                },
-            )
-            .semantics {
-                customActions = if (enabled) {
-                    actions.map { action ->
-                        CustomAccessibilityAction(action.description) {
-                            action.onClick()
-                            true
-                        }
-                    }
-                } else {
-                    emptyList()
-                }
-            },
-    ) {
-        if (measuredSize != IntSize.Zero) {
-            NotificationSwipeMenu(
-                state = state,
-                width = width,
-                height = height,
-                actions = actions,
-                containerColor = containerColor,
-                actionColor = actionColor,
-                rimColor = rimColor,
-                enabled = enabled,
-                dismissPrimaryOnClick = dismissPrimaryOnClick,
-                flingVelocityPx = flingVelocityPx,
-            )
-        }
-        NotificationSwipeCard(state = state, minHeight = minHeight, content = content)
-    }
-}
-
-private suspend fun dismissSwipeRow(
-    state: NotificationSwipeState,
-    velocity: Float,
-    flingVelocityPx: Float,
-    onDismiss: () -> Unit,
-) {
-    state.dismissing = true
-    state.revealedTarget = false
-    try {
-        val sweepTargetPx = maxOf(state.maxPx, state.sweepMaxPx)
-        val fling = velocity < -flingVelocityPx
-        val remaining = (sweepTargetPx + state.offsetPx).coerceAtLeast(0f)
-        val millis = if (fling) {
-            (remaining * 1000f / -velocity).toInt().coerceIn(1, NotificationSwipeDefaults.SWEEP_MILLIS)
-        } else {
-            NotificationSwipeDefaults.SWEEP_MILLIS
-        }
-        state.animateOffsetTo(
-            target = -sweepTargetPx,
-            velocity = 0f,
-            spec = tween(millis, easing = if (fling) LinearEasing else FastOutLinearInEasing),
-        )
-        onDismiss()
-        state.snapTo(0f)
-    } finally {
-        state.dismissing = false
-    }
-}
-
-/**
- * The merged card and menu material. It reads the swipe offset while it composes, so it is the only
- * part of [NotificationSwipeBox] that re-runs on every drag frame.
- */
-@Composable
-private fun BoxScope.NotificationSwipeMenu(
-    state: NotificationSwipeState,
-    width: Dp,
-    height: Dp,
-    actions: List<NotificationSwipeAction>,
-    containerColor: Color,
-    actionColor: Color,
-    rimColor: Color,
-    enabled: Boolean,
-    dismissPrimaryOnClick: Boolean,
-    flingVelocityPx: Float,
-) {
-    val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
-    val actionCount = actions.size
-    val revealWidth = NotificationSwipeDefaults.revealWidth(actionCount)
-    val distance = revealWidth * state.revealFraction
-    val overshoot = with(density) { state.overshootPx.toDp() }
-    val dismissing = state.dismissing
-    // Stage two: past the merge distance the delete cell springs across the settings cell, and
-    // springs back off it when the card returns inside that distance.
-    val merge by animateFloatAsState(
-        targetValue = if (actionCount > 1 && (dismissing || overshoot >= NotificationSwipeDefaults.MergeDistance)) 1f else 0f,
-        animationSpec = NotificationSwipeDefaults.MergeSpring,
-    )
-    val armed = state.dragging && overshoot >= NotificationSwipeDefaults.MergeDistance
-    val haptic = LocalHapticFeedback.current
-    LaunchedEffect(armed) {
-        if (armed) {
-            haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-        } else if (state.dragging) {
-            haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-        }
-    }
-    val lidClose by animateFloatAsState(
-        targetValue = if (dismissing) 1f else 0f,
-        animationSpec = tween(NotificationSwipeDefaults.LID_CLOSE_MILLIS, easing = NotificationSwipeDefaults.LidCloseEasing),
-    )
-    // Stage2 tracks the finger: past the merge threshold the lid opens over LidDistance (12.8dp),
-    // and closes again the moment the card comes back inside that threshold.
-    val lidProgress = if (dismissing) {
-        0.5f + 0.5f * lidClose
-    } else {
-        ((overshoot - NotificationSwipeDefaults.MergeDistance) / NotificationSwipeDefaults.LidDistance).coerceIn(0f, 1f) / 2f
-    }
-    val deleteFade by animateFloatAsState(
-        targetValue = if (dismissing) 0f else 1f,
-        animationSpec = NotificationSwipeDefaults.DismissFadeSpring,
-    )
-
-    val progress0 = notificationActionProgress(distance, 0)
-    val progress1 = if (actionCount > 1) notificationActionProgress(distance, 1) else 0f
-    val progress2 = if (actionCount > 2) notificationActionProgress(distance, 2) else 0f
-
-    val recoil0 by animateFloatAsState(
-        targetValue = if (progress0 >= 1f) 1f else 0f,
-        animationSpec = NotificationSwipeDefaults.MenuRecoilSpring,
-    )
-    val recoil1 by animateFloatAsState(
-        targetValue = if (progress1 >= 1f) 1f else 0f,
-        animationSpec = NotificationSwipeDefaults.MenuRecoilSpring,
-    )
-    val recoil2 by animateFloatAsState(
-        targetValue = if (progress2 >= 1f) 1f else 0f,
-        animationSpec = NotificationSwipeDefaults.MenuRecoilSpring,
-    )
-
-    val touchState0 = rememberCOUITouchMotionState()
-    val touchState1 = rememberCOUITouchMotionState()
-    val touchState2 = rememberCOUITouchMotionState()
-    val touchStates = listOf(touchState0, touchState1, touchState2)
-
-    val baseParticles = notificationSwipeParticles(
-        width = width,
-        height = height,
-        distance = distance,
-        actionRecoils = listOf(recoil0, recoil1, recoil2),
-        actionCount = actionCount,
-        overshoot = overshoot,
-        merge = merge,
-        menuAlpha = deleteFade.coerceIn(0f, 1f),
-    )
-    val particles = baseParticles.mapIndexed { index, particle ->
-        val touchState = touchStates.getOrNull(index - 1)
-        if (touchState == null) {
-            particle
-        } else {
-            particle.copy(
-                centerX = particle.centerX + with(density) { touchState.translation.x.toDp() },
-                centerY = particle.centerY + with(density) { touchState.translation.y.toDp() },
-                scaleX = particle.scaleX * touchState.scaleX,
-                scaleY = particle.scaleY * touchState.scaleY,
-            )
-        }
-    }
-    // The menu sheet covers exactly the strip the card has vacated.
-    val menuShape = remember(state) {
-        GenericShape { size, _ ->
-            addRect(Rect((size.width + state.offsetPx).coerceAtLeast(0f), 0f, size.width, size.height))
-        }
-    }
-
-    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
-    val customContainer = containerColor != Color.Unspecified
-    val resolvedColor = if (customContainer) containerColor else NotificationSwipeDefaults.containerColor(isDark)
-    val resolvedBlurColors = if (customContainer) null else NotificationSwipeDefaults.blurColors(isDark)
-    val resolvedRimColor = if (rimColor != Color.Unspecified) rimColor else Color.White
-    val conicWeight = if (isSquircleEnabled()) NotificationSwipeDefaults.CONIC_CORNER_WEIGHT else 0f
-
-    MetaBallSurfaceWithRim(
-        particles = particles,
-        blurColors = resolvedBlurColors,
-        rimColor = resolvedRimColor,
-        rimLineWidth = NotificationSwipeDefaults.RimLineWidth,
-        rimLineAngle = 0f,
-        modifier = Modifier.matchParentSize(),
-        color = resolvedColor,
-        blurRadius = NotificationSwipeDefaults.blurRadius(),
-        extension = NotificationSwipeDefaults.BlendRange,
-        extensionFactorX = 1.2f,
-        extensionFactorY = 2f,
-        rimBottomScale = 1f,
-        edgeStyle = NotificationSwipeDefaults.edgeStyle(isDark),
-        conicCornerWeight = conicWeight,
-    )
-    Box(Modifier.matchParentSize().clip(menuShape), contentAlignment = AbsoluteAlignment.TopLeft) {
-        for (i in 0 until actionCount) {
-            val action = actions[actionCount - 1 - i]
-            val particle = baseParticles[i + 1]
-            val progress = when (i) {
-                0 -> progress0
-                1 -> progress1
-                else -> progress2
-            }
-            val isPrimary = i == 0
-            val isPrimaryDelete = isPrimary && action.icon == null
-            val fade = if (isPrimary) deleteFade else (1f - merge)
-            val scale = if (isPrimary) 1f else particle.scaleX
-            NotificationMenuAction(
-                particle = particle,
-                progress = progress,
-                icon = action.icon,
-                description = action.description,
-                color = action.color ?: actionColor,
-                enabled = enabled && !dismissing && (isPrimary || merge == 0f),
-                isDark = isDark,
-                touchState = touchStates.getOrNull(i),
-                fade = fade,
-                scale = scale,
-                trashProgress = if (isPrimaryDelete) lidProgress else 0f,
-                onClick = {
-                    if (isPrimary && dismissPrimaryOnClick) {
-                        if (!state.dismissing) {
-                            scope.launch {
-                                dismissSwipeRow(
-                                    state = state,
-                                    velocity = 0f,
-                                    flingVelocityPx = flingVelocityPx,
-                                    onDismiss = action.onClick,
-                                )
-                            }
-                        }
-                    } else {
-                        scope.launch { state.close() }
-                        action.onClick()
-                    }
-                },
-            )
-        }
-    }
-}
-
-/**
- * The notification card. The swipe offset is read only inside the clip shape and layer lambdas, so
- * a drag re-clips the card and moves its content without recomposing either. The card keeps its
- * left edge while its right edge retreats ahead of the menu, and the content slides left with the
- * finger inside that mask, as the shade's notification text does.
- */
-@Composable
-private fun BoxScope.NotificationSwipeCard(
-    state: NotificationSwipeState,
-    minHeight: Dp,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    val density = LocalDensity.current
-    val squircleEnabled = isSquircleEnabled()
-    val cardShape = remember(density, state, squircleEnabled) {
-        GenericShape { size, _ ->
-            val visibleWidth = (size.width + state.offsetPx).coerceAtLeast(0f)
-            if (visibleWidth > 0f && size.height > 0f) {
-                addNotificationConicRect(
-                    width = visibleWidth,
-                    height = size.height,
-                    cornerPx = with(density) { NotificationSwipeDefaults.CardCornerRadius.toPx() },
-                    squircleEnabled = squircleEnabled,
-                )
-            }
-        }
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = minHeight)
-            .clip(cardShape)
-            // Inside the clip layer, so the mask stays put while the content travels.
-            .graphicsLayer { translationX = state.offsetPx },
-        content = content,
-    )
-}
-
-private fun Path.addNotificationConicRect(
-    width: Float,
-    height: Float,
-    cornerPx: Float,
-    squircleEnabled: Boolean,
-) {
-    if (squircleEnabled) {
-        addConicRoundedRect(
-            width = width,
-            height = height,
-            cornerRadius = cornerPx,
-            weight = NotificationSwipeDefaults.CONIC_CORNER_WEIGHT,
-        )
-    } else {
-        addSquircleRect(
-            width = width,
-            height = height,
-            cornerRadius = cornerPx,
-            squircleEnabled = false,
-        )
-    }
-}
-
-@Composable
-private fun NotificationMenuAction(
-    particle: MetaBallParticle,
-    progress: Float,
-    icon: ImageVector?,
-    description: String,
-    color: Color,
-    enabled: Boolean,
-    isDark: Boolean,
-    touchState: COUITouchMotionState?,
-    fade: Float = 1f,
-    scale: Float = 1f,
-    trashProgress: Float = 0f,
-    onClick: () -> Unit,
-) {
-    val alpha = (((progress - NotificationSwipeDefaults.FADE_START) / (1f - NotificationSwipeDefaults.FADE_START)).coerceIn(0f, 1f) * fade).coerceIn(0f, 1f)
-    // An entirely covered button is absent from both hit testing and the accessibility tree.
-    if (alpha <= 0f) return
-    val density = LocalDensity.current
-    val squircleEnabled = isSquircleEnabled()
-    val actionShape = remember(density, squircleEnabled) {
-        GenericShape { size, _ ->
-            addNotificationConicRect(
-                width = size.width,
-                height = size.height,
-                cornerPx = with(density) { NotificationSwipeDefaults.CornerRadius.toPx() },
-                squircleEnabled = squircleEnabled,
-            )
-        }
-    }
-    val actionEnabled = enabled && progress >= 1f && fade > 0f
-    Box(
-        modifier = Modifier
-            .absoluteOffset {
-                IntOffset(
-                    with(density) { (particle.centerX - particle.width / 2).roundToPx() },
-                    with(density) { (particle.centerY - particle.height / 2).roundToPx() },
-                )
-            }
-            .size(particle.width, particle.height)
-            .couiTouchMotion(
-                enabled = actionEnabled,
-                pressScaleEnabled = true,
-                consumeDrag = false,
-                lightEnabled = true,
-                hitTestWhenDisabled = false,
-                shape = actionShape,
-                lightParams = SpotLightDefaults.opaqueMedium2(isDark),
-                motionState = touchState,
-            )
-            .clickable(
-                enabled = actionEnabled,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        val glyph = Modifier
-            .graphicsLayer {
-                this.alpha = alpha
-                scaleX = scale
-                scaleY = scale
-            }
-            .blur(with(density) { (NotificationSwipeDefaults.ICON_BLUR_PX * (1f - alpha) / density.density).toDp() })
-        if (icon == null) {
-            NotificationTrashIcon(progress = trashProgress, color = color, modifier = glyph, contentDescription = description)
-        } else {
-            Icon(imageVector = icon, contentDescription = description, tint = color, modifier = glyph.size(24.dp))
-        }
-    }
-}
-
-internal fun notificationActionProgress(distance: Dp, index: Int): Float = ((distance - NotificationSwipeDefaults.EndPadding - (NotificationSwipeDefaults.ActionWidth + NotificationSwipeDefaults.ActionGap) * index) / (NotificationSwipeDefaults.ActionWidth + NotificationSwipeDefaults.FollowDistance)).coerceIn(0f, 1f)
+internal fun notificationActionProgress(distance: Dp, index: Int): Float = swipeRevealActionProgress(distance, index, NotificationParticleStyle)
 
 /**
  * The melded silhouettes for a menu of [actionCount] cells: the card first, then the delete cell
  * against the outer padding and, when there is one, the settings cell after it.
- *
- * Past the menu, [overshoot] widens the delete cell towards the card and carries the settings cell
- * along, up to the merge distance. [merge] then grows the delete cell by one more cell pitch over
- * the settings cell, which shrinks to a fifth of its size inside it, so the delete cell always ends
- * one gap short of the card.
  */
 internal fun notificationSwipeParticles(
     width: Dp,
@@ -920,50 +575,16 @@ internal fun notificationSwipeParticles(
     overshoot: Dp = 0.dp,
     merge: Float = 0f,
     menuAlpha: Float = 1f,
-): List<MetaBallParticle> {
-    val cardWidth = (width - distance - overshoot).coerceAtLeast(0.dp)
-    val buttonHeight = minOf(NotificationSwipeDefaults.ActionHeight, (height - NotificationSwipeDefaults.ActionTop * 2).coerceAtLeast(0.dp))
-    val pitch = NotificationSwipeDefaults.ActionWidth + NotificationSwipeDefaults.ActionGap
-    val end = width - NotificationSwipeDefaults.EndPadding
-    val centerY = NotificationSwipeDefaults.ActionTop + buttonHeight / 2
-    val card = MetaBallParticle(cardWidth / 2, height / 2, cardWidth, height, NotificationSwipeDefaults.CardCornerRadius)
-    if (actionCount <= 0) return listOf(card)
-
-    val actualDeleteRecoil = if (actionRecoils.isNotEmpty()) actionRecoils[0] else deleteRecoil
-    val deleteFollow = distance * NotificationSwipeDefaults.FollowRatio * (1f - actualDeleteRecoil)
-    val deleteWidth = (NotificationSwipeDefaults.ActionWidth + overshoot + if (actionCount > 1) pitch * merge else 0.dp).coerceIn(0.dp, end)
-    val delete = MetaBallParticle(
-        centerX = end - deleteWidth / 2 - deleteFollow,
-        centerY = centerY,
-        width = deleteWidth,
-        height = buttonHeight,
-        cornerRadius = NotificationSwipeDefaults.CornerRadius,
-        alpha = menuAlpha,
-    )
-    val particles = mutableListOf(card, delete)
-
-    for (i in 1 until actionCount) {
-        val recoil = if (actionRecoils.size > i) {
-            actionRecoils[i]
-        } else if (i == 1) {
-            settingsRecoil
-        } else {
-            0f
-        }
-        val follow = distance * NotificationSwipeDefaults.FollowRatio * (1f - recoil)
-        val scale = 1f - (1f - NotificationSwipeDefaults.MERGED_SCALE) * merge.coerceIn(0f, 1f)
-        particles.add(
-            MetaBallParticle(
-                centerX = end - NotificationSwipeDefaults.ActionWidth / 2 - pitch * i - follow - minOf(overshoot, NotificationSwipeDefaults.MergeDistance),
-                centerY = centerY,
-                width = NotificationSwipeDefaults.ActionWidth,
-                height = buttonHeight,
-                cornerRadius = NotificationSwipeDefaults.CornerRadius,
-                scaleX = scale,
-                scaleY = scale,
-                alpha = menuAlpha,
-            ),
-        )
-    }
-    return particles
-}
+): List<MetaBallParticle> = swipeRevealParticles(
+    width = width,
+    height = height,
+    distance = distance,
+    style = NotificationParticleStyle,
+    actionRecoils = actionRecoils,
+    deleteRecoil = deleteRecoil,
+    settingsRecoil = settingsRecoil,
+    actionCount = actionCount,
+    overshoot = overshoot,
+    merge = merge,
+    menuAlpha = menuAlpha,
+)

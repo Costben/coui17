@@ -4,7 +4,9 @@
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=notificationSwipeBox" title="Demo"></iframe>
 </div>
 
-An experimental notification container with a ColorOS 17 left-swipe menu. The card and both action backgrounds share a melt-ball silhouette: pulling the card left stretches their connection until the settings and delete buttons separate. The notification card keeps its left edge while its right edge retreats ahead of the menu, and its content slides left with the finger. Pass `onSettings = null` and `settingsIcon = null` for a delete-only notification: the menu narrows to one cell.
+An experimental notification container with a ColorOS 17 left-swipe menu, built on [SwipeRevealBox](./swiperevealbox.md) with `SwipeRevealDefaults.notificationStyle()`. The card and both action backgrounds share a melt-ball silhouette: pulling the card left stretches their connection until the settings and delete buttons separate. The notification card keeps its left edge while its right edge retreats ahead of the menu, and its content slides left with the finger. Pass `onSettings = null` and `settingsIcon = null` for a delete-only notification: the menu narrows to one cell.
+
+For regular COUI card rows that should match [Card](./card.md) corners (`17.dp` Lp `3.0` squircle) without notification glass blur or rim highlights, prefer [SwipeRevealBox](./swiperevealbox.md) directly, or detach individual notification traits on `NotificationSwipeBox` with `cornerRadius`, `actionCornerRadius`, `enableBlur = false`, `enableRim = false`, and `useConicCorner = false`.
 
 ## Usage
 

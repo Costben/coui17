@@ -119,6 +119,7 @@ export default defineConfig({
                         { text: "FloatingButton", link: "/zh_CN/components/floatingbutton" },
                         { text: "ExpandableList", link: "/zh_CN/components/expandablelist" },
                         { text: "SlideView", link: "/zh_CN/components/slideview" },
+                        { text: "SwipeRevealBox", link: "/zh_CN/components/swiperevealbox" },
                         { text: "SearchHistoryView", link: "/zh_CN/components/searchhistoryview" },
                         { text: "TouchSearchView", link: "/zh_CN/components/touchsearchview" },
                         { text: "IntentSeekBar", link: "/zh_CN/components/intentseekbar" },

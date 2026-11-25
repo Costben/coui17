@@ -41,6 +41,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [FloatingButton](../components/floatingbutton)             | Speed-dial floating button                 | Quick actions, shortcuts              |
 | [ExpandableList](../components/expandablelist)             | Collapsible group list                     | Settings sections, grouped content    |
 | [SlideView](../components/slideview)                       | List row that slides aside to reveal actions | Swipe-to-delete list rows           |
+| [SwipeRevealBox](../components/swiperevealbox)             | Liquid-melt swipe container with detachable styling | Swipeable card rows, custom reveal actions |
 | [LockPatternView](../components/lockpatternview)           | 3x3 pattern unlock grid                    | Pattern unlock, gesture password      |
 | [NumericKeyboard](../components/numerickeyboard)           | Numeric PIN pad                            | PIN entry, passcode dialogs           |
 | [SimpleLockView](../components/simplelockview)             | Row of PIN dots that fill as you type      | PIN entry, passcode status            |

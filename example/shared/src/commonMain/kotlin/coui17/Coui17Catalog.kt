@@ -65,6 +65,7 @@ import component.SliderDemo
 import component.SnackbarDemo
 import component.SpinnerDemo
 import component.SpotLightDemo
+import component.SwipeRevealDemo
 import component.SwitchDemo
 import component.SwitchLoadingPreferenceDemo
 import component.TabRowDemo
@@ -162,6 +163,7 @@ internal val Coui17CatalogGroups: List<List<Coui17Category>> = listOf(
             single("FlowLayout") { FlowLayoutDemo() }
             single("ExpandableList") { ExpandableListDemoContent() }
             single("SlideView") { SlideViewDemo() }
+            single("SwipeRevealBox") { SwipeRevealDemo() }
         },
         category("Buttons & actions", Coui17CategoryTint.Blue, Coui17CategoryIcons.Actions) {
             component("Button") {

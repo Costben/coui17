@@ -4,7 +4,9 @@
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=notificationSwipeBox" title="Demo"></iframe>
 </div>
 
-实验性通知左滑菜单。通知卡片和两个操作按钮共用融合球轮廓：向左拖动时连接逐渐拉开，设置、删除按钮依次分离。卡片左沿不动、右沿随进度向左收窄，把菜单让出来，通知内容跟着手指左移。传入 `onSettings = null`、`settingsIcon = null` 时只画删除一格，菜单收窄到一格宽。
+实验性通知左滑菜单，底层基于 [SwipeRevealBox](./swiperevealbox.md) 与 `SwipeRevealDefaults.notificationStyle()` 实现。通知卡片和两个操作按钮共用融合球轮廓：向左拖动时连接逐渐拉开，设置、删除按钮依次分离。卡片左沿不动、右沿随进度向左收窄，把菜单让出来，通知内容跟着手指左移。传入 `onSettings = null`、`settingsIcon = null` 时只画删除一格，菜单收窄到一格宽。
+
+如果希望在普通卡片行中使用同样的液态左滑效果，并与标准 [Card](./card.md) 圆角（`17.dp` Lp `3.0` 超椭圆）和纯色表面保持一致，建议直接使用基础组件 [SwipeRevealBox](./swiperevealbox.md)；也可以在 `NotificationSwipeBox` 上通过 `cornerRadius`、`actionCornerRadius`、`enableBlur = false`、`enableRim = false`、`useConicCorner = false` 逐项卸除通知圆角与玻璃材质。
 
 ## 使用
 
