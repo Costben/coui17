@@ -26,6 +26,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.interfaces.HoldDownObserver
 import io.github.suqi8.coui.kmp.squircle.squircleSurface
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -80,19 +82,38 @@ fun IconButton(
         )
         return
     }
+    ToolbarRedDotLayout(
+        redDot = redDot,
+        modifier = modifier,
+    ) {
+        IconButtonContainer(
+            onClick = onClick,
+            enabled = enabled,
+            holdDownState = holdDownState,
+            backgroundColor = backgroundColor,
+            cornerRadius = cornerRadius,
+            minHeight = minHeight,
+            minWidth = minWidth,
+            interactionSource = interactionSource,
+            content = content,
+        )
+    }
+}
+
+/**
+ * Overlays a COUI toolbar menu red dot ([Badge]) at the top-end corner of the centered
+ * [IconButtonDefaults.RedDotAnchorSize] icon area without expanding the wrapped button's bounds
+ * (`COUIActionMenuView.drawRedDot`).
+ */
+@Composable
+internal fun ToolbarRedDotLayout(
+    redDot: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
     Layout(
         content = {
-            IconButtonContainer(
-                onClick = onClick,
-                enabled = enabled,
-                holdDownState = holdDownState,
-                backgroundColor = backgroundColor,
-                cornerRadius = cornerRadius,
-                minHeight = minHeight,
-                minWidth = minWidth,
-                interactionSource = interactionSource,
-                content = content,
-            )
+            content()
             Badge(count = redDot)
         },
         modifier = modifier,
@@ -123,21 +144,27 @@ fun IconButton(
 /**
  * A text action for the top app bar's `actions`, mirroring a COUI 17 text menu item
  * (`COUIActionMenuItemView` without an icon, `ToolbarMaterialHelper.applyTextButtonSize`): a
- * [minWidth]-[maxWidth] wide, [minHeight] tall capsule with a single 14dp `sans-serif-medium` label
- * in the theme color that ellipsizes past [maxWidth].
+ * [minWidth]-[maxWidth] wide, [minHeight] tall glass capsule with a single 14dp `sans-serif-medium`
+ * label in the theme color that ellipsizes past [maxWidth].
+ *
+ * When [backgroundColor] is [Color.Unspecified] (the default), the capsule uses the same COUI 17
+ * frosted glass surface, rim highlight, and soft drop halo as [HighlightedIconButton]. Passing an
+ * explicit [backgroundColor] overrides the glass surface with a solid capsule fill.
  *
  * @param text The label of the button.
  * @param onClick The callback when the button is clicked.
  * @param modifier The modifier to be applied to the button.
  * @param enabled Whether the button is enabled.
  * @param holdDownState Used to determine whether it is in the pressed state.
- * @param backgroundColor A solid fill drawn under the button, [Color.Unspecified] for none.
+ * @param backgroundColor Optional solid fill override; [Color.Unspecified] uses the COUI 17
+ *   toolbar glass capsule material.
  * @param minWidth The minimum width. COUI `coui_action_text_menu_item_min_width` (60dp).
  * @param maxWidth The maximum width. COUI `coui_action_bar_text_menu_item_max_width` (104dp).
  * @param minHeight The minimum height. COUI `coui_action_menu_item_min_height` (40dp).
  * @param insideMargin The padding around the label. COUI
  *   `coui_toolbar_text_menu_bg_padding_horizontal` (12dp, no vertical padding).
  * @param colors The [ToolbarTextButtonColors] of the label.
+ * @param backdrop The [Backdrop] sampled by the glass capsule, defaulting to [LocalBackdrop].
  */
 @Composable
 fun ToolbarTextButton(
@@ -146,14 +173,39 @@ fun ToolbarTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     holdDownState: Boolean = false,
-    backgroundColor: Color = COUITheme.colorScheme.secondaryContainer,
+    backgroundColor: Color = Color.Unspecified,
     minWidth: Dp = IconButtonDefaults.TextButtonMinWidth,
     maxWidth: Dp = IconButtonDefaults.TextButtonMaxWidth,
     minHeight: Dp = IconButtonDefaults.ToolbarButtonHeight,
     insideMargin: PaddingValues = IconButtonDefaults.TextButtonInsideMargin,
     colors: ToolbarTextButtonColors = IconButtonDefaults.toolbarTextButtonColors(),
+    backdrop: Backdrop? = LocalBackdrop.current,
 ) {
     val textSize = with(LocalDensity.current) { IconButtonDefaults.TextButtonTextSize.toSp() }
+    if (backgroundColor == Color.Unspecified) {
+        ToolbarGlassCapsuleSurface(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            holdDownState = holdDownState,
+            backdrop = backdrop,
+            minWidth = minWidth,
+            maxWidth = maxWidth,
+            minHeight = minHeight,
+            contentPadding = insideMargin,
+        ) {
+            Text(
+                text = text,
+                color = colors.contentColor(enabled),
+                fontSize = textSize,
+                fontWeight = FontWeight.Medium,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
+                maxLines = 1,
+            )
+        }
+        return
+    }
     IconButtonContainer(
         onClick = onClick,
         modifier = modifier.widthIn(max = maxWidth),
@@ -177,6 +229,42 @@ fun ToolbarTextButton(
             maxLines = 1,
         )
     }
+}
+
+/** Binary-compatibility bridge for the [ToolbarTextButton] overload that predates `backdrop`. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds backdrop and glass capsule rendering.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun ToolbarTextButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    holdDownState: Boolean = false,
+    backgroundColor: Color = Color.Unspecified,
+    minWidth: Dp = IconButtonDefaults.TextButtonMinWidth,
+    maxWidth: Dp = IconButtonDefaults.TextButtonMaxWidth,
+    minHeight: Dp = IconButtonDefaults.ToolbarButtonHeight,
+    insideMargin: PaddingValues = IconButtonDefaults.TextButtonInsideMargin,
+    colors: ToolbarTextButtonColors = IconButtonDefaults.toolbarTextButtonColors(),
+) {
+    ToolbarTextButton(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        holdDownState = holdDownState,
+        backgroundColor = backgroundColor,
+        minWidth = minWidth,
+        maxWidth = maxWidth,
+        minHeight = minHeight,
+        insideMargin = insideMargin,
+        colors = colors,
+        backdrop = LocalBackdrop.current,
+    )
 }
 
 @Composable

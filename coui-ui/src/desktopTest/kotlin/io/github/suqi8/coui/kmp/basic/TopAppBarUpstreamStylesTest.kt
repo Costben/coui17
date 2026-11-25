@@ -107,6 +107,13 @@ class TopAppBarUpstreamStylesTest {
                     ) {
                         Box(modifier = Modifier.height(24.dp).width(24.dp))
                     }
+                    HighlightedIconButton(
+                        onClick = {},
+                        redDot = 9,
+                        modifier = Modifier.testTag("highlighted-dot-btn"),
+                    ) {
+                        Box(modifier = Modifier.height(24.dp).width(24.dp))
+                    }
                 }
             }
         }
@@ -119,6 +126,10 @@ class TopAppBarUpstreamStylesTest {
         val dotSize = onNodeWithTag("dot-btn").fetchSemanticsNode().size
         assertEquals(40, dotSize.width, "IconButton width must not expand when redDot is set")
         assertEquals(40, dotSize.height, "IconButton height must not expand when redDot is set")
+
+        val highlightedDotSize = onNodeWithTag("highlighted-dot-btn").fetchSemanticsNode().size
+        assertEquals(40, highlightedDotSize.width, "HighlightedIconButton width must not expand when redDot is set")
+        assertEquals(40, highlightedDotSize.height, "HighlightedIconButton height must not expand when redDot is set")
     }
 
     @Test

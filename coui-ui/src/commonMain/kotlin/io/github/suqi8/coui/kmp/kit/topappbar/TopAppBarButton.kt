@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,8 +37,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingRenderer
 import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingSurface
 import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
@@ -59,6 +62,11 @@ internal fun TopAppBarButton(
     enabled: Boolean = true,
     text: Boolean = false,
     enforceMinimumTouchTarget: Boolean = true,
+    backdrop: CouiBackdrop? = LocalCouiToolbarBackdrop.current,
+    minWidth: Dp = 60.dp,
+    maxWidth: Dp = Dp.Unspecified,
+    height: Dp = 40.dp,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp),
     renderer: CouiFloatingRenderer? = if (isKitSurfaceSupported()) {
         remember { CouiFloatingRenderer.standalone() }
     } else {
@@ -67,11 +75,10 @@ internal fun TopAppBarButton(
     style: CouiToolbarStyle = CouiTopAppBarButtonDefaults.style(),
     content: @Composable RowScope.() -> Unit,
 ) {
-    val backdrop = LocalCouiToolbarBackdrop.current
     val dark = style.dark
     val contour = style.contourGlowEnabled
     var boundsSize by remember { mutableStateOf(IntSize.Zero) }
-    val capsule = boundsSize.width != boundsSize.height
+    val capsule = text || (boundsSize.width > 0 && boundsSize.width != boundsSize.height)
     val shape = if (capsule) style.capsuleShape else style.circleShape
     val material = remember(style, capsule) { style.material(capsule) }
     val shadow = remember(style, capsule) { style.shadow(capsule) }
@@ -87,11 +94,16 @@ internal fun TopAppBarButton(
     val contentColor = style.contentColor
 
     val isNativeSurfaceSupported = isKitSurfaceSupported() && renderer != null && backdrop != null
+    val sizeModifier = if (text) {
+        Modifier.widthIn(min = minWidth, max = maxWidth).height(height)
+    } else {
+        Modifier.size(height)
+    }
 
     Box(
         modifier
             .then(if (enforceMinimumTouchTarget) Coui.defaultStyle.minimumInteractiveComponentSize() else Modifier)
-            .then(if (text) Modifier.widthIn(min = 60.dp).height(40.dp) else Modifier.size(40.dp))
+            .then(sizeModifier)
             .onSizeChanged { boundsSize = it }
             .drawWithCache {
                 val lightClip = Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawWithCache)) }
@@ -137,7 +149,7 @@ internal fun TopAppBarButton(
     ) {
         Row(
             Modifier
-                .then(if (text) Modifier.widthIn(min = 60.dp).height(40.dp) else Modifier.fillMaxSize())
+                .then(if (text) sizeModifier else Modifier.fillMaxSize())
                 .graphicsLayer {
                     translationX = motion.translationX.value
                     translationY = motion.translationY.value
@@ -163,7 +175,7 @@ internal fun TopAppBarButton(
                     role = Role.Button,
                     onClick = onClick,
                 )
-                .then(if (text) Modifier.padding(horizontal = 12.dp) else Modifier),
+                .then(if (text) Modifier.padding(contentPadding) else Modifier),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {

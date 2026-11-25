@@ -109,12 +109,14 @@ internal object CouiTopAppBarButtonDefaults {
             return (if (px >= 0f) px + 0.5f else px - 0.5f).toInt().toFloat()
         }
         // Selector 6 is CAUSTIC_UPPER and selector 5 is LV3_A (not LV5).
+        // Keep contour toolbar shadows tight to the rim and drop white caustics in light mode so
+        // the lower edge stays cleanly grounded instead of showing a bright gap above a detached arc.
         return CouiFloatingShadow(
-            elevation = pixelSize(if (contour) 16f else 100f),
+            elevation = pixelSize(if (contour) 10f else 100f),
             color = Color.Black.copy(
                 alpha = (
                     if (contour) {
-                        30f
+                        if (dark) 36f else 22f
                     } else if (dark) {
                         68f
                     } else {
@@ -124,7 +126,7 @@ internal object CouiTopAppBarButtonDefaults {
             ),
             lightY = pixelSize(
                 if (contour) {
-                    -160f
+                    -64f
                 } else if (dark) {
                     -240f
                 } else {
@@ -132,8 +134,8 @@ internal object CouiTopAppBarButtonDefaults {
                 },
             ),
             lightZ = if (contour) 0f else pixelSize(10000f),
-            lightRadius = pixelSize(if (contour) 800f else 2000f),
-            causticColor = Color(if (dark) 0x33FFFFFF else 0x2EFFFFFF),
+            lightRadius = pixelSize(if (contour) 460f else 2000f),
+            causticColor = if (dark) Color(0x33FFFFFF) else Color.Transparent,
             layout = Rect(0f, 0f, 0f, pixelSize(4.899993896f)),
             sdf = pixelSize(9.229980469f),
             smoothCorner = capsule || search,

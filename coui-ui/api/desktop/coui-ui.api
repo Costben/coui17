@@ -2051,8 +2051,9 @@ public final class io/github/suqi8/coui/kmp/basic/HighlightedIconButtonDefaults 
 }
 
 public final class io/github/suqi8/coui/kmp/basic/HighlightedIconButtonKt {
-	public static final fun HighlightedIconButton-AFY4PWA (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;FZLio/github/suqi8/coui/kmp/blur/Backdrop;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final synthetic fun HighlightedIconButton-AFY4PWA (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;FZLio/github/suqi8/coui/kmp/blur/Backdrop;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final synthetic fun HighlightedIconButton-TN_CM5M (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;FZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun HighlightedIconButton-UR9CgXA (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;FZLio/github/suqi8/coui/kmp/blur/Backdrop;ZLjava/lang/Integer;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/HintAnimationDefaults {
@@ -2128,7 +2129,8 @@ public final class io/github/suqi8/coui/kmp/basic/IconButtonKt {
 	public static final synthetic fun IconButton-0xlP5wg (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun IconButton-F7C3Z7g (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun IconButton-NKP4n5s (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun ToolbarTextButton-L2g7X2E (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;Landroidx/compose/runtime/Composer;III)V
+	public static final synthetic fun ToolbarTextButton-L2g7X2E (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ToolbarTextButton-xbfoRhw (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZJFFFLandroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/ToolbarTextButtonColors;Lio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/IconKt {

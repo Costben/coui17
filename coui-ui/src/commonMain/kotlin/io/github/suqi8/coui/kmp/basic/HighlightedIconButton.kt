@@ -9,17 +9,26 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -28,47 +37,54 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.interfaces.HoldDownObserver
+import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
+import io.github.suqi8.coui.kmp.kit.backdrop.LocalCouiBackdrop
 import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
 import io.github.suqi8.coui.kmp.kit.topappbar.CouiTopAppBarButtonDefaults
+import io.github.suqi8.coui.kmp.kit.topappbar.CouiTopAppBarDefaults
 import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarBackdrop
+import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarSampleBlurRadius
 import io.github.suqi8.coui.kmp.kit.topappbar.TopAppBarButton
+import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
 
 /**
- * The ColorOS 17 toolbar icon button with its light halo.
+ * The ColorOS 17 toolbar icon button with its glass material and soft halo.
  *
  * ColorOS gives the toolbar's back key and overflow key the same effect: a true 40dp circle — not a
- * squircle — carrying a radial fill that is darker in the middle and brighter at the rim, an
- * angle-distributed material perimeter highlight, and a theme-dependent halo outside the edge. While
- * pressed the whole control springs to [HighlightedIconButtonDefaults.PressedScale], the rim and the
- * halo disappear and the fill and icon brighten; both themes behave identically.
+ * squircle — carrying frosted glass sampling (or a radial fallback fill when no backdrop is
+ * available), an angle-distributed material perimeter highlight, and a theme-dependent halo outside
+ * the edge. While pressed the whole control springs to [HighlightedIconButtonDefaults.PressedScale],
+ * the rim and the halo disappear and the fill and icon brighten; both themes behave identically.
  *
- * The rim uses the framework's material-luminance blend with TYPE_FRAMEWORK_CIRCLE_1 and
- * EDGE_STYLE_1. Its near/far ramps keep the top sharp and the lower edge softer. Fill and rim
- * share one sampled surface, while icons and exterior caustics remain outside the RGB effect.
- *
- * By default the disc does not blur: ColorOS 17 resolves a toolbar item's material through
- * `ToolbarMaterialEffectResolver`, whose default preset is `TYPE_FRAMEWORK_TOP_BAR` with a zero
- * blur radius, because the app bar under it is already blurred. Passing a [backdrop] opts into the
- * blurred preset, `TYPE_FRAMEWORK_TOP_BAR_BLUR` (a 20px sigma), for a button that floats over
- * content without a blurred bar. Inside a blurred app bar that blur drops toward 0.35x so the two
- * do not stack.
+ * When a [backdrop] (defaulting to [LocalBackdrop]) or an enclosing toolbar surface backdrop is
+ * present on platforms that support native floating surfaces, the button uses the unified COUI 17
+ * toolbar floating glass renderer (`TopAppBarButton`) so circular icon actions, red-dot actions,
+ * and text capsules share identical glass, rim, and shadow rendering.
  *
  * The content colour is published through [LocalContentColor], so a default [Icon] in [content]
  * follows the fill as it brightens.
@@ -77,9 +93,14 @@ import io.github.suqi8.coui.kmp.theme.LocalContentColor
  * @param modifier The modifier to be applied to the button.
  * @param size The diameter of the button.
  * @param enabled Whether the button can be clicked.
- * @param backdrop The backdrop blurred inside the disc, or `null` for the default unblurred preset.
+ * @param backdrop The backdrop blurred inside the disc, defaulting to [LocalBackdrop], or `null`
+ *   for the unblurred fallback preset.
  * @param spotLightEnabled Whether pressing lights the disc from the touch point
  *   (`TYPE_FRAMEWORK_CIRCLE_1` spotlight).
+ * @param redDot Optional toolbar menu red dot (`COUIToolbar.setRedDot` ->
+ *   `COUIActionMenuView.drawRedDot`): `null` for none, `0` for a plain dot, a positive number for
+ *   a count [Badge]. Anchored at the top-end corner of the centered
+ *   [IconButtonDefaults.RedDotAnchorSize] icon area without expanding the button bounds.
  * @param content The content of the button, typically an [Icon], drawn centred in the circle.
  */
 @Composable
@@ -88,15 +109,75 @@ fun HighlightedIconButton(
     modifier: Modifier = Modifier,
     size: Dp = HighlightedIconButtonDefaults.Size,
     enabled: Boolean = true,
-    backdrop: Backdrop? = null,
+    backdrop: Backdrop? = LocalBackdrop.current,
     spotLightEnabled: Boolean = true,
+    redDot: Int? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    if (shouldUseToolbarSurfaceIconButton(size = size, backdrop = backdrop, spotLightEnabled = spotLightEnabled)) {
+    if (redDot != null) {
+        ToolbarRedDotLayout(
+            redDot = redDot,
+            modifier = modifier,
+        ) {
+            HighlightedIconButtonContent(
+                onClick = onClick,
+                modifier = Modifier,
+                size = size,
+                enabled = enabled,
+                backdrop = backdrop,
+                spotLightEnabled = spotLightEnabled,
+                content = content,
+            )
+        }
+        return
+    }
+    HighlightedIconButtonContent(
+        onClick = onClick,
+        modifier = modifier,
+        size = size,
+        enabled = enabled,
+        backdrop = backdrop,
+        spotLightEnabled = spotLightEnabled,
+        content = content,
+    )
+}
+
+@Composable
+private fun HighlightedIconButtonContent(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp,
+    enabled: Boolean,
+    backdrop: Backdrop?,
+    spotLightEnabled: Boolean,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val blurEnabled = isBlurEnabled()
+    val ambientCouiBackdrop = LocalCouiToolbarBackdrop.current ?: LocalCouiBackdrop.current
+    val useKitToolbarSurface = isKitSurfaceSupported() &&
+        blurEnabled &&
+        spotLightEnabled &&
+        size == HighlightedIconButtonDefaults.Size &&
+        (ambientCouiBackdrop != null || backdrop != null)
+    val kitBackdrop = if (useKitToolbarSurface) {
+        ambientCouiBackdrop ?: backdrop?.let { remember(it, density) { CouiBackdrop(it, density) } }
+    } else {
+        null
+    }
+    kitBackdrop?.RetainWhileComposed()
+    if (kitBackdrop != null) {
+        val sampleBlurRadius = if (ambientCouiBackdrop != null) {
+            LocalCouiToolbarSampleBlurRadius.current
+        } else {
+            with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
+        }
         ToolbarSurfaceIconButton(
             onClick = onClick,
             modifier = modifier,
             enabled = enabled,
+            backdrop = kitBackdrop,
+            blurRadius = sampleBlurRadius,
             content = content,
         )
         return
@@ -112,7 +193,6 @@ fun HighlightedIconButton(
 
     val scheme = COUITheme.colorScheme
     val isDark = scheme.background.luminance() < 0.5f
-    val density = LocalDensity.current
     val blurScale = rememberToolbarAttenuatedBlurScale()
     val scale = 1f - (1f - HighlightedIconButtonDefaults.PressedScale) * pressProgress
     val contentColor = lerp(
@@ -136,7 +216,7 @@ fun HighlightedIconButton(
     }
     // Opt-in TYPE_FRAMEWORK_TOP_BAR_BLUR: only the blur is sampled, since the measured radial fill
     // above already carries the preset's colour layers.
-    val glassDiscModifier = if (backdrop != null && isBlurEnabled()) {
+    val glassDiscModifier = if (backdrop != null && blurEnabled) {
         Modifier.couiGlassSurface(
             backdrop = backdrop,
             shape = CircleShape,
@@ -247,6 +327,34 @@ fun HighlightedIconButton(
     }
 }
 
+/** Binary-compatibility bridge for the [HighlightedIconButton] overload that predates `redDot`. */
+@Suppress("DEPRECATION")
+@Deprecated(
+    message = "Migrated to the overload that adds redDot.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun HighlightedIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = HighlightedIconButtonDefaults.Size,
+    enabled: Boolean = true,
+    backdrop: Backdrop? = null,
+    spotLightEnabled: Boolean = true,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HighlightedIconButton(
+        onClick = onClick,
+        modifier = modifier,
+        size = size,
+        enabled = enabled,
+        backdrop = backdrop,
+        spotLightEnabled = spotLightEnabled,
+        redDot = null,
+        content = content,
+    )
+}
+
 /** A disc of [diameter] in the middle of whatever box it outlines. */
 private class CenteredDiscShape(private val diameter: Dp) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
@@ -287,28 +395,71 @@ fun HighlightedIconButton(
 /**
  * The light theme's halo: a soft dark shadow all around the rim, offset slightly downward.
  *
- * The measured profile is near symmetric but bottom-weighted (bottom -13, sides -11, top -8 luma),
- * reaching [HighlightedIconButtonDefaults.LightHaloRadius] past the edge.
+ * Clipped outside the disc so the shadow never darkens the translucent frosted fill inside, and
+ * eased smoothly across multiple stops to avoid a hard circular band.
  */
 private fun DrawScope.drawSoftDropHalo(center: Offset, radius: Float, progress: Float) {
-    val outerRadius = radius + HighlightedIconButtonDefaults.LightHaloRadius.toPx()
+    val haloRadius = HighlightedIconButtonDefaults.LightHaloRadius.toPx()
+    val outerRadius = radius + haloRadius
     val haloCenter = center + Offset(0f, HighlightedIconButtonDefaults.LightHaloOffsetY.toPx())
-    val color = HighlightedIconButtonDefaults.LightHaloColor.copy(
-        alpha = HighlightedIconButtonDefaults.LightHaloColor.alpha * progress,
-    )
-    drawCircle(
-        brush = Brush.radialGradient(
-            colorStops = arrayOf(
-                0f to color,
-                (radius / outerRadius) to color,
-                1f to Color.Transparent,
+    val baseAlpha = HighlightedIconButtonDefaults.LightHaloColor.alpha * progress
+    if (baseAlpha <= 0f || outerRadius <= radius) return
+    val innerStop = (radius / outerRadius).coerceIn(0f, 0.99f)
+    val span = 1f - innerStop
+    val discCutout = Path().apply {
+        addOval(Rect(center = center, radius = radius))
+    }
+    clipPath(discCutout, ClipOp.Difference) {
+        drawCircle(
+            brush = Brush.radialGradient(
+                colorStops = arrayOf(
+                    0f to Color.Black.copy(alpha = baseAlpha),
+                    innerStop to Color.Black.copy(alpha = baseAlpha),
+                    (innerStop + span * 0.25f) to Color.Black.copy(alpha = baseAlpha * 0.56f),
+                    (innerStop + span * 0.55f) to Color.Black.copy(alpha = baseAlpha * 0.20f),
+                    (innerStop + span * 0.80f) to Color.Black.copy(alpha = baseAlpha * 0.05f),
+                    1f to Color.Transparent,
+                ),
+                center = haloCenter,
+                radius = outerRadius,
             ),
-            center = haloCenter,
             radius = outerRadius,
-        ),
-        radius = outerRadius,
-        center = haloCenter,
-    )
+            center = haloCenter,
+        )
+    }
+}
+
+/**
+ * The light theme's halo for a capsule toolbar button: layered smooth falloff clipped outside the
+ * capsule silhouette so the frosted interior stays bright and clean.
+ */
+private fun DrawScope.drawSoftCapsuleDropHalo(
+    capsuleShape: Shape,
+    progress: Float,
+) {
+    val haloRadius = HighlightedIconButtonDefaults.LightHaloRadius.toPx()
+    val offsetY = HighlightedIconButtonDefaults.LightHaloOffsetY.toPx()
+    val baseAlpha = HighlightedIconButtonDefaults.LightHaloColor.alpha * progress
+    if (baseAlpha <= 0f || size.minDimension <= 0f) return
+    val cutout = Path().apply {
+        addOutline(capsuleShape.createOutline(size, layoutDirection, this@drawSoftCapsuleDropHalo))
+    }
+    val steps = 6
+    val stepAlpha = baseAlpha / steps * 1.45f
+    clipPath(cutout, ClipOp.Difference) {
+        for (i in 1..steps) {
+            val t = i / steps.toFloat()
+            val expand = haloRadius * t * t
+            val layerAlpha = stepAlpha * (1f - t * 0.72f)
+            val corner = size.height / 2f + expand
+            drawRoundRect(
+                color = Color.Black.copy(alpha = layerAlpha),
+                topLeft = Offset(-expand, -expand + offsetY * t),
+                size = Size(size.width + expand * 2f, size.height + expand * 2f),
+                cornerRadius = CornerRadius(corner, corner),
+            )
+        }
+    }
 }
 
 /** Defaults for [HighlightedIconButton]. */
@@ -460,21 +611,12 @@ object HighlightedIconButtonDefaults {
 }
 
 @Composable
-private fun shouldUseToolbarSurfaceIconButton(
-    size: Dp,
-    backdrop: Backdrop?,
-    spotLightEnabled: Boolean,
-): Boolean = isKitSurfaceSupported() &&
-    LocalCouiToolbarBackdrop.current != null &&
-    backdrop == null &&
-    spotLightEnabled &&
-    size == HighlightedIconButtonDefaults.Size
-
-@Composable
 private fun ToolbarSurfaceIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    backdrop: CouiBackdrop,
+    blurRadius: Float,
     content: @Composable BoxScope.() -> Unit,
 ) {
     TopAppBarButton(
@@ -482,11 +624,211 @@ private fun ToolbarSurfaceIconButton(
         onClick = onClick,
         enabled = enabled,
         enforceMinimumTouchTarget = false,
-        style = CouiTopAppBarButtonDefaults.style(search = true),
+        backdrop = backdrop,
+        style = CouiTopAppBarButtonDefaults.style(search = false, blurRadius = blurRadius),
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
+            content = content,
+        )
+    }
+}
+
+/**
+ * Shared COUI 17 frosted-glass capsule surface for toolbar text actions ([ToolbarTextButton] and
+ * [PinnedTopAppBarTextAction]). Uses the same kit floating glass pipeline (`TopAppBarButton`)
+ * when a backdrop and platform surface support are present, and falls back to a matched frosted
+ * capsule with material rim highlight and soft halo otherwise.
+ */
+@Composable
+internal fun ToolbarGlassCapsuleSurface(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    holdDownState: Boolean = false,
+    backdrop: Backdrop? = LocalBackdrop.current,
+    minWidth: Dp = IconButtonDefaults.TextButtonMinWidth,
+    maxWidth: Dp = IconButtonDefaults.TextButtonMaxWidth,
+    minHeight: Dp = IconButtonDefaults.ToolbarButtonHeight,
+    contentPadding: PaddingValues = IconButtonDefaults.TextButtonInsideMargin,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    val blurEnabled = isBlurEnabled()
+    val ambientCouiBackdrop = LocalCouiToolbarBackdrop.current ?: LocalCouiBackdrop.current
+    val useKitToolbarSurface = isKitSurfaceSupported() &&
+        blurEnabled &&
+        !holdDownState &&
+        (ambientCouiBackdrop != null || backdrop != null)
+    val kitBackdrop = if (useKitToolbarSurface) {
+        ambientCouiBackdrop ?: backdrop?.let { remember(it, density) { CouiBackdrop(it, density) } }
+    } else {
+        null
+    }
+    kitBackdrop?.RetainWhileComposed()
+    if (kitBackdrop != null) {
+        val sampleBlurRadius = if (ambientCouiBackdrop != null) {
+            LocalCouiToolbarSampleBlurRadius.current
+        } else {
+            with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
+        }
+        TopAppBarButton(
+            modifier = modifier,
+            onClick = onClick,
+            enabled = enabled,
+            text = true,
+            enforceMinimumTouchTarget = false,
+            backdrop = kitBackdrop,
+            minWidth = minWidth,
+            maxWidth = maxWidth,
+            height = minHeight,
+            contentPadding = contentPadding,
+            style = CouiTopAppBarButtonDefaults.style(search = false, blurRadius = sampleBlurRadius),
+            content = content,
+        )
+        return
+    }
+
+    val touchMotion = rememberCOUITouchMotionState()
+    val interactionSource = remember { MutableInteractionSource() }
+    HoldDownObserver(holdDownState, interactionSource)
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressProgress by animateFloatAsState(
+        targetValue = if (enabled && (isPressed || touchMotion.values.value.pressed)) 1f else 0f,
+        animationSpec = HighlightedIconButtonDefaults.PressSpring,
+        label = "toolbarTextCapsulePress",
+    )
+
+    val scheme = COUITheme.colorScheme
+    val isDark = scheme.background.luminance() < 0.5f
+    val blurScale = rememberToolbarAttenuatedBlurScale()
+    val scale = 1f - (1f - HighlightedIconButtonDefaults.PressedScale) * pressProgress
+    val squircleEnabled = isSquircleEnabled()
+    val capsuleShape = remember(squircleEnabled) { CapsuleOutlineShape(squircleEnabled = squircleEnabled) }
+    var measuredSize by remember { mutableStateOf(IntSize.Zero) }
+
+    val currentOnClick by rememberUpdatedState(onClick)
+    val clickableModifier = remember(enabled, interactionSource) {
+        if (enabled) {
+            Modifier.clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Button,
+                onClick = { currentOnClick() },
+            )
+        } else {
+            Modifier
+        }
+    }
+
+    val glassCapsuleModifier = if (backdrop != null && blurEnabled) {
+        Modifier.couiGlassSurface(
+            backdrop = backdrop,
+            shape = capsuleShape,
+            containerColor = Color.Transparent,
+            fallback = Modifier,
+            blurRadius = with(density) {
+                (HighlightedIconButtonDefaults.NATIVE_BLUR_RADIUS_PX / TEXTURE_BLUR_SIGMA_SCALE).toDp().value
+            } * blurScale(),
+            blendColors = emptyList(),
+        )
+    } else {
+        Modifier
+    }
+
+    val particleWidth = with(density) { measuredSize.width.toDp() }.coerceAtLeast(minWidth)
+    val particleHeight = with(density) { measuredSize.height.toDp() }.coerceAtLeast(minHeight)
+    val capsuleParticle = MetaBallParticle(
+        centerX = particleWidth / 2,
+        centerY = particleHeight / 2,
+        width = particleWidth,
+        height = particleHeight,
+        cornerRadius = particleHeight / 2,
+    )
+
+    Box(
+        modifier = modifier
+            .widthIn(min = minWidth, max = maxWidth)
+            .height(minHeight)
+            .onSizeChanged { measuredSize = it }
+            .couiTouchMotion(
+                enabled = enabled,
+                motionState = touchMotion,
+                pressScaleEnabled = false,
+                shape = capsuleShape,
+                lightParams = SpotLightDefaults.capsuleParams1(isDark),
+                lightEnabled = true,
+                extraTransform = {
+                    scaleX += scale - 1f
+                    scaleY += scale - 1f
+                },
+            )
+            .then(clickableModifier),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (isDark && measuredSize.width > 0 && measuredSize.height > 0) {
+            MaterialCausticShadow(
+                particles = listOf(
+                    CausticShadowParticle(
+                        capsuleParticle,
+                        CausticShadowProfile.Toolbar,
+                    ),
+                ),
+                color = HighlightedIconButtonDefaults.DarkHaloColor.copy(
+                    alpha = HighlightedIconButtonDefaults.DarkHaloColor.alpha * (1f - pressProgress).coerceIn(0f, 1f),
+                ),
+                modifier = Modifier.matchParentSize(),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .drawWithContent {
+                    if (!isDark && pressProgress < 1f) {
+                        drawSoftCapsuleDropHalo(capsuleShape, 1f - pressProgress)
+                    }
+                    drawContent()
+                }
+                .then(glassCapsuleModifier)
+                .nativeMaterialEdge(
+                    particles = listOf(capsuleParticle),
+                    rim = Color.White.copy(
+                        alpha = HighlightedIconButtonDefaults.stroke(isDark).edgeAlpha * (1f - pressProgress).coerceIn(0f, 1f),
+                    ),
+                    edgeStyle = GradientStrokeStyle.EDGE_STYLE_1,
+                    lineWidth = 2.2.dp,
+                    extension = 0.dp,
+                    continuousCurve = squircleEnabled,
+                )
+                .clip(capsuleShape)
+                .drawWithContent {
+                    val brighten = HighlightedIconButtonDefaults.PressedFillBrighten * pressProgress
+                    val radius = size.maxDimension / 2f
+                    drawRect(
+                        brush = Brush.radialGradient(
+                            colorStops = arrayOf(
+                                0f to lerp(
+                                    HighlightedIconButtonDefaults.fillCenter(isDark),
+                                    Color.White,
+                                    brighten,
+                                ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
+                                HighlightedIconButtonDefaults.FillEdgeStop to lerp(
+                                    HighlightedIconButtonDefaults.fillEdge(isDark),
+                                    Color.White,
+                                    brighten,
+                                ).copy(alpha = HighlightedIconButtonDefaults.FillAlpha),
+                            ),
+                            center = center,
+                            radius = radius.coerceAtLeast(1f),
+                        ),
+                    )
+                    drawContent()
+                },
+        )
+        Row(
+            modifier = Modifier.padding(contentPadding),
+            verticalAlignment = Alignment.CenterVertically,
             content = content,
         )
     }
