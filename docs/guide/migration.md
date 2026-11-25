@@ -84,7 +84,7 @@ BadgeBox(badge = { Badge(count = 8) }) { Icon(...) }
 
 ### TextField
 
-COUI's `TextField` adds a `backgroundMode: TextFieldMode` parameter with three ColorOS forms — `Rectangle` (stroked rounded rectangle), `Line` (bottom underline, the default) and `None` (bare text). Related default changes and additions:
+COUI's `TextField` adds a `backgroundMode: TextFieldMode` parameter defaulting to `Line` (bottom underline, ColorOS 17 dialog and inline edit form). For page forms prefer [InputView](../components/inputview.md) or a standalone `Card` + `None` (undecorated); for search or floating composers use [SearchBar](../components/searchbar.md) or a capsule floating material bar. `Rectangle` (stroked rounded rectangle) is retained only for legacy `COUIEditText` compatibility and is **not recommended for new ColorOS 17 UI**. Related default changes and additions:
 
 - `useLabelAsPlaceholder` now defaults to `true` (ColorOS fields use a hint instead of a floating label; Miuix defaulted to `false`).
 - New parameters: `justShowFocusLine`, `isError`, `maxCount` (character counter), `showClearButton`, `showPasswordToggle`.

@@ -1,6 +1,16 @@
 # TextField
 
-`TextField` 是 COUI 中的基础输入组件，用于接收用户的文本输入，视觉对齐 ColorOS COUIEditText。默认呈现 ColorOS 设置对话框中的输入形态：16sp 裸文本 + 细下划线，聚焦时主题色 1dp 线条从起始边展开，标签作为普通占位符使用。同时提供纯描边圆角矩形、完全无装饰（卡片内）两种形态，以及可选的浮动标签、错误抖动、字数统计、清除按钮与密码切换。
+`TextField` 是 COUI 中的基础输入组件，用于接收用户的文本输入，视觉对齐 ColorOS 17 `COUIEditText`。默认呈现 ColorOS 17 设置弹窗中的下划线输入形态：16sp 裸文本 + 细下划线，聚焦时主题色 1dp 线条从起始边展开，标签作为普通占位符使用。
+
+::: tip ColorOS 17 输入框选型建议
+在 ColorOS 17 实际界面中，请按场景选用以下三种现代输入形态，**不要在新界面中直接使用 `TextFieldMode.Rectangle`**：
+
+| 使用场景 | 推荐实现 |
+| --- | --- |
+| 弹窗、底部面板、单行编辑 | `TextField` 默认的 `TextFieldMode.Line`（卡片内行编辑可开启 `justShowFocusLine = true`） |
+| 页面内独立单行 / 多行表单 | [InputView](./inputview.md) 或外层 `Card` + `TextField(backgroundMode = TextFieldMode.None)` |
+| 搜索栏、底部悬浮输入条 | [SearchBar](./searchbar.md) 或胶囊悬浮材质输入条 |
+:::
 
 <div style="position: relative; height: 340px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../../compose/index.html?id=textField" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -91,26 +101,19 @@ TextField(
 
 ## 背景模式
 
-`TextField` 通过 `backgroundMode` 支持 COUIEditText 的三种背景模式：
+`TextField` 通过 `backgroundMode` 映射 `COUIEditText` 的三种背景模式：
 
-- `TextFieldMode.Line`（默认）：无填充；0.33dp 细下划线，聚焦时 1dp 主题色线条从起始边展开——即 ColorOS 设置的对话框 / 底部面板输入形态
-- `TextFieldMode.Rectangle`：纯描边圆角矩形（10dp 圆角，无填充）；未聚焦 0.33dp 细描边，聚焦 1dp 主题色描边；默认文本加粗
-- `TextFieldMode.None`：无任何背景装饰——裸文本，即白卡输入使用的形态（见 `InputView`）
+- `TextFieldMode.Line`（**默认推荐**）：无填充；0.33dp 细下划线，聚焦时 1dp 主题色线条从起始边展开——即 ColorOS 17 设置弹窗与底部面板的标准输入形态
+- `TextFieldMode.None`（**卡片表单推荐**）：无任何背景装饰的裸文本，用于放进 [Card](./card.md) 或 [InputView](./inputview.md) 中，由外层圆角卡片提供视觉边界
+- `TextFieldMode.Rectangle`（**旧版兼容，不建议新界面使用**）：早期 `COUIEditText.MODE_BACKGROUND_RECT` 遗留的 10dp 纯描边圆角矩形，ColorOS 17 系统界面已基本不再使用；仅作历史兼容保留
 
-```kotlin
-var text by remember { mutableStateOf("") }
-
-TextField(
-    value = text,
-    onValueChange = { text = it },
-    label = "矩形样式",
-    backgroundMode = TextFieldMode.Rectangle
-)
-```
+::: warning 避免直接选用 `TextFieldMode.Rectangle`
+常规页面输入请优先使用 [InputView](./inputview.md) 或「独立 `Card` + `TextFieldMode.None`」，弹窗输入请直接使用默认的 `TextFieldMode.Line`，搜索或底部输入场景请使用 [SearchBar](./searchbar.md) / 胶囊悬浮材质输入条。
+:::
 
 ### 无装饰（None）模式
 
-`TextFieldMode.None` 移除所有背景装饰——当外层容器（例如白色输入卡片）已经提供视觉框架时使用：
+`TextFieldMode.None` 移除所有背景装饰——当外层容器（例如 [Card](./card.md) 或 [InputView](./inputview.md)）已经提供视觉框架时使用：
 
 ```kotlin
 var text by remember { mutableStateOf("") }
@@ -128,7 +131,7 @@ Card {
 
 ### 仅显示聚焦线
 
-`Line` 模式下设置 `justShowFocusLine = true` 可隐藏静息下划线，只保留聚焦时展开的线条，对应 ColorOS 设置卡片内偏好输入（COUIInputPreference `couiJustShowFocusLine`，设备上默认开启）。把输入框放进 `Card` 即为设置里的完整观感：
+`Line` 模式下设置 `justShowFocusLine = true` 可隐藏静息下划线，只保留聚焦时展开的线条，对应 ColorOS 设置卡片内输入设置项（`COUIInputPreference` 的 `couiJustShowFocusLine`，设备上默认开启）。把输入框放进 `Card` 即为设置里的完整观感：
 
 ```kotlin
 var text by remember { mutableStateOf("") }

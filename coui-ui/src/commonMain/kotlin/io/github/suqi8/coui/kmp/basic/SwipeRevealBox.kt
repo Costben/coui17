@@ -98,7 +98,7 @@ import kotlinx.coroutines.launch
  * - **Icon + Text**: pass both [icon] (or `useTrashIcon = true`) and [label].
  *
  * Pass [containerColor] to give an action its own pill background (e.g. primary blue, orange, or
- * error red) with smooth liquid-melt color blending; leave it `null` to share the card surface.
+ * error red) with smooth metaball color blending; leave it `null` to share the card surface.
  *
  * Set [requireConfirmation] to `true` for the COUI-Kit two-step confirmation pattern: the first tap
  * switches the glyph to a checkmark and arms confirmation; the second tap invokes [onClick].
@@ -296,7 +296,7 @@ object SwipeRevealDefaults {
     /** Default extra swipe distance past the revealed menu before a full swipe arms deletion. */
     val MergeDistance = NotificationSwipeDefaults.MergeDistance
 
-    /** Restrained liquid follow distance in [cardStyle] so slow drags detach smoothly. */
+    /** Restrained metaball follow distance in [cardStyle] so slow drags detach smoothly. */
     val FollowDistance = 6.dp
 
     /**
@@ -308,7 +308,7 @@ object SwipeRevealDefaults {
 
     /**
      * Restrained action detachment spring (`damping = 0.88f, response = 0.32f`): preserves the
-     * tactile liquid release without exaggerated bouncing during slow drags.
+     * tactile metaball release without exaggerated bouncing during slow drags.
      */
     val RecoilSpring: SpringSpec<Float> = folmeSpring(damping = 0.88f, response = 0.32f)
 
@@ -449,7 +449,7 @@ object SwipeRevealDefaults {
     )
 
     /**
-     * Upstream COUI 17 [SwipeActionItem] RoundRect button preset with liquid-melt physics:
+     * Upstream COUI 17 [SwipeActionItem] RoundRect button preset with metaball physics:
      * `68.dp`-wide, `12.dp`-radius floating pills suited for colored actions, text-only labels, and
      * stacked icon + text buttons.
      */
@@ -624,7 +624,7 @@ object SwipeRevealDefaults {
 
 /**
  * A general-purpose swipe container that reveals up to 3 actions on a physical left swipe with
- * ColorOS 17 liquid-melt (`MetaBallSurface`) physics.
+ * ColorOS 17 metaball (`MetaBallSurface`) physics.
  *
  * Unlike [NotificationSwipeBox], [SwipeRevealBox] defaults to [SwipeRevealDefaults.cardStyle]:
  * standard COUI [Card] corners (`17.dp` Lp `3.0` squircle), opaque `surfaceContainer` fill, no

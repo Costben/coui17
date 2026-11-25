@@ -1053,7 +1053,7 @@ half4 main(float2 xy) {
     // TYPE_FRAMEWORK_CAPSULE_3 uses the native EDGE_STYLE_0 near/far perimeter ramps.
     // The top is the narrow far line, the bottom the broader near line; both follow the union SDF.
     // Particle 0 (the foreground card) always owns pixels inside its silhouette (d0 <= -aa);
-    // trailing action colors only blend in across the liquid bridge outside the card edge.
+    // trailing action colors only blend in across the metaball bridge outside the card edge.
     half4 body = half4(in_body);
     if (in_useParticleColors > 0.5) {
         if (hasAction > 0.5) {

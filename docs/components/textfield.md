@@ -1,6 +1,16 @@
 # TextField
 
-`TextField` is a basic input component in COUI for receiving text input from users, styled after ColorOS COUIEditText. By default it renders the ColorOS Settings dialog form: bare 16sp text over a hairline underline that turns into an expanding accent line when focused, with the label acting as a plain placeholder. Stroke-only rectangle and fully undecorated (card) forms, an opt-in floating label, error shake, character counter, clear button and password toggle are also available.
+`TextField` is a basic input component in COUI for receiving text input from users, styled after ColorOS 17 `COUIEditText`. By default it renders the ColorOS 17 Settings dialog underline form: bare 16sp text over a hairline underline that turns into an expanding accent line when focused, with the label acting as a plain placeholder.
+
+::: tip ColorOS 17 Input Selection Guide
+For real ColorOS 17 UI, choose one of the three modern forms below and **avoid `TextFieldMode.Rectangle` in new screens**:
+
+| Scenario | Recommended pattern |
+| --- | --- |
+| Dialogs, bottom sheets, inline edits | Default `TextField(backgroundMode = TextFieldMode.Line)` (or `justShowFocusLine = true` inside a `Card`) |
+| Page forms (single-line or multi-line) | [InputView](./inputview.md) or a standalone [Card](./card.md) + `TextField(backgroundMode = TextFieldMode.None)` |
+| Search & floating bottom composers | [SearchBar](./searchbar.md) or a capsule floating material input bar |
+:::
 
 <div style="position: relative; height: 340px; border-radius: 10px; overflow: hidden; border: 1px solid #777;">
     <iframe id="demoIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" src="../compose/index.html?id=textField" title="Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -95,31 +105,19 @@ TextField(
 
 ## Background Modes
 
-`TextField` supports the three COUIEditText background modes via `backgroundMode`:
+`TextField` maps the three `COUIEditText` background modes via `backgroundMode`:
 
-- `TextFieldMode.Line` (default): no fill; a 0.33dp hairline underline plus a 1dp accent
-  line that expands from the start edge when focused — the form ColorOS Settings uses for
-  dialog and bottom-sheet inputs
-- `TextFieldMode.Rectangle`: stroke-only rounded rectangle (10dp corners, no fill);
-  0.33dp hairline stroke, 1dp accent stroke when focused; text is bold by default
-- `TextFieldMode.None`: no background decoration at all — bare text, the form used inside
-  white input cards (see `InputView`)
+- `TextFieldMode.Line` (**recommended default**): no fill; a 0.33dp hairline underline plus a 1dp accent line that expands from the start edge when focused — the ColorOS 17 form for dialog and bottom-sheet inputs
+- `TextFieldMode.None` (**recommended for card forms**): no background decoration at all — bare text meant to sit inside a [Card](./card.md) or [InputView](./inputview.md) where the card surface provides the frame
+- `TextFieldMode.Rectangle` (**legacy compatibility only — avoid in new ColorOS 17 UI**): legacy 10dp stroke-only rounded rectangle (`COUIEditText.MODE_BACKGROUND_RECT`), rarely used in ColorOS 17 and kept only for backward compatibility
 
-```kotlin
-var text by remember { mutableStateOf("") }
-
-TextField(
-    value = text,
-    onValueChange = { text = it },
-    label = "Rectangle style",
-    backgroundMode = TextFieldMode.Rectangle
-)
-```
+::: warning Avoid `TextFieldMode.Rectangle` in new ColorOS 17 UI
+Use [InputView](./inputview.md) or a standalone [Card](./card.md) + `TextFieldMode.None` for page forms, keep the default `TextFieldMode.Line` for dialogs/sheets, or use [SearchBar](./searchbar.md) / a capsule floating material bar for search and floating input bars.
+:::
 
 ### Undecorated (None) Mode
 
-`TextFieldMode.None` removes all background decoration — useful when the surrounding
-container (such as a white input card) already provides the visual frame:
+`TextFieldMode.None` removes all background decoration — useful when the surrounding container (such as a [Card](./card.md) or [InputView](./inputview.md)) already provides the visual frame:
 
 ```kotlin
 var text by remember { mutableStateOf("") }

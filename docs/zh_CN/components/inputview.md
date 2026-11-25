@@ -1,6 +1,6 @@
 # InputView
 
-ColorOS「卡片输入」：白卡（12dp 圆角）内包含可选的 16sp 中等字重标题与一个完全无装饰的输入框，计数 / 清除 / 密码按钮位于输入框尾部，10sp 错误提示位于卡片下方。对应 COUICardSingleInputView（单行）与 COUICardMultiInputView（多行，计数位于卡片右下角）。错误提示以 COUI ease 曲线 217ms 淡入 / 283ms 淡出，显示期间输入框播放 COUI 错误抖动。
+ColorOS 17 页面表单推荐使用的「卡片输入」组件：圆角卡片内包含可选的 16sp 中等字重标题与完全无装饰的输入区（`TextFieldMode.None`），计数 / 清除 / 密码按钮位于输入框尾部，10sp 错误提示位于卡片下方。对应 `COUICardSingleInputView`（单行）与 `COUICardMultiInputView`（多行，计数位于卡片右下角）。在页面内需要独立框体输入时，请优先使用 `InputView`（或 `Card` + `TextFieldMode.None`），而非旧版描边 `TextFieldMode.Rectangle`。错误提示以 COUI ease 曲线 217ms 淡入 / 283ms 淡出，显示期间输入框播放 COUI 错误抖动。
 
 ## 引入
 

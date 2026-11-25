@@ -1,5 +1,15 @@
 # 最佳实践
 
+## ColorOS 17 输入框选型
+
+在基于 COUI 构建 ColorOS 17 风格界面时，请按以下场景选用输入框，**不要直接使用旧版描边矩形 `TextFieldMode.Rectangle`**：
+
+- **弹窗 / 底部面板 / 行内编辑**：直接使用默认下划线形态 `TextField()`（`TextFieldMode.Line`）；放在卡片行内时可配合 `justShowFocusLine = true`。
+- **页面内独立单行 / 多行表单**：使用 [InputView](../components/inputview.md)，或单独包一层 [Card](../components/card.md) + `TextField(backgroundMode = TextFieldMode.None)`。
+- **搜索或底部悬浮输入**：使用 [SearchBar](../components/searchbar.md) 或胶囊悬浮材质输入条。
+
+## 示例与参考项目
+
 COUI 基于 [Miuix](https://github.com/compose-miuix-ui/miuix) 构建，二者共享同一套组件 API，因此 Miuix 生态中的实践经验同样适用于 COUI。以下是一些基于 COUI 或 Miuix 创建的示例应用，它们展示了如何在实际项目中应用组件和设计理念。
 
 ### 示例应用

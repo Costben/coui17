@@ -1,5 +1,15 @@
 # Best Practices
 
+## ColorOS 17 Input Selection
+
+When building ColorOS 17 interfaces with COUI, pick the input form that matches the container and **avoid the legacy stroked `TextFieldMode.Rectangle`**:
+
+- **Dialogs, bottom sheets, and inline edits**: use the default underline `TextField()` (`TextFieldMode.Line`); inside a card row, set `justShowFocusLine = true`.
+- **Page forms (single-line or multi-line)**: use [InputView](../components/inputview.md), or wrap `TextField(backgroundMode = TextFieldMode.None)` in a standalone [Card](../components/card.md).
+- **Search and floating input bars**: use [SearchBar](../components/searchbar.md) or a capsule floating material input bar.
+
+## Reference Applications
+
 COUI is based on [Miuix](https://github.com/compose-miuix-ui/miuix) and shares the same component API surface, so patterns from the wider Miuix ecosystem apply directly to COUI. Below are some example applications built with COUI or Miuix, showcasing how to apply the components and design principles in real-world projects.
 
 ### Example Applications

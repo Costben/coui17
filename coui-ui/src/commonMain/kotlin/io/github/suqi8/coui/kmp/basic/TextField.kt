@@ -91,16 +91,21 @@ import kotlin.math.roundToInt
 /**
  * Background mode of a [TextField], mirroring COUIEditText couiBackgroundMode.
  *
- * - [Rectangle]: stroke-only rounded rectangle (no fill), 10dp corners; unfocused
- *   stroke 0.33dp couiColorDivider, focused 1dp couiColorPrimary
- *   (COUIEditText MODE_BACKGROUND_RECT, Widget.COUI.EditText.HintAnim.Rectangle).
- * - [Line]: no fill; a 0.33dp bottom underline plus a focused 1dp primary line that
- *   expands from the start edge (COUIEditText MODE_BACKGROUND_LINE — the form used by
+ * For ColorOS 17 UI, prefer [Line] (dialogs, sheets, and inline focus-line rows), [None] inside an
+ * [InputView] or standalone [Card] (page forms), or [SearchBar] / a capsule floating material bar
+ * (search and floating composers). Avoid [Rectangle] in new UI.
+ *
+ * - [Line] (recommended default): no fill; a 0.33dp bottom underline plus a focused 1dp primary
+ *   line that expands from the start edge (COUIEditText `MODE_BACKGROUND_LINE` — the form used by
  *   ColorOS Settings dialogs and bottom-sheet editors via
- *   Widget.COUI.EditText.HintAnim.Line.HintDisable / Widget.COUI.Input).
- * - [None]: no background decoration at all — bare text (COUIEditText
- *   MODE_BACKGROUND_NONE / MODE_BACKGROUND_NO_LINE, the form used inside white
- *   input cards such as COUICardSingleInputView).
+ *   `Widget.COUI.EditText.HintAnim.Line.HintDisable` / `Widget.COUI.Input`).
+ * - [None] (recommended for card forms): no background decoration at all — bare text (COUIEditText
+ *   `MODE_BACKGROUND_NONE` / `MODE_BACKGROUND_NO_LINE`, the form used inside card inputs such as
+ *   [InputView] / `COUICardSingleInputView` or a standalone [Card]).
+ * - [Rectangle] (legacy compatibility only — avoid in new ColorOS 17 UI): stroke-only rounded
+ *   rectangle (no fill, 10dp corners; unfocused stroke 0.33dp `couiColorDivider`, focused 1dp
+ *   `couiColorPrimary`; COUIEditText `MODE_BACKGROUND_RECT`). Retained only for compatibility with
+ *   legacy `COUIEditText` screens.
  */
 enum class TextFieldMode { Rectangle, Line, None }
 

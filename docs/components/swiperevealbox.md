@@ -1,6 +1,6 @@
 # SwipeRevealBox
 
-A general-purpose basic swipe container with ColorOS 17 liquid-melt (`MetaBallSurface`) left-swipe action reveal.
+A general-purpose basic swipe container with ColorOS 17 metaball (`MetaBallSurface`) left-swipe action reveal.
 
 Unlike [NotificationSwipeBox](./notificationswipebox.md), `SwipeRevealBox` is decoupled from SystemUI notification shade visuals. By default it uses `SwipeRevealDefaults.cardStyle()`, matching a standard COUI [Card](./card.md): `17.dp` Lp `3.0` squircle corners, opaque `surfaceContainer` fill, no backdrop blur, no glass rim highlight, compact `48.dp × 48.dp` centered floating action buttons, and critically damped settle physics so slow drags never over-bounce.
 
@@ -56,7 +56,7 @@ Supply foreground content without an opaque background so it does not cover the 
 
 ### Colored pills, text labels, and icon + text buttons
 
-Each `SwipeRevealAction` can provide its own `containerColor` (with smooth liquid-melt color blending between the card and buttons), `label`, and/or `icon`:
+Each `SwipeRevealAction` can provide its own `containerColor` (with smooth metaball color blending between the card and buttons), `label`, and/or `icon`:
 
 ```kotlin
 SwipeRevealBox(
@@ -110,4 +110,4 @@ SwipeRevealBox(
 - `SwipeRevealState` provides `revealFraction` (`0f..1f`), `isRevealed`, `suspend fun reveal()`, and `suspend fun close()`, and saves its target state across recreation via `rememberSwipeRevealState()`.
 - Supply up to 3 actions in visual left-to-right order: the last action sits at the trailing edge and is revealed first.
 - With `dismissOnFullSwipe = true`, pulling `SwipeRevealDefaults.MergeDistance` (`40.dp`) past the revealed menu merges the primary cell across secondary cells, triggers haptic feedback, opens the trash lid (when `useTrashIcon = true`), and sweeps the row out on release.
-- For classic ColorOS list swipe rows without liquid-melt physics, see [SlideView](./slideview.md).
+- For classic ColorOS list swipe rows without metaball physics, see [SlideView](./slideview.md).

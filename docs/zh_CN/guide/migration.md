@@ -84,7 +84,7 @@ BadgeBox(badge = { Badge(count = 8) }) { Icon(...) }
 
 ### TextField
 
-COUI 的 `TextField` 新增 `backgroundMode: TextFieldMode` 参数，提供三种 ColorOS 形态 — `Rectangle`（描边圆角矩形）、`Line`（底部横线，默认值）和 `None`（无背景装饰）。相关的默认值变化与新增参数：
+COUI 的 `TextField` 新增 `backgroundMode: TextFieldMode` 参数，默认使用 `Line`（底部下划线，ColorOS 17 弹窗与行内编辑形态），卡片内表单推荐使用 [InputView](../components/inputview.md) 或 `Card` + `None`（无背景装饰），搜索或悬浮输入场景请使用 [SearchBar](../components/searchbar.md) / 胶囊悬浮材质输入条；`Rectangle`（描边圆角矩形）仅保留作旧版 `COUIEditText` 兼容，**不建议在 ColorOS 17 新界面中直接使用**。相关的默认值变化与新增参数：
 
 - `useLabelAsPlaceholder` 默认值改为 `true`（ColorOS 输入框使用提示文本而非浮动标签；Miuix 默认为 `false`）。
 - 新增参数：`justShowFocusLine`、`isError`、`maxCount`（字数统计）、`showClearButton`、`showPasswordToggle`。

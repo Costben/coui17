@@ -38,7 +38,12 @@ import io.github.suqi8.coui.kmp.basic.TextFieldMode
  */
 @Composable
 fun TextFieldDemo(focusManager: FocusManager) {
-    val modeIndex = remember { mutableIntStateOf(TextFieldMode.Line.ordinal) }
+    val modeOptions = listOf(
+        TextFieldMode.Line to "Line (Default)",
+        TextFieldMode.None to "Card (None)",
+        TextFieldMode.Rectangle to "Rectangle (Legacy)",
+    )
+    val modeIndex = remember { mutableIntStateOf(0) }
     val enabled = remember { mutableStateOf(true) }
     val floatingLabel = remember { mutableStateOf(false) }
     val focusLineOnly = remember { mutableStateOf(false) }
@@ -48,11 +53,11 @@ fun TextFieldDemo(focusManager: FocusManager) {
     val digitsOnly = remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     val stateText = rememberTextFieldState(initialText = "")
-    val mode = TextFieldMode.entries[modeIndex.intValue]
+    val mode = modeOptions[modeIndex.intValue].first
     val onCard = mode == TextFieldMode.None || focusLineOnly.value
 
     DemoOptions(
-        DemoChoice("Background", TextFieldMode.entries.map { it.name }, modeIndex),
+        DemoChoice("Background", modeOptions.map { it.second }, modeIndex),
         DemoToggle("Enabled", enabled),
         DemoToggle("Floating label", floatingLabel),
         DemoToggle("Focus line only", focusLineOnly),

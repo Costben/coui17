@@ -41,7 +41,7 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [FloatingButton](../components/floatingbutton)             | Speed-dial floating button                 | Quick actions, shortcuts              |
 | [ExpandableList](../components/expandablelist)             | Collapsible group list                     | Settings sections, grouped content    |
 | [SlideView](../components/slideview)                       | List row that slides aside to reveal actions | Swipe-to-delete list rows           |
-| [SwipeRevealBox](../components/swiperevealbox)             | Liquid-melt swipe container with detachable styling | Swipeable card rows, custom reveal actions |
+| [SwipeRevealBox](../components/swiperevealbox)             | Metaball swipe container with detachable styling | Swipeable card rows, custom reveal actions |
 | [LockPatternView](../components/lockpatternview)           | 3x3 pattern unlock grid                    | Pattern unlock, gesture password      |
 | [NumericKeyboard](../components/numerickeyboard)           | Numeric PIN pad                            | PIN entry, passcode dialogs           |
 | [SimpleLockView](../components/simplelockview)             | Row of PIN dots that fill as you type      | PIN entry, passcode status            |
@@ -58,8 +58,8 @@ The Scaffold component provides a suitable container for cross-platform popup wi
 | [PageIndicator](../components/pageindicator)               | Row of page dots with an active marker     | Page position in a pager, guides      |
 | [Text](../components/text)                                 | Display text content with various styles   | Titles, body text, descriptive text   |
 | [SmallTitle](../components/smalltitle)                     | Small title component                      | Auxiliary titles, category labels     |
-| [TextField](../components/textfield)                       | Receives user text input                   | Form filling, search boxes            |
-| [InputView](../components/inputview)                       | Card-style input field                     | Form filling, dialog input            |
+| [TextField](../components/textfield)                       | Underline or card-embedded text field (avoid legacy `Rectangle`) | Dialogs, inline edits, card forms |
+| [InputView](../components/inputview)                       | ColorOS 17 card-style input field                                | Page single/multi-line forms (recommended) |
 | [CodeTextField](../components/codetextfield)               | Verification code input with cells         | OTP / verification code entry         |
 | [Switch](../components/switch)                             | Binary state toggle control                | Setting switches, feature enabling    |
 | [Checkbox](../components/checkbox)                         | Multiple selection control                 | Multiple choices, terms agreement     |

@@ -41,7 +41,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [FloatingButton](../components/floatingbutton)             | 快速拨号浮动按钮       | 快捷操作、功能入口   |
 | [ExpandableList](../components/expandablelist)             | 可展开的分组列表       | 设置分组、分组内容   |
 | [SlideView](../components/slideview)                       | 侧滑露出操作的列表行   | 侧滑删除列表项       |
-| [SwipeRevealBox](../components/swiperevealbox)             | 可拆卸圆角与材质的液态左滑容器 | 卡片行左滑操作、自定义融合菜单 |
+| [SwipeRevealBox](../components/swiperevealbox)             | 可拆卸圆角与材质的融球侧滑容器 | 卡片行侧滑操作、自定义融合菜单 |
 | [LockPatternView](../components/lockpatternview)           | 3x3 图案解锁九宫格     | 图案解锁、手势密码   |
 | [NumericKeyboard](../components/numerickeyboard)           | 数字 PIN 键盘          | PIN 输入、密码弹窗   |
 | [SimpleLockView](../components/simplelockview)             | 锁屏 PIN 圆点指示行       | 锁屏 PIN 输入     |
@@ -58,8 +58,8 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 | [PageIndicator](../components/pageindicator)               | 带当前位置标记的圆点指示器 | 分页位置、引导页   |
 | [Text](../components/text)                                 | 展示各种样式的文字内容 | 标题、正文、描述文本 |
 | [SmallTitle](../components/smalltitle)                     | 小型标题组件           | 辅助标题、分类标识   |
-| [TextField](../components/textfield)                       | 接收用户文本输入       | 表单填写、搜索框     |
-| [InputView](../components/inputview)                       | 卡片式输入框           | 表单填写、对话框输入 |
+| [TextField](../components/textfield)                       | 下划线或卡片内文本输入框（避免旧版 `Rectangle`） | 弹窗、行内编辑、卡片内表单 |
+| [InputView](../components/inputview)                       | ColorOS 17 卡片式输入框                        | 页面单行/多行表单（推荐） |
 | [CodeTextField](../components/codetextfield)               | 分格验证码输入框       | 验证码 / OTP 输入    |
 | [Switch](../components/switch)                             | 双态切换控件           | 设置项开关、功能启用 |
 | [Checkbox](../components/checkbox)                         | 多选控件               | 多项选择、条款同意   |

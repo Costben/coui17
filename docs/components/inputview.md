@@ -1,6 +1,6 @@
 # InputView
 
-The ColorOS "card input": a white card (12dp corners) holding an optional 16sp medium title and a bare, undecorated text field, with the counter / clear / password buttons at the end of the field and a 10sp error caption below the card. Mirrors COUICardSingleInputView (single line) and COUICardMultiInputView (multi line, counter at the bottom-end corner of the card). The error caption fades in over 217ms / out over 283ms with the COUI ease curve, and the field plays the COUI error shake while it is shown.
+The recommended ColorOS 17 "card input" for page forms: a rounded card surface holding an optional 16sp medium title and a bare, undecorated text field (`TextFieldMode.None`), with the counter / clear / password buttons at the end of the field and a 10sp error caption below the card. Mirrors `COUICardSingleInputView` (single line) and `COUICardMultiInputView` (multi line, counter at the bottom-end corner of the card). Prefer `InputView` (or `Card` + `TextFieldMode.None`) over the legacy stroked `TextFieldMode.Rectangle` for page inputs. The error caption fades in over 217ms / out over 283ms with the COUI ease curve, and the field plays the COUI error shake while it is shown.
 
 ## Import
 
