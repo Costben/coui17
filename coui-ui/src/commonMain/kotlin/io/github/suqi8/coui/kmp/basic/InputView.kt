@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
@@ -144,7 +145,10 @@ fun InputView(
         else -> InputViewDefaults.FieldPaddingVertical
     }
 
-    Column(modifier = modifier) {
+    val resolvedInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
+    val isFocused by resolvedInteractionSource.collectIsFocusedAsState()
+
+    Column(modifier = modifier.then(rememberImeBringIntoViewModifier(isFocused))) {
         Column(
             modifier = Modifier
                 .squircleBackground(color = colors.cardColor, cornerRadius = cornerRadius)
@@ -187,7 +191,7 @@ fun InputView(
                 singleLine = singleLine,
                 maxLines = maxLines,
                 visualTransformation = visualTransformation,
-                interactionSource = interactionSource,
+                interactionSource = resolvedInteractionSource,
             )
             if (countVisible && !singleLine) {
                 MultiInputViewCount(

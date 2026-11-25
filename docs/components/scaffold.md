@@ -15,7 +15,7 @@ Why not use the official `Popup` and `Dialog` instead of creating our own popup 
 :::
 
 ::: tip
-Each `Scaffold` automatically manages its own isolated popup state. Multiple nested or side-by-side `Scaffold`s work correctly without any extra configuration — no need to manually set `popupHost`.
+Each `Scaffold` automatically manages its own isolated popup state and shrinks its main body viewport above the soft keyboard (`WindowInsets.ime`) while consuming IME insets, so focused `TextField`, `InputView`, and `CodeTextField` components inside scrollable content lift above the keyboard automatically without double padding. Pass `contentWindowInsets = WindowInsets(0, 0, 0, 0)` when a custom host manages all window insets itself.
 :::
 
 ## Import

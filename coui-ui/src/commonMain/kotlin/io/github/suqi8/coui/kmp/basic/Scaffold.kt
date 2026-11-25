@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -113,6 +115,9 @@ fun Scaffold(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val safeInsets = remember(contentWindowInsets) { MutableWindowInsets(contentWindowInsets) }
+    val imeInsets = WindowInsets.ime
+    val remainingImeInsets = remember(imeInsets) { MutableWindowInsets(imeInsets) }
+    val applyImePadding = contentWindowInsets != ZeroWindowInsets
     val popupStates = remember { mutableStateListOf<COUIPopupUtils.PopupState>() }
     val dialogStates = remember { mutableStateListOf<COUIPopupUtils.DialogState>() }
     val parentRootDialogStates = LocalRootDialogStates.current
@@ -128,6 +133,7 @@ fun Scaffold(
         modifier = modifier.onConsumedWindowInsetsChanged { consumedWindowInsets ->
             // Exclude currently consumed window insets from user provided contentWindowInsets
             safeInsets.insets = contentWindowInsets.exclude(consumedWindowInsets)
+            remainingImeInsets.insets = imeInsets.exclude(consumedWindowInsets)
         },
         color = containerColor,
     ) {
@@ -151,6 +157,8 @@ fun Scaffold(
                 floatingToolbarPosition = floatingToolbarPosition,
                 popup = popupHost,
                 contentWindowInsets = safeInsets,
+                remainingImeInsets = remainingImeInsets,
+                applyImePadding = applyImePadding,
             )
         }
     }
@@ -183,6 +191,8 @@ private fun ScaffoldLayout(
     floatingToolbarPosition: ToolbarPosition,
     popup: @Composable () -> Unit,
     contentWindowInsets: WindowInsets,
+    remainingImeInsets: WindowInsets,
+    applyImePadding: Boolean,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     // Create the backing value for the content padding
@@ -208,7 +218,13 @@ private fun ScaffoldLayout(
     val floatingActionButtonContent: @Composable () -> Unit =
         remember(floatingActionButton) { { Box { floatingActionButton() } } }
     val floatingToolbarContent: @Composable () -> Unit = remember(floatingToolbar) { { Box { floatingToolbar() } } }
-    val bodyContent: @Composable () -> Unit = remember(content, contentPadding) { { Box { content(contentPadding) } } }
+    val bodyContent: @Composable () -> Unit = remember(content, contentPadding, applyImePadding) {
+        {
+            Box(modifier = if (applyImePadding) Modifier.imePadding() else Modifier) {
+                content(contentPadding)
+            }
+        }
+    }
     val bottomBarContent: @Composable () -> Unit = remember(bottomBar) { { Box { bottomBar() } } }
     SubcomposeLayout { constraints ->
         val layoutWidth = constraints.maxWidth
@@ -314,8 +330,13 @@ private fun ScaffoldLayout(
 
         val isFloatingToolbarEmpty = floatingToolbarPlaceable.width == 0 && floatingToolbarPlaceable.height == 0
 
-        // Update the backing state for the content padding before subcomposing the body
+        // Update the backing state for the content padding before subcomposing the body.
+        // Because bodyContent shrinks by remainingImeInsets via Modifier.imePadding(), deduct that
+        // same height from bottom padding so fixed navigation bars / system bars are not double-padded
+        // while lifting bars that consume IME keep their own height above the keyboard.
         val insets = contentWindowInsets.asPaddingValues(this)
+        val effectiveImeBottom = if (applyImePadding) remainingImeInsets.getBottom(this@SubcomposeLayout) else 0
+        val rawBottomPaddingPx = if (isBottomBarEmpty) bottomInset else bottomBarPlaceable.height
         contentPadding.paddingHolder =
             PaddingValues(
                 top =
@@ -324,12 +345,7 @@ private fun ScaffoldLayout(
                 } else {
                     topBarPlaceable.height.toDp()
                 },
-                bottom =
-                if (isBottomBarEmpty) {
-                    insets.calculateBottomPadding()
-                } else {
-                    bottomBarPlaceable.height.toDp()
-                },
+                bottom = (rawBottomPaddingPx - effectiveImeBottom).coerceAtLeast(0).toDp(),
                 start = insets.calculateStartPadding(layoutDirection),
                 end = insets.calculateEndPadding(layoutDirection),
             )
@@ -466,6 +482,8 @@ value class FabPosition internal constructor(@Suppress("unused") private val val
  */
 @Immutable
 internal class FabPlacement(val left: Int, val width: Int, val height: Int)
+
+private val ZeroWindowInsets = WindowInsets(0, 0, 0, 0)
 
 // FAB spacing above the bottom bar / bottom of the Scaffold
 private val FabSpacing = 12.dp

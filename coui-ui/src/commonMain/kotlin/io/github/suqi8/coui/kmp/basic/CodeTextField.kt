@@ -139,7 +139,7 @@ fun CodeTextField(
                 if (next.length == cellCount) currentOnComplete?.invoke(next)
             }
         },
-        modifier = modifier,
+        modifier = modifier.then(rememberImeBringIntoViewModifier(isFocused)),
         enabled = enabled,
         textStyle = HiddenFieldTextStyle,
         keyboardOptions = keyboardOptions,

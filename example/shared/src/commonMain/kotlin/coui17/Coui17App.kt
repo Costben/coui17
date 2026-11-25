@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -645,7 +648,19 @@ internal fun Coui17PageContent(
     modifier: Modifier = Modifier,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val pagePadding = PaddingValues(top = contentTop, bottom = contentBottom)
+    val imeInsets = WindowInsets.ime
+    val density = LocalDensity.current
+    val pagePadding = remember(contentTop, contentBottom, imeInsets, density) {
+        object : PaddingValues {
+            override fun calculateLeftPadding(layoutDirection: LayoutDirection): Dp = 0.dp
+            override fun calculateTopPadding(): Dp = contentTop
+            override fun calculateRightPadding(layoutDirection: LayoutDirection): Dp = 0.dp
+            override fun calculateBottomPadding(): Dp {
+                val imeBottom = with(density) { imeInsets.getBottom(this).toDp() }
+                return (contentBottom - imeBottom).coerceAtLeast(0.dp)
+            }
+        }
+    }
 
     // The list rides up with the bar instead of waiting for it to finish collapsing. The bar's live
     // height is `expandedHeight + heightOffset`, so shifting the content by that same offset keeps the
@@ -657,6 +672,7 @@ internal fun Coui17PageContent(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .imePadding()
             // Keep the content's bottom edge attached to the viewport while the top follows
             // the collapsing app bar. A plain offset on a fillMaxSize node leaves a gap at the
             // bottom once heightOffset becomes negative, exposing the Scaffold's base colour.

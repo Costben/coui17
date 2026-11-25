@@ -222,7 +222,7 @@ fun TextField(
 
     BasicTextField(
         state = state,
-        modifier = modifier,
+        modifier = modifier.then(rememberImeBringIntoViewModifier(isFocused)),
         enabled = enabled,
         readOnly = readOnly,
         textStyle = resolvedTextStyle,
@@ -390,7 +390,7 @@ fun TextField(
     BasicTextField(
         value = value,
         onValueChange = handleValueChange,
-        modifier = modifier,
+        modifier = modifier.then(rememberImeBringIntoViewModifier(isFocused)),
         enabled = enabled,
         readOnly = readOnly,
         textStyle = resolvedTextStyle,
@@ -544,7 +544,7 @@ fun TextField(
     BasicTextField(
         value = value,
         onValueChange = handleValueChange,
-        modifier = modifier,
+        modifier = modifier.then(rememberImeBringIntoViewModifier(isFocused)),
         enabled = enabled,
         readOnly = readOnly,
         textStyle = resolvedTextStyle,

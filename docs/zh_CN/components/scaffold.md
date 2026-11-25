@@ -15,7 +15,7 @@ Scaffold 组件为跨平台提供了一个合适的弹出窗口的容器。`Over
 :::
 
 ::: tip 提示
-每个 `Scaffold` 会自动管理独立的弹出层状态。多个嵌套或并列的 `Scaffold` 无需额外配置即可正常工作，不需要手动设置 `popupHost`。
+每个 `Scaffold` 会自动管理独立的弹出层状态，并默认随软键盘（`WindowInsets.ime`）自动收缩主内容区视口并消费 IME inset，使可滚动页面中的 `TextField` / `InputView` / `CodeTextField` 获焦时自动上抬避让键盘而无需手动叠加 `imePadding()`。如果外层页面自行接管全部窗口边距，传入 `contentWindowInsets = WindowInsets(0, 0, 0, 0)` 即可关闭内置避让。
 :::
 
 ## 引入
