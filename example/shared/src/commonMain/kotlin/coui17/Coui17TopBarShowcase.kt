@@ -55,7 +55,6 @@ import io.github.suqi8.coui.kmp.basic.ChipTabData
 import io.github.suqi8.coui.kmp.basic.ChipTabGroup
 import io.github.suqi8.coui.kmp.basic.HighlightedIconButton
 import io.github.suqi8.coui.kmp.basic.Icon
-import io.github.suqi8.coui.kmp.basic.IconButton
 import io.github.suqi8.coui.kmp.basic.PinnedScrollBehavior
 import io.github.suqi8.coui.kmp.basic.PinnedTopAppBar
 import io.github.suqi8.coui.kmp.basic.PinnedTopAppBarDefaults
@@ -810,20 +809,16 @@ private fun RowScope.ShowcaseBarActions(
         }
 
         TopBarActionStyle.RedDot -> {
-            IconButton(
+            HighlightedIconButton(
                 onClick = {},
                 modifier = Modifier.couiTopAppBarActionItem(),
-                minWidth = 40.dp,
-                minHeight = 40.dp,
                 redDot = 0,
             ) {
                 Icon(imageVector = COUIIcons.Basic.Search, contentDescription = str("Search"))
             }
-            IconButton(
+            HighlightedIconButton(
                 onClick = {},
                 modifier = Modifier.couiTopAppBarActionItem(),
-                minWidth = 40.dp,
-                minHeight = 40.dp,
                 redDot = 9,
             ) {
                 Icon(imageVector = COUIIcons.More, contentDescription = str("More"))
