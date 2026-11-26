@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -209,6 +212,45 @@ class SearchFilterTopAppBarLayoutTest {
         assertTrue(
             afterEdgeRed <= 6,
             "the two-row material must stop at barBottom + TwoRowTopAppBarDefaults.ExtraHeight (got red=$afterEdgeRed)",
+        )
+    }
+
+    @Test
+    fun collapsingEmbeddedSearchBarDropsFilterRowEvenWhileFiltersRemainNonNull() = runSkikoComposeUiTest(
+        size = Size(360f, 300f),
+        density = Density(1f),
+    ) {
+        var expanded by mutableStateOf(true)
+        setContent {
+            COUITheme {
+                SearchFilterTopAppBar(
+                    filters = filters,
+                    selectedFilter = 0,
+                    onFilterSelected = {},
+                    modifier = Modifier.fillMaxWidth().testTag("bar"),
+                    searchRow = {
+                        TopAppBarSearchBar(
+                            query = "coui",
+                            onQueryChange = {},
+                            expanded = expanded,
+                            onExpandedChange = { expanded = it },
+                            gradientColor = Color.Transparent,
+                        )
+                    },
+                )
+            }
+        }
+        waitForIdle()
+        assertEquals(rowsHeight.value, onNodeWithTag("bar").getBoundsInRoot().height.value, 0.5f)
+
+        // Caller keeps passing non-null filters while its panel fades out; collapsing the embedded
+        // search bar must immediately collapse the second filter row instead of leaving it lingering.
+        runOnIdle { expanded = false }
+        waitForIdle()
+        assertEquals(
+            TwoRowTopAppBarDefaults.FirstRowHeight.value,
+            onNodeWithTag("bar").getBoundsInRoot().height.value,
+            0.5f,
         )
     }
 }

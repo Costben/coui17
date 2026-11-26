@@ -207,15 +207,18 @@ class SearchResultContainerTest {
         assertTrue(state.resultsVisible)
 
         runOnIdle { showingResults = false }
-        // Mid fade-out (48ms < 120ms): results & filter bar must still be mounted.
+        // Mid fade-out (48ms < 120ms): results & filter bar must still be mounted, while
+        // filtersAlpha fades out in lockstep with contentAlpha.
         repeat(3) { mainClock.advanceTimeBy(16L) }
         assertTrue(state.filtersVisible, "filters stay visible during fade-out")
         assertTrue(state.shownResults, "results stay mounted during fade-out")
         assertTrue(state.contentAlpha < 1f, "results are fading out: ${state.contentAlpha}")
+        assertEquals(state.contentAlpha, state.filtersAlpha, 0.01f)
 
         // Finish fade-out + fade-in (120 + 200ms).
         repeat(25) { mainClock.advanceTimeBy(16L) }
         assertFalse(state.filtersVisible)
+        assertEquals(0f, state.filtersAlpha, 0.001f)
         assertFalse(state.shownResults)
         assertEquals(1f, state.contentAlpha, 0.01f)
     }

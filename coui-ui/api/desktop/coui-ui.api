@@ -1284,7 +1284,7 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchBar
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchFilterTopAppBarKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchFilterTopAppBarKt;
 	public fun <init> ()V
-	public final fun getLambda$369877959$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-1831250605$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchResultContainerKt {
@@ -3884,7 +3884,7 @@ public final class io/github/suqi8/coui/kmp/basic/SearchBarKt {
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SearchFilterTopAppBarKt {
-	public static final fun SearchFilterTopAppBar-ZSIL4_Q (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;FFFLandroidx/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/layout/PaddingValues;JLio/github/suqi8/coui/kmp/blur/Backdrop;FLkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SearchFilterTopAppBar-yfLJiog (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;FFFLandroidx/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/layout/PaddingValues;JLio/github/suqi8/coui/kmp/blur/Backdrop;FLkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class io/github/suqi8/coui/kmp/basic/SearchHistoryChipColors {
@@ -4096,6 +4096,7 @@ public final class io/github/suqi8/coui/kmp/basic/SearchResultsTransitionSpec {
 public final class io/github/suqi8/coui/kmp/basic/SearchResultsTransitionState {
 	public static final field $stable I
 	public final fun getContentAlpha ()F
+	public final fun getFiltersAlpha ()F
 	public final fun getFiltersVisible ()Z
 	public final fun getLoadingAlpha ()F
 	public final fun getResultsVisible ()Z

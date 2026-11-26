@@ -20,7 +20,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -211,6 +213,8 @@ private fun TopAppBarSearchBarImpl(
         isBackEnabled = expanded,
         onBackCompleted = closeSearch,
     )
+
+    BindSearchFilterBarBridge(expanded = expanded)
 
     val useKitSurface = isKitSurfaceSupported() && isKitSearchBarSupported() && resolvedBackdrop != null
 
@@ -524,6 +528,21 @@ private fun TopAppBarSearchBarImpl(
             dark = dark,
         ) {
             barContent()
+        }
+    }
+}
+
+@Composable
+private fun BindSearchFilterBarBridge(expanded: Boolean) {
+    val bridge = LocalSearchFilterBarBridge.current ?: return
+    SideEffect {
+        if (!bridge.bound) bridge.bound = true
+        if (bridge.expanded != expanded) bridge.expanded = expanded
+    }
+    DisposableEffect(bridge) {
+        onDispose {
+            bridge.bound = false
+            bridge.expanded = true
         }
     }
 }

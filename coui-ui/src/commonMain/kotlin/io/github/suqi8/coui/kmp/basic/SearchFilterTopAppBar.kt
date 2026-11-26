@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,19 +19,26 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.github.suqi8.coui.kmp.anim.COUIInEase
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.LayerBackdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
@@ -104,7 +113,26 @@ import io.github.suqi8.coui.kmp.theme.COUITheme
  * @param platformRenderer Whether the platform's own backdrop blur may be used. Defaults to `false`
  *   because the bar records its own material: the platform effect samples the whole window and
  *   would feed the recording back into itself.
+ * @param filtersAlpha Opacity producer for the second-row filter strip, read in the draw phase
+ *   (e.g. `{ transitionState.filtersAlpha }`). Combined with automatic collapse fade-out when
+ *   [searchRow] hosts a collapsing [TopAppBarSearchBar].
  */
+private const val FILTER_COLLAPSE_FADE_MILLIS = 90
+private val FILTER_COLLAPSE_TUCK_DISTANCE = 6.dp
+
+/**
+ * Coordinates an embedded [TopAppBarSearchBar] with its enclosing [SearchFilterTopAppBar] so the
+ * second-row filter strip dissolves and collapses immediately when the search bar collapses,
+ * instead of lingering over the underlying page while a host panel fades out.
+ */
+@Stable
+internal class SearchFilterBarBridge {
+    var bound by mutableStateOf(false)
+    var expanded by mutableStateOf(true)
+}
+
+internal val LocalSearchFilterBarBridge = compositionLocalOf<SearchFilterBarBridge?> { null }
+
 @Composable
 fun SearchFilterTopAppBar(
     filters: List<ChipTabData>? = null,
@@ -126,14 +154,40 @@ fun SearchFilterTopAppBar(
     },
     scrollFraction: () -> Float = { 1f },
     platformRenderer: Boolean = false,
+    filtersAlpha: () -> Float = { 1f },
     searchRow: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
+    val filterBarBridge = remember { SearchFilterBarBridge() }
+    val currentFiltersAlpha = rememberUpdatedState(filtersAlpha)
+    val searchBarCollapsing = filterBarBridge.bound && !filterBarBridge.expanded
+    val collapseFade = remember { Animatable(1f) }
+    LaunchedEffect(filterBarBridge.bound, filterBarBridge.expanded) {
+        if (!filterBarBridge.bound || filterBarBridge.expanded) {
+            collapseFade.snapTo(1f)
+        } else {
+            collapseFade.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = FILTER_COLLAPSE_FADE_MILLIS, easing = COUIInEase),
+            )
+        }
+    }
+    val filtersMounted by remember(filters != null) {
+        derivedStateOf {
+            if (filters == null) {
+                false
+            } else if (!filterBarBridge.bound || filterBarBridge.expanded) {
+                true
+            } else {
+                collapseFade.value > 0.001f
+            }
+        }
+    }
     val statusBarTop = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     // Mirrors the rows below row for row, with this bar's own [rowGap] rather than
     // [TwoRowTopAppBarDefaults.barHeight]'s fixed SecondRowGap: a caller that moves the gap must
     // move the material with it, or the fade band stops short of the bar's bottom edge.
-    val rowsHeight = firstRowHeight + if (filters != null) {
+    val rowsHeight = firstRowHeight + if (filtersMounted) {
         rowGap + filterRowHeight + TwoRowTopAppBarDefaults.SecondRowBottom
     } else {
         0.dp
@@ -162,7 +216,7 @@ fun SearchFilterTopAppBar(
         derivedStateOf { currentScrollFraction.value() > 0.001f }
     }
     val searchRowBackdrop = if (materialVisible) materialBackdrop else backdrop
-    val materialRamp = if (filters != null) {
+    val materialRamp = if (filtersMounted) {
         twoRowAppBarMaterialRamp(
             statusBarTop = statusBarTop,
             firstRowHeight = firstRowHeight,
@@ -172,6 +226,7 @@ fun SearchFilterTopAppBar(
     } else {
         AppBarMaterialRamp()
     }
+    val tuckDistancePx = with(density) { FILTER_COLLAPSE_TUCK_DISTANCE.toPx() }
     CompositionLocalProvider(LocalEdgeToEdge provides true) {
         Layout(
             modifier = modifier.scrollToTopOnTap(),
@@ -222,11 +277,12 @@ fun SearchFilterTopAppBar(
                             LocalBackdrop provides searchRowBackdrop,
                             LocalCouiToolbarBackdrop provides toolbarBackdrop,
                             LocalCouiToolbarSampleBlurRadius provides sampleBlur,
+                            LocalSearchFilterBarBridge provides filterBarBridge,
                         ) {
                             searchRow()
                         }
                     }
-                    if (filters != null) {
+                    if (filtersMounted && filters != null) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -234,7 +290,18 @@ fun SearchFilterTopAppBar(
                                     top = rowGap,
                                     bottom = TwoRowTopAppBarDefaults.SecondRowBottom,
                                 )
-                                .height(filterRowHeight),
+                                .height(filterRowHeight)
+                                .graphicsLayer {
+                                    val callerAlpha = currentFiltersAlpha.value().coerceIn(0f, 1f)
+                                    val collapseAlpha = if (!filterBarBridge.bound || filterBarBridge.expanded) {
+                                        1f
+                                    } else {
+                                        collapseFade.value.coerceIn(0f, 1f)
+                                    }
+                                    val combined = callerAlpha * collapseAlpha
+                                    alpha = combined
+                                    translationY = -tuckDistancePx * (1f - combined)
+                                },
                             contentAlignment = Alignment.Center,
                         ) {
                             // AppBarMaterialLayout already paints the live progressive blur and
@@ -245,10 +312,18 @@ fun SearchFilterTopAppBar(
                             ChipTabGroup(
                                 tabs = filters,
                                 selectedIndex = selectedFilter,
-                                onSelectedChange = onFilterSelected,
+                                onSelectedChange = if (searchBarCollapsing) {
+                                    {}
+                                } else {
+                                    onFilterSelected
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 leadingIcon = leadingIcon,
-                                onLeadingIconClick = onLeadingIconClick,
+                                onLeadingIconClick = if (searchBarCollapsing) {
+                                    {}
+                                } else {
+                                    onLeadingIconClick
+                                },
                                 contentPadding = filterContentPadding,
                                 backdrop = null,
                             )

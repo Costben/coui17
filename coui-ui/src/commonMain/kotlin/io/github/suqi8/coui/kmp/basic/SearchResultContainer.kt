@@ -205,6 +205,7 @@ class SearchResultsTransitionState internal constructor(
     internal var loadingWasShown: Boolean = false
     internal var riseDistanceTarget: Dp by mutableStateOf(spec.resultsRiseDistance)
     internal var loadingExiting: Boolean by mutableStateOf(false)
+    internal var exitingResults: Boolean by mutableStateOf(false)
 
     internal val modeFade = Animatable(1f)
     internal val riseProgress = Animatable(if (initialShowingResults && !initialLoading) 1f else 0f)
@@ -221,8 +222,21 @@ class SearchResultsTransitionState internal constructor(
     val loadingAlpha: Float
         get() = loadingProgress.value
 
+    /**
+     * Opacity for a companion [SearchFilterTopAppBar]'s filter strip. Stays `1f` while results are
+     * active, fades out in lockstep with [modeFade] while leaving results, and drops to `0f` once
+     * [filtersVisible] becomes `false`.
+     */
+    val filtersAlpha: Float
+        get() = when {
+            !filtersVisible -> 0f
+            exitingResults -> modeFade.value.coerceIn(0f, 1f)
+            else -> 1f
+        }
+
     internal suspend fun syncMode(showingResults: Boolean) {
         if (showingResults) {
+            exitingResults = false
             filtersVisible = true
             if (!shownResults) {
                 modeFade.animateTo(0f, tween(spec.suggestFadeOutMillis, easing = COUIInEase))
@@ -236,6 +250,7 @@ class SearchResultsTransitionState internal constructor(
             }
         } else {
             if (shownResults) {
+                exitingResults = true
                 loadingExiting = true
                 coroutineScope {
                     if (loadingProgress.value > 0.001f) {
@@ -256,6 +271,7 @@ class SearchResultsTransitionState internal constructor(
                         modeFade.snapTo(0f)
                     }
                 }
+                exitingResults = false
                 filtersVisible = false
                 resultsVisible = false
                 riseProgress.snapTo(1f)
@@ -264,6 +280,7 @@ class SearchResultsTransitionState internal constructor(
                 animatedQueryKey = null
                 shownResults = false
             } else {
+                exitingResults = false
                 filtersVisible = false
                 loadingWasShown = false
                 loadingProgress.snapTo(0f)
