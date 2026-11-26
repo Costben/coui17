@@ -39,6 +39,7 @@ import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.node.invalidateMeasurement
 import androidx.compose.ui.node.observeReads
 import androidx.compose.ui.node.requireGraphicsContext
+import androidx.compose.ui.node.requireLayoutCoordinates
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
@@ -727,6 +728,12 @@ private class DrawBackdropNode(
         if (!isEffectivelyEnabled || size.width <= 0f || size.height <= 0f) {
             drawContent()
             return
+        }
+        if (backdrop.isCoordinatesDependent && layoutCoordinates?.isAttached != true) {
+            val coords = requireLayoutCoordinates()
+            if (coords.isAttached) {
+                layoutCoordinates = coords
+            }
         }
         if (effectScope.update(this)) {
             updateEffects()

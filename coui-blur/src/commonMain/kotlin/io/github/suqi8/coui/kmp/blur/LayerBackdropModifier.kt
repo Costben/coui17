@@ -13,6 +13,7 @@ import androidx.compose.ui.node.GlobalPositionAwareModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.TraversableNode
 import androidx.compose.ui.node.invalidateDraw
+import androidx.compose.ui.node.requireLayoutCoordinates
 import androidx.compose.ui.platform.InspectorInfo
 import io.github.suqi8.coui.kmp.blur.internal.recordLayer
 import io.github.suqi8.coui.kmp.blur.internal.singlePassLayerBackdrop
@@ -101,6 +102,15 @@ internal class LayerBackdropNode(
 
     override fun ContentDrawScope.draw() {
         val backdrop = backdrop
+        if (lastCoordinates?.isAttached != true) {
+            val coords = requireLayoutCoordinates()
+            if (coords.isAttached) {
+                lastCoordinates = coords
+                if (backdrop.owner === this@LayerBackdropNode) {
+                    backdrop.layerCoordinates = coords
+                }
+            }
+        }
         if (backdrop.owner === this@LayerBackdropNode && backdrop.hasConsumers) {
             if (singlePassLayerBackdrop &&
                 backdrop.usesDefaultOnDraw &&

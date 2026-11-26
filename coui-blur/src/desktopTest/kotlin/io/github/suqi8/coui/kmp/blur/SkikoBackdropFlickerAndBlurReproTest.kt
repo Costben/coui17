@@ -326,4 +326,50 @@ class SkikoBackdropFlickerAndBlurReproTest {
         assertTrue(pLeft.red > pLeft.green + 0.2f, "Left should be reddish, got $pLeft")
         assertTrue(pRight.green > pRight.red + 0.2f, "Right should be greenish, got $pRight")
     }
+
+    /**
+     * Repro 7: Dynamically attaching layerBackdrop to an already-laid-out static Box (without
+     * changing its size or position) must immediately publish coordinates and record so consumers
+     * render blurred pixels instead of falling back to blank/solid.
+     */
+    @Test
+    fun dynamicallyAttachingLayerBackdropToStaticBoxPublishesCoordinatesAndBlurs() = runSkikoComposeUiTest(
+        size = Size(200f, 200f),
+        density = Density(1f),
+    ) {
+        var recordEnabled by mutableStateOf(false)
+        var backdropRef: LayerBackdrop? = null
+        setContent {
+            val backdrop = rememberLayerBackdrop()
+            backdropRef = backdrop
+            Box(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .then(if (recordEnabled) Modifier.layerBackdrop(backdrop) else Modifier),
+                ) {
+                    Canvas(Modifier.fillMaxSize()) {
+                        drawRect(Color.Red)
+                    }
+                }
+                Box(Modifier.fillMaxSize().background(Color.Green))
+                Box(
+                    Modifier
+                        .size(120.dp)
+                        .textureBlur(backdrop, RectangleShape, blurRadius = 15f),
+                )
+            }
+        }
+        waitForIdle()
+        assertTrue(!backdropRef!!.isReadyForSampling, "unattached backdrop should not be ready")
+
+        recordEnabled = true
+        waitForIdle()
+        assertTrue(backdropRef!!.isReadyForSampling, "dynamically attached backdrop must report ready")
+        val pixel = onRoot().captureToImage().toPixelMap()[60, 60]
+        assertTrue(
+            pixel.red > 0.8f && pixel.green < 0.2f,
+            "dynamically attached backdrop must blur red source instead of staying blank, got $pixel",
+        )
+    }
 }
