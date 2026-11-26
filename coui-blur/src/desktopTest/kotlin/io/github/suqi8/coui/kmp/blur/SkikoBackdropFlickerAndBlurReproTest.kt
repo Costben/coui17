@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -231,7 +231,7 @@ class SkikoBackdropFlickerAndBlurReproTest {
         size = Size(393f, 852f),
         density = Density(3f),
     ) {
-        var offsetY by mutableStateOf(1600f)
+        var offsetY by mutableFloatStateOf(1600f)
         var backdropDrawCount = 0
         setContent {
             val backdrop = rememberLayerBackdrop()

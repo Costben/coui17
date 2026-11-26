@@ -1,3 +1,5 @@
+// Copyright 2026, compose-coui-ui contributors
+// SPDX-License-Identifier: Apache-2.0
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.foundation.Canvas
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -178,7 +181,7 @@ class DialogBlurAndBottomBarReproTest {
             lineTo(4f, 20f)
             close()
         }.build()
-        var tab by mutableStateOf(0)
+        var tab by mutableIntStateOf(0)
         setContent {
             COUITheme(controller = ThemeController(ColorSchemeMode.Light)) {
                 Box(Modifier.fillMaxSize()) {

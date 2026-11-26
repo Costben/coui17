@@ -31,8 +31,7 @@ internal class CouiTopAppBarSearchState internal constructor(
     private var cachedPairRenderer: CouiFloatingRenderer? = null
 
     /** Retains the dual-body floating renderer across expand/collapse cycles so shaders never recompile on reopen. */
-    internal fun obtainPairRenderer(): CouiFloatingRenderer =
-        cachedPairRenderer ?: CouiFloatingRenderer.pair().also { cachedPairRenderer = it }
+    internal fun obtainPairRenderer(): CouiFloatingRenderer = cachedPairRenderer ?: CouiFloatingRenderer.pair().also { cachedPairRenderer = it }
 }
 
 @Composable
