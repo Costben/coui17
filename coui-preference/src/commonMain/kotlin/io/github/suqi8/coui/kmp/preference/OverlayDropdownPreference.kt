@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -359,5 +360,189 @@ fun OverlayDropdownPreference(
         role = Role.DropdownList,
         holdDownState = isHoldDown.value,
         enabled = actualEnabled,
+    )
+}
+
+/**
+ * A dropdown preference whose [title] and optional [summary] accept styled [AnnotatedString]s,
+ * enabling inline keyword highlighting (such as ColorOS Settings search results) while keeping
+ * the anchored overlay dropdown popup intact.
+ */
+@Composable
+fun OverlayDropdownPreference(
+    items: List<String>,
+    selectedIndex: Int,
+    title: AnnotatedString,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: AnnotatedString? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
+    startAction: @Composable (() -> Unit)? = null,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    maxHeight: Dp? = null,
+    enabled: Boolean = true,
+    showValue: Boolean = true,
+    renderInRootScaffold: Boolean = true,
+    onExpandedChange: ((Boolean) -> Unit)? = null,
+    onSelectedIndexChange: ((Int) -> Unit)? = null,
+) {
+    val entry = remember(
+        items,
+        selectedIndex,
+        onSelectedIndexChange,
+    ) {
+        DropdownEntry(
+            items.mapIndexed { index, item ->
+                DropdownItem(
+                    text = item,
+                    selected = index == selectedIndex,
+                    onClick = { onSelectedIndexChange?.invoke(index) },
+                )
+            },
+        )
+    }
+    OverlayDropdownPreference(
+        entry = entry,
+        title = title,
+        modifier = modifier,
+        titleColor = titleColor,
+        summary = summary,
+        summaryColor = summaryColor,
+        dropdownColors = dropdownColors,
+        startAction = startAction,
+        bottomAction = bottomAction,
+        insideMargin = insideMargin,
+        cardListPosition = cardListPosition,
+        maxHeight = maxHeight,
+        enabled = enabled,
+        showValue = showValue,
+        renderInRootScaffold = renderInRootScaffold,
+        collapseOnSelection = true,
+        onExpandedChange = onExpandedChange,
+    )
+}
+
+/**
+ * A dropdown preference backed by a [DropdownEntry] whose [title] and optional [summary] accept
+ * styled [AnnotatedString]s.
+ */
+@Composable
+fun OverlayDropdownPreference(
+    entry: DropdownEntry,
+    title: AnnotatedString,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: AnnotatedString? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    dropdownColors: DropdownColors = DropdownDefaults.dropdownColors(),
+    startAction: @Composable (() -> Unit)? = null,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    maxHeight: Dp? = null,
+    enabled: Boolean = true,
+    showValue: Boolean = true,
+    renderInRootScaffold: Boolean = true,
+    collapseOnSelection: Boolean = true,
+    onExpandedChange: ((Boolean) -> Unit)? = null,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isDropdownExpanded = remember { mutableStateOf(false) }
+    val isHoldDown = remember { mutableStateOf(false) }
+    val preciseClickState = rememberPreciseClickState()
+    val hapticFeedback = LocalHapticFeedback.current
+    val currentHapticFeedback by rememberUpdatedState(hapticFeedback)
+    val currentOnExpandedChange = rememberUpdatedState(onExpandedChange)
+    val setExpanded: (Boolean) -> Unit = remember {
+        { expanded ->
+            if (isDropdownExpanded.value != expanded) {
+                isDropdownExpanded.value = expanded
+                if (!expanded) {
+                    isHoldDown.value = false
+                }
+                currentOnExpandedChange.value?.invoke(expanded)
+            }
+        }
+    }
+
+    val itemsNotEmpty = entry.items.isNotEmpty()
+    val actualEnabled = enabled && itemsNotEmpty
+
+    val actionColor = if (actualEnabled) {
+        COUITheme.colorScheme.onSurfaceVariantActions
+    } else {
+        COUITheme.colorScheme.disabledOnSecondaryVariant
+    }
+    val valueColor = if (actualEnabled) {
+        COUITheme.colorScheme.onSurfaceSecondary
+    } else {
+        COUITheme.colorScheme.disabledOnSecondaryVariant
+    }
+
+    val handleClick = remember(actualEnabled) {
+        {
+            if (actualEnabled) {
+                setExpanded(!isDropdownExpanded.value)
+                if (isDropdownExpanded.value) {
+                    isHoldDown.value = true
+                    currentHapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+                }
+            }
+        }
+    }
+
+    BasicComponent(
+        title = title,
+        modifier = modifier.preciseClickAnchor(preciseClickState),
+        titleColor = titleColor,
+        summary = summary,
+        summaryColor = summaryColor,
+        startAction = startAction,
+        endActions = {
+            if (showValue && itemsNotEmpty) {
+                val text = entry.items.firstOrNull { it.selected }?.text
+                if (!text.isNullOrEmpty()) {
+                    Text(
+                        text = text,
+                        modifier = Modifier
+                            .widthIn(max = 162.dp)
+                            .padding(start = 8.dp, end = 4.dp)
+                            .align(Alignment.CenterVertically)
+                            .weight(1f, fill = false),
+                        fontSize = COUITheme.textStyles.body2.fontSize,
+                        color = valueColor,
+                        textAlign = TextAlign.End,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            DropdownArrowEndAction(
+                actionColor = actionColor,
+            )
+            if (itemsNotEmpty) {
+                OverlayDropdownPopup(
+                    entry = entry,
+                    show = isDropdownExpanded.value,
+                    onDismiss = { setExpanded(false) },
+                    onDismissFinished = { isHoldDown.value = false },
+                    maxHeight = maxHeight,
+                    dropdownColors = dropdownColors,
+                    renderInRootScaffold = renderInRootScaffold,
+                    collapseOnSelection = collapseOnSelection,
+                    preciseClickState = preciseClickState,
+                )
+            }
+        },
+        bottomAction = bottomAction,
+        insideMargin = insideMargin,
+        cardListPosition = cardListPosition,
+        onClick = handleClick,
+        role = Role.DropdownList,
+        holdDownState = isHoldDown.value,
+        enabled = actualEnabled,
+        interactionSource = interactionSource,
     )
 }

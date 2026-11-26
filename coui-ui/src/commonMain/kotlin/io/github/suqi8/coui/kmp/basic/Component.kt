@@ -37,6 +37,7 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
@@ -139,6 +140,75 @@ fun BasicComponent(
             if (summary != null) {
                 // `coui_preference.xml` stacks the summary straight under the title: the 2dp
                 // `support_preference_margin_between_line` belongs to the icon placement, not the text.
+                Text(
+                    text = summary,
+                    style = COUITheme.textStyles.footnote1,
+                    color = summaryColor.color(enabled),
+                    onTextLayout = { summaryGeometry.value = it.lineGeometry() },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A COUI [BasicComponent] whose [title] and optional [summary] accept styled [AnnotatedString]s,
+ * enabling inline keyword highlighting (such as ColorOS Settings search results) while keeping
+ * native text metrics, icon alignment, and divider geometry identical to the [String] overload.
+ */
+@Composable
+fun BasicComponent(
+    title: AnnotatedString,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: AnnotatedString? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    startAction: @Composable (() -> Unit)? = null,
+    centerStartAction: Boolean = false,
+    endActions: @Composable (RowScope.() -> Unit)? = null,
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    showDivider: Boolean = true,
+    onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null,
+    role: Role? = null,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+) {
+    val titleGeometry = remember { mutableStateOf(TextLineGeometry()) }
+    val summaryGeometry = remember { mutableStateOf(TextLineGeometry()) }
+    val metricsSource = remember {
+        PreferenceTextMetricsSource {
+            PreferenceTextMetrics(titleGeometry.value, summaryGeometry.value)
+        }
+    }
+    CompositionLocalProvider(LocalPreferenceTextMetrics provides metricsSource) {
+        BasicComponent(
+            startAction = startAction,
+            centerStartAction = centerStartAction,
+            endActions = endActions,
+            bottomAction = bottomAction,
+            modifier = modifier,
+            insideMargin = insideMargin,
+            cardListPosition = cardListPosition,
+            showDivider = showDivider,
+            onClick = onClick,
+            onClickLabel = onClickLabel,
+            role = role,
+            holdDownState = holdDownState,
+            enabled = enabled,
+            interactionSource = interactionSource,
+        ) {
+            Text(
+                text = title,
+                style = COUITheme.textStyles.headline1,
+                fontWeight = FontWeight.Medium,
+                color = titleColor.color(enabled),
+                onTextLayout = { titleGeometry.value = it.lineGeometry() },
+            )
+            if (summary != null) {
                 Text(
                     text = summary,
                     style = COUITheme.textStyles.footnote1,

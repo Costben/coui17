@@ -69,6 +69,7 @@ public final class io/github/suqi8/coui/kmp/preference/ArrowPreferenceDefaults {
 }
 
 public final class io/github/suqi8/coui/kmp/preference/ArrowPreferenceKt {
+	public static final fun ArrowPreference (Landroidx/compose/ui/text/AnnotatedString;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Landroidx/compose/ui/text/AnnotatedString;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;ZZLjava/lang/String;ZLandroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun ArrowPreference (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;ZZLandroidx/compose/runtime/Composer;III)V
 	public static final fun ArrowPreference (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;ZLkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Lkotlin/jvm/functions/Function0;ZZLjava/lang/String;ZLandroidx/compose/runtime/Composer;III)V
 }
@@ -272,6 +273,7 @@ public final class io/github/suqi8/coui/kmp/preference/ComposableSingletons$Arro
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/preference/ComposableSingletons$ArrowPreferenceKt;
 	public fun <init> ()V
 	public final fun getLambda$-1063291561$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$460123662$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$910201956$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
 }
 
@@ -308,6 +310,7 @@ public final class io/github/suqi8/coui/kmp/preference/ComposableSingletons$Swit
 public final class io/github/suqi8/coui/kmp/preference/ComposableSingletons$SwitchPreferenceKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/preference/ComposableSingletons$SwitchPreferenceKt;
 	public fun <init> ()V
+	public final fun getLambda$-1712537788$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$1048145454$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$1930550022$io_github_suqi8_coui_kmp_coui_preference ()Lkotlin/jvm/functions/Function3;
 }
@@ -445,8 +448,10 @@ public final class io/github/suqi8/coui/kmp/preference/MultiSelectListPreference
 }
 
 public final class io/github/suqi8/coui/kmp/preference/OverlayDropdownPreferenceKt {
+	public static final fun OverlayDropdownPreference-4Xcw_4U (Lio/github/suqi8/coui/kmp/basic/DropdownEntry;Landroidx/compose/ui/text/AnnotatedString;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Landroidx/compose/ui/text/AnnotatedString;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lio/github/suqi8/coui/kmp/basic/DropdownColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Landroidx/compose/ui/unit/Dp;ZZZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 	public static final fun OverlayDropdownPreference-4Xcw_4U (Lio/github/suqi8/coui/kmp/basic/DropdownEntry;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lio/github/suqi8/coui/kmp/basic/DropdownColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Landroidx/compose/ui/unit/Dp;ZZZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 	public static final fun OverlayDropdownPreference-4Xcw_4U (Ljava/util/List;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lio/github/suqi8/coui/kmp/basic/DropdownColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Landroidx/compose/ui/unit/Dp;ZZZZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
+	public static final fun OverlayDropdownPreference-vU0eyXE (Ljava/util/List;ILandroidx/compose/ui/text/AnnotatedString;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Landroidx/compose/ui/text/AnnotatedString;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lio/github/suqi8/coui/kmp/basic/DropdownColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Landroidx/compose/ui/unit/Dp;ZZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 	public static final fun OverlayDropdownPreference-vU0eyXE (Ljava/util/List;ILjava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lio/github/suqi8/coui/kmp/basic/DropdownColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;Landroidx/compose/ui/unit/Dp;ZZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -658,6 +663,7 @@ public final class io/github/suqi8/coui/kmp/preference/SwitchPreferenceDefaults 
 }
 
 public final class io/github/suqi8/coui/kmp/preference/SwitchPreferenceKt {
+	public static final fun SwitchPreference (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/AnnotatedString;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Landroidx/compose/ui/text/AnnotatedString;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lio/github/suqi8/coui/kmp/basic/SwitchColors;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZZZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;III)V
 	public static final synthetic fun SwitchPreference (ZLkotlin/jvm/functions/Function1;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lio/github/suqi8/coui/kmp/basic/SwitchColors;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZZLandroidx/compose/runtime/Composer;III)V
 	public static final fun SwitchPreference (ZLkotlin/jvm/functions/Function1;Ljava/lang/String;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Ljava/lang/String;Lio/github/suqi8/coui/kmp/basic/BasicComponentColors;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function2;Lio/github/suqi8/coui/kmp/basic/SwitchColors;Landroidx/compose/foundation/layout/PaddingValues;Lio/github/suqi8/coui/kmp/basic/CardListPosition;ZZZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;III)V
 }

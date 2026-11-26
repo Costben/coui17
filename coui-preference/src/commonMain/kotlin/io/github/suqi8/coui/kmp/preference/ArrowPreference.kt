@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -123,6 +124,83 @@ fun ArrowPreference(
             )
         },
         bottomAction = bottomAction,
+        onClick = onClick,
+        holdDownState = holdDownState,
+        enabled = enabled,
+    )
+}
+
+/**
+ * An arrow preference whose [title] and optional [summary] accept styled [AnnotatedString]s,
+ * enabling inline keyword highlighting (such as ColorOS Settings search results) without losing
+ * native [ArrowPreference] layout, divider, or trailing arrow styling.
+ */
+@Composable
+@NonRestartableComposable
+fun ArrowPreference(
+    title: AnnotatedString,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: AnnotatedString? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    startAction: @Composable (() -> Unit)? = null,
+    centerStartAction: Boolean = false,
+    endActions: @Composable RowScope.() -> Unit = {},
+    bottomAction: (@Composable () -> Unit)? = null,
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    onClick: (() -> Unit)? = null,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+    statusText: String? = null,
+    showRedDot: Boolean = false,
+) {
+    BasicComponent(
+        title = title,
+        modifier = modifier,
+        titleColor = titleColor,
+        summary = summary,
+        summaryColor = summaryColor,
+        startAction = startAction,
+        centerStartAction = centerStartAction,
+        endActions = {
+            Row(
+                modifier = Modifier
+                    .padding(end = 4.dp)
+                    .align(Alignment.CenterVertically)
+                    .weight(1f, fill = false),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                endActions()
+            }
+            if (statusText != null) {
+                Text(
+                    modifier = Modifier
+                        .padding(start = ArrowPreferenceDefaults.StatusTextStartPadding)
+                        .widthIn(max = ArrowPreferenceDefaults.StatusTextMaxWidth)
+                        .align(Alignment.CenterVertically),
+                    text = statusText,
+                    style = COUITheme.textStyles.body2,
+                    color = COUITheme.colorScheme.onSurfaceSecondary,
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (showRedDot) {
+                Badge(
+                    modifier = Modifier
+                        .padding(end = ArrowPreferenceDefaults.RedDotEndPadding)
+                        .align(Alignment.CenterVertically),
+                )
+            }
+            ArrowPreferenceEndAction(
+                enabled = enabled,
+            )
+        },
+        bottomAction = bottomAction,
+        insideMargin = insideMargin,
+        cardListPosition = cardListPosition,
         onClick = onClick,
         holdDownState = holdDownState,
         enabled = enabled,

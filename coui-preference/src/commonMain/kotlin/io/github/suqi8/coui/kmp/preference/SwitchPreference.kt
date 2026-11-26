@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.basic.Badge
 import io.github.suqi8.coui.kmp.basic.BasicComponent
@@ -109,6 +110,81 @@ fun SwitchPreference(
             )
         },
         bottomAction = bottomAction,
+        onClick = {
+            if (enabled) {
+                currentOnCheckedChange(!checked)
+                currentOnClick?.invoke()
+            }
+        },
+        role = Role.Switch,
+        holdDownState = holdDownState,
+        enabled = enabled,
+    )
+}
+
+/**
+ * A switch preference whose [title] and optional [summary] accept styled [AnnotatedString]s,
+ * enabling inline keyword highlighting (such as ColorOS Settings search results) while keeping
+ * direct switch toggling intact.
+ */
+@Composable
+@NonRestartableComposable
+fun SwitchPreference(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    title: AnnotatedString,
+    modifier: Modifier = Modifier,
+    titleColor: BasicComponentColors = BasicComponentDefaults.titleColor(),
+    summary: AnnotatedString? = null,
+    summaryColor: BasicComponentColors = BasicComponentDefaults.summaryColor(),
+    startAction: @Composable (() -> Unit)? = null,
+    endActions: @Composable RowScope.() -> Unit = {},
+    bottomAction: (@Composable () -> Unit)? = null,
+    switchColors: SwitchColors = SwitchDefaults.switchColors(),
+    insideMargin: PaddingValues = BasicComponentDefaults.InsideMargin,
+    cardListPosition: CardListPosition = CardListPosition.None,
+    holdDownState: Boolean = false,
+    enabled: Boolean = true,
+    showRedDot: Boolean = false,
+    onClick: (() -> Unit)? = null,
+) {
+    val currentOnCheckedChange by rememberUpdatedState(onCheckedChange)
+    val currentOnClick by rememberUpdatedState(onClick)
+    BasicComponent(
+        title = title,
+        modifier = modifier,
+        titleColor = titleColor,
+        summary = summary,
+        summaryColor = summaryColor,
+        startAction = startAction,
+        endActions = {
+            Row(
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .align(Alignment.CenterVertically)
+                    .weight(1f, fill = false),
+            ) {
+                endActions()
+            }
+            if (showRedDot) {
+                Badge(
+                    modifier = Modifier
+                        .padding(start = SwitchPreferenceDefaults.RedDotStartPadding)
+                        .align(Alignment.CenterVertically),
+                    dotDiameter = SwitchPreferenceDefaults.RedDotDiameter,
+                )
+            }
+            SwitchPreferenceEndActions(
+                checked = checked,
+                onCheckedChange = currentOnCheckedChange,
+                onClick = currentOnClick,
+                enabled = enabled,
+                switchColors = switchColors,
+            )
+        },
+        bottomAction = bottomAction,
+        insideMargin = insideMargin,
+        cardListPosition = cardListPosition,
         onClick = {
             if (enabled) {
                 currentOnCheckedChange(!checked)
