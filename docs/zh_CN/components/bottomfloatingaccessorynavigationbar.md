@@ -109,7 +109,9 @@ BottomFloatingAccessoryNavigationBar(
 
 与普通悬浮导航栏一致，16dp 的外部内边距只在小屏下保留，中屏与大屏下收缩为 0。胶囊会在两个配件视图让出的空间中居中。
 
-胶囊本身按 `BaseBottomFloatingMenuView.onMeasure` 测量原生菜单视图的方式测量——能放下时等于各项在 `BottomFloatingNavigationBarDefaults.ItemMaxWidth`（70dp）下的总宽加上 12dp 内边距与 8dp 间距，放不下时被压缩进配件视图让出的宽度。纵向上它在导航栏 88dp 的盒子里居中，与 `COUIBottomFloatingAccessoryNavigationBar.onLayout` 让子视图居中一致。盒子下方的留白由宿主决定：用 `BottomFloatingNavigationBarDefaults.navigationBarPadding()`（手势导航 8dp、三键导航 36dp）代替 `navigationBarsPadding()`，手势导航下胶囊底边即距屏幕边缘 24dp，与 ColorOS 17 相册一致。
+胶囊本身按 `BaseBottomFloatingMenuView.onMeasure` 测量原生菜单视图的方式测量——能放下时等于各项在 `BottomFloatingNavigationBarDefaults.ItemMaxWidth`（70dp）下的总宽加上 12dp 内边距与 8dp 间距，放不下时被压缩进配件视图让出的宽度。纵向上它在导航栏 88dp 的盒子里居中，与 `COUIBottomFloatingAccessoryNavigationBar.onLayout` 让子视图居中一致。盒子下方的留白由宿主决定：用 `BottomFloatingNavigationBarDefaults.navigationBarPadding()`（Android 手势导航与 iOS 全面屏均为 8dp、Android 三键导航为 36dp）代替 `navigationBarsPadding()`，胶囊底边即距屏幕边缘 24dp，与 ColorOS 17 相册一致。
+
+> **iOS 适配说明**：在 iOS 端**切勿**给 `BottomFloatingNavigationBar` / `BottomFloatingAccessoryNavigationBar`（以及详情页底部悬浮工具栏）直接套 `Modifier.navigationBarsPadding()`。全面屏 iPhone 的 `WindowInsets.navigationBars`（含 `tappableElement`）会返回完整的 34pt Home Indicator 安全区，叠加导航栏 88dp 盒子自带的 16dp 下留白后会把胶囊抬到距屏底 50dp 以上、显得明显偏高。iOS 宿主应统一使用 `Modifier.padding(bottom = BottomFloatingNavigationBarDefaults.navigationBarPadding())`（库侧在非 Android 平台已屏蔽 `tappableElement` 三键导航分支，仅在 `navigationBars > 0` 时返回 `MenuToScreenNaviDistance = 8.dp`），使底栏胶囊稳定落在距屏底 24dp 位置。
 
 布局在同一档位上会在小屏与中屏摆放之间选择，但这个选择在这里观察不到。小屏摆放把每个配件视图贴到导航栏各自的外侧边缘，并把菜单居中于两者之间——本实现已经如此，因为原生组件把自身测量为「内容 + 内边距」，而本移植同样包裹内容。
 

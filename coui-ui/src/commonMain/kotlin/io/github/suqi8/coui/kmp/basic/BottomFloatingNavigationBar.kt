@@ -1062,16 +1062,17 @@ object BottomFloatingNavigationBarDefaults {
 
     /**
      * The bottom padding ColorOS 17 hosts put under a floating bar, in place of the navigation
-     * inset: [MenuToScreenNaviDistance] under gesture navigation, [ButtonNavigationDistance] under
-     * three-button navigation and nothing without a navigation bar — the branches of the Gallery's
-     * `TemplateFragment.getBottomPadding`. With it a 56dp capsule ends 24dp above the screen's
-     * bottom edge under gesture navigation, as the Gallery's does.
+     * inset: [MenuToScreenNaviDistance] under gesture navigation (and iOS home-indicator screens),
+     * [ButtonNavigationDistance] under Android three-button navigation and nothing without a
+     * navigation bar — the branches of the Gallery's `TemplateFragment.getBottomPadding`. With it
+     * a 56dp capsule ends 24dp above the screen's bottom edge under gesture navigation, as the
+     * Gallery's does.
      */
     @Composable
     fun navigationBarPadding(): Dp {
         val density = LocalDensity.current
         return when {
-            WindowInsets.tappableElement.getBottom(density) > 0 -> ButtonNavigationDistance
+            platformSupportsButtonNavigationBar && WindowInsets.tappableElement.getBottom(density) > 0 -> ButtonNavigationDistance
             WindowInsets.navigationBars.getBottom(density) > 0 -> MenuToScreenNaviDistance
             else -> 0.dp
         }

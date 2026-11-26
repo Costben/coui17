@@ -228,6 +228,20 @@ Layout(...) { measurables, constraints ->
 
 `Modifier.layerBackdrop` 是单属主的：同一个 backdrop 挂到多个节点上，只有最近附加的那个在录。**不要**把同一个 backdrop 铺到 `HorizontalPager` 的每一页上——页会抢属主，模糊可能采到屏外邻居。
 
+### 16a. iOS 悬浮底栏高度偏高：禁止叠 `navigationBarsPadding()`，统一用 `navigationBarPadding()`
+
+**现象**：在全面屏 iPhone（如 iPhone 17）上，悬浮底栏（`BottomFloatingAccessoryNavigationBar` / `BottomFloatingNavigationBar` / 悬浮底部工具栏）明显偏高、远离屏幕底边。
+
+**根因**（两处叠加）：
+
+1. 宿主在底栏外层套了 `Modifier.navigationBarsPadding()`：全面屏 iPhone 的 `WindowInsets.navigationBars` 为 34pt，叠加底栏 88dp 盒子居中自带的 16dp 下留白，胶囊底边被顶到距屏底 50dp；
+2. 旧版 `BottomFloatingNavigationBarDefaults.navigationBarPadding()` 直接以 `WindowInsets.tappableElement.getBottom(density) > 0` 判定三键导航（返回 `ButtonNavigationDistance = 36.dp`），而 Compose Multiplatform 在 iOS 上 `tappableElement` 与 `navigationBars` 同为 34pt > 0，导致调用 `navigationBarPadding()` 也被误抬到 52dp。
+
+**做法**：
+
+- **库侧**：`BottomFloatingNavigationBarDefaults.navigationBarPadding()` 通过 `platformSupportsButtonNavigationBar` 仅在 Android 启用三键导航分支；iOS 端只判断 `WindowInsets.navigationBars.getBottom(density) > 0`，有 Home Indicator 时返回 `MenuToScreenNaviDistance`（`8.dp`），无底部安全区时返回 `0.dp`。
+- **调用方（iOS 与 Android 统一写法）**：底栏宿主一律使用 `Modifier.padding(bottom = BottomFloatingNavigationBarDefaults.navigationBarPadding())`（或等价地在 iOS 上仅加 `8.dp`），**不要**直接对悬浮底栏使用 `Modifier.navigationBarsPadding()`；静止态下 56dp 胶囊底边即落在距屏底 24dp（`16dp + 8dp`），与 ColorOS 17 和 BiliCO iOS 保持一致。
+
 ---
 
 ## Compose / 文本
