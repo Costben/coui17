@@ -13,7 +13,10 @@ import platform.Foundation.NSOperationQueue
 import platform.UIKit.UIAccessibilityBoldTextStatusDidChangeNotification
 import platform.UIKit.UIAccessibilityIsBoldTextEnabled
 
-private const val IOS_BOLD_TEXT_WEIGHT_DELTA = 200
+// Shift up by 1 weight grade (Regular 400 -> Medium 500, Medium 500 -> SemiBold 600,
+// SemiBold 600 -> Bold 700, Bold 700 -> Heavy 800) so PingFang SC retains visual hierarchy
+// across Regular/Medium/Semibold and Bold titles do not bloat to Black (900).
+private const val IOS_BOLD_TEXT_WEIGHT_DELTA = 100
 
 @Composable
 internal actual fun rememberPlatformFontWeightAdjustment(): Int {
