@@ -12,6 +12,8 @@ import io.github.suqi8.coui.kmp.blur.BackdropEffectScopeImpl
 import io.github.suqi8.coui.kmp.shader.RuntimeShader
 import io.github.suqi8.coui.kmp.shader.asAndroidRuntimeShader
 
+internal actual val useUnifiedBlurShader: Boolean = false
+
 /** Only reachable when [io.github.suqi8.coui.kmp.shader.isRenderEffectSupported] holds. */
 @RequiresApi(Build.VERSION_CODES.S)
 internal actual fun RenderEffect?.chain(other: RenderEffect): RenderEffect = if (this != null) {

@@ -41,6 +41,8 @@ private val BLUR_H_KEYS: Array<Array<String>> = Array(MAX_BLUR_TAPS + 1) { n ->
 private val BLUR_V_KEYS: Array<Array<String>> = Array(MAX_BLUR_TAPS + 1) { n ->
     Array(MAX_DOWNSCALE_EXP + 1) { exp -> "LMGauss${n}_V_d${1 shl exp}" }
 }
+private val BLUR_UNIFIED_H_KEYS: Array<String> = Array(MAX_DOWNSCALE_EXP + 1) { exp -> "LMGaussU_H_d${1 shl exp}" }
+private val BLUR_UNIFIED_V_KEYS: Array<String> = Array(MAX_DOWNSCALE_EXP + 1) { exp -> "LMGaussU_V_d${1 shl exp}" }
 
 /**
  * Builds the separable Blur [RenderEffect] (H then V) for an EXPLICIT [downScale] level using the
@@ -70,6 +72,7 @@ internal fun createBlurEffect(
 
     // exp = log2(downScale); downScale is always a power of two in 1..16.
     val exp = downScale.countTrailingZeroBits()
+    val unified = useUnifiedBlurShader
 
     var effect: RenderEffect? = null
 
@@ -78,17 +81,26 @@ internal fun createBlurEffect(
     if (radiusX > 0f) {
         val n = computeBlurParamsInto(adjustedVarianceX, rawScratch, paramOffsets, paramWeights)
         if (n > 0) {
-            val shaderOffsets = scope.obtainShaderOffsetsBuffer(n)
-            val shaderWeights = scope.obtainShaderWeightsBuffer(n)
+            val bufLen = if (unified) MAX_BLUR_TAPS else n
+            val shaderOffsets = scope.obtainShaderOffsetsBuffer(bufLen)
+            val shaderWeights = scope.obtainShaderWeightsBuffer(bufLen)
             for (i in 0 until n) {
                 shaderOffsets[i * 2] = paramOffsets[i]
                 shaderOffsets[i * 2 + 1] = 0f
                 shaderWeights[i] = paramWeights[i]
             }
-            val hShader = scope.obtainRuntimeShader(
-                BLUR_H_KEYS[n][exp],
-                BLUR_SHADER_BY_TAP[n],
-            ).apply {
+            for (i in n until bufLen) {
+                shaderOffsets[i * 2] = 0f
+                shaderOffsets[i * 2 + 1] = 0f
+                shaderWeights[i] = 0f
+            }
+            val hShader = if (unified) {
+                scope.obtainRuntimeShader(BLUR_UNIFIED_H_KEYS[exp], UNIFIED_BLUR_SHADER).apply {
+                    setFloatUniform("in_tapCount", n.toFloat())
+                }
+            } else {
+                scope.obtainRuntimeShader(BLUR_H_KEYS[n][exp], BLUR_SHADER_BY_TAP[n])
+            }.apply {
                 setFloatUniform("in_blurOffset", shaderOffsets)
                 setFloatUniform("in_blurWeight", shaderWeights)
                 setFloatUniform("in_maxCoord", texW - 0.5f, texH - 0.5f)
@@ -100,17 +112,26 @@ internal fun createBlurEffect(
     if (radiusY > 0f) {
         val n = computeBlurParamsInto(adjustedVarianceY, rawScratch, paramOffsets, paramWeights)
         if (n > 0) {
-            val shaderOffsets = scope.obtainShaderOffsetsBuffer(n)
-            val shaderWeights = scope.obtainShaderWeightsBuffer(n)
+            val bufLen = if (unified) MAX_BLUR_TAPS else n
+            val shaderOffsets = scope.obtainShaderOffsetsBuffer(bufLen)
+            val shaderWeights = scope.obtainShaderWeightsBuffer(bufLen)
             for (i in 0 until n) {
                 shaderOffsets[i * 2] = 0f
                 shaderOffsets[i * 2 + 1] = paramOffsets[i]
                 shaderWeights[i] = paramWeights[i]
             }
-            val vShader = scope.obtainRuntimeShader(
-                BLUR_V_KEYS[n][exp],
-                BLUR_SHADER_BY_TAP[n],
-            ).apply {
+            for (i in n until bufLen) {
+                shaderOffsets[i * 2] = 0f
+                shaderOffsets[i * 2 + 1] = 0f
+                shaderWeights[i] = 0f
+            }
+            val vShader = if (unified) {
+                scope.obtainRuntimeShader(BLUR_UNIFIED_V_KEYS[exp], UNIFIED_BLUR_SHADER).apply {
+                    setFloatUniform("in_tapCount", n.toFloat())
+                }
+            } else {
+                scope.obtainRuntimeShader(BLUR_V_KEYS[n][exp], BLUR_SHADER_BY_TAP[n])
+            }.apply {
                 setFloatUniform("in_blurOffset", shaderOffsets)
                 setFloatUniform("in_blurWeight", shaderWeights)
                 setFloatUniform("in_maxCoord", texW - 0.5f, texH - 0.5f)

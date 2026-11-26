@@ -8,6 +8,13 @@ import io.github.suqi8.coui.kmp.blur.BackdropEffectScopeImpl
 import io.github.suqi8.coui.kmp.blur.RuntimeShader
 
 /**
+ * Whether blur passes should collapse per-tap shader variants into unified shaders with a uniform
+ * loop bound. Enabled on Skiko/Metal to prevent mid-animation GPU PSO compilation stalls when blur
+ * radius sweeps across tap counts.
+ */
+internal expect val useUnifiedBlurShader: Boolean
+
+/**
  * Chains [other] after this [RenderEffect]. If this is null, returns [other] directly.
  */
 internal expect fun RenderEffect?.chain(other: RenderEffect): RenderEffect

@@ -20,8 +20,13 @@ fun Backdrop.releaseBackdropSampling() {
 
 /**
  * Whether this backdrop currently has content to sample: a [LayerBackdrop] whose source node is
- * attached. Other backdrops always report `true`.
+ * attached and has recorded at least once since becoming active. Other backdrops always report
+ * `true`.
  */
 @InternalCouiBlurApi
 val Backdrop.isReadyForSampling: Boolean
-    get() = (this as? LayerBackdrop)?.layerCoordinates?.isAttached ?: true
+    get() = if (this is LayerBackdrop) {
+        hasRecorded && layerCoordinates?.isAttached == true
+    } else {
+        true
+    }

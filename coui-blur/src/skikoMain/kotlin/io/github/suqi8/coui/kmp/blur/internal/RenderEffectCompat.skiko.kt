@@ -12,6 +12,8 @@ import org.jetbrains.skia.BlendMode
 import org.jetbrains.skia.FilterTileMode
 import org.jetbrains.skia.ImageFilter
 
+internal actual val useUnifiedBlurShader: Boolean = true
+
 internal actual fun RenderEffect?.chain(other: RenderEffect): RenderEffect = if (this != null) {
     ImageFilter.makeCompose(
         other.skiaImageFilter,

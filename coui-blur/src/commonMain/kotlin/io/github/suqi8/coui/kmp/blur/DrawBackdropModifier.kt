@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.GraphicsLayerScope
@@ -723,7 +724,7 @@ private class DrawBackdropNode(
     }
 
     override fun ContentDrawScope.draw() {
-        if (!isEffectivelyEnabled) {
+        if (!isEffectivelyEnabled || size.width <= 0f || size.height <= 0f) {
             drawContent()
             return
         }
@@ -812,6 +813,9 @@ private class DrawBackdropNode(
     private fun updateEffects() {
         if (!isEffectivelyEnabled) return
         primary.ensureMain()
+        if (!effectScope.size.isSpecified || effectScope.size.width <= 0f || effectScope.size.height <= 0f) {
+            return
+        }
 
         // Gradient mode: progressiveBlur() records radii + downscale and splits the chain; the
         // stack is assembled below once the post chain is known. Re-derives as false once a

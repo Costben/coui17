@@ -6,6 +6,7 @@ package io.github.suqi8.coui.kmp.blur
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.GlobalPositionAwareModifierNode
@@ -14,6 +15,7 @@ import androidx.compose.ui.node.TraversableNode
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
 import io.github.suqi8.coui.kmp.blur.internal.recordLayer
+import io.github.suqi8.coui.kmp.blur.internal.singlePassLayerBackdrop
 
 /**
  * Captures the content of this composable into the given [LayerBackdrop]'s graphics layer.
@@ -98,16 +100,36 @@ internal class LayerBackdropNode(
     }
 
     override fun ContentDrawScope.draw() {
-        drawContent()
         val backdrop = backdrop
         if (backdrop.owner === this@LayerBackdropNode && backdrop.hasConsumers) {
+            if (singlePassLayerBackdrop &&
+                backdrop.usesDefaultOnDraw &&
+                !LayerBackdrop.isRecording &&
+                size.width > 0f &&
+                size.height > 0f
+            ) {
+                val wasRecording = LayerBackdrop.isRecording
+                LayerBackdrop.isRecording = true
+                try {
+                    recordLayer(backdrop.graphicsLayer) { this@draw.drawContent() }
+                    backdrop.markRecorded()
+                } finally {
+                    LayerBackdrop.isRecording = wasRecording
+                }
+                drawLayer(backdrop.graphicsLayer)
+                return
+            }
+            drawContent()
             val wasRecording = LayerBackdrop.isRecording
             LayerBackdrop.isRecording = true
             try {
                 recordLayer(backdrop.graphicsLayer) { backdrop.onDraw(this@draw) }
+                backdrop.markRecorded()
             } finally {
                 LayerBackdrop.isRecording = wasRecording
             }
+        } else {
+            drawContent()
         }
     }
 
@@ -116,6 +138,9 @@ internal class LayerBackdropNode(
             lastCoordinates = coordinates
             if (backdrop.owner === this) {
                 backdrop.layerCoordinates = coordinates
+                if (backdrop.hasConsumers && !backdrop.hasRecorded) {
+                    invalidateDraw()
+                }
             }
         }
     }

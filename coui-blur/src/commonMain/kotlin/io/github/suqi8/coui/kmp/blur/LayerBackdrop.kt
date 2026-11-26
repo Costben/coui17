@@ -48,9 +48,14 @@ fun rememberLayerBackdrop(
     onDraw: ContentDrawScope.() -> Unit = DefaultOnDraw,
 ): LayerBackdrop {
     val currentOnDraw by rememberUpdatedState(onDraw)
-    return remember(graphicsLayer) {
-        LayerBackdrop(graphicsLayer) { currentOnDraw() }
+    val isDefault = onDraw === DefaultOnDraw
+    val backdrop = remember(graphicsLayer) {
+        LayerBackdrop(graphicsLayer, usesDefaultOnDraw = isDefault) { currentOnDraw() }
     }
+    SideEffect {
+        backdrop.usesDefaultOnDraw = isDefault
+    }
+    return backdrop
 }
 
 /**
@@ -73,10 +78,12 @@ fun rememberLayerBackdrop(
     onDraw: ContentDrawScope.() -> Unit = DefaultOnDraw,
 ): LayerBackdrop {
     val currentOnDraw by rememberUpdatedState(onDraw)
+    val isDefault = onDraw === DefaultOnDraw
     val backdrop = remember(graphicsLayer) {
-        LayerBackdrop(graphicsLayer, upstream = upstream) { currentOnDraw() }
+        LayerBackdrop(graphicsLayer, upstream = upstream, usesDefaultOnDraw = isDefault) { currentOnDraw() }
     }
     SideEffect {
+        backdrop.usesDefaultOnDraw = isDefault
         backdrop.setUpstream(upstream)
     }
     DisposableEffect(backdrop) {
@@ -107,6 +114,7 @@ fun rememberLayerBackdrop(
 class LayerBackdrop internal constructor(
     val graphicsLayer: GraphicsLayer,
     private var upstream: LayerBackdrop? = null,
+    internal var usesDefaultOnDraw: Boolean = false,
     internal val onDraw: ContentDrawScope.() -> Unit,
 ) : Backdrop {
 
@@ -126,6 +134,20 @@ class LayerBackdrop internal constructor(
     override val isCoordinatesDependent: Boolean = true
 
     internal var layerCoordinates: LayoutCoordinates? by mutableStateOf(null)
+
+    /**
+     * Whether [graphicsLayer] holds a recording from the current [owner] while actively consumed.
+     * Cleared when the owner detaches or the last consumer releases so re-attaching never samples
+     * a blank or stale frame, and observed in [drawBackdrop] to wake consumers once recorded.
+     */
+    internal var hasRecorded: Boolean by mutableStateOf(false)
+        private set
+
+    internal fun markRecorded() {
+        if (!hasRecorded) {
+            hasRecorded = true
+        }
+    }
 
     // Attached nodes in attach order; the last one is the owner. Only touched on attach/detach.
     private val attachedNodes = ArrayList<LayerBackdropNode>(1)
@@ -180,6 +202,7 @@ class LayerBackdrop internal constructor(
         if (consumerCount <= 0) return
         consumerCount--
         if (consumerCount == 0) {
+            hasRecorded = false
             upstream?.releaseConsumer()
             notifySampling(false)
         }
@@ -194,6 +217,7 @@ class LayerBackdrop internal constructor(
         }
         upstream = resolved
         if (consumerCount > 0) {
+            hasRecorded = false
             owner?.invalidateDraw()
         }
     }
@@ -214,6 +238,10 @@ class LayerBackdrop internal constructor(
         // its own coordinates once positioned.
         owner = node
         layerCoordinates = node.attachedCoordinates
+        hasRecorded = false
+        if (hasConsumers) {
+            node.invalidateDraw()
+        }
     }
 
     internal fun detachNode(node: LayerBackdropNode) {
@@ -223,6 +251,7 @@ class LayerBackdrop internal constructor(
         val next = if (attachedNodes.isEmpty()) null else attachedNodes[attachedNodes.lastIndex]
         owner = next
         layerCoordinates = next?.attachedCoordinates
+        hasRecorded = false
         next?.invalidateDraw()
     }
 
@@ -241,6 +270,7 @@ class LayerBackdrop internal constructor(
     ) {
         val coordinates = coordinates ?: return
         val layerCoordinates = layerCoordinates ?: return
+        if (!hasRecorded) return
 
         val offset = try {
             layerCoordinates.localPositionOf(coordinates)
