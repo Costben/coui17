@@ -140,6 +140,7 @@ internal fun TopAppBarSearch(
             }
 
             val renderer = checkNotNull(state.renderer)
+            val blurCache = remember { HashMap<Float, RenderEffect>(10) }
             if (state.motion.present && state.expandedWidth > 0f) {
                 val overlay = checkNotNull(LocalCouiToolbarOverlay.current)
                 val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -147,11 +148,14 @@ internal fun TopAppBarSearch(
                 val height = with(density) { 40.dp.roundToPx().toFloat() }
                 val progress = state.motion.progress
                 val visibleWidth = max(height, height + (fullWidth - height) * progress)
-                val blurRadius = max(0f, 1f - abs((1f - progress) - 0.5f) * 2f) * 30f
+                val rawBlurRadius = max(0f, 1f - abs((1f - progress) - 0.5f) * 2f) * 30f
+                val blurRadius = if (rawBlurRadius < 2f) 0f else (rawBlurRadius / 4f).roundToInt() * 4f
                 var expandedCenter by remember { mutableStateOf<Offset?>(null) }
                 val blur = remember(blurRadius) {
                     if (blurRadius > 0f && isKitRenderEffectSupported()) {
-                        createBlurRenderEffect(blurRadius, blurRadius, TileMode.Decal)
+                        blurCache.getOrPut(blurRadius) {
+                            createBlurRenderEffect(blurRadius, blurRadius, TileMode.Decal)
+                        }
                     } else {
                         null
                     }
@@ -185,6 +189,7 @@ internal fun TopAppBarSearch(
                                 val active = visible && state.motion.expanded
                                 if (action != null) {
                                     TopAppBarSearchPair(
+                                        renderer = state.obtainPairRenderer(),
                                         fullWidth = fullWidth,
                                         progress = progress,
                                         enabled = enabled,

@@ -109,7 +109,7 @@ float cubicBezierDistance(vec2 p, vec2 p0, vec2 p1, vec2 p2, vec2 p3) {
         vec2 re = Bt - p;
         vec2 tangent = (3.0 * c3 * t + 2.0 * c2) * t + c1;
         vec2 normal = vec2(-tangent.y, tangent.x);
-        vec2 normalizedNormal = normalize(normal);
+        vec2 normalizedNormal = dot(normal, normal) > 1e-6 ? normalize(normal) : vec2(0.7071, 0.7071);
         float dis = length(re);
         return dot(re, normalizedNormal) > 0.0 ? dis : -dis;
     }
@@ -148,7 +148,8 @@ struct RectCorner {vec2 center;vec2 halfSize;float coner;float weight;};
     const int ARRAY_SIZE = 3;
 
 float gain(float x, float k) {
-        float a = 0.5*pow(2.0*((x<0.5)?x:1.0-x), k);
+        float base = 2.0 * ((x < 0.5) ? x : 1.0 - x);
+        float a = 0.5 * (base > 0.0 ? pow(base, k) : 0.0);
         return (x<0.5)?a:1.0-a;
     }
 
@@ -246,13 +247,14 @@ void blend_pair( Rect rect1, Rect rect2,
                 max(blendP1.blendShape * blendP1.shapeRangeFactorY + space * 0.5, 0.001),
                 0.0, dis_y) *
                 gain(smoothstep(max(minHS * blendP1.shapeRangeFactorX, 0.001), 0.0, dis_x), u_s);
+            vec2 unitDir = dot(pr.dir_c, pr.dir_c) > 1e-6 ? normalize(pr.dir_c) : vec2(1.0, 0.0);
             float ss1 = (blendP1.blendShape * rd1) * shapeChange;
-            if (ss1 > 0.001) { p1 += normalize(-pr.dir_c) * ss1; change_flag1 = 1.0; }
+            if (ss1 > 0.001) { p1 += (-unitDir) * ss1; change_flag1 = 1.0; }
 
             float rd2 = smoothstep(max(blendP2.blendShape * blendP2.shapeRangeFactorY + space * 0.5, 0.001),0.0, dis_y) *
                         gain(smoothstep(max(minHS * blendP2.shapeRangeFactorX, 0.001), 0.0, dis_x), u_s);
             float ss2 = (blendP2.blendShape * rd2) * shapeChange;
-            if (ss2 > 0.001) { p2 += normalize(pr.dir_c) * ss2; change_flag2 = 1.0; }
+            if (ss2 > 0.001) { p2 += unitDir * ss2; change_flag2 = 1.0; }
         }
 
 float d1 = (change_flag1 < 0.5) ? draw: sdBezierDistance(p1, coner1.halfSize, coner1.coner, coner1.weight);;
@@ -306,13 +308,13 @@ half4 main(float2 coords) {
     // 系统 mix_c: 像素位于另一主体之外时取满量程, 位于其内部时取 blend_pair 的 rangeOut,
     // 融球越深退晕带越窄, 因此卡片轮廓之外的地方按卡片自身距离场连续淡化。
     float fadeRange = (d1 > 0.0) ? 1.0 : colorRange;
-    float edgeFade = pow(
-        smoothstep(max(BLEND_COLOR_RANGE * 0.5 * fadeRange, 0.001), 0.0, d0),
-        BLEND_COLOR_FADE);
+    float edgeFadeBase = smoothstep(max(BLEND_COLOR_RANGE * 0.5 * fadeRange, 0.001), 0.0, d0);
+    float edgeFade = edgeFadeBase > 0.0 ? pow(edgeFadeBase, BLEND_COLOR_FADE) : 0.0;
     // 删除按钮主体由自身距离场与 actionAlpha 决定, 两层同色叠加避免卡片右边缘出现硬台阶。
     float actionBody = (d0 > 0.0 && d1 <= 0.0) ? actionAlpha : 0.0;
     float opacity = 1.0 - (1.0 - edgeFade) * (1.0 - actionBody);
-    half alpha = bodyColor.a * half(coverage * opacity);
-    return half4(bodyColor.rgb * alpha, alpha);
+    half mask = half(coverage * opacity);
+    // bodyColor is premultiplied by setColorUniform; scale directly by mask instead of bodyColor.a * mask.
+    return half4(bodyColor.rgb * mask, bodyColor.a * mask);
 }
 """

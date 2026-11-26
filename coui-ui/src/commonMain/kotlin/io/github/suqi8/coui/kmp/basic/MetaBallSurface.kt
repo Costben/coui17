@@ -836,7 +836,8 @@ float couiSdSquircleBox(float2 p, float2 b, float r, float w) {
     if (q.x <= 0.0 || q.y <= 0.0) {
         return max(q.x, q.y) - r;
     }
-    return pow(pow(q.x, w) + pow(q.y, w), 1.0 / w) - r;
+    float sumPow = pow(max(q.x, 1e-6), w) + pow(max(q.y, 1e-6), w);
+    return pow(max(sumPow, 1e-6), 1.0 / w) - r;
 }
 
 float couiCubicBezierDistance(float2 p, float2 p0, float2 p1, float2 p2, float2 p3) {
@@ -923,7 +924,7 @@ float couiEdgeAlpha(float2 pos, float2 halfSize, float d, float2 uRectLineNear,
         float distanceAll = (halfSize.x+halfSize.y)*2.0;
 
         float ratio = fract(uAngle+halfSize.x/distanceAll*0.5+0.5);
-        float2 dir_pos= normalize(pos);
+        float2 dir_pos = dot(pos, pos) > 1e-6 ? normalize(pos) : float2(1.0, 0.0);
         float2 dirAbs_pos = abs(dir_pos);
         float2 pos_n = min(float2(dirAbs_pos.xy*halfSize.yx/max(float2(0.001),dirAbs_pos.yx)),halfSize)*sign(dir_pos);
         float2 halfSize_symobol = float2(-halfSize.y,halfSize.x);
@@ -939,8 +940,10 @@ float couiEdgeAlpha(float2 pos, float2 halfSize, float d, float2 uRectLineNear,
         float lineFarSdf=smoothstep(-rectLineFar.y,-rectLineFar.x,d);
 
         if(uRectLinePara2 > 0.001){
-            lineNearSdf = pow(lineNearSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
-            lineFarSdf = pow(lineFarSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
+            float nearPow = lineNearSdf > 0.0 ? pow(lineNearSdf, uRectLinePara1) : 0.0;
+            float farPow = lineFarSdf > 0.0 ? pow(lineFarSdf, uRectLinePara1) : 0.0;
+            lineNearSdf = nearPow*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
+            lineFarSdf = farPow*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
         }
 
         lineNearAlpha*=lineNearSdf;

@@ -56,6 +56,7 @@ private enum class SearchPairSlot { Input, Action }
 @Composable
 internal fun TopAppBarSearchPair(
     modifier: Modifier = Modifier,
+    renderer: CouiFloatingRenderer = remember { CouiFloatingRenderer.pair() },
     fullWidth: Float,
     progress: Float,
     enabled: Boolean,
@@ -72,7 +73,6 @@ internal fun TopAppBarSearchPair(
     val style = LocalCouiToolbarStyle.current
     val density = LocalDensity.current
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val renderer = remember { CouiFloatingRenderer.pair() }
     val inputLayer = rememberGraphicsLayer()
     val actionLayer = rememberGraphicsLayer()
     SideEffect { inputLayer.renderEffect = contentRenderEffect }
@@ -85,18 +85,25 @@ internal fun TopAppBarSearchPair(
     val actionSource = remember { MutableInteractionSource() }
     val (inputLightInput, inputLight) = rememberCouiSpotlight(enabled && active, SpotlightPreset.OpaqueMedium2, style.dark)
     val (actionLightInput, actionLight) = rememberCouiSpotlight(actionEnabled, SpotlightPreset.OpaqueMedium2, style.dark)
-    var geometry by remember { mutableStateOf<CouiTopAppBarSearchPairGeometry?>(null) }
+    // Non-snapshot holder avoids mutating Compose state inside SubcomposeLayout's measure pass
+    // (which previously triggered a redundant second layout/draw pass on every animation frame).
+    val geometryRef = remember { arrayOfNulls<CouiTopAppBarSearchPairGeometry>(1) }
     val fraction = progress.coerceIn(0f, 1f)
-    val actionBlur = remember(fraction) {
-        if (isKitRenderEffectSupported()) {
-            val radius = (1f - fraction) * 30f
-            if (radius > 0f) createBlurRenderEffect(radius, radius, TileMode.Decal) else null
+    val rawActionBlur = (1f - fraction) * 30f
+    val actionBlurRadius = if (rawActionBlur < 2f) 0f else (rawActionBlur / 4f).roundToInt() * 4f
+    val actionBlurCache = remember { HashMap<Float, RenderEffect>(10) }
+    val actionBlur = remember(actionBlurRadius) {
+        if (actionBlurRadius > 0f && isKitRenderEffectSupported()) {
+            actionBlurCache.getOrPut(actionBlurRadius) {
+                createBlurRenderEffect(actionBlurRadius, actionBlurRadius, TileMode.Decal)
+            }
         } else {
             null
         }
     }
     fun inputSurface(): CouiFloatingSurface {
-        val bounds = checkNotNull(geometry).inputBounds.translate(Offset(inputTouch.translationX.value, inputTouch.translationY.value))
+        val frame = geometryRef[0] ?: return CouiFloatingSurface(androidx.compose.ui.geometry.Rect.Zero, visible = false)
+        val bounds = frame.inputBounds.translate(Offset(inputTouch.translationX.value, inputTouch.translationY.value))
         return CouiFloatingSurface(
             bounds,
             scaleX = inputTouch.scaleX.value + inputPress.scale.value - 1f,
@@ -105,7 +112,7 @@ internal fun TopAppBarSearchPair(
         )
     }
     fun actionSurface(): CouiFloatingSurface {
-        val frame = checkNotNull(geometry)
+        val frame = geometryRef[0] ?: return CouiFloatingSurface(androidx.compose.ui.geometry.Rect.Zero, visible = false)
         return CouiFloatingSurface(
             frame.actionBounds.translate(Offset(actionTouch.translationX.value, actionTouch.translationY.value)),
             scaleX = frame.actionScale * (actionTouch.scaleX.value + actionPress.scale.value - 1f),
@@ -164,7 +171,7 @@ internal fun TopAppBarSearchPair(
                         .widthIn(min = CouiTopAppBarDefaults.searchActionMinWidth, max = CouiTopAppBarDefaults.searchActionMaxWidth)
                         .graphicsLayer {
                             // Semantics evaluation at attach time runs before first measurement; keep unmeasured nodes invisible and non-hittable.
-                            val frame = geometry
+                            val frame = geometryRef[0]
                             if (frame == null) {
                                 alpha = 0f
                             } else {
@@ -203,7 +210,7 @@ internal fun TopAppBarSearchPair(
             progress,
             rtl,
         )
-        geometry = frame
+        geometryRef[0] = frame
         val body = subcompose(SearchPairSlot.Input) {
             ProvideCouiContent(
                 color = style.contentColor.copy(alpha = style.contentColor.alpha * if (enabled) 1f else .38f),
@@ -211,7 +218,7 @@ internal fun TopAppBarSearchPair(
             ) {
                 Box(
                     Modifier.graphicsLayer {
-                        if (geometry == null) {
+                        if (geometryRef[0] == null) {
                             alpha = 0f
                         } else {
                             val surface = inputSurface()

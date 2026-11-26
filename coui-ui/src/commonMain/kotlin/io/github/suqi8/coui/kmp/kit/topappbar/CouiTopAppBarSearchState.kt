@@ -28,6 +28,11 @@ internal class CouiTopAppBarSearchState internal constructor(
     internal val motion = CouiSearchMotion(true, expandedState)
     internal var sourceCenter by mutableStateOf<Offset?>(null)
     internal var expandedWidth by mutableFloatStateOf(0f)
+    private var cachedPairRenderer: CouiFloatingRenderer? = null
+
+    /** Retains the dual-body floating renderer across expand/collapse cycles so shaders never recompile on reopen. */
+    internal fun obtainPairRenderer(): CouiFloatingRenderer =
+        cachedPairRenderer ?: CouiFloatingRenderer.pair().also { cachedPairRenderer = it }
 }
 
 @Composable

@@ -230,7 +230,7 @@ internal fun couiResolveHandUpSpring(
     } else {
         (kotlin.math.abs(initialVelocity) / maxInitialVelocity).coerceAtMost(1f) * bounceGain
     }
-    val bounce = max(kotlin.math.abs(velocityBounce), kotlin.math.abs(configuredBounce * bounceGain)).coerceAtMost(1f)
+    val bounce = max(kotlin.math.abs(velocityBounce), kotlin.math.abs(configuredBounce * bounceGain)).coerceAtMost(0.92f)
     return COUIHandUpSpringValues(response, bounce, initialVelocity)
 }
 
@@ -344,7 +344,6 @@ fun Modifier.couiTouchMotion(
     val lightProgress = remember { Animatable(0f) }
     var pressed by remember { mutableStateOf(false) }
     var extinguishing by remember { mutableStateOf(false) }
-    val lightPosition = Offset(lightX.value, lightY.value)
 
     val widthDp = with(density) { widthPx.value.toDp().value }
     val heightDp = with(density) { heightPx.value.toDp().value }
@@ -391,6 +390,7 @@ fun Modifier.couiTouchMotion(
                 val motionScope = this
                 var motionJob: Job? = null
                 var lightMotionJob: Job? = null
+                var lightProgressJob: Job? = null
                 fun updateLight(position: Offset) {
                     // Native coordinates remain unbounded. Only the owner's silhouette clips the
                     // moving halo, allowing it to leave the surface and return in the same gesture.
@@ -434,7 +434,8 @@ fun Modifier.couiTouchMotion(
                         pressed = true
                         extinguishing = false
                         updateLight(down.position)
-                        launch { lightProgress.animateTo(1f, SpotLightDefaults.GlowSpring) }
+                        lightProgressJob?.cancel()
+                        lightProgressJob = motionScope.launch { lightProgress.animateTo(1f, SpotLightDefaults.GlowSpring) }
                         var finished = false
                         try {
                             while (!finished) {
@@ -495,7 +496,8 @@ fun Modifier.couiTouchMotion(
                             motionJob?.cancel()
                             pressed = false
                             extinguishing = true
-                            motionScope.launch { lightProgress.animateTo(0f, SpotLightDefaults.ExtinguishSpring) }
+                            lightProgressJob?.cancel()
+                            lightProgressJob = motionScope.launch { lightProgress.animateTo(0f, SpotLightDefaults.ExtinguishSpring) }
                             val handUp = couiResolveHandUpSpring(
                                 widthPx.value,
                                 heightPx.value,
@@ -583,51 +585,43 @@ fun Modifier.couiTouchMotion(
 
     val visualModifier = Modifier.graphicsLayer {
         val pressScale = 1f - (1f - pressTarget) * pressProgress.value
-        translationX = translateXAnim.value
-        translationY = translateYAnim.value
+        val tx = translateXAnim.value
+        val ty = translateYAnim.value
+        val sx = scaleXAnim.value + pressScale - 1f
+        val sy = scaleYAnim.value + pressScale - 1f
+        translationX = if (tx.isFinite()) tx else 0f
+        translationY = if (ty.isFinite()) ty else 0f
         // Native collector combines unit contributions by adding deltas from 1.
-        scaleX = scaleXAnim.value + pressScale - 1f
-        scaleY = scaleYAnim.value + pressScale - 1f
+        scaleX = if (sx.isFinite()) sx.coerceIn(0.5f, 1.5f) else 1f
+        scaleY = if (sy.isFinite()) sy.coerceIn(0.5f, 1.5f) else 1f
         transformOrigin = TransformOrigin(0.5f, 0.5f)
         extraTransform()
     }
-    val lightRadius = with(density) {
-        couiSpotlightRadius(
-            lightParams.startRadius,
-            lightParams.endRadius,
-            lightParams.endRadius * 2f,
-            lightProgress.value,
-            extinguishing,
-        ).toDp()
-    }
-    val lightModifier = if (shape == null) {
-        Modifier.spotLight(
-            position = lightPosition,
-            radius = lightRadius,
-            intensity = lightParams.endIntensity * lightProgress.value,
-            lightHeight = lightHeight,
-            ambientStrength = lightParams.ambientStrength,
-            diffuseStrength = lightParams.diffuseStrength,
-            noise = lightParams.noise,
-            dither = lightParams.ditherN,
-            blendMode = lightParams.blendMode,
-            enabled = enabled && lightEnabled,
-        )
-    } else {
-        Modifier.spotLight(
-            position = lightPosition,
-            radius = lightRadius,
-            intensity = lightParams.endIntensity * lightProgress.value,
-            lightHeight = lightHeight,
-            ambientStrength = lightParams.ambientStrength,
-            diffuseStrength = lightParams.diffuseStrength,
-            noise = lightParams.noise,
-            dither = lightParams.ditherN,
-            blendMode = lightParams.blendMode,
-            enabled = enabled && lightEnabled,
-            clipShape = shape,
-        )
-    }
+    val lightModifier = Modifier.spotLightDeferred(
+        positionProvider = { Offset(lightX.value, lightY.value) },
+        radiusProvider = {
+            with(density) {
+                couiSpotlightRadius(
+                    lightParams.startRadius,
+                    lightParams.endRadius,
+                    lightParams.endRadius * 2f,
+                    lightProgress.value.coerceIn(0f, 1f),
+                    extinguishing,
+                ).toDp()
+            }
+        },
+        intensityProvider = {
+            (lightParams.endIntensity * lightProgress.value.coerceIn(0f, 1f)).coerceAtLeast(0f)
+        },
+        lightHeight = lightHeight,
+        ambientStrength = lightParams.ambientStrength,
+        diffuseStrength = lightParams.diffuseStrength,
+        noise = lightParams.noise,
+        dither = lightParams.ditherN,
+        blendMode = lightParams.blendMode,
+        enabled = enabled && lightEnabled,
+        clipShape = shape,
+    )
     // Keep the surface, clipped light and content inside one transform. The pointer detector stays
     // outside it so the moving visual layer does not alter the gesture's displacement coordinates.
     // A disabled detector handles nothing but still wins the hit test, which hides every sibling

@@ -10,6 +10,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import io.github.suqi8.coui.kmp.basic.LocalPopupBarriers
 import io.github.suqi8.coui.kmp.basic.PopupBarriers
+import io.github.suqi8.coui.kmp.kit.effect.CouiShaderWarmup
 import io.github.suqi8.coui.kmp.utils.COUIIndication
 import io.github.suqi8.coui.kmp.utils.COUIOverscrollFactory
 
@@ -47,6 +48,7 @@ fun COUITheme(
         LocalOverscrollFactory provides COUIOverscrollFactory,
         LocalPopupBarriers provides rememberPopupBarriers(),
     ) {
+        CouiShaderWarmup()
         content()
     }
 }
@@ -82,6 +84,7 @@ fun COUITheme(
         LocalOverscrollFactory provides COUIOverscrollFactory,
         LocalPopupBarriers provides rememberPopupBarriers(),
     ) {
+        CouiShaderWarmup()
         content()
     }
 }

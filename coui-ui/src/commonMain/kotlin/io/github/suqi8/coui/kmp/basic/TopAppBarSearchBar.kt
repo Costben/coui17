@@ -223,7 +223,7 @@ private fun TopAppBarSearchBarImpl(
             val sampleBlurRadius = if (localCouiBackdrop == null) {
                 with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
             } else {
-                0f
+                LocalCouiToolbarSampleBlurRadius.current
             }
             SharedTransitionScope { overlayModifier ->
                 CompositionLocalProvider(
@@ -503,7 +503,7 @@ private fun TopAppBarSearchBarImpl(
         val sampleBlurRadius = if (localCouiBackdrop == null) {
             with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
         } else {
-            0f
+            LocalCouiToolbarSampleBlurRadius.current
         }
         SharedTransitionScope { overlayModifier ->
             CompositionLocalProvider(

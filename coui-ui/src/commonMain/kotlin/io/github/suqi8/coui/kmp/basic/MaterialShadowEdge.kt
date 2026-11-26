@@ -1236,7 +1236,8 @@ float4 blendShadowColor(CommonDataRect rectData, float4 color, float d, float2 f
                         fadeSdf = smoothSDF_D(pos_new, halfSizeFade, fadeConer.x, rectData.weight, aaFactor);
                         float alpha = smoothstep(fadeLine,0.0,fadeSdf);
                         if(uFadeInPara2>EFFECT_PARAM_THRESHOLD){
-                            alpha = pow(alpha, uFadeInPara1)*uFadeInPara2+(1.0-uFadeInPara2)*alpha;
+                            float alphaPow = alpha > 0.0 ? pow(alpha, uFadeInPara1) : 0.0;
+                            alpha = alphaPow*uFadeInPara2+(1.0-uFadeInPara2)*alpha;
                         }
                         alpha = alpha*(uFadeAlpha.x-uFadeAlpha.y) + uFadeAlpha.y;
                         fadeAlpha = alpha;
@@ -1257,7 +1258,8 @@ float4 blendShadowColor(CommonDataRect rectData, float4 color, float d, float2 f
                         }
                         float alpha = smoothstep(fadeLine,0.0,fadeSdf);
                         if(uFadeOutPara2>EFFECT_PARAM_THRESHOLD){
-                            alpha = pow(alpha, uFadeOutPara1)*uFadeOutPara2+(1.0-uFadeOutPara2)*alpha;
+                            float alphaPow = alpha > 0.0 ? pow(alpha, uFadeOutPara1) : 0.0;
+                            alpha = alphaPow*uFadeOutPara2+(1.0-uFadeOutPara2)*alpha;
                         }
                         alpha *= uFadeAlpha.z;
                         fadeAlpha = mix(fadeAlpha, 1.0,alpha);
@@ -1305,7 +1307,7 @@ float4 blendEdge(CommonDataRect rectData, float4 color, float d){
         float2 halfSize = rectData.halfSize;
 
         float ratio = mod(uAngle+rectData.halfSize.x/distanceAll*0.5+0.5,1.0);
-        float2 dir_pos= normalize(rectData.pos);
+        float2 dir_pos = dot(rectData.pos, rectData.pos) > 1e-6 ? normalize(rectData.pos) : float2(1.0, 0.0);
         float2 dirAbs_pos = abs(dir_pos);
         float2 pos_n = min(float2(dirAbs_pos.xy*halfSize.yx/max(float2(EFFECT_PARAM_THRESHOLD),dirAbs_pos.yx)),halfSize)*sign(dir_pos);
         float2 halfSize_symobol = float2(-halfSize.y,halfSize.x);
@@ -1321,8 +1323,10 @@ float4 blendEdge(CommonDataRect rectData, float4 color, float d){
         float lineFarSdf=smoothstep(-rectLineFar.y,-rectLineFar.x,d);
 
         if(uRectLinePara2 > EFFECT_PARAM_THRESHOLD){
-            lineNearSdf = pow(lineNearSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
-            lineFarSdf = pow(lineFarSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
+            float nearPow = lineNearSdf > 0.0 ? pow(lineNearSdf, uRectLinePara1) : 0.0;
+            float farPow = lineFarSdf > 0.0 ? pow(lineFarSdf, uRectLinePara1) : 0.0;
+            lineNearSdf = nearPow*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
+            lineFarSdf = farPow*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
         }
 
         lineNearAlpha*=lineNearSdf;

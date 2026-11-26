@@ -22,9 +22,10 @@ float RBox(float2 p, float2 b, float r) {
     return min(max(q.x, q.y), 0.) + length(max(q, 0.)) - r;
 }
 float Oval(float2 p, float2 b, float r) {
-    float k0 = length(p / b);
-    float k1 = length(p / (b * b));
-    return k0 * (k0 - 1.0) / k1;
+    float2 safeB = max(b, float2(1e-4));
+    float k0 = length(p / safeB);
+    float k1 = length(p / (safeB * safeB));
+    return k1 > 1e-6 ? k0 * (k0 - 1.0) / k1 : -min(safeB.x, safeB.y);
 }
 float4 performBlend(float4 base, float4 blend) {
     float3 resultRgb = base.rgb + (blend.rgb * blend.a);
@@ -76,9 +77,11 @@ half4 caustic(float2 position, half4 destination) {
     append(
         """
             float value = smoothstep(sdf, 0.0, opticsSdf);
-            value *= pow(smoothstep(halfSizeOptics.y + sdf, -halfSizeOptics.y - sdf, -pos_optics.y), u_pyrolysisArray[11]);
+            float yRamp = smoothstep(halfSizeOptics.y + sdf, -halfSizeOptics.y - sdf, -pos_optics.y);
+            value *= yRamp > 0.0 ? pow(yRamp, u_pyrolysisArray[11]) : 0.0;
             if (u_pyrolysisArray[10] > 0.001) {
-                value = pow(value, u_pyrolysisArray[9]) * u_pyrolysisArray[10] + (1.0 - u_pyrolysisArray[10]) * value;
+                float valuePow = value > 0.0 ? pow(value, u_pyrolysisArray[9]) : 0.0;
+                value = valuePow * u_pyrolysisArray[10] + (1.0 - u_pyrolysisArray[10]) * value;
             }
             float4 opticsColor = float4(u_pyrolysisArray[0], u_pyrolysisArray[1], u_pyrolysisArray[2], u_pyrolysisArray[3]);
             opticsColor.a *= value;
@@ -90,8 +93,8 @@ half4 caustic(float2 position, half4 destination) {
     return destination;
 }
 float channelCoverage(float base, float result) {
-    if (result > base) return (result - base) / (1.0 - base);
-    if (result < base) return (base - result) / base;
+    if (result > base) return (result - base) / max(1.0 - base, 1e-6);
+    if (result < base) return (base - result) / max(base, 1e-6);
     return 0.0;
 }
 half4 main(float2 position) {

@@ -35,6 +35,10 @@ import io.github.suqi8.coui.kmp.blur.LayerBackdrop
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
+import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
+import io.github.suqi8.coui.kmp.kit.topappbar.CouiTopAppBarDefaults
+import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarBackdrop
+import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarSampleBlurRadius
 import io.github.suqi8.coui.kmp.theme.COUITheme
 
 /**
@@ -200,7 +204,25 @@ fun SearchFilterTopAppBar(
                         modifier = Modifier.fillMaxWidth().height(firstRowHeight),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CompositionLocalProvider(LocalBackdrop provides searchRowBackdrop) {
+                        // Sample the page backdrop directly (with fast downscaled toolbar blur)
+                        // instead of recording and replaying AppBarMaterialLayout's progressive
+                        // blur through materialBackdrop on every scroll frame. Keep LocalBackdrop
+                        // on searchRowBackdrop so callers inspecting it still see the composite.
+                        val pageCouiBackdrop = remember(backdrop, density) {
+                            backdrop?.let { CouiBackdrop(it, density) }
+                        }
+                        pageCouiBackdrop?.RetainWhileComposed()
+                        val toolbarBackdrop = pageCouiBackdrop ?: LocalCouiToolbarBackdrop.current
+                        val sampleBlur = if (pageCouiBackdrop != null) {
+                            with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
+                        } else {
+                            LocalCouiToolbarSampleBlurRadius.current
+                        }
+                        CompositionLocalProvider(
+                            LocalBackdrop provides searchRowBackdrop,
+                            LocalCouiToolbarBackdrop provides toolbarBackdrop,
+                            LocalCouiToolbarSampleBlurRadius provides sampleBlur,
+                        ) {
                             searchRow()
                         }
                     }
@@ -215,6 +237,11 @@ fun SearchFilterTopAppBar(
                                 .height(filterRowHeight),
                             contentAlignment = Alignment.Center,
                         ) {
+                            // AppBarMaterialLayout already paints the live progressive blur and
+                            // surface veil directly behind the filter row. Leaving backdrop = null
+                            // avoids running 8+ per-chip textureBlur passes (and replaying the
+                            // progressive blur per chip) on every scroll frame while translucent
+                            // unselected pills still show the blurred material beneath them.
                             ChipTabGroup(
                                 tabs = filters,
                                 selectedIndex = selectedFilter,
@@ -223,7 +250,7 @@ fun SearchFilterTopAppBar(
                                 leadingIcon = leadingIcon,
                                 onLeadingIconClick = onLeadingIconClick,
                                 contentPadding = filterContentPadding,
-                                backdrop = materialBackdrop,
+                                backdrop = null,
                             )
                         }
                     }

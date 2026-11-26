@@ -89,7 +89,7 @@ internal class CouiFloatingRenderer private constructor(internal val surfaceCoun
     internal val shaders = if (standalone) {
         listOf(RuntimeShader(couiFloatingStandaloneShader()))
     } else {
-        listOf(RuntimeShader(couiFloatingShader(1)), RuntimeShader(couiFloatingShader(2)))
+        listOf(RuntimeShader(couiFloatingShader()), RuntimeShader(couiFloatingShader()))
     }
     internal val causticShaders = List(surfaceCount) { RuntimeShader(CouiCausticShader) }
     internal val shadowRenderer = CouiShadowRenderer(surfaceCount)
@@ -233,6 +233,7 @@ private fun Modifier.floatingSurfaces(
     val windowSize = LocalWindowInfo.current.containerSize
     val renderEffectSupported = isKitSurfaceSupported() && isKitRenderEffectSupported()
     val shadowLayers = List(renderer.surfaceCount) { rememberGraphicsLayer() }
+    val shadowRecordKeys = remember(renderer) { arrayOfNulls<ShadowRecordKey>(renderer.surfaceCount) }
     val causticLayers = List(renderer.surfaceCount) { rememberGraphicsLayer() }
     val materialLayers = List(renderer.surfaceCount) { rememberGraphicsLayer() }
     val resolvedForegroundComposition = foregroundComposition || backdrop == null || !backdrop.hasContent
@@ -293,6 +294,9 @@ private fun Modifier.floatingSurfaces(
                 if (clipped.width <= 0f || clipped.height <= 0f) return
                 val bounds = Rect(floor(clipped.left), floor(clipped.top), ceil(clipped.right), ceil(clipped.bottom))
                 layer.topLeft = IntOffset(bounds.left.toInt(), bounds.top.toInt())
+                // Explicitly update the rectangular outline to bounds.size so SkiaGraphicsLayer
+                // never reuses a stale 0x0 or prior-size cached internalOutline when clip = true.
+                layer.setRectOutline(Offset.Zero, bounds.size)
                 layer.clip = true
                 // Full patch uses Src; separated transparent foreground only uses SrcOver.
                 layer.blendMode = blendMode
@@ -436,6 +440,7 @@ private fun Modifier.floatingSurfaces(
                         if (renderer.standalone) {
                             shader.setFloatUniform("u_baseShapeCtxArray", floatingShapeContext(ball[2], ball[3], ball[5], ball[4]))
                         } else {
+                            shader.setFloatUniform("u_materialIndex", material.index.toFloat())
                             val activeBalls = floatingBallSlots(index, materials.map { it.index }).map { slot ->
                                 if (nodes[slot].visible) nodes[slot].ball(height, origin) else FloatArray(8)
                             }
@@ -494,6 +499,28 @@ private fun Modifier.floatingSurfaces(
                     if (!nodes[index].visible) return@forEachIndexed
                     val bounds = nodes[index].bounds
                     val node = nodes[index]
+                    val shadow = shadows[index]
+                    val resolvedLightZ = if (shadow.lightZ > 0f) shadow.lightZ else defaultLightZ
+                    val winX = windowOrigin.x + (node.bounds.center.x - node.bounds.width * node.scaleX * 0.5f)
+                    val winY = windowOrigin.y + (node.bounds.center.y - node.bounds.height * node.scaleY * 0.5f)
+                    val recordKey = ShadowRecordKey(
+                        width = bounds.width,
+                        height = bounds.height,
+                        scaleX = node.scaleX,
+                        scaleY = node.scaleY,
+                        windowX = winX,
+                        windowY = winY,
+                        alpha = node.alpha,
+                        colorArgb = shadow.color.toArgb(),
+                        elevation = shadow.elevation,
+                        lightY = shadow.lightY,
+                        lightZ = resolvedLightZ,
+                        lightRadius = shadow.lightRadius,
+                        cornerRadius = node.resolvedCornerRadius,
+                        smoothCorner = shadow.smoothCorner,
+                    )
+                    if (shadowRecordKeys[index] == recordKey) return@forEachIndexed
+                    shadowRecordKeys[index] = recordKey
                     val recordSize = IntSize(
                         ceil(bounds.width * node.scaleX + ShadowOutsetPx * 2f).toInt().coerceAtLeast(1),
                         ceil(bounds.height * node.scaleY + ShadowOutsetPx * 2f).toInt().coerceAtLeast(1),
@@ -507,15 +534,14 @@ private fun Modifier.floatingSurfaces(
                             renderer.shadowRenderer.draw(
                                 canvas, index, bounds.width, bounds.height,
                                 node.scaleX, node.scaleY,
-                                windowOrigin.x + (node.bounds.center.x - node.bounds.width * node.scaleX * 0.5f),
-                                windowOrigin.y + (node.bounds.center.y - node.bounds.height * node.scaleY * 0.5f),
-                                node.alpha, shadows[index].color.toArgb(),
-                                shadows[index].elevation, shadows[index].lightY,
-                                if (shadows[index].lightZ > 0f) shadows[index].lightZ else defaultLightZ,
-                                shadows[index].lightRadius,
+                                winX, winY,
+                                node.alpha, shadow.color.toArgb(),
+                                shadow.elevation, shadow.lightY,
+                                resolvedLightZ,
+                                shadow.lightRadius,
                                 if (roundedRect) {
                                     CouiShadowOutline.RoundRect
-                                } else if (shadows[index].smoothCorner) {
+                                } else if (shadow.smoothCorner) {
                                     CouiShadowOutline.SmoothCapsule
                                 } else {
                                     CouiShadowOutline.Oval
@@ -544,12 +570,43 @@ private fun Modifier.floatingSurfaces(
                 }
             }
         } else {
-            onDrawWithContent { drawContent() }
+            onDrawWithContent {
+                drawContent()
+                // Children record into contentLayers whenever renderEffectSupported is true, so draw
+                // them even on the initial pass before coordinates/bounds settle to avoid a 1-frame drop.
+                if (renderEffectSupported) {
+                    nodes.forEachIndexed { index, node ->
+                        if (node.visible) {
+                            val layer = contentLayers[index]
+                            if (layer.size.width > 0 && layer.size.height > 0) {
+                                drawLayer(layer)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 private data class FloatingPatch(val layer: GraphicsLayer, val bounds: Rect, val prefix: List<GraphicsLayer>)
+
+private data class ShadowRecordKey(
+    val width: Float,
+    val height: Float,
+    val scaleX: Float,
+    val scaleY: Float,
+    val windowX: Float,
+    val windowY: Float,
+    val alpha: Float,
+    val colorArgb: Int,
+    val elevation: Float,
+    val lightY: Float,
+    val lightZ: Float,
+    val lightRadius: Float,
+    val cornerRadius: Float,
+    val smoothCorner: Boolean,
+)
 
 private fun GraphicsLayer.setOutline(outline: Outline) {
     when (outline) {

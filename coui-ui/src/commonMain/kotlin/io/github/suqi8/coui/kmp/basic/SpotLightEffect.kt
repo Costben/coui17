@@ -434,6 +434,65 @@ object SpotLightDefaults {
  *   native path's `setProgress(0)` behaviour of a zero radius is left to the caller.
  */
 @Composable
+internal fun Modifier.spotLightDeferred(
+    positionProvider: () -> Offset,
+    radiusProvider: () -> Dp,
+    intensityProvider: () -> Float,
+    modifier: Modifier = Modifier,
+    lightColor: Color = Color.White,
+    lightHeight: Dp = SpotLightDefaults.LightHeight.dp,
+    ambientStrength: Float = SpotLightDefaults.AmbientStrength,
+    diffuseStrength: Float = SpotLightDefaults.DiffuseStrength,
+    noise: Float = 0f,
+    dither: Float = 0f,
+    blendMode: BlendMode = BlendMode.SrcOver,
+    enabled: Boolean = true,
+    clipShape: Shape? = null,
+): Modifier {
+    val shader = if (enabled) rememberSpotLightShader(isRuntimeShaderSupported()) else null
+    if (shader == null) return modifier.then(this)
+
+    return modifier.then(this).drawWithCache {
+        val width = size.width
+        val height = size.height
+        val lightHeightPx = lightHeight.toPx()
+        val lightPath = clipShape?.createOutline(size, layoutDirection, this)?.toPath()
+        onDrawBehind {
+            if (width <= 0f || height <= 0f) return@onDrawBehind
+            val safeIntensity = intensityProvider().coerceAtLeast(0f)
+            val radiusPx = radiusProvider().toPx()
+            if (!safeIntensity.isFinite() || !radiusPx.isFinite() || safeIntensity <= 0.001f || radiusPx <= 0.001f) {
+                return@onDrawBehind
+            }
+            val pos = positionProvider()
+            val px = if (pos.x.isFinite()) pos.x * width else width * 0.5f
+            val py = if (pos.y.isFinite()) pos.y * height else height * 0.5f
+            shader.setSpotLightUniforms(
+                width = width,
+                height = height,
+                lightPx = Offset(px, py),
+                radiusPx = radiusPx,
+                intensity = safeIntensity,
+                lightColor = lightColor,
+                lightHeightPx = lightHeightPx,
+                ambientStrength = ambientStrength,
+                diffuseStrength = diffuseStrength,
+                noise = noise,
+                dither = dither,
+            )
+            val lightBrush = shader.asBrush()
+            if (lightPath == null) {
+                drawRect(brush = lightBrush, size = size, blendMode = blendMode)
+            } else {
+                clipPath(lightPath) {
+                    drawRect(brush = lightBrush, size = size, blendMode = blendMode)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun Modifier.spotLight(
     position: Offset,
     radius: Dp,
@@ -457,13 +516,17 @@ fun Modifier.spotLight(
     return modifier.then(this).drawWithCache {
         val width = size.width
         val height = size.height
-        if (width <= 0f || height <= 0f) return@drawWithCache onDrawBehind {}
+        val safeIntensity = intensity.coerceAtLeast(0f)
+        val radiusPx = radius.toPx()
+        if (width <= 0f || height <= 0f || safeIntensity <= 0.001f || radiusPx <= 0.001f) {
+            return@drawWithCache onDrawBehind {}
+        }
         shader.setSpotLightUniforms(
             width = width,
             height = height,
             lightPx = Offset(position.x * width, position.y * height),
-            radiusPx = radius.toPx(),
-            intensity = intensity,
+            radiusPx = radiusPx,
+            intensity = safeIntensity,
             lightColor = lightColor,
             lightHeightPx = lightHeight.toPx(),
             ambientStrength = ambientStrength,
@@ -561,8 +624,9 @@ float noise(float2 p) {
 }
 
 float softLight(float A, float B) {
-    float l = B - (1.0 - 2.0 * A) * B * (1.0 - B);
-    float h = B + (2.0 * A - 1.0) * (sqrt(B) - B);
+    float safeB = max(B, 0.0);
+    float l = safeB - (1.0 - 2.0 * A) * safeB * (1.0 - safeB);
+    float h = safeB + (2.0 * A - 1.0) * (sqrt(safeB) - safeB);
     return mix(l, h, step(0.5, A));
 }
 
@@ -591,19 +655,19 @@ half4 main(float2 fragCoord) {
     float2 delta = fragCoord - lightP;
     float3 L = float3(delta, lightH);
     float dist = length(L);
-    L = normalize(L);
+    L = dist > 1e-4 ? L / dist : float3(0.0, 0.0, 1.0);
 
     float3 N = float3(0.0, 0.0, 1.0);
     float diff = max(dot(N, L), 0.0);
     float3 lighting = (ambientStr + diffuseStr * diff) * lightCol;
 
-    if (dist >= radius) {
+    if (radius <= 1e-4 || intensity <= 0.0 || dist >= radius) {
         return half4(0.0, 0.0, 0.0, 0.0);
     }
 
     float att = smoothstep(1.0, 0.0, dist / radius) * step(dist, radius);
 
-    lighting *= att * lightIntensity * intensity;
+    lighting = max(lighting * (att * lightIntensity * intensity), float3(0.0));
     float alpha = clamp(luminance(lighting), 0.0, 1.0);
 
     // 后处理总开关（step 替代提前返回分支，避免 warp divergence）

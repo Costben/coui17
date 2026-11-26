@@ -309,6 +309,17 @@ internal fun DialogContentLayout(
             }
         }
 
+        val centeredScaleBlock: (androidx.compose.ui.graphics.GraphicsLayerScope.() -> Unit)? = if (isCentered) {
+            {
+                val progress = animationProgress.value
+                val scale = if (show) 0.8f + 0.2f * progress else 1f
+                scaleX = scale * (1f - (backProgress.value * 0.2f))
+                scaleY = scale * (1f - (backProgress.value * 0.2f))
+            }
+        } else {
+            null
+        }
+
         DialogContent(
             title = title,
             titleColor = titleColor,
@@ -323,6 +334,7 @@ internal fun DialogContentLayout(
             onDismissRequest = requestDismiss,
             modifier = contentModifier,
             edgeModifier = edgeModifier,
+            enclosingLayerBlock = centeredScaleBlock,
             forceCentered = forceCentered,
             maxWidth = maxWidth,
             largeScreen = largeScreen,
@@ -363,6 +375,7 @@ internal fun DialogContent(
     onDismissRequest: (() -> Unit)?,
     modifier: Modifier = Modifier,
     edgeModifier: Modifier = Modifier,
+    enclosingLayerBlock: (androidx.compose.ui.graphics.GraphicsLayerScope.() -> Unit)? = null,
     forceCentered: Boolean = false,
     maxWidth: Dp = DialogDefaults.MaxWidth,
     largeScreen: Boolean? = null,
@@ -434,6 +447,7 @@ internal fun DialogContent(
         ),
         blurRadius = DialogDefaults.blurRadius(),
         blendColors = DialogDefaults.blurColors(),
+        enclosingLayerBlock = enclosingLayerBlock,
     )
 
     // `setWindowWidth` clamps the *window* to `contentMaxWidth`, and the panel background

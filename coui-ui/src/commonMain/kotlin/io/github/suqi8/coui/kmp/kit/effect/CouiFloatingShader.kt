@@ -5,21 +5,22 @@
 package io.github.suqi8.coui.kmp.kit.effect
 
 // PJZ110 libhwui OplusMaterialEffectMetaBallShader: setCornerParams 对应 cornerType=4。
-internal fun couiFloatingShader(index: Int): String {
-    require(index in 1..3)
+// Unified across material indices 1..3 via u_materialIndex so Skiko/Metal compiles one PSO
+// instead of duplicating this ~600-line shader per metaball slot.
+internal fun couiFloatingShader(): String {
     // 原片段使用 fwidth; 保留导数抗锯齿, 不改成固定像素宽度。
     val versionHeader = if (isAgslEs3Supported) "#version 300\n" else ""
-    return "${versionHeader}const int MATERIAL_INDEX = $index;\n" + CouiMaterialShaderFunctions +
+    return "${versionHeader}uniform float u_materialIndex;\n" + CouiMaterialShaderFunctions +
         FloatingBaseUniforms + FloatingBallUniforms + FloatingLightingUniforms + FloatingShapeFunctions +
-        FloatingPairFunctions + FloatingLightingFunctions + floatingSdf() + when (index) {
-            1 -> FloatingIndex1
-            2 -> FloatingIndex2
-            else -> FloatingIndex3
-        } + "return sr;}" + FloatingRect + when (index) {
-            1 -> FloatingRect1
-            2 -> FloatingRect2
-            else -> FloatingRect3
-        } + "return rectData;}" + FloatingMain
+        FloatingPairFunctions + FloatingLightingFunctions + floatingSdf() +
+        "if (u_materialIndex < 1.5) {\n" + FloatingIndex1 +
+        "} else if (u_materialIndex < 2.5) {\n" + FloatingIndex2 +
+        "} else {\n" + FloatingIndex3 +
+        "}\nreturn sr;}" + FloatingRect +
+        "if (u_materialIndex < 1.5) {\n" + FloatingRect1 +
+        "} else if (u_materialIndex < 2.5) {\n" + FloatingRect2 +
+        "} else {\n" + FloatingRect3 +
+        "}\nreturn rectData;}" + FloatingMain
 }
 
 // BaseShader 的非融球 cornerType=4 分支, 不声明关联主体或计算 pair。
@@ -221,8 +222,9 @@ return rectSdf;
 
 private const val FloatingPairFunctions = """
 float gain(float x, float k) {
-float a = 0.5*pow(2.0*((x<0.5)?x:1.0-x), k);
-return (x<0.5)?a:1.0-a;
+float b = 2.0 * ((x < 0.5) ? x : 1.0 - x);
+float a = 0.5 * (b > 0.0 ? pow(b, k) : 0.0);
+return (x < 0.5) ? a : 1.0 - a;
 }
 void blendPair(float2 p,float2 point1, float2 point2,RectCorner rc1, RectCorner rc2,ShapeCtx shapeCtx1, ShapeCtx shapeCtx2,inout float raw1, inout float raw2,inout float sdf1, inout float sdf2,float2 invScale1, float2 invScale2,inout float minDist,float pre[24],inout float colorRangeC,inout float aaFactor){
 if(!all(greaterThanEqual(float4(rc1.halfSize, rc2.halfSize), float4(EPS))) || pre[21] < 0.5)return;
@@ -297,7 +299,8 @@ return mix(l,h,step(.5,A));
 float getShadowAlpha(float fadeLine, float fadeSdf, float d, float para1, float para2){
 float alpha = smoothstep(fadeLine,0.0,fadeSdf)*smoothstep(fadeLine, 0.0, d);
 if(para2>EPS){
-alpha = pow(alpha, para1)*para2+(1.0-para2)*alpha;
+float p = alpha > 0.0 ? pow(alpha, para1) : 0.0;
+alpha = p*para2+(1.0-para2)*alpha;
 }
 return alpha;
 }
@@ -381,6 +384,9 @@ float uRectLinePara1 = u_edgeArray[14];
 float uRectLinePara2 = u_edgeArray[15];
 float distanceAll = u_edgeArray[16];
 float2 halfSize = rectData.halfSize;
+if(dot(rectData.pos, rectData.pos) < EPS){
+return color;
+}
 float2 dirPos= normalize(rectData.pos);
 float2 dirAbsPos = abs(dirPos);
 float2 posN = min(float2(dirAbsPos.xy*halfSize.yx/max(float2(.001),dirAbsPos.yx)),halfSize)*sign(dirPos);
@@ -395,8 +401,10 @@ float lineFarAlpha = uRectLineAlpha.y*smoothstep(u_edgeArray[22], u_edgeArray[23
 float lineNearSdf=smoothstep(-uRectLineNear.y,-uRectLineNear.x,d);
 float lineFarSdf=smoothstep(-uRectLineFar.y,-uRectLineFar.x,d);
 if(uRectLinePara2 > EPS){
-lineNearSdf = pow(lineNearSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
-lineFarSdf = pow(lineFarSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
+float nearPow = lineNearSdf > 0.0 ? pow(lineNearSdf, uRectLinePara1) : 0.0;
+float farPow = lineFarSdf > 0.0 ? pow(lineFarSdf, uRectLinePara1) : 0.0;
+lineNearSdf = nearPow*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
+lineFarSdf = farPow*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
 }
 lineNearAlpha*=lineNearSdf;
 lineFarAlpha*=lineFarSdf;
@@ -453,21 +461,21 @@ const float2 eps2 = float2(EPS);
 if(all(greaterThanEqual(rc1.halfSize, eps2))){
 float aaFactor1 = 0.0;
 sdfIndex1 = smoothSdfD(rp1, shapeCtx1, aaFactor1);
-if(MATERIAL_INDEX == 1) aaFactor = aaFactor1;
+if(u_materialIndex < 1.5) aaFactor = aaFactor1;
 rawSdf1 = sdfIndex1;
 minDistance = min(sdfIndex1, minDistance);
 }
 if(all(greaterThanEqual(rc2.halfSize, eps2))){
 float aaFactor2 = 0.0;
 sdfIndex2 = smoothSdfD(rp2, shapeCtx2, aaFactor2);
-if(MATERIAL_INDEX == 2) aaFactor = aaFactor2;
+if(u_materialIndex >= 1.5 && u_materialIndex < 2.5) aaFactor = aaFactor2;
 rawSdf2 = sdfIndex2;
 minDistance = min(sdfIndex2, minDistance);
 }
 if(all(greaterThanEqual(rc3.halfSize, eps2))){
 float aaFactor3 = 0.0;
 sdfIndex3 = smoothSdfD(rp3, shapeCtx3, aaFactor3);
-if(MATERIAL_INDEX == 3) aaFactor = aaFactor3;
+if(u_materialIndex >= 2.5) aaFactor = aaFactor3;
 rawSdf3 = sdfIndex3;
 minDistance = min(sdfIndex3, minDistance);
 }
@@ -533,7 +541,8 @@ float inLayer2ForBall1 = 1.0 - smoothstep(aa, range12 + epsAa, sdfIndex2);
 float rangeWhenInLayer3ForBall1 = mix(range13, max(range13, range12), inLayer2ForBall1);
 float colorRangeValue1 = mix(range12, rangeWhenInLayer3ForBall1, inLayer3ForBall1);
 colorRangeValue1 = max(BLEND_COLOR_RANGE * colorRangeValue1, antiAa);
-float mixC1 = pow(smoothstep(colorRangeValue1, aa, sdfIndex1), BLEND_COLOR_FADE);
+float mixC1Base = smoothstep(colorRangeValue1, aa, sdfIndex1);
+float mixC1 = (mixC1Base > 0.0 ? pow(mixC1Base, BLEND_COLOR_FADE) : 0.0);
 mixC1 *= mixC;
 sr.mixC = mixC1;
 
@@ -541,7 +550,8 @@ sr.mixC = mixC1;
 
 private const val FloatingIndex2 = """
 float colorRangeValue2 = max(BLEND_COLOR_RANGE * range23, antiAa);
-float mixC2 = pow(smoothstep(colorRangeValue2, aa, sdfIndex2), BLEND_COLOR_FADE) * step(aa, sdfIndex1);
+float mixC2Base = smoothstep(colorRangeValue2, aa, sdfIndex2);
+float mixC2 = (mixC2Base > 0.0 ? pow(mixC2Base, BLEND_COLOR_FADE) : 0.0) * step(aa, sdfIndex1);
 mixC2 *= mixC;
 sr.mixC = mixC2;
 

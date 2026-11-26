@@ -202,8 +202,9 @@ half4 main(float2 pos) {
     float cornerOptics = min(in_corner, min(halfSizeOptics.x, halfSizeOptics.y));
     float opticsSdf = RBox(pos_optics, halfSizeOptics, cornerOptics);
     float value = smoothstep(sdf, 0.0, opticsSdf);
-    value *= pow(smoothstep(halfSizeOptics.y + sdf, -halfSizeOptics.y - sdf, -pos_optics.y), 18.0);
-    value = pow(value, 0.6) * 0.6 + 0.4 * value;
+    float yRamp = smoothstep(halfSizeOptics.y + sdf, -halfSizeOptics.y - sdf, -pos_optics.y);
+    value *= yRamp > 0.0 ? pow(yRamp, 18.0) : 0.0;
+    value = (value > 0.0 ? pow(value, 0.6) : 0.0) * 0.6 + 0.4 * value;
     float gray = clamp((dot(float3(0.299, 0.587, 0.114), in_background) - 0.45) * 0.6, 0.0, 1.0);
     float alpha = in_color.a * value * (1.0 - gray) * (1.0 - gray);
     return half4(in_color.rgb * alpha, alpha);

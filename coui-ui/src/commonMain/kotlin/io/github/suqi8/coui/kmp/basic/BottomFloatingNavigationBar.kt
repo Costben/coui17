@@ -47,11 +47,15 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
@@ -64,18 +68,30 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measured
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
 import io.github.suqi8.coui.kmp.blur.BlendColorEntry
@@ -811,11 +827,31 @@ fun RowScope.BottomFloatingNavigationBarItem(
     // `combinedClickable` already gives exactly that pairing.
     var menuExpanded by remember { mutableStateOf(false) }
 
+    val ownerOwnsTouch = LocalFloatingMenuTouchOwner.current
+    val itemTouchModifier = if (ownerOwnsTouch) {
+        Modifier
+    } else {
+        Modifier.couiTouchMotion(enabled = true, spec = motionSpec, lightParams = lightSpec)
+    }
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    val mainTextStyle = COUITheme.textStyles.main
+    val whiteLabelStyle = remember(density, mainTextStyle) {
+        mainTextStyle.copy(
+            color = Color.White,
+            fontSize = with(density) { BottomFloatingNavigationBarDefaults.LabelFontSize.value.dp.toSp() },
+            lineHeight = with(density) { LabelLineHeight.toSp() },
+            lineHeightStyle = LabelLineHeightStyle,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+        )
+    }
+
     Box(
         modifier = modifier
             .height(BottomFloatingNavigationBarDefaults.ItemHeight)
             .widthIn(max = BottomFloatingNavigationBarDefaults.ItemMaxWidth)
-            .couiTouchMotion(enabled = !LocalFloatingMenuTouchOwner.current, spec = motionSpec, lightParams = lightSpec)
+            .then(itemTouchModifier)
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -873,20 +909,49 @@ fun RowScope.BottomFloatingNavigationBarItem(
                 }
             }
             Spacer(Modifier.height(BottomFloatingNavigationBarDefaults.IconTitleGapVertical))
-            Text(
-                text = label,
-                color = tint,
-                // The native title is sized in pixels, so a larger system font leaves it as it is.
-                fontSize = with(LocalDensity.current) { BottomFloatingNavigationBarDefaults.LabelFontSize.value.dp.toSp() },
-                // A TextView pads its line out to the font's top and bottom metrics, which drops the
-                // glyph about 2.8dp below the title's top edge; an unpadded line sits it 1dp below.
-                lineHeight = with(LocalDensity.current) { LabelLineHeight.toSp() },
-                style = COUITheme.textStyles.main.copy(lineHeightStyle = LabelLineHeightStyle),
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
+            val textMeasurer = rememberTextMeasurer()
+            val labelHeightPx = with(density) { LabelLineHeight.roundToPx() }
+            val rasterCache = remember(label, whiteLabelStyle, textMeasurer, density, layoutDirection) {
+                BottomBarLabelRasterCache()
+            }
+            Layout(
+                modifier = Modifier
+                    .semantics { text = AnnotatedString(label) }
+                    .drawWithContent {
+                        val fallbackMaxW = size.width.roundToInt().coerceAtLeast(1)
+                        val bitmap = rasterCache.bitmap ?: rasterCache.getOrRasterize(
+                            maxWidth = fallbackMaxW,
+                            label = label,
+                            style = whiteLabelStyle,
+                            textMeasurer = textMeasurer,
+                            density = density,
+                            layoutDirection = layoutDirection,
+                        ) ?: return@drawWithContent
+                        val x = ((size.width - bitmap.width) * 0.5f).coerceAtLeast(0f).roundToInt()
+                        val y = ((size.height - bitmap.height) * 0.5f).roundToInt()
+                        drawImage(
+                            image = bitmap,
+                            dstOffset = IntOffset(x, y),
+                            dstSize = IntSize(bitmap.width, bitmap.height),
+                            colorFilter = ColorFilter.tint(tint),
+                        )
+                    },
+            ) { _, constraints ->
+                val maxW = if (constraints.hasBoundedWidth) constraints.maxWidth.coerceAtLeast(1) else Constraints.Infinity
+                val bitmap = rasterCache.getOrRasterize(
+                    maxWidth = maxW,
+                    label = label,
+                    style = whiteLabelStyle,
+                    textMeasurer = textMeasurer,
+                    density = density,
+                    layoutDirection = layoutDirection,
+                )
+                val rawW = bitmap?.width ?: 0
+                val rawH = bitmap?.height ?: 0
+                val w = rawW.coerceIn(constraints.minWidth, constraints.maxWidth)
+                val h = maxOf(rawH, labelHeightPx).coerceIn(constraints.minHeight, constraints.maxHeight)
+                layout(w, h) {}
+            }
         }
         if (overflowMenu != null) {
             NavigationPopupMenu(
@@ -1424,6 +1489,65 @@ internal fun Modifier.bottomFloatingTouchHighlight(shape: Shape): Modifier {
             // The highlight sits above the glass but below the items, exactly like the native onDraw.
             drawContent()
         }
+}
+
+/**
+ * Pre-rasterizes a bottom navigation label in white into a tiny CPU-backed [ImageBitmap] once per
+ * `(label, style, maxWidth)` so the draw pass blits it with [ColorFilter.tint] — identical to the
+ * icon right above it. Avoids Skia/Metal `Paragraph.updateForegroundPaint` / `markDirty()` and GPU
+ * glyph-atlas corruption when toggling tab selection after video playback on iOS.
+ */
+private class BottomBarLabelRasterCache {
+    var maxWidth: Int = -2
+    var bitmap: ImageBitmap? = null
+
+    fun getOrRasterize(
+        maxWidth: Int,
+        label: String,
+        style: TextStyle,
+        textMeasurer: TextMeasurer,
+        density: Density,
+        layoutDirection: LayoutDirection,
+    ): ImageBitmap? {
+        if (this.maxWidth == maxWidth) return bitmap
+        this.maxWidth = maxWidth
+        if (label.isEmpty()) {
+            bitmap = null
+            return null
+        }
+        val padX = 2
+        val textMaxW = if (maxWidth == Constraints.Infinity) {
+            Constraints.Infinity
+        } else {
+            (maxWidth - padX * 2).coerceAtLeast(1)
+        }
+        val measured = textMeasurer.measure(
+            text = label,
+            style = style,
+            overflow = TextOverflow.Ellipsis,
+            softWrap = true,
+            maxLines = 1,
+            constraints = Constraints(maxWidth = textMaxW),
+        )
+        val w = (measured.size.width + padX * 2).coerceAtLeast(1)
+        val h = measured.size.height.coerceAtLeast(1)
+        val image = ImageBitmap(w, h, ImageBitmapConfig.Argb8888)
+        val canvas = Canvas(image)
+        CanvasDrawScope().draw(
+            density = density,
+            layoutDirection = layoutDirection,
+            canvas = canvas,
+            size = Size(w.toFloat(), h.toFloat()),
+        ) {
+            drawText(
+                textLayoutResult = measured,
+                topLeft = Offset(padX.toFloat(), 0f),
+            )
+        }
+        image.prepareToDraw()
+        bitmap = image
+        return image
+    }
 }
 
 /** The [Outline] as a [Path], so a draw scope can clip to it. */

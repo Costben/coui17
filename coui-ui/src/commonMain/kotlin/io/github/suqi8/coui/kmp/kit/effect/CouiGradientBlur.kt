@@ -6,6 +6,8 @@ package io.github.suqi8.coui.kmp.kit.effect
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
@@ -131,8 +133,11 @@ private class CouiGradientRenderer(
     private val kernelRadius = ceil(
         (referenceBlurRadiusPx * SigmaScale + 0.5f) * 3f / BlurOffsetPx,
     ).toInt()
+    private val maxLoop = gradientGaussianLoopBound(kernelRadius)
     private val shaders = List(2) { index ->
-        RuntimeShader(gradientGaussianShader(kernelRadius, gradientSpeed)).apply {
+        RuntimeShader(gradientGaussianShader(maxLoop)).apply {
+            setFloatUniform("in_blurRadius", kernelRadius.toFloat())
+            setFloatUniform("in_gradientSpeed", gradientSpeed ?: -1f)
             setFloatUniform(
                 "in_blurOffset",
                 if (index == 0) BlurOffsetPx else 0f,
@@ -153,7 +158,6 @@ private class CouiGradientRenderer(
     init {
         passes.forEach {
             it.compositingStrategy = CompositingStrategy.Offscreen
-            it.clip = true
         }
     }
 
@@ -161,15 +165,20 @@ private class CouiGradientRenderer(
         if (scope.size.width <= 0f || scope.size.height <= 0f) return
         val paddedSize = IntSize(scope.size.width.toInt(), scope.size.height.toInt())
         updateEffects(paddedSize)
+        val outlineSize = Size(paddedSize.width.toFloat(), paddedSize.height.toFloat())
         // New Canvas does not inherit CouiBackdrop padding translation; explicit density avoids cyclic DrawScope delegation.
         passes[0].record(density, scope.layoutDirection, paddedSize) {
             translate(padding, padding) { drawBackdrop() }
         }
+        passes[0].setRectOutline(Offset.Zero, outlineSize)
+        passes[0].clip = true
         // Separate layers enforce two rasterizations so the second pass does not nest-evaluate the first pass inside its shader.
         // The second pass only references the first pass; child layer updates still propagate without re-recording on scroll.
         if (recordedSize != paddedSize || recordedLayoutDirection != scope.layoutDirection) {
             val horizontal = passes[0]
             passes[1].record(density, scope.layoutDirection, paddedSize) { drawLayer(horizontal) }
+            passes[1].setRectOutline(Offset.Zero, outlineSize)
+            passes[1].clip = true
             recordedSize = paddedSize
             recordedLayoutDirection = scope.layoutDirection
         }
@@ -191,15 +200,28 @@ private class CouiGradientRenderer(
     }
 }
 
+internal const val DEFAULT_GRADIENT_GAUSSIAN_LOOP_BOUND = 32
+
+internal fun gradientGaussianLoopBound(kernelRadius: Int): Int {
+    val clamped = kernelRadius.coerceAtLeast(1)
+    return if (clamped <= DEFAULT_GRADIENT_GAUSSIAN_LOOP_BOUND) {
+        DEFAULT_GRADIENT_GAUSSIAN_LOOP_BOUND
+    } else {
+        ((clamped + 15) / 16) * 16
+    }
+}
+
 // libhwui.so: OplusGradientGaussianBlurEffect::make_blur_effect, preserving integer radius, weights, and remaining center weight.
 // shortcut: fixed noise seed without per-frame temporal jitter; hook up the render clock if dynamic noise is needed later.
-private fun gradientGaussianShader(kernelRadius: Int, gradientSpeed: Float?): String = """
-    const int in_blurRadius = $kernelRadius;
+internal fun gradientGaussianShader(maxLoop: Int = DEFAULT_GRADIENT_GAUSSIAN_LOOP_BOUND): String = """
+    const int MAX_BLUR_RADIUS = $maxLoop;
     const float PI = 3.1415926;
     uniform shader child;
     uniform float2 inputSize;
     uniform float gradientTop;
     uniform float gradientHeight;
+    uniform float in_blurRadius;
+    uniform float in_gradientSpeed;
     uniform half2 in_blurOffset;
 
     float4 sampleChild(float2 coord) {
@@ -221,9 +243,11 @@ private fun gradientGaussianShader(kernelRadius: Int, gradientSpeed: Float?): St
     half4 main(float2 coord) {
         float4 c = sampleChild(coord);
         float position = clamp((coord.y - gradientTop) / gradientHeight, 0.0, 1.0);
-        // Keep smoothstep for the default path; use 1 - pow(position, speed) when an explicit speed is provided.
-        float ratio = ${if (gradientSpeed == null) "smoothstep(0.0, 1.0, 1.0 - position)" else "1.0 - pow(position, $gradientSpeed)"};
-        int radius = int(float(in_blurRadius) * ratio);
+        // Keep smoothstep when in_gradientSpeed <= 0; use 1 - pow(position, speed) when an explicit speed is provided.
+        float ratio = in_gradientSpeed <= 0.0
+            ? smoothstep(0.0, 1.0, 1.0 - position)
+            : 1.0 - (position > 0.0 ? pow(position, in_gradientSpeed) : 0.0);
+        int radius = int(in_blurRadius * ratio);
         if (radius <= 1) return half4(c);
         // Convolution result becomes zero after restoring center alpha; pass sharp edge through without truncating low non-zero coverage.
         if (c.a == 0.0) return half4(0.0);
@@ -231,7 +255,7 @@ private fun gradientGaussianShader(kernelRadius: Int, gradientSpeed: Float?): St
         float sumWeight = 0.0;
         // Accumulate color and normalize coverage in float to prevent half-precision rounding from causing horizontal banding.
         float4 finalColor = float4(0.0);
-        for (int i = 1; i <= in_blurRadius; i++) {
+        for (int i = 1; i <= MAX_BLUR_RADIUS; i++) {
             if (i > radius) break;
             float weight = getWeight(i, radius);
             offset.x = min(in_blurOffset.x, float(radius)) * float(i);

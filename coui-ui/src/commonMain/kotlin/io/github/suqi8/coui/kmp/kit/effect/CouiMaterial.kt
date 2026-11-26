@@ -69,7 +69,7 @@ internal const val CouiMaterialShaderFunctions = """
     }
 """
 
-private const val CouiMaterialShader = CouiMaterialShaderFunctions + """
+internal const val CouiMaterialShader = CouiMaterialShaderFunctions + """
     uniform shader content;
     uniform float4 uMixColor;
     uniform float4 uBlendColor;

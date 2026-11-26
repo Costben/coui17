@@ -108,7 +108,6 @@ internal class CouiBackdrop internal constructor(
     init {
         layer?.let {
             it.compositingStrategy = CompositingStrategy.Offscreen
-            it.clip = true
         }
     }
 
@@ -188,14 +187,33 @@ internal class CouiBackdrop internal constructor(
         val source = coordinates ?: return
         val l = layer ?: return
         if (!recorded || !source.isAttached || !target.isAttached) return
+        val sameWindow = source.findRootCoordinates() === target.findRootCoordinates()
         // Same-window sampling relies on RenderNode dependency tracking; cross-window subscribes to PreDraw.
-        if (source.findRootCoordinates() !== target.findRootCoordinates()) redrawSignal.value
+        if (!sameWindow) redrawSignal.value
         val width = source.size.width.toFloat()
         val height = source.size.height.toFloat()
         if (width <= 0f || height <= 0f) return
-        val origin = target.screenToLocal(source.localToScreen(Offset.Zero))
-        val right = target.screenToLocal(source.localToScreen(Offset(width, 0f)))
-        val bottom = target.screenToLocal(source.localToScreen(Offset(0f, height)))
+        val origin: Offset
+        val right: Offset
+        val bottom: Offset
+        if (sameWindow) {
+            origin = target.localPositionOf(source, Offset.Zero)
+            right = target.localPositionOf(source, Offset(width, 0f))
+            bottom = target.localPositionOf(source, Offset(0f, height))
+        } else {
+            val screenOrigin = target.screenToLocal(source.localToScreen(Offset.Zero))
+            val screenRight = target.screenToLocal(source.localToScreen(Offset(width, 0f)))
+            val screenBottom = target.screenToLocal(source.localToScreen(Offset(0f, height)))
+            if (screenOrigin.isFinite && screenRight.isFinite && screenBottom.isFinite) {
+                origin = screenOrigin
+                right = screenRight
+                bottom = screenBottom
+            } else {
+                origin = target.windowToLocal(source.localToWindow(Offset.Zero))
+                right = target.windowToLocal(source.localToWindow(Offset(width, 0f)))
+                bottom = target.windowToLocal(source.localToWindow(Offset(0f, height)))
+            }
+        }
         if (!origin.isFinite || !right.isFinite || !bottom.isFinite) return
         val xAxis = (right - origin) / width
         val yAxis = (bottom - origin) / height
@@ -221,6 +239,10 @@ internal class CouiBackdrop internal constructor(
                 }
                 drawSource(this@apply)
             }
+            // Refresh the rectangular outline explicitly on Skiko where SkiaGraphicsLayer.setSize
+            // keeps a cached internalOutline (0x0 if clip=true ran before first record).
+            l.setRectOutline(Offset.Zero, size)
+            l.clip = true
             drawLayer(l)
         }
         recorded = true
