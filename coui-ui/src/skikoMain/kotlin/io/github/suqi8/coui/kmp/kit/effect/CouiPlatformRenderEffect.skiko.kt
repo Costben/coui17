@@ -29,6 +29,8 @@ internal actual fun isKitSearchBarSupported(): Boolean = true
 
 internal actual val isAgslEs3Supported: Boolean = false
 
+internal actual val preferFastAnimatingFloatingSurfaces: Boolean = true
+
 internal actual fun RuntimeShader.asComposeRenderEffect(inputUniformName: String): RenderEffect = ImageFilter.makeRuntimeShader(
     asSkikoRuntimeShader(),
     inputUniformName,

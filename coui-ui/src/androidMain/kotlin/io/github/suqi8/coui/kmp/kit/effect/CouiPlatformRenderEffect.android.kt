@@ -33,6 +33,8 @@ internal actual fun isKitSearchBarSupported(): Boolean = Build.VERSION.SDK_INT >
 
 internal actual val isAgslEs3Supported: Boolean = true
 
+internal actual val preferFastAnimatingFloatingSurfaces: Boolean = false
+
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 internal actual fun RuntimeShader.asComposeRenderEffect(inputUniformName: String): RenderEffect = AndroidRenderEffect.createRuntimeShaderEffect(
     asAndroidRuntimeShader(),

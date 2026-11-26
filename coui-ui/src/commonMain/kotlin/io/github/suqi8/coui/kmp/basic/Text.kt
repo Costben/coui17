@@ -29,7 +29,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.LocalContentColor
+import io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment
 import io.github.suqi8.coui.kmp.theme.LocalTextStyles
+import io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight
+import io.github.suqi8.coui.kmp.theme.withPlatformFontWeightAdjustment
 
 /**
  * The style a [Text] uses when the caller passes none.
@@ -119,6 +122,8 @@ fun Text(
     style: TextStyle = defaultTextStyle(),
 ) {
     val textColor = color.takeOrElse { style.color.takeOrElse { LocalContentColor.current } }
+    val weightAdjustment = LocalPlatformFontWeightAdjustment.current
+    val resolvedWeight = adjustPlatformFontWeight(fontWeight ?: style.fontWeight, weightAdjustment)
 
     BasicText(
         text = text,
@@ -127,7 +132,7 @@ fun Text(
         style.merge(
             color = textColor,
             fontSize = fontSize,
-            fontWeight = fontWeight,
+            fontWeight = resolvedWeight,
             textAlign = textAlign ?: TextAlign.Unspecified,
             lineHeight = lineHeight,
             fontFamily = fontFamily,
@@ -218,13 +223,15 @@ fun Text(
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
     style: TextStyle = defaultTextStyle(),
 ) {
+    val weightAdjustment = LocalPlatformFontWeightAdjustment.current
+    val resolvedWeight = adjustPlatformFontWeight(fontWeight ?: style.fontWeight, weightAdjustment)
     BasicText(
         text = text,
         modifier = modifier,
         style =
         style.merge(
             fontSize = fontSize,
-            fontWeight = fontWeight,
+            fontWeight = resolvedWeight,
             textAlign = textAlign ?: TextAlign.Unspecified,
             lineHeight = lineHeight,
             fontFamily = fontFamily,
@@ -323,9 +330,13 @@ fun Text(
     style: TextStyle = defaultTextStyle(),
 ) {
     val textColor = color.takeOrElse { style.color.takeOrElse { LocalContentColor.current } }
+    val weightAdjustment = LocalPlatformFontWeightAdjustment.current
+    val resolvedWeight = adjustPlatformFontWeight(fontWeight ?: style.fontWeight, weightAdjustment)
     val linkStyles = rememberTextLinkStyles()
     val textWithMaterialLinkStyles =
-        remember(text, linkStyles) { createTextWithLinkStyles(text, linkStyles) }
+        remember(text, linkStyles, weightAdjustment) {
+            createTextWithLinkStyles(text, linkStyles).withPlatformFontWeightAdjustment(weightAdjustment)
+        }
 
     BasicText(
         text = textWithMaterialLinkStyles,
@@ -334,7 +345,7 @@ fun Text(
         style.merge(
             color = textColor,
             fontSize = fontSize,
-            fontWeight = fontWeight,
+            fontWeight = resolvedWeight,
             textAlign = textAlign ?: TextAlign.Unspecified,
             lineHeight = lineHeight,
             fontFamily = fontFamily,
@@ -429,9 +440,13 @@ fun Text(
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextStyle = defaultTextStyle(),
 ) {
+    val weightAdjustment = LocalPlatformFontWeightAdjustment.current
+    val resolvedWeight = adjustPlatformFontWeight(fontWeight ?: style.fontWeight, weightAdjustment)
     val linkStyles = rememberTextLinkStyles()
     val textWithMaterialLinkStyles =
-        remember(text, linkStyles) { createTextWithLinkStyles(text, linkStyles) }
+        remember(text, linkStyles, weightAdjustment) {
+            createTextWithLinkStyles(text, linkStyles).withPlatformFontWeightAdjustment(weightAdjustment)
+        }
 
     BasicText(
         text = textWithMaterialLinkStyles,
@@ -439,7 +454,7 @@ fun Text(
         style =
         style.merge(
             fontSize = fontSize,
-            fontWeight = fontWeight,
+            fontWeight = resolvedWeight,
             textAlign = textAlign ?: TextAlign.Unspecified,
             lineHeight = lineHeight,
             fontFamily = fontFamily,

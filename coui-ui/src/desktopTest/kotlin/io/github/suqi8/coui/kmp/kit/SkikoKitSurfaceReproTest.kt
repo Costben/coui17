@@ -298,9 +298,17 @@ class SkikoKitSurfaceReproTest {
         assertTrue(collapsedImg[180, 22].blue > 0.7f, "collapsed center should show blue backdrop")
 
         expanded = true
-        repeat(4) { mainClock.advanceTimeByFrame() }
-        waitForIdle()
-        val expandedImg = onRoot().captureToImage().toPixelMap()
+        // CouiSearchMotion advances via real wall-clock Swing frame callbacks (CouiFrameCallback.desktop.kt).
+        // Because TopAppBarSearch no longer triggers per-frame recomposition during expansion, waitForIdle()
+        // returns immediately; pump real wall-clock frames until the spring expands across center.
+        var expandedImg = onRoot().captureToImage().toPixelMap()
+        repeat(25) {
+            if (expandedImg[150, 22].red > collapsedImg[150, 22].red + 0.1f) return@repeat
+            Thread.sleep(20)
+            mainClock.advanceTimeByFrame()
+            waitForIdle()
+            expandedImg = onRoot().captureToImage().toPixelMap()
+        }
         // Expanded glass search capsule covers the center of the toolbar with frosted light surface.
         assertTrue(
             expandedImg[150, 22].red > collapsedImg[150, 22].red + 0.1f,
@@ -308,7 +316,10 @@ class SkikoKitSurfaceReproTest {
         )
 
         expanded = false
-        repeat(4) { mainClock.advanceTimeByFrame() }
+        repeat(4) {
+            Thread.sleep(16)
+            mainClock.advanceTimeByFrame()
+        }
         waitForIdle()
     }
 

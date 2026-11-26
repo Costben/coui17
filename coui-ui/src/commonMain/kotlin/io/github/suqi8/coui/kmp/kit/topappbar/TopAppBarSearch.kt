@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +79,7 @@ import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingSurface
 import io.github.suqi8.coui.kmp.kit.effect.createBlurRenderEffect
 import io.github.suqi8.coui.kmp.kit.effect.isKitRenderEffectSupported
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.CouiSearchRelocationBoundary
 import io.github.suqi8.coui.kmp.kit.motion.couiPressMotion
@@ -88,6 +90,9 @@ import io.github.suqi8.coui.kmp.kit.search.CouiSearchBarDefaults
 import io.github.suqi8.coui.kmp.kit.search.CouiSearchIcon
 import io.github.suqi8.coui.kmp.kit.theme.LocalCouiTextStyle
 import io.github.suqi8.coui.kmp.kit.theme.ProvideCouiContent
+import io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment
+import io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight
+import kotlinx.coroutines.flow.first
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -146,18 +151,25 @@ internal fun TopAppBarSearch(
                 val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
                 val fullWidth = state.expandedWidth
                 val height = with(density) { 40.dp.roundToPx().toFloat() }
-                val progress = state.motion.progress
-                val visibleWidth = max(height, height + (fullWidth - height) * progress)
-                val rawBlurRadius = max(0f, 1f - abs((1f - progress) - 0.5f) * 2f) * 30f
-                val blurRadius = if (rawBlurRadius < 2f) 0f else (rawBlurRadius / 4f).roundToInt() * 4f
+                val progressProvider = remember(state) { { state.motion.progress } }
+                val motionRunningProvider = remember(state) { { state.motion.running } }
                 var expandedCenter by remember { mutableStateOf<Offset?>(null) }
-                val blur = remember(blurRadius) {
-                    if (blurRadius > 0f && isKitRenderEffectSupported()) {
-                        blurCache.getOrPut(blurRadius) {
-                            createBlurRenderEffect(blurRadius, blurRadius, TileMode.Decal)
+                // On Skiko/iOS, avoid reading state.motion.progress in composition (which recomposes
+                // BasicTextField & SubcomposeLayout at 120Hz) and skip extra text motion-blur RenderEffects.
+                val blur = if (preferFastAnimatingFloatingSurfaces) {
+                    null
+                } else {
+                    val progress = state.motion.progress
+                    val rawBlurRadius = max(0f, 1f - abs((1f - progress) - 0.5f) * 2f) * 30f
+                    val blurRadius = if (rawBlurRadius < 2f) 0f else (rawBlurRadius / 4f).roundToInt() * 4f
+                    remember(blurRadius) {
+                        if (blurRadius > 0f && isKitRenderEffectSupported()) {
+                            blurCache.getOrPut(blurRadius) {
+                                createBlurRenderEffect(blurRadius, blurRadius, TileMode.Decal)
+                            }
+                        } else {
+                            null
                         }
-                    } else {
-                        null
                     }
                 }
                 overlay.apply {
@@ -178,7 +190,8 @@ internal fun TopAppBarSearch(
                                         requester,
                                         enabled = enabled,
                                         active = visible && state.motion.expanded,
-                                        progress = progress,
+                                        progressProvider = progressProvider,
+                                        motionRunningProvider = motionRunningProvider,
                                         fullWidth = inputWidth,
                                         rtl = rtl,
                                         focusPending = focusPending,
@@ -191,7 +204,7 @@ internal fun TopAppBarSearch(
                                     TopAppBarSearchPair(
                                         renderer = state.obtainPairRenderer(),
                                         fullWidth = fullWidth,
-                                        progress = progress,
+                                        progressProvider = progressProvider,
                                         enabled = enabled,
                                         active = active,
                                         deform = enabled && active && !state.motion.running,
@@ -215,6 +228,8 @@ internal fun TopAppBarSearch(
                                 }
                             },
                         ) { measurables, constraints ->
+                            val progress = progressProvider()
+                            val visibleWidth = max(height, height + (fullWidth - height) * progress)
                             val child = measurables.single().measure(Constraints.fixed(visibleWidth.roundToInt(), height.roundToInt()))
                             layout(constraints.maxWidth, constraints.maxHeight) {
                                 val iconCenter = if (rtl) constraints.maxWidth - height * 0.5f else height * 0.5f
@@ -375,7 +390,8 @@ private fun SearchInput(
     requester: FocusRequester,
     enabled: Boolean,
     active: Boolean,
-    progress: Float,
+    progressProvider: () -> Float,
+    motionRunningProvider: () -> Boolean,
     fullWidth: Float,
     rtl: Boolean,
     focusPending: Boolean,
@@ -384,8 +400,13 @@ private fun SearchInput(
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     // Compose alongside the input node so phased measurement of custom actions never outpaces focus requests.
+    // On Skiko/iOS, defer UIKit becomeFirstResponder + IME presentation until the expand spring nearly lands
+    // so XPC keyboard bring-up and per-frame WindowInsets.ime updates never stall the 120Hz expand animation.
     LaunchedEffect(focusPending, enabled, active) {
         if (focusPending && enabled && active) {
+            if (preferFastAnimatingFloatingSurfaces) {
+                snapshotFlow { !motionRunningProvider() || progressProvider() >= 0.92f }.first { it }
+            }
             if (requester.requestFocus()) keyboard?.show()
             onFocused()
         }
@@ -398,6 +419,13 @@ private fun SearchInput(
             backgroundColor = inheritedSelectionColors.backgroundColor,
         )
     }
+    val baseInputStyle = LocalCouiTextStyle.current
+    val weightAdjustment = LocalPlatformFontWeightAdjustment.current
+    val inputTextStyle = baseInputStyle.copy(
+        color = LocalContentColor.current,
+        fontSize = 15.sp,
+        fontWeight = adjustPlatformFontWeight(baseInputStyle.fontWeight, weightAdjustment),
+    )
     // Lay out at full target width and clip to current width; full-width input prevents overlap regions from leaking touches to underlying buttons.
     Layout(content = {
         CompositionLocalProvider(LocalTextSelectionColors provides selectionColors) {
@@ -409,7 +437,7 @@ private fun SearchInput(
                     .then(if (!active) Modifier.clearAndSetSemantics {} else Modifier),
                 enabled = enabled && active,
                 singleLine = true,
-                textStyle = LocalCouiTextStyle.current.copy(color = LocalContentColor.current, fontSize = 15.sp),
+                textStyle = inputTextStyle,
                 cursorBrush = SolidColor(LocalCouiToolbarStyle.current.cursorColor),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { onSearch() }),
@@ -423,7 +451,7 @@ private fun SearchInput(
                             )
                         }
                         Box(
-                            Modifier.weight(1f).graphicsLayer { alpha = progress.coerceIn(0f, 1f) },
+                            Modifier.weight(1f).graphicsLayer { alpha = progressProvider().coerceIn(0f, 1f) },
                             contentAlignment = Alignment.CenterStart,
                         ) {
                             if (query.isEmpty()) {
@@ -438,7 +466,7 @@ private fun SearchInput(
                             }
                             input()
                         }
-                        Box(Modifier.graphicsLayer { alpha = progress.coerceIn(0f, 1f) }) { trailingIcon() }
+                        Box(Modifier.graphicsLayer { alpha = progressProvider().coerceIn(0f, 1f) }) { trailingIcon() }
                     }
                 },
             )

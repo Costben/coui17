@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +41,7 @@ import io.github.suqi8.coui.kmp.kit.effect.SpotlightPreset
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingPair
 import io.github.suqi8.coui.kmp.kit.effect.createBlurRenderEffect
 import io.github.suqi8.coui.kmp.kit.effect.isKitRenderEffectSupported
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.couiMovingActionClick
 import io.github.suqi8.coui.kmp.kit.motion.couiPressMotion
@@ -58,7 +60,7 @@ internal fun TopAppBarSearchPair(
     modifier: Modifier = Modifier,
     renderer: CouiFloatingRenderer = remember { CouiFloatingRenderer.pair() },
     fullWidth: Float,
-    progress: Float,
+    progressProvider: () -> Float,
     enabled: Boolean,
     active: Boolean,
     deform: Boolean,
@@ -88,17 +90,21 @@ internal fun TopAppBarSearchPair(
     // Non-snapshot holder avoids mutating Compose state inside SubcomposeLayout's measure pass
     // (which previously triggered a redundant second layout/draw pass on every animation frame).
     val geometryRef = remember { arrayOfNulls<CouiTopAppBarSearchPairGeometry>(1) }
-    val fraction = progress.coerceIn(0f, 1f)
-    val rawActionBlur = (1f - fraction) * 30f
-    val actionBlurRadius = if (rawActionBlur < 2f) 0f else (rawActionBlur / 4f).roundToInt() * 4f
     val actionBlurCache = remember { HashMap<Float, RenderEffect>(10) }
-    val actionBlur = remember(actionBlurRadius) {
-        if (actionBlurRadius > 0f && isKitRenderEffectSupported()) {
-            actionBlurCache.getOrPut(actionBlurRadius) {
-                createBlurRenderEffect(actionBlurRadius, actionBlurRadius, TileMode.Decal)
+    val actionBlur = if (preferFastAnimatingFloatingSurfaces) {
+        null
+    } else {
+        val fraction = progressProvider().coerceIn(0f, 1f)
+        val rawActionBlur = (1f - fraction) * 30f
+        val actionBlurRadius = if (rawActionBlur < 2f) 0f else (rawActionBlur / 4f).roundToInt() * 4f
+        remember(actionBlurRadius) {
+            if (actionBlurRadius > 0f && isKitRenderEffectSupported()) {
+                actionBlurCache.getOrPut(actionBlurRadius) {
+                    createBlurRenderEffect(actionBlurRadius, actionBlurRadius, TileMode.Decal)
+                }
+            } else {
+                null
             }
-        } else {
-            null
         }
     }
     fun inputSurface(): CouiFloatingSurface {
@@ -123,21 +129,29 @@ internal fun TopAppBarSearchPair(
         )
     }
     val extension = with(density) { 4.dp.roundToPx() }
-    val materials = listOf(
-        style.material(capsule).copy(index = 1, extension = extension),
-        style.material(true).copy(index = 2, extension = extension),
-    )
-    val shadow = style.shadow(true)
+    val materials = remember(style, capsule, extension) {
+        listOf(
+            style.material(capsule).copy(index = 1, extension = extension),
+            style.material(true).copy(index = 2, extension = extension),
+        )
+    }
+    val shadows = remember(style) {
+        val s = style.shadow(true)
+        listOf(s, s)
+    }
+    val shapes = remember(shape) { listOf(shape, shape) }
+    val layers = remember(inputLayer, actionLayer) { listOf(inputLayer, actionLayer) }
     val drawing = Modifier.couiFloatingPair(
         backdrop,
         renderer,
         materials,
-        listOf(shadow, shadow),
-        listOf(shape, shape),
-        listOf(inputLayer, actionLayer),
+        shadows,
+        shapes,
+        layers,
         style.contourGlowEnabled,
         drawOrder = listOf(1, 0),
         foregroundComposition = true,
+        animating = animating,
         beforeContent = { index, path ->
             val surface = if (index == 0) inputSurface() else actionSurface()
             val light = if (index == 0) inputLight else actionLight
@@ -154,14 +168,22 @@ internal fun TopAppBarSearchPair(
         },
         surfaces = { listOf(inputSurface(), actionSurface()) },
     )
-    SubcomposeLayout(modifier.then(drawing)) { constraints ->
-        val height = constraints.maxHeight
-        // Measure custom action content first to determine final input width without a one-frame onSizeChanged mismatch.
-        val actionWidthLimit = min(
-            CouiTopAppBarDefaults.searchActionMaxWidth.roundToPx(),
-            (fullWidth * .4f).roundToInt(),
-        ).coerceAtLeast(1)
-        val button = subcompose(SearchPairSlot.Action) {
+    val finalInputWidthState = remember { mutableFloatStateOf(fullWidth) }
+    val actionSubcomposeContent = remember(
+        style,
+        enabled,
+        active,
+        onActionClick,
+        deform,
+        actionEnabled,
+        animating,
+        shape,
+        actionBlur,
+        action,
+        progressProvider,
+        actionLayer,
+    ) {
+        @Composable {
             ProvideCouiContent(
                 color = style.contentColor.copy(alpha = style.contentColor.alpha * if (enabled && onActionClick != null) 1f else .38f),
                 textStyle = style.textStyle,
@@ -193,25 +215,24 @@ internal fun TopAppBarSearchPair(
                 ) {
                     Box(
                         Modifier.graphicsLayer {
-                            alpha = fraction
+                            alpha = progressProvider().coerceIn(0f, 1f)
                             renderEffect = actionBlur
                         },
                     ) { action() }
                 }
             }
-        }.single().measure(Constraints(maxWidth = actionWidthLimit, minHeight = height, maxHeight = height))
-        val gap = min(CouiTopAppBarDefaults.searchActionGap.toPx(), (fullWidth - button.width - 1f).coerceAtLeast(0f))
-        val finalInputWidth = (fullWidth - button.width - gap).roundToInt().coerceAtLeast(1).toFloat()
-        val frame = topAppBarSearchPairGeometry(
-            constraints.maxWidth.toFloat(),
-            height.toFloat(),
-            button.width.toFloat(),
-            gap,
-            progress,
-            rtl,
-        )
-        geometryRef[0] = frame
-        val body = subcompose(SearchPairSlot.Input) {
+        }
+    }
+    val inputSubcomposeContent = remember(
+        style,
+        enabled,
+        active,
+        deform,
+        shape,
+        inputLayer,
+        input,
+    ) {
+        @Composable {
             ProvideCouiContent(
                 color = style.contentColor.copy(alpha = style.contentColor.alpha * if (enabled) 1f else .38f),
                 textStyle = style.textStyle,
@@ -232,9 +253,38 @@ internal fun TopAppBarSearchPair(
                         .then(inputLightInput)
                         .drawWithContent { inputLayer.record { this@drawWithContent.drawContent() } }
                         .clip(shape),
-                ) { input(finalInputWidth) }
+                ) { input(finalInputWidthState.floatValue) }
             }
-        }.single().measure(Constraints.fixed(frame.inputBounds.width.roundToInt(), height))
+        }
+    }
+    SubcomposeLayout(modifier.then(drawing)) { constraints ->
+        val height = constraints.maxHeight
+        val progress = progressProvider()
+        // Measure custom action content first to determine final input width without a one-frame onSizeChanged mismatch.
+        val actionWidthLimit = min(
+            CouiTopAppBarDefaults.searchActionMaxWidth.roundToPx(),
+            (fullWidth * .4f).roundToInt(),
+        ).coerceAtLeast(1)
+        val button = subcompose(SearchPairSlot.Action, actionSubcomposeContent)
+            .single()
+            .measure(Constraints(maxWidth = actionWidthLimit, minHeight = height, maxHeight = height))
+        val gap = min(CouiTopAppBarDefaults.searchActionGap.toPx(), (fullWidth - button.width - 1f).coerceAtLeast(0f))
+        val finalInputWidth = (fullWidth - button.width - gap).roundToInt().coerceAtLeast(1).toFloat()
+        if (finalInputWidthState.floatValue != finalInputWidth) {
+            finalInputWidthState.floatValue = finalInputWidth
+        }
+        val frame = topAppBarSearchPairGeometry(
+            constraints.maxWidth.toFloat(),
+            height.toFloat(),
+            button.width.toFloat(),
+            gap,
+            progress,
+            rtl,
+        )
+        geometryRef[0] = frame
+        val body = subcompose(SearchPairSlot.Input, inputSubcomposeContent)
+            .single()
+            .measure(Constraints.fixed(frame.inputBounds.width.roundToInt(), height))
         layout(constraints.maxWidth, height) {
             // Draw order is managed by the dual-body renderer; revealed action receives touches first.
             if (frame.actionAlpha > 0f) button.place(frame.actionBounds.left.roundToInt(), 0, zIndex = 1f)

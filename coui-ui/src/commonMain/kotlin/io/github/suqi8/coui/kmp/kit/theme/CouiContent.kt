@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment
+import io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight
 
 @Composable
 internal fun CouiText(
@@ -45,6 +47,10 @@ internal fun CouiText(
     } else {
         CouiTheme.contentColor
     }
+    val resolvedWeight = adjustPlatformFontWeight(
+        fontWeight ?: style.fontWeight,
+        LocalPlatformFontWeightAdjustment.current,
+    )
     BasicText(
         text,
         modifier,
@@ -52,7 +58,7 @@ internal fun CouiText(
             TextStyle(
                 color = contentColor,
                 fontSize = fontSize,
-                fontWeight = fontWeight,
+                fontWeight = resolvedWeight,
                 textAlign = textAlign ?: TextAlign.Unspecified,
                 lineHeight = lineHeight,
             ),

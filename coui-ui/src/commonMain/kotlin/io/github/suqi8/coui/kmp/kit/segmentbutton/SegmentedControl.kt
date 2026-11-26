@@ -571,6 +571,10 @@ internal fun SegmentedControl(
                                     style = textStyle.copy(
                                         textAlign = TextAlign.Center,
                                         color = animatedTextColor,
+                                        fontWeight = io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight(
+                                            textStyle.fontWeight,
+                                            io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment.current,
+                                        ),
                                     ),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,

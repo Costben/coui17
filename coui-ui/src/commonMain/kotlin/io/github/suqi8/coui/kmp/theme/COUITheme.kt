@@ -38,6 +38,7 @@ fun COUITheme(
         remember(couiColors.onBackground, couiColors.focusOutline) {
             COUIIndication(color = couiColors.onBackground, focusOutline = couiColors.focusOutline)
         }
+    val fontWeightAdjustment = rememberPlatformFontWeightAdjustment()
     CompositionLocalProvider(
         LocalColors provides couiColors,
         LocalTextStyles provides couiTextStyles,
@@ -47,6 +48,7 @@ fun COUITheme(
         LocalColorSchemeMode provides controller.colorSchemeMode,
         LocalOverscrollFactory provides COUIOverscrollFactory,
         LocalPopupBarriers provides rememberPopupBarriers(),
+        LocalPlatformFontWeightAdjustment provides fontWeightAdjustment,
     ) {
         CouiShaderWarmup()
         content()
@@ -76,6 +78,7 @@ fun COUITheme(
         remember(couiColors.onBackground, couiColors.focusOutline) {
             COUIIndication(color = couiColors.onBackground, focusOutline = couiColors.focusOutline)
         }
+    val fontWeightAdjustment = rememberPlatformFontWeightAdjustment()
     CompositionLocalProvider(
         LocalColors provides couiColors,
         LocalTextStyles provides couiTextStyles,
@@ -83,6 +86,7 @@ fun COUITheme(
         LocalIndication provides couiIndication,
         LocalOverscrollFactory provides COUIOverscrollFactory,
         LocalPopupBarriers provides rememberPopupBarriers(),
+        LocalPlatformFontWeightAdjustment provides fontWeightAdjustment,
     ) {
         CouiShaderWarmup()
         content()

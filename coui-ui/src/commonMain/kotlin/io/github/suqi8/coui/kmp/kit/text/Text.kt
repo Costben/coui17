@@ -77,7 +77,8 @@ internal fun Text(
 internal fun rememberCouiTextStyle(kind: CouiTextKind): TextStyle {
     val density = LocalDensity.current
     val fontScale = rememberCouiTextFontScale()
-    return remember(kind, density, fontScale) {
+    val weightAdjustment = io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment.current
+    return remember(kind, density, fontScale, weightAdjustment) {
         val fixedDp = kind == CouiTextKind.Toolbar || kind == CouiTextKind.PageTitle || kind == CouiTextKind.PreferenceValue
         val pixels = if (fixedDp) {
             kind.size * density.density
@@ -86,9 +87,14 @@ internal fun rememberCouiTextStyle(kind: CouiTextKind): TextStyle {
                 with(density) { it.sp.toPx() }
             }
         }
+        val adjustedWeight = if (weightAdjustment != 0) {
+            (kind.weight + weightAdjustment).coerceIn(1, 1000)
+        } else {
+            kind.weight
+        }
         couiTextStyle(
             familyName = kind.family,
-            weight = kind.weight,
+            weight = adjustedWeight,
             pixels = pixels,
             lineSpacing = couiLineSpacing(kind),
             includeFontPadding = kind != CouiTextKind.Toolbar && kind != CouiTextKind.PageTitle && kind != CouiTextKind.HomeTitle,

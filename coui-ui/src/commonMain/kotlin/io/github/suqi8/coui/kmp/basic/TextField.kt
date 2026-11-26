@@ -200,9 +200,13 @@ fun TextField(
     val currentOnTextLayout by rememberUpdatedState(onTextLayout)
 
     val contentColor = LocalContentColor.current
-    val resolvedTextStyle = remember(textStyle, contentColor, enabled, colors.disabledTextColor) {
+    val weightAdjustment = io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment.current
+    val resolvedTextStyle = remember(textStyle, contentColor, enabled, colors.disabledTextColor, weightAdjustment) {
         val textColor = if (enabled) textStyle.color.takeOrElse { contentColor } else colors.disabledTextColor
-        textStyle.copy(color = textColor)
+        textStyle.copy(
+            color = textColor,
+            fontWeight = io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight(textStyle.fontWeight, weightAdjustment),
+        )
     }
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -353,9 +357,13 @@ fun TextField(
     val currentOnTextLayout by rememberUpdatedState(onTextLayout)
 
     val contentColor = LocalContentColor.current
-    val resolvedTextStyle = remember(textStyle, contentColor, enabled, colors.disabledTextColor) {
+    val weightAdjustment = io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment.current
+    val resolvedTextStyle = remember(textStyle, contentColor, enabled, colors.disabledTextColor, weightAdjustment) {
         val textColor = if (enabled) textStyle.color.takeOrElse { contentColor } else colors.disabledTextColor
-        textStyle.copy(color = textColor)
+        textStyle.copy(
+            color = textColor,
+            fontWeight = io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight(textStyle.fontWeight, weightAdjustment),
+        )
     }
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -519,9 +527,13 @@ fun TextField(
     val currentOnTextLayout by rememberUpdatedState(onTextLayout)
 
     val contentColor = LocalContentColor.current
-    val resolvedTextStyle = remember(textStyle, contentColor, enabled, colors.disabledTextColor) {
+    val weightAdjustment = io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment.current
+    val resolvedTextStyle = remember(textStyle, contentColor, enabled, colors.disabledTextColor, weightAdjustment) {
         val textColor = if (enabled) textStyle.color.takeOrElse { contentColor } else colors.disabledTextColor
-        textStyle.copy(color = textColor)
+        textStyle.copy(
+            color = textColor,
+            fontWeight = io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight(textStyle.fontWeight, weightAdjustment),
+        )
     }
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
