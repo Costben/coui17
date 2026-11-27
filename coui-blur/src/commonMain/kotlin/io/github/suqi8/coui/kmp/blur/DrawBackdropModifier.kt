@@ -59,6 +59,7 @@ import io.github.suqi8.coui.kmp.blur.internal.progressiveSharpBandBounds
 import io.github.suqi8.coui.kmp.blur.internal.progressiveSharpLoopRadius
 import io.github.suqi8.coui.kmp.blur.internal.recordLayer
 import io.github.suqi8.coui.kmp.blur.internal.runtimeShaderEffect
+import io.github.suqi8.coui.kmp.blur.internal.useUnifiedBlurShader
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -301,6 +302,9 @@ private class DrawBackdropNode(
         var downscaleFactor: Int = 1
         var padding: Float by mutableFloatStateOf(0f)
 
+        /** True when anti-banding dither is already folded into [mainLayer]'s effect. */
+        var ditherChained: Boolean = false
+
         /** First step downscale for cascade (backdrop draw uses this, not the total factor). */
         var cascadeFirstStepScale: Int = 1
 
@@ -364,6 +368,7 @@ private class DrawBackdropNode(
             dsH.fill(-1)
             noiseEffect = null
             noiseEffectCoeff = Float.NaN
+            ditherChained = false
         }
     }
 
@@ -674,6 +679,7 @@ private class DrawBackdropNode(
     private var sharpExp = -1
     private var sharpBandOffset = IntOffset.Zero
     private var sharpBandSize = IntSize.Zero
+    private var sharpOverlayDownscale = 1
 
     /** Renders the blurred backdrop into [primary] and, in a cross-fade band, the [secondary] level. */
     private fun DrawScope.drawBlurredBackdrop() {
@@ -704,24 +710,52 @@ private class DrawBackdropNode(
         val bandSize = sharpBandSize
         if (bandSize.width <= 0 || bandSize.height <= 0) return
         val bandOffset = sharpBandOffset
+        val ds = sharpOverlayDownscale
         val layer = sharpLayer ?: graphicsContext.createGraphicsLayer().also { sharpLayer = it }
         recordLayer(layer, size = bandSize) {
-            translate(-bandOffset.x.toFloat(), -bandOffset.y.toFloat()) {
-                onDrawBackdrop {
-                    with(backdrop) {
-                        drawBackdrop(
-                            density = effectScope,
-                            coordinates = layoutCoordinates,
-                            layerBlock = layerBlock,
-                            downscaleFactor = 1,
-                        )
+            if (ds > 1) {
+                val inv = 1f / ds
+                translate(-bandOffset.x * inv, -bandOffset.y * inv) {
+                    scale(inv, inv, Offset.Zero) {
+                        onDrawBackdrop {
+                            with(backdrop) {
+                                drawBackdrop(
+                                    density = effectScope,
+                                    coordinates = layoutCoordinates,
+                                    layerBlock = layerBlock,
+                                    downscaleFactor = 1,
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                translate(-bandOffset.x.toFloat(), -bandOffset.y.toFloat()) {
+                    onDrawBackdrop {
+                        with(backdrop) {
+                            drawBackdrop(
+                                density = effectScope,
+                                coordinates = layoutCoordinates,
+                                layerBlock = layerBlock,
+                                downscaleFactor = 1,
+                            )
+                        }
                     }
                 }
             }
         }
         layer.renderEffect = sharpOverlayEffect
-        layer.topLeft = bandOffset
-        drawLayer(layer)
+        if (ds > 1) {
+            layer.topLeft = IntOffset.Zero
+            translate(bandOffset.x.toFloat(), bandOffset.y.toFloat()) {
+                scale(ds.toFloat(), ds.toFloat(), Offset.Zero) {
+                    drawLayer(layer)
+                }
+            }
+        } else {
+            layer.topLeft = bandOffset
+            drawLayer(layer)
+        }
     }
 
     override fun ContentDrawScope.draw() {
@@ -838,8 +872,9 @@ private class DrawBackdropNode(
             // Noise is finalize's duty here — chained after the assembled stack, not into the
             // post chain (which the composite ramp-weights).
             finalizeProgressiveComposite()
+            primary.ditherChained = stackDitherChained
         } else {
-            chainFullResNoiseIfNeeded()
+            primary.ditherChained = chainNoiseIfNeeded()
             sharpOverlayActive = false
             stackDitherChained = false
         }
@@ -860,7 +895,7 @@ private class DrawBackdropNode(
         secondary.ensureMain()
         effectScope.forcedDownscaleExp = expHi
         effectScope.apply(effects)
-        chainFullResNoiseIfNeeded()
+        secondary.ditherChained = chainNoiseIfNeeded()
         secondary.mainLayer?.renderEffect = effectScope.renderEffect
         secondary.padding = effectScope.padding
         secondary.downscaleFactor = effectScope.downscaleFactor.coerceAtLeast(1)
@@ -885,9 +920,8 @@ private class DrawBackdropNode(
         val rY = scope.cachedProgRadiusY
         if (gradient == null || rX.isNaN() || rY.isNaN()) {
             // No progressiveBlur call in the effects block: draw uniformly, gradient ignored.
-            chainFullResNoiseIfNeeded()
+            stackDitherChained = chainNoiseIfNeeded()
             sharpOverlayActive = false
-            stackDitherChained = false
             return
         }
         val paddedW = scope.cachedProgSizeW
@@ -960,9 +994,8 @@ private class DrawBackdropNode(
             // progressiveBlur() falls back to its uniform loop-shader build.
             scope.progressiveCompositeActive = false
             scope.apply(effects)
-            chainFullResNoiseIfNeeded()
+            stackDitherChained = chainNoiseIfNeeded()
             sharpOverlayActive = false
-            stackDitherChained = false
             return
         }
         scope.renderEffect = stack
@@ -998,14 +1031,22 @@ private class DrawBackdropNode(
                 sharpOverlayEffect = null
                 sharpBandOffset = IntOffset.Zero
                 sharpBandSize = IntSize.Zero
+                sharpOverlayDownscale = 1
             } else {
-                val left = floor(band.left).toInt()
-                val top = floor(band.top).toInt()
+                // On 3x Retina Skiko/iOS displays, rendering the clear-end loop-blur handoff at
+                // 0.5x (1.5x logical Retina) cuts band pixels 4x and loop taps 2x (~8x lower GPU
+                // cost) while keeping Android and 1x/2x desktop renders untouched at 1x.
+                val ds = if (useUnifiedBlurShader && scope.density >= 2.5f) 2 else 1
+                val left = if (ds > 1) (floor(band.left).toInt() / ds) * ds else floor(band.left).toInt()
+                val top = if (ds > 1) (floor(band.top).toInt() / ds) * ds else floor(band.top).toInt()
+                val fullBandW = (ceil(band.right).toInt() - left).coerceAtLeast(ds)
+                val fullBandH = (ceil(band.bottom).toInt() - top).coerceAtLeast(ds)
                 sharpBandOffset = IntOffset(left, top)
                 sharpBandSize = IntSize(
-                    (ceil(band.right).toInt() - left).coerceAtLeast(1),
-                    (ceil(band.bottom).toInt() - top).coerceAtLeast(1),
+                    ((fullBandW + ds - 1) / ds).coerceAtLeast(1),
+                    ((fullBandH + ds - 1) / ds).coerceAtLeast(1),
                 )
+                sharpOverlayDownscale = ds
                 sharpOverlayEffect = createProgressiveSharpOverlayEffect(
                     rX,
                     rY,
@@ -1021,6 +1062,7 @@ private class DrawBackdropNode(
                     gradient.endFraction,
                     gradient.curve,
                     scope,
+                    downscale = ds,
                 )
             }
             sharpOverlayGradient = gradient
@@ -1034,24 +1076,25 @@ private class DrawBackdropNode(
     }
 
     /**
-     * Full-res path: chains noise into the RenderEffect. The downscaled path defers it to
-     * [drawUpscaledLayer] so each screen pixel still gets independent dithering — unless the
-     * composite stack carries the duty itself ([stackDitherChained]). Composite pass 1 skips
-     * this: [finalizeProgressiveComposite] chains noise after the assembled stack instead.
-     *
-     * Cached on input identity + coefficient so repeated [updateEffects] runs don't allocate a
-     * fresh native effect per pass.
+     * Chains anti-banding noise into [BackdropEffectScopeImpl.renderEffect] when possible:
+     * - Full-res path (`downscaleFactor <= 1`): chains directly at full strength.
+     * - Downscaled path with sub-grain anti-banding (`<= NOISE_GRAIN_THRESHOLD`): folds capped
+     *   pre-quantization dither directly into the downscaled layer and returns `true`, avoiding a
+     *   full-resolution `noiseLayer` round-trip per frame (matching progressive composite).
+     * - Downscaled path with deliberate visible grain (`> NOISE_GRAIN_THRESHOLD`): returns `false`
+     *   so [drawUpscaledLayer] runs the full-resolution grain pass per screen pixel.
      */
-    private fun chainFullResNoiseIfNeeded() {
+    private fun chainNoiseIfNeeded(): Boolean {
         val noiseCoeff = effectScope.noiseCoefficient
-        if (noiseCoeff > 0f && effectScope.downscaleFactor <= 1) {
+        if (noiseCoeff <= 0f) return false
+        if (effectScope.downscaleFactor <= 1) {
             val input = effectScope.renderEffect
             if (effectScope.cachedNoiseChainResult != null &&
                 effectScope.cachedNoiseChainInput === input &&
                 effectScope.cachedNoiseChainCoeff == noiseCoeff
             ) {
                 effectScope.renderEffect = effectScope.cachedNoiseChainResult
-                return
+                return false
             }
             effectScope.runtimeShaderEffect(
                 key = "NoiseDither",
@@ -1063,7 +1106,14 @@ private class DrawBackdropNode(
             effectScope.cachedNoiseChainInput = input
             effectScope.cachedNoiseChainCoeff = noiseCoeff
             effectScope.cachedNoiseChainResult = effectScope.renderEffect
+            return false
         }
+        if (noiseCoeff <= NOISE_GRAIN_THRESHOLD) {
+            val ditherCoeff = minOf(noiseCoeff * 2f, STACK_DITHER_MAX)
+            effectScope.renderEffect = effectScope.renderEffect.chain(obtainStackDitherEffect(ditherCoeff))
+            return true
+        }
+        return false
     }
 
     override fun onAttach() {
@@ -1124,7 +1174,7 @@ private class DrawBackdropNode(
         fullWidth: Int,
         fullHeight: Int,
     ) {
-        val noiseCoeff = if (stackDitherChained) 0f else effectScope.noiseCoefficient
+        val noiseCoeff = if (target.ditherChained) 0f else effectScope.noiseCoefficient
         if (noiseCoeff > 0f) {
             layer.topLeft = IntOffset.Zero
             val noiseL = target.noiseLayer
@@ -1190,6 +1240,7 @@ private class DrawBackdropNode(
         sharpExp = -1
         sharpBandOffset = IntOffset.Zero
         sharpBandSize = IntSize.Zero
+        sharpOverlayDownscale = 1
     }
 
     fun releaseGraphicsLayers() {

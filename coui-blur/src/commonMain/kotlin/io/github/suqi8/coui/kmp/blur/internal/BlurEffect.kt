@@ -359,17 +359,19 @@ internal fun createProgressiveSharpOverlayEffect(
     endFraction: Float,
     curve: Float,
     scope: BackdropEffectScopeImpl,
+    downscale: Int = 1,
 ): RenderEffect {
+    val ds = downscale.coerceAtLeast(1).toFloat()
     val rad = angleDeg * (PI / 180.0)
     val ax = cos(rad).toFloat()
     val ay = sin(rad).toFloat()
     val projMin = (if (ax > 0f) 0f else ax * compW) + (if (ay > 0f) 0f else ay * compH)
     val projMax = (if (ax > 0f) ax * compW else 0f) + (if (ay > 0f) ay * compH else 0f)
     val span = projMax - projMin
-    val projFull = projMin + startFraction * span
-    var projZero = projMin + endFraction * span
+    val projFull = (projMin + startFraction * span) / ds
+    var projZero = (projMin + endFraction * span) / ds
     if (abs(projZero - projFull) < 1e-3f) projZero = projFull + 1e-3f
-    val originProj = originX * ax + originY * ay
+    val originProj = (originX * ax + originY * ay) / ds
     val clampedCurve = curve.coerceIn(0.05f, 20f)
 
     // The loop blur ramps across the sharp band only: full strength at the band's onset
@@ -379,8 +381,8 @@ internal fun createProgressiveSharpOverlayEffect(
     var loopZero = projZero - originProj
     if (abs(loopZero - loopFull) < 1e-3f) loopZero = loopFull + 1e-3f
 
-    val maxRadiusX = progressiveSharpLoopRadius(radiusX, exp)
-    val maxRadiusY = progressiveSharpLoopRadius(radiusY, exp)
+    val maxRadiusX = progressiveSharpLoopRadius(radiusX, exp) / ds
+    val maxRadiusY = progressiveSharpLoopRadius(radiusY, exp) / ds
 
     val hasH = maxRadiusX >= 0.5f
     val hasV = maxRadiusY >= 0.5f
