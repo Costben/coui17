@@ -5,11 +5,7 @@ package io.github.suqi8.coui.kmp.basic
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalOverscrollFactory
@@ -30,7 +26,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -39,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -48,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -657,13 +654,69 @@ private fun RefreshHint(
     modifier: Modifier = Modifier,
 ) {
     var hintHeightPx by remember { mutableFloatStateOf(0f) }
-    val rotation = when (state.refreshState) {
+    val spinnerAngle = remember { Animatable(0f) }
+    val spinnerScale = remember { Animatable(1f) }
+    val spinnerMode = when (state.refreshState) {
         FullPageRefreshState.Pulling,
         FullPageRefreshState.ThresholdReached,
         FullPageRefreshState.Refreshing,
-        -> animateHintRotation()
+        -> 0
 
-        else -> null
+        FullPageRefreshState.RefreshComplete -> 1
+
+        FullPageRefreshState.Idle -> 2
+    }
+    val completeFadeDurationMillis =
+        ((state.completeHoldDurationMillis / 2).coerceIn(0L, 400L)).toInt()
+
+    // 连续维护旋转角度：拉动与刷新期间匀速推进；进入 RefreshComplete 或回弹收起时绝不归零闪现，
+    // 而是从当前角度顺势惯性减速滑停并轻微缩小淡出，待完全收起不可见后再复位。
+    LaunchedEffect(spinnerMode) {
+        when (spinnerMode) {
+            0 -> {
+                if (spinnerScale.value != 1f) {
+                    spinnerScale.snapTo(1f)
+                }
+                var lastFrameNanos = withFrameNanos { it }
+                while (true) {
+                    val frameNanos = withFrameNanos { it }
+                    val dtMs = ((frameNanos - lastFrameNanos) / 1_000_000f).coerceIn(0f, 64f)
+                    lastFrameNanos = frameNanos
+                    spinnerAngle.snapTo((spinnerAngle.value + dtMs * SPINNER_DEGREES_PER_MILLIS) % 360f)
+                }
+            }
+
+            1 -> {
+                val coastMillis = completeFadeDurationMillis.coerceIn(140, 360)
+                val startAngle = spinnerAngle.value
+                launch {
+                    spinnerScale.animateTo(
+                        targetValue = 0.86f,
+                        animationSpec = tween(durationMillis = coastMillis, easing = LinearOutSlowInEasing),
+                    )
+                }
+                spinnerAngle.animateTo(
+                    targetValue = startAngle + SPINNER_COMPLETE_COAST_DEGREES,
+                    animationSpec = tween(durationMillis = coastMillis, easing = LinearOutSlowInEasing),
+                )
+                spinnerAngle.snapTo(spinnerAngle.value % 360f)
+            }
+
+            else -> {
+                if (state.dragOffset > 0.5f) {
+                    val startAngle = spinnerAngle.value
+                    spinnerAngle.animateTo(
+                        targetValue = startAngle + 45f,
+                        animationSpec = tween(
+                            durationMillis = REBOUND_MAX_DURATION_MILLIS,
+                            easing = LinearOutSlowInEasing,
+                        ),
+                    )
+                }
+                spinnerAngle.snapTo(0f)
+                spinnerScale.snapTo(1f)
+            }
+        }
     }
 
     val text = when (state.refreshState) {
@@ -699,9 +752,7 @@ private fun RefreshHint(
             targetState = state.refreshState == FullPageRefreshState.RefreshComplete,
             // Half the hold, the reference proportion. A fixed 400ms fade outlives any hold shorter
             // than that, so the page starts leaving while the hint is still half transparent.
-            animationSpec = tween(
-                ((state.completeHoldDurationMillis / 2).coerceIn(0L, 400L)).toInt(),
-            ),
+            animationSpec = tween(completeFadeDurationMillis),
             modifier = Modifier.fillMaxWidth(),
             label = "fullPageRefreshHint",
         ) { complete ->
@@ -717,7 +768,8 @@ private fun RefreshHint(
                     RefreshHintSpinner(
                         size = spinnerSize,
                         color = spinnerColor,
-                        rotation = rotation?.value ?: 0f,
+                        rotation = { spinnerAngle.value },
+                        scale = { spinnerScale.value },
                     )
                 }
                 Spacer(Modifier.height(14.dp))
@@ -736,13 +788,22 @@ private fun RefreshHint(
 private fun RefreshHintSpinner(
     size: Dp,
     color: Color,
-    rotation: Float,
+    rotation: () -> Float,
+    scale: () -> Float,
 ) {
-    Canvas(modifier = Modifier.size(size)) {
+    Canvas(
+        modifier = Modifier
+            .size(size)
+            .graphicsLayer {
+                val s = scale()
+                scaleX = s
+                scaleY = s
+            },
+    ) {
         val strokeWidth = this.size.minDimension / 10f
         drawArc(
             color = color,
-            startAngle = -90f + rotation,
+            startAngle = -90f + rotation(),
             sweepAngle = 270f,
             useCenter = false,
             topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f),
@@ -750,19 +811,6 @@ private fun RefreshHintSpinner(
             style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
         )
     }
-}
-
-@Composable
-private fun animateHintRotation(): State<Float> {
-    val infiniteTransition = rememberInfiniteTransition()
-    return infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable<Float>(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-    )
 }
 
 /**
@@ -835,6 +883,12 @@ fun fullPagePullToRefreshColors(
 )
 
 private const val PULL_DAMPING = 0.5f
+
+/** Continuous spinner angular velocity during pulling and refreshing (360° per second). */
+private const val SPINNER_DEGREES_PER_MILLIS = 0.36f
+
+/** Extra coast angle while smoothly decelerating out on refresh completion. */
+private const val SPINNER_COMPLETE_COAST_DEGREES = 75f
 
 /** How much of the reference 500ms-per-threshold timing the rebound to rest keeps. */
 private const val REBOUND_DURATION_SCALE = 0.3f
