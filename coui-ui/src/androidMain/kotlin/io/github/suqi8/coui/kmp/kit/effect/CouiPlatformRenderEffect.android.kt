@@ -82,6 +82,23 @@ internal actual fun createBlendModeColorFilterRenderEffect(
     renderEffect.asAndroidRenderEffect(),
 ).asComposeRenderEffect()
 
+@RequiresApi(Build.VERSION_CODES.S)
+internal actual fun createFloatingMaterialInputEffect(
+    blurRadius: Float,
+    firstColor: Color,
+    firstBlendMode: BlendMode,
+    secondColor: Color,
+    secondBlendMode: BlendMode,
+): RenderEffect {
+    val blur = if (blurRadius == 0f) {
+        createOffsetRenderEffect(0f, 0f)
+    } else {
+        createBlurRenderEffect(blurRadius, blurRadius, TileMode.Mirror)
+    }
+    val color1 = createBlendModeColorFilterRenderEffect(firstColor, firstBlendMode, blur)
+    return createBlendModeColorFilterRenderEffect(secondColor, secondBlendMode, color1)
+}
+
 internal actual typealias PlatformRenderEffect = AndroidRenderEffect
 
 @RequiresApi(Build.VERSION_CODES.S)

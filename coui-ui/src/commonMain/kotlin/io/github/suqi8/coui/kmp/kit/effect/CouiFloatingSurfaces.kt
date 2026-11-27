@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.IntSize
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.shape.CouiCapsuleShape
 import io.github.suqi8.coui.kmp.shader.RuntimeShader
+import io.github.suqi8.coui.kmp.shader.asBrush
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
@@ -91,7 +92,17 @@ internal class CouiFloatingRenderer private constructor(internal val surfaceCoun
     } else {
         listOf(RuntimeShader(couiFloatingShader()), RuntimeShader(couiFloatingShader()))
     }
+    internal val standaloneShader: RuntimeShader = if (standalone) {
+        shaders[0]
+    } else {
+        RuntimeShader(couiFloatingStandaloneShader())
+    }
     internal val causticShaders = List(surfaceCount) { RuntimeShader(CouiCausticShader) }
+    internal val directCausticShaders = if (preferFastAnimatingFloatingSurfaces) {
+        List(surfaceCount) { RuntimeShader(CouiCausticDirectShader) }
+    } else {
+        emptyList()
+    }
     internal val shadowRenderer = CouiShadowRenderer(surfaceCount)
     internal val destinationEffect: RenderEffect = RuntimeShader(
         "uniform shader image; half4 main(float2 p) { return image.eval(p); }",
@@ -249,14 +260,13 @@ private fun Modifier.floatingSurfaces(
             emptyList()
         } else {
             materials.map { material ->
-                // Toolbar defaults to zero blur radius, yet still retains sampling and two-layer blending.
-                val blur = if (material.blurRadius == 0f) {
-                    createOffsetRenderEffect(0f, 0f)
-                } else {
-                    createBlurRenderEffect(material.blurRadius, material.blurRadius, TileMode.Mirror)
-                }
-                val color1 = createBlendModeColorFilterRenderEffect(material.firstColor, material.firstBlendMode, blur)
-                createBlendModeColorFilterRenderEffect(material.secondColor, material.secondBlendMode, color1)
+                createFloatingMaterialInputEffect(
+                    blurRadius = material.blurRadius,
+                    firstColor = material.firstColor,
+                    firstBlendMode = material.firstBlendMode,
+                    secondColor = material.secondColor,
+                    secondBlendMode = material.secondBlendMode,
+                )
             }
         }
     }
@@ -286,6 +296,7 @@ private fun Modifier.floatingSurfaces(
             val viewport = target.localBoundingBoxOf(target.findRootCoordinates(), false)
             val commands = mutableListOf<GraphicsLayer>()
             val patches = mutableListOf<FloatingPatch>()
+            val directCaustics = mutableListOf<DirectCausticPatch>()
             fun appendPatch(
                 layer: GraphicsLayer,
                 crop: Rect,
@@ -386,36 +397,71 @@ private fun Modifier.floatingSurfaces(
                                 node.bounds.width + shadow.layout.right,
                                 node.bounds.height + shadow.layout.bottom,
                             )
-                            // Toolbar skips destination backfill; default path retains full destination instead of PLUS contribution.
-                            appendPatch(
-                                causticLayers[index],
-                                node.mapRect(optical),
-                                blendMode = if (resolvedForegroundComposition) BlendMode.SrcOver else BlendMode.Src,
-                            ) { bounds ->
-                                renderer.causticShaders[index].apply {
-                                    setIntUniform("u_foregroundComposition", if (resolvedForegroundComposition) 1 else 0)
-                                    setFloatUniform("u_offset", bounds.left - node.bounds.left, bounds.top - node.bounds.top)
-                                    setFloatUniform("u_invScale", 1f / node.scaleX, 1f / node.scaleY)
-                                    setFloatUniform(
-                                        "u_commonArray",
-                                        floatArrayOf(
-                                            0f, 0f, 0f, 0f, node.bounds.width,
-                                            node.bounds.height, node.resolvedCornerRadius, 0f, 0f, 0f, 0f, 0f,
-                                        ),
-                                    )
-                                    setFloatUniform(
-                                        "u_pyrolysisArray",
-                                        floatArrayOf(
-                                            shadow.causticColor.red, shadow.causticColor.green,
-                                            shadow.causticColor.blue, shadow.causticColor.alpha * node.alpha, shadow.layout.left, shadow.layout.top,
-                                            shadow.layout.right, shadow.layout.bottom, shadow.sdf, shadow.power, shadow.powerMix,
-                                            shadow.speed, 0.45f, 0.6f,
-                                        ),
-                                    )
-                                }.let { shader ->
-                                    val effect = shader.asComposeRenderEffect("u_originShader")
-                                    val blurInput = if (resolvedForegroundComposition) causticInputs[index] else null
-                                    if (blurInput != null) createChainRenderEffect(effect, blurInput) else effect
+                            if (preferFastAnimatingFloatingSurfaces && resolvedForegroundComposition) {
+                                val clipped = node.mapRect(optical).intersect(viewport)
+                                if (clipped.width > 0f && clipped.height > 0f) {
+                                    val bounds = Rect(floor(clipped.left), floor(clipped.top), ceil(clipped.right), ceil(clipped.bottom))
+                                    val layer = causticLayers[index]
+                                    layer.topLeft = IntOffset(bounds.left.toInt(), bounds.top.toInt())
+                                    layer.setRectOutline(Offset.Zero, bounds.size)
+                                    layer.clip = true
+                                    layer.blendMode = BlendMode.SrcOver
+                                    layer.renderEffect = null
+                                    val shader = renderer.directCausticShaders[index].apply {
+                                        setFloatUniform("u_offset", bounds.left - node.bounds.left, bounds.top - node.bounds.top)
+                                        setFloatUniform("u_invScale", 1f / node.scaleX, 1f / node.scaleY)
+                                        setFloatUniform(
+                                            "u_commonArray",
+                                            floatArrayOf(
+                                                0f, 0f, 0f, 0f, node.bounds.width,
+                                                node.bounds.height, node.resolvedCornerRadius, 0f, 0f, 0f, 0f, 0f,
+                                            ),
+                                        )
+                                        setFloatUniform(
+                                            "u_pyrolysisArray",
+                                            floatArrayOf(
+                                                shadow.causticColor.red, shadow.causticColor.green,
+                                                shadow.causticColor.blue, shadow.causticColor.alpha * node.alpha, shadow.layout.left, shadow.layout.top,
+                                                shadow.layout.right, shadow.layout.bottom, shadow.sdf, shadow.power, shadow.powerMix,
+                                                shadow.speed, 0.45f, 0.6f,
+                                            ),
+                                        )
+                                    }
+                                    directCaustics.add(DirectCausticPatch(layer, bounds, shader.asBrush()))
+                                    commands.add(layer)
+                                }
+                            } else {
+                                // Toolbar skips destination backfill; default path retains full destination instead of PLUS contribution.
+                                appendPatch(
+                                    causticLayers[index],
+                                    node.mapRect(optical),
+                                    blendMode = if (resolvedForegroundComposition) BlendMode.SrcOver else BlendMode.Src,
+                                ) { bounds ->
+                                    renderer.causticShaders[index].apply {
+                                        setIntUniform("u_foregroundComposition", if (resolvedForegroundComposition) 1 else 0)
+                                        setFloatUniform("u_offset", bounds.left - node.bounds.left, bounds.top - node.bounds.top)
+                                        setFloatUniform("u_invScale", 1f / node.scaleX, 1f / node.scaleY)
+                                        setFloatUniform(
+                                            "u_commonArray",
+                                            floatArrayOf(
+                                                0f, 0f, 0f, 0f, node.bounds.width,
+                                                node.bounds.height, node.resolvedCornerRadius, 0f, 0f, 0f, 0f, 0f,
+                                            ),
+                                        )
+                                        setFloatUniform(
+                                            "u_pyrolysisArray",
+                                            floatArrayOf(
+                                                shadow.causticColor.red, shadow.causticColor.green,
+                                                shadow.causticColor.blue, shadow.causticColor.alpha * node.alpha, shadow.layout.left, shadow.layout.top,
+                                                shadow.layout.right, shadow.layout.bottom, shadow.sdf, shadow.power, shadow.powerMix,
+                                                shadow.speed, 0.45f, 0.6f,
+                                            ),
+                                        )
+                                    }.let { shader ->
+                                        val effect = shader.asComposeRenderEffect("u_originShader")
+                                        val blurInput = if (resolvedForegroundComposition) causticInputs[index] else null
+                                        if (blurInput != null) createChainRenderEffect(effect, blurInput) else effect
+                                    }
                                 }
                             }
                         }
@@ -433,32 +479,55 @@ private fun Modifier.floatingSurfaces(
                         val height = bounds.height
                         val origin = bounds.topLeft
                         val ball = node.ball(height, origin)
-                        val shader = renderer.shaders[if (renderer.standalone) 0 else material.index - 1]
                         val common = floatArrayOf(
                             bounds.width * 0.5f, height * 0.5f, ball[0], ball[1], ball[2],
                             ball[3], ball[4], ball[5], ball[6], ball[7], height, 0f,
                         )
-                        shader.setFloatUniform("u_size", bounds.width, height)
-                        // Fade only the foreground material; the composited destination keeps its original alpha.
-                        shader.setFloatUniform("u_alpha", node.alpha)
-                        shader.setFloatUniform("uUseMenuLightEdge", if (useMenuLightEdge) 1f else 0f)
-                        shader.setFloatUniform("u_commonArray", common)
+                        val shader: RuntimeShader
                         if (renderer.standalone) {
+                            shader = renderer.standaloneShader
+                            shader.setFloatUniform("u_size", bounds.width, height)
+                            shader.setFloatUniform("u_alpha", node.alpha)
+                            shader.setFloatUniform("uUseMenuLightEdge", if (useMenuLightEdge) 1f else 0f)
+                            shader.setFloatUniform("u_commonArray", common)
                             shader.setFloatUniform("u_baseShapeCtxArray", floatingShapeContext(ball[2], ball[3], ball[5], ball[4]))
                         } else {
-                            shader.setFloatUniform("u_materialIndex", material.index.toFloat())
                             val activeBalls = floatingBallSlots(index, materials.map { it.index }).map { slot ->
                                 if (nodes[slot].visible) nodes[slot].ball(height, origin) else FloatArray(8)
                             }
                             // Native shader influence capacity is 3; unregistered slots stay zero without creating draw or content nodes.
                             val balls = List(3) { slot -> activeBalls.getOrNull(slot) ?: FloatArray(8) }
-                            balls.forEachIndexed { i, linked ->
-                                shader.setFloatUniform("u_ball${i + 1}Array", linked)
-                                shader.setFloatUniform("u_ball${i + 1}ShapeCtxArray", floatingShapeContext(linked[2], linked[3], linked[5], linked[4]))
+                            val pre12 = floatingPair(balls[0], balls[1], 4f * density)
+                            val pre13 = floatingPair(balls[0], balls[2], 4f * density)
+                            val pre23 = floatingPair(balls[1], balls[2], 4f * density)
+                            val metaballActive = !preferFastAnimatingFloatingSurfaces ||
+                                pre12[20] > 1e-6f || pre12[18] > 0f ||
+                                pre13[20] > 1e-6f || pre13[18] > 0f ||
+                                pre23[20] > 1e-6f || pre23[18] > 0f
+                            if (!metaballActive) {
+                                // When every neighbour sits beyond fusion range, the standalone shader
+                                // produces mathematically identical pixels without 3-ball SDF/blendPair ALU.
+                                shader = renderer.standaloneShader
+                                shader.setFloatUniform("u_size", bounds.width, height)
+                                shader.setFloatUniform("u_alpha", node.alpha)
+                                shader.setFloatUniform("uUseMenuLightEdge", if (useMenuLightEdge) 1f else 0f)
+                                shader.setFloatUniform("u_commonArray", common)
+                                shader.setFloatUniform("u_baseShapeCtxArray", floatingShapeContext(ball[2], ball[3], ball[5], ball[4]))
+                            } else {
+                                shader = renderer.shaders[material.index - 1]
+                                shader.setFloatUniform("u_size", bounds.width, height)
+                                shader.setFloatUniform("u_alpha", node.alpha)
+                                shader.setFloatUniform("uUseMenuLightEdge", if (useMenuLightEdge) 1f else 0f)
+                                shader.setFloatUniform("u_commonArray", common)
+                                shader.setFloatUniform("u_materialIndex", material.index.toFloat())
+                                balls.forEachIndexed { i, linked ->
+                                    shader.setFloatUniform("u_ball${i + 1}Array", linked)
+                                    shader.setFloatUniform("u_ball${i + 1}ShapeCtxArray", floatingShapeContext(linked[2], linked[3], linked[5], linked[4]))
+                                }
+                                shader.setFloatUniform("u_preCmpArray12", pre12)
+                                shader.setFloatUniform("u_preCmpArray13", pre13)
+                                shader.setFloatUniform("u_preCmpArray23", pre23)
                             }
-                            shader.setFloatUniform("u_preCmpArray12", floatingPair(balls[0], balls[1], 4f * density))
-                            shader.setFloatUniform("u_preCmpArray13", floatingPair(balls[0], balls[2], 4f * density))
-                            shader.setFloatUniform("u_preCmpArray23", floatingPair(balls[1], balls[2], 4f * density))
                         }
                         val edge = floatingEdge(
                             ball,
@@ -498,6 +567,7 @@ private fun Modifier.floatingSurfaces(
                 }
             }
             val drawCommands = commands.toList()
+            val directCausticRecorded = BooleanArray(directCaustics.size)
             onDrawWithContent {
                 // Children only record transparent foreground; final output follows shadow/caustic -> material/content Z grouping.
                 drawContent()
@@ -559,6 +629,14 @@ private fun Modifier.floatingSurfaces(
                         }
                     }
                 }
+                directCaustics.forEachIndexed { idx, patch ->
+                    if (!directCausticRecorded[idx]) {
+                        directCausticRecorded[idx] = true
+                        patch.layer.record(size = IntSize(patch.bounds.width.toInt(), patch.bounds.height.toInt())) {
+                            drawRect(brush = patch.brush)
+                        }
+                    }
+                }
                 patches.forEach { patch ->
                     patch.layer.record(size = IntSize(patch.bounds.width.toInt(), patch.bounds.height.toInt())) {
                         translate(-patch.bounds.left, -patch.bounds.top) {
@@ -598,6 +676,12 @@ private fun Modifier.floatingSurfaces(
 }
 
 private data class FloatingPatch(val layer: GraphicsLayer, val bounds: Rect, val prefix: List<GraphicsLayer>)
+
+private data class DirectCausticPatch(
+    val layer: GraphicsLayer,
+    val bounds: Rect,
+    val brush: androidx.compose.ui.graphics.Brush,
+)
 
 private data class ShadowRecordKey(
     val width: Float,

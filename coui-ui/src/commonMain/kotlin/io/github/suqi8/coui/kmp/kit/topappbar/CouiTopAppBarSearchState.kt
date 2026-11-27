@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import io.github.suqi8.coui.kmp.kit.effect.CouiFloatingRenderer
 import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.kit.motion.CouiSearchMotion
 
 @Stable
@@ -44,7 +45,15 @@ internal fun rememberCouiTopAppBarSearchState(
     },
 ): CouiTopAppBarSearchState {
     val expandedState = rememberUpdatedState(expanded)
-    val state = remember(renderer) { CouiTopAppBarSearchState(renderer, expandedState) }
+    val state = remember(renderer) {
+        CouiTopAppBarSearchState(renderer, expandedState).also {
+            // Pre-create the dual-body renderer on Skiko/Metal so the first search expand does not
+            // stall compiling the ~600-line metaball RuntimeShader on frame 1 of the animation.
+            if (preferFastAnimatingFloatingSurfaces && renderer != null) {
+                it.obtainPairRenderer()
+            }
+        }
+    }
     SideEffect { state.motion.updateTarget(expanded) }
     DisposableEffect(state) { onDispose { state.motion.dispose() } }
     return state

@@ -49,10 +49,12 @@ import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.layerBackdrop
 import io.github.suqi8.coui.kmp.blur.rememberLayerBackdrop
 import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.kit.topappbar.CouiTopAppBarDefaults
 import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarBackdrop
 import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarSampleBlurRadius
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import kotlin.math.roundToInt
 
 /**
  * The Notes two-row bar specialised for a search page: the search field on the first row, the
@@ -125,8 +127,8 @@ private const val FILTER_COLLAPSE_FADE_MILLIS = 90
 private val FILTER_COLLAPSE_TUCK_DISTANCE = 6.dp
 private const val SEARCH_ROW_LIGHT_VEIL_MAX = 0.48f
 private const val SEARCH_ROW_DARK_VEIL_MAX = 0.20f
-private const val CHIP_ROW_EXTRA_LIGHT_VEIL_MAX = 0.22f
-private const val CHIP_ROW_EXTRA_DARK_VEIL_MAX = 0.08f
+private const val CHIP_ROW_LIGHT_VEIL_MAX = 0.67f
+private const val CHIP_ROW_DARK_VEIL_MAX = 0.35f
 
 /**
  * Coordinates an embedded [TopAppBarSearchBar] with its enclosing [SearchFilterTopAppBar] so the
@@ -204,43 +206,25 @@ fun SearchFilterTopAppBar(
     val pageColor = COUITheme.colorScheme.background
     val isDark = pageColor.luminance() < 0.5f
     val blurEnabled = isBlurEnabled()
+    val fastGlass = LocalTransitionFastGlass.current || (preferFastAnimatingFloatingSurfaces && searchBarCollapsing)
     val veilColor = if (isDark) Color.Black else containerColor
     val searchVeilMax = if (isDark) SEARCH_ROW_DARK_VEIL_MAX else SEARCH_ROW_LIGHT_VEIL_MAX
-    val chipExtraVeilMax = if (isDark) CHIP_ROW_EXTRA_DARK_VEIL_MAX else CHIP_ROW_EXTRA_LIGHT_VEIL_MAX
+    val chipVeilMax = if (isDark) CHIP_ROW_DARK_VEIL_MAX else CHIP_ROW_LIGHT_VEIL_MAX
     val currentScrollFraction = rememberUpdatedState(scrollFraction)
-    // Record the live upstream page beneath the bar material so chips sampling materialBackdrop
-    // stay smoothly translucent throughout the 0..1 scroll ramp instead of snapping to a flat
-    // pageColor sheet, and add a light extra veil strictly in the offscreen recording so dark
-    // covers never turn unselected chips muddy along the lower fade band.
-    val upstream = backdrop as? LayerBackdrop
-    var materialCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
-    val materialBackdrop = if (upstream != null) {
-        rememberLayerBackdrop(upstream = upstream) {
-            drawRect(pageColor)
-            val coords = materialCoords
-            if (coords != null && coords.isAttached) {
-                with(upstream) {
-                    drawBackdrop(
-                        density = this@rememberLayerBackdrop,
-                        coordinates = coords,
-                        layerBlock = null,
-                        downscaleFactor = 1,
-                    )
-                }
-            }
-            drawContent()
-            val extra = chipExtraVeilMax * currentScrollFraction.value().coerceIn(0f, 1f)
-            if (extra > 0f) drawRect(veilColor, alpha = extra)
-        }
-    } else {
-        rememberLayerBackdrop {
-            drawRect(pageColor)
-            drawContent()
+    // Quantize the clamped scroll fraction inside derivedStateOf so once the list scrolls past the
+    // 30dp ramp (99% of scrolling), downstream DrawBackdropNode.observeReads does NOT invalidate
+    // and rebuild chip blur RenderEffects on every scroll pixel.
+    val quantizedScrollFraction by remember {
+        derivedStateOf {
+            val raw = currentScrollFraction.value().coerceIn(0f, 1f)
+            (raw * 32f).roundToInt() / 32f
         }
     }
     // Dedicated real LayerBackdrop for the first search row: draws nothing on screen while
     // recording the live page + a restrained veil (48% light / 20% dark) so TopAppBarSearchBar
-    // neither bleeds saturated photos raw nor washes out to opaque white over the ~90% top scrim.
+    // neither bleeds saturated photos raw nor washes out to opaque white over the ~90% top scrim,
+    // without nesting AppBarMaterialLayout's progressive blur inside a recorded layer.
+    val upstream = backdrop as? LayerBackdrop
     var searchCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val searchRowLayerBackdrop = if (upstream != null) {
         rememberLayerBackdrop(upstream = upstream) {
@@ -256,21 +240,20 @@ fun SearchFilterTopAppBar(
                     )
                 }
             }
-            val veil = searchVeilMax * currentScrollFraction.value().coerceIn(0f, 1f)
+            val veil = searchVeilMax * quantizedScrollFraction
             if (veil > 0f) drawRect(veilColor, alpha = veil)
         }
     } else {
         null
     }
-    val materialVisible by remember {
-        derivedStateOf { currentScrollFraction.value() > 0.001f }
+    val searchRowBackdrop = searchRowLayerBackdrop ?: backdrop
+    val chipBackdrop: Backdrop? = if (blurEnabled && !fastGlass && backdrop != null) backdrop else null
+    val chipVeilProvider: () -> Color = remember(veilColor, chipVeilMax) {
+        {
+            val alpha = chipVeilMax * quantizedScrollFraction
+            if (alpha > 0.001f) veilColor.copy(alpha = alpha) else Color.Transparent
+        }
     }
-    val searchRowBackdrop = when {
-        searchRowLayerBackdrop != null -> searchRowLayerBackdrop
-        materialVisible -> materialBackdrop
-        else -> backdrop
-    }
-    val chipBackdrop: Backdrop? = if (blurEnabled && backdrop != null) materialBackdrop else null
     val materialRamp = if (filtersMounted) {
         twoRowAppBarMaterialRamp(
             statusBarTop = statusBarTop,
@@ -282,32 +265,25 @@ fun SearchFilterTopAppBar(
         AppBarMaterialRamp()
     }
     val tuckDistancePx = with(density) { FILTER_COLLAPSE_TUCK_DISTANCE.toPx() }
+    val searchLayerHeight = statusBarTop + firstRowHeight + 16.dp
     CompositionLocalProvider(LocalEdgeToEdge provides true) {
         Layout(
             modifier = modifier.scrollToTopOnTap(),
             content = {
+                AppBarMaterialLayout(
+                    materialEnabled = true,
+                    modifier = Modifier.fillMaxWidth().height(barHeight),
+                    containerColor = containerColor,
+                    backdrop = if (fastGlass) null else backdrop,
+                    extraHeight = extraHeight,
+                    scrollFraction = scrollFraction,
+                    platformRenderer = platformRenderer,
+                    materialRamp = materialRamp,
+                ) {}
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(barHeight + extraHeight)
-                        .onGloballyPositioned { materialCoords = it }
-                        .layerBackdrop(materialBackdrop),
-                ) {
-                    AppBarMaterialLayout(
-                        materialEnabled = true,
-                        modifier = Modifier.fillMaxWidth().height(barHeight),
-                        containerColor = containerColor,
-                        backdrop = backdrop,
-                        extraHeight = extraHeight,
-                        scrollFraction = scrollFraction,
-                        platformRenderer = platformRenderer,
-                        materialRamp = materialRamp,
-                    ) {}
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(barHeight + extraHeight)
+                        .height(searchLayerHeight)
                         .onGloballyPositioned { searchCoords = it }
                         .then(
                             if (blurEnabled && searchRowLayerBackdrop != null) {
@@ -369,27 +345,32 @@ fun SearchFilterTopAppBar(
                                 },
                             contentAlignment = Alignment.Center,
                         ) {
-                            // Sample the recorded materialBackdrop (a real LayerBackdrop linked to
-                            // upstream) so both unselected and selected pills render genuine frosted
-                            // glass matching ColorOS 17 Notes without turning black over dark covers.
-                            ChipTabGroup(
-                                tabs = filters,
-                                selectedIndex = selectedFilter,
-                                onSelectedChange = if (searchBarCollapsing) {
-                                    {}
-                                } else {
-                                    onFilterSelected
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                leadingIcon = leadingIcon,
-                                onLeadingIconClick = if (searchBarCollapsing) {
-                                    {}
-                                } else {
-                                    onLeadingIconClick
-                                },
-                                contentPadding = filterContentPadding,
-                                backdrop = chipBackdrop,
-                            )
+                            // Sample the page backdrop directly with the bar's surface veil folded
+                            // into the chips' blend pass (mathematically equivalent to blurring
+                            // pre-veiled pixels, without replaying AppBarMaterialLayout's
+                            // progressive blur on every scroll frame).
+                            CompositionLocalProvider(
+                                LocalChipTabBackdropVeil provides chipVeilProvider,
+                            ) {
+                                ChipTabGroup(
+                                    tabs = filters,
+                                    selectedIndex = selectedFilter,
+                                    onSelectedChange = if (searchBarCollapsing) {
+                                        {}
+                                    } else {
+                                        onFilterSelected
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    leadingIcon = leadingIcon,
+                                    onLeadingIconClick = if (searchBarCollapsing) {
+                                        {}
+                                    } else {
+                                        onLeadingIconClick
+                                    },
+                                    contentPadding = filterContentPadding,
+                                    backdrop = chipBackdrop,
+                                )
+                            }
                         }
                     }
                 }

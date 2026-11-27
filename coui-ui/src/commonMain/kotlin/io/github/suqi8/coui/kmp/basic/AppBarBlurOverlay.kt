@@ -12,6 +12,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
@@ -298,6 +299,14 @@ fun AppBarBlurOverlay(
 }
 
 /**
+ * When `true` (e.g. on an exiting iOS route sliding off-screen over a live blurred destination),
+ * [AppBarMaterial] and [ChipTabGroup] paint their calibrated gradient / translucent surfaces
+ * directly instead of executing multi-pass backdrop blur shaders, keeping dual-screen transitions
+ * within the 120Hz frame budget without switching widget trees or flashing an opaque bar.
+ */
+val LocalTransitionFastGlass = compositionLocalOf { false }
+
+/**
  * Whether an enclosing toolbar or app bar already applies a backdrop blur beneath its children.
  *
  * When `true` (or when [LocalToolbarBackdropBlurFraction] returns a positive value), nested glass
@@ -464,6 +473,7 @@ internal fun AppBarMaterial(
 ) {
     val density = LocalDensity.current
     val blurEnabled = isBlurEnabled()
+    val fastGlass = LocalTransitionFastGlass.current
     // The effect stays composed at every alpha, including 0. `AppBarBlurOverlayBehavior` only
     // changes the overlay's alpha (and visibility at exactly 0) while scrolling; the RenderEffect is
     // set once. Removing the blur node at rest and rebuilding it when scrolling starts recreated its
@@ -513,7 +523,7 @@ internal fun AppBarMaterial(
             Modifier.background(containerColor)
         } else {
             val brush = appBarBlurOverlayBrush(gradientColor, isDarkTheme, materialRamp.alphaMidFraction)
-            if (backdrop == null) {
+            if (backdrop == null || fastGlass) {
                 Modifier.background(brush)
             } else {
                 Modifier.progressiveTextureBlur(
@@ -544,6 +554,13 @@ internal fun AppBarMaterial(
                 // material at full strength and the 30dp fade-in was a one-frame pop. The offscreen
                 // buffer only exists while the material is translucent.
                 compositingStrategy = CompositingStrategy.Auto
+            }
+            .drawWithContent {
+                // Keep the blur node attached and its RenderEffects warm at scrollFraction == 0,
+                // while skipping the offscreen progressive-blur draw work when completely invisible.
+                if (scrollFraction() > 0.001f) {
+                    drawContent()
+                }
             }
             .then(effect),
     )

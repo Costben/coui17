@@ -38,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -50,7 +51,9 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -75,6 +78,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
@@ -83,7 +87,12 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.suqi8.coui.kmp.anim.folmeSpring
 import io.github.suqi8.coui.kmp.blur.Backdrop
-import io.github.suqi8.coui.kmp.blur.textureBlur
+import io.github.suqi8.coui.kmp.blur.BlendColorEntry
+import io.github.suqi8.coui.kmp.blur.BlurBlendMode
+import io.github.suqi8.coui.kmp.blur.BlurColors
+import io.github.suqi8.coui.kmp.blur.drawBackdrop
+import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.blur.textureBlurEffect
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -94,6 +103,46 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 import kotlin.math.roundToInt
+
+/**
+ * Optional draw-phase surface veil prepended to each chip's blur blend pass (e.g. from
+ * [SearchFilterTopAppBar]), lifting dark content under the chips without recording an extra
+ * nested [io.github.suqi8.coui.kmp.blur.LayerBackdrop] around the bar's progressive blur.
+ */
+internal val LocalChipTabBackdropVeil = staticCompositionLocalOf<(() -> Color)?> { null }
+
+private fun resolveChipBlurColors(
+    isDark: Boolean,
+    fraction: Float,
+    veil: Color?,
+): BlurColors {
+    val base = GlassChipDefaults.blurColors(isDark, fraction)
+    if (veil == null || veil.alpha <= 0.001f) return base
+    return BlurColors(
+        blendColors = buildList(base.blendColors.size + 1) {
+            add(BlendColorEntry(veil, BlurBlendMode.SrcOver))
+            addAll(base.blendColors)
+        },
+    )
+}
+
+private data class ChipTabRowMaskShape(
+    val rects: List<Rect>,
+    val pillShape: Shape,
+) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val union = Path()
+        val scratch = Path()
+        for (rect in rects) {
+            if (rect.width <= 0f || rect.height <= 0f) continue
+            if (rect.right <= 0f || rect.left >= size.width) continue
+            scratch.reset()
+            scratch.addOutline(pillShape.createOutline(rect.size, layoutDirection, density))
+            union.addPath(scratch, rect.topLeft)
+        }
+        return Outline.Generic(union)
+    }
+}
 
 /**
  * The ColorOS 17 chip tab bar: a horizontally scrollable, single-line row of [ChipTab] pills.
@@ -179,6 +228,15 @@ fun ChipTabGroup(
     // Placed in the scrolled content's own coordinates, i.e. the space scrollX is measured in.
     val tabBounds = remember(tabs.size) { mutableStateMapOf<Int, Rect>() }
     val tabPressScales = remember(tabs.size) { Array(tabs.size) { mutableFloatStateOf(1f) } }
+    val blurActive = backdrop != null && isBlurEnabled() && !LocalTransitionFastGlass.current
+    val chipVeil = LocalChipTabBackdropVeil.current
+    val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
+    val squircleEnabled = isSquircleEnabled()
+    val sharedPillShape = remember(squircleEnabled) {
+        CapsuleOutlineShape(cornerRadius = ChipTabDefaults.CornerRadius, squircleEnabled = squircleEnabled)
+    }
+    val sharedBlurRadiusDp = remember(density) { with(density) { GlassChipDefaults.BlurRadiusPx.toDp().value } }
+    val pressOutsetPx = with(density) { ChipTabDefaults.PressOutset.toPx() }
 
     // COUIChipTabGroup only scrolls from its chip click listener, never on the first layout.
     var firstSelection by remember { mutableStateOf(true) }
@@ -247,6 +305,43 @@ fun ChipTabGroup(
                     }
                     .scrollEdgeFade(scrollState, ChipTabDefaults.FadeWidth),
             ) {
+                if (blurActive && tabs.isNotEmpty()) {
+                    // Single shared blur pass for every unselected tab pill in the row, clipped
+                    // to the union of visible pill silhouettes. Cuts N per-tab Gaussian/downsample
+                    // pipelines down to 1 pass while preserving exact frosted glass appearance.
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .drawBackdrop(
+                                backdrop = backdrop!!,
+                                shape = {
+                                    val rtl = layoutDirection == LayoutDirection.Rtl
+                                    val scrollX = scrollState.value.toFloat()
+                                    val maxScroll = scrollState.maxValue.toFloat()
+                                    val rects = ArrayList<Rect>(tabs.size)
+                                    for (index in tabs.indices) {
+                                        val b = tabBounds[index] ?: continue
+                                        val x = if (rtl) b.left + scrollX - maxScroll else b.left - scrollX
+                                        val y = b.top + pressOutsetPx
+                                        val scale = tabPressScales.getOrNull(index)?.floatValue ?: 1f
+                                        val w = b.width * scale
+                                        val h = b.height * scale
+                                        val left = x + (b.width - w) * 0.5f
+                                        val top = y + (b.height - h) * 0.5f
+                                        rects.add(Rect(left, top, left + w, top + h))
+                                    }
+                                    ChipTabRowMaskShape(rects = rects, pillShape = sharedPillShape)
+                                },
+                                effects = {
+                                    textureBlurEffect(
+                                        blurRadiusX = sharedBlurRadiusDp,
+                                        blurRadiusY = sharedBlurRadiusDp,
+                                        colors = resolveChipBlurColors(isDark, 0f, chipVeil?.invoke()),
+                                    )
+                                },
+                            ),
+                    )
+                }
                 Row(
                     // The padding sits inside the scroll, like the scroller's clipToPadding = false: the
                     // tabs scroll on under it up to the fading edge.
@@ -274,6 +369,7 @@ fun ChipTabGroup(
                             drawElevation = false,
                             pressScaleHolder = tabPressScales[index],
                             backdrop = backdrop,
+                            sharedUncheckedBlur = blurActive,
                         ) { contentColor ->
                             ChipTabLabel(
                                 label = tab.label,
@@ -519,6 +615,7 @@ private fun ChipTabSurface(
     modifier: Modifier = Modifier,
     pressScaleHolder: MutableFloatState? = null,
     backdrop: Backdrop? = null,
+    sharedUncheckedBlur: Boolean = false,
     content: @Composable RowScope.(contentColor: Color) -> Unit,
 ) {
     // COUIChipTabDrawable.onStateChange: the checked layer animates between 0 and 1 on COUISpringForce
@@ -654,9 +751,9 @@ private fun ChipTabSurface(
     // a blurred copy of the backdrop plus the two blend colours, and the checked layer only adds a
     // wash instead of the opaque surface, so a checked pill still reads as glass.
     val blurRadius = remember(density) { with(density) { GlassChipDefaults.BlurRadiusPx.toDp() } }
-    val blurColors = remember(isDark, checkedLayerAlpha, backdrop) {
-        if (backdrop != null) GlassChipDefaults.blurColors(isDark, checkedLayerAlpha) else null
-    }
+    val chipVeil = LocalChipTabBackdropVeil.current
+    val hasBackdropBlur = backdrop != null && isBlurEnabled() && !LocalTransitionFastGlass.current
+    val needsOwnBlur = hasBackdropBlur && (!sharedUncheckedBlur || checkedLayerAlpha > 0f)
 
     Box(
         modifier = modifier
@@ -753,12 +850,17 @@ private fun ChipTabSurface(
                 },
             )
             .then(
-                if (blurColors != null) {
-                    Modifier.textureBlur(
+                if (needsOwnBlur) {
+                    Modifier.drawBackdrop(
                         backdrop = backdrop!!,
-                        shape = pillShape,
-                        blurRadius = blurRadius.value,
-                        colors = blurColors,
+                        shape = { pillShape },
+                        effects = {
+                            textureBlurEffect(
+                                blurRadiusX = blurRadius.value,
+                                blurRadiusY = blurRadius.value,
+                                colors = resolveChipBlurColors(isDark, checkedLayerAlpha, chipVeil?.invoke()),
+                            )
+                        },
                     )
                 } else {
                     Modifier
@@ -772,7 +874,7 @@ private fun ChipTabSurface(
                 val silhouette = Path().apply { addOutline(outline) }
                 val surfaceBrush = Brush.verticalGradient(colorStops = surfaceStops, startY = 0f, endY = size.height)
                 onDrawWithContent {
-                    if (blurColors == null) {
+                    if (!hasBackdropBlur) {
                         if (checkedLayerAlpha > 0f) {
                             drawPath(path = silhouette, brush = surfaceBrush, alpha = checkedLayerAlpha)
                         }

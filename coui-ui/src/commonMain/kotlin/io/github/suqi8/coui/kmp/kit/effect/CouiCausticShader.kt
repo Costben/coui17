@@ -113,3 +113,92 @@ half4 main(float2 position) {
         """.trimIndent(),
     )
 }
+
+/**
+ * Foreground-only direct caustic shader (no `u_originShader` backdrop readback or blur pass).
+ *
+ * Used on Skiko/Metal when `foregroundComposition` is active: paints the exact SDF + vertical
+ * falloff caustic glow directly with `SrcOver`, naturally self-attenuating over bright surfaces
+ * (`B + (1 - B) * a`), completely eliminating both the 2x full-resolution backdrop blur passes and
+ * any possibility of leaking unblurred background pixels through the caustic band.
+ */
+internal val CouiCausticDirectShader: String = buildString {
+    if (isAgslEs3Supported) {
+        append("#version 300\n")
+    }
+    append(
+        """
+uniform float u_commonArray[12];
+uniform float u_pyrolysisArray[14];
+uniform float2 u_offset;
+uniform float2 u_invScale;
+float RBox(float2 p, float2 b, float r) {
+    float2 q = abs(p) - b + r;
+    return min(max(q.x, q.y), 0.) + length(max(q, 0.)) - r;
+}
+float Oval(float2 p, float2 b, float r) {
+    float2 safeB = max(b, float2(1e-4));
+    float k0 = length(p / safeB);
+    float k1 = length(p / (safeB * safeB));
+    return k1 > 1e-6 ? k0 * (k0 - 1.0) / k1 : -min(safeB.x, safeB.y);
+}
+half4 main(float2 position) {
+    float2 halfRecSize = float2(u_commonArray[4], u_commonArray[5]) * .5;
+    float2 p = (position + u_offset - halfRecSize) * u_invScale + halfRecSize;
+    if (u_pyrolysisArray[3] > 0.001) {
+        float2 recLT = float2(u_commonArray[2], u_commonArray[3]);
+        float2 recCenter = recLT + halfRecSize;
+        float recCorner = u_commonArray[6];
+        float2 opticsOffset = float2((u_pyrolysisArray[4] + u_pyrolysisArray[6]) * 0.5,
+                                    (u_pyrolysisArray[5] + u_pyrolysisArray[7]) * 0.5);
+        float2 pos_optics = p - recCenter - opticsOffset;
+        float2 halfSizeOptics = halfRecSize + float2(u_pyrolysisArray[6] - u_pyrolysisArray[4],
+                                                   u_pyrolysisArray[7] - u_pyrolysisArray[5]) * 0.5;
+        float sdf = min(u_pyrolysisArray[8], min(halfRecSize.x, halfRecSize.y));
+        float opticsSdf = sdf;
+        if (all(lessThanEqual(abs(pos_optics), halfSizeOptics))) {
+            halfSizeOptics -= opticsSdf;
+            halfSizeOptics = max(halfSizeOptics, float2(0.0));
+            float conerOptics = min(recCorner, min(halfSizeOptics.x, halfSizeOptics.y));
+        """.trimIndent(),
+    )
+    if (isAgslEs3Supported) {
+        append(
+            """
+            uint outlineType = floatBitsToUint(u_commonArray[10]);
+            if (outlineType == 0) {
+                opticsSdf = RBox(pos_optics, halfSizeOptics, conerOptics);
+            } else if (outlineType == 1) {
+                opticsSdf = Oval(pos_optics, halfSizeOptics, conerOptics);
+            }
+""",
+        )
+    } else {
+        append(
+            """
+            if (u_commonArray[10] < 0.5) {
+                opticsSdf = RBox(pos_optics, halfSizeOptics, conerOptics);
+            } else if (u_commonArray[10] < 1.5) {
+                opticsSdf = Oval(pos_optics, halfSizeOptics, conerOptics);
+            }
+""",
+        )
+    }
+    append(
+        """
+            float value = smoothstep(sdf, 0.0, opticsSdf);
+            float yRamp = smoothstep(halfSizeOptics.y + sdf, -halfSizeOptics.y - sdf, -pos_optics.y);
+            value *= yRamp > 0.0 ? pow(yRamp, u_pyrolysisArray[11]) : 0.0;
+            if (u_pyrolysisArray[10] > 0.001) {
+                float valuePow = value > 0.0 ? pow(value, u_pyrolysisArray[9]) : 0.0;
+                value = valuePow * u_pyrolysisArray[10] + (1.0 - u_pyrolysisArray[10]) * value;
+            }
+            float a = clamp(u_pyrolysisArray[3] * value, 0.0, 1.0);
+            return half4(u_pyrolysisArray[0] * a, u_pyrolysisArray[1] * a, u_pyrolysisArray[2] * a, a);
+        }
+    }
+    return half4(0.0);
+}
+        """.trimIndent(),
+    )
+}

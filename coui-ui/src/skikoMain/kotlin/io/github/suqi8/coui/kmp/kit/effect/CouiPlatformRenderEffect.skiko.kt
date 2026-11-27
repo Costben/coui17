@@ -54,23 +54,26 @@ internal actual fun createBlurRenderEffect(
     if (edgeTreatment == TileMode.Decal) {
         return cachedUnifiedDecalBlurEffect(sigmaX, sigmaY)
     }
-    // Large Mirror blurs (e.g. toolbar glass sampling at 3x Retina) run ~8x faster at 0.5x scale
-    // with visually indistinguishable Gaussian output and identical coordinate space.
+    // Large Mirror blurs (e.g. toolbar glass sampling at 3x Retina): 0.25x for sigma >= 12px
+    // (1/16 pixel count, matching coui-blur's 4x downscale band) and 0.5x for 8..12px, giving
+    // visually identical smooth Gaussian output at ~8-32x lower Metal GPU cost.
     if (edgeTreatment == TileMode.Mirror && sigmaX >= 8f && sigmaY >= 8f) {
+        val scale = if (sigmaX >= 12f && sigmaY >= 12f) 0.25f else 0.5f
+        val invScale = 1f / scale
         val down = ImageFilter.makeMatrixTransform(
-            Matrix33.makeScale(0.5f, 0.5f),
+            Matrix33.makeScale(scale, scale),
             SamplingMode.LINEAR,
             null,
         )
         val blurred = ImageFilter.makeBlur(
-            sigmaX * 0.5f,
-            sigmaY * 0.5f,
+            sigmaX * scale,
+            sigmaY * scale,
             FilterTileMode.MIRROR,
             down,
             null,
         )
         return ImageFilter.makeMatrixTransform(
-            Matrix33.makeScale(2f, 2f),
+            Matrix33.makeScale(invScale, invScale),
             SamplingMode.LINEAR,
             blurred,
         ).asComposeRenderEffect()
@@ -174,6 +177,54 @@ internal actual fun createBlendModeColorFilterRenderEffect(
     renderEffect.skiaImageFilter,
     null,
 ).asComposeRenderEffect()
+
+internal actual fun createFloatingMaterialInputEffect(
+    blurRadius: Float,
+    firstColor: Color,
+    firstBlendMode: BlendMode,
+    secondColor: Color,
+    secondBlendMode: BlendMode,
+): RenderEffect {
+    val sigma = if (blurRadius > 0f) blurRadius * 0.57735f + 0.5f else 0f
+    if (sigma >= 8f) {
+        val scale = if (sigma >= 12f) 0.25f else 0.5f
+        val invScale = 1f / scale
+        val down = ImageFilter.makeMatrixTransform(
+            Matrix33.makeScale(scale, scale),
+            SamplingMode.LINEAR,
+            null,
+        )
+        val blurred = ImageFilter.makeBlur(
+            sigma * scale,
+            sigma * scale,
+            FilterTileMode.MIRROR,
+            down,
+            null,
+        )
+        val color1 = ImageFilter.makeColorFilter(
+            ColorFilter.makeBlend(firstColor.toArgb(), firstBlendMode.toSkiaBlendMode()),
+            blurred,
+            null,
+        )
+        val color2 = ImageFilter.makeColorFilter(
+            ColorFilter.makeBlend(secondColor.toArgb(), secondBlendMode.toSkiaBlendMode()),
+            color1,
+            null,
+        )
+        return ImageFilter.makeMatrixTransform(
+            Matrix33.makeScale(invScale, invScale),
+            SamplingMode.LINEAR,
+            color2,
+        ).asComposeRenderEffect()
+    }
+    val blur = if (blurRadius == 0f) {
+        createOffsetRenderEffect(0f, 0f)
+    } else {
+        createBlurRenderEffect(blurRadius, blurRadius, TileMode.Mirror)
+    }
+    val color1 = createBlendModeColorFilterRenderEffect(firstColor, firstBlendMode, blur)
+    return createBlendModeColorFilterRenderEffect(secondColor, secondBlendMode, color1)
+}
 
 internal actual typealias PlatformRenderEffect = ImageFilter
 

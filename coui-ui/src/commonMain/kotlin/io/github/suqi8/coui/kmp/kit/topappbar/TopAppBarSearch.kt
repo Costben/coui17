@@ -405,7 +405,7 @@ private fun SearchInput(
     LaunchedEffect(focusPending, enabled, active) {
         if (focusPending && enabled && active) {
             if (preferFastAnimatingFloatingSurfaces) {
-                snapshotFlow { !motionRunningProvider() || progressProvider() >= 0.92f }.first { it }
+                snapshotFlow { !motionRunningProvider() || progressProvider() >= 0.985f }.first { it }
             }
             if (requester.requestFocus()) keyboard?.show()
             onFocused()

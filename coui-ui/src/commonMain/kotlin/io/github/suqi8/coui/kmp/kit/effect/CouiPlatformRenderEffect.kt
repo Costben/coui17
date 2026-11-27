@@ -70,6 +70,19 @@ internal expect fun createBlendModeColorFilterRenderEffect(
     renderEffect: RenderEffect,
 ): RenderEffect
 
+/**
+ * Builds the blurred + two-stage color-blended input effect for a floating surface material.
+ * On Skiko/Metal, large Mirror blurs fold both color filters into the downscaled blur pass before
+ * upscaling so ColorDodge and Luminosity do not run on full-resolution Retina offscreen targets.
+ */
+internal expect fun createFloatingMaterialInputEffect(
+    blurRadius: Float,
+    firstColor: Color,
+    firstBlendMode: BlendMode,
+    secondColor: Color,
+    secondBlendMode: BlendMode,
+): RenderEffect
+
 /** Platform-native render-effect handle preserved for legacy Android callers during migration. */
 internal expect class PlatformRenderEffect
 
