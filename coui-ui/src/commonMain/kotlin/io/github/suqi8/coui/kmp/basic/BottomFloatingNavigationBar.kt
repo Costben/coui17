@@ -98,6 +98,7 @@ import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.LocalBlurEnabled
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.utils.COUIResponsiveUtils
@@ -909,48 +910,65 @@ fun RowScope.BottomFloatingNavigationBarItem(
                 }
             }
             Spacer(Modifier.height(BottomFloatingNavigationBarDefaults.IconTitleGapVertical))
-            val textMeasurer = rememberTextMeasurer()
-            val labelHeightPx = with(density) { LabelLineHeight.roundToPx() }
-            val rasterCache = remember(label, whiteLabelStyle, textMeasurer, density, layoutDirection) {
-                BottomBarLabelRasterCache()
-            }
-            Layout(
-                modifier = Modifier
-                    .semantics { text = AnnotatedString(label) }
-                    .drawWithContent {
-                        val fallbackMaxW = size.width.roundToInt().coerceAtLeast(1)
-                        val bitmap = rasterCache.bitmap ?: rasterCache.getOrRasterize(
-                            maxWidth = fallbackMaxW,
-                            label = label,
-                            style = whiteLabelStyle,
-                            textMeasurer = textMeasurer,
-                            density = density,
-                            layoutDirection = layoutDirection,
-                        ) ?: return@drawWithContent
-                        val x = ((size.width - bitmap.width) * 0.5f).coerceAtLeast(0f).roundToInt()
-                        val y = ((size.height - bitmap.height) * 0.5f).roundToInt()
-                        drawImage(
-                            image = bitmap,
-                            dstOffset = IntOffset(x, y),
-                            dstSize = IntSize(bitmap.width, bitmap.height),
-                            colorFilter = ColorFilter.tint(tint),
-                        )
-                    },
-            ) { _, constraints ->
-                val maxW = if (constraints.hasBoundedWidth) constraints.maxWidth.coerceAtLeast(1) else Constraints.Infinity
-                val bitmap = rasterCache.getOrRasterize(
-                    maxWidth = maxW,
-                    label = label,
-                    style = whiteLabelStyle,
-                    textMeasurer = textMeasurer,
-                    density = density,
-                    layoutDirection = layoutDirection,
+            if (preferFastAnimatingFloatingSurfaces) {
+                val textMeasurer = rememberTextMeasurer()
+                val labelHeightPx = with(density) { LabelLineHeight.roundToPx() }
+                val rasterCache = remember(label, whiteLabelStyle, textMeasurer, density, layoutDirection) {
+                    BottomBarLabelRasterCache()
+                }
+                Layout(
+                    modifier = Modifier
+                        .semantics { text = AnnotatedString(label) }
+                        .drawWithContent {
+                            val fallbackMaxW = size.width.roundToInt().coerceAtLeast(1)
+                            val bitmap = rasterCache.bitmap ?: rasterCache.getOrRasterize(
+                                maxWidth = fallbackMaxW,
+                                label = label,
+                                style = whiteLabelStyle,
+                                textMeasurer = textMeasurer,
+                                density = density,
+                                layoutDirection = layoutDirection,
+                            ) ?: return@drawWithContent
+                            val x = ((size.width - bitmap.width) * 0.5f).coerceAtLeast(0f).roundToInt()
+                            val y = ((size.height - bitmap.height) * 0.5f).roundToInt()
+                            drawImage(
+                                image = bitmap,
+                                dstOffset = IntOffset(x, y),
+                                dstSize = IntSize(bitmap.width, bitmap.height),
+                                colorFilter = ColorFilter.tint(tint),
+                            )
+                        },
+                ) { _, constraints ->
+                    val maxW = if (constraints.hasBoundedWidth) constraints.maxWidth.coerceAtLeast(1) else Constraints.Infinity
+                    val bitmap = rasterCache.getOrRasterize(
+                        maxWidth = maxW,
+                        label = label,
+                        style = whiteLabelStyle,
+                        textMeasurer = textMeasurer,
+                        density = density,
+                        layoutDirection = layoutDirection,
+                    )
+                    val rawW = bitmap?.width ?: 0
+                    val rawH = bitmap?.height ?: 0
+                    val w = rawW.coerceIn(constraints.minWidth, constraints.maxWidth)
+                    val h = maxOf(rawH, labelHeightPx).coerceIn(constraints.minHeight, constraints.maxHeight)
+                    layout(w, h) {}
+                }
+            } else {
+                Text(
+                    text = label,
+                    color = tint,
+                    // The native title is sized in pixels, so a larger system font leaves it as it is.
+                    fontSize = with(density) { BottomFloatingNavigationBarDefaults.LabelFontSize.value.dp.toSp() },
+                    // A TextView pads its line out to the font's top and bottom metrics, which drops the
+                    // glyph about 2.8dp below the title's top edge; an unpadded line sits it 1dp below.
+                    lineHeight = with(density) { LabelLineHeight.toSp() },
+                    style = mainTextStyle.copy(lineHeightStyle = LabelLineHeightStyle),
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
                 )
-                val rawW = bitmap?.width ?: 0
-                val rawH = bitmap?.height ?: 0
-                val w = rawW.coerceIn(constraints.minWidth, constraints.maxWidth)
-                val h = maxOf(rawH, labelHeightPx).coerceIn(constraints.minHeight, constraints.maxHeight)
-                layout(w, h) {}
             }
         }
         if (overflowMenu != null) {

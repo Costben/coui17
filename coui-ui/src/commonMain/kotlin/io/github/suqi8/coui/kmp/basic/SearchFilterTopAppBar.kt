@@ -127,6 +127,8 @@ private const val FILTER_COLLAPSE_FADE_MILLIS = 90
 private val FILTER_COLLAPSE_TUCK_DISTANCE = 6.dp
 private const val SEARCH_ROW_LIGHT_VEIL_MAX = 0.48f
 private const val SEARCH_ROW_DARK_VEIL_MAX = 0.20f
+private const val CHIP_ROW_EXTRA_LIGHT_VEIL_MAX = 0.22f
+private const val CHIP_ROW_EXTRA_DARK_VEIL_MAX = 0.08f
 private const val CHIP_ROW_LIGHT_VEIL_MAX = 0.67f
 private const val CHIP_ROW_DARK_VEIL_MAX = 0.35f
 
@@ -206,25 +208,58 @@ fun SearchFilterTopAppBar(
     val pageColor = COUITheme.colorScheme.background
     val isDark = pageColor.luminance() < 0.5f
     val blurEnabled = isBlurEnabled()
-    val fastGlass = LocalTransitionFastGlass.current || (preferFastAnimatingFloatingSurfaces && searchBarCollapsing)
+    val useFastNonNestedGlass = preferFastAnimatingFloatingSurfaces
+    val fastGlass = LocalTransitionFastGlass.current || (useFastNonNestedGlass && searchBarCollapsing)
     val veilColor = if (isDark) Color.Black else containerColor
     val searchVeilMax = if (isDark) SEARCH_ROW_DARK_VEIL_MAX else SEARCH_ROW_LIGHT_VEIL_MAX
+    val chipExtraVeilMax = if (isDark) CHIP_ROW_EXTRA_DARK_VEIL_MAX else CHIP_ROW_EXTRA_LIGHT_VEIL_MAX
     val chipVeilMax = if (isDark) CHIP_ROW_DARK_VEIL_MAX else CHIP_ROW_LIGHT_VEIL_MAX
     val currentScrollFraction = rememberUpdatedState(scrollFraction)
-    // Quantize the clamped scroll fraction inside derivedStateOf so once the list scrolls past the
-    // 30dp ramp (99% of scrolling), downstream DrawBackdropNode.observeReads does NOT invalidate
-    // and rebuild chip blur RenderEffects on every scroll pixel.
+    // Quantize the clamped scroll fraction inside derivedStateOf on Skiko/iOS so once the list
+    // scrolls past the 30dp ramp (99% of scrolling), downstream DrawBackdropNode.observeReads does
+    // NOT invalidate and rebuild chip blur RenderEffects on every scroll pixel.
     val quantizedScrollFraction by remember {
         derivedStateOf {
             val raw = currentScrollFraction.value().coerceIn(0f, 1f)
             (raw * 32f).roundToInt() / 32f
         }
     }
+    val upstream = backdrop as? LayerBackdrop
+    // Android keeps the original materialBackdrop recording (AppBarMaterialLayout + subtle extra
+    // veil) so chips sample the exact progressive-blur surface; Skiko/iOS skips nested recording
+    // and folds the surface veil into the chips' blend pass via LocalChipTabBackdropVeil.
+    var materialCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val materialBackdrop = if (!useFastNonNestedGlass) {
+        if (upstream != null) {
+            rememberLayerBackdrop(upstream = upstream) {
+                drawRect(pageColor)
+                val coords = materialCoords
+                if (coords != null && coords.isAttached) {
+                    with(upstream) {
+                        drawBackdrop(
+                            density = this@rememberLayerBackdrop,
+                            coordinates = coords,
+                            layerBlock = null,
+                            downscaleFactor = 1,
+                        )
+                    }
+                }
+                drawContent()
+                val extra = chipExtraVeilMax * currentScrollFraction.value().coerceIn(0f, 1f)
+                if (extra > 0f) drawRect(veilColor, alpha = extra)
+            }
+        } else {
+            rememberLayerBackdrop {
+                drawRect(pageColor)
+                drawContent()
+            }
+        }
+    } else {
+        null
+    }
     // Dedicated real LayerBackdrop for the first search row: draws nothing on screen while
     // recording the live page + a restrained veil (48% light / 20% dark) so TopAppBarSearchBar
-    // neither bleeds saturated photos raw nor washes out to opaque white over the ~90% top scrim,
-    // without nesting AppBarMaterialLayout's progressive blur inside a recorded layer.
-    val upstream = backdrop as? LayerBackdrop
+    // neither bleeds saturated photos raw nor washes out to opaque white over the ~90% top scrim.
     var searchCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val searchRowLayerBackdrop = if (upstream != null) {
         rememberLayerBackdrop(upstream = upstream) {
@@ -240,18 +275,38 @@ fun SearchFilterTopAppBar(
                     )
                 }
             }
-            val veil = searchVeilMax * quantizedScrollFraction
+            val fraction = if (useFastNonNestedGlass) {
+                quantizedScrollFraction
+            } else {
+                currentScrollFraction.value().coerceIn(0f, 1f)
+            }
+            val veil = searchVeilMax * fraction
             if (veil > 0f) drawRect(veilColor, alpha = veil)
         }
     } else {
         null
     }
-    val searchRowBackdrop = searchRowLayerBackdrop ?: backdrop
-    val chipBackdrop: Backdrop? = if (blurEnabled && !fastGlass && backdrop != null) backdrop else null
-    val chipVeilProvider: () -> Color = remember(veilColor, chipVeilMax) {
-        {
-            val alpha = chipVeilMax * quantizedScrollFraction
-            if (alpha > 0.001f) veilColor.copy(alpha = alpha) else Color.Transparent
+    val materialVisible by remember {
+        derivedStateOf { currentScrollFraction.value() > 0.001f }
+    }
+    val searchRowBackdrop = when {
+        searchRowLayerBackdrop != null -> searchRowLayerBackdrop
+        materialBackdrop != null && materialVisible -> materialBackdrop
+        else -> backdrop
+    }
+    val chipBackdrop: Backdrop? = when {
+        !blurEnabled || fastGlass || backdrop == null -> null
+        useFastNonNestedGlass -> backdrop
+        else -> materialBackdrop
+    }
+    val chipVeilProvider: (() -> Color)? = remember(useFastNonNestedGlass, veilColor, chipVeilMax) {
+        if (!useFastNonNestedGlass) {
+            null
+        } else {
+            {
+                val alpha = chipVeilMax * quantizedScrollFraction
+                if (alpha > 0.001f) veilColor.copy(alpha = alpha) else Color.Transparent
+            }
         }
     }
     val materialRamp = if (filtersMounted) {
@@ -265,21 +320,46 @@ fun SearchFilterTopAppBar(
         AppBarMaterialRamp()
     }
     val tuckDistancePx = with(density) { FILTER_COLLAPSE_TUCK_DISTANCE.toPx() }
-    val searchLayerHeight = statusBarTop + firstRowHeight + 16.dp
+    val searchLayerHeight = if (useFastNonNestedGlass) {
+        statusBarTop + firstRowHeight + 16.dp
+    } else {
+        barHeight + extraHeight
+    }
     CompositionLocalProvider(LocalEdgeToEdge provides true) {
         Layout(
             modifier = modifier.scrollToTopOnTap(),
             content = {
-                AppBarMaterialLayout(
-                    materialEnabled = true,
-                    modifier = Modifier.fillMaxWidth().height(barHeight),
-                    containerColor = containerColor,
-                    backdrop = if (fastGlass) null else backdrop,
-                    extraHeight = extraHeight,
-                    scrollFraction = scrollFraction,
-                    platformRenderer = platformRenderer,
-                    materialRamp = materialRamp,
-                ) {}
+                if (materialBackdrop != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(barHeight + extraHeight)
+                            .onGloballyPositioned { materialCoords = it }
+                            .layerBackdrop(materialBackdrop),
+                    ) {
+                        AppBarMaterialLayout(
+                            materialEnabled = true,
+                            modifier = Modifier.fillMaxWidth().height(barHeight),
+                            containerColor = containerColor,
+                            backdrop = if (fastGlass) null else backdrop,
+                            extraHeight = extraHeight,
+                            scrollFraction = scrollFraction,
+                            platformRenderer = platformRenderer,
+                            materialRamp = materialRamp,
+                        ) {}
+                    }
+                } else {
+                    AppBarMaterialLayout(
+                        materialEnabled = true,
+                        modifier = Modifier.fillMaxWidth().height(barHeight),
+                        containerColor = containerColor,
+                        backdrop = if (fastGlass) null else backdrop,
+                        extraHeight = extraHeight,
+                        scrollFraction = scrollFraction,
+                        platformRenderer = platformRenderer,
+                        materialRamp = materialRamp,
+                    ) {}
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

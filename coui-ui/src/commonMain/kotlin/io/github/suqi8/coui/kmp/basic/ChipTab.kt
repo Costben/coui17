@@ -30,6 +30,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -92,7 +94,9 @@ import io.github.suqi8.coui.kmp.blur.BlurBlendMode
 import io.github.suqi8.coui.kmp.blur.BlurColors
 import io.github.suqi8.coui.kmp.blur.drawBackdrop
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
+import io.github.suqi8.coui.kmp.blur.textureBlur
 import io.github.suqi8.coui.kmp.blur.textureBlurEffect
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
@@ -228,7 +232,9 @@ fun ChipTabGroup(
     // Placed in the scrolled content's own coordinates, i.e. the space scrollX is measured in.
     val tabBounds = remember(tabs.size) { mutableStateMapOf<Int, Rect>() }
     val tabPressScales = remember(tabs.size) { Array(tabs.size) { mutableFloatStateOf(1f) } }
+    val tabOwnBlur = remember(tabs.size) { Array(tabs.size) { mutableStateOf(it == selectedIndex) } }
     val blurActive = backdrop != null && isBlurEnabled() && !LocalTransitionFastGlass.current
+    val useSharedUncheckedBlur = blurActive && preferFastAnimatingFloatingSurfaces
     val chipVeil = LocalChipTabBackdropVeil.current
     val isDark = COUITheme.colorScheme.background.luminance() < 0.5f
     val squircleEnabled = isSquircleEnabled()
@@ -305,10 +311,10 @@ fun ChipTabGroup(
                     }
                     .scrollEdgeFade(scrollState, ChipTabDefaults.FadeWidth),
             ) {
-                if (blurActive && tabs.isNotEmpty()) {
-                    // Single shared blur pass for every unselected tab pill in the row, clipped
-                    // to the union of visible pill silhouettes. Cuts N per-tab Gaussian/downsample
-                    // pipelines down to 1 pass while preserving exact frosted glass appearance.
+                if (useSharedUncheckedBlur && tabs.isNotEmpty()) {
+                    // Single shared blur pass for every unselected tab pill in the row on Skiko/iOS,
+                    // clipped to the union of unselected pill silhouettes. Selected or animating pills
+                    // draw their own blur layer and are excluded here to prevent gray halo overlap.
                     Box(
                         modifier = Modifier
                             .matchParentSize()
@@ -320,6 +326,7 @@ fun ChipTabGroup(
                                     val maxScroll = scrollState.maxValue.toFloat()
                                     val rects = ArrayList<Rect>(tabs.size)
                                     for (index in tabs.indices) {
+                                        if (tabOwnBlur.getOrNull(index)?.value == true) continue
                                         val b = tabBounds[index] ?: continue
                                         val x = if (rtl) b.left + scrollX - maxScroll else b.left - scrollX
                                         val y = b.top + pressOutsetPx
@@ -369,7 +376,8 @@ fun ChipTabGroup(
                             drawElevation = false,
                             pressScaleHolder = tabPressScales[index],
                             backdrop = backdrop,
-                            sharedUncheckedBlur = blurActive,
+                            sharedUncheckedBlur = useSharedUncheckedBlur,
+                            ownBlurState = if (useSharedUncheckedBlur) tabOwnBlur[index] else null,
                         ) { contentColor ->
                             ChipTabLabel(
                                 label = tab.label,
@@ -616,17 +624,19 @@ private fun ChipTabSurface(
     pressScaleHolder: MutableFloatState? = null,
     backdrop: Backdrop? = null,
     sharedUncheckedBlur: Boolean = false,
+    ownBlurState: MutableState<Boolean>? = null,
     content: @Composable RowScope.(contentColor: Color) -> Unit,
 ) {
     // COUIChipTabDrawable.onStateChange: the checked layer animates between 0 and 1 on COUISpringForce
     // response 0.2 / bounce 0, cut at ALPHA_MIN_VISIBLE_CHANGE (1 / 256); the unchecked layer is its
     // complement, so one animation drives both.
-    val checkedLayerAlpha by animateFloatAsState(
+    val checkedLayerAlphaState = animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
         animationSpec = ChipTabDefaults.LayerSpring,
         visibilityThreshold = ChipTabDefaults.MinVisibleChange,
         label = "chipTabCheckedLayerAlpha",
     )
+    val checkedLayerAlpha = checkedLayerAlphaState.value
     val colorScheme = COUITheme.colorScheme
     val isDark = colorScheme.background.luminance() < 0.5f
     val surfaceStops = if (isDark) ChipTabSurfaceStopsDark else ChipTabSurfaceStopsLight
@@ -754,6 +764,13 @@ private fun ChipTabSurface(
     val chipVeil = LocalChipTabBackdropVeil.current
     val hasBackdropBlur = backdrop != null && isBlurEnabled() && !LocalTransitionFastGlass.current
     val needsOwnBlur = hasBackdropBlur && (!sharedUncheckedBlur || checkedLayerAlpha > 0f)
+    if (ownBlurState != null) {
+        SideEffect {
+            if (ownBlurState.value != needsOwnBlur) {
+                ownBlurState.value = needsOwnBlur
+            }
+        }
+    }
 
     Box(
         modifier = modifier
@@ -851,17 +868,26 @@ private fun ChipTabSurface(
             )
             .then(
                 if (needsOwnBlur) {
-                    Modifier.drawBackdrop(
-                        backdrop = backdrop!!,
-                        shape = { pillShape },
-                        effects = {
-                            textureBlurEffect(
-                                blurRadiusX = blurRadius.value,
-                                blurRadiusY = blurRadius.value,
-                                colors = resolveChipBlurColors(isDark, checkedLayerAlpha, chipVeil?.invoke()),
-                            )
-                        },
-                    )
+                    if (preferFastAnimatingFloatingSurfaces) {
+                        Modifier.drawBackdrop(
+                            backdrop = backdrop!!,
+                            shape = { pillShape },
+                            effects = {
+                                textureBlurEffect(
+                                    blurRadiusX = blurRadius.value,
+                                    blurRadiusY = blurRadius.value,
+                                    colors = resolveChipBlurColors(isDark, checkedLayerAlphaState.value, chipVeil?.invoke()),
+                                )
+                            },
+                        )
+                    } else {
+                        Modifier.textureBlur(
+                            backdrop = backdrop!!,
+                            shape = pillShape,
+                            blurRadius = blurRadius.value,
+                            colors = resolveChipBlurColors(isDark, checkedLayerAlpha, chipVeil?.invoke()),
+                        )
+                    }
                 } else {
                     Modifier
                 },

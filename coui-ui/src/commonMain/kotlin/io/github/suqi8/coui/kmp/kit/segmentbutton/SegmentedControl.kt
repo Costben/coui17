@@ -41,13 +41,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -64,6 +69,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -76,15 +82,21 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.constrainWidth
@@ -102,6 +114,7 @@ import io.github.suqi8.coui.kmp.kit.effect.couiButtonFeedback
 import io.github.suqi8.coui.kmp.kit.effect.couiFloatingSurface
 import io.github.suqi8.coui.kmp.kit.effect.isKitRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.kit.effect.rememberCouiSpotlight
 import io.github.suqi8.coui.kmp.kit.input.isCouiTouchCancelled
 import io.github.suqi8.coui.kmp.kit.motion.CouiPressMotion
@@ -228,20 +241,37 @@ internal fun SegmentedControl(
         Modifier to null
     }
 
+    val layoutDirection = LocalLayoutDirection.current
     val measurer = rememberTextMeasurer()
+    val weightAdjustment = io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment.current
+    val adjustedTextStyle = remember(textStyle, weightAdjustment) {
+        textStyle.copy(
+            fontWeight = io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight(
+                textStyle.fontWeight,
+                weightAdjustment,
+            ),
+        )
+    }
+    val whiteLabelStyle = remember(adjustedTextStyle) {
+        adjustedTextStyle.copy(
+            textAlign = TextAlign.Center,
+            color = Color.White,
+        )
+    }
     // Re-measure natural widths if asynchronous font loading resolves after first composition.
     val resolvedTypeface = LocalFontFamilyResolver.current.resolve(
-        textStyle.fontFamily,
-        textStyle.fontWeight ?: FontWeight.Normal,
-        textStyle.fontStyle ?: FontStyle.Normal,
-        textStyle.fontSynthesis ?: FontSynthesis.All,
+        adjustedTextStyle.fontFamily,
+        adjustedTextStyle.fontWeight ?: FontWeight.Normal,
+        adjustedTextStyle.fontStyle ?: FontStyle.Normal,
+        adjustedTextStyle.fontSynthesis ?: FontSynthesis.All,
     ).value
     val minWidthPx = with(density) { minWidth.toPx() }
     val maxWidthPx = if (maxWidth == Dp.Infinity) Float.MAX_VALUE else with(density) { maxWidth.toPx().coerceAtLeast(minWidthPx) }
     val segmentPaddingPx = with(density) { segmentPadding.toPx() }
-    val naturalWidths = remember(labels, textStyle, density, measurer, resolvedTypeface, minWidthPx, maxWidthPx, segmentPaddingPx) {
+    val extraLabelSlackPx = if (preferFastAnimatingFloatingSurfaces || weightAdjustment != 0) 2f else 0f
+    val naturalWidths = remember(labels, adjustedTextStyle, density, measurer, resolvedTypeface, minWidthPx, maxWidthPx, segmentPaddingPx, extraLabelSlackPx) {
         labels.map { label ->
-            val measured = measurer.measure(label, textStyle, maxLines = 1).size.width.toFloat() + segmentPaddingPx * 2f
+            val measured = ceil(measurer.measure(label, adjustedTextStyle, maxLines = 1).size.width.toFloat()) + extraLabelSlackPx + segmentPaddingPx * 2f
             measured.coerceIn(minWidthPx, maxWidthPx)
         }
     }
@@ -565,16 +595,56 @@ internal fun SegmentedControl(
                         ) {
                             if (tabContent != null) {
                                 tabContent(index, label, isActive)
+                            } else if (preferFastAnimatingFloatingSurfaces) {
+                                val rasterCache = remember(label, whiteLabelStyle, measurer, density, layoutDirection) {
+                                    SegmentLabelRasterCache()
+                                }
+                                Layout(
+                                    modifier = Modifier
+                                        .semantics { text = AnnotatedString(label) }
+                                        .drawWithContent {
+                                            val fallbackMaxW = size.width.roundToInt().coerceAtLeast(1)
+                                            val bitmap = rasterCache.bitmap ?: rasterCache.getOrRasterize(
+                                                maxWidth = fallbackMaxW,
+                                                label = label,
+                                                style = whiteLabelStyle,
+                                                textMeasurer = measurer,
+                                                density = density,
+                                                layoutDirection = layoutDirection,
+                                            ) ?: return@drawWithContent
+                                            val x = ((size.width - bitmap.width) * 0.5f).roundToInt()
+                                            val y = ((size.height - bitmap.height) * 0.5f).roundToInt()
+                                            drawImage(
+                                                image = bitmap,
+                                                dstOffset = IntOffset(x, y),
+                                                dstSize = IntSize(bitmap.width, bitmap.height),
+                                                colorFilter = ColorFilter.tint(animatedTextColor),
+                                            )
+                                        },
+                                ) { _, constraints ->
+                                    val maxW = if (constraints.hasBoundedWidth) {
+                                        constraints.maxWidth.coerceAtLeast(1)
+                                    } else {
+                                        Constraints.Infinity
+                                    }
+                                    val bitmap = rasterCache.getOrRasterize(
+                                        maxWidth = maxW,
+                                        label = label,
+                                        style = whiteLabelStyle,
+                                        textMeasurer = measurer,
+                                        density = density,
+                                        layoutDirection = layoutDirection,
+                                    )
+                                    val w = (bitmap?.width ?: 0).coerceIn(constraints.minWidth, constraints.maxWidth)
+                                    val h = (bitmap?.height ?: 0).coerceIn(constraints.minHeight, constraints.maxHeight)
+                                    layout(w, h) {}
+                                }
                             } else {
                                 BasicText(
                                     label,
-                                    style = textStyle.copy(
+                                    style = adjustedTextStyle.copy(
                                         textAlign = TextAlign.Center,
                                         color = animatedTextColor,
-                                        fontWeight = io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight(
-                                            textStyle.fontWeight,
-                                            io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment.current,
-                                        ),
                                     ),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
@@ -776,4 +846,58 @@ private fun DrawScope.drawIndicatorContour(
         1.8f * density,
     )
     drawIntoCanvas { canvas -> canvas.drawRect(0f, 0f, rectSize.width, rectSize.height, paint) }
+}
+
+/**
+ * Pre-rasterizes a segment label in white into a tiny CPU-backed [ImageBitmap] once per
+ * `(label, style, maxWidth)` so Skiko/Metal draws it via [ColorFilter.tint] instead of live
+ * `Paragraph.updateForegroundPaint` inside an offscreen `GraphicsLayer`, preventing glyph-atlas
+ * corruption and disappearing/truncated tab labels after video playback on iOS.
+ */
+private class SegmentLabelRasterCache {
+    var maxWidth: Int = -2
+    var bitmap: ImageBitmap? = null
+
+    fun getOrRasterize(
+        maxWidth: Int,
+        label: String,
+        style: TextStyle,
+        textMeasurer: TextMeasurer,
+        density: Density,
+        layoutDirection: LayoutDirection,
+    ): ImageBitmap? {
+        if (this.maxWidth == maxWidth) return bitmap
+        this.maxWidth = maxWidth
+        if (label.isEmpty()) {
+            bitmap = null
+            return null
+        }
+        val padX = 2
+        val measured = textMeasurer.measure(
+            text = label,
+            style = style,
+            overflow = TextOverflow.Ellipsis,
+            softWrap = true,
+            maxLines = 1,
+            constraints = Constraints(maxWidth = maxWidth),
+        )
+        val w = (measured.size.width + padX * 2).coerceAtLeast(1)
+        val h = measured.size.height.coerceAtLeast(1)
+        val image = ImageBitmap(w, h, ImageBitmapConfig.Argb8888)
+        val canvas = Canvas(image)
+        CanvasDrawScope().draw(
+            density = density,
+            layoutDirection = layoutDirection,
+            canvas = canvas,
+            size = Size(w.toFloat(), h.toFloat()),
+        ) {
+            drawText(
+                textLayoutResult = measured,
+                topLeft = Offset(padX.toFloat(), 0f),
+            )
+        }
+        image.prepareToDraw()
+        bitmap = image
+        return image
+    }
 }

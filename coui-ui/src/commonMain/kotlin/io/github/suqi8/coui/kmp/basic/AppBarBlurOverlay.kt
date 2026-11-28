@@ -34,6 +34,7 @@ import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.ProgressiveBlur
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.progressiveTextureBlur
+import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleClippedHost
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
@@ -555,13 +556,19 @@ internal fun AppBarMaterial(
                 // buffer only exists while the material is translucent.
                 compositingStrategy = CompositingStrategy.Auto
             }
-            .drawWithContent {
-                // Keep the blur node attached and its RenderEffects warm at scrollFraction == 0,
-                // while skipping the offscreen progressive-blur draw work when completely invisible.
-                if (scrollFraction() > 0.001f) {
-                    drawContent()
-                }
-            }
+            .then(
+                if (preferFastAnimatingFloatingSurfaces) {
+                    Modifier.drawWithContent {
+                        // Keep the blur node attached and its RenderEffects warm at scrollFraction == 0,
+                        // while skipping the offscreen progressive-blur draw work when completely invisible.
+                        if (scrollFraction() > 0.001f) {
+                            drawContent()
+                        }
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .then(effect),
     )
 }

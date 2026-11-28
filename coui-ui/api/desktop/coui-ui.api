@@ -1285,7 +1285,8 @@ public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchBar
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchFilterTopAppBarKt {
 	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchFilterTopAppBarKt;
 	public fun <init> ()V
-	public final fun getLambda$1510896089$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-680909899$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$1112288472$io_github_suqi8_coui_kmp_coui_ui ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/ComposableSingletons$SearchResultContainerKt {
