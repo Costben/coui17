@@ -1,0 +1,176 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-blur/1.2.0-SNAPSHOT/coui-blur-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-blur",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur-iosSimulatorArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT.klib",
+          "size": 304918,
+          "sha512": "f02d910cb951156a2d080f644768c84b312ab0b37330b488650efbdc92c6c9d0915041d86f809bb3c2c891f468a05bdb2b4820a11778a9601ab9da486fe4310f",
+          "sha256": "9cd4fab9e5a30e887176e14ab20d7c51cd3a08d60106f1a2b0bfd7a3b2fa9e49",
+          "sha1": "cb77c620c7ea2688f5fe0ba362de48648da26754",
+          "md5": "0a277e545396e30a25cdef0327e10dce"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 86879,
+          "sha512": "235c367f6687d20bcf3c4ade56ec311a41872423337c474be782dfea3229aa2e9d0d207b8a8b0128ab1958d4b7fb7fb6dd0c323bd365694d81e66b1e3db0c187",
+          "sha256": "7680e5cbda5f605b481a49fc30ba77e1a09dc03db79fc0d4813d821b551c8949",
+          "sha1": "2b11f38c9d034283d1c0c3ecc69ef34bbe4bf1b9",
+          "md5": "1c2eca12f747f14b5579f3641d96056e"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 356,
+          "sha512": "ac5495bde10179579cf2b6441bd20e9b64abd1967cfe39bc83eed7ca8abd32db5a7977afc2ea2298f135a6c7cd6058b84ee651000bdfed0ba98f49e8691a009e",
+          "sha256": "67044280fdc9229ee3b43e41a423bc758ab540f519a06098791f6f3b0da62c18",
+          "sha1": "ab55f262ee01f0f7c5e81a64d94b6af310b829b0",
+          "md5": "9abe5b499b0bc72718fafe960ac2361b"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 3334,
+          "sha512": "043a94bde7a31a276109856ef6632828ec9c778e2b93b064de3bdb0059048fdda634117b788e470e71611ce0ed4bfe20a563d0f649af493609aae82b7eb2c703",
+          "sha256": "9a93e1b143ca983812633bd36d7b29b516fe4a290ccaa251f644034e041186c4",
+          "sha1": "ff56a0637910fcc61ed1fc77d6c8320c2ffde964",
+          "md5": "ac46aec412364b6c11ae7fc89d2c4035"
+        }
+      ]
+    }
+  ]
+}

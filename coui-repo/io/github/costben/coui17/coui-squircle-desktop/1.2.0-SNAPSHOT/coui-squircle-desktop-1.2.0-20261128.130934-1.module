@@ -1,0 +1,123 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-squircle/1.2.0-SNAPSHOT/coui-squircle-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-squircle",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "desktopApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-squircle-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-squircle-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 93994,
+          "sha512": "681d7d577559cec4398a161814b6bb55f980fd65c9e1b260782e7a09f41a4a2f2b46459e2ef819ef8ac65893bf43d3d2a04079bb8b5e040a2b8c089f07cc9988",
+          "sha256": "84ebc79795d1dc0b88d59b99bf983c4ad87715a54f98730b2db59eaafa1243dc",
+          "sha1": "3baa22d52d019505e6a2153b3911bbe05db61f63",
+          "md5": "5c75d3ada1396e5755295f6c5cf5c271"
+        }
+      ]
+    },
+    {
+      "name": "desktopRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-squircle-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-squircle-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 93994,
+          "sha512": "681d7d577559cec4398a161814b6bb55f980fd65c9e1b260782e7a09f41a4a2f2b46459e2ef819ef8ac65893bf43d3d2a04079bb8b5e040a2b8c089f07cc9988",
+          "sha256": "84ebc79795d1dc0b88d59b99bf983c4ad87715a54f98730b2db59eaafa1243dc",
+          "sha1": "3baa22d52d019505e6a2153b3911bbe05db61f63",
+          "md5": "5c75d3ada1396e5755295f6c5cf5c271"
+        }
+      ]
+    },
+    {
+      "name": "desktopSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "coui-squircle-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-squircle-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "size": 68828,
+          "sha512": "834fd5a04a8c9a09803b84eb12fbb11ce6ff5c68db71380cef56a56a382a4094ea2af25b0a5f18fadf19d44fd2be85d66b36986918290ebcd214efccf0718b1d",
+          "sha256": "19a7ef6f00f4fdf1240b6a07768081585eaca4d75cbcba509e8ea35ed92bc71a",
+          "sha1": "faa484ab6d83a9b67b8a8b1bc9d3bce1c5625e5e",
+          "md5": "72be5a8dd9458ebd74e1f649e6378b67"
+        }
+      ]
+    }
+  ]
+}

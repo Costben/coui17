@@ -1,0 +1,130 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-preference/1.2.0-SNAPSHOT/coui-preference-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-preference",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "desktopApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-ui",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-preference-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-preference-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 565017,
+          "sha512": "a4168e5a933dce7a4408c32f46f4a8e2858d20bf34c05bc14d3cb3fe896adaec326471bdf182aae1f6674c6e3ac517ed5815cc55eea4d88871d5611cae4f8f63",
+          "sha256": "31defac2486e42545aaabe0536754334785c41f478414d063d9d14478e082e76",
+          "sha1": "4b1eb0d96a12a2db20f1a94501ba23cdd2e39e01",
+          "md5": "5d1141c4131a8e6bd93540ee6076bc47"
+        }
+      ]
+    },
+    {
+      "name": "desktopRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-ui",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-preference-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-preference-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 565017,
+          "sha512": "a4168e5a933dce7a4408c32f46f4a8e2858d20bf34c05bc14d3cb3fe896adaec326471bdf182aae1f6674c6e3ac517ed5815cc55eea4d88871d5611cae4f8f63",
+          "sha256": "31defac2486e42545aaabe0536754334785c41f478414d063d9d14478e082e76",
+          "sha1": "4b1eb0d96a12a2db20f1a94501ba23cdd2e39e01",
+          "md5": "5d1141c4131a8e6bd93540ee6076bc47"
+        }
+      ]
+    },
+    {
+      "name": "desktopSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "coui-preference-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-preference-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "size": 98697,
+          "sha512": "d0dcf3876d0b6d957e6a90262b6a06007201f1fa6bdb8230deebb7d661798911806de17de0120f30411d9358a5146bbb09b201adebccc644bec4f16229a0780e",
+          "sha256": "369ac3d86cf6deb385f2f83211f0f83f3d824b164a149af93f639d83a8a1b1ca",
+          "sha1": "4f953ea4e0b57a1ccbf40aff421b12cab2f4ddf0",
+          "md5": "53f4a45d3217a82396ccae9dc67f8279"
+        }
+      ]
+    }
+  ]
+}

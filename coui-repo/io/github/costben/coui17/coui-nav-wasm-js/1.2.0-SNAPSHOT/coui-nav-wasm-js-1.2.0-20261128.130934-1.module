@@ -1,0 +1,260 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-nav/1.2.0-SNAPSHOT/coui-nav-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-nav",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav-wasm-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-nav-wasm-js-1.2.0-SNAPSHOT.klib",
+          "size": 175249,
+          "sha512": "12c124dcc8c350108d436929b65a050fdc16f1b10f7ff9452caf75d39550e29c484ad02873637fb9788ccad776573a04910866f775515de486185d02d82853e5",
+          "sha256": "74909418082360d0485b26393d6cff907eecc161a09fb624bdc2b49abde0198f",
+          "sha1": "b61001c8327d1b6608c690ac19a91436e830a54d",
+          "md5": "dcc00402ed00dc95cefc0c7f90380476"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-collections-immutable",
+          "version": {
+            "requires": "0.5.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav-wasm-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-nav-wasm-js-1.2.0-SNAPSHOT.klib",
+          "size": 175249,
+          "sha512": "12c124dcc8c350108d436929b65a050fdc16f1b10f7ff9452caf75d39550e29c484ad02873637fb9788ccad776573a04910866f775515de486185d02d82853e5",
+          "sha256": "74909418082360d0485b26393d6cff907eecc161a09fb624bdc2b49abde0198f",
+          "sha1": "b61001c8327d1b6608c690ac19a91436e830a54d",
+          "md5": "dcc00402ed00dc95cefc0c7f90380476"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "coui-nav-wasm-js-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-nav-wasm-js-1.2.0-SNAPSHOT-sources.jar",
+          "size": 71609,
+          "sha512": "de8cfe7a74770cbd3a0917d3d4a7686f45eb15eaa731c5ffdb2b4756fca6646800bf3ca31835e791322715ca071222c2868297971fcded42e36d042146df7697",
+          "sha256": "917a9f045448625e0190e56e7abd3bc84e12d749fee731f0310f1153de61f085",
+          "sha1": "d4428af6e76aa3d445dae86235871a189d9536b8",
+          "md5": "c352a70da6a9ebcde81687ee252e7673"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-collections-immutable",
+          "version": {
+            "requires": "0.5.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-nav-wasm-js-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 354,
+          "sha512": "aa8539c188c6bb23a05ed0094bde609592295458fc8938a014dfb19afdfc28ff5c5770ea1ab08fff0d31d95808f8bccdd34274c123f79088e7085c1b263cd036",
+          "sha256": "38afe7b99b8a188ecc7cbdaa4f4be11ece02b1f88131d0277907ecfecfbdfc9e",
+          "sha1": "83d58461b88a8722c07ac10a94a39ae6a97b5672",
+          "md5": "c576f57867440da09833b9eb6b6e86da"
+        }
+      ]
+    }
+  ]
+}

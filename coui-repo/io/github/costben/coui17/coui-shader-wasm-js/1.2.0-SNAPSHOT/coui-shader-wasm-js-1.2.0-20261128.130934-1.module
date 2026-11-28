@@ -1,0 +1,148 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-shader/1.2.0-SNAPSHOT/coui-shader-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-shader",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-wasm-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-shader-wasm-js-1.2.0-SNAPSHOT.klib",
+          "size": 13700,
+          "sha512": "1d71881f314a588539f85e22ed48efe5493e53cabe3d94ec96fc84cea576b40965868f585a9c116746ca2eff94f6102b802d99411a1e34d686fdb517baa8a2f6",
+          "sha256": "9ce50fbcda5cd1b364b4f3c626c88cbd1afdb31c639f31057251e6500e3c5f9d",
+          "sha1": "8e5bbd29436ca31fe9d3602ff76f0cd288d08f8f",
+          "md5": "927739e1f67e3114b2ebc941b70b9f61"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-wasm-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-shader-wasm-js-1.2.0-SNAPSHOT.klib",
+          "size": 13700,
+          "sha512": "1d71881f314a588539f85e22ed48efe5493e53cabe3d94ec96fc84cea576b40965868f585a9c116746ca2eff94f6102b802d99411a1e34d686fdb517baa8a2f6",
+          "sha256": "9ce50fbcda5cd1b364b4f3c626c88cbd1afdb31c639f31057251e6500e3c5f9d",
+          "sha1": "8e5bbd29436ca31fe9d3602ff76f0cd288d08f8f",
+          "md5": "927739e1f67e3114b2ebc941b70b9f61"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "coui-shader-wasm-js-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-shader-wasm-js-1.2.0-SNAPSHOT-sources.jar",
+          "size": 5251,
+          "sha512": "d75b57487f63b2ce387bece4cc409d854a7ffffa87d2afd5906ff22a07b6167baf928a9399c714464263ab753f80ddb8b3dd7c69126dfad0ffc2e4615defa2e4",
+          "sha256": "2f36c1a95aefb969c7735e46a2bd35939eb01b7eb19e5f835b177d3b037e3ec2",
+          "sha1": "e17eceb5d270ea3fb42b05bba2b262a08ddbb27e",
+          "md5": "395e561ef7fa75f8389bdc6c033130a3"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-shader-wasm-js-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 360,
+          "sha512": "105ab8577c58a730325779f00d545c3f69c0b1b31d401aa20bbd389c5fa2826b084e3044433aa99f0a31801ff77aa834b083eb9457d1476e31b6ec41b3e9e30a",
+          "sha256": "e3f32317c6ff1f98c1bcfe125749d0e09d8938641225d3bc6a541a9d7d43d94f",
+          "sha1": "5df00ac2baaa61323984c2e777c6c2ee334c83d0",
+          "md5": "8c3ed36c1d6bd85eb67931967f5b86e1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-shader/1.2.0-SNAPSHOT/coui-shader-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-shader",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "macosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-macosArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-shader-macosarm64-1.2.0-SNAPSHOT.klib",
+          "size": 14526,
+          "sha512": "2d9187eeb5611ec605ba050737c9810ab2137c62f87ea72278afb9b9801cc6b02636cb11cacea7dda2f0a2cd73b5650c74db3f3cf5e707acd8ebbe9835e2f145",
+          "sha256": "4ae2f928df5936a1002420f51f74330a93242ccda4fa3b3d36a21d9b5f7b0836",
+          "sha1": "05f62b4a66289b3becdcec4723560061c41eebf4",
+          "md5": "107df8d8f7d2f5bb6886d9e331a2e90e"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-shader-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-shader-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 5251,
+          "sha512": "d75b57487f63b2ce387bece4cc409d854a7ffffa87d2afd5906ff22a07b6167baf928a9399c714464263ab753f80ddb8b3dd7c69126dfad0ffc2e4615defa2e4",
+          "sha256": "2f36c1a95aefb969c7735e46a2bd35939eb01b7eb19e5f835b177d3b037e3ec2",
+          "sha1": "e17eceb5d270ea3fb42b05bba2b262a08ddbb27e",
+          "md5": "395e561ef7fa75f8389bdc6c033130a3"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-shader-macosarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 360,
+          "sha512": "105ab8577c58a730325779f00d545c3f69c0b1b31d401aa20bbd389c5fa2826b084e3044433aa99f0a31801ff77aa834b083eb9457d1476e31b6ec41b3e9e30a",
+          "sha256": "e3f32317c6ff1f98c1bcfe125749d0e09d8938641225d3bc6a541a9d7d43d94f",
+          "sha1": "5df00ac2baaa61323984c2e777c6c2ee334c83d0",
+          "md5": "8c3ed36c1d6bd85eb67931967f5b86e1"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-shader-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-blur/1.2.0-SNAPSHOT/coui-blur-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-blur",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "macosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur-macosArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-blur-macosarm64-1.2.0-SNAPSHOT.klib",
+          "size": 299349,
+          "sha512": "5b3c45551fb5df45edd039d0e7c08a207a32a52ceed93b4f000b1c26eef060f157a9d0e1c20df1bb252b282b811118a485e5d76537f57d847df6f3b5d2c280c6",
+          "sha256": "75ca0f9c0c0e601fca6571a6fbd8e1bf71c30a690931625609ba1ee1642c72b1",
+          "sha1": "4699c6ffb8854ec270cdbc220c5b0f8ed3168574",
+          "md5": "e0dbeb30fc296c8eeffda17fddda2dc7"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-blur-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-blur-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 85903,
+          "sha512": "fe5dd1830bffc8993297a83a443753d91653a1f1b7c169921ab5ef3fac8cd2a826c6bc62586be7cbc2f459687c09bcb5724909aedb982e679fa44a466067ed3e",
+          "sha256": "eb93ef368c5ab7a9e1fd6641bc5a62326879e7e69917ef0266334aa1a29e3d81",
+          "sha1": "3062a2aeecfa14ca96c3087a462b0465f09c9505",
+          "md5": "02deae46f70eecaad2cc421007a888d2"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-blur-macosarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 356,
+          "sha512": "ac5495bde10179579cf2b6441bd20e9b64abd1967cfe39bc83eed7ca8abd32db5a7977afc2ea2298f135a6c7cd6058b84ee651000bdfed0ba98f49e8691a009e",
+          "sha256": "67044280fdc9229ee3b43e41a423bc758ab540f519a06098791f6f3b0da62c18",
+          "sha1": "ab55f262ee01f0f7c5e81a64d94b6af310b829b0",
+          "md5": "9abe5b499b0bc72718fafe960ac2361b"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-blur-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 3334,
+          "sha512": "043a94bde7a31a276109856ef6632828ec9c778e2b93b064de3bdb0059048fdda634117b788e470e71611ce0ed4bfe20a563d0f649af493609aae82b7eb2c703",
+          "sha256": "9a93e1b143ca983812633bd36d7b29b516fe4a290ccaa251f644034e041186c4",
+          "sha1": "ff56a0637910fcc61ed1fc77d6c8320c2ffde964",
+          "md5": "ac46aec412364b6c11ae7fc89d2c4035"
+        }
+      ]
+    }
+  ]
+}

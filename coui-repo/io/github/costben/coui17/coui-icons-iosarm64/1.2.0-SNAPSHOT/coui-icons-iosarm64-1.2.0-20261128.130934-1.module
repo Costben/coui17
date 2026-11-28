@@ -1,0 +1,176 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-icons/1.2.0-SNAPSHOT/coui-icons-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-icons",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-icons-iosArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-icons-iosarm64-1.2.0-SNAPSHOT.klib",
+          "size": 1282941,
+          "sha512": "d25ab72d29e71a05c43c45831d68730294df66c39168bb2d18317f086437fa4c3b63ac13296d5f7a3997bb9c4bb6584f428b654829ae6566ba92bfd4977af2d5",
+          "sha256": "e90ced499ab409854f42da76f29a98048a4073e578f3c70f25d646f653c6e9a5",
+          "sha1": "d373544fa0c0de4494eea3d762ebb9a79cf8b8d1",
+          "md5": "ab57b0bd960b80cffaa3884fbd976577"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-icons-iosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-icons-iosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 743655,
+          "sha512": "ed3a97ffc530b3569d6ec55bf4890244e8707053b3ff809ad7883a12687024a814cf43dca0cdc97d9124f81d100cd6e0f2cdc035351b6e63794551b25f18fc4c",
+          "sha256": "6db260bea2fb1fbb16d62abd5268cb21abe0421662be29c240a94d7dc5450b13",
+          "sha1": "30dc25ddc171cd19f57b32778aec5ba79f7ff3db",
+          "md5": "8a6b72f2a86c004b22087ce4545d4615"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-icons-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-icons-iosarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 358,
+          "sha512": "dc1716a1dba82c77de58689e5f5180ac51ce1c43e6b7744bd030399827020cdf540835aac5d977045c6e5e77e04c80480e6acb369d16ed28c022a6df61e085bc",
+          "sha256": "a7632ed4fdd556cc41d464bf73a221ccf704d2ed07d5be9efc4271b529768fcd",
+          "sha1": "3b3c10fb295b0e92822345c9b7ae098f4aacf813",
+          "md5": "fc4a4452664730dae4acaa8a3aca6443"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-icons-iosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-icons-iosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

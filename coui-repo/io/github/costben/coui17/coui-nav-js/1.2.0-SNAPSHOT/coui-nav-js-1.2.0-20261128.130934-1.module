@@ -1,0 +1,281 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-nav/1.2.0-SNAPSHOT/coui-nav-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-nav",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "jsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-nav-js-1.2.0-SNAPSHOT.klib",
+          "size": 3637062,
+          "sha512": "5e5f3a41219b6732a4bf24d8c03dfcb0614e915c8ad8e4174d1f9de56dc07c20a78363183ee60f802c20f1467c7902b935dad6ad6ea83c5d72e90bdf7af2ae0c",
+          "sha256": "af7afaf7ed75267234d35fb802e847f70db72cda5060f1b51311ee0e9afd91e0",
+          "sha1": "baee3b6983fc36f872c42c6fd8a26960d34e605f",
+          "md5": "9673479f21dab8c4a53a8786bb94e5df"
+        }
+      ]
+    },
+    {
+      "name": "jsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-collections-immutable",
+          "version": {
+            "requires": "0.5.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-nav-js-1.2.0-SNAPSHOT.klib",
+          "size": 3637062,
+          "sha512": "5e5f3a41219b6732a4bf24d8c03dfcb0614e915c8ad8e4174d1f9de56dc07c20a78363183ee60f802c20f1467c7902b935dad6ad6ea83c5d72e90bdf7af2ae0c",
+          "sha256": "af7afaf7ed75267234d35fb802e847f70db72cda5060f1b51311ee0e9afd91e0",
+          "sha1": "baee3b6983fc36f872c42c6fd8a26960d34e605f",
+          "md5": "9673479f21dab8c4a53a8786bb94e5df"
+        }
+      ]
+    },
+    {
+      "name": "jsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "files": [
+        {
+          "name": "coui-nav-js-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-nav-js-1.2.0-SNAPSHOT-sources.jar",
+          "size": 71609,
+          "sha512": "de8cfe7a74770cbd3a0917d3d4a7686f45eb15eaa731c5ffdb2b4756fca6646800bf3ca31835e791322715ca071222c2868297971fcded42e36d042146df7697",
+          "sha256": "917a9f045448625e0190e56e7abd3bc84e12d749fee731f0310f1153de61f085",
+          "sha1": "d4428af6e76aa3d445dae86235871a189d9536b8",
+          "md5": "c352a70da6a9ebcde81687ee252e7673"
+        }
+      ]
+    },
+    {
+      "name": "jsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-collections-immutable",
+          "version": {
+            "requires": "0.5.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-nav-js-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 354,
+          "sha512": "aa8539c188c6bb23a05ed0094bde609592295458fc8938a014dfb19afdfc28ff5c5770ea1ab08fff0d31d95808f8bccdd34274c123f79088e7085c1b263cd036",
+          "sha256": "38afe7b99b8a188ecc7cbdaa4f4be11ece02b1f88131d0277907ecfecfbdfc9e",
+          "sha1": "83d58461b88a8722c07ac10a94a39ae6a97b5672",
+          "md5": "c576f57867440da09833b9eb6b6e86da"
+        }
+      ]
+    }
+  ]
+}

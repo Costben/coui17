@@ -1,0 +1,151 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-navigation3-ui/1.2.0-SNAPSHOT/coui-navigation3-ui-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-navigation3-ui",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "desktopApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-navigation3-ui-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-navigation3-ui-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 143504,
+          "sha512": "b44d86efe9e20520c5a1d9835e549a73394aa670ae29a05f396457e361f86067941057e6b08fe344ede69bf66bed04201dfc30923f090e6d7ef51568d6b928d8",
+          "sha256": "d10f1904bf5040b6c452b1861cb1a32e24c5c73e263c6058a0da3e1872bb13c0",
+          "sha1": "b0d6b6fce81dd501eb770249801c242c1798ce52",
+          "md5": "8dfc117314c4ed12cf19ca1be4c6a26f"
+        }
+      ]
+    },
+    {
+      "name": "desktopRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.collection",
+          "module": "collection",
+          "version": {
+            "requires": "1.6.0"
+          }
+        },
+        {
+          "group": "androidx.navigation3",
+          "module": "navigation3-runtime",
+          "version": {
+            "requires": "1.1.4"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-navigation3-ui-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-navigation3-ui-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 143504,
+          "sha512": "b44d86efe9e20520c5a1d9835e549a73394aa670ae29a05f396457e361f86067941057e6b08fe344ede69bf66bed04201dfc30923f090e6d7ef51568d6b928d8",
+          "sha256": "d10f1904bf5040b6c452b1861cb1a32e24c5c73e263c6058a0da3e1872bb13c0",
+          "sha1": "b0d6b6fce81dd501eb770249801c242c1798ce52",
+          "md5": "8dfc117314c4ed12cf19ca1be4c6a26f"
+        }
+      ]
+    },
+    {
+      "name": "desktopSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "coui-navigation3-ui-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-navigation3-ui-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "size": 33949,
+          "sha512": "ad7f4efb6ec8cdf1e5e736a3be4373a4bfedaf3c056944a0442702ed46851aa7cac3cc8a76835531c4a4e3502b4155c2ef0777aba2c7787db6c1a38a3facacc3",
+          "sha256": "2ed064ff5186bb81bdabc2fab72dc8c76d1073f60db4e60a9785f886b565ea10",
+          "sha1": "9654cd02c7f17d42196b035c352c4680fb4378e8",
+          "md5": "e4dbb1c2e5e9a8b5453e4c1fab5da02e"
+        }
+      ]
+    }
+  ]
+}

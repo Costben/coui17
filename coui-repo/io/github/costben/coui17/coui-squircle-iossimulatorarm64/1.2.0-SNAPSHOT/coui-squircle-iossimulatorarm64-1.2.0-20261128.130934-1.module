@@ -1,0 +1,176 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-squircle/1.2.0-SNAPSHOT/coui-squircle-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-squircle",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-squircle-iosSimulatorArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-squircle-iossimulatorarm64-1.2.0-SNAPSHOT.klib",
+          "size": 120890,
+          "sha512": "e90bc89d39378563c85e148811a62922aae710de3326e3acede688f88463086c9889eacb1e92516a04716b754de9d0d41059eda7ed3c7b69f58d43fdf350078b",
+          "sha256": "236d424dc2827dd1068cd4469b41f63c9dc3d3b9f4d5a0fd9fa6750be36160fe",
+          "sha1": "0c2dbda2d9a60b82ce930baf920690ce4200832a",
+          "md5": "c9b7db8f3783c1df70d51912a8575cf8"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-squircle-iossimulatorarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-squircle-iossimulatorarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 68828,
+          "sha512": "834fd5a04a8c9a09803b84eb12fbb11ce6ff5c68db71380cef56a56a382a4094ea2af25b0a5f18fadf19d44fd2be85d66b36986918290ebcd214efccf0718b1d",
+          "sha256": "19a7ef6f00f4fdf1240b6a07768081585eaca4d75cbcba509e8ea35ed92bc71a",
+          "sha1": "faa484ab6d83a9b67b8a8b1bc9d3bce1c5625e5e",
+          "md5": "72be5a8dd9458ebd74e1f649e6378b67"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-squircle-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-squircle-iossimulatorarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 364,
+          "sha512": "6529c30cffd91a4ad2857ffbcb1a18fc8e731559cc9bafc9a9b739f1206983f5c9f4a427f74e8471edc327fb0637d1c5b186c801cb5d637dd6d14ccbe1448c29",
+          "sha256": "accd33ca75d9532659452d5b530c51fe797f8185a999c79205700a8c47cfa370",
+          "sha1": "fce182c2c0aabc5fd450b8aa34731ece5595c93b",
+          "md5": "c04e254e091947855533f12ffae33d41"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-squircle-iossimulatorarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-squircle-iossimulatorarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

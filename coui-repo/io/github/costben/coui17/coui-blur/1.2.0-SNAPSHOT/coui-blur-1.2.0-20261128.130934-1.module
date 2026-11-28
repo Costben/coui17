@@ -1,0 +1,523 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.costben.coui17",
+    "module": "coui-blur",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "metadataApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur-metadata-1.2.0-SNAPSHOT.jar",
+          "url": "coui-blur-1.2.0-SNAPSHOT.jar",
+          "size": 43785,
+          "sha512": "9dda9fb64154f70fdf51d41bb06942396bfd295e6b74ad6b2b816439a96a4081d27faeb60cd735b2b69599751e1404b0d512013983ea23b603a81a6edce2bf92",
+          "sha256": "6daceff84ba281b0646e2ceaf209e92ccad06fadf611b8ee05101e3be3499546",
+          "sha1": "46fdd406930c5b1d7166521e292e64e6fac45fce",
+          "md5": "0adf927abf9c7adb2c2a2e07c625e1ab"
+        }
+      ]
+    },
+    {
+      "name": "metadataSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "files": [
+        {
+          "name": "coui-blur-kotlin-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-blur-1.2.0-SNAPSHOT-sources.jar",
+          "size": 88915,
+          "sha512": "517eaf96ed649c6bc7cf51844621b4bda1ed61228654c9da502b4cf579a038128237754d3d56ee9ffb91ff7017f8bcd3abdb598fadd98741d111b4bf121aa42e",
+          "sha256": "594bbf3b01fc2243095aebf9406b83cf773eed32e0db09cff808280bda0afc92",
+          "sha1": "d5afbd8aeea4a0a33da0b9a5537fca87aca51d36",
+          "md5": "d796cac7fbaa632bc901ee58609d7080"
+        }
+      ]
+    },
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../coui-blur-android/1.2.0-SNAPSHOT/coui-blur-android-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-android",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../coui-blur-android/1.2.0-SNAPSHOT/coui-blur-android-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-android",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../coui-blur-android/1.2.0-SNAPSHOT/coui-blur-android-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-android",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "desktopApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../coui-blur-desktop/1.2.0-SNAPSHOT/coui-blur-desktop-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-desktop",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "desktopRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../coui-blur-desktop/1.2.0-SNAPSHOT/coui-blur-desktop-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-desktop",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "desktopSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../coui-blur-desktop/1.2.0-SNAPSHOT/coui-blur-desktop-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-desktop",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iosarm64/1.2.0-SNAPSHOT/coui-blur-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iosarm64/1.2.0-SNAPSHOT/coui-blur-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iosarm64/1.2.0-SNAPSHOT/coui-blur-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iosarm64/1.2.0-SNAPSHOT/coui-blur-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iossimulatorarm64/1.2.0-SNAPSHOT/coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iossimulatorarm64/1.2.0-SNAPSHOT/coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iossimulatorarm64/1.2.0-SNAPSHOT/coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-iossimulatorarm64/1.2.0-SNAPSHOT/coui-blur-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-js/1.2.0-SNAPSHOT/coui-blur-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-js/1.2.0-SNAPSHOT/coui-blur-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-js/1.2.0-SNAPSHOT/coui-blur-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-js/1.2.0-SNAPSHOT/coui-blur-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-macosarm64/1.2.0-SNAPSHOT/coui-blur-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-macosarm64/1.2.0-SNAPSHOT/coui-blur-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-macosarm64/1.2.0-SNAPSHOT/coui-blur-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-blur-macosarm64/1.2.0-SNAPSHOT/coui-blur-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-wasm-js/1.2.0-SNAPSHOT/coui-blur-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-wasm-js/1.2.0-SNAPSHOT/coui-blur-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-wasm-js/1.2.0-SNAPSHOT/coui-blur-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-blur-wasm-js/1.2.0-SNAPSHOT/coui-blur-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-blur-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    }
+  ]
+}

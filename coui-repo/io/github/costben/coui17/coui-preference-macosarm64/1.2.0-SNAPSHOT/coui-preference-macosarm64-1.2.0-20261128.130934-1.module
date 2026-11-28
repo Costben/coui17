@@ -1,0 +1,176 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-preference/1.2.0-SNAPSHOT/coui-preference-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-preference",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "macosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-ui",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-preference-macosArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-preference-macosarm64-1.2.0-SNAPSHOT.klib",
+          "size": 577443,
+          "sha512": "ca17e51789baa6cf0f30ae3ce849471ab0636607486a7d31b2e155db41869b9063bae24aa5f91916dfa9ac886fde01b8245147044bf157c50ae60d9ada0ed013",
+          "sha256": "8ad04e966e1e1f5d80daa5b758d3afd4c8c0a358b8f237c73d00efe1e6a7c6d6",
+          "sha1": "84106ee28582964f931032388970c93191911afb",
+          "md5": "fbbfb2a124b033cceb40e163aff24d35"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-preference-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-preference-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 98697,
+          "sha512": "d0dcf3876d0b6d957e6a90262b6a06007201f1fa6bdb8230deebb7d661798911806de17de0120f30411d9358a5146bbb09b201adebccc644bec4f16229a0780e",
+          "sha256": "369ac3d86cf6deb385f2f83211f0f83f3d824b164a149af93f639d83a8a1b1ca",
+          "sha1": "4f953ea4e0b57a1ccbf40aff421b12cab2f4ddf0",
+          "md5": "53f4a45d3217a82396ccae9dc67f8279"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-ui",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-preference-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-preference-macosarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 368,
+          "sha512": "c8c15530970700b60534b05231d89343b4a0d8741bfe4c4fd5146491f5a157b8f2f50810cc8b489510f94ffbbeddb18f254c732413e3cd976081c67ffa015ed7",
+          "sha256": "4386eb9a3249475fbd02270c71c6a302754bc2fd9039d215353cac6eaac66a13",
+          "sha1": "e49b5e993a75507e572178e7f63d086b2df79dbd",
+          "md5": "228156179e34c35b5fbf3e18ed636ca7"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-ui",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-preference-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-preference-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

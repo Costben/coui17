@@ -1,0 +1,158 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-navigation3-ui/1.2.0-SNAPSHOT/coui-navigation3-ui-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-navigation3-ui",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-navigation3-ui.aar",
+          "url": "coui-navigation3-ui-android-1.2.0-SNAPSHOT.aar",
+          "size": 137332,
+          "sha512": "be15ba7ecb5dcb2b2dfdec349335a61414067772fa55682f958803d14c6bff6f1ccd30480a946ec33443c40d9054e6beb514bfa85cdf9e15012034ca33d4c00b",
+          "sha256": "9d4b4951daf764da1cb8adfbb5a5dc1fef50d774644bde650408bb5e8e32ca5e",
+          "sha1": "e2b89ecba8f7be21f4e24d7d6ea6624b8ff351ee",
+          "md5": "ba15eb6ac7a046cdc3333807ded5e94b"
+        }
+      ]
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "androidx.activity",
+          "module": "activity-compose",
+          "version": {
+            "requires": "1.13.0"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.collection",
+          "module": "collection",
+          "version": {
+            "requires": "1.6.0"
+          }
+        },
+        {
+          "group": "androidx.navigation3",
+          "module": "navigation3-runtime",
+          "version": {
+            "requires": "1.1.4"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-navigation3-ui.aar",
+          "url": "coui-navigation3-ui-android-1.2.0-SNAPSHOT.aar",
+          "size": 137332,
+          "sha512": "be15ba7ecb5dcb2b2dfdec349335a61414067772fa55682f958803d14c6bff6f1ccd30480a946ec33443c40d9054e6beb514bfa85cdf9e15012034ca33d4c00b",
+          "sha256": "9d4b4951daf764da1cb8adfbb5a5dc1fef50d774644bde650408bb5e8e32ca5e",
+          "sha1": "e2b89ecba8f7be21f4e24d7d6ea6624b8ff351ee",
+          "md5": "ba15eb6ac7a046cdc3333807ded5e94b"
+        }
+      ]
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "coui-navigation3-ui-android-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-navigation3-ui-android-1.2.0-SNAPSHOT-sources.jar",
+          "size": 34490,
+          "sha512": "27069f6f1b9c542f39d2253fe302d2e7e25ad09f141cc63377a1579cd3b77662377a3ce414a03756a5909749532da83081d41aeeb51ecc1973c25fa560eae110",
+          "sha256": "40f7e62334f3b4a7865847a1630fbdc779a897d1fda543ce0022816e2af7c12f",
+          "sha1": "bf03de9a3ad2c17334d45204f823081b6c245bd1",
+          "md5": "84c1af6feea583049a6cc91cc8e41acc"
+        }
+      ]
+    }
+  ]
+}

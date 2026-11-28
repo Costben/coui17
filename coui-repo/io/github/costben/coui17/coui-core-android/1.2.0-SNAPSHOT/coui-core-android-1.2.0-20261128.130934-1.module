@@ -1,0 +1,109 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-core/1.2.0-SNAPSHOT/coui-core-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-core",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core.aar",
+          "url": "coui-core-android-1.2.0-SNAPSHOT.aar",
+          "size": 18882,
+          "sha512": "66dee9056643395b9b3b1a8eb5e42bfd2917650f464f5ac17294a0cb37c3687334ce90641d7a26073be29bbbf75e70f448e76104d96587f61d7ba7d8a5ff8f36",
+          "sha256": "4e8caaa571cb4ec03b4a575dd8f8ece68b8f606fc81f6025599770fd42279e1c",
+          "sha1": "bf40625660db07f50b7cc6872f020980c07e0fdc",
+          "md5": "0d38b73824f766725ec264e33df141b2"
+        }
+      ]
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core.aar",
+          "url": "coui-core-android-1.2.0-SNAPSHOT.aar",
+          "size": 18882,
+          "sha512": "66dee9056643395b9b3b1a8eb5e42bfd2917650f464f5ac17294a0cb37c3687334ce90641d7a26073be29bbbf75e70f448e76104d96587f61d7ba7d8a5ff8f36",
+          "sha256": "4e8caaa571cb4ec03b4a575dd8f8ece68b8f606fc81f6025599770fd42279e1c",
+          "sha1": "bf40625660db07f50b7cc6872f020980c07e0fdc",
+          "md5": "0d38b73824f766725ec264e33df141b2"
+        }
+      ]
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "coui-core-android-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-core-android-1.2.0-SNAPSHOT-sources.jar",
+          "size": 6677,
+          "sha512": "f5992afbb19ee89afdd3fc67e98bad966d5764ac704ec4ce5b10b80abd91cce0505fc27712da7a7aac8eb2a6b16dbe09ec31c064bec08081c9b61f6fb3e65d53",
+          "sha256": "1f67848686f5fed6468bf150030f8372c873ba23e818bc56a789f539eaf73f24",
+          "sha1": "eec16cd45dc55edcaaa83b1a43c3f28f09eca982",
+          "md5": "5b2299a09e3b450ce543c9a9d6232307"
+        }
+      ]
+    }
+  ]
+}

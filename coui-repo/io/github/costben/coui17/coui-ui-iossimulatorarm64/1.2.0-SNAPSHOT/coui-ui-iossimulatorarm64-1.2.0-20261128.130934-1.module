@@ -1,0 +1,281 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-ui/1.2.0-SNAPSHOT/coui-ui-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-ui",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-blur",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.material3",
+          "module": "material3-window-size-class",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "com.materialkolor",
+          "module": "material-color-utilities",
+          "version": {
+            "requires": "5.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-ui-iosSimulatorArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-ui-iossimulatorarm64-1.2.0-SNAPSHOT.klib",
+          "size": 6725352,
+          "sha512": "fe2ef28154e58610c8ee91744b15dd997512c27aef9196c26280b123583c0f0f5a2b01c0bac94b47451dc83871cd6eaf7ea262912a7b4cdde0cdb8c7f008b13c",
+          "sha256": "09faaf46ceedc3c63f2eb0e6e164c37cab70de89767ceeaba5a285346b5510f9",
+          "sha1": "44de5b24130777b40dffcf0b3454531115a92723",
+          "md5": "954f6153434706dd2327140e9b47bef3"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-ui-iossimulatorarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-ui-iossimulatorarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 1260640,
+          "sha512": "e717e9b06ff7d88334f050b7641de466d3f83694c2c5bd060cf223d4c944596307988c1fa76e93e8850924f331a973e1a6d800cce69efe3673d28a6abe8deeb7",
+          "sha256": "e356fae39c53b55bc12d6ad0722aadbc0f1999bd9839fbd26f6a5803803ad103",
+          "sha1": "27fb5a76b8efb314ad4a51320ff30831a13dceed",
+          "md5": "830233ed3298ecb47941152a640b4d57"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-blur",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.material3",
+          "module": "material3-window-size-class",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "com.materialkolor",
+          "module": "material-color-utilities",
+          "version": {
+            "requires": "5.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-ui-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-ui-iossimulatorarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 352,
+          "sha512": "0b3b3035a6702e2ba781ff4ab2de3869df4df7c82004dfbf5095cb8c6b001be2baf0dd5dedd7ab86395f2472a688639b8e6c0322cd300d5325e4584c8e0a637e",
+          "sha256": "a9dabfde9cbb1a5ad8704c5d63923d4e31bf8fcd1a0791312d42f67499ce880a",
+          "sha1": "5d785f202de67cc27468feb37eda42f4de619098",
+          "md5": "f9d813f03d3ed6cc5d03bbed4e7b5933"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-blur",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.material3",
+          "module": "material3-window-size-class",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "com.materialkolor",
+          "module": "material-color-utilities",
+          "version": {
+            "requires": "5.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-ui-iossimulatorarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-ui-iossimulatorarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 9713,
+          "sha512": "484ca5bff711ffd167e3d9843dffb5a66470c8f4e7bd8c690df5d711a6ddd41c62375257a1e913a07261c6777982d7eccc8d33a28e0c831d7b010007fad9da4a",
+          "sha256": "cef73d603c90f3f6c635d9f21ce5b0d81724a5e93da3c9554d51ffa5caff7095",
+          "sha1": "a357bd1f2db47bd2e5e73126c613a07125d72a63",
+          "md5": "bfadf5cd8d71bc0c7edeeaf2612808b3"
+        }
+      ]
+    }
+  ]
+}

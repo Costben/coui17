@@ -1,0 +1,165 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-nav/1.2.0-SNAPSHOT/coui-nav-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-nav",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav.aar",
+          "url": "coui-nav-android-1.2.0-SNAPSHOT.aar",
+          "size": 207277,
+          "sha512": "a5cd1247d253b5bf61b4c845fd014be47f3a4ea0e25eb50af21212a74dddd0373b93682acbc554a47152beb10cd7d20c365dc830df22f24fc7e4986b9f93bd7d",
+          "sha256": "a37dc6197ff40b6bec0734fec113da76542a45b701c6b1112a758232ba78893d",
+          "sha1": "810244f2a28930e092d0e4ff3eed95632daaf403",
+          "md5": "9e07ef08538f88a45cfc73e38bab8720"
+        }
+      ]
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-collections-immutable",
+          "version": {
+            "requires": "0.5.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav.aar",
+          "url": "coui-nav-android-1.2.0-SNAPSHOT.aar",
+          "size": 207277,
+          "sha512": "a5cd1247d253b5bf61b4c845fd014be47f3a4ea0e25eb50af21212a74dddd0373b93682acbc554a47152beb10cd7d20c365dc830df22f24fc7e4986b9f93bd7d",
+          "sha256": "a37dc6197ff40b6bec0734fec113da76542a45b701c6b1112a758232ba78893d",
+          "sha1": "810244f2a28930e092d0e4ff3eed95632daaf403",
+          "md5": "9e07ef08538f88a45cfc73e38bab8720"
+        }
+      ]
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "coui-nav-android-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-nav-android-1.2.0-SNAPSHOT-sources.jar",
+          "size": 72190,
+          "sha512": "063f9457837471d0fb1c064499e2943e21bce1022f9fb1f56ae18cc984badfbf27aabd1e49f6e204d8505d2a3e018d63930d95823b660e6c57438a928f98695f",
+          "sha256": "221d792b90c004daf18ae219880b8c4b0e071fe7a456e8a5184d70a5eadf7b2a",
+          "sha1": "43e2a815a9dedc5bcde89a5a996ac4cd537d6edb",
+          "md5": "5cb9eb7dcf918868af7256913f80ca45"
+        }
+      ]
+    }
+  ]
+}

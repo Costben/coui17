@@ -1,0 +1,155 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-core/1.2.0-SNAPSHOT/coui-core-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-core",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "macosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-macosArm64Main-1.2.0-SNAPSHOT.klib",
+          "url": "coui-core-macosarm64-1.2.0-SNAPSHOT.klib",
+          "size": 15317,
+          "sha512": "1fd9137c8939db9cc8781be8964f2dda5e4b956d5b8b1c18a518707d425f90d9e647a659ecf1d3d9f06b983b4b58646caa6964ba0b7fa2dd61e252a2d369e823",
+          "sha256": "327e464b8954f81cb163c0f125ce1376c9dbaeef6df4eea0d4c0e82f7732d927",
+          "sha1": "57506d28acb0317190b4c6baeeef69840cace9c8",
+          "md5": "3df068570e3ffc486a9c7267fdd31727"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "coui-core-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-core-macosarm64-1.2.0-SNAPSHOT-sources.jar",
+          "size": 6637,
+          "sha512": "9444a86c128383f52d3ccd3e395058d08240072020cc8f8ab884ed30335d68ffa24e39b212fc46762a0b3562b4d49af870b08d1bc5371c154549d3bb34da12ae",
+          "sha256": "ca3d8a6f92bd2b75434c6e85379dbad8d837fa64a571c216e11bf7737fa29586",
+          "sha1": "fa3c29bcf1fb5d0b0270c80caa304be0231145d7",
+          "md5": "2a11a56b96903282bf84a382f8eef8fa"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-core-macosarm64-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 356,
+          "sha512": "79b0d755287661d49aa720f9ee645b65ea66fcbf8a399f6ac8c67183d18efacd0c8c6263dee5522ccd8fd99e7be28c03690bb7b65ff0a96cde2b210b93ab1e5a",
+          "sha256": "819e095c4dfb0e1bbc176cb4478507fc141a6effcc06cf3c039254521f150d8a",
+          "sha1": "923070b6c113761f8af72934b01960e7beb7916d",
+          "md5": "1030e31ed3a459beb43ddb8e58acae40"
+        }
+      ]
+    },
+    {
+      "name": "macosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "url": "coui-core-macosarm64-1.2.0-SNAPSHOT-metadata.jar",
+          "size": 2421,
+          "sha512": "37f7bf33afa6635a3afd44dcf99612947cc3fcc5089738c583768be2e63347a505777f4b5eaa3e06b28c959792ec420c9a496ff90f1444a3899d8f9fbf530ae6",
+          "sha256": "eba3015beda244cd7645e51e9969318120737caaef2f641380ce55e7213543ec",
+          "sha1": "41ecac8368e087481ac76c8f2d19566d058fc3d6",
+          "md5": "3d19b4b02b600dd05cc76a27071e2b02"
+        }
+      ]
+    }
+  ]
+}

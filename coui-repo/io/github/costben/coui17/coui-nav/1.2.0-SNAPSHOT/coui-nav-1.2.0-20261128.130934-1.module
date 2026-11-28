@@ -1,0 +1,572 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.costben.coui17",
+    "module": "coui-nav",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "metadataApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-squircle",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "androidx.navigationevent",
+          "module": "navigationevent-compose",
+          "version": {
+            "requires": "1.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.androidx.lifecycle",
+          "module": "lifecycle-viewmodel-compose",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-collections-immutable",
+          "version": {
+            "requires": "0.5.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-nav-metadata-1.2.0-SNAPSHOT.jar",
+          "url": "coui-nav-1.2.0-SNAPSHOT.jar",
+          "size": 25490,
+          "sha512": "3519cf1243bf2bb7c04aef2222d5ba7b3f91481319ad18501075f39350d22ff19b92448db5aa6fde5ffbcf74c722363ea758f7e071e6b2dcc8868260cd5041bf",
+          "sha256": "851fb210f80b1e73bb330444ec12982ca9f5ac47c3c32a44ef35c7ab10e33aa9",
+          "sha1": "774118c02f24529dd9002f18ea6a5f2db77f3273",
+          "md5": "7f15e5fb60a4fde235fc4d1cde5aa7d9"
+        }
+      ]
+    },
+    {
+      "name": "metadataSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "files": [
+        {
+          "name": "coui-nav-kotlin-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-nav-1.2.0-SNAPSHOT-sources.jar",
+          "size": 71609,
+          "sha512": "ba6ee320dc50daf12c9fba54c62b23c2bbdfb9f1430f6a3afc8f45f4ea9a93277c4ad1c0a46d9eded6b9aaaa946fc299046f1bf7a554e0f95a8267c1cbadc5a2",
+          "sha256": "2aa078aed321e5a9d56c5d52fc88be002b555e4717c49fa5727797671f93262e",
+          "sha1": "ebdd563a28e0bf8cc6fe9a93a004eea8922f6ebd",
+          "md5": "909409890a87f79f5abe28da26ebbe40"
+        }
+      ]
+    },
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../coui-nav-android/1.2.0-SNAPSHOT/coui-nav-android-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-android",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../coui-nav-android/1.2.0-SNAPSHOT/coui-nav-android-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-android",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../coui-nav-android/1.2.0-SNAPSHOT/coui-nav-android-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-android",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "desktopApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../coui-nav-desktop/1.2.0-SNAPSHOT/coui-nav-desktop-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-desktop",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "desktopRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../coui-nav-desktop/1.2.0-SNAPSHOT/coui-nav-desktop-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-desktop",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "desktopSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../coui-nav-desktop/1.2.0-SNAPSHOT/coui-nav-desktop-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-desktop",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iosarm64/1.2.0-SNAPSHOT/coui-nav-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iosarm64/1.2.0-SNAPSHOT/coui-nav-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iosarm64/1.2.0-SNAPSHOT/coui-nav-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iosarm64/1.2.0-SNAPSHOT/coui-nav-iosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iossimulatorarm64/1.2.0-SNAPSHOT/coui-nav-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iossimulatorarm64/1.2.0-SNAPSHOT/coui-nav-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iossimulatorarm64/1.2.0-SNAPSHOT/coui-nav-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-iossimulatorarm64/1.2.0-SNAPSHOT/coui-nav-iossimulatorarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-iossimulatorarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-js/1.2.0-SNAPSHOT/coui-nav-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-js/1.2.0-SNAPSHOT/coui-nav-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-js/1.2.0-SNAPSHOT/coui-nav-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "jsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-js/1.2.0-SNAPSHOT/coui-nav-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64ApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-macosarm64/1.2.0-SNAPSHOT/coui-nav-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-macosarm64/1.2.0-SNAPSHOT/coui-nav-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64ResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresources",
+        "org.gradle.usage": "kotlin-multiplatformresources",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-macosarm64/1.2.0-SNAPSHOT/coui-nav-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "macosArm64MetadataElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../coui-nav-macosarm64/1.2.0-SNAPSHOT/coui-nav-macosarm64-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-macosarm64",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-wasm-js/1.2.0-SNAPSHOT/coui-nav-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-wasm-js/1.2.0-SNAPSHOT/coui-nav-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-wasm-js/1.2.0-SNAPSHOT/coui-nav-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    },
+    {
+      "name": "wasmJsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "available-at": {
+        "url": "../../coui-nav-wasm-js/1.2.0-SNAPSHOT/coui-nav-wasm-js-1.2.0-SNAPSHOT.module",
+        "group": "io.github.costben.coui17",
+        "module": "coui-nav-wasm-js",
+        "version": "1.2.0-SNAPSHOT"
+      }
+    }
+  ]
+}

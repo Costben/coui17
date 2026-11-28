@@ -1,0 +1,148 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-core/1.2.0-SNAPSHOT/coui-core-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-core",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-wasm-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-core-wasm-js-1.2.0-SNAPSHOT.klib",
+          "size": 14720,
+          "sha512": "9cf28331d813e80c0637df64b716fd7c7e20385769087e540b49a88b67e4c497929d11aa0dca682deabe39df2484150b80fe8a27a3da2048cdbebb980a17db5a",
+          "sha256": "39d2eed81acb9bf1ac8326dfd625f50c3992005c4b883243f1360124e519f1c3",
+          "sha1": "65716e4cec9108580e1e8cb89b467835e501b324",
+          "md5": "d3c5097b81e97d5527b1974fffa52411"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-wasm-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-core-wasm-js-1.2.0-SNAPSHOT.klib",
+          "size": 14720,
+          "sha512": "9cf28331d813e80c0637df64b716fd7c7e20385769087e540b49a88b67e4c497929d11aa0dca682deabe39df2484150b80fe8a27a3da2048cdbebb980a17db5a",
+          "sha256": "39d2eed81acb9bf1ac8326dfd625f50c3992005c4b883243f1360124e519f1c3",
+          "sha1": "65716e4cec9108580e1e8cb89b467835e501b324",
+          "md5": "d3c5097b81e97d5527b1974fffa52411"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "coui-core-wasm-js-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-core-wasm-js-1.2.0-SNAPSHOT-sources.jar",
+          "size": 6656,
+          "sha512": "722a81a73b83d436e9649467824b35b32f9622d15fb2e9083357812659c1b1caa0a811109341a5f53c24e49ede4fdcbc215dc014619734fa0c2cbcd598a3871b",
+          "sha256": "a38e7e7c4a4e9cfe4720c2cb31f5e630b0839c5e15c9c9b7816676eeee6663cd",
+          "sha1": "c8e4206a0ab2758773b138567c4d789374a72ba1",
+          "md5": "a29d592b33f6bd9c3e9056778ff5301f"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-core-wasm-js-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 356,
+          "sha512": "79b0d755287661d49aa720f9ee645b65ea66fcbf8a399f6ac8c67183d18efacd0c8c6263dee5522ccd8fd99e7be28c03690bb7b65ff0a96cde2b210b93ab1e5a",
+          "sha256": "819e095c4dfb0e1bbc176cb4478507fc141a6effcc06cf3c039254521f150d8a",
+          "sha1": "923070b6c113761f8af72934b01960e7beb7916d",
+          "md5": "1030e31ed3a459beb43ddb8e58acae40"
+        }
+      ]
+    }
+  ]
+}

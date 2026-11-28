@@ -1,0 +1,123 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-blur/1.2.0-SNAPSHOT/coui-blur-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-blur",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur.aar",
+          "url": "coui-blur-android-1.2.0-SNAPSHOT.aar",
+          "size": 229498,
+          "sha512": "972031a5ac9a5b50bd4a61850a2e797c94727c5f7a7392f32a5575df4d7fd06560b1ac731b2286088d6667d31c3a8fb8f85150f729ee0acdf054225045a84a9e",
+          "sha256": "db0e782d773b6f9e71c3883c5bb1b2d37ffa5d4a63f9b0c27e18c46d034b6b6f",
+          "sha1": "6756d0534472486f6355ac3d362db027e2ae6435",
+          "md5": "3347d737d22703cfcdb87379728e3139"
+        }
+      ]
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-blur.aar",
+          "url": "coui-blur-android-1.2.0-SNAPSHOT.aar",
+          "size": 229498,
+          "sha512": "972031a5ac9a5b50bd4a61850a2e797c94727c5f7a7392f32a5575df4d7fd06560b1ac731b2286088d6667d31c3a8fb8f85150f729ee0acdf054225045a84a9e",
+          "sha256": "db0e782d773b6f9e71c3883c5bb1b2d37ffa5d4a63f9b0c27e18c46d034b6b6f",
+          "sha1": "6756d0534472486f6355ac3d362db027e2ae6435",
+          "md5": "3347d737d22703cfcdb87379728e3139"
+        }
+      ]
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "coui-blur-android-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-blur-android-1.2.0-SNAPSHOT-sources.jar",
+          "size": 87408,
+          "sha512": "e3865518892e9888cf220acddaa6e43fb282cb315150a64692a31083fe609f6dfd33122f76eacd04931ea062336f26c1ff04a2ccb9d78a2fd6f34dfd27adacda",
+          "sha256": "653580f7b5e9dcda8139f42c5a0c4f957714b1f5b920e843c4c9a3529e43ca8a",
+          "sha1": "0c43a3d4596858b04cc2b91ac602442c9e4632df",
+          "md5": "be80d4cb994700468c8bd44cadc1b6b6"
+        }
+      ]
+    }
+  ]
+}

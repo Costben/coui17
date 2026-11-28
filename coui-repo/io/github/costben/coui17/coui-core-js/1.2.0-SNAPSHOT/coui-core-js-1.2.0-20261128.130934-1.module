@@ -1,0 +1,169 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-core/1.2.0-SNAPSHOT/coui-core-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-core",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "jsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-core-js-1.2.0-SNAPSHOT.klib",
+          "size": 3475940,
+          "sha512": "e47f0f593baf3b67b96ae63b234c84e383a0b4e48fa6a078aa5a7ac20327cb0b9ea4553cdd20552f43498cefd075a52ed5f0e76ddef08c49b8c8a05a703d331d",
+          "sha256": "605581dd2357eae75d636a94578876e2e3f7ba55a1216f6110d6a0ee63212bea",
+          "sha1": "84bc76859b55cd3fc9d2ee44a8b0138c8d1e0997",
+          "md5": "4505e78532156424935c0bef240f44da"
+        }
+      ]
+    },
+    {
+      "name": "jsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-js-1.2.0-SNAPSHOT.klib",
+          "url": "coui-core-js-1.2.0-SNAPSHOT.klib",
+          "size": 3475940,
+          "sha512": "e47f0f593baf3b67b96ae63b234c84e383a0b4e48fa6a078aa5a7ac20327cb0b9ea4553cdd20552f43498cefd075a52ed5f0e76ddef08c49b8c8a05a703d331d",
+          "sha256": "605581dd2357eae75d636a94578876e2e3f7ba55a1216f6110d6a0ee63212bea",
+          "sha1": "84bc76859b55cd3fc9d2ee44a8b0138c8d1e0997",
+          "md5": "4505e78532156424935c0bef240f44da"
+        }
+      ]
+    },
+    {
+      "name": "jsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "files": [
+        {
+          "name": "coui-core-js-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-core-js-1.2.0-SNAPSHOT-sources.jar",
+          "size": 6581,
+          "sha512": "6fca42cf485c673b533f4d3dc102008453ae50bf51619cdf8489cb22bcd3d057594bf408ec42eab51d6329cbfef909a7389d75687958c8cd66c9f9bb60f623e3",
+          "sha256": "d23d27cf8b916f7d84d44e3846a39e580ddf905512c86ce7407754a7ea7b4217",
+          "sha1": "d414ada3842cd8912fb4d333211c20d57edfeaf8",
+          "md5": "cd0591dca5782a8b852c697b354966de"
+        }
+      ]
+    },
+    {
+      "name": "jsResourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.libraryelements": "kotlin-multiplatformresourcesjs",
+        "org.gradle.usage": "kotlin-multiplatformresourcesjs",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-core-1.2.0-SNAPSHOT.kotlin_resources.zip",
+          "url": "coui-core-js-1.2.0-SNAPSHOT-kotlin_resources.kotlin_resources.zip",
+          "size": 356,
+          "sha512": "79b0d755287661d49aa720f9ee645b65ea66fcbf8a399f6ac8c67183d18efacd0c8c6263dee5522ccd8fd99e7be28c03690bb7b65ff0a96cde2b210b93ab1e5a",
+          "sha256": "819e095c4dfb0e1bbc176cb4478507fc141a6effcc06cf3c039254521f150d8a",
+          "sha1": "923070b6c113761f8af72934b01960e7beb7916d",
+          "md5": "1030e31ed3a459beb43ddb8e58acae40"
+        }
+      ]
+    }
+  ]
+}

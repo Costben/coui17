@@ -1,0 +1,123 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-icons/1.2.0-SNAPSHOT/coui-icons-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-icons",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-icons.aar",
+          "url": "coui-icons-android-1.2.0-SNAPSHOT.aar",
+          "size": 1879598,
+          "sha512": "26a3eb5b7d53488cb288216448d07d88726d6f82e585703ceddec1c5ca5f478b689d49ad221371cd06bd50703abd9fcf9ffe97acb7f4f54982ddc38c76fa186e",
+          "sha256": "c40f008e08715649dfaf6e5db0eefc16b5f462e977ba84ebe7a615b6ec5e1651",
+          "sha1": "61deba918622f28999c0a1a564cf8367123e872c",
+          "md5": "d44666402c71d8e0ed392cd3ebb5d3e1"
+        }
+      ]
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-core",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-icons.aar",
+          "url": "coui-icons-android-1.2.0-SNAPSHOT.aar",
+          "size": 1879598,
+          "sha512": "26a3eb5b7d53488cb288216448d07d88726d6f82e585703ceddec1c5ca5f478b689d49ad221371cd06bd50703abd9fcf9ffe97acb7f4f54982ddc38c76fa186e",
+          "sha256": "c40f008e08715649dfaf6e5db0eefc16b5f462e977ba84ebe7a615b6ec5e1651",
+          "sha1": "61deba918622f28999c0a1a564cf8367123e872c",
+          "md5": "d44666402c71d8e0ed392cd3ebb5d3e1"
+        }
+      ]
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "coui-icons-android-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-icons-android-1.2.0-SNAPSHOT-sources.jar",
+          "size": 743655,
+          "sha512": "ed3a97ffc530b3569d6ec55bf4890244e8707053b3ff809ad7883a12687024a814cf43dca0cdc97d9124f81d100cd6e0f2cdc035351b6e63794551b25f18fc4c",
+          "sha256": "6db260bea2fb1fbb16d62abd5268cb21abe0421662be29c240a94d7dc5450b13",
+          "sha1": "30dc25ddc171cd19f57b32778aec5ba79f7ff3db",
+          "md5": "8a6b72f2a86c004b22087ce4545d4615"
+        }
+      ]
+    }
+  ]
+}

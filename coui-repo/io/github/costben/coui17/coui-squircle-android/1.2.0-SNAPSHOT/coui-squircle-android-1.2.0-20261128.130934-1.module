@@ -1,0 +1,123 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-squircle/1.2.0-SNAPSHOT/coui-squircle-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-squircle",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-squircle.aar",
+          "url": "coui-squircle-android-1.2.0-SNAPSHOT.aar",
+          "size": 88077,
+          "sha512": "d8814e2d3779ce2c7809fcba62ab95e43283a0590d4bd14297c849a0097eefe970fded7d9797b30ae5344eb4c97f11925f17a04ff4506886fac61c513d3b5300",
+          "sha256": "603f7d8f8a65a91bbe8122a4c1976ce1622c9b6fd7216ef5cdf0f319b891f60c",
+          "sha1": "9e265d3e906a14b48de8441a2ce3a77a149c0697",
+          "md5": "1859b93f8ed167723cb1da7bca6c473c"
+        }
+      ]
+    },
+    {
+      "name": "androidRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.costben.coui17",
+          "module": "coui-shader",
+          "version": {
+            "requires": "1.2.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-squircle.aar",
+          "url": "coui-squircle-android-1.2.0-SNAPSHOT.aar",
+          "size": 88077,
+          "sha512": "d8814e2d3779ce2c7809fcba62ab95e43283a0590d4bd14297c849a0097eefe970fded7d9797b30ae5344eb4c97f11925f17a04ff4506886fac61c513d3b5300",
+          "sha256": "603f7d8f8a65a91bbe8122a4c1976ce1622c9b6fd7216ef5cdf0f319b891f60c",
+          "sha1": "9e265d3e906a14b48de8441a2ce3a77a149c0697",
+          "md5": "1859b93f8ed167723cb1da7bca6c473c"
+        }
+      ]
+    },
+    {
+      "name": "androidSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "coui-squircle-android-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-squircle-android-1.2.0-SNAPSHOT-sources.jar",
+          "size": 68830,
+          "sha512": "ca35e601d599ca48b77eca5762694368bc3eb8ba78f415ac38c9a43251f982e2e5ea803650ce0259d33fb6acda94cae3e1798e8467de2ec7bde33e2c4fbafa38",
+          "sha256": "20f150a68306211b5b8eade24f3c7b2f90af37f3fd9f33c31d1fa709d59f447d",
+          "sha1": "cb54c961ef082fa214a8b3a9f124bdc8a18c2b5a",
+          "md5": "bd436ac0a85db9ee0d7b2aedb8f1c263"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../coui-shader/1.2.0-SNAPSHOT/coui-shader-1.2.0-SNAPSHOT.module",
+    "group": "io.github.costben.coui17",
+    "module": "coui-shader",
+    "version": "1.2.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.8.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "desktopApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-shader-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 7597,
+          "sha512": "10f0eaedec24384d5092ca7c62792574a83020ac83559c8f48c7e611b88d61731d5e0ead08998f6a3457bbe2d7ce44edf5b1032cc3fe1215cef1ddbb928b12d4",
+          "sha256": "b0aa29c55fcd5d0c40150aaa6beeb5c913f56572a634a5432992f920109ed75d",
+          "sha1": "c1a92a61ee7613c25e333a12328bf9278e8cdea6",
+          "md5": "d6b5220b53accae8e15e51be60966839"
+        }
+      ]
+    },
+    {
+      "name": "desktopRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.10"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.foundation",
+          "module": "foundation",
+          "version": {
+            "requires": "1.11.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "coui-shader-desktop-1.2.0-SNAPSHOT.jar",
+          "url": "coui-shader-desktop-1.2.0-SNAPSHOT.jar",
+          "size": 7597,
+          "sha512": "10f0eaedec24384d5092ca7c62792574a83020ac83559c8f48c7e611b88d61731d5e0ead08998f6a3457bbe2d7ce44edf5b1032cc3fe1215cef1ddbb928b12d4",
+          "sha256": "b0aa29c55fcd5d0c40150aaa6beeb5c913f56572a634a5432992f920109ed75d",
+          "sha1": "c1a92a61ee7613c25e333a12328bf9278e8cdea6",
+          "md5": "d6b5220b53accae8e15e51be60966839"
+        }
+      ]
+    },
+    {
+      "name": "desktopSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "coui-shader-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "url": "coui-shader-desktop-1.2.0-SNAPSHOT-sources.jar",
+          "size": 5251,
+          "sha512": "d75b57487f63b2ce387bece4cc409d854a7ffffa87d2afd5906ff22a07b6167baf928a9399c714464263ab753f80ddb8b3dd7c69126dfad0ffc2e4615defa2e4",
+          "sha256": "2f36c1a95aefb969c7735e46a2bd35939eb01b7eb19e5f835b177d3b037e3ec2",
+          "sha1": "e17eceb5d270ea3fb42b05bba2b262a08ddbb27e",
+          "md5": "395e561ef7fa75f8389bdc6c033130a3"
+        }
+      ]
+    }
+  ]
+}
