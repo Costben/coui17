@@ -137,6 +137,7 @@ public final class io/github/suqi8/coui/kmp/basic/AppBarBlurOverlayKt {
 	public static final fun getLocalToolbarBackdropBlurFraction ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalToolbarBackdropBlurred ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalTransitionFastGlass ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun rememberAppBarVeiledBackdrop-3IgeMak (Lkotlin/jvm/functions/Function0;JLio/github/suqi8/coui/kmp/blur/Backdrop;Landroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/blur/Backdrop;
 }
 
 public final class io/github/suqi8/coui/kmp/basic/AppBarGlassDefaults {

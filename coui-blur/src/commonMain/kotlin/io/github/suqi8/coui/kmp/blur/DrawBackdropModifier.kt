@@ -272,8 +272,9 @@ private class DrawBackdropNode(
 
     private var registeredBackdrop: LayerBackdrop? = null
 
+    @OptIn(InternalCouiBlurApi::class)
     private fun syncBackdropRegistration(active: Boolean) {
-        val target = if (active) backdrop as? LayerBackdrop else null
+        val target = if (active) backdrop.unwrapLayerBackdrop() else null
         val current = registeredBackdrop
         if (current === target) return
         current?.releaseConsumer()

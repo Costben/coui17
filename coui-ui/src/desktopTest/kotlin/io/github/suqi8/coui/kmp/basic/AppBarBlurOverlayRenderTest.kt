@@ -7,8 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -493,6 +499,138 @@ class AppBarBlurOverlayRenderTest {
                 hasDefaultRamp = false,
                 hasBackdrop = true,
             ),
+        )
+    }
+
+    /**
+     * Regression for circular glass toolbar buttons inside [AppBarBlurOverlay] /
+     * `SmallTopAppBar(gradientGlass = true)` over dark scrolling content:
+     *
+     * Without veiling the child backdrop inside [AppBarMaterialLayout], `HighlightedIconButton`'s
+     * `ColorDodge + Luminosity` over raw black drops below the surrounding blurred light top bar,
+     * reading as a dark punched-out hole. With [AppBarVeiledBackdrop], the button samples the
+     * bar's aligned translucent veil inside its existing local pass (zero double blur):
+     * - at `scrollFraction = 1f` over pure black, the button disc stays brighter than the
+     *   surrounding bar (no dark hole);
+     * - at `scrollFraction = 0f`, no veil is applied so the button reflects the raw backdrop;
+     * - toggling `scrollFraction` `0f -> 1f` updates the button in the draw phase automatically.
+     */
+    @Test
+    fun highlightedIconButtonInsideAppBarBlurOverlayMatchesBarVeilOverBlackContent() = runSkikoComposeUiTest(
+        size = Size(240f, 180f),
+        density = TestDensity,
+    ) {
+        var scrollFraction by mutableFloatStateOf(0f)
+        setContent {
+            COUITheme {
+                val backdrop = rememberLayerBackdrop()
+                Box(Modifier.fillMaxSize()) {
+                    Canvas(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                        drawRect(Color.Black)
+                    }
+                    CompositionLocalProvider(
+                        LocalBackdrop provides backdrop,
+                        LocalEdgeToEdge provides true,
+                    ) {
+                        AppBarBlurOverlay(
+                            scrollFraction = { scrollFraction },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(96.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(top = 44.dp),
+                                contentAlignment = Alignment.TopCenter,
+                            ) {
+                                HighlightedIconButton(onClick = {}) {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        // Button is 40dp centered at x = 120, y = 44..84 (center y = 64).
+        val zeroPixels = onRoot().captureToImage().toPixelMap()
+        val zeroButtonRed = redChannel(zeroPixels[120, 64])
+
+        scrollFraction = 1f
+        waitForIdle()
+
+        val scrolledPixels = onRoot().captureToImage().toPixelMap()
+        val barTopRed = redChannel(scrolledPixels[24, 52])
+        val barCenterRed = redChannel(scrolledPixels[24, 64])
+        val buttonTopRed = redChannel(scrolledPixels[120, 52])
+        val buttonCenterRed = redChannel(scrolledPixels[120, 64])
+
+        assertTrue(
+            buttonCenterRed >= barCenterRed + 12,
+            "veiled glass button at center must stay brighter than surrounding bar over black " +
+                "(buttonCenter=$buttonCenterRed barCenter=$barCenterRed zeroButton=$zeroButtonRed)",
+        )
+        assertTrue(
+            buttonTopRed >= barTopRed,
+            "veiled glass button upper half must not punch darker than surrounding bar over black " +
+                "(buttonTop=$buttonTopRed barTop=$barTopRed)",
+        )
+        assertTrue(
+            buttonCenterRed >= zeroButtonRed + 35,
+            "toggling scrollFraction 0 -> 1 must lift button brightness via aligned veil " +
+                "(zeroButton=$zeroButtonRed scrolledButton=$buttonCenterRed)",
+        )
+    }
+
+    /**
+     * Standalone [rememberAppBarVeiledBackdrop] (for custom sibling bars outside
+     * [AppBarBlurOverlay]) must keep its upstream [LayerBackdrop] recording through
+     * `DelegatingBackdrop` consumer propagation and reflect live backdrop updates.
+     */
+    @Test
+    fun standaloneRememberAppBarVeiledBackdropKeepsUpstreamLayerRecordingAndAppliesVeil() = runSkikoComposeUiTest(
+        size = Size(200f, 160f),
+        density = TestDensity,
+    ) {
+        var useRed by mutableStateOf(false)
+        setContent {
+            COUITheme {
+                val pageBackdrop = rememberLayerBackdrop()
+                Box(Modifier.fillMaxSize()) {
+                    Canvas(Modifier.fillMaxSize().layerBackdrop(pageBackdrop)) {
+                        drawRect(if (useRed) Color(0xFFFF2222) else Color.Black)
+                    }
+                    val veiled = rememberAppBarVeiledBackdrop(
+                        scrollFraction = { 1f },
+                        backdrop = pageBackdrop,
+                    )
+                    CompositionLocalProvider(LocalBackdrop provides veiled) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            HighlightedIconButton(onClick = {}) {}
+                        }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+
+        val blackPixels = onRoot().captureToImage().toPixelMap()
+        val veiledOverBlack = blackPixels[100, 80]
+        assertTrue(
+            redChannel(veiledOverBlack) >= 200,
+            "standalone veiled button over black must stay bright frosted glass, got ${veiledOverBlack.argbHex()}",
+        )
+
+        useRed = true
+        waitForIdle()
+
+        val redPixels = onRoot().captureToImage().toPixelMap()
+        val veiledOverRed = redPixels[100, 80]
+        assertTrue(
+            redChannel(veiledOverRed) > (veiledOverRed.blue * 255f).roundToInt() + 10,
+            "standalone veiled button must keep upstream LayerBackdrop live and show warm tint over red, " +
+                "got ${veiledOverRed.argbHex()}",
         )
     }
 }

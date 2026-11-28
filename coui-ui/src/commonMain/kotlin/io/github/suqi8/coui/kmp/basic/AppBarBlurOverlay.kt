@@ -11,16 +11,24 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -29,12 +37,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
 import androidx.compose.ui.util.fastFirstOrNull
 import io.github.suqi8.coui.kmp.blur.Backdrop
+import io.github.suqi8.coui.kmp.blur.BackdropEffectScope
 import io.github.suqi8.coui.kmp.blur.BlurDefaults
+import io.github.suqi8.coui.kmp.blur.DelegatingBackdrop
+import io.github.suqi8.coui.kmp.blur.InternalCouiBlurApi
 import io.github.suqi8.coui.kmp.blur.LocalBackdrop
 import io.github.suqi8.coui.kmp.blur.ProgressiveBlur
 import io.github.suqi8.coui.kmp.blur.isBlurEnabled
 import io.github.suqi8.coui.kmp.blur.progressiveTextureBlur
+import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.effect.preferFastAnimatingFloatingSurfaces
+import io.github.suqi8.coui.kmp.kit.topappbar.CouiTopAppBarDefaults
+import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarBackdrop
+import io.github.suqi8.coui.kmp.kit.topappbar.LocalCouiToolbarSampleBlurRadius
 import io.github.suqi8.coui.kmp.squircle.LocalSquircleClippedHost
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import kotlin.math.abs
@@ -392,6 +407,159 @@ internal fun twoRowAppBarMaterialRamp(
 }
 
 private const val TWO_ROW_BLUR_CURVE = 2.2f
+private const val FALLBACK_BUTTON_VEIL_TOP_LIGHT = 0.74f
+private const val FALLBACK_BUTTON_VEIL_BOTTOM_LIGHT = 0.56f
+private const val FALLBACK_BUTTON_VEIL_TOP_DARK = 0.36f
+private const val FALLBACK_BUTTON_VEIL_BOTTOM_DARK = 0.24f
+
+/**
+ * Lightweight zero-double-blur [Backdrop] decorator that draws the enclosing app bar's translucent
+ * gradient veil over [upstreamBackdrop] directly inside each child glass control's existing local
+ * sampling pass (e.g. a 40dp [HighlightedIconButton] or [ToolbarTextButton]).
+ *
+ * By linearity of Gaussian blur, $\mathrm{Blur}(\alpha C + (1 - \alpha) I) = \alpha C + (1 - \alpha)\mathrm{Blur}(I)$,
+ * so painting the bar's surface ramp inside the consumer's local recording matches sampling a
+ * recorded [AppBarMaterial] without allocating a nested `LayerBackdrop` or running a second blur pass.
+ *
+ * Implements [DelegatingBackdrop] so [LayerBackdrop] consumer registration and readiness tracking
+ * propagate transparently even when [AppBarMaterial] itself is idle or rendered by the platform view.
+ */
+@OptIn(InternalCouiBlurApi::class)
+internal class AppBarVeiledBackdrop(
+    override val upstreamBackdrop: Backdrop,
+    private val veilColor: Color,
+    private val isDarkTheme: Boolean,
+    private val alphaMidFraction: Float,
+    private val scrollFraction: () -> Float,
+) : DelegatingBackdrop {
+
+    internal var barCoordinates: LayoutCoordinates? = null
+    internal var materialHeightPx: Int = 0
+
+    override val isCoordinatesDependent: Boolean
+        get() = upstreamBackdrop.isCoordinatesDependent
+
+    override val offsetResidualX: Float
+        get() = upstreamBackdrop.offsetResidualX
+
+    override val offsetResidualY: Float
+        get() = upstreamBackdrop.offsetResidualY
+
+    private val colorStops: Array<Pair<Float, Color>> =
+        appBarBlurOverlayColorStops(veilColor, isDarkTheme, alphaMidFraction)
+
+    private val fallbackTopAlpha: Float =
+        if (isDarkTheme) FALLBACK_BUTTON_VEIL_TOP_DARK else FALLBACK_BUTTON_VEIL_TOP_LIGHT
+    private val fallbackBottomAlpha: Float =
+        if (isDarkTheme) FALLBACK_BUTTON_VEIL_BOTTOM_DARK else FALLBACK_BUTTON_VEIL_BOTTOM_LIGHT
+
+    override fun DrawScope.drawBackdrop(
+        density: Density,
+        coordinates: LayoutCoordinates?,
+        layerBlock: (GraphicsLayerScope.() -> Unit)?,
+        downscaleFactor: Int,
+    ) {
+        with(upstreamBackdrop) {
+            drawBackdrop(
+                density = density,
+                coordinates = coordinates,
+                layerBlock = layerBlock,
+                downscaleFactor = downscaleFactor,
+            )
+        }
+        if (veilColor.alpha <= 0f) return
+        val fraction = scrollFraction().coerceIn(0f, 1f)
+        if (fraction <= 0.001f) return
+
+        val inv = if (downscaleFactor > 1) 1f / downscaleFactor else 1f
+        val barCoords = barCoordinates
+        val matHeight = materialHeightPx
+        val offsetInBarY = if (
+            barCoords != null && barCoords.isAttached &&
+            coordinates != null && coordinates.isAttached &&
+            matHeight > 0
+        ) {
+            try {
+                barCoords.localPositionOf(coordinates, Offset.Zero).y
+            } catch (_: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+
+        // Cover the entire clipped recording surface even when the caller shifted the canvas origin
+        // for a blur/shadow patch margin (e.g. CouiFloatingSurfaces translate(-patch.bounds.left, ...))
+        // or DrawBackdropNode's scaled padding.
+        val margin = maxOf(size.width, size.height) * 2f + 256f
+        val coverTopLeft = Offset(-margin, -margin)
+        val coverSize = Size(size.width + margin * 2f, size.height + margin * 2f)
+
+        val brush = if (offsetInBarY != null) {
+            val startY = -offsetInBarY * inv
+            val endY = (matHeight.toFloat() - offsetInBarY) * inv
+            if (endY > startY + 0.5f) {
+                Brush.verticalGradient(
+                    colorStops = colorStops,
+                    startY = startY,
+                    endY = endY,
+                    tileMode = TileMode.Clamp,
+                )
+            } else {
+                null
+            }
+        } else {
+            val consumerHeight = ((density as? BackdropEffectScope)?.size?.height ?: size.height) * inv
+            Brush.verticalGradient(
+                colors = listOf(
+                    veilColor.copy(alpha = veilColor.alpha * fallbackTopAlpha),
+                    veilColor.copy(alpha = veilColor.alpha * fallbackBottomAlpha),
+                ),
+                startY = 0f,
+                endY = consumerHeight.coerceAtLeast(1f),
+                tileMode = TileMode.Clamp,
+            )
+        }
+        if (brush != null) {
+            drawRect(
+                brush = brush,
+                topLeft = coverTopLeft,
+                size = coverSize,
+                alpha = fraction,
+            )
+        }
+    }
+}
+
+/**
+ * Returns a lightweight [Backdrop] decorator that overlays the ColorOS 17 app bar's translucent
+ * surface veil onto [backdrop] inside each consumer's existing local sampling pass, with zero extra
+ * blur passes and zero nested offscreen layers.
+ *
+ * Bars built with [AppBarBlurOverlay], [SmallTopAppBar], [TopAppBar], [PinnedTopAppBar], and
+ * [TwoRowTopAppBar] provide this automatically to their children. Use this helper for custom top
+ * bars whose glass buttons sit as siblings outside [AppBarBlurOverlay].
+ */
+@Composable
+fun rememberAppBarVeiledBackdrop(
+    scrollFraction: () -> Float = { 1f },
+    containerColor: Color = AppBarBlurOverlayDefaults.containerColor(),
+    backdrop: Backdrop? = LocalBackdrop.current,
+): Backdrop? {
+    if (!isBlurEnabled() || backdrop == null) return null
+    val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
+    val gradientColor = resolveAppBarGradientColor(containerColor, isDarkTheme)
+    val currentFraction = rememberUpdatedState(scrollFraction)
+    return remember(backdrop, gradientColor, isDarkTheme) {
+        AppBarVeiledBackdrop(
+            upstreamBackdrop = backdrop,
+            veilColor = gradientColor,
+            isDarkTheme = isDarkTheme,
+            alphaMidFraction = 0f,
+            scrollFraction = { currentFraction.value() },
+        )
+    }
+}
 
 @Composable
 internal fun AppBarMaterialLayout(
@@ -405,9 +573,36 @@ internal fun AppBarMaterialLayout(
     materialRamp: AppBarMaterialRamp = AppBarMaterialRamp(),
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val density = LocalDensity.current
     val blurEnabled = isBlurEnabled()
-    val extraHeightPx = if (blurEnabled) with(LocalDensity.current) { extraHeight.roundToPx() } else 0
+    val extraHeightPx = if (blurEnabled) with(density) { extraHeight.roundToPx() } else 0
     val activeFraction = if (materialEnabled && blurEnabled) scrollFraction else ZeroBlurFraction
+    val isDarkTheme = COUITheme.colorScheme.background.luminance() < 0.5f
+    val gradientColor = resolveAppBarGradientColor(containerColor, isDarkTheme)
+    val currentActiveFraction = rememberUpdatedState(activeFraction)
+    val veiledBackdrop = if (materialEnabled && blurEnabled && backdrop != null) {
+        remember(backdrop, gradientColor, isDarkTheme, materialRamp.alphaMidFraction) {
+            AppBarVeiledBackdrop(
+                upstreamBackdrop = backdrop,
+                veilColor = gradientColor,
+                isDarkTheme = isDarkTheme,
+                alphaMidFraction = materialRamp.alphaMidFraction,
+                scrollFraction = { currentActiveFraction.value() },
+            )
+        }
+    } else {
+        null
+    }
+    val veiledCouiBackdrop = remember(veiledBackdrop, density) {
+        veiledBackdrop?.let { CouiBackdrop(it, density) }
+    }
+    val effectiveBackdrop = veiledBackdrop ?: LocalBackdrop.current
+    val effectiveCouiToolbarBackdrop = veiledCouiBackdrop ?: LocalCouiToolbarBackdrop.current
+    val effectiveSampleBlurRadius = if (veiledCouiBackdrop != null) {
+        with(density) { CouiTopAppBarDefaults.referenceBlurRadius.toPx() }
+    } else {
+        LocalCouiToolbarSampleBlurRadius.current
+    }
     Layout(
         content = {
             if (materialEnabled) {
@@ -420,11 +615,20 @@ internal fun AppBarMaterialLayout(
                     materialRamp = materialRamp,
                 )
             }
-            CompositionLocalProvider(LocalToolbarBackdropBlurFraction provides activeFraction) {
+            CompositionLocalProvider(
+                LocalToolbarBackdropBlurFraction provides activeFraction,
+                LocalBackdrop provides effectiveBackdrop,
+                LocalCouiToolbarBackdrop provides effectiveCouiToolbarBackdrop,
+                LocalCouiToolbarSampleBlurRadius provides effectiveSampleBlurRadius,
+            ) {
                 Box(Modifier.layoutId("content")) { content() }
             }
         },
-        modifier = modifier,
+        modifier = if (veiledBackdrop != null) {
+            modifier.onGloballyPositioned { veiledBackdrop.barCoordinates = it }
+        } else {
+            modifier
+        },
     ) { measurables, constraints ->
         val contentPlaceable =
             measurables
@@ -432,6 +636,7 @@ internal fun AppBarMaterialLayout(
                 .measure(constraints.copy(minWidth = 0, minHeight = 0))
         val width = maxOf(contentPlaceable.width, constraints.minWidth)
         val height = maxOf(contentPlaceable.height, constraints.minHeight)
+        veiledBackdrop?.materialHeightPx = height + extraHeightPx
         val materialPlaceable =
             measurables
                 .fastFirstOrNull { it.layoutId == "material" }
@@ -641,46 +846,55 @@ internal fun appBarEngineBlurRadiusPx(hwuiRadiusPx: Float): Float = hwuiRadiusPx
  * the stops are mirrored — the same way the app bar's own gradient brush mirrors them. The
  * positions and alphas come from [AppBarGlassDefaults].
  */
+private fun appBarBlurOverlayColorStops(
+    color: Color,
+    dark: Boolean,
+    alphaMidFraction: Float,
+): Array<Pair<Float, Color>> {
+    val mid = alphaMidFraction.coerceIn(0f, 0.95f)
+    val baseAlpha = color.alpha
+    return if (mid <= 0f) {
+        if (dark) {
+            arrayOf(
+                0f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlphaDark),
+                1f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlpha0),
+            )
+        } else {
+            arrayOf(
+                0f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlpha2),
+                1f - AppBarGlassDefaults.GradientPos1 to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlpha1),
+                1f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlpha0),
+            )
+        }
+    } else {
+        val tail = 1f - mid
+        if (dark) {
+            arrayOf(
+                0f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlphaDark),
+                mid to color.copy(alpha = baseAlpha * 0.38f),
+                mid + tail * 0.25f to color.copy(alpha = baseAlpha * 0.32f),
+                mid + tail * 0.50f to color.copy(alpha = baseAlpha * 0.22f),
+                mid + tail * 0.75f to color.copy(alpha = baseAlpha * 0.10f),
+                1f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlpha0),
+            )
+        } else {
+            arrayOf(
+                0f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlpha2),
+                mid to color.copy(alpha = baseAlpha * 0.74f),
+                mid + tail * 0.25f to color.copy(alpha = baseAlpha * 0.62f),
+                mid + tail * 0.50f to color.copy(alpha = baseAlpha * 0.44f),
+                mid + tail * 0.75f to color.copy(alpha = baseAlpha * 0.20f),
+                1f to color.copy(alpha = baseAlpha * AppBarGlassDefaults.GradientAlpha0),
+            )
+        }
+    }
+}
+
 @Composable
 private fun appBarBlurOverlayBrush(
     color: Color,
     dark: Boolean,
     alphaMidFraction: Float,
 ): Brush = remember(color, dark, alphaMidFraction) {
-    val mid = alphaMidFraction.coerceIn(0f, 0.95f)
-    if (mid <= 0f) {
-        if (dark) {
-            Brush.verticalGradient(
-                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
-                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
-            )
-        } else {
-            Brush.verticalGradient(
-                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
-                1f - AppBarGlassDefaults.GradientPos1 to color.copy(alpha = AppBarGlassDefaults.GradientAlpha1),
-                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
-            )
-        }
-    } else {
-        val tail = 1f - mid
-        if (dark) {
-            Brush.verticalGradient(
-                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlphaDark),
-                mid to color.copy(alpha = 0.38f),
-                mid + tail * 0.25f to color.copy(alpha = 0.32f),
-                mid + tail * 0.50f to color.copy(alpha = 0.22f),
-                mid + tail * 0.75f to color.copy(alpha = 0.10f),
-                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
-            )
-        } else {
-            Brush.verticalGradient(
-                0f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha2),
-                mid to color.copy(alpha = 0.74f),
-                mid + tail * 0.25f to color.copy(alpha = 0.62f),
-                mid + tail * 0.50f to color.copy(alpha = 0.44f),
-                mid + tail * 0.75f to color.copy(alpha = 0.20f),
-                1f to color.copy(alpha = AppBarGlassDefaults.GradientAlpha0),
-            )
-        }
-    }
+    Brush.verticalGradient(*appBarBlurOverlayColorStops(color, dark, alphaMidFraction))
 }

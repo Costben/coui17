@@ -66,6 +66,7 @@ public final class io/github/suqi8/coui/kmp/blur/BackdropSamplingHooksKt {
 	public static final fun acquireBackdropSampling (Lio/github/suqi8/coui/kmp/blur/Backdrop;)V
 	public static final fun isReadyForSampling (Lio/github/suqi8/coui/kmp/blur/Backdrop;)Z
 	public static final fun releaseBackdropSampling (Lio/github/suqi8/coui/kmp/blur/Backdrop;)V
+	public static final fun unwrapLayerBackdrop (Lio/github/suqi8/coui/kmp/blur/Backdrop;)Lio/github/suqi8/coui/kmp/blur/LayerBackdrop;
 }
 
 public final class io/github/suqi8/coui/kmp/blur/BlendColorEntry {
@@ -173,6 +174,15 @@ public final class io/github/suqi8/coui/kmp/blur/BlurDefaults {
 	public final fun getMaxBlurRadius ()F
 	public final fun getNoiseCoefficient ()F
 	public final fun getProgressiveNoiseCoefficient ()F
+}
+
+public abstract interface class io/github/suqi8/coui/kmp/blur/DelegatingBackdrop : io/github/suqi8/coui/kmp/blur/Backdrop {
+	public abstract fun getUpstreamBackdrop ()Lio/github/suqi8/coui/kmp/blur/Backdrop;
+}
+
+public final class io/github/suqi8/coui/kmp/blur/DelegatingBackdrop$DefaultImpls {
+	public static fun getOffsetResidualX (Lio/github/suqi8/coui/kmp/blur/DelegatingBackdrop;)F
+	public static fun getOffsetResidualY (Lio/github/suqi8/coui/kmp/blur/DelegatingBackdrop;)F
 }
 
 public final class io/github/suqi8/coui/kmp/blur/DrawBackdropModifierKt {
