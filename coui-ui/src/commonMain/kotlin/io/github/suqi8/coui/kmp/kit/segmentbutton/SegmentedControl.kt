@@ -265,14 +265,15 @@ internal fun SegmentedControl(
         adjustedTextStyle.fontStyle ?: FontStyle.Normal,
         adjustedTextStyle.fontSynthesis ?: FontSynthesis.All,
     ).value
-    val minWidthPx = with(density) { minWidth.toPx() }
-    val maxWidthPx = if (maxWidth == Dp.Infinity) Float.MAX_VALUE else with(density) { maxWidth.toPx().coerceAtLeast(minWidthPx) }
-    val segmentPaddingPx = with(density) { segmentPadding.toPx() }
-    val extraLabelSlackPx = if (preferFastAnimatingFloatingSurfaces || weightAdjustment != 0) 2f else 0f
+    val minWidthPx = with(density) { minWidth.roundToPx() }
+    val maxWidthPx = if (maxWidth == Dp.Infinity) Int.MAX_VALUE else with(density) { maxWidth.roundToPx().coerceAtLeast(minWidthPx) }
+    val segmentPaddingPx = with(density) { segmentPadding.roundToPx() }
+    val extraLabelSlackPx = if (preferFastAnimatingFloatingSurfaces || weightAdjustment != 0) 2 else 1
     val naturalWidths = remember(labels, adjustedTextStyle, density, measurer, resolvedTypeface, minWidthPx, maxWidthPx, segmentPaddingPx, extraLabelSlackPx) {
         labels.map { label ->
-            val measured = ceil(measurer.measure(label, adjustedTextStyle, maxLines = 1).size.width.toFloat()) + extraLabelSlackPx + segmentPaddingPx * 2f
-            measured.coerceIn(minWidthPx, maxWidthPx)
+            val measured = ceil(measurer.measure(label, adjustedTextStyle, maxLines = 1).size.width.toFloat()).toInt() +
+                extraLabelSlackPx + segmentPaddingPx * 2
+            measured.coerceIn(minWidthPx, maxWidthPx).toFloat()
         }
     }
 
@@ -304,12 +305,13 @@ internal fun SegmentedControl(
         val naturalContent = ceil(naturalWidths.sum()).toInt()
         val scrolls = naturalContent > actualWidth - padding * 2
         val contentWidth = if (scrolls) naturalContent + padding * 2 else actualWidth
-        val geometry = remember(contentWidth, actualHeight, padding, naturalWidths, rtl, small, maxWidthPx) {
+        val maxWidthLimitPx = if (maxWidth == Dp.Infinity) Float.MAX_VALUE else maxWidthPx.toFloat()
+        val geometry = remember(contentWidth, actualHeight, padding, naturalWidths, rtl, small, maxWidthLimitPx) {
             SegmentGeometry(
                 contentWidth.toFloat(),
                 actualHeight.toFloat(),
                 padding.toFloat(),
-                segmentWidths(naturalWidths, contentWidth - padding * 2, maxWidthPx),
+                segmentWidths(naturalWidths, contentWidth - padding * 2, maxWidthLimitPx),
                 rtl,
                 small,
             )

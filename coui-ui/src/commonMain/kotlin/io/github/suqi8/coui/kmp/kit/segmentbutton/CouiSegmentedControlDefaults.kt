@@ -17,7 +17,6 @@ import io.github.suqi8.coui.kmp.kit.text.CouiTextKind
 import io.github.suqi8.coui.kmp.kit.text.couiAdaptFontSize
 import io.github.suqi8.coui.kmp.kit.text.couiLineSpacing
 import io.github.suqi8.coui.kmp.kit.text.couiTextStyle
-import io.github.suqi8.coui.kmp.kit.text.rememberCouiTextFontScale
 import kotlin.math.roundToInt
 
 internal object CouiSegmentedControlDefaults {
@@ -28,6 +27,7 @@ internal object CouiSegmentedControlDefaults {
     internal val minWidth = 52.dp
     internal val labelPadding = 12.dp
     internal val switchDistance = 5.dp
+    internal const val MAX_FONT_SCALE = 1.35f
 
     /** Plain container fill when backdrop sampling is off, preserving the native alpha. */
     fun containerColor(dark: Boolean): Color = Color(if (dark) 0x1FFFFFFF else 0x0F000000)
@@ -55,9 +55,9 @@ internal object CouiSegmentedControlDefaults {
     @Composable
     fun textStyle(): TextStyle {
         val density = LocalDensity.current
-        val fontScale = rememberCouiTextFontScale()
-        return remember(density, fontScale) {
-            val pixels = couiAdaptFontSize(with(density) { 14.sp.toPx() }.roundToInt().toFloat(), fontScale, 1.35f)
+        return remember(density) {
+            val rawPixels = with(density) { 14.sp.toPx() }.roundToInt().toFloat()
+            val pixels = couiAdaptFontSize(rawPixels, density, MAX_FONT_SCALE)
             couiTextStyle(
                 familyName = "sans-serif-medium",
                 weight = 500,

@@ -63,7 +63,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,14 +79,18 @@ import io.github.suqi8.coui.kmp.kit.backdrop.CouiBackdrop
 import io.github.suqi8.coui.kmp.kit.effect.isKitSurfaceSupported
 import io.github.suqi8.coui.kmp.kit.segmentbutton.CouiSegmentedControlDefaults
 import io.github.suqi8.coui.kmp.kit.segmentbutton.SegmentedControl
+import io.github.suqi8.coui.kmp.kit.text.couiAdaptFontSize
 import io.github.suqi8.coui.kmp.shader.asBrush
 import io.github.suqi8.coui.kmp.shader.isRuntimeShaderSupported
 import io.github.suqi8.coui.kmp.squircle.addSquircleRoundRect
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.theme.LocalPlatformFontWeightAdjustment
+import io.github.suqi8.coui.kmp.theme.adjustPlatformFontWeight
 import io.github.suqi8.coui.kmp.utils.CouiHapticEffect
 import io.github.suqi8.coui.kmp.utils.rememberCouiHaptic
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -706,9 +709,25 @@ internal fun CommonSegmentButtonRow(
     val density = LocalDensity.current
     val viewConfiguration = LocalViewConfiguration.current
     val textMeasurer = rememberTextMeasurer()
-    val labelFontSize = COUITheme.textStyles.body2.fontSize
-    // COUI measures segments with the selected appearance (couiTextButtonM: 14sp, medium).
-    val measureStyle = remember(labelFontSize) { TextStyle(fontSize = labelFontSize, fontWeight = FontWeight.Medium) }
+    val baseFontSize = COUITheme.textStyles.body2.fontSize
+    val labelFontSize = remember(baseFontSize, density) {
+        if (baseFontSize.isSp) {
+            val rawPx = with(density) { baseFontSize.toPx() }.roundToInt().toFloat()
+            val adaptedPx = couiAdaptFontSize(rawPx, density, CouiSegmentedControlDefaults.MAX_FONT_SCALE)
+            with(density) { adaptedPx.toSp() }
+        } else {
+            baseFontSize
+        }
+    }
+    val weightAdjustment = LocalPlatformFontWeightAdjustment.current
+    val baseTextStyle = COUITheme.textStyles.main
+    // COUI measures segments with the selected appearance (couiTextButtonM: 14sp capped at 1.35x, medium).
+    val measureStyle = remember(baseTextStyle, labelFontSize, weightAdjustment) {
+        baseTextStyle.copy(
+            fontSize = labelFontSize,
+            fontWeight = adjustPlatformFontWeight(FontWeight.Medium, weightAdjustment),
+        )
+    }
     val resolvedListState = listState ?: rememberLazyListState()
     val containerRadiusDp = cornerRadius + contourPadding
     // `COUISegmentButtonLayout.onMeasure`: a custom height is `max(customHeight, coui_segment_min_height)`.
@@ -782,8 +801,8 @@ internal fun CommonSegmentButtonRow(
             tabs.map { label ->
                 min(
                     max(
-                        textMeasurer.measure(text = label, style = measureStyle, maxLines = 1).size.width +
-                            2 * segmentPaddingPx,
+                        ceil(textMeasurer.measure(text = label, style = measureStyle, maxLines = 1).size.width.toFloat()).toInt() +
+                            1 + 2 * segmentPaddingPx,
                         minWidthPx,
                     ),
                     maxWidthPx,
@@ -1292,10 +1311,11 @@ private fun SegmentTab(
 /**
  * Resolve the widths of all segments (COUISegmentButtonLayout.onMeasure).
  *
- * When the row cannot give every segment [minWidthPx] the segments keep their natural widths and
- * the row scrolls instead.
+ * When the row cannot give every segment [minWidthPx], or when the segments' natural widths exceed
+ * [availablePx], the segments keep their natural widths (clamped to [maxWidthPx]) and the row
+ * scrolls instead of squeezing labels into ellipsis.
  */
-private fun computeSegmentWidths(
+internal fun computeSegmentWidths(
     naturalWidths: List<Int>,
     availablePx: Float,
     minWidthPx: Int,
@@ -1303,10 +1323,11 @@ private fun computeSegmentWidths(
 ): List<Int> {
     val count = naturalWidths.size
     if (count == 0) return emptyList()
-    if (availablePx <= 0f || availablePx / count < minWidthPx) {
-        return naturalWidths.map { min(it, maxWidthPx) }
+    val clamped = naturalWidths.map { min(it, maxWidthPx) }
+    if (availablePx <= 0f || availablePx / count < minWidthPx || clamped.sum().toFloat() > availablePx) {
+        return clamped
     }
-    return distributeSegmentWidths(naturalWidths, availablePx).map { min(it, maxWidthPx) }
+    return distributeSegmentWidths(clamped, availablePx).map { min(it, maxWidthPx) }
 }
 
 /**
