@@ -110,17 +110,12 @@ are skipped and the content draws normally, so no module has to be left out of t
 Version 1.2.0 is not on Maven Central — the latest published upstream release is 1.1.0. A consuming
 project picks one of two sources.
 
-**GitHub Packages** (no local build; the token needs `read:packages`):
+**Public Maven repository (`maven-repo` branch)** — no local build, no token required. Every push to
+`main` refreshes the all-platform `1.2.0-SNAPSHOT` set on the orphan `maven-repo` branch:
 
 ```kotlin
 repositories {
-    maven {
-        url = uri("https://maven.pkg.github.com/Costben/coui17")
-        credentials {
-            username = System.getenv("GITHUB_ACTOR")
-            password = System.getenv("GITHUB_TOKEN")
-        }
-    }
+    maven("https://raw.githubusercontent.com/Costben/coui17/maven-repo/coui-repo")
     mavenCentral()
 }
 ```
@@ -131,8 +126,8 @@ repositories {
 ./gradlew publishAllToLocalRepository -Prelease   # writes 1.2.0 to build/repository/local
 ```
 
-Without `-Prelease` the version is `1.2.0-<git hash>-SNAPSHOT`. Then point the consuming project at
-that directory:
+Without `-Prelease` the version is `1.2.0-<git hash>-SNAPSHOT` (or `1.2.0-SNAPSHOT` with
+`-ProllingSnapshot`). Then point the consuming project at that directory:
 
 ```kotlin
 repositories {
@@ -141,22 +136,20 @@ repositories {
 }
 ```
 
-Maintainers publish the snapshot set to GitHub Packages with:
+Maintainers can also refresh the orphan `maven-repo` branch locally with:
 
 ```bash
-# GITHUB_ACTOR + GITHUB_TOKEN; -ProllingSnapshot keeps the version at 1.2.0-SNAPSHOT
-./gradlew publishAllToGithubPackages -ProllingSnapshot
-# Full path against a local directory, no token required
-./gradlew publishAndVerifyGithubPackages -ProllingSnapshot \
-    -PcouiGithubPackagesUrl=file:///tmp/coui-github-packages
+# Builds all targets with -ProllingSnapshot and force-pushes a single-commit orphan branch
+./scripts/publish-maven-repo.sh
+# Or push an already-published local repository without rebuilding
+./scripts/publish-maven-repo.sh --no-build
 ```
 
-`-ProllingSnapshot` is what makes the channel usable: without it the version carries the commit
-hash (`1.2.0-62021765-SNAPSHOT`), so a consumer would have to edit the dependency after every push.
-With it the version stays `1.2.0-SNAPSHOT` and each push replaces what that coordinate resolves to.
+`-ProllingSnapshot` keeps the version fixed at `1.2.0-SNAPSHOT` so consumers declare the coordinate
+once and every push replaces what it resolves to without editing dependency versions.
 
-Add the dependencies to the consuming project — `1.2.0-SNAPSHOT` for GitHub Packages, `1.2.0` for a
-local `-Prelease` build:
+Add the dependencies to the consuming project — `1.2.0-SNAPSHOT` for the `maven-repo` snapshot
+channel, `1.2.0` for a local `-Prelease` build:
 
 ```kotlin
 kotlin {

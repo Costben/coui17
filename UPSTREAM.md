@@ -65,18 +65,18 @@ remains continuously verified by `verification/compat-consumer`.
 
 ### What this fork publishes
 
-`publishAllToGithubPackages -ProllingSnapshot` pushes the snapshot set to
-`https://maven.pkg.github.com/Costben/coui17` under `io.github.costben.coui17:*`, at the fixed
-version `1.2.0-SNAPSHOT`: a consumer depends on that string once and each push replaces what it
-resolves to. Without the flag the version carries the commit hash, so every commit would publish a
-new coordinate and force consumers to follow. The endpoint is overridable with
-`GITHUB_PACKAGES_URL` or `-PcouiGithubPackagesUrl`, and pointing it at a `file:` URL runs the whole
-path — publish, layout verification — without credentials:
+Every push to `main` runs `.github/workflows/publish.yml` on macOS, publishing the all-platform
+`io.github.costben.coui17:*` snapshot set (`-ProllingSnapshot`, fixed version `1.2.0-SNAPSHOT`) to
+the single-commit orphan branch `maven-repo` under `coui-repo/`. Consumers resolve it directly with
+no authentication token:
 
-```bash
-./gradlew publishAndVerifyGithubPackages \
-    -PcouiGithubPackagesUrl=file:///tmp/coui-github-packages
+```kotlin
+maven("https://raw.githubusercontent.com/Costben/coui17/maven-repo/coui-repo")
 ```
+
+Force-pushing a single-commit orphan branch replaces the snapshot in place without accumulating
+binary history in the repository. Maintainers can also trigger the same extraction and push locally
+via `./scripts/publish-maven-repo.sh` (or `--no-build` to push an existing `build/repository/local`).
 
 ## Syncing with upstream
 

@@ -14,18 +14,12 @@
 
 1. 当前版本没有发布到 Maven Central，两种来源二选一。
 
-   **GitHub Packages** —— 不用本地构建。token 需要 `read:packages` 权限。快照通道的版本固定为
-   `1.2.0-SNAPSHOT`，依赖坐标不用跟着提交变：
+   **公开静态 Maven 仓库（`maven-repo` 分支）** —— 不用本地构建，也无需 Token。快照通道以固定版本
+   `1.2.0-SNAPSHOT` 持续更新全平台产物，依赖坐标不用跟着提交变：
 
    ```kotlin
    repositories {
-       maven {
-           url = uri("https://maven.pkg.github.com/Costben/coui17")
-           credentials {
-               username = System.getenv("GITHUB_ACTOR")
-               password = System.getenv("GITHUB_TOKEN")
-           }
-       }
+       maven("https://raw.githubusercontent.com/Costben/coui17/maven-repo/coui-repo")
        mavenCentral()
    }
    ```

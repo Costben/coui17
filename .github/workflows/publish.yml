@@ -18,12 +18,12 @@ on:
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - "gradle.properties"
+      - "scripts/publish-maven-repo.sh"
       - ".github/workflows/publish.yml"
   workflow_dispatch:
 
 permissions:
-  contents: read
-  packages: write
+  contents: write
 
 concurrency:
   group: publish-snapshot
@@ -32,7 +32,7 @@ concurrency:
 jobs:
   snapshot:
     # Apple publications are skipped on Linux, so a SNAPSHOT built there ships without the
-    # iOS/macOS coordinates. Publish from macOS, like release.yml does.
+    # iOS/macOS coordinates. Build from macOS so every target lands on the maven-repo branch.
     runs-on: macos-26
     if: github.ref_type == 'branch'
     steps:
@@ -47,24 +47,71 @@ jobs:
           java-version: "21"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Publish SNAPSHOT to GitHub Packages
-        run: ./gradlew --no-daemon --stacktrace publishAllToGithubPackages -ProllingSnapshot --no-configuration-cache
-        env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ github.token }}
-          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      # Resolves the coordinates back out of GitHub Packages the way a downstream project does, so a
-      # snapshot that uploaded but cannot be consumed fails here instead of at the consumer's desk.
-      # `smokeLocalOnly` excludes the group from Maven Central, so nothing can satisfy it by accident.
-      - name: Smoke-test the published coordinates
+      - name: Publish all-platform SNAPSHOT to local repository
+        run: ./gradlew --no-daemon --stacktrace publishAllToLocalRepository -ProllingSnapshot --no-configuration-cache
+      - name: Extract and push orphan maven-repo branch
         run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/coui-repo" "$RUNNER_TEMP/maven-repo-worktree"
+          bash scripts/publish-maven-repo.sh --no-build --extract-only "$RUNNER_TEMP/coui-repo"
+
+          # Capture the freshly published snapshot timestamp so the smoke step below can wait
+          # for GitHub's raw CDN to reflect this push instead of reading a stale cached metadata file.
+          snapshot_ts="$(python3 - "$RUNNER_TEMP/coui-repo/io/github/costben/coui17/coui-ui/1.2.0-SNAPSHOT/maven-metadata.xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          root = ET.parse(sys.argv[1]).getroot()
+          print(root.findtext("versioning/snapshot/timestamp") or "")
+          PY
+          )"
+          echo "SNAPSHOT_TIMESTAMP=$snapshot_ts" >> "$GITHUB_ENV"
+
+          worktree="$RUNNER_TEMP/maven-repo-worktree"
+          git worktree add --detach "$worktree" HEAD
+          trap 'git worktree remove --force "$worktree" 2>/dev/null || true' EXIT
+          (
+            cd "$worktree"
+            git checkout --orphan maven-repo-publish
+            git rm -rf --quiet .
+            mv "$RUNNER_TEMP/coui-repo" ./coui-repo
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add coui-repo
+            git commit -q -m "chore(maven): 更新全平台 COUI 17 快照 (${GITHUB_SHA:0:8})"
+            git \
+              -c http.version=HTTP/1.1 \
+              -c http.postBuffer=524288000 \
+              -c http.lowSpeedLimit=0 \
+              -c http.lowSpeedTime=999999 \
+              push --force origin HEAD:refs/heads/maven-repo
+          )
+      # Resolves the coordinates back out of the public tokenless maven-repo branch the way a
+      # downstream project does. No GITHUB_TOKEN / GITHUB_ACTOR is passed here, proving anonymous
+      # access works, and `smokeLocalOnly` excludes the group from Maven Central.
+      - name: Smoke-test the public tokenless maven-repo coordinates
+        run: |
+          set -euo pipefail
+          repo_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/maven-repo/coui-repo"
+          meta_url="${repo_url}/io/github/costben/coui17/coui-ui/1.2.0-SNAPSHOT/maven-metadata.xml"
+          echo "Waiting for ${meta_url} to serve snapshot timestamp ${SNAPSHOT_TIMESTAMP}..."
+          synced=0
+          for attempt in $(seq 1 30); do
+            body="$(curl -fsSL "$meta_url" 2>/dev/null || true)"
+            if [ -n "$SNAPSHOT_TIMESTAMP" ] && printf '%s' "$body" | grep -q "<timestamp>${SNAPSHOT_TIMESTAMP}</timestamp>"; then
+              echo "Public raw endpoint is serving timestamp ${SNAPSHOT_TIMESTAMP} (attempt ${attempt})"
+              synced=1
+              break
+            fi
+            sleep 10
+          done
+          if [ "$synced" -ne 1 ]; then
+            echo "FAIL: ${meta_url} did not serve timestamp ${SNAPSHOT_TIMESTAMP} within 5 minutes" >&2
+            exit 1
+          fi
+
           version="$(./gradlew -q --no-daemon printReleaseVersion -ProllingSnapshot | tail -1)"
-          echo "Resolving $version from https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
-          ./gradlew --no-daemon --stacktrace -p smoke compileKotlin \
+          echo "Resolving $version from $repo_url"
+          ./gradlew --no-daemon --stacktrace --refresh-dependencies -p smoke compileKotlin \
             -PcouiVersion="$version" \
-            -PsmokeRepo="https://maven.pkg.github.com/${GITHUB_REPOSITORY}" \
+            -PsmokeRepo="$repo_url" \
             -PsmokeLocalOnly=true
-        env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ github.token }}
