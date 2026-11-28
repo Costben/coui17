@@ -770,7 +770,11 @@ private class DrawBackdropNode(
             }
         }
         if (effectScope.update(this)) {
-            updateEffects()
+            observeNodeState(notifyLayoutAndDraw = false)
+            if (!isEffectivelyEnabled) {
+                drawContent()
+                return
+            }
         }
         captureLayerScale()
         onDrawBehind?.invoke(this)
@@ -1108,7 +1112,7 @@ private class DrawBackdropNode(
             effectScope.cachedNoiseChainResult = effectScope.renderEffect
             return false
         }
-        if (noiseCoeff <= NOISE_GRAIN_THRESHOLD) {
+        if (useUnifiedBlurShader && noiseCoeff <= NOISE_GRAIN_THRESHOLD) {
             val ditherCoeff = minOf(noiseCoeff * 2f, STACK_DITHER_MAX)
             effectScope.renderEffect = effectScope.renderEffect.chain(obtainStackDitherEffect(ditherCoeff))
             return true

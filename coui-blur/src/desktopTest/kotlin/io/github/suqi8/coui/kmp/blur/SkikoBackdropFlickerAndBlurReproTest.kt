@@ -372,4 +372,59 @@ class SkikoBackdropFlickerAndBlurReproTest {
             "dynamically attached backdrop must blur red source instead of staying blank, got $pixel",
         )
     }
+
+    /**
+     * Repro 8: When a DrawBackdropNode attaches before its first draw (size == Size.Unspecified),
+     * snapshot reads inside `effects` must still be observed once the first draw establishes size,
+     * so later State mutations (e.g. ChipTab checkedLayerAlpha or scroll veil) update the effect.
+     */
+    @Test
+    fun drawBackdropObservesStateReadInsideEffectsAfterFirstDraw() = runSkikoComposeUiTest(
+        size = Size(200f, 200f),
+        density = Density(1f),
+    ) {
+        val tintState = mutableStateOf(Color.Transparent)
+        setContent {
+            val backdrop = rememberLayerBackdrop()
+            Box(Modifier.fillMaxSize()) {
+                Canvas(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
+                    drawRect(Color(0xFF404040))
+                }
+                Box(
+                    Modifier
+                        .size(120.dp)
+                        .drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { RectangleShape },
+                            effects = {
+                                val overlay = tintState.value
+                                textureBlurEffect(
+                                    blurRadiusX = 12f,
+                                    blurRadiusY = 12f,
+                                    colors = if (overlay.alpha > 0f) {
+                                        BlurColors(listOf(BlendColorEntry(overlay, BlurBlendMode.SrcOver)))
+                                    } else {
+                                        BlurColors()
+                                    },
+                                )
+                            },
+                        ),
+                )
+            }
+        }
+        waitForIdle()
+        val before = onRoot().captureToImage().toPixelMap()[60, 60]
+        assertTrue(
+            before.red < 0.45f && before.green < 0.45f && before.blue < 0.45f,
+            "initial dark backdrop should stay dark, got $before",
+        )
+
+        tintState.value = Color.White.copy(alpha = 0.85f)
+        waitForIdle()
+        val after = onRoot().captureToImage().toPixelMap()[60, 60]
+        assertTrue(
+            after.red > 0.75f && after.green > 0.75f && after.blue > 0.75f,
+            "state read inside effects must trigger RenderEffect update after first draw, got before=$before after=$after",
+        )
+    }
 }
