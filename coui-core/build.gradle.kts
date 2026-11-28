@@ -28,7 +28,7 @@ kotlin {
                 }
         }
         minSdk = BuildConfig.MIN_SDK
-        namespace = "${BuildConfig.LIBRARY_ID}.core"
+        namespace = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}.core"
     }
 
     jvm("desktop")

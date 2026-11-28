@@ -189,7 +189,7 @@ kotlin {
                 }
         }
         minSdk = BuildConfig.MIN_SDK
-        namespace = "${BuildConfig.LIBRARY_ID}.squircle"
+        namespace = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}.squircle"
     }
 
     jvm("desktop")

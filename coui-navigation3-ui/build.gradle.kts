@@ -28,7 +28,7 @@ kotlin {
                 }
         }
         minSdk = BuildConfig.MIN_SDK
-        namespace = "${BuildConfig.LIBRARY_ID}.navigation3.ui"
+        namespace = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}.navigation3.ui"
     }
 
     jvm("desktop")

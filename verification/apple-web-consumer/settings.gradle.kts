@@ -21,7 +21,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-val couiGroup = "io.github.suqi8.coui.kmp"
+val couiGroup = "io.github.costben.coui17"
 val couiRepo = providers.gradleProperty("couiRepo").orNull
 
 dependencyResolutionManagement {

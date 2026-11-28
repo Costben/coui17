@@ -47,8 +47,8 @@ java {
 }
 
 dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-ui:$couiVersion")
-    implementation("io.github.suqi8.coui.kmp:coui-preference:$couiVersion")
+    implementation("io.github.costben.coui17:coui-ui:$couiVersion")
+    implementation("io.github.costben.coui17:coui-preference:$couiVersion")
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("org.jetbrains.compose.runtime:runtime:1.11.1")
 }

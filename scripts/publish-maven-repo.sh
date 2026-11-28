@@ -39,8 +39,8 @@ if [[ "${BUILD}" == "1" ]]; then
   (cd "${ROOT}" && ./gradlew "${tasks[@]}" -ProllingSnapshot --console=plain)
 fi
 
-if [[ ! -d "${LOCAL_REPO}/io/github/suqi8/coui/kmp" ]]; then
-  echo "找不到本地仓库目录: ${LOCAL_REPO}/io/github/suqi8/coui/kmp" >&2
+if [[ ! -d "${LOCAL_REPO}/io/github/costben/coui17" ]]; then
+  echo "找不到本地仓库目录: ${LOCAL_REPO}/io/github/costben/coui17" >&2
   exit 1
 fi
 
@@ -54,8 +54,8 @@ import shutil
 import sys
 import xml.etree.ElementTree as ET
 
-src_root = os.path.join(sys.argv[1], "io", "github", "suqi8", "coui", "kmp")
-dst_root = os.path.join(sys.argv[2], "io", "github", "suqi8", "coui", "kmp")
+src_root = os.path.join(sys.argv[1], "io", "github", "costben", "coui17")
+dst_root = os.path.join(sys.argv[2], "io", "github", "costben", "coui17")
 version = sys.argv[3]
 modules = sys.argv[4:]
 

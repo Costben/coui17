@@ -69,6 +69,8 @@ dependencies {
     implementation("org.jetbrains.compose.ui:ui-test:$composeVersion")
     implementation(compose.desktop.currentOs)
 
+    // Legacy channel deliberately resolves the upstream 1.1.0 coordinates from Maven Central so the
+    // candidate fork coordinates (`io.github.costben.coui17`) are verified as a drop-in replacement.
     couiModules.forEach { module ->
         implementation("io.github.suqi8.coui.kmp:$module:$legacyVersion")
     }
@@ -80,7 +82,7 @@ dependencies {
     "candidateImplementation"("org.jetbrains.compose.ui:ui-test:$composeVersion")
     "candidateImplementation"(compose.desktop.currentOs)
     couiModules.forEach { module ->
-        "candidateImplementation"("io.github.suqi8.coui.kmp:$module:$couiVersion")
+        "candidateImplementation"("io.github.costben.coui17:$module:$couiVersion")
     }
 }
 

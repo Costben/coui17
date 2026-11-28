@@ -20,7 +20,7 @@
 
 ## 2. 项目定位（已确认）
 
-- 本仓库 fork 自 [`suqi8/coui`](https://github.com/suqi8/coui)（分叉点 COUI 1.1.0），而 COUI 又 fork 自 [`compose-miuix-ui/miuix`](https://github.com/compose-miuix-ui/miuix)；对外仍以 [`suqi8/coui`](https://github.com/suqi8/coui) 为上游仓库，Maven 坐标为 `io.github.suqi8.coui.kmp`。血缘、继承范围、仍未独立化的身份标识与同步方式见仓库根目录 `UPSTREAM.md`。
+- 本仓库（`Costben/coui17`）是 [`suqi8/coui`](https://github.com/suqi8/coui)（分叉点 COUI 1.1.0，上游为 [`compose-miuix-ui/miuix`](https://github.com/compose-miuix-ui/miuix)）的 ColorOS 17 Drop-in Fork：发布坐标与文档站独立为 `io.github.costben.coui17` / `costben.github.io/coui17`，Kotlin 包名与 Android 库 `namespace` 保持 `io.github.suqi8.coui.kmp.*` 兼容。血缘、兼容边界与同步方式见仓库根目录 `UPSTREAM.md`。
 - **定位：就地改造成 coui 库。** Miuix 作为基底，不再单独对齐上游；最终可改包名 / Maven 坐标为 coui。
 - **改动深度：主题换肤优先（渐进）。** 先调 `theme/` 层默认值让现有组件整体呈现 COUI 观感，之后再按需逐个深挖组件。先不做大规模组件重构，除非某个组件的结构/交互和 ColorOS 差异大到换肤补不平。
 - 目标设计系统：**COUI 16 起步、对齐 ColorOS 17 的设计语言**（仓库目录名 `COUI16` 即源于早期目标）。
@@ -336,7 +336,7 @@ activity、`strings.xml` 的 `gallery_app_name`。`example/shared` 侧把页面�
 §17 / §18 记录的是本次统一之前的状态，保留作历史，不代表现状。
 
 - `example/coui17` 模块已删除。演示外壳位于 `example/shared/src/commonMain/kotlin/coui17/`，根组件为 `Coui17App`。
-- 所有平台入口都调用 `Coui17App`：Android（`example/android`，applicationId `io.github.suqi8.coui17`）、桌面、Web、macOS、iOS。
+- 所有平台入口都调用 `Coui17App`：Android（`example/android`，applicationId `io.github.costben.coui17`）、桌面、Web、macOS、iOS。
 - 壁纸取值顺序：Android 系统壁纸 → Android 锁屏壁纸（仅 API 34 及以上，且系统壁纸没有静态图时）→ Web 预览的壁纸选择器（`utils.WallpaperState`）→ 内置的 `coui17_wallpaper.jpg`（compose resource）。
 - 旧外壳 `App.kt` / `AppContent.kt` / `MainPage.kt` 及其专用的 `Home` / `HomeLayoutScope` / `MainPagerState` 已删除；`component/` 下只为 `MainPage` 服务的 48 个 `LazyListScope.*Section()` 包装已删除，公开的 `*Demo` 内容 composable 保留。
 - 设置页删除了依赖旧外壳的 `LocalLegacyChromeSettingsEnabled` 分支（顶栏、导航栏、悬浮工具栏、悬浮按钮等 12 行），同时删除了已无读取方的 11 个 `AppState` 字段。

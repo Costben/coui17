@@ -26,13 +26,13 @@ cd /Users/rinshibuya/Downloads/Erl-Project/coui
 ./gradlew -ProllingSnapshot :coui-ui:publishAndroidPublicationToLocalRepository \
   :coui-ui:publishKotlinMultiplatformPublicationToLocalRepository --console=plain
 
-R=/Users/rinshibuya/Downloads/Erl-Project/coui/build/repository/local/io/github/suqi8/coui/kmp
-L=/Users/rinshibuya/Downloads/Erl-Project/coui-local-repo/io/github/suqi8/coui/kmp
+R=/Users/rinshibuya/Downloads/Erl-Project/coui/build/repository/local/io/github/costben/coui17
+L=/Users/rinshibuya/Downloads/Erl-Project/coui-local-repo/io/github/costben/coui17
 rm -rf "$L"/coui-ui*
 cp -R "$R"/coui-ui* "$L"/
 
-rm -rf ~/.gradle/caches/modules-2/files-2.1/io.github.suqi8.coui.kmp \
-       ~/.gradle/caches/modules-2/metadata-*/descriptors/io.github.suqi8.coui.kmp
+rm -rf ~/.gradle/caches/modules-2/files-2.1/io.github.costben.coui17 \
+       ~/.gradle/caches/modules-2/metadata-*/descriptors/io.github.costben.coui17
 
 cd /Users/rinshibuya/Downloads/Erl-Project/BiliCO
 ./gradlew assembleRelease --offline --console=plain
@@ -43,7 +43,7 @@ cd /Users/rinshibuya/Downloads/Erl-Project/BiliCO
 ```bash
 stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" \
   coui/coui-ui/src/.../被改的文件.kt \
-  coui-local-repo/io/github/suqi8/coui/kmp/coui-ui-android/1.2.0-SNAPSHOT/*.aar
+  coui-local-repo/io/github/costben/coui17/coui-ui-android/1.2.0-SNAPSHOT/*.aar
 ```
 
 AAR 的时间晚于源文件，才算发布到位。
@@ -339,5 +339,5 @@ adb -s 192.168.31.132:5555 shell dumpsys gfxinfo erl.bilico
 | BiliCO 单文件上限 | 600 行 |
 | 单个 ViewModel 上限 | 400 行 |
 | coui 本地仓库 | `coui/build/repository/local` → `../coui-local-repo` |
-| 组件库坐标 | `io.github.suqi8.coui.kmp:*-android:1.2.0-SNAPSHOT` |
+| 组件库坐标 | `io.github.costben.coui17:*-android:1.2.0-SNAPSHOT` |
 | 只读参考 | `../BiliPai-coui`（不许改，不许依赖） |

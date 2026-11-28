@@ -44,10 +44,11 @@ nolebase:
   pageProperties: false
 ---
 
-::: info About this documentation
-The library, the Maven coordinates (`io.github.suqi8.coui.kmp`) and this documentation site belong
-to the upstream COUI project, [`suqi8/coui`](https://github.com/suqi8/coui), which is itself based
-on [Miuix](https://github.com/compose-miuix-ui/miuix). The repository this site is built from is a
-downstream fork of COUI; `UPSTREAM.md` in that repository records the fork relationship, what the
-fork changes, and how to sync with upstream.
+::: info About this fork
+This site documents [`Costben/coui17`](https://github.com/Costben/coui17), a **ColorOS 17 drop-in
+fork** of [`suqi8/coui`](https://github.com/suqi8/coui) (which is based on
+[Miuix](https://github.com/compose-miuix-ui/miuix)). It publishes under independent Maven
+coordinates (`io.github.costben.coui17:*`) while preserving the `io.github.suqi8.coui.kmp.*` Kotlin
+package prefix and Android `namespace` for drop-in compatibility. See `UPSTREAM.md` in the
+repository for full lineage, attribution, and sync details.
 :::

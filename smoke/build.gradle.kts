@@ -45,6 +45,6 @@ dependencies {
     implementation("org.jetbrains.compose.ui:ui-graphics:$composeVersion")
 
     publishedModules.forEach { module ->
-        implementation("io.github.suqi8.coui.kmp:$module:$couiVersion")
+        implementation("io.github.costben.coui17:$module:$couiVersion")
     }
 }

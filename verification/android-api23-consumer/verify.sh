@@ -61,7 +61,7 @@ negative_status=0
   -PcouiVersion="$version" \
   -PconsumerRepo="file://$negative_repo" \
   assembleDebug > "$negative_log" 2>&1 || negative_status=$?
-if [ "$negative_status" -eq 0 ] || ! grep -q "io.github.suqi8.coui.kmp" "$negative_log"; then
+if [ "$negative_status" -eq 0 ] || ! grep -q "io.github.costben.coui17" "$negative_log"; then
   echo "FAIL: the candidate resolved without its repository (status=$negative_status)" >&2
   tail -20 "$negative_log" >&2
   rm -rf "$negative_repo" "$negative_log"

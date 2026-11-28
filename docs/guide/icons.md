@@ -9,9 +9,9 @@ The basic `coui-ui` library includes only a small set of essential icons. To acc
 ```kotlin
 // build.gradle.kts
 commonMain.dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-ui:<version>")
+    implementation("io.github.costben.coui17:coui-ui:<version>")
     // Add the extended icon library
-    implementation("io.github.suqi8.coui.kmp:coui-icons:<version>")
+    implementation("io.github.costben.coui17:coui-icons:<version>")
 }
 ```
 

@@ -33,7 +33,7 @@ kotlin {
         // (which exposes this module through `api`) to accept a manifest-merge failure or paper over
         // it with `tools:overrideLibrary`.
         minSdk = BuildConfig.MIN_SDK
-        namespace = "${BuildConfig.LIBRARY_ID}.blur"
+        namespace = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}.blur"
     }
 
     jvm("desktop")

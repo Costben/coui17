@@ -29,7 +29,7 @@ kotlin {
                 }
         }
         minSdk = BuildConfig.MIN_SDK
-        namespace = "${BuildConfig.LIBRARY_ID}.ui"
+        namespace = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}.ui"
     }
 
     jvm("desktop")

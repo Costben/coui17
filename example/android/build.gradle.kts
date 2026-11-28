@@ -38,7 +38,7 @@ android {
         versionCode = getGitVersionCode()
     }
     experimentalProperties["android.experimental.r8.dex-startup-optimization"] = true
-    namespace = BuildConfig.APPLICATION_ID
+    namespace = BuildConfig.APPLICATION_NAMESPACE
     val properties = Properties()
     runCatching { properties.load(project.rootProject.file("local.properties").inputStream()) }
     val keystorePath = (properties.getProperty("KEYSTORE_PATH") ?: System.getenv("KEYSTORE_PATH"))?.takeIf { it.isNotBlank() }

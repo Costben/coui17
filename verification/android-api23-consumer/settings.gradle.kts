@@ -17,7 +17,7 @@ pluginManagement {
     }
 }
 
-val couiGroup = "io.github.suqi8.coui.kmp"
+val couiGroup = "io.github.costben.coui17"
 val consumerRepo = providers.gradleProperty("consumerRepo").orNull
 
 dependencyResolutionManagement {

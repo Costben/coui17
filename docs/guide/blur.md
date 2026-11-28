@@ -19,7 +19,7 @@ Add the `coui-blur` dependency to your project:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-blur:<version>")
+            implementation("io.github.costben.coui17:coui-blur:<version>")
         }
     }
 }
@@ -29,7 +29,7 @@ For Android-only projects:
 
 ```kotlin
 dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-blur-android:<version>")
+    implementation("io.github.costben.coui17:coui-blur-android:<version>")
 }
 ```
 

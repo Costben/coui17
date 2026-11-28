@@ -20,7 +20,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 GRADLE=(./gradlew --no-configuration-cache -q --console=plain)
-group_path="io/github/suqi8/coui/kmp"
+group_path="io/github/costben/coui17"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT

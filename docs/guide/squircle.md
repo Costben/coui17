@@ -28,7 +28,7 @@ Add the `coui-squircle` dependency to your project:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-squircle:<version>")
+            implementation("io.github.costben.coui17:coui-squircle:<version>")
         }
     }
 }
@@ -38,7 +38,7 @@ For Android-only projects:
 
 ```kotlin
 dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")
+    implementation("io.github.costben.coui17:coui-squircle-android:<version>")
 }
 ```
 

@@ -2,15 +2,16 @@
 
 ## 1.1.0 → 1.2.0
 
-把你依赖的每个 COUI 坐标都改成新版本：
+将你依赖的每个 COUI 坐标的 Maven 组切换为 `io.github.costben.coui17` 并更新版本号（Kotlin
+`import` 保持 `io.github.suqi8.coui.kmp.*` 不变，无需改动业务源码）：
 
 ```kotlin
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-ui:1.2.0")
-            implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
-            implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
+            implementation("io.github.costben.coui17:coui-ui:1.2.0")
+            implementation("io.github.costben.coui17:coui-preference:1.2.0")
+            implementation("io.github.costben.coui17:coui-icons:1.2.0")
         }
     }
 }

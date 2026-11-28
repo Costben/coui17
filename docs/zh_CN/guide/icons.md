@@ -9,9 +9,9 @@ COUI 提供了一套丰富的内置图标系统，满足大多数应用的主要
 ```kotlin
 // build.gradle.kts
 commonMain.dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-ui:<version>")
+    implementation("io.github.costben.coui17:coui-ui:<version>")
     // 添加扩展图标库
-    implementation("io.github.suqi8.coui.kmp:coui-icons:<version>")
+    implementation("io.github.costben.coui17:coui-icons:<version>")
 }
 ```
 

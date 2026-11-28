@@ -29,7 +29,7 @@ kotlin {
                 }
         }
         minSdk = BuildConfig.MIN_SDK
-        namespace = "${BuildConfig.LIBRARY_ID}.nav"
+        namespace = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}.nav"
     }
 
     jvm("desktop")

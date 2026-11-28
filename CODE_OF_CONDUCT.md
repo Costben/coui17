@@ -50,7 +50,7 @@ officially representing the community in public spaces.
 
 Instances of abusive, harassing, or otherwise unacceptable behaviour may be reported to the
 maintainers through GitHub: open a private report against the
-[`suqi8/coui`](https://github.com/suqi8/coui) repository (Security → Report a vulnerability is the
+[`Costben/coui17`](https://github.com/Costben/coui17) repository (Security → Report a vulnerability is the
 private channel; use it for conduct reports too, and state that the report is about conduct).
 All complaints will be reviewed and investigated promptly and fairly.
 

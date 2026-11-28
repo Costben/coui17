@@ -8,33 +8,33 @@ After migration your app keeps working with the same component set — but the v
 
 ## 1. Update dependencies
 
-Replace the Miuix Maven coordinates (`top.yukonga.miuix.kmp`) with the COUI ones (`io.github.suqi8.coui.kmp`). Every module has a 1:1 counterpart:
+Replace the Miuix Maven coordinates (`top.yukonga.miuix.kmp`) with the COUI 17 coordinates (`io.github.costben.coui17`). Every module has a 1:1 counterpart:
 
 | Miuix module | COUI module |
 | :-- | :-- |
-| `top.yukonga.miuix.kmp:miuix-ui` | `io.github.suqi8.coui.kmp:coui-ui` |
-| `top.yukonga.miuix.kmp:miuix-preference` | `io.github.suqi8.coui.kmp:coui-preference` |
-| `top.yukonga.miuix.kmp:miuix-icons` | `io.github.suqi8.coui.kmp:coui-icons` |
-| `top.yukonga.miuix.kmp:miuix-blur` | `io.github.suqi8.coui.kmp:coui-blur` |
-| `top.yukonga.miuix.kmp:miuix-squircle` | `io.github.suqi8.coui.kmp:coui-squircle` |
-| `top.yukonga.miuix.kmp:miuix-nav` | `io.github.suqi8.coui.kmp:coui-nav` |
-| `top.yukonga.miuix.kmp:miuix-shader` | `io.github.suqi8.coui.kmp:coui-shader` |
-| `top.yukonga.miuix.kmp:miuix-core` | `io.github.suqi8.coui.kmp:coui-core` |
+| `top.yukonga.miuix.kmp:miuix-ui` | `io.github.costben.coui17:coui-ui` |
+| `top.yukonga.miuix.kmp:miuix-preference` | `io.github.costben.coui17:coui-preference` |
+| `top.yukonga.miuix.kmp:miuix-icons` | `io.github.costben.coui17:coui-icons` |
+| `top.yukonga.miuix.kmp:miuix-blur` | `io.github.costben.coui17:coui-blur` |
+| `top.yukonga.miuix.kmp:miuix-squircle` | `io.github.costben.coui17:coui-squircle` |
+| `top.yukonga.miuix.kmp:miuix-nav` | `io.github.costben.coui17:coui-nav` |
+| `top.yukonga.miuix.kmp:miuix-shader` | `io.github.costben.coui17:coui-shader` |
+| `top.yukonga.miuix.kmp:miuix-core` | `io.github.costben.coui17:coui-core` |
 
 ```kotlin
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-ui:1.2.0")
+            implementation("io.github.costben.coui17:coui-ui:1.2.0")
             // Optional modules, same pattern:
-            implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
-            implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
+            implementation("io.github.costben.coui17:coui-preference:1.2.0")
+            implementation("io.github.costben.coui17:coui-icons:1.2.0")
         }
     }
 }
 ```
 
-COUI additionally ships `io.github.suqi8.coui.kmp:coui-navigation3-ui`, an integration for androidx Navigation 3 — see [Navigation 3](../guide/navigation3.md).
+COUI additionally ships `io.github.costben.coui17:coui-navigation3-ui`, an integration for androidx Navigation 3 — see [Navigation 3](../guide/navigation3.md).
 
 ## 2. Update the package prefix
 

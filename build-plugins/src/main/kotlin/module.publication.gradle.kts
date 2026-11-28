@@ -4,6 +4,8 @@
 import java.io.FileInputStream
 import java.util.Properties
 import org.gradle.api.provider.Provider
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 plugins {
     `maven-publish`
@@ -14,12 +16,35 @@ plugins {
 // Shared with the root release aggregation so the two cannot drift apart.
 val versionSuffix = releaseVersionSuffix()
 
-group = BuildConfig.LIBRARY_ID
+group = BuildConfig.LIBRARY_GROUP_ID
 version = "${BuildConfig.LIBRARY_VERSION}$versionSuffix"
+
+// Keep Kotlin's JVM moduleName anchored to LIBRARY_PACKAGE_PREFIX so internal and
+// ComposableSingletons mangled names stay binary-compatible with upstream io.github.suqi8.coui.kmp
+// even though Maven artifacts publish under LIBRARY_GROUP_ID.
+val compatModuleBaseName = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}_${project.name}"
+pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+    extensions.configure<KotlinMultiplatformExtension> {
+        targets.configureEach {
+            compilations.configureEach {
+                val compName = name
+                compileTaskProvider.configure {
+                    compilerOptions {
+                        if (this is KotlinJvmCompilerOptions) {
+                            moduleName.set(
+                                if (compName == "main") compatModuleBaseName else "${compatModuleBaseName}_$compName",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 val publicationExt = extensions.create<COUIPublicationExtension>("couiPublication")
 
-val projectUrl = "https://github.com/suqi8/coui"
+val projectUrl = "https://github.com/Costben/coui17"
 
 /** Resolved by [githubPackagesUrl] in `GithubPackages.kt`; see there for the resolution order. */
 val githubPackagesRepositoryUrl: Provider<String> = githubPackagesUrl(providers)
@@ -101,14 +126,14 @@ publishing {
             }
             scm {
                 connection.set("scm:git:$projectUrl.git")
-                developerConnection.set("scm:git:ssh://git@github.com/suqi8/coui.git")
+                developerConnection.set("scm:git:ssh://git@github.com/Costben/coui17.git")
                 url.set(projectUrl)
             }
             developers {
                 developer {
-                    id.set("suqi8")
-                    name.set("suqi8")
-                    url.set("https://github.com/suqi8")
+                    id.set("costben")
+                    name.set("Costben")
+                    url.set("https://github.com/Costben")
                 }
             }
         }

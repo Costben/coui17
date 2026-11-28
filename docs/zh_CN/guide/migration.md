@@ -8,33 +8,33 @@ COUI 基于 [Miuix](https://github.com/compose-miuix-ui/miuix) 构建，并保�
 
 ## 1. 更新依赖
 
-将 Miuix 的 Maven 坐标（`top.yukonga.miuix.kmp`）替换为 COUI 的坐标（`io.github.suqi8.coui.kmp`）。每个模块都有 1:1 的对应关系：
+将 Miuix 的 Maven 坐标（`top.yukonga.miuix.kmp`）替换为 COUI 17 的坐标（`io.github.costben.coui17`）。每个模块都有 1:1 的对应关系：
 
 | Miuix 模块 | COUI 模块 |
 | :-- | :-- |
-| `top.yukonga.miuix.kmp:miuix-ui` | `io.github.suqi8.coui.kmp:coui-ui` |
-| `top.yukonga.miuix.kmp:miuix-preference` | `io.github.suqi8.coui.kmp:coui-preference` |
-| `top.yukonga.miuix.kmp:miuix-icons` | `io.github.suqi8.coui.kmp:coui-icons` |
-| `top.yukonga.miuix.kmp:miuix-blur` | `io.github.suqi8.coui.kmp:coui-blur` |
-| `top.yukonga.miuix.kmp:miuix-squircle` | `io.github.suqi8.coui.kmp:coui-squircle` |
-| `top.yukonga.miuix.kmp:miuix-nav` | `io.github.suqi8.coui.kmp:coui-nav` |
-| `top.yukonga.miuix.kmp:miuix-shader` | `io.github.suqi8.coui.kmp:coui-shader` |
-| `top.yukonga.miuix.kmp:miuix-core` | `io.github.suqi8.coui.kmp:coui-core` |
+| `top.yukonga.miuix.kmp:miuix-ui` | `io.github.costben.coui17:coui-ui` |
+| `top.yukonga.miuix.kmp:miuix-preference` | `io.github.costben.coui17:coui-preference` |
+| `top.yukonga.miuix.kmp:miuix-icons` | `io.github.costben.coui17:coui-icons` |
+| `top.yukonga.miuix.kmp:miuix-blur` | `io.github.costben.coui17:coui-blur` |
+| `top.yukonga.miuix.kmp:miuix-squircle` | `io.github.costben.coui17:coui-squircle` |
+| `top.yukonga.miuix.kmp:miuix-nav` | `io.github.costben.coui17:coui-nav` |
+| `top.yukonga.miuix.kmp:miuix-shader` | `io.github.costben.coui17:coui-shader` |
+| `top.yukonga.miuix.kmp:miuix-core` | `io.github.costben.coui17:coui-core` |
 
 ```kotlin
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-ui:1.2.0")
+            implementation("io.github.costben.coui17:coui-ui:1.2.0")
             // 可选模块，模式相同：
-            implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
-            implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
+            implementation("io.github.costben.coui17:coui-preference:1.2.0")
+            implementation("io.github.costben.coui17:coui-icons:1.2.0")
         }
     }
 }
 ```
 
-COUI 还额外提供 `io.github.suqi8.coui.kmp:coui-navigation3-ui`，用于集成 androidx Navigation 3 — 参见[Navigation 3](../guide/navigation3.md)。
+COUI 还额外提供 `io.github.costben.coui17:coui-navigation3-ui`，用于集成 androidx Navigation 3 — 参见[Navigation 3](../guide/navigation3.md)。
 
 ## 2. 更新包名前缀
 

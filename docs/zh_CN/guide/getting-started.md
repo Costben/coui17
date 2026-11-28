@@ -48,7 +48,8 @@
 
 2. 在项目的 build.gradle.kts 中添加依赖：
 
-COUI 由多个可独立使用的模块组成。所有模块使用 `io.github.suqi8.coui.kmp` 组，并共用同一个版本号。
+COUI 由多个可独立使用的模块组成。所有模块使用 `io.github.costben.coui17` Maven 组（同时保留
+`io.github.suqi8.coui.kmp.*` Kotlin 包名前缀以兼容上游 COUI），并共用同一个版本号。
 
 | 模块 | 说明 | 平台限制 |
 |---|---|---|
@@ -68,21 +69,21 @@ COUI 由多个可独立使用的模块组成。所有模块使用 `io.github.suq
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-ui:<version>")
+            implementation("io.github.costben.coui17:coui-ui:<version>")
             // 可选：添加 coui-preference 以获取 Preference 组件
-            implementation("io.github.suqi8.coui.kmp:coui-preference:<version>")
+            implementation("io.github.costben.coui17:coui-preference:<version>")
             // 可选：添加 coui-icons 以获取更多图标
-            implementation("io.github.suqi8.coui.kmp:coui-icons:<version>")
+            implementation("io.github.costben.coui17:coui-icons:<version>")
             // 可选：添加 coui-blur 以获取模糊效果
-            implementation("io.github.suqi8.coui.kmp:coui-blur:<version>")
+            implementation("io.github.costben.coui17:coui-blur:<version>")
             // 可选：添加 coui-squircle 以获取平滑圆角形状
-            implementation("io.github.suqi8.coui.kmp:coui-squircle:<version>")
+            implementation("io.github.costben.coui17:coui-squircle:<version>")
             // 可选：添加 coui-nav 以获取导航支持
-            implementation("io.github.suqi8.coui.kmp:coui-nav:<version>")
+            implementation("io.github.costben.coui17:coui-nav:<version>")
             // 可选：添加 coui-shader 以获取运行时着色器
-            implementation("io.github.suqi8.coui.kmp:coui-shader:<version>")
+            implementation("io.github.costben.coui17:coui-shader:<version>")
             // 可选：添加 coui-navigation3-ui 以获取 Navigation3 支持
-            implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui:<version>")
+            implementation("io.github.costben.coui17:coui-navigation3-ui:<version>")
         }
     }
 }
@@ -92,68 +93,68 @@ kotlin {
 
 ```kotlin
 dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-ui-android:<version>")
+    implementation("io.github.costben.coui17:coui-ui-android:<version>")
     // 可选：添加 coui-preference 以获取 Preference 组件
-    implementation("io.github.suqi8.coui.kmp:coui-preference-android:<version>")
+    implementation("io.github.costben.coui17:coui-preference-android:<version>")
     // 可选：添加 coui-icons 以获取更多图标
-    implementation("io.github.suqi8.coui.kmp:coui-icons-android:<version>")
+    implementation("io.github.costben.coui17:coui-icons-android:<version>")
     // 可选：添加 coui-blur 以获取模糊效果（低于 Android API 33 时为空操作）
-    implementation("io.github.suqi8.coui.kmp:coui-blur-android:<version>")
+    implementation("io.github.costben.coui17:coui-blur-android:<version>")
     // 可选：添加 coui-squircle 以获取平滑圆角形状
-    implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")
+    implementation("io.github.costben.coui17:coui-squircle-android:<version>")
     // 可选：添加 coui-nav 以获取导航支持
-    implementation("io.github.suqi8.coui.kmp:coui-nav-android:<version>")
+    implementation("io.github.costben.coui17:coui-nav-android:<version>")
     // 可选：添加 coui-shader 以获取运行时着色器
-    implementation("io.github.suqi8.coui.kmp:coui-shader-android:<version>")
+    implementation("io.github.costben.coui17:coui-shader-android:<version>")
     // 可选：添加 coui-navigation3-ui 以获取 Navigation3 支持
-    implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui-android:<version>")
+    implementation("io.github.costben.coui17:coui-navigation3-ui-android:<version>")
 }
 ```
 
 - 在其他常规项目中使用，则只需要根据需要添加对应平台后缀的依赖即可：
 
 ```kotlin
-implementation("io.github.suqi8.coui.kmp:coui-ui-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-js:<version>")
+implementation("io.github.costben.coui17:coui-ui-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-ui-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-ui-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-ui-desktop:<version>")
+implementation("io.github.costben.coui17:coui-ui-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-ui-js:<version>")
 // 可选：添加 coui-preference
-implementation("io.github.suqi8.coui.kmp:coui-preference-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-js:<version>")
+implementation("io.github.costben.coui17:coui-preference-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-preference-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-preference-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-preference-desktop:<version>")
+implementation("io.github.costben.coui17:coui-preference-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-preference-js:<version>")
 // 可选：添加 coui-blur
-implementation("io.github.suqi8.coui.kmp:coui-blur-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-js:<version>")
+implementation("io.github.costben.coui17:coui-blur-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-blur-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-blur-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-blur-desktop:<version>")
+implementation("io.github.costben.coui17:coui-blur-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-blur-js:<version>")
 // 可选：添加 coui-nav
-implementation("io.github.suqi8.coui.kmp:coui-nav-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-js:<version>")
+implementation("io.github.costben.coui17:coui-nav-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-nav-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-nav-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-nav-desktop:<version>")
+implementation("io.github.costben.coui17:coui-nav-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-nav-js:<version>")
 // 可选：添加 coui-icons
-implementation("io.github.suqi8.coui.kmp:coui-icons-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-js:<version>")
+implementation("io.github.costben.coui17:coui-icons-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-icons-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-icons-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-icons-desktop:<version>")
+implementation("io.github.costben.coui17:coui-icons-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-icons-js:<version>")
 // 可选：添加 coui-squircle
-implementation("io.github.suqi8.coui.kmp:coui-squircle-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-js:<version>")
+implementation("io.github.costben.coui17:coui-squircle-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-squircle-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-squircle-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-squircle-desktop:<version>")
+implementation("io.github.costben.coui17:coui-squircle-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-squircle-js:<version>")
 ```
 
 ## 基本用法

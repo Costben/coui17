@@ -25,7 +25,7 @@
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-squircle:<version>")
+            implementation("io.github.costben.coui17:coui-squircle:<version>")
         }
     }
 }
@@ -35,7 +35,7 @@ Android 项目：
 
 ```kotlin
 dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")
+    implementation("io.github.costben.coui17:coui-squircle-android:<version>")
 }
 ```
 

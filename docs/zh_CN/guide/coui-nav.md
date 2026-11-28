@@ -7,7 +7,7 @@
 在 `build.gradle.kts` 中添加依赖：
 
 ```kotlin
-implementation("io.github.suqi8.coui.kmp:coui-nav:<version>")
+implementation("io.github.costben.coui17:coui-nav:<version>")
 ```
 
 为路由层级标注 `@Serializable`，使返回栈能在配置变更与进程死亡后保存与恢复。

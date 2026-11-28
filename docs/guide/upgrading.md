@@ -2,15 +2,17 @@
 
 ## 1.1.0 → 1.2.0
 
-Update the version in every COUI coordinate you depend on:
+Switch the Maven group to `io.github.costben.coui17` and update the version in every COUI
+coordinate you depend on (Kotlin imports remain `io.github.suqi8.coui.kmp.*` for drop-in
+compatibility):
 
 ```kotlin
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-ui:1.2.0")
-            implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
-            implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
+            implementation("io.github.costben.coui17:coui-ui:1.2.0")
+            implementation("io.github.costben.coui17:coui-preference:1.2.0")
+            implementation("io.github.costben.coui17:coui-icons:1.2.0")
         }
     }
 }

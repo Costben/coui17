@@ -71,7 +71,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.ui)
             couiModules.forEach { module ->
-                implementation("io.github.suqi8.coui.kmp:$module:$couiVersion")
+                implementation("io.github.costben.coui17:$module:$couiVersion")
             }
         }
     }

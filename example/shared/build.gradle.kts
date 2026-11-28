@@ -15,7 +15,7 @@ plugins {
 
 val generatedSrcDir: Provider<Directory> = layout.buildDirectory.dir("generated/coui-example")
 
-group = BuildConfig.LIBRARY_ID
+group = BuildConfig.LIBRARY_GROUP_ID
 
 kotlin {
     android {
@@ -87,6 +87,7 @@ kotlin {
 
 compose.resources {
     publicResClass = true
+    packageOfResClass = "${BuildConfig.LIBRARY_PACKAGE_PREFIX}.shared.generated.resources"
 }
 
 val generateVersionInfo by tasks.registering(GenerateVersionInfoTask::class) {

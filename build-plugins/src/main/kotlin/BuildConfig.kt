@@ -3,10 +3,12 @@
 
 object BuildConfig {
     const val LIBRARY_VERSION = "1.2.0"
-    const val LIBRARY_ID = "io.github.suqi8.coui.kmp"
+    const val LIBRARY_GROUP_ID = "io.github.costben.coui17"
+    const val LIBRARY_PACKAGE_PREFIX = "io.github.suqi8.coui.kmp"
     const val APPLICATION_NAME = "COUI"
     const val APPLICATION_VERSION_NAME = "1.0.9"
-    const val APPLICATION_ID = "io.github.suqi8.coui17"
+    const val APPLICATION_ID = "io.github.costben.coui17"
+    const val APPLICATION_NAMESPACE = "io.github.suqi8.coui17"
     const val APPLICATION_SHARED_ID = "io.github.suqi8.coui.shared"
     const val COMPILE_SDK = 37
     const val COMPILE_SDK_MINOR = 0

@@ -49,8 +49,9 @@ To use COUI in your project, follow these steps to add dependencies:
 
 2. Add dependencies to your project's `build.gradle.kts`:
 
-COUI is composed of several modules that can be used independently. All modules use the group
-`io.github.suqi8.coui.kmp` and share one version number.
+COUI is composed of several modules that can be used independently. All modules use the Maven group
+`io.github.costben.coui17` (while preserving the `io.github.suqi8.coui.kmp.*` Kotlin package prefix
+for drop-in compatibility with upstream COUI) and share one version number.
 
 | Module                | Description                                                                                              | Platform notes |
 | --------------------- | -------------------------------------------------------------------------------------------------------- | -------------- |
@@ -70,21 +71,21 @@ COUI is composed of several modules that can be used independently. All modules 
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-ui:<version>")
+            implementation("io.github.costben.coui17:coui-ui:<version>")
             // Optional: Add coui-preference for preference components
-            implementation("io.github.suqi8.coui.kmp:coui-preference:<version>")
+            implementation("io.github.costben.coui17:coui-preference:<version>")
             // Optional: Add coui-icons for more icons
-            implementation("io.github.suqi8.coui.kmp:coui-icons:<version>")
+            implementation("io.github.costben.coui17:coui-icons:<version>")
             // Optional: Add coui-blur for blur effects
-            implementation("io.github.suqi8.coui.kmp:coui-blur:<version>")
+            implementation("io.github.costben.coui17:coui-blur:<version>")
             // Optional: Add coui-squircle for squircle (smooth rounded corner) shapes
-            implementation("io.github.suqi8.coui.kmp:coui-squircle:<version>")
+            implementation("io.github.costben.coui17:coui-squircle:<version>")
             // Optional: Add coui-nav for navigation
-            implementation("io.github.suqi8.coui.kmp:coui-nav:<version>")
+            implementation("io.github.costben.coui17:coui-nav:<version>")
             // Optional: Add coui-shader for runtime shaders
-            implementation("io.github.suqi8.coui.kmp:coui-shader:<version>")
+            implementation("io.github.costben.coui17:coui-shader:<version>")
             // Optional: Add coui-navigation3-ui for Navigation3 support
-            implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui:<version>")
+            implementation("io.github.costben.coui17:coui-navigation3-ui:<version>")
         }
     }
 }
@@ -94,68 +95,68 @@ kotlin {
 
 ```kotlin
 dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-ui-android:<version>")
+    implementation("io.github.costben.coui17:coui-ui-android:<version>")
     // Optional: Add coui-preference for preference components
-    implementation("io.github.suqi8.coui.kmp:coui-preference-android:<version>")
+    implementation("io.github.costben.coui17:coui-preference-android:<version>")
     // Optional: Add coui-icons for more icons
-    implementation("io.github.suqi8.coui.kmp:coui-icons-android:<version>")
+    implementation("io.github.costben.coui17:coui-icons-android:<version>")
     // Optional: Add coui-blur for blur effects (no-op below Android API 33)
-    implementation("io.github.suqi8.coui.kmp:coui-blur-android:<version>")
+    implementation("io.github.costben.coui17:coui-blur-android:<version>")
     // Optional: Add coui-squircle for squircle (smooth rounded corner) shapes
-    implementation("io.github.suqi8.coui.kmp:coui-squircle-android:<version>")
+    implementation("io.github.costben.coui17:coui-squircle-android:<version>")
     // Optional: Add coui-nav for navigation
-    implementation("io.github.suqi8.coui.kmp:coui-nav-android:<version>")
+    implementation("io.github.costben.coui17:coui-nav-android:<version>")
     // Optional: Add coui-shader for runtime shaders
-    implementation("io.github.suqi8.coui.kmp:coui-shader-android:<version>")
+    implementation("io.github.costben.coui17:coui-shader-android:<version>")
     // Optional: Add coui-navigation3-ui for Navigation3 support
-    implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui-android:<version>")
+    implementation("io.github.costben.coui17:coui-navigation3-ui-android:<version>")
 }
 ```
 
 - For other projects, add platform-specific dependencies as needed:
 
 ```kotlin
-implementation("io.github.suqi8.coui.kmp:coui-ui-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-ui-js:<version>")
+implementation("io.github.costben.coui17:coui-ui-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-ui-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-ui-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-ui-desktop:<version>")
+implementation("io.github.costben.coui17:coui-ui-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-ui-js:<version>")
 // Optional: Add coui-preference
-implementation("io.github.suqi8.coui.kmp:coui-preference-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-preference-js:<version>")
+implementation("io.github.costben.coui17:coui-preference-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-preference-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-preference-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-preference-desktop:<version>")
+implementation("io.github.costben.coui17:coui-preference-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-preference-js:<version>")
 // Optional: Add coui-blur
-implementation("io.github.suqi8.coui.kmp:coui-blur-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-blur-js:<version>")
+implementation("io.github.costben.coui17:coui-blur-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-blur-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-blur-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-blur-desktop:<version>")
+implementation("io.github.costben.coui17:coui-blur-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-blur-js:<version>")
 // Optional: Add coui-nav
-implementation("io.github.suqi8.coui.kmp:coui-nav-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-nav-js:<version>")
+implementation("io.github.costben.coui17:coui-nav-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-nav-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-nav-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-nav-desktop:<version>")
+implementation("io.github.costben.coui17:coui-nav-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-nav-js:<version>")
 // Optional: Add coui-icons
-implementation("io.github.suqi8.coui.kmp:coui-icons-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-icons-js:<version>")
+implementation("io.github.costben.coui17:coui-icons-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-icons-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-icons-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-icons-desktop:<version>")
+implementation("io.github.costben.coui17:coui-icons-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-icons-js:<version>")
 // Optional: Add coui-squircle
-implementation("io.github.suqi8.coui.kmp:coui-squircle-iosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-iossimulatorarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-macosarm64:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-desktop:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-wasmjs:<version>")
-implementation("io.github.suqi8.coui.kmp:coui-squircle-js:<version>")
+implementation("io.github.costben.coui17:coui-squircle-iosarm64:<version>")
+implementation("io.github.costben.coui17:coui-squircle-iossimulatorarm64:<version>")
+implementation("io.github.costben.coui17:coui-squircle-macosarm64:<version>")
+implementation("io.github.costben.coui17:coui-squircle-desktop:<version>")
+implementation("io.github.costben.coui17:coui-squircle-wasmjs:<version>")
+implementation("io.github.costben.coui17:coui-squircle-js:<version>")
 ```
 
 ## Basic Usage

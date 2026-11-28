@@ -17,7 +17,7 @@ Android 上 `coui-blur` 可安装到 `minSdk` 23，无需 `tools:overrideLibrary
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-blur:<version>")
+            implementation("io.github.costben.coui17:coui-blur:<version>")
         }
     }
 }
@@ -27,7 +27,7 @@ Android 项目：
 
 ```kotlin
 dependencies {
-    implementation("io.github.suqi8.coui.kmp:coui-blur-android:<version>")
+    implementation("io.github.costben.coui17:coui-blur-android:<version>")
 }
 ```
 

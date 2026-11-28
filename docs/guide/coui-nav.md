@@ -7,7 +7,7 @@
 Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
-implementation("io.github.suqi8.coui.kmp:coui-nav:<version>")
+implementation("io.github.costben.coui17:coui-nav:<version>")
 ```
 
 Annotate your route hierarchy with `@Serializable` so the back stack can be saved and restored across configuration changes and process death.

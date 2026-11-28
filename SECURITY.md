@@ -17,13 +17,13 @@ Snapshots published from `main` are development builds and are not covered by th
 Please do not open a public issue for a security problem.
 
 Use GitHub's private vulnerability reporting on the
-[`suqi8/coui`](https://github.com/suqi8/coui) repository (**Security → Report a vulnerability**).
+[`Costben/coui17`](https://github.com/Costben/coui17) repository (**Security → Report a vulnerability**).
 If you cannot use that channel, contact a maintainer directly and ask for a private channel before
 sharing details.
 
 A useful report contains:
 
-- the affected artifact and version (`io.github.suqi8.coui.kmp:*`);
+- the affected artifact and version (`io.github.costben.coui17:*`);
 - the platform (Android / iOS / macOS / Desktop / Web) and OS version;
 - a minimal reproduction, and the impact you believe it has;
 - any suggested fix or mitigation.

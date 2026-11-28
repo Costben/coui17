@@ -6,10 +6,11 @@ complete contribution looks like.
 
 ## Before you start
 
-- Read [`UPSTREAM.md`](UPSTREAM.md) first. This repository is a downstream fork of
-  [`suqi8/coui`](https://github.com/suqi8/coui): it does not own the COUI name, the
-  `io.github.suqi8.coui.kmp` coordinates or the published documentation site, and changes that
-  belong upstream may have to be proposed there instead.
+- Read [`UPSTREAM.md`](UPSTREAM.md) first. This repository (`Costben/coui17`) is a ColorOS 17
+  drop-in downstream fork of [`suqi8/coui`](https://github.com/suqi8/coui): it publishes under its
+  own Maven coordinates (`io.github.costben.coui17:*`) and documentation site while preserving the
+  `io.github.suqi8.coui.kmp.*` Kotlin package prefix and Android `namespace` for compatibility.
+  Changes that also belong upstream may be proposed to `suqi8/coui` as well.
 - Read [`CLAUDE.md`](CLAUDE.md) for the code style, API conventions and performance constraints.
   It is written for AI coding assistants, but it is the authoritative engineering convention for
   human contributors too. [`AGENT.md`](AGENT.md) covers the design-sourcing rules that apply when a

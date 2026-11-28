@@ -133,7 +133,7 @@ val verifySnapshotProbe = tasks.register<VerifyStagedRepositoryTask>("verifyStag
     group = "publishing"
     description = "Validates the staged Maven Central repository without re-staging it"
     repositoryDir.set(stagingDir)
-    groupId.set(BuildConfig.LIBRARY_ID)
+    groupId.set(BuildConfig.LIBRARY_GROUP_ID)
     version.set(releaseVersion)
     requireSignature.set(requireReleaseSignature)
     rejectForeignVersions.set(true)
@@ -143,7 +143,7 @@ val verifyLocalProbe = tasks.register<VerifyStagedRepositoryTask>("verifyLocalRe
     group = "publishing"
     description = "Validates the shared local repository without publishing to it again"
     repositoryDir.set(localRepoDir)
-    groupId.set(BuildConfig.LIBRARY_ID)
+    groupId.set(BuildConfig.LIBRARY_GROUP_ID)
     version.set(releaseVersion)
     requireSignature.set(false)
     rejectForeignVersions.set(true)
@@ -199,7 +199,7 @@ val verifyGithubPackages = tasks.register<VerifyStagedRepositoryTask>("verifyGit
     group = "publishing"
     description = "Validates the GitHub Packages repository a file: endpoint points at"
     repositoryDir.set(layout.dir(githubPackagesRepoDir))
-    groupId.set(BuildConfig.LIBRARY_ID)
+    groupId.set(BuildConfig.LIBRARY_GROUP_ID)
     version.set(releaseVersion)
     requireSignature.set(false)
     rejectForeignVersions.set(true)

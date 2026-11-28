@@ -11,13 +11,14 @@ A ColorOS-styled UI library for Compose Multiplatform, forked from
 > This library is experimental. APIs may change without notice.
 
 > [!IMPORTANT]
-> **This repository is a fork.** It is a downstream fork of
+> **This repository is a ColorOS 17 drop-in fork.** It is a downstream fork of
 > [suqi8/coui](https://github.com/suqi8/coui) (COUI), which is itself a fork of
-> [Miuix](https://github.com/compose-miuix-ui/miuix). The COUI name, the
-> `io.github.suqi8.coui.kmp` Maven coordinates and the published documentation site belong to the
-> upstream COUI project; this fork publishes snapshots to its own GitHub Packages repository under
-> those coordinates and does not publish to Maven Central. [`UPSTREAM.md`](UPSTREAM.md)
-> records the full lineage, what this fork changes, and how to sync with upstream.
+> [Miuix](https://github.com/compose-miuix-ui/miuix). This fork publishes under its own Maven
+> coordinates (`io.github.costben.coui17:*`) and hosts its own documentation site
+> (<https://costben.github.io/coui17/>), while keeping the Kotlin package prefix
+> (`io.github.suqi8.coui.kmp.*`) and Android `namespace` unchanged for drop-in compatibility with
+> upstream COUI. [`UPSTREAM.md`](UPSTREAM.md) records the full lineage, what this fork changes, and
+> how to sync with upstream.
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.4.10-7F52FF)](https://kotlinlang.org/)
 [![Compose Multiplatform](https://img.shields.io/badge/compose-1.11.1-4285F4)](https://kotlinlang.org/compose-multiplatform/)
@@ -74,21 +75,22 @@ The documentation site and the sample applications have their own steps; both ar
 
 ### Modules
 
-All modules use the group `io.github.suqi8.coui.kmp` and share the same version number. Every
-module exposes the full target set: Android, iOS (`iosArm64`, `iosSimulatorArm64`), macOS
-(`macosArm64`), Desktop JVM, JsCanvas and WasmJs.
+All modules use the Maven group `io.github.costben.coui17` (while preserving the
+`io.github.suqi8.coui.kmp.*` Kotlin package prefix for drop-in compatibility) and share the same
+version number. Every module exposes the full target set: Android, iOS (`iosArm64`,
+`iosSimulatorArm64`), macOS (`macosArm64`), Desktop JVM, JsCanvas and WasmJs.
 
-| Module                | Maven coordinate                                | Description                                                                                              | Depends on              |
-| --------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `coui-ui`             | `io.github.suqi8.coui.kmp:coui-ui`              | Core UI component library (ColorOS 16 design language)                                                   | `coui-core`, `coui-blur`, `coui-squircle` |
-| `coui-core`           | `io.github.suqi8.coui.kmp:coui-core`            | Shared primitives and platform utilities used by the other modules                                       | —                       |
-| `coui-preference`     | `io.github.suqi8.coui.kmp:coui-preference`      | Preference components (`SwitchPreference`, `CheckboxPreference`, …)                                      | `coui-ui`               |
-| `coui-icons`          | `io.github.suqi8.coui.kmp:coui-icons`           | Extended Material icon set, usable standalone or with `coui-ui`                                          | `coui-core`             |
-| `coui-blur`           | `io.github.suqi8.coui.kmp:coui-blur`            | Backdrop blur / blur effect modifiers, usable standalone                                                | `coui-shader`           |
-| `coui-squircle`       | `io.github.suqi8.coui.kmp:coui-squircle`        | Squircle (continuous corner) shape, usable standalone                                                    | `coui-shader`           |
-| `coui-shader`         | `io.github.suqi8.coui.kmp:coui-shader`          | Runtime shader abstraction (`RuntimeShader`) with a no-op fallback on unsupported platforms             | —                       |
-| `coui-nav`            | `io.github.suqi8.coui.kmp:coui-nav`             | Self-contained navigation runtime (stack, driver, back handling)                                         | `coui-squircle`         |
-| `coui-navigation3-ui` | `io.github.suqi8.coui.kmp:coui-navigation3-ui`  | Navigation3 UI integration, usable standalone                                                            | `coui-squircle`         |
+| Module                | Maven coordinate                              | Description                                                                                              | Depends on              |
+| --------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `coui-ui`             | `io.github.costben.coui17:coui-ui`            | Core UI component library (ColorOS 17 design language)                                                   | `coui-core`, `coui-blur`, `coui-squircle` |
+| `coui-core`           | `io.github.costben.coui17:coui-core`          | Shared primitives and platform utilities used by the other modules                                       | —                       |
+| `coui-preference`     | `io.github.costben.coui17:coui-preference`    | Preference components (`SwitchPreference`, `CheckboxPreference`, …)                                      | `coui-ui`               |
+| `coui-icons`          | `io.github.costben.coui17:coui-icons`         | Extended Material icon set, usable standalone or with `coui-ui`                                          | `coui-core`             |
+| `coui-blur`           | `io.github.costben.coui17:coui-blur`          | Backdrop blur / blur effect modifiers, usable standalone                                                | `coui-shader`           |
+| `coui-squircle`       | `io.github.costben.coui17:coui-squircle`      | Squircle (continuous corner) shape, usable standalone                                                    | `coui-shader`           |
+| `coui-shader`         | `io.github.costben.coui17:coui-shader`        | Runtime shader abstraction (`RuntimeShader`) with a no-op fallback on unsupported platforms             | —                       |
+| `coui-nav`            | `io.github.costben.coui17:coui-nav`           | Self-contained navigation runtime (stack, driver, back handling)                                         | `coui-squircle`         |
+| `coui-navigation3-ui` | `io.github.costben.coui17:coui-navigation3-ui`| Navigation3 UI integration, usable standalone                                                            | `coui-squircle`         |
 
 #### Android `minSdk`
 
@@ -160,21 +162,21 @@ local `-Prelease` build:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.suqi8.coui.kmp:coui-ui:1.2.0")
+            implementation("io.github.costben.coui17:coui-ui:1.2.0")
             // Optional: Preference components (includes coui-ui)
-            implementation("io.github.suqi8.coui.kmp:coui-preference:1.2.0")
+            implementation("io.github.costben.coui17:coui-preference:1.2.0")
             // Optional: Extended icon set
-            implementation("io.github.suqi8.coui.kmp:coui-icons:1.2.0")
+            implementation("io.github.costben.coui17:coui-icons:1.2.0")
             // Optional: Blur effects (no-op below Android API 33)
-            implementation("io.github.suqi8.coui.kmp:coui-blur:1.2.0")
+            implementation("io.github.costben.coui17:coui-blur:1.2.0")
             // Optional: Squircle shapes
-            implementation("io.github.suqi8.coui.kmp:coui-squircle:1.2.0")
+            implementation("io.github.costben.coui17:coui-squircle:1.2.0")
             // Optional: Runtime shaders
-            implementation("io.github.suqi8.coui.kmp:coui-shader:1.2.0")
+            implementation("io.github.costben.coui17:coui-shader:1.2.0")
             // Optional: Navigation runtime
-            implementation("io.github.suqi8.coui.kmp:coui-nav:1.2.0")
+            implementation("io.github.costben.coui17:coui-nav:1.2.0")
             // Optional: Navigation3 UI
-            implementation("io.github.suqi8.coui.kmp:coui-navigation3-ui:1.2.0")
+            implementation("io.github.costben.coui17:coui-navigation3-ui:1.2.0")
             // Other dependencies...
         }
         // Other sourceSets...
