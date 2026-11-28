@@ -6639,6 +6639,43 @@ public final class io/github/suqi8/coui/kmp/utils/CouiPickerFeedbackKt {
 	public static final fun rememberCouiPickerHaptic (Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function2;
 }
 
+public abstract interface class io/github/suqi8/coui/kmp/utils/CouiSystemBarsApplier {
+	public abstract fun apply (Lio/github/suqi8/coui/kmp/utils/ResolvedCouiSystemBarsStyle;)V
+}
+
+public final class io/github/suqi8/coui/kmp/utils/CouiSystemBarsController {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun resolve (Z)Lio/github/suqi8/coui/kmp/utils/ResolvedCouiSystemBarsStyle;
+}
+
+public final class io/github/suqi8/coui/kmp/utils/CouiSystemBarsKt {
+	public static final fun CouiSystemBarsEffect (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final fun CouiSystemBarsHost (Lio/github/suqi8/coui/kmp/utils/CouiSystemBarsApplier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun getLocalCouiSystemBarsApplier ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalCouiSystemBarsController ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class io/github/suqi8/coui/kmp/utils/CouiSystemBarsStyle {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Boolean;
+	public final fun component2 ()Ljava/lang/Boolean;
+	public final fun component3 ()Ljava/lang/Boolean;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;)Lio/github/suqi8/coui/kmp/utils/CouiSystemBarsStyle;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/utils/CouiSystemBarsStyle;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/utils/CouiSystemBarsStyle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDarkNavigationBarIcons ()Ljava/lang/Boolean;
+	public final fun getDarkStatusBarIcons ()Ljava/lang/Boolean;
+	public final fun getNavigationBarVisible ()Ljava/lang/Boolean;
+	public final fun getStatusBarVisible ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/suqi8/coui/kmp/utils/CouiVibrateLevel : java/lang/Enum {
 	public static final field Crisp Lio/github/suqi8/coui/kmp/utils/CouiVibrateLevel;
 	public static final field Soft Lio/github/suqi8/coui/kmp/utils/CouiVibrateLevel;
@@ -6765,6 +6802,24 @@ public final class io/github/suqi8/coui/kmp/utils/PressFeedbackType : java/lang/
 public final class io/github/suqi8/coui/kmp/utils/PressableKt {
 	public static final fun pressable-QzZPfjk (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;ZLandroidx/compose/ui/semantics/Role;Ljava/lang/Long;)Landroidx/compose/ui/Modifier;
 	public static synthetic fun pressable-QzZPfjk$default (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/foundation/Indication;ZLandroidx/compose/ui/semantics/Role;Ljava/lang/Long;ILjava/lang/Object;)Landroidx/compose/ui/Modifier;
+}
+
+public final class io/github/suqi8/coui/kmp/utils/ResolvedCouiSystemBarsStyle {
+	public static final field $stable I
+	public fun <init> (ZZZZ)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun copy (ZZZZ)Lio/github/suqi8/coui/kmp/utils/ResolvedCouiSystemBarsStyle;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/utils/ResolvedCouiSystemBarsStyle;ZZZZILjava/lang/Object;)Lio/github/suqi8/coui/kmp/utils/ResolvedCouiSystemBarsStyle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDarkNavigationBarIcons ()Z
+	public final fun getDarkStatusBarIcons ()Z
+	public final fun getNavigationBarVisible ()Z
+	public final fun getStatusBarVisible ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/suqi8/coui/kmp/utils/ScrollEndHapticKt {

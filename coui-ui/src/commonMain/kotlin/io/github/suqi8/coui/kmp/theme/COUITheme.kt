@@ -13,6 +13,8 @@ import io.github.suqi8.coui.kmp.basic.PopupBarriers
 import io.github.suqi8.coui.kmp.kit.effect.CouiShaderWarmup
 import io.github.suqi8.coui.kmp.utils.COUIIndication
 import io.github.suqi8.coui.kmp.utils.COUIOverscrollFactory
+import io.github.suqi8.coui.kmp.utils.CouiSystemBarsHost
+import io.github.suqi8.coui.kmp.utils.LocalCouiSystemBarsController
 
 /**
  * The COUI theme that provides colors, text styles and metrics for the COUI components.
@@ -39,6 +41,7 @@ fun COUITheme(
             COUIIndication(color = couiColors.onBackground, focusOutline = couiColors.focusOutline)
         }
     val fontWeightAdjustment = rememberPlatformFontWeightAdjustment()
+    val hasOuterSystemBars = LocalCouiSystemBarsController.current != null
     CompositionLocalProvider(
         LocalColors provides couiColors,
         LocalTextStyles provides couiTextStyles,
@@ -51,7 +54,11 @@ fun COUITheme(
         LocalPlatformFontWeightAdjustment provides fontWeightAdjustment,
     ) {
         CouiShaderWarmup()
-        content()
+        if (hasOuterSystemBars) {
+            content()
+        } else {
+            CouiSystemBarsHost(content = content)
+        }
     }
 }
 
@@ -79,6 +86,7 @@ fun COUITheme(
             COUIIndication(color = couiColors.onBackground, focusOutline = couiColors.focusOutline)
         }
     val fontWeightAdjustment = rememberPlatformFontWeightAdjustment()
+    val hasOuterSystemBars = LocalCouiSystemBarsController.current != null
     CompositionLocalProvider(
         LocalColors provides couiColors,
         LocalTextStyles provides couiTextStyles,
@@ -89,7 +97,11 @@ fun COUITheme(
         LocalPlatformFontWeightAdjustment provides fontWeightAdjustment,
     ) {
         CouiShaderWarmup()
-        content()
+        if (hasOuterSystemBars) {
+            content()
+        } else {
+            CouiSystemBarsHost(content = content)
+        }
     }
 }
 
