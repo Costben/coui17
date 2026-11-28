@@ -5336,6 +5336,7 @@ public final class io/github/suqi8/coui/kmp/basic/ToastDefaults {
 	public final fun getExitScaleEasing ()Landroidx/compose/animation/core/Easing;
 	public final fun getHorizontalPadding-D9Ej5fM ()F
 	public final fun getHostContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getImeBottomPadding-D9Ej5fM ()F
 	public final fun getLongDurationMillis ()J
 	public final fun getMaxLines ()I
 	public final fun getMaxWidth-D9Ej5fM ()F
@@ -5358,7 +5359,7 @@ public final class io/github/suqi8/coui/kmp/basic/ToastHostState {
 public final class io/github/suqi8/coui/kmp/basic/ToastKt {
 	public static final fun Toast-gMrHQkA (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/basic/ToastColors;FLjava/lang/String;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Toast-jIwJxvA (Lio/github/suqi8/coui/kmp/basic/ToastData;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/ToastColors;FLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)V
-	public static final fun ToastHost (Lio/github/suqi8/coui/kmp/basic/ToastHostState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ToastHost-0vH8DBg (Lio/github/suqi8/coui/kmp/basic/ToastHostState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment;Landroidx/compose/foundation/layout/PaddingValues;ZZFLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun rememberToastHostState (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/ToastHostState;
 }
 

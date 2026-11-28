@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +32,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +44,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -48,12 +55,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.icon.COUIIcons
 import io.github.suqi8.coui.kmp.icon.basic.Close
 import io.github.suqi8.coui.kmp.squircle.isSquircleEnabled
 import io.github.suqi8.coui.kmp.theme.COUITheme
+import io.github.suqi8.coui.kmp.utils.LocalCouiSystemBarsController
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -205,8 +215,17 @@ fun rememberToastHostState(): ToastHostState = remember { ToastHostState() }
  * @param modifier Modifier applied to the overlay container when a toast is active.
  * @param contentAlignment Alignment of the toast inside the host container.
  * @param contentPadding Outer margins applied around the toast inside the host container.
- * @param applySystemInsets Whether to apply [navigationBarsPadding] and [imePadding] when a toast
- *   is active. Set to `false` if the parent already applies system/IME insets.
+ * @param applySystemInsets Whether to apply navigation-bar and IME insets when a toast is active.
+ *   Set to `false` if the parent already applies system/IME insets.
+ * @param lockNavigationBarInsets When [applySystemInsets] is `true`, locks the non-immersive
+ *   navigation-bar height so toasts pop and stay at the same fixed vertical position across normal
+ *   and immersive pages (including when the system navigation bar is hidden or animating). Defaults
+ *   to `true`.
+ * @param imeBottomPadding Clearance between the top of the software keyboard (IME) and the toast
+ *   when [applySystemInsets] is `true` and the keyboard rises above the resting bottom offset
+ *   (`lockedNavigationBarBottom + contentPadding.calculateBottomPadding()`). Defaults to
+ *   [ToastDefaults.ImeBottomPadding] (`24.dp`), avoiding double-counting navigation-bar height or
+ *   floating tall bottom-bar offsets above the keyboard.
  * @param toast Composable rendering each [ToastData]; defaults to [Toast].
  */
 @Composable
@@ -216,6 +235,8 @@ fun ToastHost(
     contentAlignment: Alignment = Alignment.BottomCenter,
     contentPadding: PaddingValues = ToastDefaults.HostContentPadding,
     applySystemInsets: Boolean = true,
+    lockNavigationBarInsets: Boolean = true,
+    imeBottomPadding: Dp = ToastDefaults.ImeBottomPadding,
     toast: @Composable (ToastData) -> Unit = { data ->
         Toast(
             data = data,
@@ -224,6 +245,19 @@ fun ToastHost(
     },
 ) {
     val motionState = remember(state) { ToastMotionState() }
+    val navInsetCache = remember { ToastNavigationBarInsetCache() }
+    val overrides = LocalToastInsetsOverrides.current
+    val platformLockedNavInsets = overrides?.platformLockedNavigationBarsPx
+        ?: rememberPlatformLockedNavigationBarInsetsPx()
+
+    if (applySystemInsets && lockNavigationBarInsets &&
+        (overrides != null || platformNeedsCompositionNavBarObserver())
+    ) {
+        ToastNavigationBarInsetObserver(
+            cache = navInsetCache,
+            navigationBars = overrides?.navigationBars,
+        )
+    }
 
     LaunchedEffect(state) {
         state.motionState = motionState
@@ -275,19 +309,122 @@ fun ToastHost(
     // Avoid composing a full-screen Box or subscribing to WindowInsets.ime while idle.
     val activeToast = state.currentToast ?: return
 
+    ToastHostOverlay(
+        activeToast = activeToast,
+        motionState = motionState,
+        navInsetCache = navInsetCache,
+        platformLockedNavInsets = platformLockedNavInsets,
+        overrides = overrides,
+        modifier = modifier,
+        contentAlignment = contentAlignment,
+        contentPadding = contentPadding,
+        applySystemInsets = applySystemInsets,
+        lockNavigationBarInsets = lockNavigationBarInsets,
+        imeBottomPadding = imeBottomPadding,
+        toast = toast,
+    )
+}
+
+@Composable
+private fun ToastNavigationBarInsetObserver(
+    cache: ToastNavigationBarInsetCache,
+    navigationBars: WindowInsets?,
+) {
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    val containerSize = LocalWindowInfo.current.containerSize
+    val systemBarsController = LocalCouiSystemBarsController.current
+    val navBarVisible by remember(systemBarsController) {
+        derivedStateOf {
+            systemBarsController?.resolve(fallbackDarkIcons = true)?.navigationBarVisible ?: true
+        }
+    }
+    val resolvedNavBars = navigationBars ?: WindowInsets.navigationBars
+    val liveNav = ToastSystemBarInsetsPx(
+        left = resolvedNavBars.getLeft(density, layoutDirection).coerceAtLeast(0),
+        right = resolvedNavBars.getRight(density, layoutDirection).coerceAtLeast(0),
+        bottom = resolvedNavBars.getBottom(density).coerceAtLeast(0),
+    )
+    cache.record(
+        containerSize = containerSize,
+        navigationBarVisible = navBarVisible,
+        liveInsets = liveNav,
+    )
+}
+
+@Composable
+private fun ToastHostOverlay(
+    activeToast: ToastData,
+    motionState: ToastMotionState,
+    navInsetCache: ToastNavigationBarInsetCache,
+    platformLockedNavInsets: () -> ToastSystemBarInsetsPx?,
+    overrides: ToastInsetsOverrides?,
+    modifier: Modifier = Modifier,
+    contentAlignment: Alignment,
+    contentPadding: PaddingValues,
+    applySystemInsets: Boolean,
+    lockNavigationBarInsets: Boolean,
+    imeBottomPadding: Dp,
+    toast: @Composable (ToastData) -> Unit,
+) {
+    val paddingModifier = if (applySystemInsets) {
+        val density = LocalDensity.current
+        val layoutDirection = LocalLayoutDirection.current
+        val containerSize = LocalWindowInfo.current.containerSize
+        val navBars = overrides?.navigationBars ?: WindowInsets.navigationBars
+        val liveNav = ToastSystemBarInsetsPx(
+            left = navBars.getLeft(density, layoutDirection).coerceAtLeast(0),
+            right = navBars.getRight(density, layoutDirection).coerceAtLeast(0),
+            bottom = navBars.getBottom(density).coerceAtLeast(0),
+        )
+        val systemBarsController = LocalCouiSystemBarsController.current
+        val navBarVisible = systemBarsController?.resolve(fallbackDarkIcons = true)?.navigationBarVisible ?: true
+        val effectiveNav = if (lockNavigationBarInsets) {
+            navInsetCache.record(
+                containerSize = containerSize,
+                navigationBarVisible = navBarVisible,
+                liveInsets = liveNav,
+            )
+            val platformNav = platformLockedNavInsets()
+            when {
+                platformNav != null && !platformNeedsCompositionNavBarObserver() -> platformNav
+                platformNav != null -> navInsetCache.resolve(containerSize, liveNav).maxWith(platformNav)
+                else -> navInsetCache.resolve(containerSize, liveNav)
+            }
+        } else {
+            liveNav
+        }
+
+        val contentStartPx = with(density) { contentPadding.calculateStartPadding(layoutDirection).roundToPx() }
+        val contentEndPx = with(density) { contentPadding.calculateEndPadding(layoutDirection).roundToPx() }
+        val contentTopPx = with(density) { contentPadding.calculateTopPadding().roundToPx() }
+        val contentBottomPx = with(density) { contentPadding.calculateBottomPadding().roundToPx() }
+        val navStartPx = if (layoutDirection == LayoutDirection.Ltr) effectiveNav.left else effectiveNav.right
+        val navEndPx = if (layoutDirection == LayoutDirection.Ltr) effectiveNav.right else effectiveNav.left
+        val restingBottomPx = effectiveNav.bottom + contentBottomPx
+        val ime = overrides?.ime ?: WindowInsets.ime
+        val imeBottomPx = ime.getBottom(density).coerceAtLeast(0)
+        val effectiveBottomPx = if (imeBottomPx > 0) {
+            val imePaddingPx = with(density) { imeBottomPadding.roundToPx().coerceAtLeast(0) }
+            maxOf(restingBottomPx, imeBottomPx + imePaddingPx)
+        } else {
+            restingBottomPx
+        }
+
+        Modifier.padding(
+            start = with(density) { (navStartPx + contentStartPx).toDp() },
+            top = with(density) { contentTopPx.toDp() },
+            end = with(density) { (navEndPx + contentEndPx).toDp() },
+            bottom = with(density) { effectiveBottomPx.toDp() },
+        )
+    } else {
+        Modifier.padding(contentPadding)
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .then(
-                if (applySystemInsets) {
-                    Modifier
-                        .navigationBarsPadding()
-                        .imePadding()
-                } else {
-                    Modifier
-                },
-            )
-            .padding(contentPadding),
+            .then(paddingModifier),
         contentAlignment = contentAlignment,
     ) {
         Box(
@@ -566,6 +703,12 @@ object ToastDefaults {
     /** Default outer padding applied by [ToastHost]. */
     val HostContentPadding: PaddingValues = PaddingValues(start = 24.dp, end = 24.dp, bottom = 44.dp)
 
+    /**
+     * Default clearance between the top of the software keyboard (IME) and the toast capsule when
+     * the keyboard lifts the toast above its resting position (`24.dp`).
+     */
+    val ImeBottomPadding: Dp = 24.dp
+
     /** Container scale easing during enter (`CubicBezierEasing(0f, 0f, 0f, 1f)`). */
     val EnterScaleEasing: Easing = CubicBezierEasing(0f, 0f, 0f, 1f)
 
@@ -735,6 +878,48 @@ internal class ToastMotionState {
 
 private val LocalToastMotionState = compositionLocalOf<ToastMotionState?> { null }
 
+internal data class ToastInsetsOverrides(
+    val navigationBars: WindowInsets? = null,
+    val ime: WindowInsets? = null,
+    val platformLockedNavigationBarsPx: (() -> ToastSystemBarInsetsPx?)? = null,
+)
+
+internal val LocalToastInsetsOverrides = compositionLocalOf<ToastInsetsOverrides?> { null }
+
+/**
+ * Per-window-size cache of non-immersive navigation-bar insets.
+ *
+ * Only records insets while `navigationBarVisible` is `true` and merges with component-wise `max`
+ * within the same `containerSize`, so neither immersive hiding nor hide/restore transition frames
+ * shrink the locked height, while orientation / window-size changes keep independent entries.
+ */
+internal class ToastNavigationBarInsetCache {
+    private val lockedBySize = LinkedHashMap<IntSize, ToastSystemBarInsetsPx>()
+
+    fun record(
+        containerSize: IntSize,
+        navigationBarVisible: Boolean,
+        liveInsets: ToastSystemBarInsetsPx,
+    ) {
+        if (!navigationBarVisible || !liveInsets.isNonZero) return
+        val existing = lockedBySize.remove(containerSize)
+        lockedBySize[containerSize] = existing?.maxWith(liveInsets) ?: liveInsets
+        while (lockedBySize.size > MAX_CACHED_WINDOW_SIZES) {
+            val oldestKey = lockedBySize.entries.firstOrNull()?.key ?: break
+            lockedBySize.remove(oldestKey)
+        }
+    }
+
+    fun resolve(
+        containerSize: IntSize,
+        liveInsets: ToastSystemBarInsetsPx,
+    ): ToastSystemBarInsetsPx {
+        val cached = lockedBySize[containerSize]
+        return cached?.maxWith(liveInsets) ?: liveInsets
+    }
+}
+
+private const val MAX_CACHED_WINDOW_SIZES = 4
 private const val TOAST_MIN_SCALE = 0.9f
 private const val TOAST_ENTER_CONTAINER_ALPHA_DURATION_MS = 66
 private const val TOAST_ENTER_CONTENT_ALPHA_DELAY_MS = 50

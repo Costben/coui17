@@ -3,7 +3,14 @@
 package io.github.suqi8.coui.kmp.basic
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -19,11 +26,14 @@ import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.suqi8.coui.kmp.theme.COUITheme
 import io.github.suqi8.coui.kmp.theme.darkColorScheme
 import io.github.suqi8.coui.kmp.theme.lightColorScheme
+import io.github.suqi8.coui.kmp.utils.CouiSystemBarsEffect
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -311,6 +321,294 @@ class ToastTest {
         assertFailsWith<IllegalArgumentException> {
             state.showToast("Invalid", durationMillis = -100L)
         }
+    }
+
+    @Test
+    fun locksNavigationBarHeightAcrossImmersiveHideAndRestoreAnimations() {
+        runSkikoComposeUiTest(size = Size(400f, 800f), density = Density(1f)) {
+            mainClock.autoAdvance = false
+            val state = ToastHostState()
+            val fakeNav = MutableTestWindowInsets(bottomPx = 48)
+            var immersive by mutableStateOf(false)
+
+            setContent {
+                COUITheme {
+                    if (immersive) {
+                        CouiSystemBarsEffect(navigationBarVisible = false)
+                    }
+                    CompositionLocalProvider(
+                        LocalToastInsetsOverrides provides ToastInsetsOverrides(
+                            navigationBars = fakeNav,
+                            ime = MutableTestWindowInsets(bottomPx = 0),
+                        ),
+                    ) {
+                        Box(Modifier.fillMaxSize()) {
+                            ToastHost(
+                                state = state,
+                                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 82.dp),
+                                toast = { data ->
+                                    Toast(
+                                        data = data,
+                                        modifier = Modifier.testTag(TOAST_TAG),
+                                        onDismiss = state::dismiss,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            // Record visible navigation-bar height while idle before entering immersive mode.
+            mainClock.advanceTimeByFrame()
+
+            // Enter immersive mode and animate navigation bar down 48 -> 20 -> 0.
+            immersive = true
+            fakeNav.bottomPx = 20
+            mainClock.advanceTimeByFrame()
+            fakeNav.bottomPx = 0
+            mainClock.advanceTimeByFrame()
+
+            // First toast pops while in immersive mode; must stay at 800 - (48 + 82) = 670dp.
+            state.showToast("Saved", durationMillis = 5000L)
+            mainClock.advanceTimeBy(400)
+            val immersiveBounds = onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot()
+            assertEquals(670f, immersiveBounds.bottom.value, 0.5f)
+
+            // Leave immersive mode and animate navigation bar back 0 -> 16 -> 48; toast must not jump.
+            immersive = false
+            fakeNav.bottomPx = 16
+            mainClock.advanceTimeByFrame()
+            val restoringBounds = onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot()
+            assertEquals(670f, restoringBounds.bottom.value, 0.5f)
+
+            fakeNav.bottomPx = 48
+            mainClock.advanceTimeByFrame()
+            val restoredBounds = onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot()
+            assertEquals(670f, restoredBounds.bottom.value, 0.5f)
+        }
+    }
+
+    @Test
+    fun coldStartInImmersiveUsesPlatformLockedNavigationBarHeight() {
+        runSkikoComposeUiTest(size = Size(400f, 800f), density = Density(1f)) {
+            mainClock.autoAdvance = false
+            val state = ToastHostState()
+            val fakeNav = MutableTestWindowInsets(bottomPx = 0)
+
+            setContent {
+                COUITheme {
+                    CouiSystemBarsEffect(navigationBarVisible = false)
+                    CompositionLocalProvider(
+                        LocalToastInsetsOverrides provides ToastInsetsOverrides(
+                            navigationBars = fakeNav,
+                            ime = MutableTestWindowInsets(bottomPx = 0),
+                            platformLockedNavigationBarsPx = { ToastSystemBarInsetsPx(bottom = 48) },
+                        ),
+                    ) {
+                        Box(Modifier.fillMaxSize()) {
+                            ToastHost(
+                                state = state,
+                                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 82.dp),
+                                toast = { data ->
+                                    Toast(
+                                        data = data,
+                                        modifier = Modifier.testTag(TOAST_TAG),
+                                        onDismiss = state::dismiss,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            mainClock.advanceTimeByFrame()
+
+            state.showToast("Immersive cold start", durationMillis = 5000L)
+            mainClock.advanceTimeBy(400)
+            val bounds = onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot()
+            assertEquals(670f, bounds.bottom.value, 0.5f)
+        }
+    }
+
+    @Test
+    fun unlockingNavigationBarInsetsFollowsLiveInsets() {
+        runSkikoComposeUiTest(size = Size(400f, 800f), density = Density(1f)) {
+            mainClock.autoAdvance = false
+            val state = ToastHostState()
+            val fakeNav = MutableTestWindowInsets(bottomPx = 48)
+
+            setContent {
+                COUITheme {
+                    CompositionLocalProvider(
+                        LocalToastInsetsOverrides provides ToastInsetsOverrides(
+                            navigationBars = fakeNav,
+                            ime = MutableTestWindowInsets(bottomPx = 0),
+                        ),
+                    ) {
+                        Box(Modifier.fillMaxSize()) {
+                            ToastHost(
+                                state = state,
+                                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 82.dp),
+                                lockNavigationBarInsets = false,
+                                toast = { data ->
+                                    Toast(
+                                        data = data,
+                                        modifier = Modifier.testTag(TOAST_TAG),
+                                        onDismiss = state::dismiss,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            mainClock.advanceTimeByFrame()
+
+            state.showToast("Live nav", durationMillis = 5000L)
+            mainClock.advanceTimeBy(400)
+            assertEquals(670f, onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot().bottom.value, 0.5f)
+
+            fakeNav.bottomPx = 0
+            mainClock.advanceTimeByFrame()
+            assertEquals(718f, onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot().bottom.value, 0.5f)
+        }
+    }
+
+    @Test
+    fun imeLiftsToastSmoothlyWithoutDippingOrFloatingAboveTallOffset() {
+        runSkikoComposeUiTest(size = Size(400f, 800f), density = Density(1f)) {
+            mainClock.autoAdvance = false
+            val state = ToastHostState()
+            val fakeNav = MutableTestWindowInsets(bottomPx = 24)
+            val fakeIme = MutableTestWindowInsets(bottomPx = 0)
+
+            setContent {
+                COUITheme {
+                    CompositionLocalProvider(
+                        LocalToastInsetsOverrides provides ToastInsetsOverrides(
+                            navigationBars = fakeNav,
+                            ime = fakeIme,
+                        ),
+                    ) {
+                        Box(Modifier.fillMaxSize()) {
+                            ToastHost(
+                                state = state,
+                                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 82.dp),
+                                imeBottomPadding = 24.dp,
+                                toast = { data ->
+                                    Toast(
+                                        data = data,
+                                        modifier = Modifier.testTag(TOAST_TAG),
+                                        onDismiss = state::dismiss,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            mainClock.advanceTimeByFrame()
+
+            state.showToast("IME aware", durationMillis = 5000L)
+            mainClock.advanceTimeBy(400)
+            // Resting offset: 24 + 82 = 106dp -> bottom at 800 - 106 = 694dp.
+            assertEquals(694f, onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot().bottom.value, 0.5f)
+
+            // Early IME frame (40 + 24 = 64 < 106): must stay at 694dp without dipping down.
+            fakeIme.bottomPx = 40
+            mainClock.advanceTimeByFrame()
+            assertEquals(694f, onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot().bottom.value, 0.5f)
+
+            // Full IME open (300 + 24 = 324 > 106): lifts to 24dp above keyboard (800 - 324 = 476dp).
+            fakeIme.bottomPx = 300
+            mainClock.advanceTimeByFrame()
+            assertEquals(476f, onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot().bottom.value, 0.5f)
+
+            // Keyboard closes: returns smoothly to resting offset 694dp.
+            fakeIme.bottomPx = 0
+            mainClock.advanceTimeByFrame()
+            assertEquals(694f, onNodeWithTag(TOAST_TAG).getUnclippedBoundsInRoot().bottom.value, 0.5f)
+        }
+    }
+
+    @Test
+    fun idleHostDoesNotReadImeInsets() {
+        runSkikoComposeUiTest(size = Size(400f, 800f), density = Density(1f)) {
+            val state = ToastHostState()
+            val fakeNav = MutableTestWindowInsets(bottomPx = 24)
+            val fakeIme = MutableTestWindowInsets(bottomPx = 0)
+
+            setContent {
+                COUITheme {
+                    CompositionLocalProvider(
+                        LocalToastInsetsOverrides provides ToastInsetsOverrides(
+                            navigationBars = fakeNav,
+                            ime = fakeIme,
+                        ),
+                    ) {
+                        Box(Modifier.fillMaxSize()) {
+                            ToastHost(state = state)
+                        }
+                    }
+                }
+            }
+            waitForIdle()
+            assertEquals(0, fakeIme.bottomReadCount)
+
+            // Simulate keyboard opening/closing animation frames while no toast is active.
+            for (height in listOf(40, 120, 260, 320, 180, 0)) {
+                fakeIme.bottomPx = height
+                waitForIdle()
+            }
+            assertEquals(0, fakeIme.bottomReadCount)
+        }
+    }
+
+    @Test
+    fun navigationBarInsetCacheIsolatesWindowSizesAndIgnoresImmersiveOrShrink() {
+        val cache = ToastNavigationBarInsetCache()
+        val portrait = IntSize(400, 800)
+        val landscape = IntSize(800, 400)
+
+        cache.record(portrait, navigationBarVisible = true, liveInsets = ToastSystemBarInsetsPx(bottom = 48))
+        // Immersive hiding must not overwrite portrait height.
+        cache.record(portrait, navigationBarVisible = false, liveInsets = ToastSystemBarInsetsPx(bottom = 0))
+        assertEquals(48, cache.resolve(portrait, ToastSystemBarInsetsPx(bottom = 0)).bottom)
+
+        // Restore transition intermediate value must not shrink the locked portrait height.
+        cache.record(portrait, navigationBarVisible = true, liveInsets = ToastSystemBarInsetsPx(bottom = 18))
+        assertEquals(48, cache.resolve(portrait, ToastSystemBarInsetsPx(bottom = 18)).bottom)
+
+        // Rotating to landscape gets its own independent inset entry.
+        cache.record(
+            landscape,
+            navigationBarVisible = true,
+            liveInsets = ToastSystemBarInsetsPx(right = 48, bottom = 0),
+        )
+        assertEquals(
+            ToastSystemBarInsetsPx(right = 48, bottom = 0),
+            cache.resolve(landscape, ToastSystemBarInsetsPx(right = 0, bottom = 0)),
+        )
+
+        // Rotating back to portrait while still immersive restores portrait's locked 48px.
+        assertEquals(48, cache.resolve(portrait, ToastSystemBarInsetsPx(bottom = 0)).bottom)
+    }
+}
+
+private class MutableTestWindowInsets(bottomPx: Int) : WindowInsets {
+    var bottomPx by mutableIntStateOf(bottomPx)
+    var bottomReadCount: Int = 0
+        private set
+
+    override fun getLeft(density: Density, layoutDirection: LayoutDirection): Int = 0
+
+    override fun getTop(density: Density): Int = 0
+
+    override fun getRight(density: Density, layoutDirection: LayoutDirection): Int = 0
+
+    override fun getBottom(density: Density): Int {
+        bottomReadCount += 1
+        return bottomPx
     }
 }
 

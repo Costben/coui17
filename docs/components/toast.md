@@ -46,23 +46,26 @@ toastState.showToast(
 )
 ```
 
-## Skipping `WindowInsets.ime` When Idle
+## Fixed Position Across Immersive Pages & Keyboard Handling
 
-If your layout computes dynamic bottom offsets based on keyboard visibility, guard the `WindowInsets.ime` read with `state.hasActiveToast`:
+By default (`applySystemInsets = true`, `lockNavigationBarInsets = true`), `ToastHost` locks the non-immersive navigation-bar height so toasts always appear at the exact same vertical position across regular screens and immersive screens (such as image/video viewers using `CouiSystemBarsEffect(navigationBarVisible = false)`), even if the first toast is triggered while the navigation bar is hidden or animating.
+
+When the software keyboard (IME) opens, `ToastHost` computes:
 
 ```kotlin
-val bottomPadding = if (toastState.hasActiveToast) {
-    val imeOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-    if (!imeOpen && hasFloatingBottomBar) 82.dp else 44.dp
-} else {
-    44.dp
-}
+max(lockedNavigationBarBottom + contentPadding.bottom, imeBottom + imeBottomPadding)
+```
 
+This avoids both double-counting the navigation bar and floating tall bottom-bar offsets above the keyboard. For an app with a floating bottom bar, pass only `contentPadding`:
+
+```kotlin
 ToastHost(
     state = toastState,
-    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = bottomPadding),
+    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 82.dp),
 )
 ```
+
+While idle (`state.hasActiveToast == false`), `ToastHost` never subscribes to `WindowInsets.ime`, keeping keyboard open/close animations free of extra recompositions.
 
 ## Properties
 
@@ -83,7 +86,9 @@ ToastHost(
 | `modifier` | `Modifier` | Modifier applied to the host overlay while active | `Modifier` |
 | `contentAlignment` | `Alignment` | Toast alignment inside the host | `Alignment.BottomCenter` |
 | `contentPadding` | `PaddingValues` | Outer padding around the toast | `ToastDefaults.HostContentPadding` |
-| `applySystemInsets` | `Boolean` | Applies `navigationBarsPadding()` and `imePadding()` while active | `true` |
+| `applySystemInsets` | `Boolean` | Applies navigation-bar and IME insets while active | `true` |
+| `lockNavigationBarInsets` | `Boolean` | Locks non-immersive navigation-bar height across immersive pages and system-bar animations | `true` |
+| `imeBottomPadding` | `Dp` | Clearance above the software keyboard when IME lifts the toast past its resting position | `ToastDefaults.ImeBottomPadding` (`24.dp`) |
 | `toast` | `@Composable (ToastData) -> Unit` | Custom toast renderer | `{ Toast(it, onDismiss = state::dismiss) }` |
 
 ### Toast
