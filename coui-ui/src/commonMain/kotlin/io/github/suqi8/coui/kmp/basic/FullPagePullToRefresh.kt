@@ -6,6 +6,10 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalOverscrollFactory
@@ -26,6 +30,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -652,7 +657,6 @@ private fun RefreshHint(
     val density = LocalDensity.current
     val spinnerSizePx = with(density) { spinnerSize.toPx() }
     var hintHeightPx by remember { mutableFloatStateOf(0f) }
-    val cycle = remember { Animatable(0f) }
     var heldRotation by remember { mutableFloatStateOf(270f) }
 
     val hasCompleteText = refreshTexts.complete.isNotBlank()
@@ -666,23 +670,33 @@ private fun RefreshHint(
     val completeFadeDurationMillis =
         ((state.completeHoldDurationMillis / 2).coerceIn(0L, 400L)).toInt()
 
-    // 复用 ColorOS 17 原生 pull_down_loading.json 节奏：
-    // 下拉期间停在初始帧并严格跟手旋转；松手进入刷新后锁住当前角度并播放 76 帧 Trim Paths 呼吸转圈；
-    // 刷新完成阶段保持原速呼吸旋转不回零：有完成文案时平滑淡出切出文案停留后再收起，无文案时直接转着收起。
+    // Reuse ColorOS 17's native pull_down_loading.json cadence:
+    // stay on frame 0 and rotate with the finger while pulling; lock the angle on release and
+    // run the 76-frame Trim Paths breathing cycle continuously across Refreshing -> RefreshComplete.
+    // Drive the loop with rememberInfiniteTransition rather than a manual while(true) Animatable
+    // loop so Compose UI tests' waitForIdle() does not spin forever advancing finite frames.
     LaunchedEffect(spinning) {
-        if (!spinning) {
-            cycle.snapTo(0f)
-            return@LaunchedEffect
+        if (spinning) {
+            heldRotation = pullToRefreshIndicatorRotation(
+                offset = state.dragOffset,
+                begin = spinnerSizePx,
+                threshold = state.refreshThresholdPx,
+            )
         }
-        heldRotation = pullToRefreshIndicatorRotation(
-            offset = state.dragOffset,
-            begin = spinnerSizePx,
-            threshold = state.refreshThresholdPx,
+    }
+    val cycle: State<Float>? = if (spinning) {
+        val transition = rememberInfiniteTransition(label = "fullPageRefreshSpinner")
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(RotatingSpinnerCycleMillis, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "fullPageRefreshSpinnerCycle",
         )
-        while (true) {
-            cycle.animateTo(1f, tween(RotatingSpinnerCycleMillis, easing = LinearEasing))
-            cycle.snapTo(0f)
-        }
+    } else {
+        null
     }
 
     val text = when (state.refreshState) {
@@ -745,7 +759,7 @@ private fun RefreshHint(
                                 )
                             }
                         },
-                        cycle = { cycle.value },
+                        cycle = { cycle?.value ?: 0f },
                     )
                 }
                 if (showTextSlot) {
