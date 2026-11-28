@@ -101,6 +101,7 @@ export default defineConfig({
                         { text: "TimePicker", link: "/components/timepicker" },
                         { text: "ProgressIndicator", link: "/components/progressindicator", },
                         { text: "Snackbar", link: "/components/snackbar" },
+                        { text: "Toast", link: "/components/toast" },
                         { text: "TopTips", link: "/components/toptips" },
                         { text: "Tooltip", link: "/components/tooltip" },
                         { text: "Badge", link: "/components/badge" },

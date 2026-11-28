@@ -5278,6 +5278,90 @@ public final class io/github/suqi8/coui/kmp/basic/TimeValue {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/suqi8/coui/kmp/basic/ToastColors {
+	public static final field $stable I
+	public synthetic fun <init> (JJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-0d7_KjU ()J
+	public final fun component2-0d7_KjU ()J
+	public final fun component3-0d7_KjU ()J
+	public final fun component4-0d7_KjU ()J
+	public final fun component5-0d7_KjU ()J
+	public final fun component6-0d7_KjU ()J
+	public final fun copy-tNS2XkQ (JJJJJJ)Lio/github/suqi8/coui/kmp/basic/ToastColors;
+	public static synthetic fun copy-tNS2XkQ$default (Lio/github/suqi8/coui/kmp/basic/ToastColors;JJJJJJILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ToastColors;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActionContentColor-0d7_KjU ()J
+	public final fun getAmbientShadowColor-0d7_KjU ()J
+	public final fun getContainerColor-0d7_KjU ()J
+	public final fun getContentColor-0d7_KjU ()J
+	public final fun getDismissActionContentColor-0d7_KjU ()J
+	public final fun getSpotShadowColor-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ToastData {
+	public static final field $stable I
+	public fun <init> (JLjava/lang/String;JLjava/lang/String;ZLkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (JLjava/lang/String;JLjava/lang/String;ZLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Lkotlin/jvm/functions/Function0;
+	public final fun copy (JLjava/lang/String;JLjava/lang/String;ZLkotlin/jvm/functions/Function0;)Lio/github/suqi8/coui/kmp/basic/ToastData;
+	public static synthetic fun copy$default (Lio/github/suqi8/coui/kmp/basic/ToastData;JLjava/lang/String;JLjava/lang/String;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/suqi8/coui/kmp/basic/ToastData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActionLabel ()Ljava/lang/String;
+	public final fun getDurationMillis ()J
+	public final fun getId ()J
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getOnAction ()Lkotlin/jvm/functions/Function0;
+	public final fun getWithDismissAction ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ToastDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lio/github/suqi8/coui/kmp/basic/ToastDefaults;
+	public final fun colors-5tl4gsc (JJJJJJLandroidx/compose/runtime/Composer;II)Lio/github/suqi8/coui/kmp/basic/ToastColors;
+	public final fun getDismissContentDescription ()Ljava/lang/String;
+	public final fun getDoubleLineVerticalPadding-D9Ej5fM ()F
+	public final fun getElevation-D9Ej5fM ()F
+	public final fun getEnterDurationMillis ()I
+	public final fun getEnterScaleEasing ()Landroidx/compose/animation/core/Easing;
+	public final fun getExitDurationMillis ()I
+	public final fun getExitScaleEasing ()Landroidx/compose/animation/core/Easing;
+	public final fun getHorizontalPadding-D9Ej5fM ()F
+	public final fun getHostContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getLongDurationMillis ()J
+	public final fun getMaxLines ()I
+	public final fun getMaxWidth-D9Ej5fM ()F
+	public final fun getMinHeight-D9Ej5fM ()F
+	public final fun getShortDurationMillis ()J
+	public final fun getSingleLineVerticalPadding-D9Ej5fM ()F
+	public final fun textStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ToastHostState {
+	public static final field $stable I
+	public fun <init> ()V
+	public final fun dismiss ()V
+	public final fun getCurrentToast ()Lio/github/suqi8/coui/kmp/basic/ToastData;
+	public final fun getHasActiveToast ()Z
+	public final fun showToast (Ljava/lang/String;JLjava/lang/String;ZLkotlin/jvm/functions/Function0;)V
+	public static synthetic fun showToast$default (Lio/github/suqi8/coui/kmp/basic/ToastHostState;Ljava/lang/String;JLjava/lang/String;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+}
+
+public final class io/github/suqi8/coui/kmp/basic/ToastKt {
+	public static final fun Toast-gMrHQkA (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/github/suqi8/coui/kmp/basic/ToastColors;FLjava/lang/String;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Toast-jIwJxvA (Lio/github/suqi8/coui/kmp/basic/ToastData;Landroidx/compose/ui/Modifier;Lio/github/suqi8/coui/kmp/basic/ToastColors;FLkotlin/jvm/functions/Function0;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ToastHost (Lio/github/suqi8/coui/kmp/basic/ToastHostState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Alignment;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun rememberToastHostState (Landroidx/compose/runtime/Composer;I)Lio/github/suqi8/coui/kmp/basic/ToastHostState;
+}
+
 public final class io/github/suqi8/coui/kmp/basic/ToolbarPosition {
 	public static final field Companion Lio/github/suqi8/coui/kmp/basic/ToolbarPosition$Companion;
 	public static final synthetic fun box-impl (I)Lio/github/suqi8/coui/kmp/basic/ToolbarPosition;

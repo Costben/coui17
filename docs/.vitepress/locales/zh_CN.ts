@@ -110,6 +110,7 @@ export default defineConfig({
                         { text: "TimePicker", link: "/zh_CN/components/timepicker" },
                         { text: "ProgressIndicator", link: "/zh_CN/components/progressindicator", },
                         { text: "Snackbar", link: "/zh_CN/components/snackbar" },
+                        { text: "Toast", link: "/zh_CN/components/toast" },
                         { text: "TopTips", link: "/zh_CN/components/toptips" },
                         { text: "Tooltip", link: "/zh_CN/components/tooltip" },
                         { text: "Badge", link: "/zh_CN/components/badge" },
